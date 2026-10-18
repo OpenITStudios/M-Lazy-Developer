@@ -2,6 +2,10 @@ import type {
   GameplayCausalLink,
   GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
+import {
+  satisfiedScenarioKnowledgeReceipt,
+  uniqueScenarioKnowledgeRequirement,
+} from "./gameplay-scenario-knowledge.js";
 
 /** Exact selected-artifact subject/scope relation; not a proof of reachability or delivery. */
 export function capabilityDeliveryMatchesScope(
@@ -1107,12 +1111,13 @@ export function assessGameplayDefectResolutionGate(
           ...link.evidenceIds,
           ...link.impactPathEvidenceIds,
           ...requiredDimensionEvidenceIds,
-          ...link.knowledgeRequirementIds.flatMap(
-            (id) =>
-              graph.knowledgeReceipts.find(
-                (item) => item.requirementId === id,
-              )?.evidenceIds ?? [],
-          ),
+          ...link.knowledgeRequirementIds.flatMap((id) => {
+            const required = uniqueScenarioKnowledgeRequirement(
+              graph, id, link.scenarioId,
+            );
+            return required === undefined ? [] :
+              satisfiedScenarioKnowledgeReceipt(graph, required)?.evidenceIds ?? [];
+          }),
         ]),
       ].sort(),
       ...(blockingCounterProofEvidenceIds.length > 0

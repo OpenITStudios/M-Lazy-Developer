@@ -412,6 +412,57 @@ describe("non-finding PROVE resolution conservation", () => {
     })),
   };
 
+  it("does not borrow a foreign same-ID Knowledge receipt as defect evidence", () => {
+    const requirement = {
+      id: "knowledge:arena:state",
+      scenarioId: "preset:arena-capacity",
+      domain: "state-flow" as const,
+      reason: "Arena admission state ownership",
+      capabilityIds: ["state-flow"],
+      dependsOnRequirementIds: [],
+      subjectIds: ["policy:arena-capacity"],
+      componentIds: ["runtime:arena"],
+    };
+    const receipt = {
+      requirementId: requirement.id,
+      scenarioId: requirement.scenarioId,
+      domain: requirement.domain,
+      status: "SATISFIED" as const,
+      evidenceIds: ["e:knowledge-owner"],
+      knowledgeIds: ["knowledge:arena:state"],
+      capabilityIdsUsed: ["state-flow"],
+      subjectIds: requirement.subjectIds,
+      componentIds: requirement.componentIds,
+      reason: "Selected source proves arena ownership.",
+    };
+    const withKnowledge: GameplayScenarioGraph = {
+      ...graph,
+      knowledgeRequirements: [requirement],
+      knowledgeReceipts: [receipt],
+      causalLinks: graph.causalLinks.map((link) => ({
+        ...link, knowledgeRequirementIds: [requirement.id],
+      })),
+    };
+    const admitted = assessGameplayDefectResolutionGate(withKnowledge);
+    expect(admitted.resolutions[0]?.evidenceIds)
+      .toContain("e:knowledge-owner");
+
+    for (const foreign of [
+      { scenarioId: "scenario:elsewhere" },
+      { domain: "chunk-simulation" as const },
+    ]) {
+      const conflicted: GameplayScenarioGraph = {
+        ...withKnowledge,
+        knowledgeReceipts: [receipt, { ...receipt, ...foreign }],
+      };
+      const resolution = assessGameplayDefectResolutionGate(conflicted);
+      expect(resolution.resolutions[0]?.evidenceIds)
+        .not.toContain("e:knowledge-owner");
+      expect(resolution.resolutions[0]?.knowledgeRequirementIds)
+        .toContain(requirement.id);
+    }
+  });
+
   it("keeps source detection gaps as valid non-finding obligations without fabricating a defect", () => {
     const result = assessGameplayDefectResolutionGate(gapGraph);
     expect(result.status).toBe("READY_FOR_PROPOSED_BUG_SET");

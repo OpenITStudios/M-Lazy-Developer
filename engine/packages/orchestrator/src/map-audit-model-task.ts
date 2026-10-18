@@ -17,6 +17,10 @@ import type {
 import type {
   GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
+import {
+  satisfiedScenarioKnowledgeReceipt,
+  uniqueScenarioKnowledgeRequirement,
+} from "./inspection/gameplay-scenario-knowledge.js";
 import type {
   GameplayDefectResolutionGate,
 } from "./inspection/gameplay-defect-resolution.js";
@@ -464,22 +468,44 @@ function knowledgeContextFor(
   world: GameplayWorldModel,
 ): readonly AuditModelTaskKnowledgeContext[] {
   return unique(requirementIds).flatMap((requirementId) => {
-    const requirement = graph.knowledgeRequirements.find(
+    const candidates = graph.knowledgeRequirements.filter(
       (item) => item.id === requirementId,
     );
-    if (requirement === undefined) return [];
-    const receipt = graph.knowledgeReceipts.find(
+    const requirement = candidates.length === 1
+      ? uniqueScenarioKnowledgeRequirement(
+          graph, requirementId, candidates[0]!.scenarioId,
+        )
+      : undefined;
+    // Preserve unresolved Knowledge IDs as task context without choosing a
+    // foreign/duplicate owner or borrowing a SATISFIED receipt as evidence.
+    if (requirement === undefined) return [{
+      requirementId,
+      domain: "unresolved",
+      status: "MISSING_RECEIPT",
+      capabilityIds: [],
+      evidenceIds: [],
+    }];
+    const admitted = satisfiedScenarioKnowledgeReceipt(graph, requirement);
+    const receipts = graph.knowledgeReceipts.filter(
       (item) => item.requirementId === requirementId,
     );
+    const scoped = receipts.length === 1 &&
+      receipts[0]?.scenarioId === requirement.scenarioId &&
+      receipts[0].domain === requirement.domain
+        ? receipts[0]
+        : undefined;
     return [{
       requirementId,
       domain: requirement.domain,
-      status: receipt?.status ?? "MISSING_RECEIPT",
+      status: admitted?.status ??
+        (scoped?.status !== "SATISFIED"
+          ? scoped?.status ?? "MISSING_RECEIPT"
+          : "MISSING_RECEIPT"),
       capabilityIds:
-        receipt?.capabilityIdsUsed.length
-          ? [...receipt.capabilityIdsUsed]
+        admitted?.capabilityIdsUsed.length
+          ? [...admitted.capabilityIdsUsed]
           : [...requirement.capabilityIds],
-      evidenceIds: [...(receipt?.evidenceIds ?? [])],
+      evidenceIds: [...(admitted?.evidenceIds ?? [])],
       ...(requirement.domain === "platform-constraints"
         ? { platformClaims: world.platformKnowledge.claims }
         : {}),
@@ -632,19 +658,20 @@ function provePackets(
       const scenario = graph.scenarios.find(
         (item) => item.id === link.scenarioId,
       );
-      const requirements = graph.knowledgeRequirements.filter(
-        (item) => link.knowledgeRequirementIds.includes(item.id),
-      );
+      const requirements = unique(link.knowledgeRequirementIds).flatMap((id) => {
+        const required = uniqueScenarioKnowledgeRequirement(
+          graph, id, link.scenarioId,
+        );
+        return required === undefined ? [] : [required];
+      });
       const needsTranslation =
         gate.gameplayTranslationRequiredIds.includes(link.id);
       const requirementIds = unique(link.knowledgeRequirementIds);
       const ids = unique([
         ...link.evidenceIds,
-        ...graph.knowledgeReceipts
-          .filter((receipt) =>
-            requirements.some((requirement) =>
-              requirement.id === receipt.requirementId))
-          .flatMap((receipt) => receipt.evidenceIds),
+        ...requirements.flatMap((requirement) =>
+          satisfiedScenarioKnowledgeReceipt(graph, requirement)?.evidenceIds ?? []
+        ),
       ]);
       const evidence = evidenceContext(ids, intent);
       return {
