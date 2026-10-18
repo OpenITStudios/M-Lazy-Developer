@@ -433,8 +433,13 @@ describe("reusable blind-spot obligations", () => {
         discoveryChallenges: [], sharedResourceSignals: [], compoundBoundaries: [],
         accumulationGrowth: [],
       });
-      expect(obligations.filter(o => o.id === "knowledge-gap:" + required.id))
-        .toHaveLength(1);
+      const pending = obligations.filter(o =>
+        o.id === "knowledge-gap:" + required.id);
+      expect(pending).toHaveLength(1);
+      if (requirements.length > 1) {
+        // A single receipt is not transferable across duplicate ID owners.
+        expect(pending[0]?.evidenceIds).toEqual([]);
+      }
     }
   });
 
