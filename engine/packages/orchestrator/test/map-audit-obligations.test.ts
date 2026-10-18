@@ -407,6 +407,8 @@ describe("reusable blind-spot obligations", () => {
       { requirements: [required], receipts: [] },
       { requirements: [required], receipts: [{ ...receipt, evidenceIds: [] }] },
       { requirements: [required], receipts: [receipt, { ...receipt }] },
+      { requirements: [required], receipts: [receipt, { ...receipt, scenarioId: "scenario:foreign" }] },
+      { requirements: [required], receipts: [receipt, { ...receipt, domain: "chunk-simulation" }] },
       { requirements: [required, { ...required }], receipts: [receipt] },
       { requirements: [required, { ...required, scenarioId: "scenario:other" }],
         receipts: [receipt] },
@@ -436,8 +438,8 @@ describe("reusable blind-spot obligations", () => {
       const pending = obligations.filter(o =>
         o.id === "knowledge-gap:" + required.id);
       expect(pending).toHaveLength(1);
-      if (requirements.length > 1) {
-        // A single receipt is not transferable across duplicate ID owners.
+      if (requirements.length > 1 || receipts.length > 1) {
+        // Ambiguous owner or receipt IDs may not supply proof evidence.
         expect(pending[0]?.evidenceIds).toEqual([]);
       }
     }

@@ -113,17 +113,20 @@ export function unresolvedKnowledgeRequirements(
       graph, requirement.id, requirement.scenarioId,
     ) !== undefined;
     const receipts = graph.knowledgeReceipts.filter((receipt) =>
-      receipt.requirementId === requirement.id &&
-      receipt.scenarioId === requirement.scenarioId &&
-      receipt.domain === requirement.domain
+      receipt.requirementId === requirement.id
     );
+    const matchedReceipt = receipts.length === 1 &&
+      receipts[0]?.scenarioId === requirement.scenarioId &&
+      receipts[0].domain === requirement.domain
+        ? receipts[0]
+        : undefined;
     if (satisfiedScenarioKnowledgeReceipt(graph, requirement) !== undefined) {
       return [];
     }
     return [{
       requirement,
-      ...(uniqueOwner && receipts.length === 1
-        ? { receipt: receipts[0]! }
+      ...(uniqueOwner && matchedReceipt !== undefined
+        ? { receipt: matchedReceipt }
         : {}),
     }];
   });

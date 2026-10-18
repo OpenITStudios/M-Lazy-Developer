@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   requiredKnowledgeDomainsForPreset,
+  uniqueScenarioKnowledgeRequirement,
+  satisfiedScenarioKnowledgeReceipt,
   gameplayScenarioNeighborhoodNodeIds,
   isAuthoredSourceContentNode,
 } from "../../src/inspection/gameplay-scenario-knowledge.js";
@@ -57,6 +59,56 @@ function world(): GameplayWorldModel {
     },
   } as unknown as GameplayWorldModel;
 }
+
+describe("graph-scoped Knowledge proof identity", () => {
+  const requirement = {
+    id: "knowledge:wave:state",
+    scenarioId: "scenario:wave",
+    domain: "state-flow" as const,
+    reason: "Wave ownership",
+    capabilityIds: ["state-flow"],
+    dependsOnRequirementIds: [],
+    subjectIds: ["objective:wave"],
+    componentIds: ["state:wave"],
+  };
+  const receipt = {
+    requirementId: requirement.id,
+    scenarioId: requirement.scenarioId,
+    domain: requirement.domain,
+    status: "SATISFIED" as const,
+    evidenceIds: ["source:wave"],
+    knowledgeIds: ["knowledge:wave"],
+    capabilityIdsUsed: ["state-flow"],
+    subjectIds: requirement.subjectIds,
+    componentIds: requirement.componentIds,
+    reason: "Grounded.",
+  };
+
+  it("rejects duplicate receipt ID even when only one matches scenario/domain", () => {
+    const base = {
+      knowledgeRequirements: [requirement],
+      knowledgeReceipts: [receipt],
+    };
+    expect(uniqueScenarioKnowledgeRequirement(
+      base, requirement.id, requirement.scenarioId,
+    )).toEqual(requirement);
+    expect(satisfiedScenarioKnowledgeReceipt(base, requirement)).toEqual(receipt);
+
+    for (const extra of [
+      { ...receipt, scenarioId: "scenario:foreign" },
+      { ...receipt, domain: "chunk-simulation" as const },
+      { ...receipt },
+    ]) {
+      const withDuplicate = {
+        ...base,
+        knowledgeReceipts: [receipt, extra],
+      };
+      expect(satisfiedScenarioKnowledgeReceipt(
+        withDuplicate, requirement,
+      )).toBeUndefined();
+    }
+  });
+});
 
 describe("conditional gameplay knowledge dependencies", () => {
   it("expands reconnect inventory proof into persistence, arena, and temporal ownership when those surfaces coexist", () => {

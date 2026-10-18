@@ -51,13 +51,16 @@ export function satisfiedScenarioKnowledgeReceipt(
   if (owner === undefined || owner.domain !== requirement.domain) {
     return undefined;
   }
+  // Requirement IDs identify receipts graph-wide. A second receipt
+  // carrying this ID from a foreign scenario/domain makes ownership
+  // ambiguous; do not accept only the convenient matching subset.
   const receipts = graph.knowledgeReceipts.filter((item) =>
-    item.requirementId === requirement.id &&
-    item.scenarioId === requirement.scenarioId &&
-    item.domain === requirement.domain
+    item.requirementId === requirement.id
   );
   return receipts.length === 1 &&
-    receipts[0]?.status === "SATISFIED" &&
+    receipts[0]?.scenarioId === requirement.scenarioId &&
+    receipts[0].domain === requirement.domain &&
+    receipts[0].status === "SATISFIED" &&
     receipts[0].evidenceIds.length > 0
       ? receipts[0]
       : undefined;

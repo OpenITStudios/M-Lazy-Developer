@@ -242,6 +242,45 @@ describe("map audit proof saturation", () => {
     }
   });
 
+  it("does not promote a causal link with a second foreign-domain Knowledge receipt", () => {
+    const worldGraph = graph(["objective:wave"], "wave-progression");
+    const valid = worldGraph.knowledgeReceipts[0];
+    const complete = {
+      ...resolution,
+      familyProof: {
+        schemaVersion: 1 as const,
+        policy: "family-proof-receipt" as const,
+        failureDomain: "progression-wave-objective",
+        criteria: [
+          "completion-dependency-grounded", "failing-path-reachable",
+          "reconciliation-exhausted",
+        ].map((id) => ({
+          id, satisfied: true, evidenceIds: ["source:contradiction"],
+        })),
+      },
+    };
+    expect(assessReadyResolutionSaturation(worldGraph, complete as any).saturated).toBe(true);
+    for (const override of [
+      { scenarioId: "scenario:foreign" },
+      { domain: "platform-constraints" },
+    ]) {
+      const ambiguous = {
+        ...worldGraph,
+        knowledgeReceipts: [
+          ...worldGraph.knowledgeReceipts,
+          { ...valid, ...override },
+        ],
+      };
+      const result = assessReadyResolutionSaturation(ambiguous, complete as any);
+      expect(result.missingUniversalCriteriaIds)
+        .toContain("required-knowledge-satisfied");
+      expect(projectReadyAuditIssues(ambiguous, {
+        confirmedDefectReadyIds: ["l1"],
+        resolutions: [complete],
+      } as any)).toEqual([]);
+    }
+  });
+
   it("rejects a satisfied knowledge receipt without matching requirement identity", () => {
     const scenario = graph(["objective:wave"], "chunk-residency-stall");
     scenario.knowledgeRequirements[1].id = "foreign-requirement";
