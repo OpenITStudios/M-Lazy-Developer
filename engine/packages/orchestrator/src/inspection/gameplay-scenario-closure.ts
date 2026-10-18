@@ -2,6 +2,9 @@ import type {
   GameplayScenarioClosure,
   GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
+import {
+  satisfiedScenarioKnowledgeReceipt,
+} from "./gameplay-scenario-knowledge.js";
 
 export function assessGameplayScenarioClosure(
   graph: GameplayScenarioGraph,
@@ -78,15 +81,27 @@ export function assessGameplayScenarioClosure(
     .map((edge) => edge.id)
     .sort();
 
-  const missingRequiredKnowledgeIds =
-    graph.knowledgeReceipts
-      .filter(
-        (receipt) =>
-          receipt.status ===
-          "MISSING_REQUIRED_KNOWLEDGE",
-      )
-      .map((receipt) => receipt.requirementId)
-      .sort();
+  // Scenario closure and D1/PROVE must agree on receipt authority.
+  // A missing, duplicate, detached, or evidence-free SATISFIED receipt is
+  // unresolved even if no explicit MISSING_REQUIRED_KNOWLEDGE row exists.
+  const missingRequiredKnowledgeIds = [
+    ...new Set([
+      ...graph.knowledgeRequirements
+        .filter((required) =>
+          satisfiedScenarioKnowledgeReceipt(graph, required) === undefined
+        )
+        .map((required) => required.id),
+      ...graph.knowledgeReceipts
+        .filter((receipt) =>
+          !graph.knowledgeRequirements.some((required) =>
+            required.id === receipt.requirementId &&
+            required.scenarioId === receipt.scenarioId &&
+            required.domain === receipt.domain
+          )
+        )
+        .map((receipt) => receipt.requirementId),
+    ]),
+  ].sort();
 
   const prerequisiteBlockedKnowledgeIds =
     graph.knowledgeReceipts
@@ -222,7 +237,7 @@ export function assessGameplayScenarioClosure(
   }
   if (missingRequiredKnowledgeIds.length > 0) {
     reasons.push(
-      "Required gameplay knowledge exists in the engine but did not return evidence to its scenario: " +
+      "Required gameplay Knowledge lacks a unique scenario/domain-scoped, evidenced SATISFIED receipt or contains detached receipts: " +
         missingRequiredKnowledgeIds.join(", ") +
         ".",
     );

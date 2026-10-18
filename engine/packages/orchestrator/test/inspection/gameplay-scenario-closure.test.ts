@@ -25,6 +25,93 @@ function baseGraph(): GameplayScenarioGraph {
 }
 
 describe("gameplay scenario closure", () => {
+  it("keeps Scenario Closure OPEN when canonical Knowledge proof is missing or ambiguous", () => {
+    const required = {
+      id: "knowledge:wave:state",
+      scenarioId: "scenario:wave",
+      domain: "state-flow" as const,
+      reason: "Wave state ownership",
+      capabilityIds: ["state-flow"],
+      dependsOnRequirementIds: [],
+      subjectIds: ["objective:wave"],
+      componentIds: ["component:state"],
+    };
+    const receipt = {
+      requirementId: required.id,
+      scenarioId: required.scenarioId,
+      domain: required.domain,
+      status: "SATISFIED" as const,
+      evidenceIds: ["e:state"],
+      knowledgeIds: ["knowledge:wave"],
+      capabilityIdsUsed: ["state-flow"],
+      subjectIds: required.subjectIds,
+      componentIds: required.componentIds,
+      reason: "Source-grounded state flow.",
+    };
+    const valid: GameplayScenarioGraph = {
+      ...baseGraph(),
+      scenarios: [{
+        id: "scenario:wave", label: "wave-progression",
+        gameplayStage: "PROGRESSION",
+        purpose: "Complete one wave.",
+        sourceSubjectIds: ["objective:wave"],
+        componentIds: ["component:state", "component:goal"],
+        causalLinkIds: ["link:wave"],
+        playerCounts: [1],
+        requiredKnowledgeIds: [required.id],
+        composedScenarioIds: [],
+      }],
+      components: [{
+        id: "component:state", label: "Wave state",
+        kind: "state", technicalRole: "wave owner",
+        gameplayPurpose: "Track state to completion.",
+        evidenceIds: ["e:state"],
+        usedByScenarioIds: ["scenario:wave"], orphan: false,
+      }, {
+        id: "component:goal", label: "Wave goal",
+        kind: "objective", technicalRole: "wave completion",
+        gameplayPurpose: "Conclude the wave.",
+        evidenceIds: ["e:goal"],
+        usedByScenarioIds: ["scenario:wave"], orphan: false,
+      }],
+      causalLinks: [{
+        id: "link:wave", scenarioId: "scenario:wave",
+        fromComponentId: "component:state",
+        toComponentId: "component:goal",
+        purpose: "State controls wave conclusion.",
+        subjectIds: ["objective:wave"],
+        componentIds: ["component:state", "component:goal"],
+        evidenceIds: ["e:state"],
+        knowledgeRequirementIds: [required.id],
+        impactPathComponentIds: [],
+        impactPathEvidenceIds: [],
+        dimensionEvidence: {},
+        status: "PROVEN",
+        reason: "Grounded source dependency.",
+      }],
+      knowledgeRequirements: [required],
+      knowledgeReceipts: [receipt],
+    };
+    expect(assessGameplayScenarioClosure(valid).status).toBe("CLOSED");
+    const variants: GameplayScenarioGraph[] = [
+      { ...valid, knowledgeReceipts: [] },
+      { ...valid, knowledgeReceipts: [{ ...receipt, evidenceIds: [] }] },
+      { ...valid, knowledgeReceipts: [receipt, { ...receipt }] },
+      { ...valid, knowledgeReceipts: [
+        receipt, { ...receipt, scenarioId: "scenario:foreign" },
+      ] },
+      { ...valid, knowledgeRequirements: [required, { ...required }] },
+      { ...valid, knowledgeReceipts: [
+        receipt, { ...receipt, requirementId: "knowledge:orphan" },
+      ] },
+    ];
+    for (const variant of variants) {
+      const closure = assessGameplayScenarioClosure(variant);
+      expect(closure.status).toBe("OPEN");
+      expect(closure.missingRequiredKnowledgeIds.length).toBeGreaterThan(0);
+    }
+  });
+
   it("opens when a leaf scenario has components but no causal proof links", () => {
     const result = assessGameplayScenarioClosure({
       ...baseGraph(),
