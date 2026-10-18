@@ -66,6 +66,79 @@ describe("selected-map audit revision freshness", () => {
     expect(after).not.toBe(before);
   });
 
+  it("invalidates unchanged-ID checkpoint task text and Defect Resolution routing", () => {
+    const base: any = {
+      identity: { artifactId: "art_same", artifactFingerprint: "sha256:same" },
+      admission: { status: "BLOCKED", firstBlockingStage: "PROVE", issues: [] },
+      procedure: {
+        status: "PARTIAL",
+        blockingCheckpointIds: ["D1"],
+        checkpoints: [{
+          id: "D1", block: "PROVE", status: "PARTIAL",
+          reasonCode: "KNOWLEDGE_GAP", blocksPublication: true,
+          label: "Required Knowledge evidence",
+          reason: "State ownership unresolved.",
+          evidenceIds: ["e:initial"],
+          outputIds: ["RequiredInspectionGraph"],
+          obligations: [{
+            id: "rig:state", required: true, satisfied: false,
+            evidenceIds: ["e:initial"], reason: "Need decisive state owner.",
+          }],
+        }],
+      },
+      graph: {
+        scenarios: [], components: [], causalLinks: [],
+        knowledgeRequirements: [], knowledgeReceipts: [],
+      },
+      defectResolution: {
+        status: "BLOCKED", resolutions: [],
+        contradictedCausalLinkIds: [],
+        confirmedDefectReadyIds: [],
+        blockingCounterProofIds: [],
+        runtimeProofRequiredIds: [],
+        detectionGapIds: ["link:state"],
+        gameplayTranslationRequiredIds: [],
+        counterProofSearchRequiredIds: [],
+        issues: [],
+      },
+    };
+    const original = deriveSelectedMapAuditRevision(base);
+    const updates: any[] = [
+      { ...base, procedure: {
+        ...base.procedure,
+        checkpoints: [{ ...base.procedure.checkpoints[0],
+          reason: "Different unresolved owner.",
+        }],
+      } },
+      { ...base, procedure: {
+        ...base.procedure,
+        checkpoints: [{ ...base.procedure.checkpoints[0],
+          label: "Revised Knowledge checkpoint",
+        }],
+      } },
+      { ...base, procedure: {
+        ...base.procedure,
+        checkpoints: [{ ...base.procedure.checkpoints[0],
+          obligations: [{ ...base.procedure.checkpoints[0].obligations[0],
+            reason: "Different deciding proof requirement.",
+          }],
+        }],
+      } },
+      { ...base, defectResolution: {
+        ...base.defectResolution,
+        detectionGapIds: [],
+        counterProofSearchRequiredIds: ["link:state"],
+      } },
+      { ...base, defectResolution: {
+        ...base.defectResolution, status: "READY_FOR_PROPOSED_BUG_SET",
+      } },
+    ];
+    for (const candidate of updates) {
+      expect(deriveSelectedMapAuditRevision(candidate))
+        .not.toBe(original);
+    }
+  });
+
   it("invalidates stale model responses when causal/knowledge scope changes without changing link IDs", () => {
     const base: any = {
       identity: {

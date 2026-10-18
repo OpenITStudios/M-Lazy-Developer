@@ -47,18 +47,10 @@ export function deriveSelectedMapAuditRevision(input: {
       status: input.procedure.status,
       blockingCheckpointIds:
         input.procedure.blockingCheckpointIds,
-      checkpoints: input.procedure.checkpoints.map((item) => ({
-        id: item.id,
-        status: item.status,
-        reasonCode: item.reasonCode,
-        blocksPublication: item.blocksPublication,
-        obligations: item.obligations.map((obligation) => ({
-          id: obligation.id,
-          required: obligation.required,
-          satisfied: obligation.satisfied,
-          evidenceIds: obligation.evidenceIds,
-        })),
-      })),
+      // A checkpoint packet sends its label, reason and evidence to the
+      // model. Binding only ID/status lets stale responses survive a changed
+      // task decision even when the checkpoint remains blocked.
+      checkpoints: input.procedure.checkpoints,
     },
     // Model responses are authorized against this revision. Bind the entire
     // canonical causal/proof core, not a lossy pick of its fields: scenario
@@ -73,7 +65,9 @@ export function deriveSelectedMapAuditRevision(input: {
       knowledgeRequirements: input.graph.knowledgeRequirements,
       knowledgeReceipts: input.graph.knowledgeReceipts,
     },
-    defectResolution: input.defectResolution.resolutions,
+    // PROVE tasks and publication also depend on the gate's routing lists,
+    // status and issues. Resolution objects alone do not bind that context.
+    defectResolution: input.defectResolution,
   };
 
   return createHash("sha256")
