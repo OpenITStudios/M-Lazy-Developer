@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assessGameplayDefectResolutionGate,
+  requiredCounterProofDimensions,
 } from "../../src/inspection/gameplay-defect-resolution.js";
 import type {
   GameplayScenarioGraph,
@@ -121,6 +122,40 @@ describe("gameplay defect resolution crosscheck depth", () => {
       "owner",
       "scope",
     ]);
+  });
+
+  it("never drops a counter-proof dimension by selecting the first ambiguous Knowledge ID", () => {
+    const linked = graph.causalLinks[0]!;
+    const state = {
+      id: "knowledge:shared-id",
+      scenarioId: linked.scenarioId,
+      domain: "state-flow" as const,
+      reason: "State ownership",
+      capabilityIds: [], dependsOnRequirementIds: [],
+      subjectIds: [], componentIds: [],
+    };
+    const spatial = {
+      ...state,
+      scenarioId: "scenario:other",
+      domain: "spatial-authority" as const,
+    };
+    const withKnowledge: GameplayScenarioGraph = {
+      ...graph,
+      knowledgeRequirements: [state, spatial],
+      causalLinks: [{
+        ...linked,
+        knowledgeRequirementIds: [state.id],
+      }],
+    };
+    const linkedScenario = withKnowledge.scenarios[0]!;
+    const dimensions = requiredCounterProofDimensions(
+      withKnowledge, withKnowledge.causalLinks[0]!, linkedScenario,
+    );
+    expect(dimensions).toContain("geometry");
+    expect(dimensions).toContain("guard");
+    expect(dimensions).toContain("scope");
+    // This broadens search pressure, not evidence authority: the global
+    // uniqueness/receipt gate remains responsible for rejecting PROVEN.
   });
 
   it("rejects shallow one-dimension counter-proof search for ownership-sensitive defects", () => {

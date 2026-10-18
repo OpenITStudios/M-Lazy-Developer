@@ -134,15 +134,19 @@ export function requiredCounterProofDimensions(
   ]);
   const components = new Set(link.componentIds);
   const knowledgeDomains = new Set(
-    link.knowledgeRequirementIds
-      .map((id) =>
-        graph.knowledgeRequirements.find(
-          (item) => item.id === id,
-        )?.domain
-      )
-      .filter((domain): domain is NonNullable<typeof domain> =>
-        domain !== undefined
-      ),
+    link.knowledgeRequirementIds.flatMap((id) => {
+      const owner = uniqueScenarioKnowledgeRequirement(
+        graph, id, link.scenarioId,
+      );
+      if (owner !== undefined) return [owner.domain];
+      // An ambiguous Knowledge ID can never satisfy a proof criterion.
+      // Counter-proof search is only a conservative plan: consider all
+      // possible domains rather than silently choosing the first one and
+      // omitting a necessary blocking dimension.
+      return graph.knowledgeRequirements
+        .filter((requirement) => requirement.id === id)
+        .map((requirement) => requirement.domain);
+    }),
   );
   const hasComponent = (...ids: string[]) =>
     ids.some((id) => components.has(id));
