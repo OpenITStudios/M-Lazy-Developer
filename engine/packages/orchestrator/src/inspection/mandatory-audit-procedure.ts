@@ -1809,10 +1809,34 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     },
   ));
 
+  // D1 independently validates the exact scoped Knowledge contract.
+  // Scenario closure tracks analyzer statuses but cannot by itself detect
+  // a forged SATISFIED receipt with empty evidence, duplicate ownership or
+  // a receipt detached from its originating requirement.
+  const unresolvedRigRequirements = graph.knowledgeRequirements.filter(
+    (required) =>
+      satisfiedScenarioKnowledgeReceipt(required, graph) === undefined
+  );
+  const orphanRigReceipts = graph.knowledgeReceipts.filter((receipt) =>
+    !graph.knowledgeRequirements.some((required) =>
+      required.id === receipt.requirementId &&
+      required.scenarioId === receipt.scenarioId &&
+      required.domain === receipt.domain
+    )
+  );
+  const rigKnowledgeComplete =
+    unresolvedRigRequirements.length === 0 &&
+    orphanRigReceipts.length === 0;
+  const scopedRigEvidenceIds = graph.knowledgeRequirements.flatMap(
+    (required) =>
+      satisfiedScenarioKnowledgeReceipt(required, graph)?.evidenceIds ?? []
+  );
+
   checkpoint.push(receipt(
     "D1",
     "PROVE",
     "Required Inspection Graph",
+    !rigKnowledgeComplete ||
     scenarioClosure.missingRequiredKnowledgeIds.length > 0 ||
       scenarioClosure.capabilityGapKnowledgeIds.length > 0 ||
       scenarioClosure.prerequisiteBlockedKnowledgeIds.length > 0 ||
@@ -1823,11 +1847,11 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     capabilityFailureRoutedIds.length !==
         capabilityDeliveryFailures.length
       ? "A gameplay capability delivery failure exists without a CONTRADICTED causal link; design/implementation failure has not been routed into proof."
-      : "RIG knowledge receipts and gameplay capability delivery failures are evaluated fail-closed.",
+      : !rigKnowledgeComplete
+        ? "RIG Knowledge requirements lack unique, scenario/domain-scoped, evidenced SATISFIED receipts or have orphaned receipts."
+        : "RIG knowledge receipts and gameplay capability delivery failures are evaluated fail-closed.",
     [
-      ...graph.knowledgeReceipts.flatMap(
-        (item) => item.evidenceIds,
-      ),
+      ...scopedRigEvidenceIds,
       ...hidden.capabilityDelivery.flatMap(
         (item) => item.evidenceIds,
       ),
@@ -1835,6 +1859,14 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     ["RequiredInspectionGraph", "GameplayCapabilityDelivery"],
     {
       obligations: [
+        obligation(
+          "rig-knowledge-receipts-accounted",
+          graph.knowledgeRequirements.length > 0 ||
+            graph.knowledgeReceipts.length > 0,
+          rigKnowledgeComplete,
+          "Every RIG Knowledge requirement must have one evidenced SATISFIED receipt owned by its scenario/domain, with no detached receipts.",
+          scopedRigEvidenceIds,
+        ),
         obligation(
           "capability-failures-routed-to-proof",
           capabilityDeliveryFailures.length > 0,
