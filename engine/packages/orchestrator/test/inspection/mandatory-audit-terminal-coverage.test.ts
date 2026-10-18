@@ -46,16 +46,31 @@ const selected = new Set(["selected:causal", "selected:terminal-state"]);
 
 function graph(options: {
   link?: Partial<GameplayCausalLink>;
-  receipts?: readonly { scenarioId: string; requirementId: string; status: string }[];
+  receipts?: readonly {
+    scenarioId: string; requirementId: string; status: string;
+    domain?: string; evidenceIds?: readonly string[];
+  }[];
   componentSource?: readonly string[];
 } = {}): GameplayScenarioGraph {
   const receipt = options.receipts ?? [{
     scenarioId: scenario.id,
     requirementId: "knowledge:terminal-ownership",
     status: "SATISFIED",
+    domain: "state-flow",
+    evidenceIds: ["selected:causal"],
   }];
   return {
     scenarios: [scenario],
+    knowledgeRequirements: [{
+      id: "knowledge:terminal-ownership",
+      scenarioId: scenario.id,
+      domain: "state-flow",
+      reason: "Terminal ownership requires source evidence.",
+      capabilityIds: ["state-flow"],
+      dependsOnRequirementIds: [],
+      subjectIds: ["outcome:win"],
+      componentIds: ["state:terminal"],
+    }],
     components: [
       { id: "state:terminal", kind: "state", evidenceIds: options.componentSource ?? ["selected:terminal-state"] },
       { id: "outcome:win", kind: "outcome", evidenceIds: ["selected:causal"] },
@@ -135,6 +150,25 @@ describe("terminal collision C6 source evaluation", () => {
       [{ scenarioId: scenario.id, requirementId: "knowledge:terminal-ownership", status: "BLOCKED" }],
     ]) {
       const result = assess({ graph: graph({ receipts }) });
+      expect(result.complete).toBe(false);
+      expect(result.missing).toContain(
+        "terminal scenario knowledge requirements are not all satisfied",
+      );
+    }
+  });
+
+  it("does not close EVALUATE on detached, duplicated or unevidenced SATISFIED Knowledge", () => {
+    const valid = graph();
+    const validReceipt = valid.knowledgeReceipts[0]!;
+    const unrelatedCases: GameplayScenarioGraph[] = [
+      { ...valid, knowledgeRequirements: [] },
+      { ...valid, knowledgeReceipts: [{ ...validReceipt, evidenceIds: [] }] },
+      { ...valid, knowledgeReceipts: [{ ...validReceipt, domain: "arena-lifecycle" }] },
+      { ...valid, knowledgeReceipts: [validReceipt, { ...validReceipt }] },
+      { ...valid, knowledgeReceipts: [{ ...validReceipt, scenarioId: "preset:other" }] },
+    ];
+    for (const candidate of unrelatedCases) {
+      const result = assess({ graph: candidate });
       expect(result.complete).toBe(false);
       expect(result.missing).toContain(
         "terminal scenario knowledge requirements are not all satisfied",

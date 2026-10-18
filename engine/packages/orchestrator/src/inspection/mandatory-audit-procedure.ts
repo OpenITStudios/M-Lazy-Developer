@@ -74,14 +74,24 @@ function scenarioKnowledgeAccounted(
   scenario: GameplayScenario,
   graph: GameplayScenarioGraph,
 ): boolean {
+  // EVALUATE may close its source-scoped coverage only when the same
+  // scenario/domain receipt would be admitted by canonical PROVE. A stale
+  // SATISFIED flag alone is not sufficient evidence of Knowledge closure.
   return scenario.requiredKnowledgeIds.length > 0 &&
-    scenario.requiredKnowledgeIds.every((id) =>
-      graph.knowledgeReceipts.some((receipt) =>
-        receipt.scenarioId === scenario.id &&
-        receipt.requirementId === id &&
-        receipt.status === "SATISFIED"
-      )
-    );
+    scenario.requiredKnowledgeIds.every((id) => {
+      const requirement = graph.knowledgeRequirements.find((item) =>
+        item.id === id && item.scenarioId === scenario.id
+      );
+      if (requirement === undefined) return false;
+      const receipts = graph.knowledgeReceipts.filter((item) =>
+        item.requirementId === id &&
+        item.scenarioId === scenario.id &&
+        item.domain === requirement.domain
+      );
+      return receipts.length === 1 &&
+        receipts[0]?.status === "SATISFIED" &&
+        receipts[0].evidenceIds.length > 0;
+    });
 }
 
 /**
@@ -1504,13 +1514,8 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
           "repeated-run-dependencies-resolved",
           repeated !== undefined,
           repeated === undefined ||
-            repeated.requiredKnowledgeIds.every((id) =>
-              graph.knowledgeReceipts.some(
-                (receipt) =>
-                  receipt.requirementId === id &&
-                  receipt.status === "SATISFIED"
-              )
-            ),
+            (repeated.requiredKnowledgeIds.length === 0 ||
+              scenarioKnowledgeAccounted(repeated, graph)),
           "Repeated-run scenario requires all applicable cleanup/state/world dependencies to return satisfied receipts.",
           repeated?.requiredKnowledgeIds ?? [],
         ),
