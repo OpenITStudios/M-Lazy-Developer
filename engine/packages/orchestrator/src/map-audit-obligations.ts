@@ -9,6 +9,10 @@ import type {
 import type {
   GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
+import {
+  satisfiedScenarioKnowledgeReceipt,
+  uniqueScenarioKnowledgeRequirement,
+} from "./inspection/gameplay-scenario-knowledge.js";
 import { SELECTED_MAP_AUDIT_STAGE_ORDER } from "./map-audit-admission.js";
 import {
   capabilityDeliveryMatchesScope,
@@ -105,17 +109,17 @@ export function unresolvedKnowledgeRequirements(
     // The requirement ID is the canonical RIG identity. Duplicate owners,
     // including identical copies or IDs reused by a different scenario,
     // cannot borrow one receipt to claim complete Knowledge coverage.
-    const uniqueOwner = graph.knowledgeRequirements.filter((item) =>
-      item.id === requirement.id
-    ).length === 1;
+    const uniqueOwner = uniqueScenarioKnowledgeRequirement(
+      graph, requirement.id, requirement.scenarioId,
+    ) !== undefined;
     const receipts = graph.knowledgeReceipts.filter((receipt) =>
       receipt.requirementId === requirement.id &&
       receipt.scenarioId === requirement.scenarioId &&
       receipt.domain === requirement.domain
     );
-    if (uniqueOwner && receipts.length === 1 &&
-        receipts[0]?.status === "SATISFIED" &&
-        receipts[0].evidenceIds.length > 0) return [];
+    if (satisfiedScenarioKnowledgeReceipt(graph, requirement) !== undefined) {
+      return [];
+    }
     return [{
       requirement,
       ...(uniqueOwner && receipts.length === 1

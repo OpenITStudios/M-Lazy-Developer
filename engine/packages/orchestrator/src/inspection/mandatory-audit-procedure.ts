@@ -6,6 +6,10 @@ import type {
   GameplayScenario,
   GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
+import {
+  satisfiedScenarioKnowledgeReceipt,
+  uniqueScenarioKnowledgeRequirement,
+} from "./gameplay-scenario-knowledge.js";
 import type { GameplayDiscoveryClosure } from "./gameplay-discovery-closure.js";
 import type { GameplayBoundaryRegistry } from "./gameplay-boundary-registry.js";
 import type { MultiplayerStateValidationPlan } from "./multiplayer-state-validation.js";
@@ -70,44 +74,15 @@ function sourceBoundScenarioLinks(
   );
 }
 
-/**
- * The checkpoint's evidence projection must use the same scoped receipt
- * admission for every caller: B1 actor, C6 terminal, repeated-run and C9.
- * Neither status nor the visible evidence list may accept a detached receipt.
- */
-function satisfiedScenarioKnowledgeReceipt(
-  requirement: GameplayScenarioGraph["knowledgeRequirements"][number],
-  graph: GameplayScenarioGraph,
-): GameplayScenarioGraph["knowledgeReceipts"][number] | undefined {
-  const owners = graph.knowledgeRequirements.filter((item) =>
-    item.id === requirement.id
-  );
-  if (owners.length !== 1 ||
-      owners[0]?.scenarioId !== requirement.scenarioId ||
-      owners[0].domain !== requirement.domain) return undefined;
-  const receipts = graph.knowledgeReceipts.filter((item) =>
-    item.requirementId === requirement.id &&
-    item.scenarioId === requirement.scenarioId &&
-    item.domain === requirement.domain
-  );
-  return receipts.length === 1 &&
-    receipts[0]?.status === "SATISFIED" &&
-    receipts[0].evidenceIds.length > 0
-      ? receipts[0]
-      : undefined;
-}
-
 function scenarioKnowledgeAccounted(
   scenario: GameplayScenario,
   graph: GameplayScenarioGraph,
 ): boolean {
   return scenario.requiredKnowledgeIds.length > 0 &&
     scenario.requiredKnowledgeIds.every((id) => {
-      const required = graph.knowledgeRequirements.filter((item) =>
-        item.id === id && item.scenarioId === scenario.id
-      );
-      return required.length === 1 &&
-        satisfiedScenarioKnowledgeReceipt(required[0]!, graph) !== undefined;
+      const required = uniqueScenarioKnowledgeRequirement(graph, id, scenario.id);
+      return required !== undefined &&
+        satisfiedScenarioKnowledgeReceipt(graph, required) !== undefined;
     });
 }
 
@@ -645,7 +620,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     actorKnowledgeDemanded &&
     (actorKnowledgeRequirements.length === 0 ||
       actorKnowledgeRequirements.some((required) =>
-        satisfiedScenarioKnowledgeReceipt(required, graph) === undefined
+        satisfiedScenarioKnowledgeReceipt(graph, required) === undefined
       ));
   const actorFormalizationGaps = [
     ...(actorNodes.length > groundedActorNodes.length
@@ -687,7 +662,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
         node.evidenceIds.filter((id) => selectedEvidenceIds.has(id))
       ),
       ...actorKnowledgeRequirements.flatMap((required) =>
-        satisfiedScenarioKnowledgeReceipt(required, graph)?.evidenceIds ?? []
+        satisfiedScenarioKnowledgeReceipt(graph, required)?.evidenceIds ?? []
       ),
     ])],
     ["ActorEntityContract"],
@@ -1774,7 +1749,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
                   required.id === id && required.scenarioId === scenario.id
                 )
                 .flatMap((required) =>
-                  satisfiedScenarioKnowledgeReceipt(required, graph)?.evidenceIds ?? []
+                  satisfiedScenarioKnowledgeReceipt(graph, required)?.evidenceIds ?? []
                 )
             )
           ),
@@ -1815,7 +1790,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
   // a receipt detached from its originating requirement.
   const unresolvedRigRequirements = graph.knowledgeRequirements.filter(
     (required) =>
-      satisfiedScenarioKnowledgeReceipt(required, graph) === undefined
+      satisfiedScenarioKnowledgeReceipt(graph, required) === undefined
   );
   const orphanRigReceipts = graph.knowledgeReceipts.filter((receipt) =>
     !graph.knowledgeRequirements.some((required) =>
@@ -1829,7 +1804,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     orphanRigReceipts.length === 0;
   const scopedRigEvidenceIds = graph.knowledgeRequirements.flatMap(
     (required) =>
-      satisfiedScenarioKnowledgeReceipt(required, graph)?.evidenceIds ?? []
+      satisfiedScenarioKnowledgeReceipt(graph, required)?.evidenceIds ?? []
   );
 
   checkpoint.push(receipt(

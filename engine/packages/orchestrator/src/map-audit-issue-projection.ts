@@ -2,6 +2,9 @@ import type {
   GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
 import {
+  uniqueScenarioKnowledgeRequirement,
+} from "./inspection/gameplay-scenario-knowledge.js";
+import {
   capabilityDeliveryMatchesScope,
   type GameplayDefectResolutionGate,
 } from "./inspection/gameplay-defect-resolution.js";
@@ -147,13 +150,10 @@ export function projectionContext(
   // ID when a Knowledge requirement has foreign or duplicate owners.
   // PROVE uses exactly this unique link-scenario ownership boundary.
   const knowledgeDomains = link.knowledgeRequirementIds.flatMap((id) => {
-    const owners = graph.knowledgeRequirements.filter((item) =>
-      item.id === id
+    const requirement = uniqueScenarioKnowledgeRequirement(
+      graph, id, link.scenarioId,
     );
-    return owners.length === 1 &&
-      owners[0]?.scenarioId === link.scenarioId
-        ? [owners[0].domain]
-        : [];
+    return requirement === undefined ? [] : [requirement.domain];
   });
   const relatedDelivery =
     relatedCapabilityDelivery(

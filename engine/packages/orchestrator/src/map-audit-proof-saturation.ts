@@ -9,6 +9,10 @@ import {
 import type {
   GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
+import {
+  satisfiedScenarioKnowledgeReceipt,
+  uniqueScenarioKnowledgeRequirement,
+} from "./inspection/gameplay-scenario-knowledge.js";
 
 export interface AuditProofSaturationCriterion {
   readonly id: string;
@@ -283,27 +287,14 @@ export function assessReadyResolutionSaturation(
     link?.knowledgeRequirementIds ?? [],
   )].sort();
   const scopedRequirements = scopedRequirementIds.flatMap((id) => {
-    // Requirement IDs are canonical owners across the entire graph.
-    // A same-ID foreign/scenario duplicate must not become causal proof via
-    // Array.find(), even when one matching receipt advertises SATISFIED.
-    const owners = graph.knowledgeRequirements.filter((item) =>
-      item.id === id
+    const requirement = uniqueScenarioKnowledgeRequirement(
+      graph, id, link?.scenarioId ?? "",
     );
-    if (owners.length !== 1 || owners[0]?.scenarioId !== link?.scenarioId) {
-      return [];
-    }
-    return [owners[0]!];
+    return requirement === undefined ? [] : [requirement];
   });
   const satisfiedKnowledge = scopedRequirements.flatMap((requirement) => {
-    const candidates = graph.knowledgeReceipts.filter((item) =>
-      item.requirementId === requirement.id &&
-      item.scenarioId === requirement.scenarioId &&
-      item.domain === requirement.domain
-    );
-    if (candidates.length !== 1 ||
-        candidates[0]?.status !== "SATISFIED" ||
-        candidates[0].evidenceIds.length === 0) return [];
-    return [{ requirement, receipt: candidates[0] }];
+    const receipt = satisfiedScenarioKnowledgeReceipt(graph, requirement);
+    return receipt === undefined ? [] : [{ requirement, receipt }];
   });
   const missingKnowledgeRequirementIds = scopedRequirementIds.filter((id) =>
     !satisfiedKnowledge.some((item) => item.requirement.id === id)

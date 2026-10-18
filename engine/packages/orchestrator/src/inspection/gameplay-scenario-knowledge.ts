@@ -19,7 +19,49 @@ import type {
   GameplayKnowledgeDomain,
   GameplayKnowledgeReceipt,
   GameplayKnowledgeRequirement,
+  GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
+
+/** A Knowledge requirement ID has one source/ownership identity graph-wide. */
+export function uniqueScenarioKnowledgeRequirement(
+  graph: Pick<GameplayScenarioGraph, "knowledgeRequirements">,
+  requirementId: string,
+  scenarioId: string,
+): GameplayKnowledgeRequirement | undefined {
+  const owners = graph.knowledgeRequirements.filter((item) =>
+    item.id === requirementId
+  );
+  return owners.length === 1 && owners[0]?.scenarioId === scenarioId
+    ? owners[0]
+    : undefined;
+}
+
+/**
+ * The canonical source-scoped Knowledge proof condition for checkpoints,
+ * Audit Obligations, PROVE saturation and REPORT taxonomy consumers.
+ * A status flag alone, a duplicate ID, or an empty evidence list is not proof.
+ */
+export function satisfiedScenarioKnowledgeReceipt(
+  graph: Pick<GameplayScenarioGraph, "knowledgeRequirements" | "knowledgeReceipts">,
+  requirement: GameplayKnowledgeRequirement,
+): GameplayKnowledgeReceipt | undefined {
+  const owner = uniqueScenarioKnowledgeRequirement(
+    graph, requirement.id, requirement.scenarioId,
+  );
+  if (owner === undefined || owner.domain !== requirement.domain) {
+    return undefined;
+  }
+  const receipts = graph.knowledgeReceipts.filter((item) =>
+    item.requirementId === requirement.id &&
+    item.scenarioId === requirement.scenarioId &&
+    item.domain === requirement.domain
+  );
+  return receipts.length === 1 &&
+    receipts[0]?.status === "SATISFIED" &&
+    receipts[0].evidenceIds.length > 0
+      ? receipts[0]
+      : undefined;
+}
 
 const registry = createAnalysisCapabilityRegistry(
   BUILTIN_ANALYSIS_CAPABILITIES,
