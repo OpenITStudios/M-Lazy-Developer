@@ -435,6 +435,37 @@ describe("reusable blind-spot obligations", () => {
     }
   });
 
+  it("keeps orphaned Knowledge receipts visible without promoting detached evidence", () => {
+    const orphan = {
+      requirementId: "knowledge:unowned:state",
+      scenarioId: "scenario:other",
+      domain: "state-flow",
+      status: "SATISFIED",
+      evidenceIds: ["e:detached"],
+      knowledgeIds: ["knowledge:unowned"],
+      capabilityIdsUsed: ["state-flow"],
+      subjectIds: ["objective:unowned"],
+      componentIds: ["runtime:entities"],
+      reason: "Detached evidence must not prove another scenario.",
+    };
+    for (const status of ["SATISFIED", "MISSING_REQUIRED_KNOWLEDGE"] as const) {
+      const obligations = derive({
+        graph: {
+          ...graph,
+          knowledgeReceipts: [{ ...orphan, status }],
+        },
+      });
+      const orphanObligations = obligations.filter((item) =>
+        item.id === "knowledge-gap:" + orphan.requirementId);
+      expect(orphanObligations).toHaveLength(1);
+      expect(orphanObligations[0]?.stage).toBe("FORMALIZE");
+      expect(orphanObligations[0]?.evidenceIds).toEqual([]);
+      expect(orphanObligations[0]?.reason).toContain(
+        "no matching requirement owner",
+      );
+    }
+  });
+
   it("keeps missing scenario knowledge as an audit obligation, not a bug", () => {
     const unresolvedGraph = {
       ...graph,

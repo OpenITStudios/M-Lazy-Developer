@@ -206,6 +206,40 @@ function graphObligations(
     }));
   }
 
+  // A receipt without a matching requirement owner (ID + scenario +
+  // domain) is structural residue, even when its status says SATISFIED.
+  // Do not transfer its unscoped evidence into causal proof. The earliest
+  // outstanding work is FORMALIZE, before any PROVE knowledge saturation.
+  for (const receipt of graph.knowledgeReceipts) {
+    if (graph.knowledgeRequirements.some((requirement) =>
+      requirement.id === receipt.requirementId &&
+      requirement.scenarioId === receipt.scenarioId &&
+      requirement.domain === receipt.domain
+    )) continue;
+
+    items.push(normalize({
+      id: "knowledge-gap:" + receipt.requirementId,
+      source: "knowledge-gap",
+      stage: "FORMALIZE",
+      title: "Resolve orphaned Knowledge receipt " + receipt.requirementId,
+      reason: "A Knowledge receipt with status " + receipt.status +
+        " has no matching requirement owner in this scenario/domain.",
+      missingProof:
+        "A matching scenario/domain Knowledge requirement and rederived " +
+        "receipt, or evidence-backed removal of the orphaned receipt.",
+      validationTest:
+        "Trace the exact requirement ID, scenario and Knowledge domain; " +
+        "rebuild the canonical inspection graph before PROVE or publication.",
+      validationGroupKey:
+        "knowledge-receipt-owner:" + receipt.requirementId,
+      subjectIds: receipt.subjectIds,
+      componentIds: receipt.componentIds,
+      // A detached receipt's evidence cannot claim selected-artifact
+      // authority before its missing scenario/requirement link is repaired.
+      evidenceIds: [],
+    }));
+  }
+
   for (const scenario of graph.scenarios) {
     if (
       scenario.composedScenarioIds.length === 0 &&

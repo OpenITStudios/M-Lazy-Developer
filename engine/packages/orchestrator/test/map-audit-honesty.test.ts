@@ -309,6 +309,43 @@ describe("map audit honesty gate", () => {
     expect(accounted.status).toBe("PASS");
   });
 
+  it("retains a detached SATISFIED receipt as material residue", () => {
+    const receipt = {
+      requirementId: "knowledge:orphan",
+      scenarioId: "scenario:elsewhere",
+      domain: "state-flow" as const,
+      status: "SATISFIED" as const,
+      evidenceIds: ["e:detached"],
+      knowledgeIds: [],
+      capabilityIdsUsed: [],
+      subjectIds: [],
+      componentIds: [],
+      reason: "Missing requirement authority",
+    };
+    const input = {
+      graph: {
+        ...graph,
+        knowledgeReceipts: [receipt],
+      },
+      gate, gameplayClosure: closure,
+      capabilityDelivery: [], negativeSpace: [], temporalRisks: [],
+      discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+      visibleIssues: [],
+    };
+    const visibleBase = ["link:wave", "capability-delivery:unassessed"];
+    const hidden = assessAuditHonesty({
+      ...input, visibleObligationIds: visibleBase,
+    });
+    expect(hidden.status).toBe("VIOLATION");
+    expect(hidden.missingVisibleResidueIds).toContain("knowledge-gap:knowledge:orphan");
+    const conserved = assessAuditHonesty({
+      ...input, visibleObligationIds: [...visibleBase, "knowledge-gap:knowledge:orphan"],
+    });
+    expect(conserved.missingVisibleResidueIds).toEqual([]);
+    expect(conserved.status).toBe("PASS");
+  });
+
   it("blocks review when a material unresolved residue is hidden", () => {
     const result = assessAuditHonesty({
       graph,

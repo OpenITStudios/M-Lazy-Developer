@@ -87,9 +87,15 @@ function unresolvedGraphResidueIds(
   for (const { requirement } of unresolvedKnowledgeRequirements(graph)) {
     ids.add("knowledge-gap:" + requirement.id);
   }
-  // Retain visibility of malformed/orphaned non-satisfied receipts.
+  // A receipt without its scenario/domain Knowledge requirement owner is
+  // unresolved structural residue even if it advertises SATISFIED.
   for (const receipt of graph.knowledgeReceipts) {
-    if (receipt.status !== "SATISFIED") {
+    const owned = graph.knowledgeRequirements.some((requirement) =>
+      requirement.id === receipt.requirementId &&
+      requirement.scenarioId === receipt.scenarioId &&
+      requirement.domain === receipt.domain
+    );
+    if (receipt.status !== "SATISFIED" || !owned) {
       ids.add("knowledge-gap:" + receipt.requirementId);
     }
   }
