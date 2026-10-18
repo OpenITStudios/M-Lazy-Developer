@@ -346,4 +346,148 @@ describe("map audit proof saturation", () => {
       .missingFamilyCriteriaIds).toContain("reconciliation-exhausted");
   });
 
+  it("keeps platform performance impact and degradation unproven without a causal impact path", () => {
+    const baseline = graph([], "performance-budget-exceeded");
+    baseline.causalLinks[0].componentIds = ["runtime:environment"];
+    baseline.causalLinks[0].knowledgeRequirementIds = [
+      "knowledge:s1:platform-constraints",
+    ];
+    baseline.knowledgeRequirements = [baseline.knowledgeRequirements[1]!];
+    baseline.knowledgeReceipts = [baseline.knowledgeReceipts[1]!];
+
+    const decorated = {
+      ...resolution,
+      knowledgeRequirementIds: ["knowledge:s1:platform-constraints"],
+      familyProof: {
+        schemaVersion: 1 as const,
+        policy: "family-proof-receipt" as const,
+        failureDomain: "platform-performance",
+        criteria: [
+          { id: "platform-constraint-grounded", satisfied: true,
+            evidenceIds: ["knowledge:platform"] },
+          { id: "gameplay-dependency-affected", satisfied: true,
+            evidenceIds: ["source:contradiction"] },
+          { id: "player-degradation-derived", satisfied: true,
+            evidenceIds: ["source:contradiction"] },
+        ],
+      },
+    };
+    const missing = assessReadyResolutionSaturation(
+      baseline, decorated as any,
+    );
+    expect(missing.failureDomain).toBe("platform-performance");
+    expect(missing.missingFamilyCriteriaIds).toEqual(
+      expect.arrayContaining([
+        "gameplay-dependency-affected",
+        "player-degradation-derived",
+      ]),
+    );
+    expect(missing.missingFamilyCriteriaIds)
+      .not.toContain("platform-constraint-grounded");
+
+    const withImpact = {
+      ...baseline,
+      causalLinks: [{
+        ...baseline.causalLinks[0]!,
+        impactPathComponentIds: ["objective:wave"],
+        impactPathEvidenceIds: ["source:impact"],
+      }],
+    };
+    const grounded = assessReadyResolutionSaturation(
+      withImpact, decorated as any,
+    );
+    for (const id of [
+      "gameplay-dependency-affected",
+      "player-degradation-derived",
+    ]) {
+      expect(grounded.familyCriteria.find((item) => item.id === id)?.evidenceIds)
+        .toEqual(["source:impact"]);
+    }
+  });
+
+  it("requires exact causal impact-path evidence for player-impact family proof", () => {
+    // Actor classification is owned by the causal graph, not by the
+    // resolution. The unrelated chunk/platform requirements are removed
+    // here so this independently exercises the entity-AI failure family.
+    const baseline = graph([], "entity-navigation-stall");
+    baseline.causalLinks[0].componentIds = ["runtime:entities"];
+    baseline.causalLinks[0].knowledgeRequirementIds = [];
+    baseline.knowledgeRequirements = [];
+    baseline.knowledgeReceipts = [];
+
+    const actorCriterionIds = [
+      "actor-contract-grounded",
+      "actor-failure-reachable",
+      "actor-player-impact-grounded",
+    ];
+    const makeProof = (impactId: string) => ({
+      ...resolution,
+      knowledgeRequirementIds: [],
+      familyProof: {
+        schemaVersion: 1 as const,
+        policy: "family-proof-receipt" as const,
+        failureDomain: "entity-ai-combat",
+        criteria: actorCriterionIds.map((id) => ({
+          id,
+          satisfied: true,
+          evidenceIds: [
+            id === "actor-player-impact-grounded"
+              ? impactId
+              : "source:contradiction",
+          ],
+        })),
+      },
+    });
+
+    const noImpact = assessReadyResolutionSaturation(
+      baseline, makeProof("source:contradiction") as any,
+    );
+    expect(noImpact.failureDomain).toBe("entity-ai-combat");
+    expect(noImpact.saturated).toBe(false);
+    expect(noImpact.missingFamilyCriteriaIds)
+      .toContain("actor-player-impact-grounded");
+
+    // An evidence ID from another scenario cannot substitute for the
+    // missing player-impact path even if it is available elsewhere.
+    const unrelated = {
+      ...baseline,
+      causalLinks: [
+        ...baseline.causalLinks,
+        {
+          ...baseline.causalLinks[0]!,
+          id: "foreign:link",
+          scenarioId: "foreign:scenario",
+          evidenceIds: ["source:foreign-impact"],
+          impactPathComponentIds: ["objective:foreign"],
+          impactPathEvidenceIds: ["source:foreign-impact"],
+        },
+      ],
+    };
+    const foreign = assessReadyResolutionSaturation(
+      unrelated, makeProof("source:foreign-impact") as any,
+    );
+    expect(foreign.missingFamilyCriteriaIds)
+      .toContain("actor-player-impact-grounded");
+
+    // A proven path on the actual causal link may support the same family
+    // criterion without requiring unrelated native-Minecraft execution.
+    const withImpact = {
+      ...baseline,
+      causalLinks: [{
+        ...baseline.causalLinks[0]!,
+        impactPathComponentIds: ["objective:wave"],
+        impactPathEvidenceIds: ["source:impact"],
+      }],
+    };
+    const positive = assessReadyResolutionSaturation(
+      withImpact, makeProof("source:impact") as any,
+    );
+    expect(positive.familyCriteria.find((item) =>
+      item.id === "actor-player-impact-grounded")?.evidenceIds)
+      .toEqual(["source:impact"]);
+    expect(positive.missingFamilyCriteriaIds)
+      .not.toContain("actor-player-impact-grounded");
+  });
+
+
 });

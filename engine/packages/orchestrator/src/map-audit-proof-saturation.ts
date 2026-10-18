@@ -160,6 +160,15 @@ export function proofSaturationFamilyCriteria(
   return FAMILY_CRITERIA[domain].map((item) => item.description);
 }
 
+// A causal contradiction is not by itself proof that the player-facing
+// outcome is reachable. These family criteria require the link's own
+// independently traced impact path, not just a scoped evidence ID.
+const IMPACT_PATH_CRITERIA = new Set([
+  "actor-player-impact-grounded",
+  "gameplay-dependency-affected",
+  "player-degradation-derived",
+]);
+
 const FAMILY_COUNTERPROOF_DIMENSIONS: Readonly<
   Partial<Record<string, readonly string[]>>
 > = {
@@ -283,11 +292,7 @@ function derivedFamilyCriterionEvidence(input: {
       "owner",
     ]);
   }
-  if (
-    criterionId.includes("player-impact") ||
-    criterionId.includes("gameplay-dependency-affected") ||
-    criterionId.includes("player-degradation-derived")
-  ) {
+  if (IMPACT_PATH_CRITERIA.has(criterionId)) {
     return impactEvidence;
   }
   if (criterionId.includes("platform-constraint")) {
@@ -491,22 +496,32 @@ export function assessReadyResolutionSaturation(
           classification.failureDomain
           ? familyReceiptById.get(criterion.id)
           : undefined;
-      // An explicit family receipt can cite existing proof, but cannot
-      // bypass a missing/wrong-scope RIG receipt for platform/simulation.
+      // Explicit family evidence must match the proof dimension it closes:
+      // platform/runtime knowledge is matched to its RIG receipt; player
+      // impact requires this causal link's own traced impact-path evidence.
+      // A contradiction elsewhere in the same scenario is not impact proof.
       const requiredKnowledgeDomain = criterion.id.includes("platform-constraint")
         ? "platform-constraints"
         : criterion.id.includes("residency-requirement")
           ? "chunk-simulation"
           : undefined;
-      const allowedKnowledgeIds = requiredKnowledgeDomain === undefined
-        ? undefined
-        : new Set(knowledgeEvidenceByDomain.get(requiredKnowledgeDomain) ?? []);
+      const allowedCriterionEvidenceIds =
+        IMPACT_PATH_CRITERIA.has(criterion.id)
+          ? new Set(
+              link !== undefined && link.impactPathComponentIds.length > 0
+                ? link.impactPathEvidenceIds
+                : [],
+            )
+          : requiredKnowledgeDomain === undefined
+            ? undefined
+            : new Set(knowledgeEvidenceByDomain.get(requiredKnowledgeDomain) ?? []);
       const explicitEvidence =
         receipt?.satisfied === true &&
         receipt.evidenceIds.length > 0 &&
         receipt.evidenceIds.every((id) =>
           knownEvidenceIds.has(id) &&
-          (allowedKnowledgeIds === undefined || allowedKnowledgeIds.has(id))
+          (allowedCriterionEvidenceIds === undefined ||
+            allowedCriterionEvidenceIds.has(id))
         )
           ? [...receipt.evidenceIds]
           : [];
