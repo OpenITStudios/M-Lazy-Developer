@@ -95,7 +95,8 @@ jobs:
                 failed=1
               fi
             done
-          } | tee -a "$GITHUB_STEP_SUMMARY"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
           if [[ "$failed" -ne 0 ]]; then
             echo "Manual Verify failed: inspect every non-success gate above." >&2
           fi
