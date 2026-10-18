@@ -102,12 +102,18 @@ export function unresolvedKnowledgeRequirements(
   readonly receipt?: GameplayScenarioGraph["knowledgeReceipts"][number];
 }[] {
   return graph.knowledgeRequirements.flatMap((requirement) => {
+    // The requirement ID is the canonical RIG identity. Duplicate owners,
+    // including identical copies or IDs reused by a different scenario,
+    // cannot borrow one receipt to claim complete Knowledge coverage.
+    const uniqueOwner = graph.knowledgeRequirements.filter((item) =>
+      item.id === requirement.id
+    ).length === 1;
     const receipts = graph.knowledgeReceipts.filter((receipt) =>
       receipt.requirementId === requirement.id &&
       receipt.scenarioId === requirement.scenarioId &&
       receipt.domain === requirement.domain
     );
-    if (receipts.length === 1 &&
+    if (uniqueOwner && receipts.length === 1 &&
         receipts[0]?.status === "SATISFIED" &&
         receipts[0].evidenceIds.length > 0) return [];
     return [{

@@ -403,14 +403,17 @@ describe("reusable blind-spot obligations", () => {
       componentIds: required.componentIds,
       reason: "Source grounded.",
     };
-    for (const receipts of [
-      [],
-      [{ ...receipt, evidenceIds: [] }],
-      [receipt, { ...receipt }],
+    for (const { requirements, receipts } of [
+      { requirements: [required], receipts: [] },
+      { requirements: [required], receipts: [{ ...receipt, evidenceIds: [] }] },
+      { requirements: [required], receipts: [receipt, { ...receipt }] },
+      { requirements: [required, { ...required }], receipts: [receipt] },
+      { requirements: [required, { ...required, scenarioId: "scenario:other" }],
+        receipts: [receipt] },
     ]) {
       const changedGraph = {
         ...baseGraph("PROVEN"),
-        knowledgeRequirements: [required],
+        knowledgeRequirements: requirements,
         knowledgeReceipts: receipts,
       };
       const obligations = deriveAuditObligations({
