@@ -143,16 +143,18 @@ export function projectionContext(
 
   const subjectIds = [...new Set(link.subjectIds)].sort();
   const componentIds = [...new Set(link.componentIds)].sort();
-  const knowledgeDomains =
-    link.knowledgeRequirementIds
-      .map((id) =>
-        graph.knowledgeRequirements.find(
-          (item) => item.id === id,
-        )?.domain
-      )
-      .filter((domain): domain is NonNullable<typeof domain> =>
-        domain !== undefined
-      );
+  // Report taxonomy must not derive its domain from the first matching
+  // ID when a Knowledge requirement has foreign or duplicate owners.
+  // PROVE uses exactly this unique link-scenario ownership boundary.
+  const knowledgeDomains = link.knowledgeRequirementIds.flatMap((id) => {
+    const owners = graph.knowledgeRequirements.filter((item) =>
+      item.id === id
+    );
+    return owners.length === 1 &&
+      owners[0]?.scenarioId === link.scenarioId
+        ? [owners[0].domain]
+        : [];
+  });
   const relatedDelivery =
     relatedCapabilityDelivery(
       scenario.label,

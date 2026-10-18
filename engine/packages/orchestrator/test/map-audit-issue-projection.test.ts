@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { assessAuditHonesty } from "../src/map-audit-honesty.js";
 import {
   projectReadyAuditIssues,
+  projectionContext,
 } from "../src/map-audit-issue-projection.js";
 import {
   assessGameplayDefectResolutionGate,
@@ -571,6 +572,45 @@ describe("EVALUATE to PROVE to issue projection", () => {
     expect(proof.blockingCounterProofIds).toEqual([]);
     expect(projectReadyAuditIssues(unrelated, proof)
       .map((item) => item.causalLinkId)).toEqual(["link:capacity"]);
+  });
+});
+
+describe("report Knowledge domain provenance", () => {
+  it("ignores foreign and duplicate requirement ID owners in report taxonomy", () => {
+    const requirement = {
+      id: "knowledge:progression:state",
+      scenarioId: "scenario:progression",
+      domain: "inventory-state" as const,
+      reason: "Inventory scope for progression",
+      capabilityIds: [], dependsOnRequirementIds: [],
+      subjectIds: ["objective:wave"], componentIds: ["runtime:entities"],
+    };
+    const scoped: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: graph.causalLinks.map((link) =>
+        link.id === "link:progression"
+          ? { ...link, knowledgeRequirementIds: [requirement.id] }
+          : link
+      ),
+      knowledgeRequirements: [requirement],
+    };
+    const context = (scenarioGraph: GameplayScenarioGraph) =>
+      projectionContext(scenarioGraph, "link:progression", [])?.knowledgeDomains;
+    expect(context(scoped)).toEqual(["inventory-state"]);
+    expect(context({
+      ...scoped,
+      knowledgeRequirements: [{ ...requirement, scenarioId: "scenario:foreign" }],
+    })).toEqual([]);
+    expect(context({
+      ...scoped,
+      knowledgeRequirements: [requirement, { ...requirement }],
+    })).toEqual([]);
+    expect(context({
+      ...scoped,
+      knowledgeRequirements: [
+        requirement, { ...requirement, scenarioId: "scenario:foreign" },
+      ],
+    })).toEqual([]);
   });
 });
 
