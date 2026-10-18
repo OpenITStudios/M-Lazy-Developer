@@ -169,6 +169,31 @@ describe("selected-map audit admission", () => {
     expect(canAdmitAuditIssueLanes(admission, noFormalize)).toBe(false);
   });
 
+  it("rejects duplicate or wrong-stage nonfoundational checkpoint IDs", () => {
+    const complete = procedure([]);
+    const C1 = complete.checkpoints.find(item => item.id === "C1")!;
+    const E1 = complete.checkpoints.find(item => item.id === "E1")!;
+    for (const [description, checkpoints, stage] of [
+      ["duplicate C1", [...complete.checkpoints, { ...C1 }], "EVALUATE"],
+      ["wrong C1 stage", complete.checkpoints.map(item =>
+        item.id === "C1" ? { ...item, block: "PROVE" as const } : item), "EVALUATE"],
+      ["wrong E1 stage", complete.checkpoints.map(item =>
+        item.id === "E1" ? { ...item, block: "EVALUATE" as const } : item), "REPORT"],
+    ] as const) {
+      const result = assessSelectedMapAuditAdmission({
+        mandatoryAuditProcedure: { ...complete, checkpoints },
+      });
+      expect(result.status, description).toBe("BLOCKED");
+      expect(result.firstBlockingStage, description).toBe(stage);
+      expect(result.issues.some(issue =>
+        issue.stage === stage && issue.code === "PROCEDURE_BLOCKED"),
+      description).toBe(true);
+    }
+    expect(assessSelectedMapAuditAdmission({
+      mandatoryAuditProcedure: complete,
+    }).status).toBe("READY");
+  });
+
   it("uses checkpoint-owned stage as the single blocking truth", () => {
     const result = assessSelectedMapAuditAdmission({
       mandatoryAuditProcedure: procedure(["A2"]),

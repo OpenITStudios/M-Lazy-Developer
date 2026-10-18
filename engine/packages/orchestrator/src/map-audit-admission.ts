@@ -108,6 +108,32 @@ export function assessSelectedMapAuditAdmission(
         "Mandatory Audit Procedure receipt is missing; ordered audit admission cannot be established.",
     });
   } else {
+    // The procedure owns checkpoint identities. Duplicate non-foundational
+    // IDs or a stage that contradicts the ID must never manufacture READY,
+    // even when the denormalized blocking list is empty.
+    const seenCheckpointIds = new Set<string>();
+    for (const checkpoint of procedure.checkpoints) {
+      const expectedStage = selectedMapAuditStageForCheckpoint(checkpoint.id);
+      if (seenCheckpointIds.has(checkpoint.id)) {
+        issues.push({
+          stage: expectedStage,
+          code: "PROCEDURE_BLOCKED",
+          message: "Mandatory Audit Procedure duplicates checkpoint ID " +
+            checkpoint.id + ".",
+        });
+      }
+      seenCheckpointIds.add(checkpoint.id);
+      if (checkpoint.block !== expectedStage) {
+        issues.push({
+          stage: expectedStage,
+          code: "PROCEDURE_BLOCKED",
+          message: "Mandatory Audit Procedure checkpoint " +
+            checkpoint.id + " belongs to " + expectedStage +
+            ", not " + checkpoint.block + ".",
+        });
+      }
+    }
+
     for (const checkpointId of procedure.blockingCheckpointIds) {
       const checkpoint = procedure.checkpoints.find(
         (item) => item.id === checkpointId,
