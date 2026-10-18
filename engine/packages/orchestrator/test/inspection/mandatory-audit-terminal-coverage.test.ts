@@ -176,6 +176,22 @@ describe("terminal collision C6 source evaluation", () => {
     }
   });
 
+  it("does not treat duplicate Knowledge requirement owners as an evidenced terminal contract", () => {
+    const valid = graph();
+    const invalid: GameplayScenarioGraph = {
+      ...valid,
+      knowledgeRequirements: [
+        ...valid.knowledgeRequirements,
+        { ...valid.knowledgeRequirements[0]! },
+      ],
+    };
+    const result = assess({ graph: invalid });
+    expect(result.complete).toBe(false);
+    expect(result.missing).toContain(
+      "terminal scenario knowledge requirements are not all satisfied",
+    );
+  });
+
   it("retains unresolved terminal races and precedence as EVALUATE obligations", () => {
     for (const changed of [
       { unresolvedTerminalRaces: 1 },

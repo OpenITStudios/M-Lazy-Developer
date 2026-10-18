@@ -70,27 +70,44 @@ function sourceBoundScenarioLinks(
   );
 }
 
+/**
+ * The checkpoint's evidence projection must use the same scoped receipt
+ * admission for every caller: B1 actor, C6 terminal, repeated-run and C9.
+ * Neither status nor the visible evidence list may accept a detached receipt.
+ */
+function satisfiedScenarioKnowledgeReceipt(
+  requirement: GameplayScenarioGraph["knowledgeRequirements"][number],
+  graph: GameplayScenarioGraph,
+): GameplayScenarioGraph["knowledgeReceipts"][number] | undefined {
+  const owners = graph.knowledgeRequirements.filter((item) =>
+    item.id === requirement.id
+  );
+  if (owners.length !== 1 ||
+      owners[0]?.scenarioId !== requirement.scenarioId ||
+      owners[0].domain !== requirement.domain) return undefined;
+  const receipts = graph.knowledgeReceipts.filter((item) =>
+    item.requirementId === requirement.id &&
+    item.scenarioId === requirement.scenarioId &&
+    item.domain === requirement.domain
+  );
+  return receipts.length === 1 &&
+    receipts[0]?.status === "SATISFIED" &&
+    receipts[0].evidenceIds.length > 0
+      ? receipts[0]
+      : undefined;
+}
+
 function scenarioKnowledgeAccounted(
   scenario: GameplayScenario,
   graph: GameplayScenarioGraph,
 ): boolean {
-  // EVALUATE may close its source-scoped coverage only when the same
-  // scenario/domain receipt would be admitted by canonical PROVE. A stale
-  // SATISFIED flag alone is not sufficient evidence of Knowledge closure.
   return scenario.requiredKnowledgeIds.length > 0 &&
     scenario.requiredKnowledgeIds.every((id) => {
-      const requirement = graph.knowledgeRequirements.find((item) =>
+      const required = graph.knowledgeRequirements.filter((item) =>
         item.id === id && item.scenarioId === scenario.id
       );
-      if (requirement === undefined) return false;
-      const receipts = graph.knowledgeReceipts.filter((item) =>
-        item.requirementId === id &&
-        item.scenarioId === scenario.id &&
-        item.domain === requirement.domain
-      );
-      return receipts.length === 1 &&
-        receipts[0]?.status === "SATISFIED" &&
-        receipts[0].evidenceIds.length > 0;
+      return required.length === 1 &&
+        satisfiedScenarioKnowledgeReceipt(required[0]!, graph) !== undefined;
     });
 }
 
@@ -628,11 +645,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     actorKnowledgeDemanded &&
     (actorKnowledgeRequirements.length === 0 ||
       actorKnowledgeRequirements.some((required) =>
-        !graph.knowledgeReceipts.some((item) =>
-          item.requirementId === required.id &&
-          item.scenarioId === required.scenarioId &&
-          item.status === "SATISFIED"
-        )
+        satisfiedScenarioKnowledgeReceipt(required, graph) === undefined
       ));
   const actorFormalizationGaps = [
     ...(actorNodes.length > groundedActorNodes.length
@@ -674,13 +687,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
         node.evidenceIds.filter((id) => selectedEvidenceIds.has(id))
       ),
       ...actorKnowledgeRequirements.flatMap((required) =>
-        graph.knowledgeReceipts
-          .filter((item) =>
-            item.requirementId === required.id &&
-            item.scenarioId === required.scenarioId &&
-            item.status === "SATISFIED"
-          )
-          .flatMap((item) => item.evidenceIds)
+        satisfiedScenarioKnowledgeReceipt(required, graph)?.evidenceIds ?? []
       ),
     ])],
     ["ActorEntityContract"],
@@ -1761,13 +1768,15 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
             unaccountedCrossSystemKnowledge.length === 0,
           "Each required cross-system scenario must have explicit, satisfied knowledge receipts scoped to its declared requirements.",
           crossSystemScenarios.flatMap((scenario) =>
-            graph.knowledgeReceipts
-              .filter((receipt) =>
-                receipt.scenarioId === scenario.id &&
-                scenario.requiredKnowledgeIds.includes(receipt.requirementId) &&
-                receipt.status === "SATISFIED"
-              )
-              .flatMap((receipt) => receipt.evidenceIds)
+            scenario.requiredKnowledgeIds.flatMap((id) =>
+              graph.knowledgeRequirements
+                .filter((required) =>
+                  required.id === id && required.scenarioId === scenario.id
+                )
+                .flatMap((required) =>
+                  satisfiedScenarioKnowledgeReceipt(required, graph)?.evidenceIds ?? []
+                )
+            )
           ),
         ),
         obligation(
