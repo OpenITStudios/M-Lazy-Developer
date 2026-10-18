@@ -20,6 +20,7 @@ import {
 } from "../src/map-audit-pipeline.js";
 import {
   deriveAuditModelKnowledgeLookup,
+  deriveAuditModelTaskPackets,
   retrieveAuditTaskKnowledge,
 } from "../src/map-audit-model-task.js";
 import { formatSelectedMapAuditBrief } from "../src/map-audit-output-v2.js";
@@ -403,6 +404,96 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
     } finally {
       await fixture.cleanup();
     }
+  });
+});
+
+describe("model handoff Knowledge owner boundary", () => {
+  it("keeps a foreign scenario requirement unresolved despite a SATISFIED receipt", () => {
+    const required = {
+      id: "knowledge:foreign:state",
+      scenarioId: "scenario:foreign",
+      domain: "state-flow",
+      reason: "Foreign scenario state ownership",
+      capabilityIds: ["state-flow"],
+      dependsOnRequirementIds: [],
+      subjectIds: ["state:foreign"],
+      componentIds: ["state:foreign"],
+    };
+    const receipt = {
+      requirementId: required.id,
+      scenarioId: required.scenarioId,
+      domain: required.domain,
+      status: "SATISFIED",
+      evidenceIds: ["e:foreign-knowledge"],
+      knowledgeIds: ["fact:foreign"],
+      capabilityIdsUsed: ["state-flow"],
+      subjectIds: required.subjectIds,
+      componentIds: required.componentIds,
+      reason: "Valid evidence for a different scenario.",
+    };
+    const base = {
+      admission: {
+        status: "BLOCKED",
+        firstBlockingStage: "PROVE",
+        issues: [],
+      },
+      procedure: { checkpoints: [], blockingCheckpointIds: [] },
+      graph: {
+        scenarios: [{
+          id: "scenario:owned",
+          label: "Own scenario",
+          gameplayStage: "PROGRESSION",
+          purpose: "Resolve owned causal dependency",
+        }],
+        causalLinks: [{
+          id: "link:owned",
+          scenarioId: "scenario:owned",
+          knowledgeRequirementIds: [required.id],
+          status: "CONTRADICTED",
+          evidenceIds: ["e:link"],
+          subjectIds: ["state:owned"],
+          componentIds: ["state:owned"],
+        }],
+        knowledgeRequirements: [required],
+        knowledgeReceipts: [receipt],
+      },
+      defectResolution: {
+        gameplayTranslationRequiredIds: ["link:owned"],
+        counterProofSearchRequiredIds: [],
+      },
+      intent: { nodes: [], evidence: [] },
+      auditRevision: "revision:owned",
+      world: { platformKnowledge: { claims: [] } },
+    } as any;
+    const task = deriveAuditModelTaskPackets(base).find(
+      (item) => item.kind === "GAMEPLAY_TRANSLATION",
+    );
+    expect(task?.scenarioId).toBe("scenario:owned");
+    expect(task?.requiredKnowledgeIds).toEqual([required.id]);
+    expect(task?.knowledgeContext).toEqual([{
+      requirementId: required.id,
+      domain: "unresolved",
+      status: "MISSING_RECEIPT",
+      capabilityIds: [],
+      evidenceIds: [],
+    }]);
+    expect(task?.evidenceIds).not.toContain("e:foreign-knowledge");
+
+    // Even a valid matching owner cannot borrow a duplicated receipt ID.
+    const sameScenario = {
+      ...base,
+      graph: {
+        ...base.graph,
+        knowledgeRequirements: [{ ...required, scenarioId: "scenario:owned" }],
+        knowledgeReceipts: [{ ...receipt, scenarioId: "scenario:owned" }],
+      },
+    };
+    const admitted = deriveAuditModelTaskPackets(sameScenario).find(
+      (item) => item.kind === "GAMEPLAY_TRANSLATION",
+    );
+    expect(admitted?.knowledgeContext[0]?.status).toBe("SATISFIED");
+    expect(admitted?.knowledgeContext[0]?.evidenceIds)
+      .toEqual(["e:foreign-knowledge"]);
   });
 });
 

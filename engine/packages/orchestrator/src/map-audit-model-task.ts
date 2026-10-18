@@ -464,18 +464,14 @@ function evidenceContext(
 
 function knowledgeContextFor(
   requirementIds: readonly string[],
+  scenarioId: string,
   graph: GameplayScenarioGraph,
   world: GameplayWorldModel,
 ): readonly AuditModelTaskKnowledgeContext[] {
   return unique(requirementIds).flatMap((requirementId) => {
-    const candidates = graph.knowledgeRequirements.filter(
-      (item) => item.id === requirementId,
+    const requirement = uniqueScenarioKnowledgeRequirement(
+      graph, requirementId, scenarioId,
     );
-    const requirement = candidates.length === 1
-      ? uniqueScenarioKnowledgeRequirement(
-          graph, requirementId, candidates[0]!.scenarioId,
-        )
-      : undefined;
     // Preserve unresolved Knowledge IDs as task context without choosing a
     // foreign/duplicate owner or borrowing a SATISFIED receipt as evidence.
     if (requirement === undefined) return [{
@@ -704,7 +700,7 @@ function provePackets(
         evidenceContext: evidence.context,
         unresolvedEvidenceIds: evidence.unresolved,
         knowledgeContext:
-          knowledgeContextFor(requirementIds, graph, world),
+          knowledgeContextFor(requirementIds, link.scenarioId, graph, world),
         unresolvedObligationIds: [],
         allowedOutputs:
           needsTranslation
@@ -832,6 +828,7 @@ export function deriveAuditModelTaskPackets(input: {
             evidence.unresolved,
           knowledgeContext: knowledgeContextFor(
             unique(finding.knowledgeRequirementIds ?? []),
+            finding.scenarioId,
             input.graph,
             input.world,
           ),
