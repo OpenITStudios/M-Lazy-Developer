@@ -28,20 +28,75 @@ jobs:
       - name: Install
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      # These gates are independent after installation. Collect their real
+      # failure outcomes in one explicitly dispatched run instead of hiding
+      # later failures behind the first failing check.
       - name: Repository policy
+        id: repository
+        continue-on-error: true
         run: npm run verify:repository
 
       - name: Source hygiene audit
+        id: hygiene
+        continue-on-error: true
         run: npm run audit:source
 
       - name: Public API audit
+        id: api
+        continue-on-error: true
         run: npm run audit:api
 
       - name: Typecheck
+        id: typecheck
+        continue-on-error: true
         run: npm run typecheck
 
       - name: Bug Report UI build
+        id: ui
+        continue-on-error: true
         run: npm run bug-report-ui:build
 
       - name: Test
+        id: tests
+        continue-on-error: true
         run: npm test
+
+      # continue-on-error keeps subsequent diagnostics running; it does NOT
+      # authorize a green workflow. Inspect the raw step outcome, not the
+      # continue-on-error-adjusted conclusion.
+      - name: Summarize and enforce verification results
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          REPOSITORY_OUTCOME: ${{ steps.repository.outcome }}
+          HYGIENE_OUTCOME: ${{ steps.hygiene.outcome }}
+          API_OUTCOME: ${{ steps.api.outcome }}
+          TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
+          UI_OUTCOME: ${{ steps.ui.outcome }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          failed=0
+          {
+            echo "## Manual Verify results"
+            echo ""
+            echo "| Gate | Outcome |"
+            echo "| --- | --- |"
+            for entry in \
+              "Repository policy:${REPOSITORY_OUTCOME}" \
+              "Source hygiene:${HYGIENE_OUTCOME}" \
+              "Public API:${API_OUTCOME}" \
+              "Typecheck:${TYPECHECK_OUTCOME}" \
+              "Bug Report UI build:${UI_OUTCOME}" \
+              "Test:${TESTS_OUTCOME}"; do
+              gate="${entry%%:*}"
+              outcome="${entry#*:}"
+              printf "| %s | %s |\n" "$gate" "$outcome"
+              if [[ "$outcome" != "success" ]]; then
+                failed=1
+              fi
+            done
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ "$failed" -ne 0 ]]; then
+            echo "Manual Verify failed: inspect every non-success gate above." >&2
+          fi
+          exit "$failed"
