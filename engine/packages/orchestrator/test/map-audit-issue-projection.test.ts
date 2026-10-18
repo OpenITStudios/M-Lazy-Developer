@@ -310,6 +310,50 @@ describe("EVALUATE to PROVE to issue projection", () => {
     },
   };
 
+
+  it("publishes only source-bound evidence in PROVEN and NEED_VALIDATION", () => {
+    const decorated = {
+      ...submitted,
+      evidenceIds: ["world:arena-count", "foreign:invented"],
+      subjectIds: ["foreign:subject"],
+      componentIds: ["foreign:component"],
+    };
+    const proof = assessGameplayDefectResolutionGate(baseGraph, [decorated]);
+    expect(proof.confirmedDefectReadyIds).toEqual(["link:capacity"]);
+    const published = projectReadyAuditIssues(baseGraph, proof);
+    expect(published).toHaveLength(1);
+    expect(published[0]?.evidenceIds).toContain("world:arena-count");
+    expect(published[0]?.evidenceIds).not.toContain("foreign:invented");
+    expect(published[0]?.subjectIds).not.toContain("foreign:subject");
+    expect(published[0]?.componentIds).not.toContain("foreign:component");
+
+    const missingKnowledge = "knowledge:capacity:unknown";
+    const incomplete: GameplayScenarioGraph = {
+      ...baseGraph,
+      causalLinks: [{
+        ...baseGraph.causalLinks[0]!,
+        knowledgeRequirementIds: [missingKnowledge],
+      }],
+      knowledgeRequirements: [{
+        id: missingKnowledge,
+        scenarioId: "scenario:capacity",
+        domain: "state-flow",
+        reason: "Unresolved state requirement",
+        capabilityIds: [],
+        dependsOnRequirementIds: [],
+        subjectIds: ["policy:arena"],
+        componentIds: ["runtime:arena"],
+      }],
+      knowledgeReceipts: [],
+    };
+    const pending = projectAllNeedValidationAuditIssues(incomplete, proof);
+    expect(pending).toHaveLength(1);
+    expect(pending[0]?.status).toBe("NEED_VALIDATION");
+    expect(pending[0]?.evidenceIds).not.toContain("foreign:invented");
+    expect(pending[0]?.subjectIds).not.toContain("foreign:subject");
+    expect(pending[0]?.componentIds).not.toContain("foreign:component");
+  });
+
   it("preserves a grounded source contradiction through the actual PROVE gate into PROVEN output", () => {
     const proof = assessGameplayDefectResolutionGate(baseGraph, [submitted]);
     expect(proof.status).toBe("READY_FOR_PROPOSED_BUG_SET");

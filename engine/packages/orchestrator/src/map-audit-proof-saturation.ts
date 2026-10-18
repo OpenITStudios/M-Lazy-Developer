@@ -111,6 +111,49 @@ function nonEmpty(value: string | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+/**
+ * Evidence admitted for one causal finding must originate from its own
+ * selected-scenario graph neighborhood or its uniquely owned, satisfied
+ * Knowledge requirements. Resolution/model text is not an evidence source.
+ */
+function causalSourceEvidenceIds(
+  graph: GameplayScenarioGraph,
+  link: GameplayScenarioGraph["causalLinks"][number],
+): readonly string[] {
+  const scoped = graph.causalLinks.filter((candidate) =>
+    candidate.scenarioId === link.scenarioId &&
+    (candidate.id === link.id ||
+      (candidate.subjectIds ?? []).some((id) =>
+        (link.subjectIds ?? []).includes(id)) ||
+      (candidate.componentIds ?? []).some((id) =>
+        (link.componentIds ?? []).includes(id)))
+  );
+  return [...new Set(scoped.flatMap((candidate) => [
+    ...candidate.evidenceIds,
+    ...candidate.impactPathEvidenceIds,
+    ...Object.values(candidate.dimensionEvidence ?? {}).flat(),
+  ]))].filter(nonEmpty).sort();
+}
+
+export function sourceBoundAuditEvidenceIds(
+  graph: GameplayScenarioGraph,
+  causalLinkId: string,
+): readonly string[] {
+  const link = graph.causalLinks.find((item) => item.id === causalLinkId);
+  if (link === undefined) return [];
+  const knowledgeEvidence = link.knowledgeRequirementIds.flatMap((id) => {
+    const requirement = uniqueScenarioKnowledgeRequirement(
+      graph, id, link.scenarioId,
+    );
+    return requirement === undefined ? [] :
+      satisfiedScenarioKnowledgeReceipt(graph, requirement)?.evidenceIds ?? [];
+  });
+  return [...new Set([
+    ...causalSourceEvidenceIds(graph, link),
+    ...knowledgeEvidence,
+  ])].filter(nonEmpty).sort();
+}
+
 export function proofSaturationFamilyCriteria(
   domain: GameplayIssueFailureDomain,
 ): readonly string[] {
@@ -299,6 +342,12 @@ export function assessReadyResolutionSaturation(
   const missingKnowledgeRequirementIds = scopedRequirementIds.filter((id) =>
     !satisfiedKnowledge.some((item) => item.requirement.id === id)
   );
+  const authorizedEvidenceIds = sourceBoundAuditEvidenceIds(
+    graph, resolution.causalLinkId,
+  );
+  const knownEvidenceIds = new Set(authorizedEvidenceIds);
+  const causalEvidenceIds = link === undefined
+    ? [] : causalSourceEvidenceIds(graph, link);
   const evidenceIds = [
     ...new Set([
       ...(link?.evidenceIds ?? []),
@@ -307,8 +356,7 @@ export function assessReadyResolutionSaturation(
       ...(link?.impactPathEvidenceIds ?? []),
       ...satisfiedKnowledge.flatMap((item) => item.receipt.evidenceIds),
     ]),
-  ].sort();
-  const knownEvidenceIds = new Set(evidenceIds);
+  ].filter((id) => knownEvidenceIds.has(id)).sort();
   const knowledgeEvidenceByDomain = new Map<string, string[]>();
   for (const { requirement, receipt } of satisfiedKnowledge) {
     knowledgeEvidenceByDomain.set(requirement.domain, [
@@ -319,12 +367,9 @@ export function assessReadyResolutionSaturation(
     ].sort());
   }
 
-  const componentIds = [
-    ...new Set([
-      ...(link?.componentIds ?? []),
-      ...(resolution.componentIds ?? []),
-    ]),
-  ].sort();
+  // Graph ownership alone selects the failure family. An externally supplied
+  // resolution cannot add a foreign component to change the proof policy.
+  const componentIds = [...new Set(link?.componentIds ?? [])].sort();
 
   // Ambiguous Knowledge IDs must not choose an arbitrary domain for proof
   // family selection; source-valid scoped requirements remain navigable.
@@ -341,6 +386,9 @@ export function assessReadyResolutionSaturation(
 
   const counterProofIds =
     resolution.counterProofSearch?.evidenceIds ?? [];
+  const counterProofEvidenceBound =
+    counterProofIds.length > 0 &&
+    counterProofIds.every((id) => knownEvidenceIds.has(id));
   // The same source graph must agree with the supplied no-blocking
   // conclusion. A proof receipt must not override a later/independent
   // exact-target exclusion still present in the canonical Scenario Graph.
@@ -351,6 +399,7 @@ export function assessReadyResolutionSaturation(
       "NO_BLOCKING_PROOF" &&
     resolution.counterProofSearch
       .exhaustiveWithinScope === true &&
+    counterProofEvidenceBound &&
     graphBlockingProofIds.length === 0;
 
   const universalCriteria:
@@ -404,8 +453,8 @@ export function assessReadyResolutionSaturation(
         id: "evidence-bound",
         description:
           "At least one selected-artifact/analysis evidence id supports the contradiction.",
-        satisfied: evidenceIds.length > 0,
-        evidenceIds,
+        satisfied: causalEvidenceIds.length > 0,
+        evidenceIds: causalEvidenceIds,
       },
       {
         id: "required-knowledge-satisfied",
@@ -420,7 +469,8 @@ export function assessReadyResolutionSaturation(
         description:
           "Bounded counter-proof search is exhaustive in scope and found no blocking proof.",
         satisfied: counterProofCleared,
-        evidenceIds: [...counterProofIds],
+        evidenceIds: counterProofIds.filter((id) =>
+          knownEvidenceIds.has(id)),
       },
     ];
 

@@ -287,4 +287,63 @@ describe("map audit proof saturation", () => {
     const result = assessReadyResolutionSaturation(scenario, resolution as any);
     expect(result.missingFamilyCriteriaIds).toContain("platform-constraint-bound");
   });
+  it("does not use invented resolution or foreign-scenario evidence to saturate proof", () => {
+    const scenario = graph(["objective:wave"], "wave-progression");
+    const criteria = [
+      "completion-dependency-grounded",
+      "failing-path-reachable",
+      "reconciliation-exhausted",
+    ].map((id) => ({
+      id, satisfied: true, evidenceIds: ["source:contradiction"],
+    }));
+    const complete = {
+      ...resolution,
+      familyProof: {
+        schemaVersion: 1 as const,
+        policy: "family-proof-receipt" as const,
+        failureDomain: "progression-wave-objective",
+        criteria,
+      },
+    };
+    expect(assessReadyResolutionSaturation(scenario, complete as any).saturated)
+      .toBe(true);
+
+    const foreign = {
+      ...complete,
+      evidenceIds: ["source:contradiction", "foreign:invented"],
+      familyProof: {
+        ...complete.familyProof,
+        criteria: criteria.map((criterion) =>
+          criterion.id === "reconciliation-exhausted"
+            ? { ...criterion, evidenceIds: ["foreign:invented"] }
+            : criterion),
+      },
+    };
+    const assessment = assessReadyResolutionSaturation(scenario, foreign as any);
+    expect(assessment.saturated).toBe(false);
+    expect(assessment.missingFamilyCriteriaIds)
+      .toContain("reconciliation-exhausted");
+
+    const falseCounterproof = {
+      ...complete,
+      counterProofSearch: {
+        ...complete.counterProofSearch,
+        evidenceIds: ["foreign:invented"],
+      },
+    };
+    expect(assessReadyResolutionSaturation(scenario, falseCounterproof as any)
+      .missingUniversalCriteriaIds).toContain("counter-proof-cleared");
+
+    const secondScenario = {
+      ...scenario,
+      causalLinks: [
+        ...scenario.causalLinks,
+        { ...scenario.causalLinks[0],
+          id: "l2", scenarioId: "s2", evidenceIds: ["foreign:invented"] },
+      ],
+    };
+    expect(assessReadyResolutionSaturation(secondScenario, foreign as any)
+      .missingFamilyCriteriaIds).toContain("reconciliation-exhausted");
+  });
+
 });

@@ -69,6 +69,7 @@ export type AuditIssueProjection =
 
 import {
   assessReadyResolutionSaturation,
+  sourceBoundAuditEvidenceIds,
 } from "./map-audit-proof-saturation.js";
 
 export function relatedCapabilityDelivery(
@@ -288,17 +289,13 @@ export function projectReadyAuditIssues(
           expectedOutcome: resolution.expectedOutcome!,
           actualOutcome: resolution.actualOutcome!,
           affectedScope: resolution.affectedScope!,
-          subjectIds: [...new Set([
-            ...subjectIds,
-            ...(resolution.subjectIds ?? []),
-          ])].sort(),
-          componentIds: [...new Set([
-            ...componentIds,
-            ...(resolution.componentIds ?? []),
-          ])].sort(),
+          // The causal link, not a resolution, owns report subjects/components.
+          subjectIds,
+          componentIds,
           evidenceIds: [...new Set([
             ...link.evidenceIds,
-            ...(resolution.evidenceIds ?? []),
+            ...(resolution.evidenceIds ?? []).filter((id) =>
+              sourceBoundAuditEvidenceIds(graph, link.id).includes(id)),
           ])].sort(),
           ...(link.knowledgeRequirementIds.length === 0
             ? {}

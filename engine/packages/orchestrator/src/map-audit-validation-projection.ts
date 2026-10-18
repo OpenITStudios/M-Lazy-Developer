@@ -9,6 +9,7 @@ import type {
 } from "../../diagnostic-reasoning/src/index.js";
 import {
   assessReadyResolutionSaturation,
+  sourceBoundAuditEvidenceIds,
 } from "./map-audit-proof-saturation.js";
 import {
   projectionContext,
@@ -125,24 +126,16 @@ export function projectNeedValidationAuditIssues(
         expectedOutcome,
         actualOutcome,
         affectedScope,
-        subjectIds: [
-          ...new Set([
-            ...subjectIds,
-            ...(resolution.subjectIds ?? []),
-          ]),
-        ].sort(),
-        componentIds: [
-          ...new Set([
-            ...componentIds,
-            ...(resolution.componentIds ?? []),
-          ]),
-        ].sort(),
+        // Keep provisional report scope aligned with the causal-link owner.
+        subjectIds,
+        componentIds,
         evidenceIds: [
           ...new Set([
             ...link.evidenceIds,
             ...(resolution.evidenceIds ?? []),
             ...(resolution.counterProofSearch?.evidenceIds ?? []),
-          ]),
+          ].filter((id) =>
+            sourceBoundAuditEvidenceIds(graph, link.id).includes(id))),
         ].sort(),
         ...(link.knowledgeRequirementIds.length
           ? { knowledgeRequirementIds: [...new Set(link.knowledgeRequirementIds)].sort() }
