@@ -206,6 +206,42 @@ describe("map audit proof saturation", () => {
       .missingUniversalCriteriaIds).toContain("required-knowledge-satisfied");
   });
 
+  it("rejects duplicate requirement ID owners even with SATISFIED scenario evidence", () => {
+    const baseline = graph(["objective:wave"], "wave-progression");
+    const complete = {
+      ...resolution,
+      familyProof: {
+        schemaVersion: 1 as const,
+        policy: "family-proof-receipt" as const,
+        failureDomain: "progression-wave-objective",
+        criteria: [
+          "completion-dependency-grounded", "failing-path-reachable",
+          "reconciliation-exhausted",
+        ].map((id) => ({
+          id, satisfied: true, evidenceIds: ["source:contradiction"],
+        })),
+      },
+    };
+    expect(assessReadyResolutionSaturation(baseline, complete as any).saturated)
+      .toBe(true);
+    for (const duplicate of [
+      { ...baseline.knowledgeRequirements[0] },
+      { ...baseline.knowledgeRequirements[0], scenarioId: "foreign-scenario" },
+    ]) {
+      const changed = {
+        ...baseline,
+        knowledgeRequirements: [...baseline.knowledgeRequirements, duplicate],
+      };
+      const assessment = assessReadyResolutionSaturation(changed, complete as any);
+      expect(assessment.saturated).toBe(false);
+      expect(assessment.missingUniversalCriteriaIds)
+        .toContain("required-knowledge-satisfied");
+      expect(projectReadyAuditIssues(changed, {
+        confirmedDefectReadyIds: ["l1"], resolutions: [complete],
+      } as any)).toEqual([]);
+    }
+  });
+
   it("rejects a satisfied knowledge receipt without matching requirement identity", () => {
     const scenario = graph(["objective:wave"], "chunk-residency-stall");
     scenario.knowledgeRequirements[1].id = "foreign-requirement";

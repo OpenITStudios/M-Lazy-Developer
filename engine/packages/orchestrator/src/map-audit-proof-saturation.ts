@@ -282,11 +282,19 @@ export function assessReadyResolutionSaturation(
   const scopedRequirementIds = [...new Set(
     link?.knowledgeRequirementIds ?? [],
   )].sort();
-  const satisfiedKnowledge = scopedRequirementIds.flatMap((id) => {
-    const requirement = graph.knowledgeRequirements.find((item) =>
-      item.id === id && item.scenarioId === link?.scenarioId
+  const scopedRequirements = scopedRequirementIds.flatMap((id) => {
+    // Requirement IDs are canonical owners across the entire graph.
+    // A same-ID foreign/scenario duplicate must not become causal proof via
+    // Array.find(), even when one matching receipt advertises SATISFIED.
+    const owners = graph.knowledgeRequirements.filter((item) =>
+      item.id === id
     );
-    if (requirement === undefined) return [];
+    if (owners.length !== 1 || owners[0]?.scenarioId !== link?.scenarioId) {
+      return [];
+    }
+    return [owners[0]!];
+  });
+  const satisfiedKnowledge = scopedRequirements.flatMap((requirement) => {
     const candidates = graph.knowledgeReceipts.filter((item) =>
       item.requirementId === requirement.id &&
       item.scenarioId === requirement.scenarioId &&
@@ -327,16 +335,10 @@ export function assessReadyResolutionSaturation(
     ]),
   ].sort();
 
+  // Ambiguous Knowledge IDs must not choose an arbitrary domain for proof
+  // family selection; source-valid scoped requirements remain navigable.
   const knowledgeDomains =
-    scopedRequirementIds
-      .map((id) =>
-        graph.knowledgeRequirements.find(
-          (item) => item.id === id,
-        )?.domain
-      )
-      .filter((domain): domain is NonNullable<typeof domain> =>
-        domain !== undefined
-      );
+    scopedRequirements.map((item) => item.domain);
   const classification = classifyGameplayIssue({
     gameplayStage:
       scenario?.gameplayStage ?? "ACTIVE_GAMEPLAY",
