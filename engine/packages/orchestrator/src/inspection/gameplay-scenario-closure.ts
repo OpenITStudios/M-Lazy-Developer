@@ -4,6 +4,7 @@ import type {
 } from "./gameplay-scenario-model.js";
 import {
   satisfiedScenarioKnowledgeReceipt,
+  uniqueScenarioKnowledgeRequirement,
 } from "./gameplay-scenario-knowledge.js";
 
 export function assessGameplayScenarioClosure(
@@ -138,19 +139,20 @@ export function assessGameplayScenarioClosure(
 
   const componentIds = new Set(graph.components.map((item) => item.id));
   const causalLinkIds = new Set(graph.causalLinks.map((item) => item.id));
-  const requirementIds = new Set(graph.knowledgeRequirements.map((item) => item.id));
   const invalidScenarioBindings = graph.scenarios
     .filter((scenario) =>
       scenario.componentIds.some((id) => !componentIds.has(id)) ||
       scenario.causalLinkIds.some((id) => !causalLinkIds.has(id)) ||
-      scenario.requiredKnowledgeIds.some((id) => !requirementIds.has(id)))
+      scenario.requiredKnowledgeIds.some((id) =>
+        uniqueScenarioKnowledgeRequirement(graph, id, scenario.id) === undefined))
     .map((scenario) => scenario.id).sort();
   const invalidCausalLinks = graph.causalLinks
     .filter((edge) =>
       !scenarioIds.has(edge.scenarioId) ||
       !componentIds.has(edge.fromComponentId) ||
       !componentIds.has(edge.toComponentId) ||
-      edge.knowledgeRequirementIds.some((id) => !requirementIds.has(id)))
+      edge.knowledgeRequirementIds.some((id) =>
+        uniqueScenarioKnowledgeRequirement(graph, id, edge.scenarioId) === undefined))
     .map((edge) => edge.id).sort();
   const scenarioComponents = new Map(
     graph.scenarios.map((scenario) => [scenario.id, new Set(scenario.componentIds)]),
@@ -172,7 +174,11 @@ export function assessGameplayScenarioClosure(
     .filter((item) =>
       !scenarioIds.has(item.scenarioId) ||
       item.componentIds.some((id) => !componentIds.has(id)) ||
-      item.dependsOnRequirementIds.some((id) => !requirementIds.has(id)))
+      item.dependsOnRequirementIds.some((id) =>
+        uniqueScenarioKnowledgeRequirement(graph, id, item.scenarioId) === undefined) ||
+      !graph.scenarios.some((scenario) =>
+        scenario.id === item.scenarioId &&
+        scenario.requiredKnowledgeIds.includes(item.id)))
     .map((item) => item.id).sort();
 
   const scenarioWithoutComponents = graph.scenarios

@@ -110,6 +110,81 @@ describe("gameplay scenario closure", () => {
       expect(closure.status).toBe("OPEN");
       expect(closure.missingRequiredKnowledgeIds.length).toBeGreaterThan(0);
     }
+
+    // Two individually proven scenarios must not be able to borrow each
+    // other's requirement, link ownership, or prerequisite identity.
+    const otherRequirement = {
+      ...required,
+      id: "knowledge:other:state",
+      scenarioId: "scenario:other",
+    };
+    const otherReceipt = {
+      ...receipt,
+      requirementId: otherRequirement.id,
+      scenarioId: otherRequirement.scenarioId,
+    };
+    const otherScenario = {
+      ...valid.scenarios[0]!,
+      id: "scenario:other",
+      causalLinkIds: ["link:other"],
+      requiredKnowledgeIds: [otherRequirement.id],
+    };
+    const otherLink = {
+      ...valid.causalLinks[0]!,
+      id: "link:other",
+      scenarioId: "scenario:other",
+      knowledgeRequirementIds: [otherRequirement.id],
+    };
+    const multi: GameplayScenarioGraph = {
+      ...valid,
+      scenarios: [...valid.scenarios, otherScenario],
+      causalLinks: [...valid.causalLinks, otherLink],
+      knowledgeRequirements: [required, otherRequirement],
+      knowledgeReceipts: [receipt, otherReceipt],
+    };
+    expect(assessGameplayScenarioClosure(multi).status).toBe("CLOSED");
+
+    const wave = multi.scenarios[0]!;
+    const waveLink = multi.causalLinks[0]!;
+    const foreignBindings: GameplayScenarioGraph[] = [
+      {
+        ...multi,
+        scenarios: [
+          { ...wave, requiredKnowledgeIds: [otherRequirement.id] },
+          otherScenario,
+        ],
+      },
+      {
+        ...multi,
+        causalLinks: [
+          { ...waveLink, knowledgeRequirementIds: [otherRequirement.id] },
+          otherLink,
+        ],
+      },
+      {
+        ...multi,
+        knowledgeRequirements: [
+          { ...required, dependsOnRequirementIds: [otherRequirement.id] },
+          otherRequirement,
+        ],
+      },
+      {
+        ...multi,
+        scenarios: [
+          { ...wave, requiredKnowledgeIds: [] },
+          otherScenario,
+        ],
+      },
+    ];
+    for (const graph of foreignBindings) {
+      const closure = assessGameplayScenarioClosure(graph);
+      expect(closure.status).toBe("OPEN");
+      expect(closure.reasons).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/(Missing scenario bindings|Invalid causal links|Invalid knowledge dependencies)/),
+        ]),
+      );
+    }
   });
 
   it("opens when a leaf scenario has components but no causal proof links", () => {
