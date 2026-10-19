@@ -42,7 +42,7 @@ const defect: ConfirmedDefect = {
   title: "Cleanup retains state",
   problem: "State remains.",
   expected: {
-    authority: "authored-intent",
+    authority: "selected-artifact",
     statement: "State resets.",
     evidenceIds: ["intent:cleanup"],
   },

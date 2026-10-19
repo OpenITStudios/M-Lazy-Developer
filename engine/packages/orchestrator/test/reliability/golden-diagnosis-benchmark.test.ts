@@ -135,8 +135,10 @@ describe("golden diagnosis benchmark", () => {
             "designed-behavior",
         }, {
           caseId: "valid",
+          // A wrong confirmed-defect prediction on a non-defect case is
+          // a false positive under the current closed disposition taxonomy.
           disposition:
-            "probable-defect",
+            "confirmed-defect",
         }],
       );
 

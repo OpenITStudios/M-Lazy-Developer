@@ -428,7 +428,6 @@ describe("script transform hint realizer", () => {
         scriptText,
         fileSource,
         hint,
-        approvedReceipt,
       );
     expect(bound.status).toBe("bound");
     if (bound.status !== "bound") return;
@@ -529,7 +528,6 @@ describe("script transform hint realizer", () => {
         scriptText,
         fileSource,
         hint,
-        approvedReceipt,
       );
     expect(bound.status).toBe("bound");
     if (bound.status !== "bound") return;

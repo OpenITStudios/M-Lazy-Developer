@@ -1041,7 +1041,7 @@ describe("gameplay discovery challenger", () => {
     const graph: GameplayScenarioGraph = {
       ...emptyGraph,
       components: [
-        { id: "component:event", label: "Inventory event", kind: "event",
+        { id: "component:event", label: "Inventory event", kind: "mechanic",
           technicalRole: "trigger", gameplayPurpose: "Grant inventory",
           evidenceIds: ["op:grant"], usedByScenarioIds: ["scenario:inventory"],
           orphan: false },

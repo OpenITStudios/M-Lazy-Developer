@@ -57,6 +57,11 @@ function executor(loaded: boolean) {
       status: "unknown",
       error: "not used",
     }),
+    // The closed-loop fixture does not observe these runtime-native
+    // surfaces; unknown is required, not an invented successful probe.
+    entityLocation: () => ({ status: "unknown", error: "not observed" }),
+    dimensionHeightRange: () => ({ status: "unknown", error: "not observed" }),
+    commandResult: () => ({ status: "unknown", error: "not observed" }),
   });
 }
 

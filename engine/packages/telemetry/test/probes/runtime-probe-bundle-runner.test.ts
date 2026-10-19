@@ -10,6 +10,9 @@ const executor = createRuntimeProbeExecutor({
   entityResolvable: () => ({ status: "value", value: false }),
   tagPresent: () => ({ status: "value", value: true }),
   scoreboardValue: () => ({ status: "value", value: 7 }),
+  entityLocation: () => ({ status: "unknown", error: "not observed" }),
+  dimensionHeightRange: () => ({ status: "unknown", error: "not observed" }),
+  commandResult: () => ({ status: "unknown", error: "not observed" }),
 });
 
 const bundle = {
