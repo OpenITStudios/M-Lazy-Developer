@@ -25,6 +25,7 @@ function authoredIntent(subjectId: string): GameplayIntentModel {
   return {
     schemaVersion: 1,
     id: "persistence-intent",
+    artifactId: "fixture:selected-map",
     evidence: [{
       id: "intent-evidence",
       origin: "source-code",

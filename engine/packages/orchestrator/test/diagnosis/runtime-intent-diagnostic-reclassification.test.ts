@@ -18,6 +18,7 @@ function intent(
   return {
     schemaVersion: 1,
     id: "intent",
+    artifactId: "fixture:selected-map",
     evidence: [{
       id: "intent-evidence",
       origin: "source-code",
