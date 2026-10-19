@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseScriptFile } from "../../../../analyzers/scripts/src/parser/parse.js";
-import { semanticIrExecutionTraces } from "../../../semantic-ir/src/query.js";
+import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import { semanticIrExecutionTraces } from "../../../semantic-ir/src/index.js";
 import { buildInspectionSemanticIr, scriptRegionId } from "../../src/diagnosis/semantic-ir-stage.js";
 
 const parsed = (path: string, text: string, artifactId = "selected-map") => {

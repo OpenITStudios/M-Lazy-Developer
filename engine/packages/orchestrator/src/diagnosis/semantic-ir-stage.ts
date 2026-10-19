@@ -5,7 +5,7 @@ import {
   tagAccesses,
 } from "../../../../analyzers/commands/src/index.js";
 import type { ParsedFunction } from "../../../../analyzers/functions/src/index.js";
-import { resolveScriptImports } from "../../../../analyzers/scripts/src/parser/resolve.js";
+import { resolveScriptImports } from "../../../../analyzers/scripts/src/index.js";
 import type {
   ParsedScriptFile,
   CrossFileCallEdge,

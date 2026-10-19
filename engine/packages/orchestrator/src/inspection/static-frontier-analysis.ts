@@ -1,7 +1,7 @@
-import type { ParsedBlockDefinition } from "../../../../analyzers/blocks/src/types.js";
-import type { ParsedEntityDefinition } from "../../../../analyzers/entities/src/types.js";
+import type { ParsedBlockDefinition } from "../../../../analyzers/blocks/src/index.js";
+import type { ParsedEntityDefinition } from "../../../../analyzers/entities/src/index.js";
 import type { ParsedScriptFile } from "../../../../analyzers/scripts/src/index.js";
-import type { ManifestCompatibilityFacts } from "../../../../analyzers/manifest/src/compatibility.js";
+import type { ManifestCompatibilityFacts } from "../../../../analyzers/manifest/src/index.js";
 
 export function analyzeInteractiveBlockComponents(block: ParsedBlockDefinition) {
   return Object.keys(block.components).sort().map((component) => ({

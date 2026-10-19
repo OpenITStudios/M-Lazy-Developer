@@ -1,5 +1,5 @@
-import type { McStructureSemantics } from "../../../adapters/mcstructure/src/semantics.js";
-import type { EducationTargetProfile } from "../../manifest/src/education.js";
+import type { McStructureSemantics } from "../../../adapters/mcstructure/src/index.js";
+import type { EducationTargetProfile } from "../../manifest/src/index.js";
 
 export interface EducationPermissionBlockAssessment {
   identifier: "minecraft:allow" | "minecraft:deny" | "minecraft:border_block";

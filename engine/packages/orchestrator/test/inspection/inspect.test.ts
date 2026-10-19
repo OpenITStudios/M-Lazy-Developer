@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { inspectDirectory } from "../../src/inspection/inspect.js";
-import { parseScriptFile } from "../../../../analyzers/scripts/src/parser/parse.js";
+import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import { SemanticGraph } from "../../../graph/src/index.js";
 import { parseEntityDefinition } from "../../../../analyzers/entities/src/index.js";
 import { populateEntityLootTableEdges } from "../../../../analyzers/references/src/index.js";

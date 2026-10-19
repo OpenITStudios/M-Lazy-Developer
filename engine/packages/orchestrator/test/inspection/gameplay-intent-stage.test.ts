@@ -174,7 +174,7 @@ describe("gameplay intent stage", () => {
       edge.kind === "produces" && edge.evidenceIds.includes(outcome!.id)))
       .toBe(false);
     const foreign = { ...ir, execution: { ...ir.execution,
-      outcomes: ir.execution.outcomes.map(item => ({
+      outcomes: ir.execution.outcomes!.map(item => ({
         ...item, source: { ...item.source, artifactId: "world:foreign" },
       })),
     }};
