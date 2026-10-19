@@ -42,6 +42,12 @@ function profile(
       worldSettings: "complete",
       packs: "complete",
     },
+  }, {
+    evidence: [{
+      id: "test:profile-fixture:" + edition + ":" + host + ":" + version,
+      kind: "operator",
+      detail: "Synthetic test profile inputs; not a live Minecraft runtime observation.",
+    }],
   });
 }
 
