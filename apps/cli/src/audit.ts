@@ -4,14 +4,12 @@ import {
   runSelectedMapAudit,
   applySelectedMapAuditModelResponses,
   projectSelectedMapAuditModelHandoff,
+  formatSelectedMapAuditBrief,
+  type InspectTargetProfile,
   type SelectedMapAuditModelResponseBatch,
   type SelectedMapAuditRuntimeTarget,
-} from "../../../engine/packages/orchestrator/src/map-audit-pipeline.js";
-import type {
-  InspectTargetProfile,
-} from "../../../engine/packages/orchestrator/src/core/types.js";
+} from "../../../engine/packages/orchestrator/src/index.js";
 import { loadKnowledgeDirectory } from "../../../engine/packages/knowledge/src/index.js";
-import { formatSelectedMapAuditBrief } from "../../../engine/packages/orchestrator/src/map-audit-output-v2.js";
 import { parseCliTargetOptions } from "./target-options.js";
 
 function runtimeTarget(
