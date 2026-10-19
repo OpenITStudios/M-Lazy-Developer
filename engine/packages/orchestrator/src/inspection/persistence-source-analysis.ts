@@ -177,8 +177,30 @@ function exactSourceToken(source: SourceRef): string | undefined {
 function sameSequentialPath(
   generation: ScriptSequentialPathEvidence,
   reset: ScriptSequentialPathEvidence,
+  laterResetSource?: SourceRef,
 ): boolean {
   if (!sameSequentialBlock(generation.blockSource, reset.blockSource)) return false;
+  // For a generation invalidation AFTER a reset, that direct reset statement
+  // legitimately appears among preceding receiver-touching calls. Exclude
+  // exactly that statement, not any other call, escape or control barrier.
+  // directStatementSequence already requires a standalone call expression.
+  const matchesResetStatement = (statement: SourceRef): boolean => {
+    if (!laterResetSource || !exactSourcePosition(statement) ||
+        !exactSourcePosition(laterResetSource)) return false;
+    const a = statement.range!;
+    const b = laterResetSource.range!;
+    return statement.artifactId === laterResetSource.artifactId &&
+      statement.relativePath === laterResetSource.relativePath &&
+      statement.jsonPointer === laterResetSource.jsonPointer &&
+      a.lineStart === b.lineStart && a.columnStart === b.columnStart &&
+      a.lineEnd === b.lineEnd && a.columnEnd! >= b.columnEnd!;
+  };
+  const recordedCalls = generation.precedingReceiverCallSources ?? [];
+  const resetCallCount = recordedCalls.filter(matchesResetStatement).length;
+  if (laterResetSource && resetCallCount !== 1) return false;
+  const comparableCalls = laterResetSource
+    ? recordedCalls.filter(site => !matchesResetStatement(site))
+    : recordedCalls;
   const sameSites = (a: readonly SourceRef[], b: readonly SourceRef[]) => {
     if (a.length !== b.length) return false;
     return a.every((source, i) => {
@@ -194,7 +216,7 @@ function sameSequentialPath(
       reset.precedingControlExitSources) &&
     sameSites(generation.precedingReceiverRebindingSources,
       reset.precedingReceiverRebindingSources) &&
-    sameSites(generation.precedingReceiverCallSources ?? [],
+    sameSites(comparableCalls,
       reset.precedingReceiverCallSources ?? []) &&
     sameSites(generation.precedingReceiverEscapeSources ?? [],
       reset.precedingReceiverEscapeSources ?? []);
@@ -362,13 +384,15 @@ export function analyzePersistenceSource(
                     item.arenaExpression !== site.receiverHint ||
                     !item.sequentialPathEvidence ||
                     !site.sequentialPathEvidence ||
-                    !sameSequentialPath(
-                      item.sequentialPathEvidence, site.sequentialPathEvidence) ||
                     item.source.artifactId !== site.source.artifactId ||
                     item.source.relativePath !== site.source.relativePath ||
                     !item.generationExpression) return [];
                 const order = sourceOrder(item.source, site.source);
-                return order ? [{
+                if (!order || !sameSequentialPath(
+                  item.sequentialPathEvidence, site.sequentialPathEvidence,
+                  order === "after-reset" ? site.source : undefined,
+                )) return [];
+                return [{
                   generationExpression: item.generationExpression,
                   arenaExpression: item.arenaExpression,
                   source: item.source,
