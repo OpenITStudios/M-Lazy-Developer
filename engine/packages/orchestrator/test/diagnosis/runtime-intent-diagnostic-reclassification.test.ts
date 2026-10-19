@@ -22,6 +22,7 @@ function intent(
       id: "intent-evidence",
       origin: "source-code",
       locator: "scripts/main.ts",
+      scope: "selected-artifact",
       summary: "Authored lifecycle evidence.",
     }],
     nodes: [{
