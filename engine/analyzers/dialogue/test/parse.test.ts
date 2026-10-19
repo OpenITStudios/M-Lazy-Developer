@@ -31,15 +31,27 @@ describe("NPC dialogue parser", () => {
       {
         kind: "npc-name",
         text: "Arena Guide",
+        source: {
+          ...source,
+          jsonPointer: "/minecraft:npc_dialogue/scenes/0/npc_name",
+        },
       },
       {
         kind: "body",
         text: "Only two arenas are available right now.",
+        source: {
+          ...source,
+          jsonPointer: "/minecraft:npc_dialogue/scenes/0/text",
+        },
       },
       {
         kind: "button",
         text: "Join Queue",
         buttonIndex: 0,
+        source: {
+          ...source,
+          jsonPointer: "/minecraft:npc_dialogue/scenes/0/buttons/0/name",
+        },
       },
     ]);
     expect(parsed?.scenes[0]?.commands).toEqual(expect.arrayContaining([
