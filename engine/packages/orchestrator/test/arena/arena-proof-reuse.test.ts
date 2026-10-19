@@ -44,6 +44,7 @@ function inspection(
         entriesScanned: 1,
         truncated: false,
         actorRecords: 0,
+        actorContentComplete: true,
         actorDigestRecords: 0,
         chunkRecords: 1,
         blockEntityRecords: 0,
@@ -100,6 +101,20 @@ describe("arena proof reuse", () => {
         "actor-population",
       ]),
     );
+  });
+
+  it("does not manufacture zero-Actor or physical reuse when world DB scans are missing", () => {
+    const before = inspection({ worldDatabase: undefined });
+    const after = inspection({
+      fingerprint: "artifact-b",
+      worldDatabase: undefined,
+    });
+    const result = assessArenaProofReuse(before, after);
+    expect(result.blockedLayers).toEqual(expect.arrayContaining([
+      "native-spatial", "voxel", "block-entity", "tick-state",
+      "actor-population",
+    ]));
+    expect(result.reusableLayers).not.toContain("actor-population");
   });
 
   it("ignores world DB changes outside arena chunk scope", () => {

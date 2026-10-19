@@ -166,7 +166,7 @@ function completeWorldDbFingerprint(
       reason: string;
     } {
   const scan =
-    result.worldDatabase.nativeScan;
+    result.worldDatabase?.nativeScan;
   if (!scan || scan.status !== "scanned") {
     return {
       complete: false,
@@ -394,28 +394,34 @@ export function assessArenaProofReuse(
   );
 
   const beforeScan =
-    before.worldDatabase.nativeScan;
+    before.worldDatabase?.nativeScan;
   const afterScan =
-    after.worldDatabase.nativeScan;
+    after.worldDatabase?.nativeScan;
   const actorLayoutSame =
     layoutFingerprint(before) ===
       layoutFingerprint(after);
   const actorHashesComplete =
-    beforeScan?.actorContentComplete === true &&
-    afterScan?.actorContentComplete === true;
+    beforeScan?.status === "scanned" &&
+    afterScan?.status === "scanned" &&
+    beforeScan.truncated !== true &&
+    afterScan.truncated !== true &&
+    beforeScan.actorContentComplete === true &&
+    afterScan.actorContentComplete === true;
   const beforeActorHash =
     beforeScan?.actorContentFingerprint;
   const afterActorHash =
     afterScan?.actorContentFingerprint;
+  // Missing Actor DB evidence is UNKNOWN, never a verified zero record count.
   const beforeActors =
-    beforeScan?.actorRecords ?? 0;
+    beforeScan?.actorRecords;
   const afterActors =
-    afterScan?.actorRecords ?? 0;
+    afterScan?.actorRecords;
 
   if (
     beforeActors === 0 &&
     afterActors === 0 &&
-    actorLayoutSame
+    actorLayoutSame &&
+    actorHashesComplete
   ) {
     assessments.push({
       layer: "actor-population",
