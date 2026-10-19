@@ -123,6 +123,28 @@ describe("gameplay issue taxonomy", () => {
     });
   });
 
+  it("does not classify platform performance as UI just because it contains form", () => {
+    for (const scenarioLabel of [
+      "performance-budget-exceeded",
+      "platform-performance",
+    ]) {
+      expect(classifyGameplayIssue({
+        gameplayStage: "ACTIVE_GAMEPLAY",
+        scenarioLabel,
+        componentIds: ["runtime:environment"],
+      })).toMatchObject({
+        failureDomain: "platform-performance",
+      });
+    }
+    expect(classifyGameplayIssue({
+      gameplayStage: "ACTIVE_GAMEPLAY",
+      scenarioLabel: "openFormResponse",
+      componentIds: ["runtime:ui-form"],
+    })).toMatchObject({
+      failureDomain: "ui-feedback-information",
+    });
+  });
+
   it("routes delayed callback ownership to temporal async", () => {
     expect(
       classifyGameplayIssue({

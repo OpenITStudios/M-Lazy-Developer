@@ -15,6 +15,14 @@ import {
   type RuntimeExperimentDefinition,
 } from "../../src/index.js";
 
+// Provenance describes synthetic fixture configuration, never a claim that
+// Minecraft was observed live by this test's fake harness.
+const syntheticProfileEvidence = [{
+  id: "fixture:bedrock-host-profile",
+  kind: "configuration" as const,
+  detail: "Synthetic Bedrock harness profile for unit testing only.",
+}];
+
 const targetProfile = captureMinecraftRuntimeProfile({
   schemaVersion: 2,
   product: {
@@ -36,7 +44,7 @@ const targetProfile = captureMinecraftRuntimeProfile({
     worldSettings: "unknown",
     packs: "partial",
   },
-});
+}, { evidence: syntheticProfileEvidence });
 
 const actionCapabilities: RuntimeActionCapabilityRegistry = {
   schemaVersion: 1,
@@ -241,7 +249,7 @@ describe("bedrock runtime experiment host", () => {
       captureMinecraftRuntimeProfile({
         ...targetProfile.profile,
         host: "client",
-      });
+      }, { evidence: syntheticProfileEvidence });
 
     const host =
       createBedrockHarnessExperimentHost({

@@ -229,11 +229,18 @@ export function classifyGameplayIssue(input: {
     };
   }
 
-  if (
-    /ui|feedback|form|dialogue|message|indicator|display|hud/i.test(
-      input.scenarioLabel,
-    )
-  ) {
+  // Match gameplay UI vocabulary as words/tokens, not substrings:
+  // "performance" and "platform" both contain "form" but are not UI.
+  const labelTokens = input.scenarioLabel
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  const uiTokens = new Set([
+    "ui", "feedback", "form", "dialogue", "message",
+    "indicator", "display", "hud",
+  ]);
+  if (labelTokens.some((token) => uiTokens.has(token))) {
     return {
       failureDomain: "ui-feedback-information",
       contributingDomains: [
