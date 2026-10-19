@@ -2589,8 +2589,10 @@ function progressionAdvanceOwnership(
 const TERMINAL_GAMEPLAY_STATE =
   /^(?:complete|completed|finish|finished|done|victory|defeat|ended|end|success|successful|failure|failed|win|won|loss|lost|abort|aborted)$/i;
 
+// Result/terminal tables are progression lifecycles too: the evaluator below
+// already enforces their ordered result -> reward -> cleanup contract.
 const PROGRESSION_MACHINE_OWNER =
-  /(?:wave|round|level|stage|phase|game|match|progress|combat)/i;
+  /(?:wave|round|level|stage|phase|game|match|progress|combat|result|terminal)/i;
 
 const RESULT_LIFECYCLE_PHASES = [
   "active",
