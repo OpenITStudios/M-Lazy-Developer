@@ -1,6 +1,9 @@
 name: Verify
 
 on:
+  push:
+    branches:
+      - Local
   workflow_dispatch:
 
 permissions:
@@ -13,7 +16,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -29,7 +32,8 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       # These gates are independent after installation. Collect their real
-      # failure outcomes in one explicitly dispatched run instead of hiding
+      # failure outcomes in one push-triggered or manually dispatched run
+      # instead of hiding
       # later failures behind the first failing check.
       - name: Repository policy
         id: repository
@@ -77,7 +81,7 @@ jobs:
         run: |
           failed=0
           {
-            echo "## Manual Verify results"
+            echo "## Full Verify results"
             echo ""
             echo "| Gate | Outcome |"
             echo "| --- | --- |"
@@ -98,6 +102,6 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           cat "$GITHUB_STEP_SUMMARY"
           if [[ "$failed" -ne 0 ]]; then
-            echo "Manual Verify failed: inspect every non-success gate above." >&2
+            echo "Full Verify failed: inspect every non-success gate above." >&2
           fi
           exit "$failed"

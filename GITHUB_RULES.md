@@ -173,11 +173,11 @@ unavailable proof      → exact UNKNOWN residue; no user-PC handoff
 
 Never use temporary branches/workflows, base64 stand-ins, placeholder source, alternate repository structures, or force-pushes merely to bypass connector limitations.
 
-## CI policy: manual-only, last resort
+## CI policy: automatic Full Verify on Local
 
-GitHub Actions workflows are optional tools, not the default verification or completion gate for `Local` development. Never require CI, wait for a run, or trigger a workflow merely to finish a source-verifiable change. Prefer exact-head source review, then a relevant targeted verifier/test when executable evidence is needed and available. Use manual GitHub Actions only when narrower proof is insufficient or an explicit release/integration check is requested.
+The user explicitly authorized automatic Full CI on the `Local` development branch. `Verify` runs on each push to `Local` and remains manually dispatchable for intentional rechecks. Its six independent checks (repository policy, source hygiene, public API, typecheck, UI build, and Vitest) must all succeed; collect all outcomes in one run, never mask a failed gate. Concurrency cancels obsolete in-progress runs for the same branch to conserve compute. A green CI result does not prove Minecraft runtime behavior.
 
-`Verify`, `Repository Policy`, and `Package Source Snapshot` must remain `workflow_dispatch` only: no automatic `push`, `pull_request`, or scheduled triggers. Existing verification scripts/tests remain available. Never report static inspection as executed tests or Minecraft runtime proof. Branch protection/required checks are separate GitHub settings and must not be assumed changed by workflow edits.
+`Repository Policy` and `Package Source Snapshot` remain `workflow_dispatch` only; do not auto-run the portable snapshot transfer on every commit. Do not add `pull_request` or scheduled CI triggers without separate authorization. Continue independently source-verifiable work even when CI is unavailable or failing. Never represent static inspection as executed tests or Minecraft runtime proof. Branch protection and required checks are separate settings and are not changed by this workflow policy.
 
 ## 8. Verification
 
