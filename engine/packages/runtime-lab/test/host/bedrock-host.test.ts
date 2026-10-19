@@ -9,6 +9,7 @@ import {
   BEDROCK_PROBE_PREFIX,
   createBedrockHarnessExperimentHost,
   executeRuntimeExperimentCampaign,
+  MULTIPLAYER_STRESS_CAPABILITY_REGISTRY,
   type BedrockHarnessChannel,
   type BedrockHarnessWaitOptions,
   type RuntimeActionCapabilityRegistry,
@@ -48,15 +49,11 @@ const targetProfile = captureMinecraftRuntimeProfile({
 
 const actionCapabilities: RuntimeActionCapabilityRegistry = {
   schemaVersion: 1,
-  actions: [{
-    id: "test.join-arena",
-    requiredContext: "LIVE_MINECRAFT",
-    mutationRisk: "mutating",
-    phases: ["stimulus"],
-    optionalParameters: {
-      arenaId: "string",
-    },
-  }],
+  // This unit harness acknowledges canonical actions without claiming
+  // they were observed in a live Minecraft host.
+  actions: MULTIPLAYER_STRESS_CAPABILITY_REGISTRY.actions.filter(
+    (action) => action.id === "multiplayer.execute-all-arena-start-burst",
+  ),
 };
 
 const definition: RuntimeExperimentDefinition = {
@@ -291,9 +288,12 @@ describe("bedrock runtime mutating action protocol", () => {
         {
           id: "stimulus",
           phase: "stimulus",
-          actionId: "test.join-arena",
+          actionId: "multiplayer.execute-all-arena-start-burst",
           parameters: {
-            arenaId: "a1",
+            arenaIds: "a1,a2",
+            arenaGenerations: "1,2",
+            playerCountPerArena: 5,
+            startOwnershipGuardEnabled: true,
           },
         },
         definition.protocol[0]!,
@@ -348,7 +348,13 @@ describe("bedrock runtime mutating action protocol", () => {
         {
           id: "stimulus",
           phase: "stimulus",
-          actionId: "test.join-arena",
+          actionId: "multiplayer.execute-all-arena-start-burst",
+          parameters: {
+            arenaIds: "a1,a2",
+            arenaGenerations: "1,2",
+            playerCountPerArena: 5,
+            startOwnershipGuardEnabled: true,
+          },
         },
         definition.protocol[0]!,
       ],
