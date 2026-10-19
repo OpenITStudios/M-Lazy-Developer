@@ -54,6 +54,17 @@ export function createTickingAreaPolicyExperiment(
         command: "$factor.command",
         predicate: input.predicate,
       },
+    }, {
+      // Observe the resulting policy without re-executing the potentially
+      // mutating command selected by either experimental arm.
+      id: "observe-ticking-area-policy",
+      phase: "observe",
+      actionId: "probe.command-result",
+      parameters: {
+        dimension: input.target.dimension,
+        command: "tickingarea list",
+        predicate: input.predicate,
+      },
     }],
     factors: [{
       id: "command",

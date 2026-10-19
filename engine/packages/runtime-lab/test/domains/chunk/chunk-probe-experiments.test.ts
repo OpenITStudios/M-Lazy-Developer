@@ -23,6 +23,11 @@ describe("chunk probe experiments", () => {
       predicate: "ticking-area-policy-observed",
     });
     expect(validateRuntimeExperimentDefinition(definition)).toEqual([]);
+    expect(definition.protocol.filter(step => step.phase === "observe"))
+      .toMatchObject([{ id: "observe-ticking-area-policy",
+        actionId: "probe.command-result" }]);
+    expect(definition.protocol[1]?.parameters?.["command"])
+      .toBe("tickingarea list");
   });
 
   it("builds valid unloaded destination experiments with teardown", () => {
