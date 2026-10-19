@@ -29,6 +29,7 @@ function authoredIntent(subjectId: string): GameplayIntentModel {
       id: "intent-evidence",
       origin: "source-code",
       locator: "scripts/persistence.ts",
+      scope: "selected-artifact",
       summary: "Authored persistence recovery invariant.",
     }],
     nodes: [{

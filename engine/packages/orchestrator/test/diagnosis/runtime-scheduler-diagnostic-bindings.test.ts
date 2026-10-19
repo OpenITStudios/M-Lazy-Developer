@@ -28,6 +28,7 @@ function authoredIntent(subjectId: string): GameplayIntentModel {
       id: "intent-evidence",
       origin: "source-code",
       locator: "scripts/scheduler.ts",
+      scope: "selected-artifact",
       summary: "Authored scheduler isolation invariant.",
     }],
     nodes: [{

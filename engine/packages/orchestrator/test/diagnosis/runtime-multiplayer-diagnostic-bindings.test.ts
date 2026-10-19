@@ -33,6 +33,7 @@ function authoredIntent(subjectId: string): GameplayIntentModel {
       id: "intent-evidence",
       origin: "source-code",
       locator: "scripts/session.ts",
+      scope: "selected-artifact",
       summary: "Authored multiplayer session invariant.",
     }],
     nodes: [{
