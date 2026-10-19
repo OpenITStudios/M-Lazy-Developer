@@ -54,6 +54,8 @@ async function buildGraph(
       sourceIndex.parsedDialogueDocuments,
     parsedStructureModels:
       sourceIndex.parsedStructureModels,
+    tickFunctionRegistrations:
+      sourceIndex.tickFunctionRegistrations,
   });
   populateInspectionScriptImportGraph(
     sourceIndex.graph,

@@ -185,10 +185,10 @@ describe("inspectDirectory", () => {
       ({
         id,
         identifier: id,
-        kind: "script",
-        identity: { kind: "script", scope: "project", identifier: id },
+        kind: "script_file",
+        identity: { kind: "script_file", scope: "project", identifier: id },
         source: s,
-      }) as SemanticNode;
+      });
     const a = node("script:entry", source);
     const b = node("script:arena", targetSource);
     graph.addNode(a);

@@ -125,6 +125,8 @@ const completeEntityAiStack = {
     navigationCapabilities: [
       "navigation:walk",
     ],
+    movementGoalPriorities: [],
+    duplicateMovementGoalPriorities: [],
     missingSurfaces: [],
     status: "targeted-stack-complete" as const,
   }],

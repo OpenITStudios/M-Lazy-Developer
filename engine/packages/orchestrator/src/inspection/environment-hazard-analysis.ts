@@ -1,7 +1,7 @@
 import type { ParsedEntityDefinition } from "../../../../analyzers/entities/src/index.js";
 import type { ParsedScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import type { ArenaRegionContract } from "../../../project-model/src/index.js";
-import type { SpatialAuthorityBehaviorContract } from "../../../behavior-model/src/index.js";
+import type { SpatialAuthorityPolicy } from "../../../behavior-model/src/index.js";
 import { analyzeSpatialAuthorityCoverage } from "./spatial-authority-analysis.js";
 
 export interface EnvironmentHazardAnalysis {
@@ -20,6 +20,7 @@ export interface EnvironmentHazardAnalysis {
     | "post-only"
     | "absent";
   explosionContainmentStatus:
+    | "resolved"
     | "unresolved"
     | "not-applicable";
   repeatedDamageStatus:
@@ -40,6 +41,11 @@ function hasComponent(
 export function analyzeEnvironmentHazards(
   scripts: readonly ParsedScriptFile[],
   entities: readonly ParsedEntityDefinition[],
+  authority?: {
+    readonly regions: readonly ArenaRegionContract[];
+    readonly contract: SpatialAuthorityPolicy;
+    readonly regionIds: readonly string[];
+  },
 ): EnvironmentHazardAnalysis {
   const explosionBeforeHandlers = scripts.reduce(
     (sum, script) =>
@@ -99,6 +105,29 @@ export function analyzeEnvironmentHazards(
   const hasExplosion =
     explosionBeforeHandlers > 0 ||
     explosionAfterHandlers > 0;
+  // Only an explicit, valid rule for every requested spatial region can
+  // establish mutation authority. A beforeEvents handler alone does not
+  // prove containment, nor does a partial/missing policy.
+  const containment = hasExplosion &&
+    authority !== undefined &&
+    authority.regionIds.length > 0
+      ? analyzeSpatialAuthorityCoverage(
+          authority.regions,
+          authority.contract,
+          authority.regionIds.map((regionId) => ({
+            regionId,
+            actor: "system" as const,
+            action: "mutate-blocks" as const,
+          })),
+        )
+      : undefined;
+  const containmentResolved =
+    containment !== undefined &&
+    containment.policyValid &&
+    containment.assessments.length === authority?.regionIds.length &&
+    containment.assessments.every((item) =>
+      item.status === "resolved" && item.decision !== undefined
+    );
 
   return {
     explosionBeforeHandlers,
@@ -113,9 +142,8 @@ export function analyzeEnvironmentHazards(
           ? "post-only"
           : "absent",
     explosionContainmentStatus:
-      hasExplosion
-        ? "unresolved"
-        : "not-applicable",
+      !hasExplosion ? "not-applicable"
+        : containmentResolved ? "resolved" : "unresolved",
     repeatedDamageStatus:
       hurtOnConditionEntities > 0
         ? "generation-policy-unresolved"

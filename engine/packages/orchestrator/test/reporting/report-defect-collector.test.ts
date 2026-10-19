@@ -95,7 +95,7 @@ function defect(
     impactEvidenceIds?: readonly string[];
     primaryEvidenceIds?: readonly string[];
   } = {},
-): ConfirmedDefectDraft {
+): ConfirmedDefectDraft | AiConfirmedDefectDraft {
   return {
     title: "Cleanup retains match state",
     problem: "Match-owned state remains after cleanup.",
