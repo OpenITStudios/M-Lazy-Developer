@@ -563,7 +563,10 @@ export interface ScriptArenaAuthorityEvidence {
 
 export interface ScriptArenaAuthorityPath {
   arenaExpression: string;
+  /** Position-qualified evidence-owner identity; never discard or merge. */
   executionRegion: string;
+  /** Exact unique binding to the parser/CFG region, when one exists. */
+  parserExecutionRegion?: string;
   membershipCommit?: ScriptArenaAuthorityEvidence;
   membershipRelease?: ScriptArenaAuthorityEvidence;
   capacityOperand?: ScriptArenaAuthorityEvidence;

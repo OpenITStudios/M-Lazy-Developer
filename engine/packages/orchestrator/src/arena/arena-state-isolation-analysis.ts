@@ -84,13 +84,19 @@ function reachable(
   return seen;
 }
 
+function arenaRegionOf(
+  path: NonNullable<ParsedScriptFile["arenaAuthorityPaths"]>[number],
+): string {
+  return path.parserExecutionRegion ?? path.executionRegion;
+}
+
 function arenaRegions(
   script: ParsedScriptFile,
 ): Set<string> {
   const roots = [
     ...new Set(
       (script.arenaAuthorityPaths ?? [])
-        .map((item) => item.executionRegion),
+        .map(arenaRegionOf),
     ),
   ];
   return reachable(graphFor(script), roots);
@@ -171,7 +177,7 @@ function arenaRegionsAcrossScripts(
   };
   for (const script of scripts) {
     for (const root of script.arenaAuthorityPaths ?? []) {
-      admit({ script, region: root.executionRegion });
+      admit({ script, region: arenaRegionOf(root) });
     }
   }
   for (let cursor = 0; cursor < queue.length; cursor += 1) {
@@ -218,7 +224,7 @@ function arenaRegionsAcrossScripts(
       const aliases = new Map<string, Origin>();
       const rootKey = [
         script.source?.artifactId, script.source?.relativePath,
-        root.executionRegion, root.arenaExpression,
+        arenaRegionOf(root), root.arenaExpression,
       ].join(":");
       if (plain(root.arenaExpression)) {
         aliases.set(root.arenaExpression, {
@@ -232,7 +238,7 @@ function arenaRegionsAcrossScripts(
           role: "player", root: rootKey + ":" + member, rootName: member,
         });
       }
-      admitAlias({ script, region: root.executionRegion, aliases });
+      admitAlias({ script, region: arenaRegionOf(root), aliases });
     }
   }
   for (let cursor = 0; cursor < aliasQueue.length; cursor += 1) {
@@ -318,7 +324,7 @@ function arenaRegionsAcrossScripts(
       for (const [region, values] of regions) {
         // Root authority is not a forwarded parameter witness.
         if ((script.arenaAuthorityPaths ?? [])
-          .some(path => path.executionRegion === region)) continue;
+          .some(path => arenaRegionOf(path) === region)) continue;
         const names = new Set(values.flatMap(aliases => [...aliases.keys()]));
         const messages: string[] = [];
         for (const name of [...names].sort()) {
@@ -704,7 +710,7 @@ function analyzeScript(
   const authoritiesForRegion = (region: string): readonly string[] => [
     ...new Set(
       (script.arenaAuthorityPaths ?? [])
-        .filter((item) => item.executionRegion === region)
+        .filter((item) => arenaRegionOf(item) === region)
         .map((item) => item.arenaExpression)
         .filter(Boolean),
     ),

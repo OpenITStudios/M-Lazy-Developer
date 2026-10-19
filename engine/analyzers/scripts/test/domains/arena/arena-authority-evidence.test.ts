@@ -1114,6 +1114,10 @@ describe("arena authority evidence", () => {
     expect(paths.filter((path) => path.capacityAuthorityProven)).toHaveLength(1);
     expect(paths.find((path) => path.executionRegion.startsWith("method:Limited.join@"))?.capacityAuthorityProven).toBe(true);
     expect(paths.find((path) => path.executionRegion.startsWith("method:Open.join@"))?.capacityAuthorityProven).toBe(false);
+    expect(paths.find(path => path.executionRegion.startsWith("method:Limited.join@"))
+      ?.parserExecutionRegion).toMatch(/^function:Limited\\.join@\\d+:\\d+$/);
+    expect(paths.find(path => path.executionRegion.startsWith("method:Open.join@"))
+      ?.parserExecutionRegion).toMatch(/^function:Open\\.join@\\d+:\\d+$/);
   });
 
   it("does not close capacity when a second unguarded roster write follows", () => {
@@ -1143,6 +1147,8 @@ describe("arena authority evidence", () => {
     const paths = (parsed.arenaAuthorityPaths ?? []).filter((path) => path.capacityAuthorityProven);
     expect(paths).toHaveLength(2);
     expect(new Set(paths.map((path) => path.executionRegion)).size).toBe(2);
+    // The parser's bare function:join key is ambiguous for these two owners.
+    expect(paths.every(path => path.parserExecutionRegion === undefined)).toBe(true);
   });
 
   it("proves start ownership only when owner acquisition and start-state commit share the same arena path", () => {

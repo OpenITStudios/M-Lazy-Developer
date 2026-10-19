@@ -26,6 +26,7 @@ import type {
   ScriptEnumValueComparison,
   ScriptStateMutation,
   ScriptTransitionDeclaration,
+  ScriptArenaAuthorityPath,
   ScriptTypeProperty,
   ScriptReturnOutcome,
   ScriptGuardedOutcome,
@@ -56,6 +57,7 @@ import {
 import {
   correlateScriptArenaAuthorityPaths,
   deriveScriptArenaAuthorityEvidence,
+  localExecutionRegionId as arenaEvidenceExecutionRegionId,
 } from "../domains/arena/arena-authority-evidence.js";
 import {
   derivePersistenceIdempotencyGuards,
@@ -668,6 +670,52 @@ function localExecutionRegionId(
     current = current.parent;
   }
   return "module";
+}
+
+/**
+ * Join position-qualified arena evidence with parser/CFG region identity using
+ * the SAME parsed AST. Unique source declarations only: a same-named nested
+ * function must never inherit another declaration's arena authority.
+ * This is a source-region correspondence, not a proof of a live arena.
+ */
+function bindArenaParserRegions(
+  file: ts.SourceFile,
+  paths: readonly ScriptArenaAuthorityPath[],
+): ScriptArenaAuthorityPath[] {
+  const candidates = new Map<string, string[]>();
+  const canonicalCounts = new Map<string, number>();
+  const visit = (node: ts.Node): void => {
+    let parserRegion: string | undefined;
+    if (ts.isFunctionDeclaration(node) && node.body) {
+      parserRegion = node.name
+        ? "function:" + node.name.text
+        : "anonymous-function";
+    } else if (ts.isMethodDeclaration(node) && node.body &&
+               ts.isIdentifier(node.name)) {
+      parserRegion = sourceMethodRegion(node, file);
+    }
+    if (parserRegion !== undefined &&
+        ("body" in node) && node.body &&
+        ts.isBlock(node.body)) {
+      const evidenceRegion =
+        arenaEvidenceExecutionRegionId(node.body, file);
+      candidates.set(evidenceRegion, [
+        ...(candidates.get(evidenceRegion) ?? []), parserRegion,
+      ]);
+      canonicalCounts.set(parserRegion,
+        (canonicalCounts.get(parserRegion) ?? 0) + 1);
+    }
+    ts.forEachChild(node, visit);
+  };
+  ts.forEachChild(file, visit);
+  return paths.map(path => {
+    const matches = candidates.get(path.executionRegion) ?? [];
+    const parserRegion = matches.length === 1 ? matches[0] : undefined;
+    return parserRegion !== undefined &&
+      canonicalCounts.get(parserRegion) === 1
+        ? { ...path, parserExecutionRegion: parserRegion }
+        : path;
+  });
 }
 
 function callbackExecutionRegionId(
@@ -1997,10 +2045,10 @@ export function parseScriptFile(
       source,
       classWiring.constructorFieldBindings,
     );
-  const arenaAuthorityPaths =
-    correlateScriptArenaAuthorityPaths(
-      arenaAuthorityEvidence,
-    );
+  const arenaAuthorityPaths = bindArenaParserRegions(
+    file,
+    correlateScriptArenaAuthorityPaths(arenaAuthorityEvidence),
+  );
   const persistenceIdempotencyGuards =
     derivePersistenceIdempotencyGuards(
       text,

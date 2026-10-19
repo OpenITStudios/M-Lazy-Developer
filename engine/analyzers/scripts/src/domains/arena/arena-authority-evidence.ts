@@ -82,7 +82,7 @@ function declarationMemberName(
     : undefined;
 }
 
-function localExecutionRegionId(
+export function localExecutionRegionId(
   node: ts.Node,
   file: ts.SourceFile,
 ): string {
