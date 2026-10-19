@@ -15,6 +15,7 @@ function intent(): GameplayIntentModel {
       id: "intent-evidence",
       origin: "source-code",
       locator: "scripts/feature.ts",
+      scope: "selected-artifact",
       summary:
         "Authored feature behavior expected by the project.",
     }],
