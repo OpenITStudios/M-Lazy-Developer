@@ -252,6 +252,24 @@ function reconnectLifecycleEvent(
   return undefined;
 }
 
+/**
+ * Cross-producer region identity: arena evidence retains a position-qualified
+ * declaration ID while lifecycle reset sites use the parser's region ID.
+ * Reuse only the unique AST-backed binding already admitted by parseScriptFile.
+ * Never strip offsets or merge same-named declarations to manufacture proof.
+ */
+function sameAuthoredResetRegion(
+  script: ParsedScriptFile,
+  evidence: NonNullable<ParsedScriptFile["arenaAuthorityEvidence"]>[number],
+  resetRegion: string,
+): boolean {
+  if (evidence.executionRegion === resetRegion) return true;
+  return (script.arenaAuthorityPaths ?? []).filter(path =>
+    path.executionRegion === evidence.executionRegion &&
+    path.arenaExpression === evidence.arenaExpression &&
+    path.parserExecutionRegion === resetRegion).length === 1;
+}
+
 export function analyzePersistenceSource(
   scripts: readonly ParsedScriptFile[],
 ): PersistenceSourceAnalysis {
@@ -324,7 +342,7 @@ export function analyzePersistenceSource(
           const coLocatedGenerationInvalidationSources =
             (script.arenaAuthorityEvidence ?? [])
               .filter(item => item.kind === "generation-invalidate" &&
-                item.executionRegion === site.executionRegion &&
+                sameAuthoredResetRegion(script, item, site.executionRegion) &&
                 item.source.artifactId === site.source.artifactId &&
                 item.source.relativePath === site.source.relativePath)
               .map(item => item.source)
@@ -340,7 +358,7 @@ export function analyzePersistenceSource(
             (script.arenaAuthorityEvidence ?? [])
               .flatMap(item => {
                 if (item.kind !== "generation-invalidate" ||
-                    item.executionRegion !== site.executionRegion ||
+                    !sameAuthoredResetRegion(script, item, site.executionRegion) ||
                     item.arenaExpression !== site.receiverHint ||
                     !item.sequentialPathEvidence ||
                     !site.sequentialPathEvidence ||
