@@ -23,12 +23,18 @@ export function realizeLinearTopologyRepairStrategy(
   realizerRegistry: RepairRealizerRegistry,
   candidate: RepairableTopologyCandidate,
 ): ProviderRepairRealization {
+  // The supplied registry, not a hard-coded version, owns provider provenance.
+  const sourceVersion = registry.providers.find(
+    (provider) => provider.id === "linear-topology-repair",
+  )?.version ?? "unregistered";
   if (
     candidate.record.effect.kind !== "fill" &&
     candidate.record.effect.kind !== "setblock"
   ) {
     return {
       status: "blocked",
+      sourceKind: "provider",
+      sourceVersion,
       sourceId: "linear-topology-repair",
       reasons: [
         "Linear topology repair supports fill/setblock effects only.",
@@ -54,6 +60,8 @@ export function realizeLinearTopologyRepairStrategy(
   if (planned.status === "unsupported") {
     return {
       status: "blocked",
+      sourceKind: "provider",
+      sourceVersion,
       sourceId: "linear-topology-repair",
       reasons: [planned.reason],
     };
@@ -63,6 +71,8 @@ export function realizeLinearTopologyRepairStrategy(
   // PatchTransaction. Never turn a proposal into executable repair authority.
   return {
     status: "blocked",
+    sourceKind: "provider",
+    sourceVersion,
     sourceId: "linear-topology-repair",
     reasons: [
       "Topology replacement is proposal-only; an authorized PatchTransaction with current evidence and preservation validation is required before realization.",

@@ -19,12 +19,34 @@ for (const path of requiredPlanning) {
 
 if (existsSync("planning")) {
   const allowed = new Set(["README.md", "development.md", "operations.md", "projects.md"]);
+  // Report System Next has a separately approved, immutable design lock.
+  // This is the sole justified planning directory, not a general exemption
+  // for new planning subtrees or undocumented files.
+  const lockedReportFiles = new Set([
+    "README.md", "LOCKED-DESIGN.md", "layout.lock.json",
+    "report.schema.json", "tester-workspace.schema.json",
+    "example.report.json", "reference.html",
+  ]);
   for (const entry of readdirSync("planning", { withFileTypes: true })) {
     if (entry.isDirectory()) {
-      failures.push(
-        "Planning must remain flat until scale justifies a subdirectory: planning/" +
-          entry.name,
-      );
+      if (entry.name !== "report-system-next") {
+        failures.push(
+          "Planning must remain flat except the approved locked report design: planning/" +
+            entry.name,
+        );
+        continue;
+      }
+      const actual = readdirSync("planning/report-system-next", { withFileTypes: true });
+      for (const file of actual) {
+        if (!file.isFile() || !lockedReportFiles.has(file.name)) {
+          failures.push("Unexpected locked report design entry: planning/report-system-next/" + file.name);
+        }
+      }
+      for (const file of lockedReportFiles) {
+        if (!actual.some((entry) => entry.isFile() && entry.name === file)) {
+          failures.push("Missing locked report design entry: planning/report-system-next/" + file);
+        }
+      }
     } else if (!allowed.has(entry.name)) {
       failures.push("Unexpected planning file: planning/" + entry.name);
     }

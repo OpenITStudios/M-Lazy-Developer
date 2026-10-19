@@ -655,7 +655,9 @@ function getterBoundModuleCapacity(
         result.condition.expression.expression.text !== "Object" ||
         result.condition.expression.name.text !== "hasOwn" ||
         result.condition.arguments.length !== 2 ||
+        !result.condition.arguments[0] ||
         !ts.isIdentifier(result.condition.arguments[0]) ||
+        !result.condition.arguments[1] ||
         !ts.isIdentifier(result.condition.arguments[1]) ||
         !ts.isElementAccessExpression(result.whenTrue) ||
         !ts.isIdentifier(result.whenTrue.expression) ||
@@ -670,6 +672,7 @@ function getterBoundModuleCapacity(
         result.condition.arguments[1].text !== parameter.name.text ||
         result.whenTrue.argumentExpression.text !== parameter.name.text ||
         !actual || !ts.isPropertyAccessExpression(actual) ||
+        !ts.isIdentifier(actual.name) ||
         !/^(?:id|arenaId|configId|configKey)$/.test(actual.name.text) ||
         !membership ||
         actual.expression.getText(file) !== membership.arenaExpression) return undefined;

@@ -192,7 +192,7 @@ const SOURCE_EVIDENCE_ORIGINS = new Set([
 ]);
 function isCurrentArtifactSourceEvidence(
   evidence: GameplayIntentModel["evidence"][number] | undefined,
-): boolean {
+): evidence is GameplayIntentModel["evidence"][number] {
   return evidence !== undefined &&
     evidence.scope === "selected-artifact" &&
     SOURCE_EVIDENCE_ORIGINS.has(evidence.origin);
@@ -468,7 +468,7 @@ function knowledgeContextFor(
   graph: GameplayScenarioGraph,
   world: GameplayWorldModel,
 ): readonly AuditModelTaskKnowledgeContext[] {
-  return unique(requirementIds).flatMap((requirementId) => {
+  return unique(requirementIds).flatMap<AuditModelTaskKnowledgeContext>((requirementId) => {
     const requirement = uniqueScenarioKnowledgeRequirement(
       graph, requirementId, scenarioId,
     );

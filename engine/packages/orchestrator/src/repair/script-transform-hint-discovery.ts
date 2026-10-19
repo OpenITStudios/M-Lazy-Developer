@@ -154,6 +154,7 @@ export function realizeSchedulerGenerationGuardFromParsedScripts(
   if (schedulerHints.length === 0) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "scheduler-generation-guard-template",
       reasons: [
@@ -165,6 +166,7 @@ export function realizeSchedulerGenerationGuardFromParsedScripts(
   if (schedulerHints.length > 1) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "scheduler-generation-guard-template",
       reasons: [
@@ -212,6 +214,7 @@ export function realizeSessionGenerationGuardFromParsedScripts(
   if (sessionHints.length === 0) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "session-generation-guard-template",
       reasons: [
@@ -223,6 +226,7 @@ export function realizeSessionGenerationGuardFromParsedScripts(
   if (sessionHints.length > 1) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "session-generation-guard-template",
       reasons: [
@@ -270,6 +274,7 @@ export function realizePersistenceIdempotencyGuardFromParsedScripts(
   if (persistenceHints.length === 0) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "persistence-idempotency-guard-template",
       reasons: [
@@ -281,6 +286,7 @@ export function realizePersistenceIdempotencyGuardFromParsedScripts(
   if (persistenceHints.length > 1) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "persistence-idempotency-guard-template",
       reasons: [
@@ -334,6 +340,7 @@ export function realizeArenaCapacityGuardFromParsedScripts(
   if (capacityHints.length === 0) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "arena-capacity-guard-template",
       reasons: [
@@ -345,6 +352,7 @@ export function realizeArenaCapacityGuardFromParsedScripts(
   if (capacityHints.length > 1) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "arena-capacity-guard-template",
       reasons: [
@@ -398,6 +406,7 @@ export function realizeArenaStartOwnershipGuardFromParsedScripts(
   if (startHints.length === 0) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "arena-ownership-guard-template",
       reasons: [
@@ -409,6 +418,7 @@ export function realizeArenaStartOwnershipGuardFromParsedScripts(
   if (startHints.length > 1) {
     return {
       status: "blocked",
+      sourceKind: "built-in-planner",
       sourceId:
         "arena-ownership-guard-template",
       reasons: [
