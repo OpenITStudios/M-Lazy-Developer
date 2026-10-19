@@ -13,14 +13,14 @@ describe("bedrock harness capability parity", () => {
     const source = await readFile(
       resolve(
         process.cwd(),
-        "runtime/bedrock-reliability-harness/scripts/action.js",
+        "engine/runtime/bedrock-reliability-harness/scripts/action.js",
       ),
       "utf8",
     );
 
     const extracted = extractHarnessCapabilities(
       source,
-      "runtime/bedrock-reliability-harness/scripts/action.js",
+      "engine/runtime/bedrock-reliability-harness/scripts/action.js",
       {
         spreadCapabilities: {
           SESSION_ACTION_CAPABILITIES:
