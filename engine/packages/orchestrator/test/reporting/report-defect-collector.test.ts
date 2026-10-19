@@ -33,6 +33,7 @@ const intent: GameplayIntentModel = {
     id: "intent:evidence",
     origin: "source-code",
     locator: "scripts/session.ts",
+    scope: "selected-artifact",
     summary: "Authored cleanup contract.",
   }],
   nodes: [{
