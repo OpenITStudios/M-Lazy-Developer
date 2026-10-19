@@ -468,8 +468,8 @@ describe("arena state isolation analysis", () => {
     const script = parseScriptFile(
       "main",
       [
-        "function maintain(arena) {",
-        "  arena.players.size;",
+        "function maintain(arena, player) {",
+        "  arena.players.add(player);",
         "  world.getDimension('overworld').runCommandAsync('execute as @a at @s run fill ~1 ~0 ~1 ~-1 ~0 ~-1 grass_path replace dirt');",
         "}",
       ].join("\n"),
@@ -496,8 +496,8 @@ describe("arena state isolation analysis", () => {
     const script = parseScriptFile(
       "main",
       [
-        "function startArena(arena) {",
-        "  arena.players.size;",
+        "function startArena(arena, player) {",
+        "  arena.players.add(player);",
         "  world.getDimension('overworld').runCommandAsync('tickingarea add circle ~ ~ ~ 4 shared_cinematic true');",
         "}",
       ].join("\n"),
@@ -525,8 +525,8 @@ describe("arena state isolation analysis", () => {
     const script = parseScriptFile(
       "main",
       [
-        "function cleanup(arena) {",
-        "  arena.players.size;",
+        "function cleanup(arena, participant) {",
+        "  arena.players.delete(participant);",
         "  for (const player of world.getAllPlayers()) {",
         "    player.removeTag('shared_carrier');",
         "  }",
@@ -556,8 +556,8 @@ describe("arena state isolation analysis", () => {
       "main",
       [
         "import { world } from \"@minecraft/server\";",
-        "function cleanup(arena) {",
-        "  arena.players.size;",
+        "function cleanup(arena, participant) {",
+        "  arena.players.delete(participant);",
         "  const players = world.getPlayers({ tags: ['arena_' + arena.id] });",
         "  for (const player of players) player.removeTag('carrier');",
         "}",
@@ -725,8 +725,8 @@ describe("exact API receiver typing for dynamic-property state ownership", () =>
   it("matches exact ESM world alias while rejecting shadowed lexical world identifiers", () => {
     const named = parseScriptFile("named", [
       'import { world as selectedWorld } from "@minecraft/server";',
-      "function join(arena) {",
-      "  arena.players.size;",
+      "function join(arena, player) {",
+      "  arena.players.add(player);",
       "  selectedWorld.setDynamicProperty('arena:' + arena.id, 1);",
       "}",
     ].join("\n"), { artifactId: "world-proof", relativePath: "scripts/world.js" });
@@ -736,8 +736,8 @@ describe("exact API receiver typing for dynamic-property state ownership", () =>
 
     const shadowed = parseScriptFile("shadowed", [
       'import { world } from "@minecraft/server";',
-      "function join(arena, world) {",
-      "  arena.players.size;",
+      "function join(arena, world, player) {",
+      "  arena.players.add(player);",
       "  world.setDynamicProperty('arena:' + arena.id, 1);",
       "}",
     ].join("\n"), {
@@ -814,8 +814,8 @@ describe("P3 receiver shadowing and source-only authority", () => {
   it("rejects an imported singleton alias shadowed by a block-local value", () => {
     const script = parse([
       'import { world as serverWorld } from "@minecraft/server";',
-      "function join(arena) {",
-      "  arena.players.size;",
+      "function join(arena, player) {",
+      "  arena.players.add(player);",
       "  const serverWorld = { setDynamicProperty() {} };",
       "  serverWorld.setDynamicProperty('arena:' + arena.id, 1);",
       "}",
