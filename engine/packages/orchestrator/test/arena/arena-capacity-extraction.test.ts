@@ -640,7 +640,7 @@ describe("arena concurrency capacity extraction", () => {
       "};",
       "const parties = configs.map(cfg => new Party(cfg));",
     ];
-    const read = (name: string, lines: string[]) => parseScriptFile(
+    const read = (name: string, lines: readonly string[]) => parseScriptFile(
       name, lines.join("\n"), {
         artifactId: "fixture", relativePath: "scripts/" + name + ".js",
       },

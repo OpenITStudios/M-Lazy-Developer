@@ -315,6 +315,7 @@ describe("decision ledger recording", () => {
         incidentId: "incident-1",
         candidateId: "candidate-1",
         items: [{
+          sourceKind: "built-in-planner",
           sourceId: "session-generation-guard-template",
           sourceVersion: "1",
           disposition: "missing-realizer",

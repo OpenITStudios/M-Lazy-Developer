@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { RuntimeProbeExchange } from "../../../../project-model/src/index.js";
+import type { RuntimeProbeExchange } from "../../../project-model/src/index.js";
 import { constructCausalLinkEvidence } from "../../src/diagnosis/causal-link-evidence-construction.js";
 
 const graph = {

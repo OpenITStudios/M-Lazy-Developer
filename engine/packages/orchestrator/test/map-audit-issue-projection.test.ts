@@ -668,11 +668,11 @@ describe("map audit issue projection", () => {
     };
     expect(projectReadyAuditIssues(graph, foreign)).toEqual([]);
 
-    const incomplete = {
-      ...capacity,
-      familyProof: undefined,
-      counterProofSearch: undefined,
-    };
+    const {
+      familyProof: _discardedFamilyProof,
+      counterProofSearch: _discardedCounterProof,
+      ...incomplete
+    } = capacity;
     const unfinished: GameplayDefectResolutionGate = {
       ...gate,
       confirmedDefectReadyIds: ["link:capacity"],

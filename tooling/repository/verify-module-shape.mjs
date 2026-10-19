@@ -41,6 +41,18 @@ for (const [area, policy] of Object.entries(areaPolicies)) {
       );
     }
 
+    // Report System Next is a deliberately isolated, Node-native renderer.
+    // Its canonical entrypoint is render.mjs in the module root, as locked
+    // by its approved design. Do not move it or fabricate an unused src/.
+    if (area === "apps" && moduleName === "report-system-next") {
+      for (const name of ["render.mjs", "contract.mjs", "client.js"]) {
+        if (!existsSync(resolve(modulePath, name))) {
+          failures.push(`${area}/${moduleName}: missing canonical renderer file ${name}`);
+        }
+      }
+      continue;
+    }
+
     if (!existsSync(sourcePath) || !statSync(sourcePath).isDirectory()) {
       failures.push(`${area}/${moduleName}: missing src/ directory`);
       continue;

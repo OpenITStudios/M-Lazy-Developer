@@ -989,9 +989,9 @@ describe("source-linked Game Design path bridges (bounded source-only)", () => {
 
     // Without an explicitly selected artifact ID, an arbitrary trace from
     // an otherwise matching external world is NOT a current-map join proof.
-    const unknownArtifact: GameplayIntentModel = {
-      ...sourceBacked, artifactId: undefined,
-    };
+    const { artifactId: _unselectedArtifact, ...unknownArtifact } = sourceBacked;
+    // Absence of a selected artifact is not the same as an explicitly
+    // present property whose value is undefined.
     const missingArtifact = reconstructAuthoredJourneyCandidates(
       unknownArtifact, reconstructions, 128, 12, [sharedFlow]);
     expect(missingArtifact.candidates.some(path =>

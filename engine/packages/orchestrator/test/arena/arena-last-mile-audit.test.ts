@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   analyzeMultiplayerStaticRisks,
   analyzePendingWorldOperations,
-  assessStructureTransitionResidue,
   assessWorldReleaseState,
   proposeTickingAreaConsolidation,
 } from "../../src/index.js";
 import type { McStructureModel } from "../../../../adapters/mcstructure/src/index.js";
+import { assessStructureTransitionResidue } from "../../src/inspection/structure-transition-residue.js";
 
 describe("last-mile arena audit helpers", () => {
   it("finds a feasible ticking-area consolidation without guessing runtime state", () => {
