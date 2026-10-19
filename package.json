@@ -13,7 +13,7 @@
     "verify:source": "npm run typecheck && npm run bug-report-ui:build && npm test",
     "verify:full": "npm run verify:repository && npm run verify:source",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --exclude apps/report-system-next/render.test.mjs --exclude apps/report-system-next/client.acceptance.test.mjs && node --test apps/report-system-next/render.test.mjs apps/report-system-next/client.acceptance.test.mjs",
     "cli": "tsx apps/cli/src/main.ts",
     "verify:modules": "node tooling/repository/verify-module-shape.mjs",
     "verify:dependencies": "node tooling/repository/verify-dependency-graph.mjs",
