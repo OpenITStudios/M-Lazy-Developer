@@ -26,12 +26,17 @@ function inspection(
         confidence: "high",
       },
       regionPlan: {
-        volumes: [],
+        // The baseline proof actually covers chunk 0,0. An empty region
+        // cannot prove that a change to that chunk invalidates arena proof.
+        volumes: [{
+          min: { x: 0, y: 0, z: 0 },
+          max: { x: 15, y: 0, z: 15 },
+        }],
         boundingBox: {
           min: { x: 0, y: 0, z: 0 },
-          max: { x: 0, y: 0, z: 0 },
+          max: { x: 15, y: 0, z: 15 },
         },
-        totalBlocks: 0,
+        totalBlocks: 256,
         evidenceCandidates: 0,
         mergeGapBlocks: 0,
         confidence: "high",
