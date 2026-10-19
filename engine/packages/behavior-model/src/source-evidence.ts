@@ -1024,8 +1024,12 @@ export function deriveSourceEffectSlices(
       const current = queue[index]!;
       const region = regions.get(current.regionId);
       const parents = incoming.get(current.regionId) ?? [];
+      // A dialogue command is an authored entry into an exact /function
+      // reference chain. It is source-path context, not runtime activation.
+      // Like an uncalled mcfunction, it must have no upstream resolved caller.
       const validEntry = region?.kind === "event-source" ||
         region?.kind === "script-module" ||
+        (region?.kind === "dialogue-command" && parents.length === 0) ||
         (region?.kind === "mcfunction" && parents.length === 0);
       if (validEntry) {
         const entryToEffectEdges = current.path;
