@@ -3,12 +3,19 @@ import { diffWorldDbNative } from "../../src/inspection/world-db-diff.js";
 import type { WorldDbNativeSummary } from "../../src/world-db-analysis.js";
 
 function summary(overrides: Partial<WorldDbNativeSummary> = {}): WorldDbNativeSummary {
+  // Under exactOptionalPropertyTypes, an explicit undefined means absence
+  // of a native scan field, not a value in the canonical summary.
+  const definedOverrides = Object.fromEntries(
+    Object.entries(overrides).filter(([, value]) => value !== undefined),
+  ) as Partial<WorldDbNativeSummary>;
   return {
     status: "scanned",
     entriesScanned: 10,
     truncated: false,
     actorRecords: 2,
     actorDigestRecords: 1,
+    actorContentRecordsHashed: 2,
+    actorContentComplete: true,
     chunkRecords: 5,
     blockEntityRecords: 1,
     pendingTickRecords: 0,
@@ -24,7 +31,7 @@ function summary(overrides: Partial<WorldDbNativeSummary> = {}): WorldDbNativeSu
       kinds: ["BlockEntity"],
     }],
     chunkSignalsTruncated: false,
-    ...overrides,
+    ...definedOverrides,
   };
 }
 

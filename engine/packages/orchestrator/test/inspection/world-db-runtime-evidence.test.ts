@@ -9,6 +9,8 @@ describe("world-db runtime evidence", () => {
       truncated: false,
       actorRecords: 0,
       actorDigestRecords: 0,
+      actorContentRecordsHashed: 0,
+      actorContentComplete: true,
       chunkRecords: 2,
       blockEntityRecords: 1,
       pendingTickRecords: 1,

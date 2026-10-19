@@ -26,7 +26,10 @@ const restore = {
   deterministicItemRestores: 0,
   unknownIdentityGrants: 0,
   multipleRestoreOwners: 1,
+  initialSessionDuplicateOwners: 0,
+  initialSessionOverlapUnresolved: 0,
   conflicts: [],
+  crossLifecycleConflicts: [],
 };
 
 describe("inventory lifecycle diagnostics", () => {

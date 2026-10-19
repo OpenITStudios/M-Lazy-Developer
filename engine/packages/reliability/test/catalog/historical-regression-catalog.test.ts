@@ -10,6 +10,8 @@ const incoming: RegressionCase = {
   title: "Arena state leaks",
   domain: "multiplayer",
   discoveredBy: "approved-ai",
+  triggerTags: ["arena-isolation"],
+  capabilityTags: ["multiplayer"],
   provenance: {
     source: "Canonical Bug Report V2",
     reportPath:

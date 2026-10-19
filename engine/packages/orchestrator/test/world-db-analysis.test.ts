@@ -9,6 +9,8 @@ describe("world DB native summary contract", () => {
       truncated: false,
       actorRecords: 5,
       actorDigestRecords: 2,
+      actorContentRecordsHashed: 5,
+      actorContentComplete: true,
       chunkRecords: 80,
       blockEntityRecords: 4,
       pendingTickRecords: 3,

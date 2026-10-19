@@ -105,6 +105,7 @@ describe("engineering review invalidation projection", () => {
         intentInvariantIds: ["inv:1"],
         ok: true,
         proofLevel: "LIVE GAME VERIFIED",
+        proofSufficient: true,
         current: false,
         staleReasons: [
           "artifact fingerprint changed since this validation run",

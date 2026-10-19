@@ -11,7 +11,7 @@ function actor(
   const value = comp({
     identifier: string(identifier),
     Pos: list(float([x, y, z])),
-  }, "") as NBT;
+  }, "") as unknown as NBT;
   return new Uint8Array(
     writeUncompressed(value, "little"),
   );
