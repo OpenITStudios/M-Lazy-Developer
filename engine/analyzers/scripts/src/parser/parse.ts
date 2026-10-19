@@ -686,19 +686,20 @@ function bindArenaParserRegions(
   const canonicalCounts = new Map<string, number>();
   const visit = (node: ts.Node): void => {
     let parserRegion: string | undefined;
+    let body: ts.Block | undefined;
     if (ts.isFunctionDeclaration(node) && node.body) {
       parserRegion = node.name
         ? "function:" + node.name.text
         : "anonymous-function";
+      body = node.body;
     } else if (ts.isMethodDeclaration(node) && node.body &&
                ts.isIdentifier(node.name)) {
       parserRegion = sourceMethodRegion(node, file);
+      body = node.body;
     }
-    if (parserRegion !== undefined &&
-        ("body" in node) && node.body &&
-        ts.isBlock(node.body)) {
+    if (parserRegion !== undefined && body !== undefined) {
       const evidenceRegion =
-        arenaEvidenceExecutionRegionId(node.body, file);
+        arenaEvidenceExecutionRegionId(body, file);
       candidates.set(evidenceRegion, [
         ...(candidates.get(evidenceRegion) ?? []), parserRegion,
       ]);

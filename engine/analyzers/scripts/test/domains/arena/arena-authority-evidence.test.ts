@@ -1115,9 +1115,9 @@ describe("arena authority evidence", () => {
     expect(paths.find((path) => path.executionRegion.startsWith("method:Limited.join@"))?.capacityAuthorityProven).toBe(true);
     expect(paths.find((path) => path.executionRegion.startsWith("method:Open.join@"))?.capacityAuthorityProven).toBe(false);
     expect(paths.find(path => path.executionRegion.startsWith("method:Limited.join@"))
-      ?.parserExecutionRegion).toMatch(/^function:Limited\\.join@\\d+:\\d+$/);
+      ?.parserExecutionRegion).toMatch(/^function:Limited\.join@\d+:\d+$/);
     expect(paths.find(path => path.executionRegion.startsWith("method:Open.join@"))
-      ?.parserExecutionRegion).toMatch(/^function:Open\\.join@\\d+:\\d+$/);
+      ?.parserExecutionRegion).toMatch(/^function:Open\.join@\d+:\d+$/);
   });
 
   it("does not close capacity when a second unguarded roster write follows", () => {
