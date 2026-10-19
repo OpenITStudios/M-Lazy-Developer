@@ -20,6 +20,55 @@ function inspection(
       proofConclusion: {
         conclusion: "complete-proof",
       },
+      spatialLayout: {
+        basis: "topology",
+        canonical: {
+          arenaId: "fixture-arena",
+          anchor: { x: 0, y: 0, z: 0 },
+        },
+        replicas: [],
+        offsets: [],
+        confidence: "high",
+      },
+      regionPlan: {
+        volumes: [{
+          min: { x: 0, y: 0, z: 0 },
+          max: { x: 15, y: 15, z: 15 },
+        }],
+        boundingBox: {
+          min: { x: 0, y: 0, z: 0 },
+          max: { x: 15, y: 15, z: 15 },
+        },
+        totalBlocks: 4096,
+        evidenceCandidates: 1,
+        mergeGapBlocks: 0,
+        confidence: "high",
+      },
+      entitySpawnEvidence: [],
+    },
+    worldDatabase: {
+      nativeScan: {
+        status: "scanned",
+        truncated: false,
+        chunkSignalsTruncated: false,
+        chunkContentObservationsTruncated: false,
+        chunkContentObservations: [{
+          dimensionId: 0,
+          chunkX: 0,
+          chunkZ: 0,
+          kind: "SubChunk",
+          subChunkIndex: 0,
+          valueHash: "unchanged-voxel-content",
+        }],
+        actorRecords: 0,
+        actorContentComplete: true,
+      },
+    },
+    structureRuntime: {
+      structurePlacements: [],
+    },
+    scriptSpatial: {
+      structurePlacements: [],
     },
     gameplayWorld: {
       intent: {
