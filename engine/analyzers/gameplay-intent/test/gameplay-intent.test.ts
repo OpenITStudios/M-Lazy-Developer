@@ -12,6 +12,11 @@ const source = {
     "behavior_packs/demo/src/domain/session-state-machine.ts",
 };
 
+const bundledModuleSource = {
+  artifactId: "art_test",
+  relativePath: "behavior_packs/demo/scripts/main.js",
+};
+
 function script(): ParsedScriptFile {
   return {
     identifier: "domain/session-state-machine.ts",
@@ -335,11 +340,7 @@ describe("gameplay intent analyzer", () => {
     const bundled: ParsedScriptFile = {
       ...base,
       identifier: "scripts/main",
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/scripts/main.js",
-      },
+      source: bundledModuleSource,
       localFunctionCalls: [],
       lifecycleMemberExposures: [],
       enumValueComparisons: [],
@@ -353,27 +354,27 @@ describe("gameplay intent analyzer", () => {
         {
           member: "currentStageIndex",
           memberKind: "property",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "stageNames",
           memberKind: "property",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "countdownRunning",
           memberKind: "property",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "activeCinematics",
           memberKind: "property",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "startCountdown",
           memberKind: "method",
-          source: base.source,
+          source: bundledModuleSource,
         },
       ],
     };
@@ -415,6 +416,13 @@ describe("gameplay intent analyzer", () => {
       returnOutcomes: [],
       guardedOutcomes: [],
       commandLiterals: [],
+      // Declared members belong to this exact module: filenames alone
+      // are insufficient evidence for an intent candidate.
+      declaredMembers: [{
+        member: identifier.split("/").slice(-1)[0]!,
+        memberKind: "method",
+        source: { artifactId: "art_test", relativePath },
+      }],
     });
 
     const result = extractGameplayIntentSignals([
@@ -479,6 +487,13 @@ describe("gameplay intent analyzer", () => {
       returnOutcomes: [],
       guardedOutcomes: [],
       commandLiterals: [],
+      // Declared members belong to this exact module: filenames alone
+      // are insufficient evidence for an intent candidate.
+      declaredMembers: [{
+        member: identifier.split("/").slice(-1)[0]!,
+        memberKind: "method",
+        source: { artifactId: "art_test", relativePath },
+      }],
     });
 
     const result = extractGameplayIntentSignals([
@@ -544,11 +559,7 @@ describe("gameplay intent analyzer", () => {
     const bundled: ParsedScriptFile = {
       ...base,
       identifier: "scripts/main",
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/scripts/main.js",
-      },
+      source: bundledModuleSource,
       localFunctionCalls: [],
       lifecycleMemberExposures: [],
       enumValueComparisons: [],
@@ -563,37 +574,37 @@ describe("gameplay intent analyzer", () => {
           member: "phase",
           memberKind: "property",
           containerHint: "A",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "reconnect",
           memberKind: "method",
           containerHint: "A",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "disconnect",
           memberKind: "method",
           containerHint: "A",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "clearPlayerInventory",
           memberKind: "method",
           containerHint: "B",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "getNearbyReviver",
           memberKind: "method",
           containerHint: "C",
-          source: base.source,
+          source: bundledModuleSource,
         },
         {
           member: "initializeScoreboard",
           memberKind: "method",
           containerHint: "C",
-          source: base.source,
+          source: bundledModuleSource,
         },
       ],
     };
@@ -619,11 +630,7 @@ describe("gameplay intent analyzer", () => {
     const bundled: ParsedScriptFile = {
       ...base,
       identifier: "scripts/main",
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/scripts/main.js",
-      },
+      source: bundledModuleSource,
       localFunctionCalls: [],
       lifecycleMemberExposures: [],
       enumValueComparisons: [],
@@ -648,7 +655,7 @@ describe("gameplay intent analyzer", () => {
         member,
         memberKind: "method" as const,
         containerHint: "A",
-        source: base.source,
+        source: bundledModuleSource,
       })),
     };
 
@@ -894,11 +901,7 @@ describe("gameplay intent analyzer", () => {
     const bundled: ParsedScriptFile = {
       ...base,
       identifier: "scripts/main",
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/scripts/main.js",
-      },
+      source: bundledModuleSource,
       localFunctionCalls: [],
       lifecycleMemberExposures: [],
       enumValueComparisons: [],
@@ -919,7 +922,7 @@ describe("gameplay intent analyzer", () => {
         member,
         memberKind: "method" as const,
         containerHint: "A",
-        source: base.source,
+        source: bundledModuleSource,
       })),
     };
 
@@ -1206,11 +1209,7 @@ describe("gameplay intent analyzer", () => {
     const bundled: ParsedScriptFile = {
       ...base,
       identifier: "scripts/main",
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/scripts/main.js",
-      },
+      source: bundledModuleSource,
       localFunctionCalls: [],
       lifecycleMemberExposures: [],
       enumValueComparisons: [],
@@ -1235,7 +1234,7 @@ describe("gameplay intent analyzer", () => {
         member,
         memberKind: "method" as const,
         containerHint: "A",
-        source: base.source,
+        source: bundledModuleSource,
       })),
     };
 
@@ -1261,11 +1260,7 @@ describe("gameplay intent analyzer", () => {
     const bundled: ParsedScriptFile = {
       ...base,
       identifier: "scripts/main",
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/scripts/main.js",
-      },
+      source: bundledModuleSource,
       localFunctionCalls: [],
       lifecycleMemberExposures: [],
       enumValueComparisons: [],
@@ -1284,7 +1279,7 @@ describe("gameplay intent analyzer", () => {
         member,
         memberKind: "method" as const,
         containerHint: "A",
-        source: base.source,
+        source: bundledModuleSource,
       })),
     };
 

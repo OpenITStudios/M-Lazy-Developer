@@ -11,7 +11,7 @@
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
     "proofRegistryFingerprint": "a8fa4f54",
-    "proofInventoryFingerprint": "40c35ac1"
+    "proofInventoryFingerprint": "9de21c54"
   },
   "summary": {
     "taskCapabilities": 55,
@@ -301,7 +301,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -334,7 +334,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -433,7 +433,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -466,7 +466,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -499,7 +499,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -532,7 +532,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -565,7 +565,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -598,7 +598,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -631,7 +631,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -664,7 +664,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -697,7 +697,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -730,7 +730,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -765,7 +765,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -798,7 +798,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -893,7 +893,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -926,7 +926,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
@@ -1091,7 +1091,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 632,
+      "sourceFiles": 633,
       "testFiles": 331,
       "hasReadme": true,
       "proofPaths": [
