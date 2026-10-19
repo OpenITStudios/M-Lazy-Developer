@@ -1,4 +1,5 @@
 import { deriveProgressionActiveStateValues } from "../../../../analyzers/scripts/src/index.js";
+import type { SourceRef } from "../../../project-model/src/index.js";
 import type {
   CrossFileCallEdge,
   ParsedScriptFile,
@@ -320,6 +321,8 @@ interface LifecycleActorGuard {
   readonly scriptPath: string;
   readonly executionRegion: string;
   readonly actorIdentifier: string;
+  readonly subjectExpression?: string;
+  readonly conditionSource?: SourceRef;
 }
 
 interface ScriptedRemovalEvidence {
@@ -944,6 +947,9 @@ function lifecycleActorGuards(
               normalizeActorIdentifier(
                 item.entityIdentifier,
               ),
+            ...(item.subjectExpression === undefined
+              ? {} : { subjectExpression: item.subjectExpression }),
+            conditionSource: item.source,
           }]
         : [],
     )
@@ -1015,6 +1021,45 @@ function scriptedRemovalEvidence(
             call.method === "remove"
               ? "entity-remove"
               : "entity-kill",
+        });
+      }
+    }
+
+    // Untyped entity.remove() remains a candidate only when an exact
+    // actor-type condition guards the SAME receiver and source call site.
+    // This does not establish live actor identity or execution.
+    for (const call of script.parsed.unresolvedReceiverCalls ?? []) {
+      if (call.method !== "remove" && call.method !== "kill") continue;
+      for (const guard of guards) {
+        if (guard.scriptPath !== path ||
+            guard.executionRegion !== call.executionRegion ||
+            guard.subjectExpression !== call.receiverExpression ||
+            !guard.conditionSource) continue;
+        const a = guard.conditionSource;
+        const x = a.range;
+        const matched = (call.lexicalGuards ?? []).some(branch => {
+          const b = branch.source;
+          const y = b.range;
+          return branch.branch === "true" &&
+            a.artifactId === b.artifactId &&
+            a.relativePath === b.relativePath &&
+            a.jsonPointer === b.jsonPointer &&
+            x?.lineStart !== undefined &&
+            x.columnStart !== undefined &&
+            x.lineEnd !== undefined &&
+            x.columnEnd !== undefined &&
+            y?.lineStart === x.lineStart &&
+            y.columnStart === x.columnStart &&
+            y.lineEnd === x.lineEnd &&
+            y.columnEnd === x.columnEnd;
+        });
+        if (!matched) continue;
+        output.push({
+          scriptPath: path,
+          executionRegion: call.executionRegion,
+          actorIdentifier: guard.actorIdentifier,
+          mechanism: call.method === "remove"
+            ? "entity-remove" : "entity-kill",
         });
       }
     }
