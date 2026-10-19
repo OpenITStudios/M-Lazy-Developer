@@ -3,17 +3,15 @@ import type { DecisionBasisRevision } from "../../../project-model/src/index.js"
 import {
   CONTRACT_REGISTRY_REVISION,
 } from "../../../project-model/src/index.js";
-import type {
-  ApplyTransactionContext,
-  ApplyTransactionResult,
-  RollbackAppliedFilesResult,
-} from "../../../repair/src/apply.js";
 import {
   applyPatchTransaction,
   rollbackAppliedFiles,
-} from "../../../repair/src/apply.js";
-import type { PatchTransaction } from "../../../repair/src/index.js";
-import type { MutationWorkspace } from "../../../repair/src/index.js";
+  type ApplyTransactionContext,
+  type ApplyTransactionResult,
+  type RollbackAppliedFilesResult,
+  type PatchTransaction,
+  type MutationWorkspace,
+} from "../../../repair/src/index.js";
 import type { TransactionValidationResult } from "../../../validation/src/index.js";
 import {
   proveStaticGraphPreservation,

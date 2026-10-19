@@ -18,3 +18,6 @@ export * from "./release/index.js";
  * Engine-development callers may import internal modules explicitly.
  */
 export * from "./map-classification-routing.js";
+
+// Explicit engineering-only CLI surface; not an alternate map-audit entry.
+export * from "./engineering-cli-api.js";

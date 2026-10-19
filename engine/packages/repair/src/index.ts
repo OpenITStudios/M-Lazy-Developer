@@ -9,3 +9,11 @@ export * from "./report-lifecycle.js";
 
 export * from "./authorization.js";
 export * from "./atomic-write.js";
+
+// Exact authorized workspace transaction operations and proof receipt shapes.
+export { applyPatchTransaction, rollbackAppliedFiles } from "./apply.js";
+export type {
+  ApplyTransactionContext,
+  ApplyTransactionResult,
+  RollbackAppliedFilesResult,
+} from "./apply.js";
