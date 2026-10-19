@@ -15,7 +15,7 @@ import type {
 import type { SourceRef } from "../../../project-model/src/index.js";
 import { semanticIrExecutionTraces, type SemanticIr } from "../../../semantic-ir/src/index.js";
 import { eventRegionId, scriptRegionId } from "../diagnosis/semantic-ir-stage.js";
-import { sourceClassMethodRegion } from "../../../../analyzers/scripts/src/core/control-flow.js";
+import { sourceClassMethodRegion } from "../../../../analyzers/scripts/src/index.js";
 import {
   validateGameplayIntentModel,
   type GameplayIntentEdge,

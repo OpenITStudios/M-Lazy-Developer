@@ -3,7 +3,7 @@ import type {
 } from "../../../../analyzers/scripts/src/index.js";
 import type {
   ScriptSequentialPathEvidence,
-} from "../../../../analyzers/scripts/src/core/statement-sequence.js";
+} from "../../../../analyzers/scripts/src/index.js";
 import type { SourceRef } from "../../../project-model/src/index.js";
 
 export interface PersistenceSourceProperty {

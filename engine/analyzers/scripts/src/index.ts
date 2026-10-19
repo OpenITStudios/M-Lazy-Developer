@@ -3,6 +3,11 @@ export * from "./parser/parse.js";
 export * from "./parser/source-gameplay-content.js";
 export * from "./parser/resolve.js";
 export * from "./core/types.js";
+// Stable, narrow cross-owner contracts already consumed by the orchestrator
+// and block analysis modules. Avoid exposing whole internal helper modules.
+export { sourceClassMethodRegion } from "./core/control-flow.js";
+export type { ScriptSequentialPathEvidence } from "./core/statement-sequence.js";
+export type { BlockCustomComponentRegistrationEvidence } from "./domains/automation/block-custom-component-evidence.js";
 
 export * from "./runtime/runtime-evidence.js";
 

@@ -1,4 +1,4 @@
-import type { BlockCustomComponentRegistrationEvidence } from "../../scripts/src/domains/automation/block-custom-component-evidence.js";
+import type { BlockCustomComponentRegistrationEvidence } from "../../scripts/src/index.js";
 import type { BlockCustomComponentContract, BlockTickSchedule, ParsedBlockDefinition } from "./types.js";
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
