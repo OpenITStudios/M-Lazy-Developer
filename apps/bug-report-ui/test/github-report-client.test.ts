@@ -23,6 +23,7 @@ const report = {
     fixed: false,
     severity: "minor" as const,
     category: "ui-feedback" as const,
+    issueType: "BUG" as const,
     foundBy: "tester" as const,
     title: "A",
     problem: "A",
