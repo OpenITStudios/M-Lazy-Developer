@@ -239,6 +239,14 @@ function reachable(
   return [...seen].sort();
 }
 
+/** Position-qualified owner IDs remain canonical evidence identities.
+ * A parser/CFG region can be used for graph traversal only after the parser
+ * established its unique declaration binding. Never strip source offsets.
+ */
+function arenaRegion(path: ScriptArenaAuthorityPath): string {
+  return path.parserExecutionRegion ?? path.executionRegion;
+}
+
 function authorityPathsByRegion(
   script: ParsedScriptFile,
 ): Map<string, ScriptArenaAuthorityPath[]> {
@@ -252,11 +260,11 @@ function authorityPathsByRegion(
       script.arenaAuthorityPaths ?? []
   ) {
     const list =
-      output.get(path.executionRegion) ??
+      output.get(arenaRegion(path)) ??
       [];
     list.push(path);
     output.set(
-      path.executionRegion,
+      arenaRegion(path),
       list,
     );
   }
@@ -315,23 +323,23 @@ function terminalRegions(
   ) {
     if (
       terminalNameCandidate(
-        path.executionRegion,
+        arenaRegion(path),
       )
     ) {
       add(
-        path.executionRegion,
+        arenaRegion(path),
         "terminal-name",
       );
     }
     if (path.membershipRelease) {
       add(
-        path.executionRegion,
+        arenaRegion(path),
         "membership-release",
       );
     }
     if (path.generationInvalidation) {
       add(
-        path.executionRegion,
+        arenaRegion(path),
         "generation-invalidation",
       );
     }
@@ -657,7 +665,7 @@ function assessProject(
       const key =
         qualifiedRegion(
           script,
-          path.executionRegion,
+          arenaRegion(path),
         );
       const list =
         paths.get(key) ?? [];
@@ -666,19 +674,19 @@ function assessProject(
 
       if (
         terminalNameCandidate(
-          path.executionRegion,
+          arenaRegion(path),
         )
       ) {
         addCandidate(
           script,
-          path.executionRegion,
+          arenaRegion(path),
           "terminal-name",
         );
       }
       if (path.membershipRelease) {
         addCandidate(
           script,
-          path.executionRegion,
+          arenaRegion(path),
           "membership-release",
         );
       }
@@ -687,7 +695,7 @@ function assessProject(
       ) {
         addCandidate(
           script,
-          path.executionRegion,
+          arenaRegion(path),
           "generation-invalidation",
         );
       }
@@ -1458,9 +1466,16 @@ function materialMutationRegions(
             item.kind,
           )
         )
-        .map((item) =>
-          item.executionRegion
-        ),
+        .map((item) => {
+          // Reuse exactly one evidence-owner-to-parser binding; a lexical
+          // name shared by other declarations is not enough to join regions.
+          const owners = (script.arenaAuthorityPaths ?? []).filter(path =>
+            path.executionRegion === item.executionRegion &&
+            path.arenaExpression === item.arenaExpression);
+          return owners.length === 1
+            ? arenaRegion(owners[0]!)
+            : item.executionRegion;
+        }),
       ...(script.inventoryLifecycleEvidence ?? [])
         .filter((item) =>
           INVENTORY_MUTATION_KINDS.has(
