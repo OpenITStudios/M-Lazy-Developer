@@ -398,7 +398,7 @@ export function analyzePersistenceSource(
                   source: item.source,
                   order,
                   evidenceStatus: "SOURCE_SEQUENCE_ONLY" as const,
-                }] : [];
+                }];
               })
               .sort((a, b) =>
                 (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
