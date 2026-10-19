@@ -173,11 +173,11 @@ unavailable proof      → exact UNKNOWN residue; no user-PC handoff
 
 Never use temporary branches/workflows, base64 stand-ins, placeholder source, alternate repository structures, or force-pushes merely to bypass connector limitations.
 
-## CI policy: automatic Full Verify on Local
+## CI policy: disabled during evidence-led test pruning on Local
 
-The user explicitly authorized automatic Full CI on the `Local` development branch. `Verify` runs on each push to `Local` and remains manually dispatchable for intentional rechecks. Its six independent checks (repository policy, source hygiene, public API, typecheck, UI build, and Vitest) must all succeed; collect all outcomes in one run, never mask a failed gate. Concurrency cancels obsolete in-progress runs for the same branch to conserve compute. A green CI result does not prove Minecraft runtime behavior.
+The user has explicitly suspended GitHub CI because automatically running the large Vitest suite blocks repository work. The `Verify` and `Repository Policy` workflow YAML files have been removed from `Local`, so development pushes to this branch do not trigger their verification jobs. Their previous definitions remain recoverable from Git history; this is not an authorization to delete source contracts, lower production evidence gates, or claim PASS without execution.
 
-`Repository Policy` and `Package Source Snapshot` remain `workflow_dispatch` only; do not auto-run the portable snapshot transfer on every commit. Do not add `pull_request` or scheduled CI triggers without separate authorization. Continue independently source-verifiable work even when CI is unavailable or failing. Never represent static inspection as executed tests or Minecraft runtime proof. Branch protection and required checks are separate settings and are not changed by this workflow policy.
+`Package Source Snapshot` remains manual (`workflow_dispatch`) and is a packaging operation, not CI. Do not create new automatic, pull-request, scheduled, or manual CI verification workflows on `Local` unless the user explicitly reauthorizes CI. Changes on `main`, GitHub repository-level workflow state, and branch-protection required checks are separate authorities and are **not** modified here. During pruning use exact-ref source/consumer inspection; mark executable validation NOT EXECUTED, and preserve a small later acceptance set.
 
 ## 8. Verification
 
