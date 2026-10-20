@@ -38,13 +38,15 @@
       "path": "apps/bug-report-ui/test/report-file.test.ts",
       "lane": "development",
       "owner": "apps/bug-report-ui",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "apps/bug-report-ui",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Compatibility upload rejects non-JSON and preserves canonical V2 export naming."
     },
     {
       "path": "apps/bug-report-ui/test/report-view.test.ts",
@@ -74,13 +76,15 @@
       "path": "apps/report-system-next/client.acceptance.test.mjs",
       "lane": "acceptance",
       "owner": "apps/report-system-next",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "apps/report-system-next",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Native Node acceptance suite read as source; requires more detailed assertion-level mapping before final review."
     },
     {
       "path": "apps/report-system-next/render.test.mjs",
@@ -98,13 +102,15 @@
       "path": "engine/adapters/leveldb/test/actor.test.ts",
       "lane": "development",
       "owner": "engine/adapters/leveldb",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/adapters/leveldb",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Actor decoding deliberately does not invent absent NBT fields."
     },
     {
       "path": "engine/adapters/leveldb/test/block-entity.test.ts",
@@ -134,25 +140,29 @@
       "path": "engine/adapters/leveldb/test/keyspace.test.ts",
       "lane": "development",
       "owner": "engine/adapters/leveldb",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/adapters/leveldb",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Keyspace classification supports actor and chunk identity decoding."
     },
     {
       "path": "engine/adapters/leveldb/test/subchunk.test.ts",
       "lane": "development",
       "owner": "engine/adapters/leveldb",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/adapters/leveldb",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Persistent v9 palette decoding rejects runtime-only block identities."
     },
     {
       "path": "engine/adapters/mcstructure/test/command-chain.test.ts",
@@ -194,37 +204,43 @@
       "path": "engine/adapters/mcstructure/test/placement-transform.test.ts",
       "lane": "development",
       "owner": "engine/adapters/mcstructure",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/adapters/mcstructure",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Coordinate rotation and transformed world placement contracts."
     },
     {
       "path": "engine/adapters/mcstructure/test/runtime-content.test.ts",
       "lane": "development",
       "owner": "engine/adapters/mcstructure",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/adapters/mcstructure",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Command block and inventory extraction must be sourced to matching structure entries."
     },
     {
       "path": "engine/adapters/nbt/test/preservation.test.ts",
       "lane": "development",
       "owner": "engine/adapters/nbt",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/adapters/nbt",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Untouched NBT documents preserve exact bytes."
     },
     {
       "path": "engine/analyzers/blocks/test/automation.test.ts",
@@ -7662,6 +7678,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "5f6668e344444f39ca130ec41a4854cefbe5e426",
+  "reviewedAtCommit": "6431ddc07a12a5f5e966d45d1024fc4d1058b570",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }

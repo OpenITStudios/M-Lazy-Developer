@@ -29,7 +29,7 @@ function loadInventory() {
   if (!Array.isArray(data.tests)) throw new Error("Invalid test inventory");
   const paths = new Set();
   for (const item of data.tests) {
-    if (typeof item.path !== "string" || !/^[a-zA-Z0-9._/-]+\\.test\\.(ts|tsx|js|mjs|cjs)$/.test(item.path) ||
+    if (typeof item.path !== "string" || !/^[a-zA-Z0-9._/-]+\.test\.(ts|tsx|js|mjs|cjs)$/.test(item.path) ||
         item.path.split("/").includes("..") || paths.has(item.path) || !lanes.includes(item.lane) ||
         !existsSync(resolve(item.path))) {
       throw new Error("Stale or invalid test inventory entry: " + item.path);
@@ -49,7 +49,7 @@ if (mode === "--acceptance" && args.length <= 1) {
 } else if (mode === "--full" && args.length === 1) {
   vitestFiles = null; // Vitest discovers the complete suite, excluding node:test.
   selectedNative = nativeFiles;
- } else if (mode === "--lane" && args.length === 2 && lanes.includes(args[1])) {
+} else if (mode === "--lane" && args.length === 2 && lanes.includes(args[1])) {
   // Provisional routing only. Not proof of coverage or permission to skip safety tests.
   const matching = loadInventory().filter((item) => item.lane === args[1]).map((item) => item.path);
   selectedNative = matching.filter((path) => nativeFiles.includes(path));
