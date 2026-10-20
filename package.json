@@ -10,7 +10,7 @@
   "scripts": {
     "verify:repository": "node tooling/repository/verify.mjs && npm run verify:ownership && npm run verify:capability-truth && npm run verify:authority && npm run verify:naming && npm run verify:information-architecture && npm run verify:knowledge-architecture && npm run verify:remote-workflow-policy && npm run verify:documentation-paths && npm run verify:documentation-routing && npm run verify:documentation-ownership && npm run verify:bug-finding-coverage && npm run verify:skills && npm run verify:skill-evals && npm run verify:permissions && npm run verify:audit-entrypoint && npm run audit:skills && npm run verify:modules && npm run verify:dependencies && node tooling/repository/verify-boundaries.mjs && node tooling/repository/verify-contract-registry.mjs && node tooling/repository/verify-reliability-catalogs.mjs && node tooling/repository/verify-reliability-history.mjs && node tooling/repository/verify-knowledge-catalogs.mjs && npm run verify:knowledge-bindings && npm run verify:detection-corpus",
     "verify:boundaries": "node tooling/repository/verify-boundaries.mjs",
-    "verify:source": "npm run typecheck && npm run bug-report-ui:build && npm test",
+    "verify:source": "npm run typecheck && npm run bug-report-ui:build && npm run test:full",
     "verify:full": "npm run verify:repository && npm run verify:source",
     "typecheck": "tsc --noEmit",
     "test": "node tooling/repository/run-tests.mjs",
@@ -53,7 +53,9 @@
     "score:detection-benchmark": "node .agents/skills/m-bedrock-detection-benchmark/scripts/score-benchmark.mjs",
     "aggregate:detection-benchmark": "node .agents/skills/m-bedrock-detection-benchmark/scripts/aggregate-runs.mjs",
     "freeze:detection-observation": "node .agents/skills/m-bedrock-detection-benchmark/scripts/freeze-observed-map-audit.mjs",
-    "audit": "tsx apps/cli/src/audit.ts"
+    "audit": "tsx apps/cli/src/audit.ts",
+    "test:full": "node tooling/repository/run-tests.mjs --full",
+    "test:focus": "node tooling/repository/run-tests.mjs --focus"
   },
   "dependencies": {
     "@zip.js/zip.js": "2.17.0",
