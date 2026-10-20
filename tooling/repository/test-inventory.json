@@ -1604,13 +1604,17 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-link-evidence-construction.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Conflicting or foreign-artifact runtime observations remain UNKNOWN rather than becoming causal proof."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-link-hypothesis-construction.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Validates knowledge-to-predicate construction but no independent negative or runtime authority case; candidate for integration consolidation after consumer comparison."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-link-reasoning-coordinator.test.ts",
@@ -2028,13 +2032,17 @@
       "path": "engine/packages/orchestrator/test/inspection/combat-contract-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Distinct from loader: forbids unsupported findings and projects observed revive contradictions."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/combat-contract-load.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Requires explicit combat policy booleans and refuses hidden defaults; contract trust boundary."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
@@ -2064,13 +2072,17 @@
       "path": "engine/packages/orchestrator/test/inspection/economy-contract-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates actual authored conflict from missing evidence; no-contract case yields no speculative defect."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/economy-contract-load.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Preserves explicit reward transaction policy and rejects invalid enum inputs."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/embedded-structure-graph.test.ts",
@@ -2278,13 +2290,17 @@
       "path": "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Distinguishes known denied drop from dynamic unknown and excludes world spawnItem as player-drop."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inventory-contract-load.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Guards reset/restore policy validity and prohibits destructive reset for player-durable items."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts",
@@ -2450,13 +2466,17 @@
       "path": "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates covered/uncovered region permissions and rejects references to nonexistent regions."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/spatial-authority-contract-load.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects unknown actions and duplicate authorization rules while preserving system vs player semantics."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/spatial-authority-diagnostics.test.ts",
@@ -4164,5 +4184,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "3dcc582830f91bd34e2ad1a5c44b3113de021423"
+  "reviewedAtCommit": "b58e894cdbd9d2d049e7b8b18fa99aa0a637151b"
 }
