@@ -1718,7 +1718,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/evidence-overlay.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Revision-stale authority/mirror divergence must be retained as separate evidence/diagnosis invariant."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/evidence-recovery.test.ts",
@@ -1730,7 +1732,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/first-wrong-transition.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Comparable stream ordering, incomparable streams and incomplete evidence protect causal proof honesty."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/invariant-intelligence.test.ts",
@@ -1778,7 +1782,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-generation-integrity.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Generation mismatch rejected while matching generation admitted; guards stale runtime evidence."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-intent-diagnostic-reclassification.test.ts",
@@ -1994,13 +2000,17 @@
       "path": "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Camera/fade authoring evidence is a production analyzer contract; preserve until integrated visual-feedback acceptance covers it."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Title timing, clear and reset are distinct authored operations, not duplication of cinematic camera analysis."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts",
@@ -2066,7 +2076,9 @@
       "path": "engine/packages/orchestrator/test/inspection/embedded-structure-graph.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Integrated embedded command analysis, graph dependency, world placement, and native chunk evidence; retained after prior consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/engineering-analysis-stage.test.ts",
@@ -2120,7 +2132,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-analysis-priority.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "High-impact developer skip capability must retain deep review and permission priority; security-relevant negative admission."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-architecture-identity.test.ts",
@@ -2312,7 +2326,9 @@
       "path": "engine/packages/orchestrator/test/inspection/mount-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Seat contradiction must not be promoted into observed runtime rider state; negative evidence boundary."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/multiplayer-state-validation.test.ts",
@@ -2396,7 +2412,9 @@
       "path": "engine/packages/orchestrator/test/inspection/script-performance-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Scheduler and entity-query counting must not claim measured runtime cost; maintain until full inspection acceptance covers it."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-safe-config-analysis.test.ts",
@@ -4144,5 +4162,7 @@
       "owner": "tooling/repository",
       "review": "pending-semantic-review"
     }
-  ]
+  ],
+  "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
+  "reviewedAtCommit": "3dcc582830f91bd34e2ad1a5c44b3113de021423"
 }
