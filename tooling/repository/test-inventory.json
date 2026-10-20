@@ -1574,13 +1574,17 @@
       "path": "engine/packages/orchestrator/test/diagnosis/adaptive-runtime-probe.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Global runtime probe budget, one-per-incident selection, missing bindings and zero-budget refusal."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/area-loaded-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Positive and negative proof of complete loaded-area coverage for mutation chunks."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-analysis.test.ts",
@@ -1658,7 +1662,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/cross-domain-runtime-probe-compiler.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects mutating probe requests when compiling read-only runtime recommendations."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts",
@@ -1680,7 +1686,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Stage execution and refusals for incomplete discovery, artifact-only runtime claims and missing formal problem."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-semantic-ir-executor.test.ts",
@@ -1762,7 +1770,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/invariant-intelligence.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects automatic promotion of challenged candidate invariants."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/invariant-registry.test.ts",
@@ -1774,7 +1784,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/invariant-runtime-plan.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates temporal invariant materialization from state evaluation and open assumptions."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-classified-repair-pipeline.test.ts",
@@ -1830,7 +1842,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-binding-load.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Validated binding registry and malformed-registry rejection."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-bundle.test.ts",
@@ -2474,7 +2488,9 @@
       "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Distinguishes incompatible navigation capability from state-dependent compatibility."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-load.test.ts",
@@ -4262,5 +4278,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "dab225677aac43fc396a20d16d06a2633bf22b14"
+  "reviewedAtCommit": "bcbee20aa0364777cffdfbfb25341233aec644e3"
 }
