@@ -1634,7 +1634,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-repair-strategy-selection.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Three cases cover invariant derivation, unavailable causal chain refusal and repair proof decision-basis continuity; safety-critical."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-retest.test.ts",
@@ -2172,7 +2174,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-architecture-identity.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "20 cases retain exact cross-file source/effect identity, branch scope and foreign/ambiguous refusal."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-boundary-registry.test.ts",
@@ -2184,7 +2188,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-calibration-corpus.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Four calibration report format and scoring scenarios; useful but not a core runtime/inspection release gate during architecture iteration."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-compound-growth-analysis.test.ts",
@@ -2202,7 +2208,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-challenger.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "23 cases protect unowned raw evidence, unresolved edges and source/scenario proof ownership; critical against false closure."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-closure.test.ts",
@@ -2216,25 +2224,33 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-intent-runtime-stage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "11 cases enforce tick-scoped outcome evidence, route geometry, arena scope and refusal to upgrade policy violations to confirmed defects."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-intent-stage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "36 assertion scenarios spanning exact authored provenance, cross-file calls, negative identity ownership, and uncertainty; foundational semantics, not a microtest."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-reachability-stage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Four cases distinguish actual item/recipe reachability from inaccessible containers and incomplete multi-ingredient recipes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-route-candidate-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Four cases enforce causal ordering and refusal to blame engine navigation before source/chunk readiness."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-route-corridor.test.ts",
@@ -2246,7 +2262,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-route-runtime-plan.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Three cases require dimension-scoped safe probes and avoid requesting already satisfied evidence."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-closure.test.ts",
@@ -2260,25 +2278,33 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-knowledge-conditional.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Seven explicit positive and negative cases protect receipt identity, knowledge domain obligations, and conditional scenario requirements."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-surface-discovery.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "One broad surface inventory assertion; examine overlap with gameplay discovery closure and integrated inspection before consolidating."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-understanding-fingerprint.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Preserves comparable semantic-coverage fingerprints and explicit regression signals without mistaking names for authority."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-world-model.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Single summarization scenario with extensive fixture; review output consumer contract for overlap with broader acceptance."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inspect-artifact.test.ts",
