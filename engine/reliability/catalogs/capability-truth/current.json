@@ -11,7 +11,7 @@
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
     "proofRegistryFingerprint": "a8fa4f54",
-    "proofInventoryFingerprint": "9de21c54"
+    "proofInventoryFingerprint": "a4731610"
   },
   "summary": {
     "taskCapabilities": 55,
@@ -302,14 +302,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -335,14 +335,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -434,14 +434,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -467,14 +467,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -500,14 +500,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -533,14 +533,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -566,14 +566,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -599,14 +599,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -632,14 +632,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -665,14 +665,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -698,14 +698,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -731,14 +731,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -766,14 +766,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -799,14 +799,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -894,14 +894,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -927,14 +927,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1092,14 +1092,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 633,
-      "testFiles": 331,
+      "testFiles": 321,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts"
+        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
