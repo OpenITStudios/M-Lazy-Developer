@@ -1586,21 +1586,25 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Distinct causal chain synthesis verifies confidence ceiling, corroboration provenance, and observed-vs-projected outcomes."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-comparison.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Compares before/after causal summary deltas and candidate labels; eligible for scenario merge with retest reasons after source consumer audit."
+      "recommendation": "merge-candidate",
+      "rationale": "Production compareCausalAnalysis produces before/after delta consumed by causalRetestReasons; preserve label and evidence-delta assertions in a joint scenario."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-incident-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Incident grouping/ranking preserves independent scope and evidence-strength ordering."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-link-evidence-construction.test.ts",
@@ -1624,7 +1628,7 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Validates confirmed-defect admission and read-only probe selection across causal reasoning stages."
+      "rationale": "Coordinator verifies confirmed defect admission and bounded probe selection; complementary to runtime handoff scenario."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-repair-strategy-selection.test.ts",
@@ -1637,14 +1641,16 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Weights causal regression retest triggers from comparison deltas; candidate joint comparison/retest scenario, not safe for deletion yet."
+      "recommendation": "merge-candidate",
+      "rationale": "Production causalRetestReasons consumes CausalComparison; candidate to combine tests without changing either production owner or dropping negative improvement case."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/cross-domain-reasoning-end-to-end.test.ts",
       "lane": "acceptance",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Integrated handoff checks proof uncertainty, read-only probe cost/risk, artifact/session identity and request count."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/cross-domain-runtime-probe-compiler.test.ts",
@@ -1664,7 +1670,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-intent-executors.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Filesystem-backed diagnosis executor verifies no fabricated authored evidence and explicit custom source roots."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts",
@@ -2244,7 +2252,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-closure.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Scenario closure rejects missing, duplicated, foreign or misbound knowledge receipts; high-value proof isolation cases."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-knowledge-conditional.test.ts",
@@ -4204,5 +4214,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "3b75c35e5d3981b87972e5cf771fa0692b1d2378"
+  "reviewedAtCommit": "74fec78d563912711c4548387e189dbf6dbeb0ec"
 }
