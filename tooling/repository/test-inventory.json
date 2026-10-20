@@ -5566,37 +5566,43 @@
       "path": "engine/packages/orchestrator/test/reporting/gameplay-closure-publication.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/map-audit-finding-reasoning-admission.test.ts",
       "lane": "acceptance",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/map-audit-finding-reasoning.test.ts",
       "lane": "acceptance",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/reasoning-monotonicity.test.ts",
@@ -5630,13 +5636,15 @@
       "path": "engine/packages/orchestrator/test/reporting/report-classification-producers.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential assertion overlap with adjacent canonical reporting/decision producer; consumer-level equivalence required before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-confirmation-adapter.test.ts",
@@ -5650,37 +5658,43 @@
       "path": "engine/packages/orchestrator/test/reporting/report-defect-classification.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential assertion overlap with adjacent canonical reporting/decision producer; consumer-level equivalence required before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-defect-collector.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-repair-context.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-runtime-classification.test.ts",
@@ -5700,37 +5714,43 @@
       "path": "engine/packages/orchestrator/test/reporting/report-source-owner.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/static-report-confirmation-adapter.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/tester-report-confirmation-adapter.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/route-mutation-knowledge.test.ts",
@@ -5868,109 +5888,127 @@
       "path": "engine/packages/orchestrator/test/workflow/context-compiler.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/decision-basis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/decision-ledger-recording.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/decision-ledger.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/engineering-review-invalidation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential assertion overlap with adjacent canonical reporting/decision producer; consumer-level equivalence required before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/engineering-review-priority.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/engineering-review-projection.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/repository-task-plan.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/resource-context.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/selective-validation-plan.test.ts",
@@ -5998,13 +6036,15 @@
       "path": "engine/packages/orchestrator/test/workflow/semantic-graph-fingerprint.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/semantic-proof-cache.test.ts",
@@ -6024,13 +6064,15 @@
       "path": "engine/packages/orchestrator/test/workflow/zero-waste-benchmark.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/zero-waste-execution-receipt.test.ts",
@@ -6050,25 +6092,29 @@
       "path": "engine/packages/orchestrator/test/workflow/zero-waste-execution-summary.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof."
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/zero-waste-workflow.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review."
     },
     {
       "path": "engine/packages/preservation/test/preservation.test.ts",
@@ -7738,6 +7784,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "083312635d4a9c8a764f32f2d98c8c1d32dd41b4",
+  "reviewedAtCommit": "5b6faed4138d14ee483db49fd2446af8223ba0c5",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
