@@ -3810,7 +3810,9 @@
       "path": "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Control/treatment evidence, repeatability, direction mismatch, target-profile and causal-proof ceiling guard fundamental experiment truth."
     },
     {
       "path": "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
@@ -3824,37 +3826,49 @@
       "path": "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Distinct runtime targets and qualified cases are prerequisites; incomplete receipts remain incomplete."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Single experiment definition/contract scenario; preserve but not required in every development iteration."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/arena/repeated-arena-cycle-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Single experiment definition/contract scenario; preserve but not required in every development iteration."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-knowledge-validation-plan.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates experiment-ready knowledge from probe-required and missing knowledge."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-lifecycle-experiments.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts",
@@ -3868,31 +3882,41 @@
       "path": "engine/packages/runtime-lab/test/domains/chunk/script-ticking-area-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Single experiment definition/contract scenario; preserve but not required in every development iteration."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/entity/entity-navigation-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Measured movement, crowding, target and chunk evidence gate causal promotion."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/interaction/interaction-experiments.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Single experiment definition/contract scenario; preserve but not required in every development iteration."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Positive and negative capacity, arena isolation and session completion evidence are distinct risk checks."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-session-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Reconnect, leave and respawn evidence must bind to changing participation and generation identities."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
@@ -3906,55 +3930,73 @@
       "path": "engine/packages/runtime-lab/test/domains/persistence/persistence-recovery-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Boot-bound durable state, journal convergence and orphan recovery require exact evidence."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Generation replacement failure and repeatable causal provenance are risk boundaries."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Cancellation, cross-arena ownership and callback generation require explicit evidence."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Comparable stream sequence/tick metadata required for event ordering conclusions."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/validation/domain-validation-experiments.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/validation/final-runtime-experiments.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/validation/ordering-entity-world.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/validation/state-system-validation-experiments.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
     },
     {
       "path": "engine/packages/runtime-lab/test/experiment/catalog.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects duplicate and invalid experiments before catalog admission."
     },
     {
       "path": "engine/packages/runtime-lab/test/experiment/experiment-capability-preflight.test.ts",
@@ -3976,19 +4018,25 @@
       "path": "engine/packages/runtime-lab/test/experiment/runner.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects insufficient runtime contexts and mismatched host trial identity."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/bedrock-action-registry.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Registry identity, required action set and signatures prevent arbitrary capability admission."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/bedrock-capabilities.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Announced capability registry must match canonical contract."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/bedrock-harness-capability-parity.test.ts",
@@ -4002,19 +4050,25 @@
       "path": "engine/packages/runtime-lab/test/host/bedrock-host.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Read-only probe, stimulus acknowledgment, profile drift and live-only mutation restrictions."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/bedrock-profile.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Runtime session/target correlation identity cannot be inferred from unrelated logs."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/harness-capability-audit.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Pre-execution capability signature mismatch detection and group resolution."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/live-client-lifecycle.test.ts",
@@ -4036,13 +4090,17 @@
       "path": "engine/packages/runtime-lab/test/knowledge/runtime-knowledge-validation-registry.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Routing runtime knowledge debt is not executed proof; unknown owners remain gaps."
     },
     {
       "path": "engine/packages/runtime-lab/test/scenario/counterexample-scenario.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Replay reproducibility, explicit runtime bindings, and obsolete counterexample rejection."
     },
     {
       "path": "engine/packages/runtime-lab/test/scenario/scenario-execution-gate.test.ts",
@@ -4302,5 +4360,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "fb5669ee36d3c2e669ae95208a8683226b6f6ad1"
+  "reviewedAtCommit": "080ccaac3da36904402a91ab175df37ed0f55b68"
 }
