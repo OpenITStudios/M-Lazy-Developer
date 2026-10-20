@@ -230,25 +230,29 @@
       "path": "engine/analyzers/blocks/test/automation.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/blocks",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/blocks",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Tick scheduling and missing callback prerequisites are source-evidence bounds."
     },
     {
       "path": "engine/analyzers/blocks/test/education-permission.test.ts",
       "lane": "safety",
       "owner": "engine/analyzers/blocks",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/blocks",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Specialty block presence does not prove Education edition applicability."
     },
     {
       "path": "engine/analyzers/commands/test/dialogue-selector.test.ts",
@@ -266,25 +270,29 @@
       "path": "engine/analyzers/commands/test/grammar.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/commands",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/commands",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Command grammar preserves selector filters, nested structure calls and scoreboard read/write roles."
     },
     {
       "path": "engine/analyzers/commands/test/parse.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/commands",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/commands",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Command parser retains typed effects, coordinate modes and nested execution context."
     },
     {
       "path": "engine/analyzers/commands/test/runtime-evidence.test.ts",
@@ -326,13 +334,15 @@
       "path": "engine/analyzers/commands/test/verification-semantics.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/commands",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/commands",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Standalone test command cannot masquerade as a gated precondition."
     },
     {
       "path": "engine/analyzers/diagnostics/test/arena/arena-capacity.test.ts",
@@ -554,13 +564,15 @@
       "path": "engine/analyzers/entities/test/ai-stack.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/entities",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/entities",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "AI movement/target readiness is not inferred from absent evidence."
     },
     {
       "path": "engine/analyzers/entities/test/attack-sensor.test.ts",
@@ -674,13 +686,15 @@
       "path": "engine/analyzers/entities/test/targeting.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/entities",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/entities",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Empty target provider cannot establish target acquisition."
     },
     {
       "path": "engine/analyzers/functions/test/parse.test.ts",
@@ -1234,13 +1248,15 @@
       "path": "engine/analyzers/topology/test/arena-replica.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/topology",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/topology",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Topological translation and semantic drift remain distinct."
     },
     {
       "path": "engine/analyzers/topology/test/candidates.test.ts",
@@ -6274,13 +6290,15 @@
       "path": "engine/packages/reliability-search/test/invariant/invariant-mining.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Requires support and counterevidence checks before inferring invariants."
     },
     {
       "path": "engine/packages/reliability-search/test/invariant/invariant-refinement.test.ts",
@@ -6366,25 +6384,29 @@
       "path": "engine/packages/reliability-search/test/search/bounded-explorer.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Bounded state exploration remains deterministic and reports truncation."
     },
     {
       "path": "engine/packages/reliability-search/test/search/generation-aware.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Schedule generation and causal-parent constraints prevent invalid interleavings."
     },
     {
       "path": "engine/packages/reliability-search/test/search/happens-before.test.ts",
@@ -6406,13 +6428,15 @@
       "path": "engine/packages/reliability-search/test/search/multiplayer-interleaving.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Keeps generation dependencies and happens-before ordering in multiplayer schedules."
     },
     {
       "path": "engine/packages/reliability-search/test/search/search.test.ts",
@@ -7238,25 +7262,29 @@
       "path": "engine/packages/telemetry/test/core/budget.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/telemetry",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Limits per-tick event pressure and records loss rather than hiding evidence gaps."
     },
     {
       "path": "engine/packages/telemetry/test/core/emitter.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/telemetry",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Preserves monotonic stream sequence, event scope, unique identity and bounded buffers."
     },
     {
       "path": "engine/packages/telemetry/test/core/frame-collector.test.ts",
@@ -7310,13 +7338,15 @@
       "path": "engine/packages/telemetry/test/core/scheduler.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/telemetry",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Retains events and errors on failed transport; idempotent lifecycle."
     },
     {
       "path": "engine/packages/telemetry/test/domains/arena/arena-generation-monitor.test.ts",
@@ -7584,6 +7614,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "72ffe30443dd08deb6f70787c3eb386195f1c07b",
+  "reviewedAtCommit": "ecc62a035e5b0f332c62be2c6d39be40697e1952",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
