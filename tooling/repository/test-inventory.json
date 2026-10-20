@@ -3016,9 +3016,9 @@
       "path": "engine/packages/orchestrator/test/repair/post-repair-closure.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Closure requires defect removal plus preservation/package/runtime receipts; rejects foreign transactions."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/post-repair-validation-obligations.test.ts",
@@ -3032,9 +3032,9 @@
       "path": "engine/packages/orchestrator/test/repair/post-repair-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Post-change diagnostic regression and weaker proof status prevent PASS."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/provider-backed-repair-selection.test.ts",
@@ -3056,9 +3056,9 @@
       "path": "engine/packages/orchestrator/test/repair/repair-admission-pipeline.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Approved Bug authority, counterfactual, preservation and evidence basis cannot be bypassed."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-admission.test.ts",
@@ -3096,17 +3096,17 @@
       "path": "engine/packages/orchestrator/test/repair/repair-package-staging.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Staging is blocked before validation and partial package output must be cleaned."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-package-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Package round-trip integrity protects against content drift."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-planning.test.ts",
@@ -3120,17 +3120,17 @@
       "path": "engine/packages/orchestrator/test/repair/repair-preservation-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Preserved invariants and forbidden side effects must be checked before closure."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-proof-bundle.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Transaction, causality and impact trace metadata require stable proof identity."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-realizer-registry.test.ts",
@@ -3152,17 +3152,17 @@
       "path": "engine/packages/orchestrator/test/repair/repair-release-lineage.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Release ancestry and evidence revision continuity must fail closed on stale or missing authorization."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-runtime-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Runtime receipts require exact experiment, profile and temporal continuity, never derived-only evidence."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-strategy-enumeration.test.ts",
@@ -3184,9 +3184,9 @@
       "path": "engine/packages/orchestrator/test/repair/repair-strategy-selection.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Causal fit, policy, invariant and intervention binding are required before selecting mutation."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-validation.test.ts",
@@ -4506,5 +4506,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "e44d7fec5122c28a3d348902cffb2c41a35855f2"
+  "reviewedAtCommit": "2976b5be9407decae5258fd18d12ba6fbe8863c5"
 }
