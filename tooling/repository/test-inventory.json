@@ -1592,7 +1592,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-comparison.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Compares before/after causal summary deltas and candidate labels; eligible for scenario merge with retest reasons after source consumer audit."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-incident-analysis.test.ts",
@@ -1620,7 +1622,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-link-reasoning-coordinator.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Validates confirmed-defect admission and read-only probe selection across causal reasoning stages."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-repair-strategy-selection.test.ts",
@@ -1632,7 +1636,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-retest.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Weights causal regression retest triggers from comparison deltas; candidate joint comparison/retest scenario, not safe for deletion yet."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/cross-domain-reasoning-end-to-end.test.ts",
@@ -1650,7 +1656,9 @@
       "path": "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Preserves BUG versus DESIGN_MISMATCH disposition and refusal to upgrade runtime-proof-required evidence."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-intent-executors.test.ts",
@@ -1986,13 +1994,17 @@
       "path": "engine/packages/orchestrator/test/inspection/chunk-lifecycle-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Exercises lease acquire/release, capacity checks, readiness, and unreachable cleanup; key resource safety boundary."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/chunk-lifecycle-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Prevents runtime failure claims from source-only risks and handles lease leak versus absent observability."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/chunk-readiness-runtime-classification.test.ts",
@@ -2188,7 +2200,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-closure.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Prevents incomplete inventory, native scan truncation and unresolved references from becoming full discovery proof."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-intent-runtime-stage.test.ts",
@@ -2306,13 +2320,17 @@
       "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Exercises inventory reset completeness, equipment slots, loadout transitions and negative incomplete lifecycle cases."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates genuine policy conflicts from missing inventory lifecycle coverage and dynamic/unknown identities."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inventory-restore-ownership-analysis.test.ts",
@@ -2488,7 +2506,9 @@
       "path": "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Checks authority and mirror consistency, value/revision drift, missing authority, and knowledge diagnostics."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
@@ -4184,5 +4204,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "b58e894cdbd9d2d049e7b8b18fa99aa0a637151b"
+  "reviewedAtCommit": "3b75c35e5d3981b87972e5cf771fa0692b1d2378"
 }
