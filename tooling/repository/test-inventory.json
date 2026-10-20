@@ -1998,7 +1998,9 @@
       "path": "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Protects unresolved equipment cleanup, privileged spatial mutation and mayfly release obligations."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/chunk-lifecycle-analysis.test.ts",
@@ -2020,7 +2022,9 @@
       "path": "engine/packages/orchestrator/test/inspection/chunk-readiness-runtime-classification.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates player loader and ticking-area intervention; fails closed on contrast mismatch."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
@@ -2042,13 +2046,17 @@
       "path": "engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Differentiates cancellable before-event interactions from after-event observations."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Counts only explicit authored revive policy contradictions and refuses an invented contract."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/combat-contract-diagnostics.test.ts",
@@ -2088,7 +2096,9 @@
       "path": "engine/packages/orchestrator/test/inspection/economy-contract-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Maintains reward exclusivity, overlap UNKNOWN, and RESULT_COMMITTED ordering."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/economy-contract-diagnostics.test.ts",
@@ -2124,7 +2134,9 @@
       "path": "engine/packages/orchestrator/test/inspection/entity-ai-navigation-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Severity projection specific to navigation diagnostics; preserve until shared diagnostic acceptance is compared."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
@@ -2154,13 +2166,17 @@
       "path": "engine/packages/orchestrator/test/inspection/entity-population-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "16 cases protect spawn lineage, registry verification order, policy ownership and refusal to infer a performance defect."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/environment-hazard-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Separates hazard pre/post mutation, system authority and lack of authored hazard obligations."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-analysis-priority.test.ts",
@@ -2182,7 +2198,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-boundary-registry.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Two boundary extraction/projection cases; compare with integrated gameplay scenarios before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-calibration-corpus.test.ts",
@@ -2196,7 +2214,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-compound-growth-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Cross-arena/player/simulation scalability and lease isolation are distinct compound failure modes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-resolution-crosscheck.test.ts",
@@ -2256,7 +2276,9 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-route-corridor.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Corridor derivation prohibits projection from unresolved local coordinates."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-route-runtime-plan.test.ts",
@@ -4240,5 +4262,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "74fec78d563912711c4548387e189dbf6dbeb0ec"
+  "reviewedAtCommit": "dab225677aac43fc396a20d16d06a2633bf22b14"
 }
