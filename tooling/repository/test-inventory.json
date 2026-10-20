@@ -1554,25 +1554,29 @@
       "path": "engine/packages/bug-report/test/bug-trigger.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Six cases protect observable tester reproduction, source provenance and bounded nontechnical steps."
     },
     {
       "path": "engine/packages/bug-report/test/client-document-layout.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Document layout and deterministic issue numbering; maintain for report projection revisions."
     },
     {
       "path": "engine/packages/bug-report/test/client-document.test.ts",
@@ -1598,13 +1602,15 @@
       "path": "engine/packages/bug-report/test/copy-quality.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Rejects misleading, vague and technical tester-facing statements; quality/accuracy boundary."
     },
     {
       "path": "engine/packages/bug-report/test/create-v2.test.ts",
@@ -1682,13 +1688,15 @@
       "path": "engine/packages/bug-report/test/grouping.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Ten cases distinguish same causal repair unit from separate invariants, preventing dangerous issue conflation."
     },
     {
       "path": "engine/packages/bug-report/test/migrate.test.ts",
@@ -1778,37 +1786,43 @@
       "path": "engine/packages/bug-report/test/reconcile-current.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Preserves canonical fixed state, version authority and stable bug identity during refresh."
     },
     {
       "path": "engine/packages/bug-report/test/repair-unit-ownership.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Preserves exact repair unit ranges and refuses grouping for unknown source identity."
     },
     {
       "path": "engine/packages/bug-report/test/report-readiness.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Tester-ready output requires observable trigger and AI issue source support."
     },
     {
       "path": "engine/packages/bug-report/test/resolve-confirmed-defect-group.test.ts",
@@ -1838,13 +1852,15 @@
       "path": "engine/packages/bug-report/test/schema-runtime-parity.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Single enum parity projection may fold into canonical bug-report schema acceptance with assertion retained."
     },
     {
       "path": "engine/packages/bug-report/test/semantics.test.ts",
@@ -2006,13 +2022,15 @@
       "path": "engine/packages/diagnostic-reasoning/test/audit-risk.test.ts",
       "lane": "development",
       "owner": "engine/packages/diagnostic-reasoning",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "High-risk interacting factors escalate even when surface complexity appears low."
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/behavior-evidence.test.ts",
@@ -2042,13 +2060,15 @@
       "path": "engine/packages/diagnostic-reasoning/test/candidate-evidence.test.ts",
       "lane": "development",
       "owner": "engine/packages/diagnostic-reasoning",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Ten cases reject missing/foreign contracts, account for counter-evidence, UNKNOWN and player impact."
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/capability-guard-activation.test.ts",
@@ -2090,13 +2110,15 @@
       "path": "engine/packages/diagnostic-reasoning/test/cross-domain-reasoning.test.ts",
       "lane": "development",
       "owner": "engine/packages/diagnostic-reasoning",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Separates proven corroboration from incomplete inference and prioritizes bounded hypotheses."
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/crosscheck-scenario-routing.test.ts",
@@ -2242,13 +2264,15 @@
       "path": "engine/packages/diagnostic-reasoning/test/minimal-probe-planner.test.ts",
       "lane": "development",
       "owner": "engine/packages/diagnostic-reasoning",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Uses lowest-cost useful next probe and makes unsupported probe requirements explicit."
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/observed-outcome-intent.test.ts",
@@ -7480,6 +7504,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "d27935fecf5142d43f89c04638558253ab8d4658",
+  "reviewedAtCommit": "105f588eda2a4c554cf639114e203a08c58afaff",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
