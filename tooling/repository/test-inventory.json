@@ -3652,7 +3652,9 @@
       "path": "engine/packages/reliability-search/test/invariant/invariant-falsification.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Requires adversarial mutation evidence before invariant promotion."
     },
     {
       "path": "engine/packages/reliability-search/test/invariant/invariant-mining-advanced.test.ts",
@@ -3700,7 +3702,9 @@
       "path": "engine/packages/reliability-search/test/mutation/operator-effectiveness.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Tracks kill/survival pressure for mutation selection; projection-only optimization, not direct proof."
     },
     {
       "path": "engine/packages/reliability-search/test/robustness/metamorphic-robustness.test.ts",
@@ -3724,7 +3728,9 @@
       "path": "engine/packages/reliability-search/test/search/happens-before.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Enforces causal ordering and rejects cycles."
     },
     {
       "path": "engine/packages/reliability-search/test/search/interleaving-scale.test.ts",
@@ -3802,7 +3808,9 @@
       "path": "engine/packages/reliability/test/regression/live-regression-runner.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Requires comparable tick evidence and retains first divergence."
     },
     {
       "path": "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
@@ -3862,7 +3870,9 @@
       "path": "engine/packages/reliability/test/runtime/runtime-session-replay.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects equivalence between different runtime profiles and detects semantic divergence."
     },
     {
       "path": "engine/packages/reliability/test/session/multiplayer-stress-matrix.test.ts",
@@ -4340,19 +4350,25 @@
       "path": "engine/packages/telemetry/test/core/framing.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Protects out-of-order framing, duplicates, corruption and invalid budgets."
     },
     {
       "path": "engine/packages/telemetry/test/core/guards.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Detects duplicate start and stale generation callbacks."
     },
     {
       "path": "engine/packages/telemetry/test/core/priority-buffer.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Protects critical evidence retention under pressure and dropped-event accounting."
     },
     {
       "path": "engine/packages/telemetry/test/core/profile.test.ts",
@@ -4436,13 +4452,17 @@
       "path": "engine/packages/telemetry/test/probes/runtime-probe-executor.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Backend unknown/errors remain UNKNOWN, not fabricated runtime observations."
     },
     {
       "path": "engine/packages/telemetry/test/probes/runtime-probe-session.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Preserves transcript identity, bounded history and rejected invalid buffers."
     },
     {
       "path": "engine/packages/validation/test/traceability.test.ts",
@@ -4506,5 +4526,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "2976b5be9407decae5258fd18d12ba6fbe8863c5"
+  "reviewedAtCommit": "9aecd1e2460f91a1fc0c34677883facfd93d15ad"
 }
