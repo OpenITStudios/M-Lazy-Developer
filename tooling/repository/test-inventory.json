@@ -830,13 +830,15 @@
       "path": "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Pure deterministic arena config extraction refuses impure calls and mutable sources."
     },
     {
       "path": "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
@@ -854,13 +856,15 @@
       "path": "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Capacity/membership authority proofs must share arena identity, branch, and exact synchronous path."
     },
     {
       "path": "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
@@ -914,25 +918,29 @@
       "path": "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Chunk lifecycle and ticking-area methods retain source traceability."
     },
     {
       "path": "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Exact release obligations track branch, callback and resource keys."
     },
     {
       "path": "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts",
@@ -974,13 +982,15 @@
       "path": "engine/analyzers/scripts/test/domains/lifecycle/terminal-lifecycle-project-cross-file.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Cross-module lifecycle release path respects actual bindings."
     },
     {
       "path": "engine/analyzers/scripts/test/domains/lifecycle/terminal-lifecycle-project.test.ts",
@@ -1022,13 +1032,15 @@
       "path": "engine/analyzers/scripts/test/domains/persistence/persistent-reconciliation.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "World-load gated reconciliation cannot be inferred from persistent reads."
     },
     {
       "path": "engine/analyzers/scripts/test/domains/persistence/persistent-state-lifetime.test.ts",
@@ -1046,13 +1058,15 @@
       "path": "engine/analyzers/scripts/test/domains/persistence/persistent-state-scope.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Persistence owner scope cannot be guessed from variable or key names."
     },
     {
       "path": "engine/analyzers/scripts/test/domains/progression/progression-counter-evidence.test.ts",
@@ -1094,25 +1108,29 @@
       "path": "engine/analyzers/scripts/test/flow/semantic-flow-bindings.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Identity flow is labeled without asserting a defect."
     },
     {
       "path": "engine/analyzers/scripts/test/flow/semantic-flow-witness.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Returns bounded witness paths without silently declaring defects."
     },
     {
       "path": "engine/analyzers/scripts/test/parser/cross-file-call.test.ts",
@@ -1130,13 +1148,15 @@
       "path": "engine/analyzers/scripts/test/parser/execution-privilege.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Restricted world mutations require exact receiver/event context and avoid line-level conflation."
     },
     {
       "path": "engine/analyzers/scripts/test/parser/local-call-control-flow.test.ts",
@@ -1162,13 +1182,15 @@
       "path": "engine/analyzers/scripts/test/recovery/source-map-binding.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/scripts",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/scripts",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Invalid VLQ source mappings fail closed instead of creating false provenance."
     },
     {
       "path": "engine/analyzers/scripts/test/recovery/source-recovery.test.ts",
@@ -2726,13 +2748,15 @@
       "path": "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Guard realization requires exact analyzer-owned capacity authority, not unrelated repair claims."
     },
     {
       "path": "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
@@ -2750,13 +2774,15 @@
       "path": "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Physical divergence is proposal-only, not authorization."
     },
     {
       "path": "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
@@ -3090,13 +3116,15 @@
       "path": "engine/packages/orchestrator/test/authorized-repair-static-preservation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Unauthorized graph topology changes trigger repair rollback."
     },
     {
       "path": "engine/packages/orchestrator/test/causal-inspection-integration.test.ts",
@@ -3282,13 +3310,15 @@
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-derivation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Read-only probes must stay incident-scoped and not manufacture bugs."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-planning.test.ts",
@@ -3306,25 +3336,29 @@
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-repair-gate.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Mutation requires causal intervention and predicate/factor provenance with runtime integrity."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-runtime-binding.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Probe bindings must match declared diagnostic scope and outcomes."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-runtime-probe.test.ts",
@@ -3398,13 +3432,15 @@
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-classified-repair-pipeline.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Designed behavior never enters mutation pipeline; approval remains explicit."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-evidence-integrity.test.ts",
@@ -7678,6 +7714,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "6431ddc07a12a5f5e966d45d1024fc4d1058b570",
+  "reviewedAtCommit": "9dcc8c07493296540744051275846dbfd072d663",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
