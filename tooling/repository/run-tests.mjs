@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 // Normal development checks whole user-facing paths, not every micro regression.
@@ -22,6 +22,22 @@ const acceptanceVitestFiles = [
   "apps/bug-report-ui/test/report-file.test.ts",
 ];
 const acceptanceNativeFiles = ["apps/report-system-next/client.acceptance.test.mjs"];
+const inventoryPath = resolve("tooling/repository/test-inventory.json");
+const lanes = ["safety", "acceptance", "runtime", "regression", "development"];
+function loadInventory() {
+  const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  if (!Array.isArray(data.tests)) throw new Error("Invalid test inventory");
+  const paths = new Set();
+  for (const item of data.tests) {
+    if (typeof item.path !== "string" || !/^[a-zA-Z0-9._/-]+\\.test\\.(ts|tsx|js|mjs|cjs)$/.test(item.path) ||
+        item.path.split("/").includes("..") || paths.has(item.path) || !lanes.includes(item.lane) ||
+        !existsSync(resolve(item.path))) {
+      throw new Error("Stale or invalid test inventory entry: " + item.path);
+    }
+    paths.add(item.path);
+  }
+  return data.tests;
+}
 const args = process.argv.slice(2);
 const mode = args[0] ?? "--acceptance";
 
@@ -33,6 +49,17 @@ if (mode === "--acceptance" && args.length <= 1) {
 } else if (mode === "--full" && args.length === 1) {
   vitestFiles = null; // Vitest discovers the complete suite, excluding node:test.
   selectedNative = nativeFiles;
+ } else if (mode === "--lane" && args.length === 2 && lanes.includes(args[1])) {
+  // Provisional routing only. Not proof of coverage or permission to skip safety tests.
+  const matching = loadInventory().filter((item) => item.lane === args[1]).map((item) => item.path);
+  selectedNative = matching.filter((path) => nativeFiles.includes(path));
+  vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
+} else if (mode === "--list-lanes" && args.length === 1) {
+  const tests = loadInventory();
+  for (const lane of lanes) {
+    console.log(lane + ": " + tests.filter((item) => item.lane === lane).length + " files (provisional)");
+  }
+  process.exit(0);
 } else if (mode === "--focus" && args.length > 1) {
   const requested = [...new Set(args.slice(1).map((file) => file.replaceAll("\\", "/")))];
   for (const file of requested) {
@@ -45,7 +72,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --focus path/to/file.test.ts ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ...]");
   process.exit(2);
 }
 
