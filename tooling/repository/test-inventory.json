@@ -3794,13 +3794,17 @@
       "path": "engine/packages/runtime-lab/test/core/action-capability.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Validates runtime action capabilities, parameter types, context and read-only mutation refusal."
     },
     {
       "path": "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Explicit live proof authority refuses server-simulated evidence."
     },
     {
       "path": "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
@@ -3812,7 +3816,9 @@
       "path": "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Negative missing-host fail-closed contract guards differential execution."
     },
     {
       "path": "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
@@ -3854,7 +3860,9 @@
       "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Guards experiment cleanup, repeated trials, causal provenance, and chunk mutation capability."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/chunk/script-ticking-area-experiment.test.ts",
@@ -3890,7 +3898,9 @@
       "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Positive descriptor/registry scenarios; not evidence of actual multiplayer stress execution."
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/persistence/persistence-recovery-experiment.test.ts",
@@ -3950,13 +3960,17 @@
       "path": "engine/packages/runtime-lab/test/experiment/experiment-capability-preflight.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Rejects missing host actions and context mismatches before experiment execution."
     },
     {
       "path": "engine/packages/runtime-lab/test/experiment/promotion.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Forbids evidence promotion from a single observed campaign; requires repeatability threshold."
     },
     {
       "path": "engine/packages/runtime-lab/test/experiment/runner.test.ts",
@@ -3980,7 +3994,9 @@
       "path": "engine/packages/runtime-lab/test/host/bedrock-harness-capability-parity.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "One canonical registry parity assertion; preserve but may be consolidated with action capability contract after consumer review."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/bedrock-host.test.ts",
@@ -4004,13 +4020,17 @@
       "path": "engine/packages/runtime-lab/test/host/live-client-lifecycle.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Reconnect evidence must be live, generation-bound and cannot rely on server simulation."
     },
     {
       "path": "engine/packages/runtime-lab/test/host/multi-client-orchestrator.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Preserves concurrency, adapter capacity, and real-client versus simulated proof boundaries."
     },
     {
       "path": "engine/packages/runtime-lab/test/knowledge/runtime-knowledge-validation-registry.test.ts",
@@ -4028,13 +4048,17 @@
       "path": "engine/packages/runtime-lab/test/scenario/scenario-execution-gate.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Blocks executor calls unless capability, observation and runtime profile preflight succeed."
     },
     {
       "path": "engine/packages/runtime-lab/test/scenario/scenario-requirements.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "pending-semantic-review"
+      "review": "source-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Requirements feed execution-gate preflight; candidate integrated scenario preserving missing capabilities, manual QA and parameter mismatch."
     },
     {
       "path": "engine/packages/runtime-profile/test/runtime-profile.test.ts",
@@ -4278,5 +4302,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "bcbee20aa0364777cffdfbfb25341233aec644e3"
+  "reviewedAtCommit": "fb5669ee36d3c2e669ae95208a8683226b6f6ad1"
 }
