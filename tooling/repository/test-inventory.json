@@ -348,13 +348,15 @@
       "path": "engine/analyzers/diagnostics/test/arena/arena-capacity.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/diagnostics",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/diagnostics",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Capacity must depend on backend evidence, never a universal constant or inferred limit."
     },
     {
       "path": "engine/analyzers/diagnostics/test/arena/arena-findings.test.ts",
@@ -444,13 +446,15 @@
       "path": "engine/analyzers/diagnostics/test/runtime/runtime-evidence-merge.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/diagnostics",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/diagnostics",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Temporal comparison never allows stale/incomparable evidence to override current state."
     },
     {
       "path": "engine/analyzers/diagnostics/test/script/script-enum-value-findings.test.ts",
@@ -590,13 +594,15 @@
       "path": "engine/analyzers/entities/test/behavior-prerequisites.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/entities",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/entities",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Entity ranged, melee and navigation behavior prerequisites must be explicit."
     },
     {
       "path": "engine/analyzers/entities/test/entity.test.ts",
@@ -1212,13 +1218,15 @@
       "path": "engine/analyzers/topology/test/arena-region-partition.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/topology",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/analyzers/topology",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Physical proof partition retains static shell and fails closed when complexity budget is exhausted."
     },
     {
       "path": "engine/analyzers/topology/test/arena-region-role.test.ts",
@@ -6198,13 +6206,15 @@
       "path": "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Weak/runtime-only coverage reporting is a dashboard projection, not a direct evidence gate."
     },
     {
       "path": "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
@@ -6304,13 +6314,15 @@
       "path": "engine/packages/reliability-search/test/invariant/invariant-refinement.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Historical invariant qualification requires diversity, contradiction and update revalidation."
     },
     {
       "path": "engine/packages/reliability-search/test/minimization/logic-counterexample-minimizer.test.ts",
@@ -6328,13 +6340,15 @@
       "path": "engine/packages/reliability-search/test/minimization/minimizers.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability-search",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Source/scenario/graph counterexample minimization is bounded optimization; retain for relevant minimizer changes."
     },
     {
       "path": "engine/packages/reliability-search/test/mutation/extended-mutations.test.ts",
@@ -6490,13 +6504,15 @@
       "path": "engine/packages/reliability/test/catalog/historical-regression-catalog.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Historical identity merge rejects semantic collisions."
     },
     {
       "path": "engine/packages/reliability/test/core/reliability.test.ts",
@@ -6570,13 +6586,15 @@
       "path": "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Regressions cannot be called runtime-ready without an executable binding."
     },
     {
       "path": "engine/packages/reliability/test/regression/regression-session-report.test.ts",
@@ -6630,13 +6648,15 @@
       "path": "engine/packages/reliability/test/runtime/chunk-runtime-observation.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Unknown host readiness and probe failures are never converted into loaded evidence."
     },
     {
       "path": "engine/packages/reliability/test/runtime/content-log-parser.test.ts",
@@ -6686,13 +6706,15 @@
       "path": "engine/packages/reliability/test/session/multiplayer-stress-matrix.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Deterministic stress scenario construction; maintain for stress catalog changes."
     },
     {
       "path": "engine/packages/reliability/test/session/session-model.test.ts",
@@ -6710,13 +6732,15 @@
       "path": "engine/packages/reliability/test/update/update-evidence.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/reliability",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Curated delta provenance must reference declared sources."
     },
     {
       "path": "engine/packages/repair/test/apply.test.ts",
@@ -7614,6 +7638,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "ecc62a035e5b0f332c62be2c6d39be40697e1952",
+  "reviewedAtCommit": "276a4332ed3a342f5cc4cd608da5f117affb74de",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
