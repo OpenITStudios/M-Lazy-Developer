@@ -1402,13 +1402,15 @@
       "path": "engine/packages/analysis-planner/test/planner.test.ts",
       "lane": "development",
       "owner": "engine/packages/analysis-planner",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/analysis-planner",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Requires correct evidence tier/traits and cheapest legitimate next step rather than fabricating runtime proof."
     },
     {
       "path": "engine/packages/analysis-planner/test/retrieval.test.ts",
@@ -1438,13 +1440,15 @@
       "path": "engine/packages/analysis-planner/test/task-routing.test.ts",
       "lane": "development",
       "owner": "engine/packages/analysis-planner",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/analysis-planner",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Keeps repair authorization and runtime proof ceilings separate from diagnosis task routing."
     },
     {
       "path": "engine/packages/archive/test/inventory.test.ts",
@@ -2014,13 +2018,15 @@
       "path": "engine/packages/diagnosis-pipeline/test/cache.test.ts",
       "lane": "development",
       "owner": "engine/packages/diagnosis-pipeline",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnosis-pipeline",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Cache identity includes exact revisions and safe payload equality; mutated results do not become proof."
     },
     {
       "path": "engine/packages/diagnosis-pipeline/test/contradiction-executor.test.ts",
@@ -2062,13 +2068,15 @@
       "path": "engine/packages/diagnosis-pipeline/test/progressive-runner.test.ts",
       "lane": "development",
       "owner": "engine/packages/diagnosis-pipeline",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnosis-pipeline",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Minimum sufficient execution preserves bounded steps, blocking errors and deterministic invalidation."
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/audit-coverage.test.ts",
@@ -5990,13 +5998,15 @@
       "path": "engine/packages/preservation/test/preservation.test.ts",
       "lane": "safety",
       "owner": "engine/packages/preservation",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/preservation",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Must-change versus must-preserve invariants and healthy baseline are required for readiness."
     },
     {
       "path": "engine/packages/preservation/test/trace-diff.test.ts",
@@ -6014,13 +6024,15 @@
       "path": "engine/packages/preservation/test/verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/preservation",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/preservation",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Semantic traces, preservation, side effects and incompleteness must all pass explicitly."
     },
     {
       "path": "engine/packages/project-model/test/contracts/arena-region-contract.test.ts",
@@ -6062,13 +6074,15 @@
       "path": "engine/packages/project-model/test/evidence/telemetry-continuity.test.ts",
       "lane": "development",
       "owner": "engine/packages/project-model",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/project-model",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Per-stream sequence continuity rejects duplicate and non-monotonic evidence."
     },
     {
       "path": "engine/packages/project-model/test/evidence/telemetry-validate.test.ts",
@@ -6122,13 +6136,15 @@
       "path": "engine/packages/project-model/test/runtime/runtime-probe-binding.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/project-model",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/project-model",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Explicit incident bindings reject malformed and duplicate runtime request identities."
     },
     {
       "path": "engine/packages/project-model/test/runtime/runtime-probe.test.ts",
@@ -6170,13 +6186,15 @@
       "path": "engine/packages/project-model/test/session/work-session.test.ts",
       "lane": "development",
       "owner": "engine/packages/project-model",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/project-model",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Work-session references preserve monotonic progress and refuse silent artifact rebasing."
     },
     {
       "path": "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
@@ -6746,13 +6764,15 @@
       "path": "engine/packages/repair/test/apply.test.ts",
       "lane": "safety",
       "owner": "engine/packages/repair",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/repair",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Mutates only working root with fingerprint/precondition checks and rollback evidence."
     },
     {
       "path": "engine/packages/repair/test/atomic-write.test.ts",
@@ -6802,13 +6822,15 @@
       "path": "engine/packages/repair/test/public-api-boundary.test.ts",
       "lane": "safety",
       "owner": "engine/packages/repair",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/repair",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Low-level mutation primitives must not leak through public API."
     },
     {
       "path": "engine/packages/repair/test/report-lifecycle.test.ts",
@@ -6838,13 +6860,15 @@
       "path": "engine/packages/repair/test/workspace-hardening.test.ts",
       "lane": "safety",
       "owner": "engine/packages/repair",
-      "review": "pending-semantic-review",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/repair",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep",
+      "rationale": "Protects immutable originals against symlinks, hardlinks and root overlap."
     },
     {
       "path": "engine/packages/runtime-lab/test/core/action-capability.test.ts",
@@ -7638,6 +7662,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "276a4332ed3a342f5cc4cd608da5f117affb74de",
+  "reviewedAtCommit": "5f6668e344444f39ca130ec41a4854cefbe5e426",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
