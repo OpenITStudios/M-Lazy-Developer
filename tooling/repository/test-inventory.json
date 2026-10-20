@@ -1334,229 +1334,305 @@
       "path": "engine/packages/orchestrator/test/arena/arena-actor-population-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-authored-source-index.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-engineering-projection.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-entity-population-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-global-state-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-global-state-runtime-compiler.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-golden-baseline.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-golden-corpus.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-golden-status.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-interleaving-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-interleaving-portfolio.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-last-mile-audit.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-layout-reconciliation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-lifecycle-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-native-extraction.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-proof-conclusion.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-proof-coverage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-proof-execution-plan.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-proof-reuse.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-region-contract-load.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-repair-bridge.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-repair-localization.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-repeated-run-runtime-compiler.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-replica-proof-quality.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-runtime-adapter-requirements.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "merge-candidate",
+      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-stress-plan.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-stress-runtime-compiler.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-structure-instance-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-tick-state-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-voxel-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/script-arena-layout-fallback.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/authorized-repair-static-preservation.test.ts",
@@ -2900,211 +2976,281 @@
       "path": "engine/packages/orchestrator/test/repair/authorized-repair.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/bug-report-closure.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/closed-repair-regression.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/function-graph-mutation.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/mutation-transaction-analysis.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/post-repair-closure.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/post-repair-validation-obligations.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/post-repair-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/provider-backed-repair-selection.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/provider-backed-repair-workflow.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-admission-pipeline.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-admission.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-counterfactual.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-invariant-derivation.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-lifecycle.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-package-staging.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-package-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-planning.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-preservation-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-proof-bundle.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-realizer-registry.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-release-gate.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-release-lineage.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-runtime-verification.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-strategy-enumeration.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-strategy-provider.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-strategy-selection.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/repair-validation.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/script-mutation-detection.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/script-mutation-transaction-analysis.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/script-transform-hint-realizer.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/script-transform-postcondition.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/script-transform-semantic-impact.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/source-mutation-detection.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/repair/topology-repair-strategy-realizer.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review"
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending."
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/gameplay-closure-publication.test.ts",
@@ -4360,5 +4506,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "080ccaac3da36904402a91ab175df37ed0f55b68"
+  "reviewedAtCommit": "36489aafc1df8f3bdd790dc6ecba916a350b0124"
 }
