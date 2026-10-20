@@ -3938,37 +3938,43 @@
       "path": "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/economy-contract-analysis.test.ts",
@@ -4006,13 +4012,15 @@
       "path": "engine/packages/orchestrator/test/inspection/engineering-analysis-stage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-ai-navigation-diagnostics.test.ts",
@@ -4026,49 +4034,57 @@
       "path": "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-event-evidence.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-knowledge-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-population-analysis.test.ts",
@@ -4130,13 +4146,15 @@
       "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-resolution-crosscheck.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-challenger.test.ts",
@@ -4260,49 +4278,57 @@
       "path": "engine/packages/orchestrator/test/inspection/inspect-authored-intent-source.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inspect.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/interactive-block-state-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts",
@@ -4340,25 +4366,29 @@
       "path": "engine/packages/orchestrator/test/inspection/inventory-restore-ownership-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/knowledge-runtime-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/mandatory-audit-terminal-coverage.test.ts",
@@ -4378,13 +4408,15 @@
       "path": "engine/packages/orchestrator/test/inspection/map-engineering-workflow.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/mount-analysis.test.ts",
@@ -4398,49 +4430,57 @@
       "path": "engine/packages/orchestrator/test/inspection/multiplayer-state-validation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/permission-profile-analysis.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/persistence-source-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/player-capability-surface-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts",
@@ -4460,37 +4500,43 @@
       "path": "engine/packages/orchestrator/test/inspection/progression-actor-accounting-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/reward-source-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts",
@@ -4504,49 +4550,57 @@
       "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-load.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-api-usage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-command-transaction-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-dataflow-context-capability.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-performance-analysis.test.ts",
@@ -4560,61 +4614,71 @@
       "path": "engine/packages/orchestrator/test/inspection/script-safe-config-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-spatial-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-structure-correlation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-update-correlation.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/shared-resource-ownership.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts",
@@ -4636,13 +4700,15 @@
       "path": "engine/packages/orchestrator/test/inspection/spatial-authority-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts",
@@ -4656,13 +4722,15 @@
       "path": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts",
@@ -4682,13 +4750,15 @@
       "path": "engine/packages/orchestrator/test/inspection/structure-runtime-evidence.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "merge-candidate",
+      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/teleport-transaction-analysis.test.ts",
@@ -4708,37 +4778,43 @@
       "path": "engine/packages/orchestrator/test/inspection/topology-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/version-aware-comparison.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "defer",
+      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/world-db-diff.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/world-db-runtime-evidence.test.ts",
@@ -4758,13 +4834,15 @@
       "path": "engine/packages/orchestrator/test/inspection/world-rule-authority-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "pending-semantic-review",
+      "review": "case-inventory-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision"
-      }
+      },
+      "recommendation": "keep-provisional",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review."
     },
     {
       "path": "engine/packages/orchestrator/test/integration.test.ts",
@@ -7784,6 +7862,6 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "5b6faed4138d14ee483db49fd2446af8223ba0c5",
+  "reviewedAtCommit": "48ef00d18630f2a0f785958305476aa8cfd4491b",
   "triagePolicy": "Triage metadata is routing only: not a semantic review, skip permission or proof of redundancy."
 }
