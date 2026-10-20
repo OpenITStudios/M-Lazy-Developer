@@ -1382,9 +1382,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-engineering-projection.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Distinct compact arena diagnostic/stress presentation contract; retain for projection-specific changes."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-entity-population-proof.test.ts",
@@ -1414,9 +1414,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-golden-baseline.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Pack identity drift cannot be silently accepted as approved baseline."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-golden-corpus.test.ts",
@@ -1430,9 +1430,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-golden-status.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Approval and missing-artifact preflight block corpus readiness; corpus acceptance does not directly test this owner."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-interleaving-analysis.test.ts",
@@ -1446,9 +1446,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-interleaving-portfolio.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "defer",
+      "rationale": "Canonical stress matrix and portfolio scenario accounting; retain for portfolio changes."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-last-mile-audit.test.ts",
@@ -1478,9 +1478,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-lifecycle-diagnostics.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Medium unresolved versus minor partial lifecycle coverage severity is distinct."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-native-extraction.test.ts",
@@ -1502,9 +1502,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-proof-coverage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Mutable volume subtraction, partial coverage ratios and empty proof volume refusal."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-proof-execution-plan.test.ts",
@@ -1574,9 +1574,9 @@
       "path": "engine/packages/orchestrator/test/arena/arena-runtime-adapter-requirements.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Narrow projection/plan/registry contract; compare against integrated arena acceptance and producer/consumer assertions before deciding consolidation."
+      "review": "source-reviewed",
+      "recommendation": "keep",
+      "rationale": "Live-client hooks, required baseline surfaces and global resources for arena stress."
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
@@ -4506,5 +4506,5 @@
     }
   ],
   "reviewPolicy": "review status and recommendation describe source evidence, never execution or permission to delete",
-  "reviewedAtCommit": "36489aafc1df8f3bdd790dc6ecba916a350b0124"
+  "reviewedAtCommit": "e44d7fec5122c28a3d348902cffb2c41a35855f2"
 }
