@@ -8,6 +8,7 @@ import {
 import {
   buildInspectionSemanticIr,
 } from "../../src/diagnosis/semantic-ir-stage.js";
+import { developerPracticeSignalsFromSemanticIr } from "../../src/workflow/resource-context.js";
 
 describe("inspection semantic IR", () => {
   it("links event, deferred callback, state operations and mcfunction calls without guessing unresolved targets", () => {
@@ -390,4 +391,73 @@ describe("inspection semantic IR", () => {
       ]),
     );
   });
+
+  it("keeps typed forms, HUD, entity lifecycle and feedback distinct from lookalike methods", () => {
+    const artifactId = "selected:developer-reference";
+    const relativePath = "behavior_packs/demo/scripts/hub.ts";
+    const parsed = parseScriptFile("hub", [
+      'import { world } from "@minecraft/server";',
+      'import { ActionFormData as Menu } from "@minecraft/server-ui";',
+      'function interact(player: Player, target: Entity) {',
+      '  new Menu().title("Pick").button("Ready").show(player);',
+      '  player.onScreenDisplay.setActionBar("Preparing");',
+      '  player.teleport({ x: 1, y: 2, z: 3 });',
+      '  target.kill();',
+      '  world.sendMessage("Updated");',
+      '  const fake = { show() {}, kill() {}, setActionBar() {} };',
+      '  fake.show(); fake.kill(); fake.setActionBar();',
+      '}',
+      'world.beforeEvents.entityHurt.subscribe(() => {});',
+    ].join("\n"), { artifactId, relativePath });
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [{ parsed }],
+    });
+    const calls = ir.execution.apiCalls ?? [];
+    expect(calls.map(call => call.symbol)).toEqual(expect.arrayContaining([
+      "ActionFormData.show",
+      "ScreenDisplay.setActionBar",
+      "Entity.teleport",
+      "Entity.kill",
+      "world.sendMessage",
+    ]));
+    expect(calls.some(call => call.receiverType === "Player" &&
+      call.method === "teleport")).toBe(true);
+    expect(calls.filter(call => call.method === "show")).toHaveLength(1);
+    expect(calls.filter(call => call.method === "kill")).toHaveLength(1);
+    expect(calls.every(call => call.source.artifactId === artifactId &&
+      call.source.relativePath === relativePath)).toBe(true);
+
+    const signals = developerPracticeSignalsFromSemanticIr(ir, artifactId)
+      .map(item => item.signal);
+    expect(signals).toEqual(expect.arrayContaining([
+      "ActionFormData",
+      "onScreenDisplay.setActionBar",
+      "player.teleport",
+      "Entity.kill",
+      "sendMessage",
+      "world.beforeEvents.entityHurt",
+    ]));
+    expect(developerPracticeSignalsFromSemanticIr(ir, "different-world"))
+      .toHaveLength(0);
+  });
+
+  it("does not infer Minecraft form or display APIs from a lookalike local class", () => {
+    const parsed = parseScriptFile("fake", [
+      'class ActionFormData { show() {} }',
+      'const local = new ActionFormData();',
+      'local.show();',
+      'const player = { onScreenDisplay: { setActionBar() {} } };',
+      'player.onScreenDisplay.setActionBar("not minecraft");',
+      'const entity = { remove() {} };',
+      'entity.remove();',
+    ].join("\n"), {
+      artifactId: "selected", relativePath: "scripts/fake.js",
+    });
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [], parsedScripts: [{ parsed }],
+    });
+    expect(ir.execution.apiCalls).toEqual([]);
+  });
+
 });

@@ -199,11 +199,14 @@ The request must include:
   `persistence`, `spatial`, or `scheduler`.
 
 The selector derives `SelectedArtifactReferenceSignal` from exact
-Semantic IR state-operation, world-effect and scheduler-edge IDs carrying
-the same selected artifact ID and a non-empty source path. Supported
-source cues are deliberately limited to typed/normalized observations:
-`getDynamicProperty`, `setDynamicProperty`, `scoreboard`,
-`teleport`, `playSound`, `system.runTimeout` and `system.runInterval`.
+Semantic IR state operations, world effects, scheduler edges, parsed
+event-subscription regions, and **parser-typed Script API call sites**,
+all within the selected artifact. These include dynamic properties,
+scoreboard, teleport attempts, sound attempts, timeout/interval callbacks,
+Entity/Player kill/remove, Player.teleport, ScreenDisplay HUD methods,
+`@minecraft/server-ui` form instances invoking `.show()`, and
+Player/World `sendMessage`. Each cue retains its original source location
+and does not itself imply that its attempted effect succeeded.
 A `playSound` cue is emitted ONLY from a canonical Semantic IR
 `audio-feedback` effect authored at a typed `Player` or `Dimension`
 Script API call. It retains the exact script site and an authored
@@ -215,11 +218,15 @@ evidence of a successful effect or intended gameplay terminal.
 necessarily `Player.teleport` or completed arrival. Equal scoreboard
 labels do not establish actor ownership or gameplay scoring.
 
-Other cues such as `ActionFormData`, `onScreenDisplay.setActionBar`
-and arbitrary minified aliases are **NOT** promoted from raw text: the
-existing Semantic IR does not currently expose them as exact typed
-observations. The mere occurrence of a method named `playSound` is
-also insufficient when parser receiver inference is unresolved.
+`ActionFormData`, `ModalFormData` and `MessageFormData` now qualify
+only where the parser tracks an instance created by a constructor imported
+from the exact `@minecraft/server-ui` package (including aliased imports)
+and a real `.show()` call. Likewise HUD cues require a receiver derived
+from a typed Player's `onScreenDisplay`; a lookalike local object or
+arbitrary minified alias must still abstain. `sendMessage` indicates a
+typed messaging attempt, not localization correctness or debug intent.
+The mere occurrence of a method named `playSound` is still insufficient
+when parser receiver inference is unresolved.
 
 **Cross-source motivation (HISTORICAL, not a semantic score):**
 [developer-practice audio AST evidence](../../engine/reliability/history/audit-runs/learning/developer-practice-audio-source-2026-10-13.json)
@@ -475,12 +482,17 @@ not the final execution state. P30 failed twice in T11, T12 failed its
 visual criterion, and T20b could not finish reload. No result may be
 promoted into current-map expected behavior without independent grounding.
 
-The eight interpreter patterns without a cue supplied by the current
-typed Semantic IR remain **not automatically selectable**, including
-form lifecycle and HUD controls. Do not rewrite a `SKILL.md` signal string
-to claim a nonexistent parser observation. Those topics remain available
-for targeted ChatGPT source-level tracing; a future generalized IR/parser
-enhancement must prove an exact source-site witness before automatic matching.
+The revised source-level selector can now potentially match **15 of the
+16 developer-reference patterns**, subject to the selected artifact having
+the exact typed witness, an appropriate source locator, the requested
+question domain and explicit opt-in. This is a structural coverage count,
+**not 15 proven runtime improvements or an executed accuracy measurement**.
+`bedrock-version-targeting` still lacks an appropriate selected-source
+Semantic IR cue for manifest/API-version applicability; that question
+belongs to canonical runtime-profile and compatibility analysis.
+Forms, HUD, entity lifecycle, message and teleport cues remain abstentions
+for untyped/minified aliases and invented receiver identities. Do not
+rewrite reference strings to simulate parser evidence.
 
 ## Maturity and promotion
 

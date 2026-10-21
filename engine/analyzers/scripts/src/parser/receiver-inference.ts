@@ -12,7 +12,10 @@ import type { ScriptArgumentKind } from "../../../../packages/compatibility/src/
 type ReceiverValueType =
   | ScriptApiReceiverType
   | `${ScriptApiReceiverType}[]`
-  | "PlayerSpawnAfterEvent";
+  | "PlayerSpawnAfterEvent"
+  | "ActionFormDataConstructor"
+  | "ModalFormDataConstructor"
+  | "MessageFormDataConstructor";
 
 interface Scope {
   values: Map<string, ReceiverValueType | null>;
@@ -108,6 +111,30 @@ function minecraftSingletonBindings(
   return output;
 }
 
+/** Treat only constructors imported from the official UI module as forms. */
+function seedMinecraftUiConstructors(scope: Scope, file: ts.SourceFile): void {
+  const supported = new Set([
+    "ActionFormData", "ModalFormData", "MessageFormData",
+  ]);
+  for (const statement of file.statements) {
+    if (!ts.isImportDeclaration(statement) ||
+        !ts.isStringLiteralLike(statement.moduleSpecifier) ||
+        statement.moduleSpecifier.text !== "@minecraft/server-ui" ||
+        statement.importClause?.isTypeOnly) continue;
+    const named = statement.importClause?.namedBindings;
+    if (!named || !ts.isNamedImports(named)) continue;
+    for (const element of named.elements) {
+      const imported = element.propertyName?.text ?? element.name.text;
+      if (!element.isTypeOnly && supported.has(imported)) {
+        scope.values.set(
+          element.name.text,
+          (imported + "Constructor") as ReceiverValueType,
+        );
+      }
+    }
+  }
+}
+
 function seedMinecraftSingletons(
   scope: Scope,
   bindings: ReadonlyMap<string, ScriptApiReceiverType>,
@@ -173,7 +200,8 @@ function receiverObject(
 ): ScriptApiReceiverType | undefined {
   // Internal event payload is only a bridge to its documented .player
   // property. It is not an arbitrary Minecraft API receiver type.
-  return type && type !== "PlayerSpawnAfterEvent" && !type.endsWith("[]")
+  return type && type !== "PlayerSpawnAfterEvent" &&
+    !type.endsWith("Constructor") && !type.endsWith("[]")
     ? type as ScriptApiReceiverType
     : undefined;
 }
@@ -229,6 +257,9 @@ function propertyType(
   if (receiver === "Player" && property === "inputPermissions") {
     return "PlayerInputPermissions";
   }
+  if (receiver === "Player" && property === "onScreenDisplay") {
+    return "ScreenDisplay";
+  }
   return undefined;
 }
 
@@ -260,6 +291,15 @@ function methodReturnType(
   method: string,
   call?: ts.CallExpression,
 ): ReceiverValueType | undefined {
+  // Fluent form builders retain their instance type. Only instances
+  // from an import-qualified @minecraft/server-ui constructor qualify.
+  if (receiver === "ActionFormData" &&
+      ["title", "body", "button"].includes(method)) return receiver;
+  if (receiver === "MessageFormData" &&
+      ["title", "body", "button1", "button2"].includes(method)) return receiver;
+  if (receiver === "ModalFormData" &&
+      ["title", "dropdown", "slider", "textField", "toggle",
+       "submitButton", "label", "divider"].includes(method)) return receiver;
   if (
     call &&
     (receiver === "Entity" || receiver === "Player") &&
@@ -573,6 +613,14 @@ function inferExpressionType(
 ): ReceiverValueType | undefined {
   if (ts.isIdentifier(node)) return lookup(scope, node.text);
 
+  if (ts.isNewExpression(node) && ts.isIdentifier(node.expression)) {
+    const constructor = lookup(scope, node.expression.text);
+    if (constructor === "ActionFormDataConstructor") return "ActionFormData";
+    if (constructor === "ModalFormDataConstructor") return "ModalFormData";
+    if (constructor === "MessageFormDataConstructor") return "MessageFormData";
+    return undefined;
+  }
+
   if (ts.isPropertyAccessExpression(node)) {
     const origin = inferExpressionType(node.expression, scope, functionReturns);
     if (origin === "PlayerSpawnAfterEvent") {
@@ -636,6 +684,7 @@ function inferFunctionReturns(
   const output = new Map<string, ReceiverValueType>();
   const root = childScope();
   seedMinecraftSingletons(root, minecraftSingletonBindings(file));
+  seedMinecraftUiConstructors(root, file);
 
   for (const statement of file.statements) {
     if (!ts.isFunctionDeclaration(statement) || !statement.name) continue;
@@ -875,6 +924,7 @@ export function inferScriptMethodCalls(
   const singletonBindings = minecraftSingletonBindings(file);
   const rootScope = childScope();
   seedMinecraftSingletons(rootScope, singletonBindings);
+  seedMinecraftUiConstructors(rootScope, file);
   const trustedSpawnForward = uniqueSpawnPlayerForward(file, singletonBindings);
   const importedWorlds = isImportedMinecraftWorld(file);
 
@@ -1077,6 +1127,7 @@ export function inferScriptPropertyAccesses(
   const singletonBindings = minecraftSingletonBindings(file);
   const rootScope = childScope();
   seedMinecraftSingletons(rootScope, singletonBindings);
+  seedMinecraftUiConstructors(rootScope, file);
 
   const recordProperty = (
     node: ts.PropertyAccessExpression,
@@ -1268,6 +1319,7 @@ export function inferScriptPropertyWrites(
   const singletonBindings = minecraftSingletonBindings(file);
   const rootScope = childScope();
   seedMinecraftSingletons(rootScope, singletonBindings);
+  seedMinecraftUiConstructors(rootScope, file);
 
   const record = (
     access: ts.PropertyAccessExpression,

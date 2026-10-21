@@ -245,11 +245,33 @@ export interface SourceControlFlowRegion {
   }[];
 }
 
+/** Typed Script API call observed by the existing parser in one source file.
+ * This is an authored call attempt, never proof of a gameplay outcome.
+ * Only selected lifecycle, HUD, form and message surfaces are projected.
+ */
+export interface AuthoredScriptApiCall {
+  readonly id: string;
+  readonly receiverType:
+    | "Entity" | "Player" | "World"
+    | "ScreenDisplay"
+    | "ActionFormData" | "ModalFormData" | "MessageFormData";
+  readonly method:
+    | "kill" | "remove" | "teleport" | "sendMessage"
+    | "setActionBar" | "setTitle" | "setHudVisibility"
+    | "show";
+  readonly symbol: string;
+  readonly inference: "direct" | "bounded";
+  readonly source: SourceRef;
+  readonly executionRegionId: string;
+}
+
 export interface SemanticIr {
   schemaVersion: 1;
   execution: {
     regions: readonly ExecutionRegion[];
     edges: readonly ExecutionEdge[];
+    /** Typed lifecycle API witnesses; not source-name/lexical matches. */
+    apiCalls?: readonly AuthoredScriptApiCall[];
     outcomes?: readonly AuthoredReturnOutcome[];
     worldEffects?: readonly AuthoredWorldEffect[];
     controlFlow?: readonly SourceControlFlowRegion[];

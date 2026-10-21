@@ -49,6 +49,38 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
   for (const duplicate of duplicateIds(ir.execution.edges)) {
     errors.push("Duplicate execution edge id: " + duplicate);
   }
+  for (const duplicate of duplicateIds(ir.execution.apiCalls ?? [])) {
+    errors.push("Duplicate authored API call id: " + duplicate);
+  }
+  for (const call of ir.execution.apiCalls ?? []) {
+    const owner = call.receiverType;
+    const method = call.method;
+    const allowed =
+      ((owner === "Entity" || owner === "Player") &&
+        (method === "kill" || method === "remove" || method === "teleport")) ||
+      ((owner === "World" || owner === "Player") &&
+        method === "sendMessage") ||
+      (owner === "ScreenDisplay" &&
+        (method === "setActionBar" || method === "setTitle" ||
+         method === "setHudVisibility")) ||
+      ((owner === "ActionFormData" || owner === "ModalFormData" ||
+        owner === "MessageFormData") && method === "show");
+    const symbol = owner === "World" ? "world." + method :
+      owner === "Player" && method === "teleport"
+        ? "Entity.teleport" : owner + "." + method;
+    if (!regions.has(call.executionRegionId) ||
+        !allowed || !["direct", "bounded"].includes(call.inference) ||
+        call.symbol !== symbol ||
+        !call.source.artifactId || !call.source.relativePath) {
+      errors.push("Invalid typed authored API call: " + call.id);
+    }
+    const region = ir.execution.regions.find(item =>
+      item.id === call.executionRegionId);
+    if (region?.source.artifactId !== call.source.artifactId ||
+        region?.source.relativePath !== call.source.relativePath) {
+      errors.push("Authored API call crosses source ownership: " + call.id);
+    }
+  }
   for (const duplicate of duplicateIds(ir.execution.authoredBehaviorRelations ?? [])) {
     errors.push("Duplicate authored behavior relation id: " + duplicate);
   }

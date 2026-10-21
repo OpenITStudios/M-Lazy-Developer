@@ -23,6 +23,7 @@ import {
   type AuthoredBranchGuard,
   type AuthoredReturnOutcome,
   type AuthoredWorldEffect,
+  type AuthoredScriptApiCall,
   type AuthoredResourceAction,
   type ExecutionRegion,
   type ExecutionRegionKind,
@@ -138,6 +139,7 @@ export function buildInspectionSemanticIr(
   const outcomes = new Map<string, AuthoredReturnOutcome>();
   const resourceActions = new Map<string, AuthoredResourceAction>();
   const worldEffects = new Map<string, AuthoredWorldEffect>();
+  const apiCalls = new Map<string, AuthoredScriptApiCall>();
   const sourceControlFlow = new Map<string, SourceControlFlowRegion>();
   const ambiguousControlRegions = new Set<string>();
   const worldEffectCounts = new Map<string, number>();
@@ -531,6 +533,46 @@ export function buildInspectionSemanticIr(
         ...(callback.generationGuardOperands === undefined ? {} : {
           generationGuardOperands: callback.generationGuardOperands,
         }),
+      });
+    }
+
+    // Project only parser-confirmed lifecycle/teleport API call sites.
+    // Do not infer receiver type from method spelling or imported aliases.
+    // Calls represent authored attempts, never actual removal or arrival.
+    for (const call of parsed.methodCalls) {
+      const entityLifecycle =
+        (call.receiverType === "Entity" || call.receiverType === "Player") &&
+        (call.method === "kill" || call.method === "remove" ||
+         call.method === "teleport");
+      const playerFeedback =
+        (call.receiverType === "Player" || call.receiverType === "World") &&
+        call.method === "sendMessage";
+      const displayFeedback = call.receiverType === "ScreenDisplay" &&
+        (call.method === "setActionBar" || call.method === "setTitle" ||
+         call.method === "setHudVisibility");
+      const formPresentation =
+        (call.receiverType === "ActionFormData" ||
+         call.receiverType === "ModalFormData" ||
+         call.receiverType === "MessageFormData") && call.method === "show";
+      if (!entityLifecycle && !playerFeedback &&
+          !displayFeedback && !formPresentation) continue;
+      const regionId = ensureScriptRegion(
+        parsed, call.executionRegion ?? "module", call.source,
+      );
+      const key = [
+        "api-call", token(regionId), token(call.symbol),
+        sourceToken(call.source),
+      ].join(":");
+      // Preserve distinct receiver/method witnesses; an identical site
+      // repeated by the extractor must not multiply reference evidence.
+      apiCalls.set(key, {
+        id: key,
+        receiverType: call.receiverType,
+        method: call.method,
+        symbol: call.symbol,
+        inference: call.inference,
+        source: call.source,
+        executionRegionId: regionId,
       });
     }
 
@@ -1066,6 +1108,7 @@ export function buildInspectionSemanticIr(
         (a, b) => a.id.localeCompare(b.id),
       ),
       edges: executionEdges,
+      apiCalls: [...apiCalls.values()].sort((a, b) => a.id.localeCompare(b.id)),
       outcomes: [...outcomes.values()].sort((a, b) => a.id.localeCompare(b.id)),
       worldEffects: [...worldEffects.values()].sort((a, b) => a.id.localeCompare(b.id)),
       controlFlow: [...sourceControlFlow.values()].filter(item =>

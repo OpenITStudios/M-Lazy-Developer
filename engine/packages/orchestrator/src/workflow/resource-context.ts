@@ -303,6 +303,39 @@ export function developerPracticeSignalsFromSemanticIr(
       add(edge.id, edge.source, "system." + edge.scheduler);
     }
   }
+  // An event-source region comes from the parser's exact subscription,
+  // not from an arbitrary string or a guessed gameplay event.
+  for (const region of ir.execution.regions) {
+    if (region.kind === "event-source" &&
+        region.ownerId === "world" &&
+        region.label === "world.beforeEvents.entityHurt") {
+      add(region.id, region.source, "world.beforeEvents.entityHurt");
+    }
+  }
+  // Only parser-classified Script API receivers can add lifecycle cues.
+  // The canonical API symbol can be Entity.teleport for a Player receiver,
+  // so retain receiverType rather than deciding from symbol spelling.
+  for (const call of ir.execution.apiCalls ?? []) {
+    if ((call.receiverType === "Player" || call.receiverType === "Entity") &&
+        (call.method === "kill" || call.method === "remove")) {
+      add(call.id, call.source, "Entity." + call.method);
+    } else if (call.receiverType === "Player" && call.method === "teleport") {
+      add(call.id, call.source, "player.teleport");
+    } else if (call.receiverType === "ScreenDisplay" &&
+               ["setActionBar", "setTitle", "setHudVisibility"].includes(call.method)) {
+      add(call.id, call.source, "onScreenDisplay." + call.method);
+      if (call.method === "setHudVisibility") {
+        add(call.id, call.source, "setHudVisibility");
+      }
+    } else if (["ActionFormData", "ModalFormData", "MessageFormData"]
+                 .includes(call.receiverType) && call.method === "show") {
+      add(call.id, call.source, call.receiverType);
+    } else if ((call.receiverType === "Player" || call.receiverType === "World") &&
+               call.method === "sendMessage") {
+      // An authored message call proves neither localization nor debug intent.
+      add(call.id, call.source, "sendMessage");
+    }
+  }
   const unique = new Map(cues.map(cue =>
     [[cue.evidenceId, cue.sourcePath, cue.signal].join("::"), cue] as const));
   return [...unique.values()].sort((a, b) =>
