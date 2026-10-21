@@ -1075,4 +1075,109 @@ describe("Map Audit Output V2 projection", () => {
     );
   });
 
+  it("puts the material audit decision before technical inventories with scoped developer caveats", () => {
+    const report: any = {
+      mapVersion: "1.0.1",
+      evidenceScope: { selectedArtifact: "selected.mcworld" },
+      control: {
+        status: "BLOCKED", currentStage: "UNDERSTAND",
+        allowedNextAction: "RESOLVE_BLOCKING_STAGE",
+      },
+      gameDesign: {
+        objective: "Capture zone", objectiveGrounding: "authored",
+        winCondition: "Unresolved", winConditionGrounding: "unresolved",
+        loseCondition: "Unresolved", loseConditionGrounding: "unresolved",
+      },
+      gameplayStructure: {
+        features: [{
+          id: "feature:zone", label: "Capture zone", kind: "mechanic",
+          grounding: "SOURCE_EVIDENCED",
+          sourceEvidenceIds: ["site:zone"],
+          sourceBehaviorPaths: [], purpose: "Authored capture region",
+          activationRelationIds: [], effectRelationIds: [],
+          transitionRelationIds: [], outcomeRelationIds: [],
+        }],
+        mechanicReconstructions: [], gameplayJourneyCandidates: [],
+      },
+      stateTransitions: [], gameplayClosure: {
+        stateModelComplete: false, status: "PARTIAL", surfaceInventory: [],
+      },
+      multiArena: { isolationRules: [] },
+      bugs: [{
+        id: "bug:zone", issue: "Capture never settles",
+        issueType: "BUG", status: "NEED_VALIDATION",
+        playerImpact: "Progression may stall.",
+        expected: "Capture completes.",
+        actual: "Settlement not established.",
+        evidenceIds: ["site:zone"],
+        validationReason: "Runtime state remains unknown.",
+        missingProof: "Observe actual settlement or its source guard.",
+      }],
+      designMismatches: [], unresolved: { total: 2 },
+      auditObligations: [],
+    };
+    const task: any = {
+      id: "task:translate:zone", stage: "PROVE",
+      kind: "GAMEPLAY_TRANSLATION", decisionNeeded: "Trace zone settlement",
+      goal: "Find the selected-map source branch",
+      stopCondition: "Stop at deciding source or explicit gap",
+      evidenceContext: [{
+        kind: "selected-artifact-evidence",
+        id: "site:zone", locator: "scripts/zone.ts:12",
+      }],
+      unresolvedEvidenceIds: [],
+      knowledgeLookup: {
+        sourceLocators: ["scripts/zone.ts:12"],
+        query: "settlement from selected source",
+      },
+      developerPractice: {
+        authority: "REFERENCE", status: "INVESTIGATION_HINTS_ONLY",
+        items: [{
+          patternId: "developer.hint.forms.stale-response",
+          question: "Does the caller revalidate its session after await?",
+          negativeControl: "The caller may already reject a stale response.",
+          prohibits: "Do not infer a form bug from an unguarded helper alone.",
+          matchingEvidenceIds: ["source:typed-show"],
+          matchingSourcePaths: ["scripts/zone.ts"],
+          matchingSignals: ["ActionFormData"],
+          referenceCode: {
+            path: "modules/forms/form-service.ts",
+            sha256: "f".repeat(64),
+            symbols: ["openForm"],
+          },
+          upstreamProbes: [{
+            id: "probe.report.t1",
+            sourcePath: "docs/test-runs/probe.md",
+            status: "UPSTREAM_REPORTED_FAIL",
+            summary: "External test result, not current-map proof.",
+          }],
+        }],
+      },
+    };
+    const brief = formatSelectedMapAuditBrief({
+      report,
+      intent: {
+        evidence: [{
+          id: "site:zone", scope: "selected-artifact",
+          locator: "scripts/zone.ts:12",
+          origin: "source-code", summary: "Source defines zone",
+        }],
+        nodes: [], edges: [], invariants: [], unknowns: [],
+      } as any,
+      modelTaskPackets: [task],
+    });
+    expect(brief.indexOf("## Immediate Decision")).toBeGreaterThan(0);
+    expect(brief.indexOf("## Immediate Decision"))
+      .toBeLessThan(brief.indexOf("## Detailed Source Navigation"));
+    expect(brief.indexOf("## Immediate Decision"))
+      .toBeLessThan(brief.indexOf("## Findings"));
+    expect(brief).toContain("BUG 0 PROVEN / 1 NEED_VALIDATION");
+    expect(brief).toContain("Next decision [PROVE / GAMEPLAY_TRANSLATION]");
+    expect(brief).toContain("scripts/zone.ts:12");
+    expect(brief).toContain("Does the caller revalidate its session after await?");
+    expect(brief).toContain("Do not infer a form bug from an unguarded helper alone.");
+    expect(brief).toContain("External probe (NOT selected map proof)");
+    expect(brief).not.toContain("UPSTREAM_REPORTED_FAIL is a proven map bug");
+  });
+
 });

@@ -31,6 +31,67 @@ A partial source review may already give this useful **scoped** design-and-devia
 
 Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inventory, permissions, concurrency) serve the reconstructed player journey. They are not independent feature quotas. An unfamiliar mechanic remains valid even if no pre-existing category covers it.
 
+## Concrete operating loop — from map to decision
+
+A useful audit is **not** a generic checklist of every Minecraft feature.
+One selected map/version supplies the content; the operator reconstructs
+its actual player-facing mechanics and resolves the **first material**
+uncertainty or contradiction. The same canonical owners work as follows:
+
+| Step | Actual input | One decision/output | Existing owner |
+|---|---|---|---|
+| 1. Select | One `.mcworld` and its fingerprint; approved user focus | Exact map/version/scope, never mixed archives | Artifact + `map-audit-user-intent.ts` |
+| 2. Discover | Manifest, packs, scripts, entity/structure/world source | Inventory and source IDs; list unsupported content rather than assume absence | `inspection/inspect-artifact.ts` and format analyzers |
+| 3. Understand | Source call paths, event triggers, owner/state relationships, authored content and selected evidence | Objective, start/join, active mechanics, progression, terminal/cleanup/replay; mark inferred and UNKNOWN | `gameplay-intent/` and selected-source analyzers |
+| 4. Formalize | Typed Semantic IR + source-grounded Intent | Explicit state/actor/arena ownership, trigger → guard → effect → continuation, and scenario/contract alternatives | `semantic-ir/`, Scenario Graph, Gameplay World Model |
+| 5. Evaluate | One scenario, normal path, edge case, disconfirming conditions | Expected-versus-actual **candidate**, or intentional design/UNKNOWN; no issue promoted yet | Existing scenario, diagnostic and platform owners |
+| 6. Prove | Source evidence, counterproof, applicable platform facts, narrowly needed runtime residue | PROVEN or NEED_VALIDATION; one root cause, one issue lane; no generic runtime requirement | Defect Resolution Gate and admission |
+| 7. Report | Closed admission plus supported findings | Human-readable gameplay blueprint, separate BUG/DESIGN_MISMATCH, and exact remaining decisions | Map Audit Output V2 and approved Bug Report V2 |
+
+The next cycle always starts with the **earliest unresolved stage**, not
+with the first convenient checker. Read one relevant owner and follow the
+smallest deciding source path. If a source-only question can be answered,
+answer it before proposing a Minecraft runtime test. A bounded source
+review may communicate independently supported mechanics/defects
+without claiming the full production audit closed.
+
+### External developer source: comparison, never replacement
+
+The supplied `minecraft-bedrock-agent-skills` v0.24.0 and
+`skills-probe` references are optional, versioned **REFERENCE** input
+to a source-grounded model task. The path is:
+
+```text
+Selected-map source evidence + typed Semantic IR + question
+→ existing modelTaskPackets
+→ at most two relevant developer interpretation questions
+→ inspect map's actual caller/state/effect and negative controls
+→ decide Expected / contradiction / UNKNOWN through existing proof gate
+```
+
+No developer module is silently installed or executed. A probe FAIL does
+not establish a bug in another map; a developer implementation preference
+does not become a gameplay requirement. **Version compatibility** is
+derived from the selected pack manifest and separately verified runtime
+target, not a borrowed developer version. When no exact typed cue or
+source-location join exists, omit the hint instead of inventing a match.
+
+### What the operator sees first
+
+The existing `--brief` formatter presents **Game Understanding → Immediate
+Decision → Detailed Source Navigation → Findings → Next Investigations**.
+The immediate decision includes confirmed versus unresolved finding
+counts, a bounded set of selected-source mechanic candidates, and the
+first stage-ordered task or obligation. Only when that task actually
+has an admitted developer reference does its question appear; the full
+task section exposes source IDs, counterexamples and provenance.
+
+This front section is a **read-only projection of existing source evidence**,
+not a new stage, an alternative issue database, a cached decision, or
+proof of successful runtime execution. The detailed source inventory
+remains navigable later; it must not hide the decision or be confused
+with chronological player gameplay.
+
 ## One source-declared programmatic audit flow (optional; only if executed)
 
 ```text

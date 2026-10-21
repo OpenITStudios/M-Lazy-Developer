@@ -916,6 +916,100 @@ export function formatSelectedMapAuditBrief(input: {
         : "See independently grounded win/lose conditions; runtime NOT proven."),
     "",
   ];
+  // A compact decision appears BEFORE the potentially large authored
+  // source inventory. It projects existing report and task data only:
+  // no new verdict, proof receipt, gameplay route or second state owner.
+  const provenBugs = report.bugs.filter(item => item.status === "PROVEN");
+  const provenMismatches = report.designMismatches.filter(item =>
+    item.status === "PROVEN");
+  const pendingFindings = [...report.bugs, ...report.designMismatches]
+    .filter(item => item.status === "NEED_VALIDATION");
+  const sourcedFeatures = visibleFeatures.filter(feature =>
+    feature.grounding === "SOURCE_EVIDENCED");
+  const firstTask = modelTaskPackets[0];
+  const firstObligation = report.auditObligations?.[0];
+  out.push(
+    "## Immediate Decision (CURRENT SOURCE ONLY)",
+    "**Authored feature candidates:** " + sourcedFeatures.length +
+      "; these do not establish playability or execution.",
+    "**Findings:** BUG " + provenBugs.length + " PROVEN / " +
+      report.bugs.filter(item => item.status === "NEED_VALIDATION").length +
+      " NEED_VALIDATION; DESIGN_MISMATCH " + provenMismatches.length +
+      " PROVEN / " + report.designMismatches.filter(item =>
+        item.status === "NEED_VALIDATION").length + " NEED_VALIDATION.",
+    "**Open audit obligations:** " + (report.auditObligations?.length ?? 0) +
+      "; remaining evidence questions: " + report.unresolved.total +
+      ". Neither is a bug verdict.",
+  );
+  if (sourcedFeatures.length > 0) {
+    out.push("**Selected-source mechanics to trace (sample):**");
+    for (const feature of sourcedFeatures.slice(0, 5)) {
+      const locations = feature.sourceEvidenceIds
+        .map(id => evidenceById.get(id))
+        .filter(item => item?.scope === "selected-artifact")
+        .map(item => item!.locator);
+      out.push("- " + concise(feature.label) +
+        (locations.length === 0 ? " — source site unresolved" :
+          " — " + [...new Set(locations)].slice(0, 2).map(concise).join("; ")));
+    }
+    if (sourcedFeatures.length > 5) {
+      out.push("Other authored candidates not listed: " +
+        (sourcedFeatures.length - 5) + ".");
+    }
+  }
+  if (firstTask !== undefined) {
+    const locations = [...new Set([
+      ...(firstTask.knowledgeLookup?.sourceLocators ?? []),
+      ...firstTask.evidenceContext.flatMap(item =>
+        item.kind === "selected-artifact-evidence" && item.locator
+          ? [item.locator] : []),
+    ])];
+    out.push(
+      "**Next decision [" + firstTask.stage + " / " + firstTask.kind +
+        "]:** " + concise(firstTask.decisionNeeded),
+      "**Required next action:** " + concise(firstTask.goal),
+      "**Stop when:** " + concise(firstTask.stopCondition),
+      ...(locations.length === 0 ? [
+        "**Source witness:** unresolved; do not substitute external guides.",
+      ] : [
+        "**Source witness:** " + locations.slice(0, 3).map(concise).join("; "),
+      ]),
+    );
+    if (firstTask.developerPractice?.items.length) {
+      const guide = firstTask.developerPractice.items[0]!;
+      out.push(
+        "**Developer reference (NOT proof):** " + concise(guide.question),
+        "**Design counterexample to check:** " + concise(guide.negativeControl),
+      );
+    }
+  } else if (firstObligation !== undefined) {
+    out.push(
+      "**Next obligation [" + firstObligation.stage + "]:** " +
+        concise(firstObligation.title),
+      "**Deciding evidence:** " + concise(firstObligation.missingProof),
+      "**Next check:** " + concise(firstObligation.validationTest),
+    );
+  } else if (pendingFindings.length > 0) {
+    out.push(
+      "**Next unresolved contradiction:** " + concise(pendingFindings[0]!.issue),
+      "**Deciding evidence:** " + concise(pendingFindings[0]!.missingProof ??
+        pendingFindings[0]!.validationReason ?? "not identified"),
+    );
+  } else {
+    out.push(
+      "**Next decision:** " +
+        (report.control.status === "BLOCKED"
+          ? "Current stage is blocked; no bounded source task was produced."
+          : "No pending model task is present in this view."),
+    );
+  }
+  out.push(
+    "",
+    "## Detailed Source Navigation (NOT A PLAYER PLAYTHROUGH)",
+    "Technical source trees below are investigative references. They do not " +
+      "override the game understanding, confirmed findings or next decision above.",
+    "",
+  );
   // Navigation over the EXISTING canonical Intent owns edges. This is
   // source-structure containment, never a chronological player journey.
   // Show the discovered shape first, before technical evidence inventories.
@@ -2121,6 +2215,28 @@ export function formatSelectedMapAuditBrief(input: {
       ...(task.knowledgeLookup === undefined ? [] :
         ["  Search hint (not proof): " +
           concise(task.knowledgeLookup.query)]),
+      ...(task.developerPractice?.items ?? []).slice(0, 2).flatMap(guide => [
+        "  Developer source guide (REFERENCE; NOT map proof): " +
+          concise(guide.question),
+        "  Counterexample: " + concise(guide.negativeControl),
+        "  Forbidden inference: " + concise(guide.prohibits),
+        "  Exact selected-IR sites: " +
+          guide.matchingEvidenceIds.slice(0, 4).map(concise).join("; "),
+        ...(guide.referenceCode === undefined ? [] : [
+          "  External code example: " + concise(guide.referenceCode.path) +
+            " / sha256:" + guide.referenceCode.sha256,
+        ]),
+        ...(guide.manifestDeclarations ?? []).slice(0, 2).map(item =>
+          "  Pack manifest declaration (NOT observed runtime): " +
+            concise(item.sourcePath) + "; min_engine=" +
+            concise(item.minEngineVersion ?? "unresolved") +
+            "; module dependencies=" + item.scriptModules
+              .map(module => module.moduleName + "@" + module.version)
+              .slice(0, 3).join(", ")),
+        ...(guide.upstreamProbes ?? []).slice(0, 2).map(item =>
+          "  External probe (NOT selected map proof): " +
+            concise(item.sourcePath) + " [" + item.status + "]"),
+      ]),
       ...(task.retrievedKnowledge?.references ?? []).flatMap((reference) => [
         "  Knowledge reference (NOT bug or detector proof): " +
           concise(reference.knowledgeId) + " — " +

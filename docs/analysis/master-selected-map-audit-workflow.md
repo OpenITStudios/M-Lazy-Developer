@@ -33,6 +33,32 @@ The Pre-Audit Plan is a communication gate only. It is not an audit stage, gamep
 
 Use this document to know what happens next, what must exist before moving on, and where specialist evidence feeds the same canonical flow.
 
+## Operational decision order
+
+The short source-grounded decision cycle, including stage inputs and
+canonical owning modules, belongs to
+[Product Flow](../product/flow.md#concrete-operating-loop--from-map-to-decision).
+Use it **inside** this same audit; do not create a second audit plan, proof
+state, or feature checklist. Prioritize one material player journey and the
+earliest deciding stage. An authored world/Script API command is an
+attempted effect, not proof a player saw it.
+
+In the optional programmatic output, `--brief` starts with game
+understanding, followed immediately by the **current decision**: supported
+feature candidates, PROVEN/NEED_VALIDATION issue totals, the first
+stage-ordered model task (or its blocking obligation), the source witness
+if available and the stopping rule. The extensive technical source
+hierarchy follows as navigation, not as the lead answer.
+
+If the operator explicitly enables the reviewed ZIP context with
+`--developer-practice`, the same `modelTaskPackets` may include bounded
+`developerPractice` hints and externally attributed test reports. Always
+show their actual selected-map matching source IDs, questions,
+`negativeControl`, version declaration-only status, and prohibited
+inference. No generic developer skill, test fixture, manifest version,
+or probe result can establish gameplay Expected/Actual by itself.
+Missing typed evidence means abstain, not guess.
+
 ## What the operator must deliver
 
 Keep the user-facing audit anchored to **game design → deviations → specific remaining proof**, not a parade of checker statuses. From the exact selected artifact, communicate:
@@ -135,7 +161,7 @@ Do not introduce alternate names for these states in operator or tester-facing o
 
 ~~~
 confirmed Pre-Audit Plan
-→ npm run audit -- <selected.mcworld> [--brief | --handoff] [--responses answers.json]
+→ npm run audit -- <selected.mcworld> [--brief | --handoff] [--developer-practice] [--responses answers.json]
 ~~~
 
 Only one selected artifact/version is authoritative.
