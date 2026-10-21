@@ -1082,13 +1082,17 @@ export function deriveAuditModelTaskPackets(input: {
       "spatial-region": ["spatial"],
     };
     const domains = knowledgeLookup?.grounding === "SELECTED_ARTIFACT"
-      ? [
-          knowledgeLookup.query,
-          ...packet.knowledgeContext.map((item) => item.domain),
-          ...input.intent.nodes
-            .filter(node => subjectIds.has(node.id))
-            .flatMap(node => [node.kind, ...(kindDomains[node.kind] ?? [])]),
-        ].join(" ").toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean)
+      ? [...new Set([
+          // Keep canonical Knowledge domain IDs intact, including
+          // hyphenated IDs such as "script-api" and "client-feedback".
+          ...packet.knowledgeContext.map(item => item.domain.toLowerCase()),
+          ...[
+            knowledgeLookup.query,
+            ...input.intent.nodes
+              .filter(node => subjectIds.has(node.id))
+              .flatMap(node => [node.kind, ...(kindDomains[node.kind] ?? [])]),
+          ].join(" ").toLowerCase().split(/[^a-z0-9]+/g),
+        ].filter(Boolean))]
       : [];
     const versionQuestion = domains.some(term => [
       "manifest", "version", "versions", "edition", "compatibility",

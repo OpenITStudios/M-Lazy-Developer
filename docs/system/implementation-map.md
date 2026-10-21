@@ -177,6 +177,17 @@ The following root `map-audit-*.ts` files are **current implementation owners**,
 
 These responsibilities may compose each other but must not become independent production entrypoints or separate sources of gameplay truth. Their ownership is backed by current exports/source; this table is navigation guidance, not a new machine registry. Rename, merge or move only if overlapping *behavior* (not similar words or file size) is proven and all consumers can be migrated.
 
+### Selected-source reference and continuation boundaries
+
+- Source locator grammar: `engine/packages/project-model/src/project/source-ref.ts`.
+- Typed IR reference selector: `engine/packages/orchestrator/src/workflow/resource-context.ts`.
+- Model task and Knowledge context: `engine/packages/orchestrator/src/map-audit-model-task.ts`.
+- Optional current-snapshot continuation (no implicit stale task references):
+  `engine/packages/orchestrator/src/map-audit-pipeline.ts`.
+- Upstream developer ZIP signals: `experiments/developer-practice-signals.json`.
+  Its source SHA and report provenance are comparison records, not authority
+  for map gameplay.
+
 ## Knowledge access owners
 
 ```text

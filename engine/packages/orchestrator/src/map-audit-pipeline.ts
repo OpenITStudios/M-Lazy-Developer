@@ -885,7 +885,6 @@ function assembleSelectedMapAuditRun(
   userIntent?: AuditUserIntentEnvelope,
   runtimeProbeTranscript?: RuntimeProbeTranscript,
   knowledgeCatalog?: KnowledgeCatalog,
-  previousModelTaskPackets?: readonly AuditModelTaskPacket[],
   developerPractice?: DeveloperPracticeReferenceData,
 ): SelectedMapAuditRun {
   const identity =
@@ -971,31 +970,12 @@ function assembleSelectedMapAuditRun(
   // resolveSelectedMapAudit reuses the same immutable artifact but may have
   // no catalogue argument. Carry only a bounded selection whose task goal,
   // evidence and source-grounded query are still identical.
-  const previousById = new Map(
-    (previousModelTaskPackets ?? []).map((task) => [task.id, task]),
-  );
-  const modelTaskPackets = freshModelTaskPackets.map((task) => {
-    const previous = previousById.get(task.id);
-    const sameEvidence = previous !== undefined &&
-      previous.decisionNeeded === task.decisionNeeded &&
-      previous.knowledgeLookup?.query === task.knowledgeLookup?.query &&
-      JSON.stringify(previous.knowledgeLookup?.sourceEvidenceIds ?? []) ===
-        JSON.stringify(task.knowledgeLookup?.sourceEvidenceIds ?? []) &&
-      JSON.stringify(previous.knowledgeLookup?.sourceLocators ?? []) ===
-        JSON.stringify(task.knowledgeLookup?.sourceLocators ?? []);
-    if (!sameEvidence) return task;
-    return {
-      ...task,
-      ...(task.retrievedKnowledge === undefined &&
-          previous?.retrievedKnowledge !== undefined
-        ? { retrievedKnowledge: previous.retrievedKnowledge }
-        : {}),
-      ...(task.developerPractice === undefined &&
-          previous?.developerPractice?.selectedArtifactId === inspection.artifactId
-        ? { developerPractice: previous.developerPractice }
-        : {}),
-    };
-  });
+  // Context is re-derived ONLY from explicit current Knowledge/Developer
+  // inputs. Reusing a prior model task by ID, query and source locator does
+  // not bind its reference source revision, applicability or ZIP snapshot.
+  // A source-only continuation without those inputs must abstain rather than
+  // silently carry stale reference statements into the next audit revision.
+  const modelTaskPackets = freshModelTaskPackets;
   const allFindings = [
     ...control.issueLanes.BUG,
     ...control.issueLanes.DESIGN_MISMATCH,
@@ -1260,7 +1240,6 @@ export async function runSelectedMapAudit(
     userIntent,
     input.runtimeProbeTranscript,
     input.knowledgeCatalog,
-    undefined,
     input.developerPractice,
   );
 }
@@ -1269,6 +1248,9 @@ export interface ResolveSelectedMapAuditInput {
   readonly audit: SelectedMapAuditRun;
   readonly basedOnAuditRevision: string;
   readonly runtimeProbeTranscript?: RuntimeProbeTranscript;
+  /** Explicit, current snapshots only; no implicit prior task context reuse. */
+  readonly knowledgeCatalog?: KnowledgeCatalog;
+  readonly developerPractice?: DeveloperPracticeReferenceData;
   readonly resolutions:
     readonly GameplayDefectResolution[];
 }
@@ -1322,8 +1304,8 @@ export function resolveSelectedMapAudit(
     input.audit.demandReconciliation,
     input.audit.userIntent,
     input.runtimeProbeTranscript,
-    undefined,
-    input.audit.modelTaskPackets,
+    input.knowledgeCatalog,
+    input.developerPractice,
   );
   const previousReasoning = Object.fromEntries([
     ...input.audit.mapAuditReport.bugs,
@@ -1366,6 +1348,8 @@ export function applySelectedMapAuditModelResponses(input: {
   readonly audit: SelectedMapAuditRun;
   readonly responses: SelectedMapAuditModelResponseBatch;
   readonly runtimeProbeTranscript?: RuntimeProbeTranscript;
+  readonly knowledgeCatalog?: KnowledgeCatalog;
+  readonly developerPractice?: DeveloperPracticeReferenceData;
 }): SelectedMapAuditRun {
   const { audit, responses } = input;
   if (
@@ -1537,6 +1521,10 @@ export function applySelectedMapAuditModelResponses(input: {
     ...(input.runtimeProbeTranscript === undefined
       ? {}
       : { runtimeProbeTranscript: input.runtimeProbeTranscript }),
+    ...(input.knowledgeCatalog === undefined ? {} :
+      { knowledgeCatalog: input.knowledgeCatalog }),
+    ...(input.developerPractice === undefined ? {} :
+      { developerPractice: input.developerPractice }),
   });
 }
 

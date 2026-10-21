@@ -8,6 +8,7 @@ import {
   type KnowledgeApplicabilityDecision,
 } from "../../../knowledge/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
+import { sourceLocatorMatchesSourcePath } from "../../../project-model/src/index.js";
 import type { SourceRef } from "../../../project-model/src/index.js";
 import {
   validateMinecraftRuntimeProfile,
@@ -442,10 +443,7 @@ export function compileDeveloperPracticeReferenceContext(input: {
   const observed = developerPracticeSignalsFromSemanticIr(
     input.semanticIr, selectedArtifactId,
   ).filter(item => locators === undefined || locators.some(locator =>
-    locator === item.sourcePath ||
-    locator.startsWith(item.sourcePath + ":") ||
-    locator.startsWith(item.sourcePath + "#") ||
-    locator.startsWith(item.sourcePath + "@")
+    sourceLocatorMatchesSourcePath(locator, item.sourcePath)
   ));
   // Manifest evidence uses the existing selected-map pack owner. A manifest
   // may inform a task only when that task already has a source file in the
@@ -456,7 +454,11 @@ export function compileDeveloperPracticeReferenceContext(input: {
     item.packRoot.length > 0 &&
     !item.packRoot.split("/").includes("..") &&
     item.source.relativePath === item.packRoot + "/manifest.json" &&
-    locators.some(locator => locator.startsWith(item.packRoot + "/")) &&
+    locators.some(locator =>
+      // Root ownership is a path-segment boundary. The source evidence
+      // locator itself may carry a line, JSON pointer or source symbol.
+      locator.startsWith(item.packRoot + "/") &&
+      !locator.slice(item.packRoot.length + 1).startsWith("/")) &&
     (item.minEngineVersion === undefined ||
       /^\d+\.\d+\.\d+$/.test(item.minEngineVersion))
   );

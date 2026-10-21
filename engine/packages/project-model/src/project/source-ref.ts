@@ -110,6 +110,41 @@ export function validateSourceRef(
   return errors;
 }
 
+/**
+ * File-identity check for a source evidence locator emitted by one selected
+ * artifact. Parse only documented locator suffixes: source line/column,
+ * authored localization #L, JSON pointer, or source-symbol @.
+ *
+ * The caller must separately establish selected-artifact ownership from
+ * Gameplay Intent/SourceRef. This cannot prove that an operation executed.
+ * Do not use startsWith(path + ":") alone: arbitrary suffixes can turn
+ * a filename resemblance into a false join.
+ */
+export function sourceLocatorMatchesSourcePath(
+  locator: string,
+  relativePath: string,
+): boolean {
+  if (!locator || !relativePath || !locator.startsWith(relativePath)) {
+    return false;
+  }
+  const suffix = locator.slice(relativePath.length);
+  if (suffix.length === 0) return true;
+  if (/^:[1-9]\d*(?::[1-9]\d*){0,3}$/.test(suffix)) {
+    return true;
+  }
+  if (/^#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?$/.test(suffix)) {
+    return true;
+  }
+  if (/^#\/(?:[^\r\n]*)$/.test(suffix)) {
+    return true;
+  }
+  // Author-authored symbol locator; never an unbounded path prefix.
+  if (/^@[a-zA-Z0-9_.:/-]+$/.test(suffix)) {
+    return true;
+  }
+  return false;
+}
+
 export function sourceRefHasPreciseLocation(
   source: SourceRef,
 ): boolean {

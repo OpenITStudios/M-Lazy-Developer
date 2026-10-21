@@ -71,7 +71,7 @@ only, never universal Minecraft correctness requirements.
 |---|---|---|
 | `docs/test-runs/2026-10-18-t20-agent.md` | T20: PASS for a scoped camera visibility/restoration scene in Education 26.32 | Camera/chunk evidence candidate, not a universal failure detector |
 | `docs/test-runs/2026-10-21-p49-labels.md` | P49: FAIL particle glyph label order, overlap and far cutoff in its specific probe implementation | Negative control against assuming particle labels are always readable or per-viewer |
-| `docs/P50-GLYPH-PROBE.md` | P50: native custom glyph test **pending** | Planned fixture only; no verified rendering |
+| `docs/P50-GLYPH-PROBE.md` + `docs/test-runs/2026-10-21-p50-glyphs.md` | P50: native probe **PARTIAL** | Several text surfaces rendered; overlapping chat rows failed and other cases remain blocked; actual report supersedes plan state |
 
 The referenced report content and hashes are recorded in
 `experiments/developer-practice-signals.json`. They are upstream author/tester

@@ -38,7 +38,7 @@ cannot be selected as map-audit evidence.
 **Probe facts are upstream reports, not reproduced gameplay proof.**
 T20 reports an Education 26.32 camera scene PASS with defined scene
 conditions; P49 reports FAIL for its custom particle-glyph labeling
-layout/cutoff; P50's custom glyph display remains untested natively.
+layout/cutoff; P50's later native report has PARTIAL results: some glyph surfaces passed, while overlapping chat rows failed and other cases were blocked.
 The older pending/research queue from the original 16-skill archive is
 superseded as *current intake*, not silently treated as confirmed false.
 Latest authoring guidance may suggest targeted investigation, but cannot
@@ -482,17 +482,38 @@ not the final execution state. P30 failed twice in T11, T12 failed its
 visual criterion, and T20b could not finish reload. No result may be
 promoted into current-map expected behavior without independent grounding.
 
-The revised source-level selector can now potentially match **15 of the
-16 developer-reference patterns**, subject to the selected artifact having
-the exact typed witness, an appropriate source locator, the requested
-question domain and explicit opt-in. This is a structural coverage count,
-**not 15 proven runtime improvements or an executed accuracy measurement**.
-`bedrock-version-targeting` still lacks an appropriate selected-source
-Semantic IR cue for manifest/API-version applicability; that question
-belongs to canonical runtime-profile and compatibility analysis.
+The revised source selector supports an eligible intake path for **all 16
+developer-reference patterns**, including version-targeting via the
+selected pack's canonical manifest declaration. This is **conditional
+routing coverage**, not proof that every pattern triggers in actual maps,
+that its guidance is applicable to the live Minecraft client, or that any
+bug-detection accuracy improved. Manifest `min_engine_version` and Script
+API dependency versions remain declarations, not verified runtime versions.
 Forms, HUD, entity lifecycle, message and teleport cues remain abstentions
 for untyped/minified aliases and invented receiver identities. Do not
 rewrite reference strings to simulate parser evidence.
+
+### Canonical evidence and context lifecycle (Batch D/E)
+
+Source location matching is owned by
+`engine/packages/project-model/src/project/source-ref.ts`:
+`sourceLocatorMatchesSourcePath()` recognizes a canonical relative
+path and bounded line/column, localized line, JSON pointer or symbol
+suffix. It does **not** infer execution, and source ownership still requires
+the exact selected-artifact evidence scope.
+
+Compound domain IDs from the Knowledge owner (`script-api`,
+`client-feedback`, etc.) retain their complete identity; free-text
+question terms are only auxiliary lookup cues. Developer reference
+selection still requires an exact selected-source IR observation and
+approved opt-in input.
+
+Audit continuation never silently inherits an older model packet's
+`retrievedKnowledge` or `developerPractice`. Those views are recompiled
+from explicit current Knowledge and Developer Practice snapshots when
+provided; otherwise they are omitted on a new continuation revision.
+This fail-closed behavior does not erase the selected map's authored
+evidence, completed source analysis, or prior externally stored history.
 
 ## Maturity and promotion
 

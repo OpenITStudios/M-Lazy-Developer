@@ -155,6 +155,29 @@ proof groups. Its earliest stage-ordered model task still owns the
 operator's next step. These summaries are not independent defect proof,
 confirmed repair or a replacement for canonical REPORT.
 
+### Batch D/E — canonical source identity and reference freshness
+
+The selected source identity has one adapter under
+`project-model/src/project/source-ref.ts` for recognized
+file/line/JSON-pointer/source-symbol locators. This replaces
+unrestricted source-path prefix matching in the existing developer
+reference selector; the authored `GameplayIntentEvidence` scope and
+typed Semantic IR witness still decide eligibility.
+
+`modelTaskPackets` derive conditional context from the **current,
+explicit** Knowledge Catalog and developer-reference snapshot. A
+continuation without those snapshots does not silently retain
+previous-turn knowledge excerpts or developer hints. The CLI passes
+the same explicitly loaded snapshots to its response continuation
+when present. Source facts and canonical proof receipts are never
+rewritten from these reference hints.
+
+Full structured evidence remains with its original owners. Audit
+revision protects source/proof decisions; the reference snapshot
+lifecycle protects read-only retrieval. Neither is a second
+checkpoint, another source of Expected Behavior or proof that a
+previously opened Minecraft map behaved in a particular way.
+
 ### External developer source: comparison, never replacement
 
 The supplied `minecraft-bedrock-agent-skills` v0.24.0 and

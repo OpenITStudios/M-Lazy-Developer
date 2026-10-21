@@ -138,6 +138,10 @@ async function main(): Promise<void> {
         responses: JSON.parse(
           await readFile(resolve(responsesPath), "utf8"),
         ) as SelectedMapAuditModelResponseBatch,
+        // Reuse the same explicit source snapshot loaded for this invocation,
+        // not reference excerpts copied from an earlier model packet.
+        knowledgeCatalog: knowledge,
+        ...(developerPractice === undefined ? {} : { developerPractice }),
       });
   const output = handoff
     ? JSON.stringify(
