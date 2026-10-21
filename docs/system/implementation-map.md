@@ -139,10 +139,12 @@ These exact source entrypoints are intentionally listed because they define prod
 
 | Responsibility | Source owner |
 |---|---|
-| Production selected-map audit entry / continuation / bounded model handoff and guarded response admission | `engine/packages/orchestrator/src/map-audit-pipeline.ts` |
+| Production selected-map audit entry, continuation and guarded response admission | `engine/packages/orchestrator/src/map-audit-pipeline.ts` |
+| Read-only, bounded model handoff projection | `engine/packages/orchestrator/src/reporting/map-audit-model-handoff.ts` (stable re-export from `map-audit-pipeline.ts`) |
 | User intent / pre-audit confirmation | `engine/packages/orchestrator/src/map-audit-user-intent.ts` |
 | Ordered stage admission | `engine/packages/orchestrator/src/map-audit-admission.ts` |
-| Operator-facing Map Audit Output V2 and optional read-only brief | `engine/packages/orchestrator/src/map-audit-output-v2.ts` |
+| Canonical Map Audit Output V2 schema and projection | `engine/packages/orchestrator/src/map-audit-output-v2.ts` |
+| Read-only human-facing audit brief renderer | `engine/packages/orchestrator/src/reporting/map-audit-brief.ts` (stable re-export from `map-audit-output-v2.ts`) |
 | Audit obligations | `engine/packages/orchestrator/src/map-audit-obligations.ts` |
 | Model-facing bounded task context | `engine/packages/orchestrator/src/map-audit-model-task.ts` |
 | Work Session audit projection | `engine/packages/orchestrator/src/workflow/map-audit-work-session.ts` |
@@ -158,11 +160,11 @@ Human workflow owners:
 
 ### Audit coordination files and distinct responsibilities
 
-The following root `map-audit-*.ts` files are **current implementation owners**, not flat compatibility re-export aliases. Navigate by the production workflow and inspect the exact file responsible for the concern rather than using filename similarity as evidence for deletion.
+The following root `map-audit-*.ts` files own the canonical audit contract and decision flow. **Two stable named re-exports are deliberate compatibility exceptions:** `formatSelectedMapAuditBrief` stays importable from `map-audit-output-v2.ts` and `projectSelectedMapAuditModelHandoff` stays importable from `map-audit-pipeline.ts`, while their sole implementations live under `reporting/`. These read-only views are not second audit owners. Navigate by the concern and concrete implementation, not filename similarity.
 
 | Current implementation | Distinct responsibility |
 |---|---|
-| `map-audit-pipeline.ts` | Single production audit coordination, continuation, review and approved-report handoff |
+| `map-audit-pipeline.ts` | Single production audit coordination, continuation, model-response validation, review and approved-report handoff; read-only model handoff remains a named compatibility export |
 | `map-audit-admission.ts` | Stage order, checkpoint-to-stage mapping and admission decisions |
 | `map-audit-authority.ts` | Audit authority token issuance and authority issue assessment |
 | `map-audit-issue-projection.ts` | Projection of evidence-backed ready issues and their classification |
@@ -171,9 +173,11 @@ The following root `map-audit-*.ts` files are **current implementation owners**,
 | `map-audit-honesty.ts` | Audit truthfulness and evidence-ceiling assessment |
 | `map-audit-quality-gates.ts` | Information-integrity and zero-finding quality gate projection |
 | `map-audit-obligations.ts` | Derivation of unfinished audit/model/proof obligations |
-| `map-audit-model-task.ts` | Bounded model-facing task and evidence context packets |
+| `map-audit-model-task.ts` | Bounded model-facing task/evidence context packets and one canonical model-kind eligibility vocabulary shared with read-only handoff |
 | `map-audit-revision.ts` | Revision identity derived from audit inputs |
-| `map-audit-output-v2.ts` | One operator-facing Map Audit output projection, plus read-only brief of source mechanics, explicit unresolved dimensions and task/evidence IDs |
+| `map-audit-output-v2.ts` | Canonical Map Audit V2 types and structured report projection; named compatibility export for the brief |
+| `reporting/map-audit-brief.ts` | Sole human-readable brief formatter; read-only view of canonical report, source evidence and existing model tasks |
+| `reporting/map-audit-model-handoff.ts` | Sole read-only paginated model handoff projector from canonical `SelectedMapAuditRun`; never admits responses |
 
 These responsibilities may compose each other but must not become independent production entrypoints or separate sources of gameplay truth. Their ownership is backed by current exports/source; this table is navigation guidance, not a new machine registry. Rename, merge or move only if overlapping *behavior* (not similar words or file size) is proven and all consumers can be migrated.
 

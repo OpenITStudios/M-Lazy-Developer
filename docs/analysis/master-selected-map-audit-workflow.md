@@ -43,6 +43,14 @@ state, or feature checklist. Prioritize one material player journey and the
 earliest deciding stage. An authored world/Script API command is an
 attempted effect, not proof a player saw it.
 
+The canonical source owners and the read-only view implementations are
+listed in [Implementation Map](../system/implementation-map.md).
+`formatSelectedMapAuditBrief()` and
+`projectSelectedMapAuditModelHandoff()` remain importable from the
+historical `map-audit-output-v2.ts` and `map-audit-pipeline.ts`
+paths, respectively. Those are compatibility re-exports, not new
+execution or proof authorities.
+
 In the optional programmatic output, `--brief` starts with game
 understanding, followed immediately by the **current decision**: supported
 feature candidates, PROVEN/NEED_VALIDATION issue totals, the first

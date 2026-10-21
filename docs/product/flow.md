@@ -199,6 +199,33 @@ derived from the selected pack manifest and separately verified runtime
 target, not a borrowed developer version. When no exact typed cue or
 source-location join exists, omit the hint instead of inventing a match.
 
+### Batch F — projection/presentation ownership
+
+The authoritative `MapAuditOutputV2` type and
+`projectMapAuditOutputV2()` remain in
+`engine/packages/orchestrator/src/map-audit-output-v2.ts`.
+Its much larger **human-readable** `formatSelectedMapAuditBrief()`
+implementation is now owned only by
+`engine/packages/orchestrator/src/reporting/map-audit-brief.ts`.
+The previous import path re-exports that function for CLI/consumer
+compatibility; it does not create a second structured report.
+
+Similarly, `runSelectedMapAudit()`, revision validation, continuation,
+defect admission, and actual response mutation stay in
+`map-audit-pipeline.ts`. Only the read-only paginated
+`projectSelectedMapAuditModelHandoff()` implementation moved into
+`reporting/map-audit-model-handoff.ts`. Its previous public import
+path remains a named re-export. The set of model-response-eligible
+**task kinds** is declared once by `map-audit-model-task.ts` and shared
+between the canonical response gate and the handoff projector.
+Those task kinds alone do not permit resolution; causal-link scope and
+revision admission are still mandatory.
+
+Both movements are **source-preserving extractions**; presentation
+does not reinterpret gameplay, select new evidence, classify bugs,
+or change publication authority. No new report schema, audit stage,
+provider registry or separate pipeline was introduced.
+
 ### What the operator sees first
 
 The existing `--brief` formatter presents **Game Understanding → Immediate

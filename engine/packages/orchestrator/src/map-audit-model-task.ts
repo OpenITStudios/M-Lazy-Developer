@@ -53,6 +53,16 @@ export type AuditModelTaskKind =
   | "PROOF_NAVIGATION"
   | "AUDIT_OBLIGATION";
 
+/** Shared model response eligibility vocabulary. A task kind alone never
+ * authorizes causal proof: both handoff and canonical response gate also
+ * require the source-backed causal-link / audit-revision checks.
+ */
+export const MODEL_RESOLVABLE_KINDS: ReadonlySet<AuditModelTaskKind> = new Set([
+  "COUNTERPROOF_SEARCH",
+  "GAMEPLAY_TRANSLATION",
+  "PROOF_NAVIGATION",
+]);
+
 export interface AuditModelTaskEvidenceContext {
   readonly id: string;
   readonly kind: "selected-artifact-evidence" | "analysis-receipt";
