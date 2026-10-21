@@ -868,6 +868,7 @@ function assembleSelectedMapAuditRun(
     ...(developerPractice === undefined ? {} : {
       developerPractice,
       semanticIr: inspection.semanticIrModel,
+      selectedPacks: inspection.packs,
     }),
     ...(knowledgeEdition === undefined ? {} : { knowledgeEdition }),
   });

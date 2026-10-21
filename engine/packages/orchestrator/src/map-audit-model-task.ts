@@ -2,6 +2,7 @@ import type {
   GameplayIntentModel,
 } from "../../gameplay-intent/src/index.js";
 import type { SemanticIr } from "../../semantic-ir/src/index.js";
+import type { InspectedPack } from "./core/types.js";
 import {
   compileDeveloperPracticeReferenceContext,
   type CompiledDeveloperPracticeReferenceContext,
@@ -752,6 +753,8 @@ export function deriveAuditModelTaskPackets(input: {
   readonly knowledgeCatalog?: KnowledgeCatalog;
   readonly developerPractice?: DeveloperPracticeReferenceData;
   readonly semanticIr?: SemanticIr;
+  /** Selected artifact's manifest-backed packs, never a runtime state claim. */
+  readonly selectedPacks?: readonly InspectedPack[];
   /** Only edition identity may be checked here; API/version remain unverified. */
   readonly knowledgeEdition?: KnowledgeEdition;
 }): readonly AuditModelTaskPacket[] {
@@ -1001,6 +1004,10 @@ export function deriveAuditModelTaskPackets(input: {
           ...packet.knowledgeContext.map((item) => item.domain),
         ].join(" ").toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean)
       : [];
+    const versionQuestion = domains.some(term => [
+      "manifest", "version", "versions", "edition", "compatibility",
+      "compatible", "experiments", "experiment", "api",
+    ].includes(term));
     const reference = input.developerPractice === undefined ||
       input.semanticIr === undefined ||
       !input.intent.artifactId ||
@@ -1012,8 +1019,22 @@ export function deriveAuditModelTaskPackets(input: {
             data: input.developerPractice,
             selectedArtifactId: input.intent.artifactId,
             semanticIr: input.semanticIr,
-            domains: [...new Set(domains)],
+            domains: [...new Set([
+              ...domains,
+              ...(versionQuestion ? ["manifest", "edition", "script-api"] : []),
+            ])],
             sourceLocators: knowledgeLookup.sourceLocators,
+            manifestWitnesses: (input.selectedPacks ?? [])
+              .filter(pack => pack.manifestSource !== undefined)
+              .map(pack => ({
+                packRoot: pack.root,
+                source: pack.manifestSource!,
+                ...(pack.minEngineVersion === undefined ? {} :
+                  { minEngineVersion: pack.minEngineVersion }),
+                scriptModules: pack.scriptModules,
+                ...(pack.worldAttachment === undefined ? {} :
+                  { worldAttachment: pack.worldAttachment }),
+              })),
           });
     return {
       ...packet,

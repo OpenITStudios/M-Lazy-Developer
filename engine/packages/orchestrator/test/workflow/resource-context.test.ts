@@ -3,6 +3,7 @@ import type { RetrievalResult } from "../../../analysis-planner/src/index.js";
 import {
   compileResourceContext,
   compileSectionContext,
+  compileDeveloperPracticeReferenceContext,
   type RetrievedKnowledgeContext,
 } from "../../src/workflow/resource-context.js";
 
@@ -266,5 +267,107 @@ describe("compileSectionContext", () => {
       ],
       omitted: 0,
     });
+  });
+});
+// The manifest is a source declaration in a selected pack, not the engine
+// version or proof that a pack's script actually executed in Minecraft.
+describe("developer practice manifest-scoped version hints", () => {
+  const ir = {
+    schemaVersion: 1 as const,
+    execution: { regions: [], edges: [] },
+    state: { surfaces: [], operations: [], authorityBindings: [] },
+    temporal: { relations: [] },
+  };
+  const data = {
+    authority: "REFERENCE" as const,
+    usagePolicy: "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF" as const,
+    sourceSnapshot: { archiveSha256: "a".repeat(64) },
+    sourceFiles: [{
+      id: "src.bedrock-version-targeting",
+      path: "skills/bedrock-version-targeting/SKILL.md",
+      sha256: "b".repeat(64),
+      auditUsage: "INTERPRETATION_CANDIDATE",
+    }],
+    patterns: [{
+      id: "developer.hint.version.compatibility",
+      sourceId: "src.bedrock-version-targeting",
+      kind: "IMPLEMENTATION_PATTERN",
+      status: "SOURCE_REVIEWED",
+      domains: ["manifest", "edition", "script-api"],
+      sourceSignals: ["manifest.json", "min_engine_version", "@minecraft/server"],
+      question: "What version does the selected pack declare?",
+      candidateRelations: ["manifest dependency is not runtime support"],
+      negativeControl: "A minimum engine version is not a live game version.",
+      versionApplicability: "UNKNOWN",
+      prohibits: "Never claim observed gameplay compatibility from manifest metadata.",
+    }],
+  };
+  const witness = {
+    packRoot: "behavior_packs/demo",
+    source: {
+      artifactId: "selected",
+      relativePath: "behavior_packs/demo/manifest.json",
+    },
+    minEngineVersion: "1.21.0",
+    scriptModules: [{
+      moduleName: "@minecraft/server",
+      version: "2.8.0",
+      track: "stable",
+    }],
+    worldAttachment: "unknown" as const,
+  };
+  const baseline = {
+    data, semanticIr: ir, selectedArtifactId: "selected",
+    domains: ["manifest"], maximum: 2,
+  };
+
+  it("includes declared min-engine and Script API only for the selected pack", () => {
+    const result = compileDeveloperPracticeReferenceContext({
+      ...baseline,
+      sourceLocators: ["behavior_packs/demo/scripts/main.ts:17"],
+      manifestWitnesses: [witness],
+    });
+    expect(result?.items).toHaveLength(1);
+    expect(result?.items[0]?.matchingSignals).toEqual(
+      expect.arrayContaining(["manifest.json", "min_engine_version", "@minecraft/server"]),
+    );
+    expect(result?.items[0]?.manifestDeclarations).toEqual([{
+      sourcePath: "behavior_packs/demo/manifest.json",
+      minEngineVersion: "1.21.0",
+      scriptModules: [{
+        moduleName: "@minecraft/server", version: "2.8.0", track: "stable",
+      }],
+      worldAttachment: "unknown",
+      proof: "MANIFEST_DECLARATION_ONLY",
+    }]);
+  });
+
+  it("abstains from another pack, missing source, or another artifact", () => {
+    for (const sourceLocators of [
+      [],
+      ["behavior_packs/another/scripts/main.js"],
+      ["behavior_packs/demo-other/scripts/main.js"],
+    ]) {
+      const result = compileDeveloperPracticeReferenceContext({
+        ...baseline, sourceLocators, manifestWitnesses: [witness],
+      });
+      expect(result?.items ?? []).toHaveLength(0);
+    }
+    const crossed = compileDeveloperPracticeReferenceContext({
+      ...baseline,
+      sourceLocators: ["behavior_packs/demo/scripts/main.ts"],
+      manifestWitnesses: [{
+        ...witness, source: { ...witness.source, artifactId: "other-map" },
+      }],
+    });
+    expect(crossed?.items ?? []).toHaveLength(0);
+  });
+
+  it("does not treat invented min-engine versions as verified", () => {
+    const result = compileDeveloperPracticeReferenceContext({
+      ...baseline, sourceLocators: ["behavior_packs/demo/scripts/main.ts"],
+      manifestWitnesses: [{ ...witness, minEngineVersion: "future" }],
+    });
+    expect(result?.items ?? []).toHaveLength(0);
   });
 });

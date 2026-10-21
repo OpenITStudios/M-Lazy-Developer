@@ -122,6 +122,8 @@ export interface InspectTargetProfile {
 export interface InspectedPack {
   root: string;
   type: string;
+  /** Actual selected-artifact manifest location; not a claimed runtime version. */
+  manifestSource?: import("../../../project-model/src/index.js").SourceRef;
   uuid?: string;
   minEngineVersion?: string;
   packVersion?: string;

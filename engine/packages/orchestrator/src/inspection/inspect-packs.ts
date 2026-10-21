@@ -114,6 +114,7 @@ export async function discoverInspectionPacks(
     const normalizedPack: InspectedPack = {
       root: pack.root,
       type: classifyPackFromManifest(manifest),
+      manifestSource: manifest.source,
       educationMetadata: compatibility.educationMetadata,
       scriptModules: compatibility.scriptModules,
     };

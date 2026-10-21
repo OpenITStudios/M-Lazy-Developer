@@ -8,6 +8,7 @@ import {
   type KnowledgeApplicabilityDecision,
 } from "../../../knowledge/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
+import type { SourceRef } from "../../../project-model/src/index.js";
 import {
   validateMinecraftRuntimeProfile,
   type MinecraftRuntimeProfile,
@@ -230,6 +231,19 @@ export interface DeveloperPracticeReferenceData {
   }[];
 }
 
+/** A selected-map manifest declaration, not a running Minecraft profile. */
+export interface DeveloperPracticeManifestWitness {
+  readonly packRoot: string;
+  readonly source: SourceRef;
+  readonly minEngineVersion?: string;
+  readonly scriptModules: readonly {
+    readonly moduleName: string;
+    readonly version: string;
+    readonly track: string;
+  }[];
+  readonly worldAttachment?: "listed" | "not-listed" | "unknown";
+}
+
 export interface SelectedArtifactReferenceSignal {
   /** Exact selected-source observation, not a query string or a ZIP claim. */
   readonly evidenceId: string;
@@ -363,6 +377,18 @@ export interface CompiledDeveloperPracticeReferenceContext {
     readonly matchingEvidenceIds: readonly string[];
     readonly matchingSourcePaths: readonly string[];
     readonly matchingSignals: readonly string[];
+    /** Source-authored pack declarations; never observed client versions. */
+    readonly manifestDeclarations?: readonly {
+      readonly sourcePath: string;
+      readonly minEngineVersion?: string;
+      readonly scriptModules: readonly {
+        readonly moduleName: string;
+        readonly version: string;
+        readonly track: string;
+      }[];
+      readonly worldAttachment: "listed" | "not-listed" | "unknown";
+      readonly proof: "MANIFEST_DECLARATION_ONLY";
+    }[];
     readonly referenceCode?: {
       readonly path: string;
       readonly sha256: string;
@@ -401,6 +427,8 @@ export function compileDeveloperPracticeReferenceContext(input: {
   readonly domains: readonly string[];
   /** Optional selected-artifact file locators to constrain relevance. */
   readonly sourceLocators?: readonly string[];
+  /** Real selected-map pack manifests, never caller-supplied guessed versions. */
+  readonly manifestWitnesses?: readonly DeveloperPracticeManifestWitness[];
   readonly maximum?: number;
 }): CompiledDeveloperPracticeReferenceContext | undefined {
   const { data, selectedArtifactId } = input;
@@ -419,7 +447,38 @@ export function compileDeveloperPracticeReferenceContext(input: {
     locator.startsWith(item.sourcePath + "#") ||
     locator.startsWith(item.sourcePath + "@")
   ));
-  if (queryDomains.size === 0 || observed.length === 0) return undefined;
+  // Manifest evidence uses the existing selected-map pack owner. A manifest
+  // may inform a task only when that task already has a source file in the
+  // exact same pack root. The manifest does not prove active runtime version.
+  const relatedManifests = (input.manifestWitnesses ?? []).filter(item =>
+    locators !== undefined &&
+    item.source.artifactId === selectedArtifactId &&
+    item.packRoot.length > 0 &&
+    !item.packRoot.split("/").includes("..") &&
+    item.source.relativePath === item.packRoot + "/manifest.json" &&
+    locators.some(locator => locator.startsWith(item.packRoot + "/")) &&
+    (item.minEngineVersion === undefined ||
+      /^\d+\.\d+\.\d+$/.test(item.minEngineVersion))
+  );
+  const manifestSignals: SelectedArtifactReferenceSignal[] =
+    relatedManifests.flatMap(item => {
+      const names = new Set(item.scriptModules.map(entry => entry.moduleName));
+      const signals = [
+        "manifest.json",
+        ...(item.minEngineVersion === undefined ? [] : ["min_engine_version"]),
+        ...["@minecraft/server", "@minecraft/server-ui"].filter(name =>
+          names.has(name)),
+      ];
+      return signals.map(signal => ({
+        evidenceId: "manifest:" + item.source.artifactId + ":" +
+          item.source.relativePath + ":" + signal,
+        artifactId: selectedArtifactId,
+        sourcePath: item.source.relativePath,
+        signal,
+      }));
+    });
+  const candidatesObserved = [...observed, ...manifestSignals];
+  if (queryDomains.size === 0 || candidatesObserved.length === 0) return undefined;
   const sourceById = new Map(data.sourceFiles.map(file => [file.id, file]));
   const sorted = (items: readonly string[]) => [...new Set(items)].sort();
   const candidates = data.patterns.flatMap(pattern => {
@@ -432,8 +491,14 @@ export function compileDeveloperPracticeReferenceContext(input: {
         !pattern.question.trim() || !pattern.negativeControl.trim() ||
         !pattern.prohibits.trim()) return [];
     const cue = new Set(pattern.sourceSignals);
-    const matches = observed.filter(item => cue.has(item.signal));
+    const matches = candidatesObserved.filter(item => cue.has(item.signal) &&
+      (pattern.id === "developer.hint.version.compatibility" ||
+       !item.evidenceId.startsWith("manifest:")));
     if (matches.length === 0) return [];
+    const declarations = pattern.id === "developer.hint.version.compatibility"
+      ? relatedManifests.filter(item => matches.some(match =>
+          match.sourcePath === item.source.relativePath))
+      : [];
     return [{
       patternId: pattern.id,
       sourceId: source.id,
@@ -448,6 +513,20 @@ export function compileDeveloperPracticeReferenceContext(input: {
       matchingEvidenceIds: sorted(matches.map(item => item.evidenceId)),
       matchingSourcePaths: sorted(matches.map(item => item.sourcePath)),
       matchingSignals: sorted(matches.map(item => item.signal)),
+      ...(declarations.length === 0 ? {} : {
+        manifestDeclarations: declarations.map(item => ({
+          sourcePath: item.source.relativePath,
+          ...(item.minEngineVersion === undefined ? {} :
+            { minEngineVersion: item.minEngineVersion }),
+          scriptModules: item.scriptModules.map(module => ({
+            moduleName: module.moduleName,
+            version: module.version,
+            track: module.track,
+          })),
+          worldAttachment: item.worldAttachment ?? "unknown",
+          proof: "MANIFEST_DECLARATION_ONLY" as const,
+        })),
+      }),
       ...(data.codeInventory === undefined ? {} : {
         codeModules: data.codeInventory.codeModules
           .filter((item) =>
