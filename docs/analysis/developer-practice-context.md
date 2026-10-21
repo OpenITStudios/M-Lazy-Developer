@@ -361,6 +361,39 @@ production bug-finding engine. Their existence can direct manual
 investigation, but their execution or blanket code reuse is neither
 necessary nor safe to establish what an unrelated map does.
 
+## Exact code-level coverage from Skills Probe
+
+The 2026-10-21 probe ZIP supplies **56 TypeScript files under
+`packs/BP/scripts/`**. The same existing
+`experiments/developer-practice-signals.json` now inventories their paths,
+SHA-256 and purpose as four groups: four database implementation files,
+15 installed developer-module mirrors, 32 probe fixture/runner files and
+five config/entrypoint/type files. The first skills ZIP independently
+supplies 20 implementation and eight unit-test TypeScript files.
+
+Skills Probe's installed **database v2.1.1** is a genuine source example:
+`modules/database/store.ts` handles schema-checked, versioned table
+storage; `world.ts` bridges world dynamic properties; `players.ts`
+stores player-ID keyed registry records; `admins.ts` holds admin state.
+These are referenced only when the `bedrock-data-persistence` skill's
+question has a typed source cue. The separate upstream database GitHub
+repository and its revision were not independently verified.
+
+Each of the 22 probe reports is linked by path and SHA-256 to its test
+scenario code (such as `probe/probes/camera.ts`,
+`probe/probes/script-perf.ts`, `probe/probes/labels.ts`).
+The existing model reference selector includes only **up to two
+recent relevant upstream reports per admitted skill** and **at most
+three verified fixture paths per report**. This supports tracing how
+the *probe* measured behavior, without claiming that those fixtures or
+their results are present in the selected map.
+
+Module mirror hashes are compared to developer source identities, not
+automatically copied; test-world commands, packs, UI assets, and CLI
+bootstrap procedures stay isolated from M-Lazy-Developer's analysis
+engine. No external Minecraft pack is installed and no runtime result
+is independently reproduced by source inspection alone.
+
 ## Source-grounded audit task integration
 
 The developer v0.24.0 ZIP contains TypeScript implementation modules.
@@ -425,7 +458,10 @@ files were not vendored or imported into M-Lazy-Developer's execution path.
 The 20 module implementation files have identifiable candidate roles, but
 some are project-specific (game-results), test-only (fake-minecraft), or
 depend on an external, separately versioned database repository
-(`achmadawdi/minecraft-bedrock-store`, not present in the ZIP). Directly
+(`achmadawdi/minecraft-bedrock-store`): the *standalone developer-skills ZIP*
+does not contain that implementation, but Skills Probe includes an installed
+**database 2.1.1 snapshot** in `packs/BP/scripts/modules/database/`.
+This is a source reference, not an independently verified upstream release. Directly
 installing them in the checker would merge a Minecraft game's runtime
 with a static analyzer. The original source is used as an inspected,
 version-pinned comparison reference, and not an automatically executed package.

@@ -97,9 +97,9 @@ before a Minecraft fact is promoted to `engine/knowledge/`.
 
 The curated machine companion
 [`developer-practice-signals.json`](../../experiments/developer-practice-signals.json)
-now inventories **20 TypeScript production/example modules and 8
-TypeScript module test files**, and separately all **22 markdown probe
-execution reports** with original SHA-256 and associated skill scope.
+now inventories **20 developer TypeScript modules, 8 module tests and
+56 Skills Probe TypeScript pack sources** (including four database files),
+and separately all **22 markdown probe execution reports** with original SHA-256 and associated skill scope.
 Both ZIPs were examined as data, and neither was executed or copied wholesale.
 
 This is full **module-and-test-file traceability**, not full source
@@ -122,8 +122,11 @@ and probe pointers that share the selected reference pattern's skill
 identity and exact typed current-map semantic witness. Its result is a
 reference guide for the analyst, not imported game code or authoritative
 map gameplay. Full execution of ZIP-supplied scripts is prohibited during
-intake. The separately hosted `minecraft-bedrock-store` database module
-is not included in either source snapshot and cannot be assumed present.
+intake. The standalone `minecraft-bedrock-store` database repository is NOT
+included in the developer-skills ZIP, but its installed `database`
+v2.1.1 module is present in the Skills Probe ZIP under
+`packs/BP/scripts/modules/database/` (four TypeScript sources).
+This must not be confused with independent verification of its upstream repo.
 
 ### Historical inventory below
 

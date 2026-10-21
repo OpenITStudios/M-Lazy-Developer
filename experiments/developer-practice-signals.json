@@ -753,7 +753,10 @@
       "probeToolScriptFiles": 13,
       "duplicatedInstalledSkillScripts": 86,
       "note": "Probe scripts, command blocks, texture/effects and assets are environment-specific fixtures; do not promote to gameplay truth."
-    }
+    },
+    "sourcePackFiles": 56,
+    "databaseInstalledVersion": "2.1.1",
+    "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified."
   },
   "probeEvidence": [
     {
@@ -771,7 +774,33 @@
         "src.bedrock-sound"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/blocks.ts",
+          "sha256": "afb134a671ab8490cf3e78a4c91ff8bee326122a30ffbbe1c21837908e981e61"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/content.ts",
+          "sha256": "1ed728f797d5d996dd3bde90295897c4f39e8bf0d76ff1b2f4a838465778ba09"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/entities.ts",
+          "sha256": "f41257f153cb90b2768bf99fd4daa99a1b234b5e42f8913a1f2f39cb4ec9fce9"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/forms.ts",
+          "sha256": "3fa02a5cf91f330f55322b45b71b99e7879a66e972328c6a91d7c0d3cae3543a"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/hud.ts",
+          "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/sound.ts",
+          "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-p14-agent",
@@ -784,7 +813,13 @@
         "src.bedrock-onscreen-display"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/hud.ts",
+          "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-p21-agent",
@@ -797,7 +832,13 @@
         "src.bedrock-entity-creation"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/combat.ts",
+          "sha256": "bd673e7451306365d6de55777094a6c1a057f784cb617e0ad8dbde9ef60bbb96"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-p29-run2-agent",
@@ -810,7 +851,13 @@
         "src.bedrock-onscreen-display"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/hud.ts",
+          "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-t10-playback-agent",
@@ -824,7 +871,17 @@
         "src.bedrock-onscreen-display"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/sound.ts",
+          "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/hud.ts",
+          "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-t11-agent",
@@ -838,7 +895,13 @@
         "src.bedrock-entity-lifecycle"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/content.ts",
+          "sha256": "1ed728f797d5d996dd3bde90295897c4f39e8bf0d76ff1b2f4a838465778ba09"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-t8-agent",
@@ -851,7 +914,13 @@
         "src.bedrock-sound"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/sound.ts",
+          "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-t8-run2-agent",
@@ -864,7 +933,13 @@
         "src.bedrock-sound"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/sound.ts",
+          "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-15-t9-agent",
@@ -878,7 +953,17 @@
         "src.bedrock-teleport"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/chunks.ts",
+          "sha256": "02857963d2bc18fafb4a3d64899bcb9b39f790428b73a299bc2d5304eac708f5"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/coords.ts",
+          "sha256": "261213c04809a576e53ab14599ad8194e4f53af40220aa0cb8fe1d3edf0f2462"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-16-t12-agent",
@@ -892,7 +977,17 @@
         "src.bedrock-script-optimization"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/entities.ts",
+          "sha256": "f41257f153cb90b2768bf99fd4daa99a1b234b5e42f8913a1f2f39cb4ec9fce9"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/visual.ts",
+          "sha256": "486df23b7e2c1fcccc419fd934d0bd9ee5bde4d7618c4c501ccddc3e79fef840"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-16-t13-agent",
@@ -905,7 +1000,13 @@
         "src.bedrock-game-results"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/results.ts",
+          "sha256": "008cc627b9e41ad570fb7467a2a2c86756849f479ece5dfee4834785a8d7eaf8"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-16-t14-agent",
@@ -919,7 +1020,17 @@
         "src.bedrock-teleport"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/coords.ts",
+          "sha256": "261213c04809a576e53ab14599ad8194e4f53af40220aa0cb8fe1d3edf0f2462"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/commands.ts",
+          "sha256": "6b265011244ffb58edc2f34ac1df935174c99f65c596e4ded1eeeb62503a0b1a"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-16-t14b-agent",
@@ -933,7 +1044,17 @@
         "src.bedrock-teleport"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/coords.ts",
+          "sha256": "261213c04809a576e53ab14599ad8194e4f53af40220aa0cb8fe1d3edf0f2462"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/commands.ts",
+          "sha256": "6b265011244ffb58edc2f34ac1df935174c99f65c596e4ded1eeeb62503a0b1a"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-17-t15-agent",
@@ -947,7 +1068,17 @@
         "src.bedrock-content"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/sound.ts",
+          "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/content.ts",
+          "sha256": "1ed728f797d5d996dd3bde90295897c4f39e8bf0d76ff1b2f4a838465778ba09"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-17-t16-agent",
@@ -961,7 +1092,17 @@
         "src.bedrock-script-optimization"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/script-perf.ts",
+          "sha256": "ab436a2ad2d515d76adf92d0af944759f1f4198c46c30894419b2fd487a0a2d8"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/perf.ts",
+          "sha256": "375b818ebcc24a31576e21494002b041fd9a4842c7b7c736d49c5b5bee3dbbdd"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-17-t17-agent",
@@ -975,7 +1116,17 @@
         "src.bedrock-entity-lifecycle"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/reconcile.ts",
+          "sha256": "a7b02545c79e0dc60fdd9063bd4076754a49f95b9c55a9482bcf5f168d321a49"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/entities.ts",
+          "sha256": "f41257f153cb90b2768bf99fd4daa99a1b234b5e42f8913a1f2f39cb4ec9fce9"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-17-t18-agent",
@@ -988,7 +1139,13 @@
         "src.bedrock-debug-profiling"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/perf.ts",
+          "sha256": "375b818ebcc24a31576e21494002b041fd9a4842c7b7c736d49c5b5bee3dbbdd"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-17-t19-agent",
@@ -1001,7 +1158,13 @@
         "src.bedrock-version-targeting"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/testing.ts",
+          "sha256": "012a88ef3c33cf65b9da300e44ba59bae9c847007a0d7f32019bc4d993ad0083"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-18-t20-agent",
@@ -1015,7 +1178,17 @@
         "src.bedrock-teleport"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/camera.ts",
+          "sha256": "f96f61ef6f8d0d4b94542dad235646bc2a427839a02322c8d0488de07a3960ce"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/scene.ts",
+          "sha256": "a7ebed91ab301f3e551e7ed9be1455851faf129858ac642f50b2563cbfb60408"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-18-t20b-agent",
@@ -1029,7 +1202,17 @@
         "src.bedrock-teleport"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/camera.ts",
+          "sha256": "f96f61ef6f8d0d4b94542dad235646bc2a427839a02322c8d0488de07a3960ce"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/chunks.ts",
+          "sha256": "02857963d2bc18fafb4a3d64899bcb9b39f790428b73a299bc2d5304eac708f5"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-21-p49-labels",
@@ -1043,7 +1226,17 @@
         "src.bedrock-onscreen-display"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/labels.ts",
+          "sha256": "2b0572b27ed2ef8d9ede8607759bebe2e40fc69f6ba978cc970819d5f633db86"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/label-codec.ts",
+          "sha256": "f5d1020bd0a2888655c533854bc64d366984ffc771708754567e9259feb4fa31"
+        }
+      ]
     },
     {
       "id": "probe.report.2026-10-21-p50-glyphs",
@@ -1057,7 +1250,17 @@
         "src.bedrock-onscreen-display"
       ],
       "edition": "education",
-      "version": "26.32"
+      "version": "26.32",
+      "fixtureSources": [
+        {
+          "path": "packs/BP/scripts/probe/probes/glyphs.ts",
+          "sha256": "b479ad7b0b382234e8e3e1ca8f1ef3d8ca8f9bf3baa44a42c17f301724dfb0c4"
+        },
+        {
+          "path": "packs/BP/scripts/probe/probes/glyph-icons.ts",
+          "sha256": "b9e06a9892b1f5b7df7f5011f55a75214018db571ca9a648fff9706dd0dc6b3f"
+        }
+      ]
     }
   ],
   "codeInventory": {
@@ -1230,10 +1433,312 @@
       {
         "name": "database",
         "repository": "achmadawdi/minecraft-bedrock-store",
-        "status": "NOT_INCLUDED_IN_SOURCE_ZIP"
+        "status": "PROBE_CONTAINS_INSTALLED_SNAPSHOT_v2.1.1_NOT_STANDALONE_UPSTREAM_REVIEWED",
+        "path": "packs/BP/scripts/modules/database/module.json"
       }
     ],
     "securityBoundary": "DO_NOT_EXECUTE_OR_AUTO_IMPORT_EXTERNAL_CODE",
-    "runtimeApplicability": "Versioned @minecraft/server 2.8.0 and @minecraft/server-ui 2.1.0 examples, not universal runtime facts"
+    "runtimeApplicability": "Versioned @minecraft/server 2.8.0 and @minecraft/server-ui 2.1.0 examples, not universal runtime facts",
+    "probePackSources": [
+      {
+        "path": "packs/BP/scripts/config/admin.config.ts",
+        "sha256": "8587ce602fc9cee76a60d87c61bfa6a66d7545d8cdc164c7c67d71fb81e1c695",
+        "kind": "PROBE_CONFIGURATION_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/config/log.config.ts",
+        "sha256": "58b90c19e49973af04e4253eda6c68a69c3117438b0d8b912df2949827948051",
+        "kind": "PROBE_CONFIGURATION_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/config/project.ts",
+        "sha256": "ea5f68ee698d2eaeaeb480bad13c82495a82432765882927ae544b34f9169f23",
+        "kind": "PROBE_CONFIGURATION_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/main.ts",
+        "sha256": "b23e005f074493faf07a180520a3570261e30793e6cfcd72e14e5a34a50d7da2",
+        "kind": "PROBE_CONFIGURATION_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/modules/database/admins.ts",
+        "sha256": "513516ab7f9631272359330687637985886b8c7b77a6b42a550499945331ef65",
+        "kind": "PROBE_DATABASE_MODULE",
+        "ownerSkill": "src.bedrock-data-persistence"
+      },
+      {
+        "path": "packs/BP/scripts/modules/database/players.ts",
+        "sha256": "78d008a06af1c365b32ac686179d94cbb8e81805774a1167149b7760a3e0e3d0",
+        "kind": "PROBE_DATABASE_MODULE",
+        "ownerSkill": "src.bedrock-data-persistence"
+      },
+      {
+        "path": "packs/BP/scripts/modules/database/store.ts",
+        "sha256": "72c6eb6eae01e2dbdbc957314a6612478ce0a4b563f137c7c603a059b23ba2ac",
+        "kind": "PROBE_DATABASE_MODULE",
+        "ownerSkill": "src.bedrock-data-persistence"
+      },
+      {
+        "path": "packs/BP/scripts/modules/database/world.ts",
+        "sha256": "729a864d0906fc7cea62c750d5f7cf9bc078cd2c6a73c6d300aeee5c2c4a9430",
+        "kind": "PROBE_DATABASE_MODULE",
+        "ownerSkill": "src.bedrock-data-persistence"
+      },
+      {
+        "path": "packs/BP/scripts/modules/display/display-service.ts",
+        "sha256": "1a75aba423bd2e542107f92e463cac1965730946e86ad2ad53197a54ca5cd1f6",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-onscreen-display"
+      },
+      {
+        "path": "packs/BP/scripts/modules/display/hud-line.ts",
+        "sha256": "118f2629e128cd54ed77b7436c75a94549212208ea3017aa0eb834c08f6e4ac2",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-onscreen-display"
+      },
+      {
+        "path": "packs/BP/scripts/modules/forms/form-navigation.ts",
+        "sha256": "26f5fea58d5b01985e3591b3a34690230217d19d86cfc459d20cb26e4aa90338",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-forms"
+      },
+      {
+        "path": "packs/BP/scripts/modules/forms/form-service.ts",
+        "sha256": "5b750e93e8f3b02798e6d15efc036a78d21f8928e90c825967b4f391660470ac",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-forms"
+      },
+      {
+        "path": "packs/BP/scripts/modules/game-results/game-results-contract.ts",
+        "sha256": "0fc57cac2d30d7a3bf1c2eeb14146700662cde79eabf94babd7f451f7bdbb7a4",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-game-results"
+      },
+      {
+        "path": "packs/BP/scripts/modules/game-results/game-results-export.ts",
+        "sha256": "c635bc0dc8a2651b698eece95667b157e5f8e8120c7db1072671a62735560b9e",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-game-results"
+      },
+      {
+        "path": "packs/BP/scripts/modules/logging/log-core.ts",
+        "sha256": "c1dd1b88b02e515d815b4c974f966e2d194273f78efbc55f40883bc6c6efc674",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-debug-logging"
+      },
+      {
+        "path": "packs/BP/scripts/modules/logging/log.ts",
+        "sha256": "29ee5c95cccec51586efb61ecfdaa8af0df294a35ef5c74aa1d9c58a3f8dfeeb",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-debug-logging"
+      },
+      {
+        "path": "packs/BP/scripts/modules/profiling/perf-probe.ts",
+        "sha256": "920c39b2233d90186eb0cdf9a98d3bbc69ac1257ca124ca1dcd285df13a42349",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-debug-profiling"
+      },
+      {
+        "path": "packs/BP/scripts/modules/sound/sound-service.ts",
+        "sha256": "2cd01f7358b80100edcb5f8e2e8a6041f833b7174f922bcba9c0471741ad8449",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-sound"
+      },
+      {
+        "path": "packs/BP/scripts/modules/sound/sound-throttle.ts",
+        "sha256": "c6b24362be1a260b909305020b99f7c5874617b62d4d47a9a4f1358494563848",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-sound"
+      },
+      {
+        "path": "packs/BP/scripts/modules/teleport/teleport-service.ts",
+        "sha256": "4a4970123be96b97d618db2d0be69419cd77c3f8ba1d21512f58817cbbbaa4aa",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-teleport"
+      },
+      {
+        "path": "packs/BP/scripts/modules/time/event-log.ts",
+        "sha256": "3f8dd646d4957f9be48f9286aa3e0faf207fe79c6f5c3ec3508a2709937db6c1",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-game-time"
+      },
+      {
+        "path": "packs/BP/scripts/modules/time/game-clock.ts",
+        "sha256": "da3e1071af00990adafef05214c8e8325309339c3f9663db8675cd33708ffb1d",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-game-time"
+      },
+      {
+        "path": "packs/BP/scripts/modules/time/ticks.ts",
+        "sha256": "920bb4b3d648165cc45bbf75254967cbb7e1baded099beff98fcdc320d3f99d5",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-game-time"
+      },
+      {
+        "path": "packs/BP/scripts/probe/common/store.ts",
+        "sha256": "e06d5b206a4f7f5e6462ddb12a8926026c788e442798bf5255361d75580120bd",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/blocks.ts",
+        "sha256": "afb134a671ab8490cf3e78a4c91ff8bee326122a30ffbbe1c21837908e981e61",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/bypass.ts",
+        "sha256": "75eb50e8c572435db72cc8a28f18dc5430777f65d61e8fd6727e42effa4fb3fa",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/camera.ts",
+        "sha256": "f96f61ef6f8d0d4b94542dad235646bc2a427839a02322c8d0488de07a3960ce",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/chunks.ts",
+        "sha256": "02857963d2bc18fafb4a3d64899bcb9b39f790428b73a299bc2d5304eac708f5",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/combat.ts",
+        "sha256": "bd673e7451306365d6de55777094a6c1a057f784cb617e0ad8dbde9ef60bbb96",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/commands.ts",
+        "sha256": "6b265011244ffb58edc2f34ac1df935174c99f65c596e4ded1eeeb62503a0b1a",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/content.ts",
+        "sha256": "1ed728f797d5d996dd3bde90295897c4f39e8bf0d76ff1b2f4a838465778ba09",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/coords.ts",
+        "sha256": "261213c04809a576e53ab14599ad8194e4f53af40220aa0cb8fe1d3edf0f2462",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/debug.ts",
+        "sha256": "fd01fae335ee963e5fc06cb84877aec830bc85eb7c47cda7e92f5c90e7b1f9f4",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/entities.ts",
+        "sha256": "f41257f153cb90b2768bf99fd4daa99a1b234b5e42f8913a1f2f39cb4ec9fce9",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/forms.ts",
+        "sha256": "3fa02a5cf91f330f55322b45b71b99e7879a66e972328c6a91d7c0d3cae3543a",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/glyph-icons.ts",
+        "sha256": "b9e06a9892b1f5b7df7f5011f55a75214018db571ca9a648fff9706dd0dc6b3f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/glyphs.ts",
+        "sha256": "b479ad7b0b382234e8e3e1ca8f1ef3d8ca8f9bf3baa44a42c17f301724dfb0c4",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/hud.ts",
+        "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/items.ts",
+        "sha256": "22434a9ee87c5a09bef0e3b5ecb8d82770d1191ee90092b63a3feec14307ae68",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/label-codec.test.ts",
+        "sha256": "46ce55593be459144f55b95a01115a37b347e7b341645c8cdedae70553bc8a45",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/label-codec.ts",
+        "sha256": "f5d1020bd0a2888655c533854bc64d366984ffc771708754567e9259feb4fa31",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/labels.test.ts",
+        "sha256": "04715c43c3f3644272c7ffa38bf6b60010491f4368269558d7166ce12bc4bd0f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/labels.ts",
+        "sha256": "2b0572b27ed2ef8d9ede8607759bebe2e40fc69f6ba978cc970819d5f633db86",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/perf.ts",
+        "sha256": "375b818ebcc24a31576e21494002b041fd9a4842c7b7c736d49c5b5bee3dbbdd",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/placement.ts",
+        "sha256": "72fac51c09bc0c3116291861ffa84ca6cba8355851497f15007c8ec49ef6bb64",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/probes.ts",
+        "sha256": "8af33f650ffe5a9d24743aad7688d1c9b33031a668d05fd6020992aa338cbe9d",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/reconcile.ts",
+        "sha256": "a7b02545c79e0dc60fdd9063bd4076754a49f95b9c55a9482bcf5f168d321a49",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/results.ts",
+        "sha256": "008cc627b9e41ad570fb7467a2a2c86756849f479ece5dfee4834785a8d7eaf8",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/runtime.ts",
+        "sha256": "a2b96cdb5f2d417bdbfdd91d1beeb86835a72a83e0661f3594121fb569fda052",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/scene.ts",
+        "sha256": "a7ebed91ab301f3e551e7ed9be1455851faf129858ac642f50b2563cbfb60408",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/script-perf.ts",
+        "sha256": "ab436a2ad2d515d76adf92d0af944759f1f4198c46c30894419b2fd487a0a2d8",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/sound.ts",
+        "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/testing.ts",
+        "sha256": "012a88ef3c33cf65b9da300e44ba59bae9c847007a0d7f32019bc4d993ad0083",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/visual.ts",
+        "sha256": "486df23b7e2c1fcccc419fd934d0bd9ee5bde4d7618c4c501ccddc3e79fef840",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/runner/runner.ts",
+        "sha256": "38801a109bc75c9f9df4ac0bc514dde6789bfaf35ecfbcbd8cc1a50fe3c1f3f7",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/types/runtime.d.ts",
+        "sha256": "1c45cd83f0ef852ad0d51d280347581e9e8589ffdc9942ecb471d3fb9ced0d10",
+        "kind": "PROBE_CONFIGURATION_SOURCE"
+      }
+    ]
   }
 }

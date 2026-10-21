@@ -189,6 +189,12 @@ export interface DeveloperPracticeReferenceData {
       readonly sha256: string;
       readonly usage: string;
     }[];
+    readonly probePackSources?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly kind: string;
+      readonly ownerSkill?: string;
+    }[];
   };
   /** Scope-limited, historical upstream test reports (not map evidence). */
   readonly probeEvidence?: readonly {
@@ -198,6 +204,10 @@ export interface DeveloperPracticeReferenceData {
     readonly status: string;
     readonly summary: string;
     readonly relatedSkillIds: readonly string[];
+    readonly fixtureSources?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+    }[];
   }[];
   readonly patterns: readonly {
     readonly id: string;
@@ -336,7 +346,10 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly sourcePath: string;
       readonly status: string;
       readonly summary: string;
+      readonly fixtureSources?: readonly { readonly path: string; readonly sha256: string }[];
     }[];
+    /** Four installed store module sources are present only in the probe ZIP. */
+    readonly probeInstalledModules?: readonly { readonly path: string; readonly sha256: string }[];
   }[];
   readonly omitted: number;
 }
@@ -412,6 +425,16 @@ export function compileDeveloperPracticeReferenceContext(input: {
           .slice(0, 5)
           .map((item) => ({ path: item.path, sha256: item.sha256 })),
       }),
+      ...(data.codeInventory?.probePackSources === undefined ? {} : {
+        probeInstalledModules: data.codeInventory.probePackSources
+          .filter((item) =>
+            item.kind === "PROBE_DATABASE_MODULE" &&
+            source.id === "src.bedrock-data-persistence" &&
+            /^[a-f0-9]{64}$/.test(item.sha256) &&
+            item.ownerSkill === source.id)
+          .slice(0, 4)
+          .map((item) => ({ path: item.path, sha256: item.sha256 })),
+      }),
       ...(data.probeEvidence === undefined ? {} : {
         upstreamProbes: data.probeEvidence
           .filter((item) =>
@@ -427,6 +450,17 @@ export function compileDeveloperPracticeReferenceContext(input: {
             sourcePath: item.sourcePath,
             status: item.status,
             summary: item.summary,
+            ...(item.fixtureSources === undefined ? {} : {
+              fixtureSources: item.fixtureSources
+                .filter((fixture) => (
+                  /^packs\/BP\/scripts\/probe\/probes\/[a-z0-9-]+\.ts$/.test(fixture.path) &&
+                  /^[a-f0-9]{64}$/.test(fixture.sha256) &&
+                  data.codeInventory?.probePackSources?.some((known) =>
+                    known.path === fixture.path && known.sha256 === fixture.sha256)
+                ))
+                .slice(0, 3)
+                .map((fixture) => ({ path: fixture.path, sha256: fixture.sha256 })),
+            }),
           })),
       }),
       ...(pattern.referenceCode !== undefined &&
