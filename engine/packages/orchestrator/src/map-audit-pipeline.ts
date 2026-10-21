@@ -313,6 +313,28 @@ export interface SelectedMapAuditModelHandoff {
     readonly omittedSourceHandoffs: number;
     readonly unresolved: MapAuditOutputV2["unresolved"];
   };
+  /** Read-only consolidation of the EXISTING admitted BUG root groups and
+   * unresolved validation groups. No new finding, proof, admission or root ID.
+   */
+  readonly diagnosisNavigation: {
+    readonly authority: "READ_ONLY_CANONICAL_GROUPS_NOT_REPORT_PROOF";
+    readonly admittedBugRootGroups: readonly {
+      readonly candidateGroupKey: string;
+      readonly technicalOwnerId: string;
+      readonly dependencyTargetId: string;
+      readonly causalLinkIds: readonly string[];
+      readonly failureDomains: readonly string[];
+    }[];
+    readonly omittedBugRootGroups: number;
+    readonly pendingProofGroups: readonly {
+      readonly key: string;
+      readonly verificationMode: "STATIC_PROOF_COMPLETION" | "NARROW_RUNTIME_VERIFICATION";
+      readonly causalLinkIds: readonly string[];
+      readonly nextCheck: string;
+      readonly missingProof: readonly string[];
+    }[];
+    readonly omittedPendingProofGroups: number;
+  };
   readonly taskCount: number;
   readonly offset: number;
   readonly nextOffset: number | null;
@@ -449,6 +471,25 @@ export function projectSelectedMapAuditModelHandoff(
       omittedSourceHandoffs:
         Math.max(0, handoffs.length - 12) + omittedHandoffsInFlows,
       unresolved: audit.mapAuditReport.unresolved,
+    },
+    diagnosisNavigation: {
+      authority: "READ_ONLY_CANONICAL_GROUPS_NOT_REPORT_PROOF",
+      admittedBugRootGroups: audit.candidateGroups.slice(0, 8).map(group => ({
+        candidateGroupKey: group.candidateGroupKey,
+        technicalOwnerId: group.technicalOwnerId,
+        dependencyTargetId: group.dependencyTargetId,
+        causalLinkIds: [...group.causalLinkIds],
+        failureDomains: [...group.failureDomains],
+      })),
+      omittedBugRootGroups: Math.max(0, audit.candidateGroups.length - 8),
+      pendingProofGroups: audit.validationTests.slice(0, 8).map(group => ({
+        key: group.key,
+        verificationMode: group.verificationMode,
+        causalLinkIds: [...group.findingIds],
+        nextCheck: group.test,
+        missingProof: [...group.missingProof],
+      })),
+      omittedPendingProofGroups: Math.max(0, audit.validationTests.length - 8),
     },
     taskCount: audit.modelTaskPackets.length,
     offset,

@@ -266,6 +266,17 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(handoff.gameUnderstanding.omittedSourceArenaPartitionQuestions)
         .toBe(0);
       expect(handoff.policy).toBe("selected-map-audit-model-handoff");
+      expect(handoff.diagnosisNavigation.authority).toBe(
+        "READ_ONLY_CANONICAL_GROUPS_NOT_REPORT_PROOF",
+      );
+      expect(handoff.diagnosisNavigation.admittedBugRootGroups.length)
+        .toBeLessThanOrEqual(8);
+      expect(handoff.diagnosisNavigation.pendingProofGroups.length)
+        .toBeLessThanOrEqual(8);
+      expect(handoff.diagnosisNavigation.pendingProofGroups.every(group =>
+        group.verificationMode === "STATIC_PROOF_COMPLETION" ||
+        group.verificationMode === "NARROW_RUNTIME_VERIFICATION",
+      )).toBe(true);
       expect(handoff.artifactId).toBe(result.identity.artifactId);
       expect(handoff.artifactFingerprint).toBe(result.identity.artifactFingerprint);
       expect(handoff.auditRevision).toBe(result.auditRevision);

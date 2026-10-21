@@ -135,4 +135,50 @@ describe("map audit candidate grouping", () => {
       "progression-wave-objective",
     ]);
   });
+  it("keeps independent downstream dependencies separate despite a shared technical owner", () => {
+    const secondLink = {
+      ...graph.causalLinks[0]!,
+      id: "link:arena-cleanup",
+      scenarioId: "scenario:cleanup",
+      // Same owner, component inventory and generic failure domain; a
+      // separate target means this is a different causal dependency.
+      toComponentId: "lifecycle:cleanup",
+      reason: "Arena cleanup may fail independently of wave progression.",
+    };
+    const secondIssue = {
+      ...issue,
+      causalLinkId: secondLink.id,
+      scenarioId: secondLink.scenarioId,
+      gameplayConsequence: "Cleanup may remain incomplete.",
+    };
+    const groups = groupReadyAuditIssuesForCandidateCoverage({
+      ...graph,
+      causalLinks: [...graph.causalLinks, secondLink],
+    }, [issue, secondIssue]);
+    expect(groups).toHaveLength(2);
+    expect(groups.map(group => group.dependencyTargetId).sort()).toEqual([
+      "lifecycle:cleanup", "objective:wave",
+    ]);
+    expect(groups.every(group => group.causalLinkIds.length === 1)).toBe(true);
+  });
+
+  it("does not borrow Knowledge domains from reused foreign-scenario IDs", () => {
+    const enriched = {
+      ...graph,
+      causalLinks: [{
+        ...graph.causalLinks[0]!,
+        knowledgeRequirementIds: ["requirement:reused"],
+      }],
+      knowledgeRequirements: [{
+        id: "requirement:reused",
+        scenarioId: "scenario:foreign",
+        domain: "combat-lifecycle" as const,
+        subjectIds: [], componentIds: [],
+      }],
+    } as GameplayScenarioGraph;
+    const [group] = groupReadyAuditIssuesForCandidateCoverage(enriched, [issue]);
+    expect(group?.knowledgeDomain).toBeUndefined();
+    expect(group?.dependencyTargetId).toBe("objective:wave");
+  });
+
 });

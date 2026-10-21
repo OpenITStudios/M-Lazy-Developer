@@ -5,6 +5,8 @@ import type {
 import type {
   ReadyAuditIssueProjection,
 } from "./map-audit-issue-projection.js";
+import { uniqueScenarioKnowledgeRequirement } from
+  "./inspection/gameplay-scenario-knowledge.js";
 
 export interface ReadyAuditCandidateGroup {
   readonly issueType:
@@ -12,6 +14,9 @@ export interface ReadyAuditCandidateGroup {
   readonly candidateGroupKey: string;
   readonly knowledgeDomain?: string;
   readonly technicalOwnerId: string;
+  /** Exact downstream dependency target; unlike failure domain this is
+   * structural identity and prevents merging unrelated effects of one owner. */
+  readonly dependencyTargetId: string;
   readonly causalLinkIds: readonly string[];
   readonly scenarioIds: readonly string[];
   readonly evidenceIds: readonly string[];
@@ -63,9 +68,14 @@ export function groupReadyAuditIssuesForCandidateCoverage(
           ".",
       );
     }
-    const requirementDomains = unique(graph.knowledgeRequirements
-      .filter((item) => link.knowledgeRequirementIds.includes(item.id))
-      .map((item) => item.domain));
+    // Respect the same unique scenario/domain requirement owner used by
+    // the proof gate. A reused/foreign Knowledge ID cannot alter root identity.
+    const requirementDomains = unique(link.knowledgeRequirementIds.flatMap(id => {
+      const owner = uniqueScenarioKnowledgeRequirement(
+        graph, id, link.scenarioId,
+      );
+      return owner === undefined ? [] : [owner.domain];
+    }));
     const knowledgeDomainKey = requirementDomains.join("+") || "intent";
     const technicalOwnerId = link.fromComponentId;
     // Root-cause identity must be structural. Player-visible symptoms and
@@ -74,6 +84,7 @@ export function groupReadyAuditIssuesForCandidateCoverage(
     // because it manifests through multiple report domains.
     const rootCauseSignature = hash([
       technicalOwnerId,
+      link.toComponentId,
       knowledgeDomainKey,
       link.intentEdgeKind ?? "runtime-domain",
       ...link.componentIds,
@@ -94,9 +105,12 @@ export function groupReadyAuditIssuesForCandidateCoverage(
       const firstLink = graph.causalLinks.find(
         (link) => link.id === items[0]!.causalLinkId,
       )!;
-      const requirementDomains = unique(graph.knowledgeRequirements
-        .filter((item) => firstLink.knowledgeRequirementIds.includes(item.id))
-        .map((item) => item.domain));
+      const requirementDomains = unique(firstLink.knowledgeRequirementIds.flatMap(id => {
+        const owner = uniqueScenarioKnowledgeRequirement(
+          graph, id, firstLink.scenarioId,
+        );
+        return owner === undefined ? [] : [owner.domain];
+      }));
       return {
         issueType:
           items[0]!.issueType,
@@ -105,6 +119,7 @@ export function groupReadyAuditIssuesForCandidateCoverage(
           ? {}
           : { knowledgeDomain: requirementDomains.join("+") }),
         technicalOwnerId: firstLink.fromComponentId,
+        dependencyTargetId: firstLink.toComponentId,
         causalLinkIds: unique(
           items.map((item) => item.causalLinkId),
         ),

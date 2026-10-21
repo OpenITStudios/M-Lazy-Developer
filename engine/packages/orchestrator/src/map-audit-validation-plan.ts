@@ -72,8 +72,31 @@ export function groupNeedValidationTests(
     );
   }
 
-  return [...groups.entries()]
-    .map(([key, items]) => {
+  // One user-facing group key is only a proposed common setup. Different
+  // scenarios, issue types or proof modes cannot borrow another finding's
+  // deciding assertion. Keep the legacy key when only one scope exists.
+  const scoped = [...groups.entries()].flatMap(([baseKey, findingsForKey]) => {
+    const partitions = new Map<string, NeedValidationAuditIssueProjection[]>();
+    for (const finding of findingsForKey) {
+      const signature = JSON.stringify([
+        finding.scenarioId ?? "",
+        finding.issueType,
+        requiresRuntime(finding) ? "runtime" : "static",
+      ]);
+      partitions.set(signature, [
+        ...(partitions.get(signature) ?? []),
+        finding,
+      ]);
+    }
+    return [...partitions.entries()].map(([signature, items]) => ({
+      key: partitions.size === 1
+        ? baseKey
+        : baseKey + "::scope:" + encodeURIComponent(signature),
+      items,
+    }));
+  });
+  return scoped
+    .map(({ key, items }) => {
       const runtimeRequired =
         items.some(requiresRuntime);
       const verificationMode =

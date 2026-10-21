@@ -69,6 +69,28 @@ inference. No generic developer skill, test fixture, manifest version,
 or probe result can establish gameplay Expected/Actual by itself.
 Missing typed evidence means abstain, not guess.
 
+## Batch C — diagnosis consolidation without new authority
+
+The canonical flow already distinguishes `PROVEN` from
+`NEED_VALIDATION`; the [Product Flow](../product/flow.md#batch-c--diagnosis-and-counterproof-grouping)
+defines how its **existing** root candidate groups and deciding-proof
+groups are bounded, scoped and presented.
+
+A shared technical owner is **insufficient** to merge two distinct
+downstream dependencies into one root cause. A reused Knowledge
+requirement ID belonging to another scenario cannot make unrelated
+issues equivalent. Likewise, a shared validationGroupKey does not
+authorize combining a different scenario, issue lane or static/runtime
+verification decision.
+
+Use the model handoff's `diagnosisNavigation` as read-only task
+navigation. It exposes at most eight admitted BUG root groups and
+eight unresolved proof groups, each with omitted counts. The
+`--brief` projection can show corresponding counts if supplied
+from the same selected audit. Neither output may advance the
+Defect Resolution Gate, infer runtime behavior, create new causal
+links or substitute for the full Map Audit V2 findings.
+
 ## What the operator must deliver
 
 Keep the user-facing audit anchored to **game design → deviations → specific remaining proof**, not a parade of checker statuses. From the exact selected artifact, communicate:

@@ -120,6 +120,41 @@ source-only handoffs, `--brief` shows bounded navigation, and the
 existing `--handoff` model projection includes a deduplicated subset.
 No issue classification or proof/admission gate is changed.
 
+### Batch C — diagnosis and counterproof grouping
+
+The existing canonical audit produces two different collections from
+independently admitted source/proof evidence:
+
+1. **PROVEN candidate root groups:** the existing
+   `groupReadyAuditIssuesForCandidateCoverage()` groups BUG causal links
+   only if they share the same technical owner, **same exact downstream
+   dependency target**, compatible source-domain requirement identity and
+   dependency kind. Multiple player-facing symptoms may share one source
+   root; different downstream dependencies cannot be collapsed merely
+   because their failure domains or owner names match. Ambiguous or
+   foreign-scenario Knowledge requirement IDs must not determine grouping.
+2. **NEED_VALIDATION deciding-proof groups:** the existing
+   `groupNeedValidationTests()` reuses a shared group key only within the
+   same scenario, issue type and proof mode. Collisions are partitioned
+   into deterministic scoped keys, keeping static/formal source checks
+   apart from narrow native-runtime questions. The original key is
+   preserved for an unambiguous group.
+
+These are **projections**, not another problem database and not permission
+to merge or invent BUGs. The canonical causal link, source evidence,
+counter-proof search, mandatory audit gates, and BUG/DESIGN_MISMATCH
+classification are unchanged. A missing counterproof receipt remains
+NEED_VALIDATION, and a reference from the developer ZIP remains advisory.
+
+The existing `--handoff` now surfaces bounded
+`diagnosisNavigation.admittedBugRootGroups` and
+`diagnosisNavigation.pendingProofGroups`. The existing `--brief`
+optionally reports the number of source-verified BUG causal links versus
+their admitted root groups, alongside counts of static and runtime
+proof groups. Its earliest stage-ordered model task still owns the
+operator's next step. These summaries are not independent defect proof,
+confirmed repair or a replacement for canonical REPORT.
+
 ### External developer source: comparison, never replacement
 
 The supplied `minecraft-bedrock-agent-skills` v0.24.0 and

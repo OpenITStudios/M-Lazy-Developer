@@ -154,6 +154,8 @@ async function main(): Promise<void> {
           gameplayCatalog: resolvedAudit.inspection.authoredGameplayCatalog,
           contentCollections: resolvedAudit.inspection.authoredContentCollections,
           modelTaskPackets: resolvedAudit.modelTaskPackets,
+          candidateGroups: resolvedAudit.candidateGroups,
+          validationTests: resolvedAudit.validationTests,
         })
       : JSON.stringify(resolvedAudit.mapAuditReport, null, 2) + "\n";
   process.stdout.write(output);

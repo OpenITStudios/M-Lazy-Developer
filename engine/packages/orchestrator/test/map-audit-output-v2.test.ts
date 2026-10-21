@@ -1168,6 +1168,17 @@ describe("Map Audit Output V2 projection", () => {
         nodes: [], edges: [], invariants: [], unknowns: [],
       } as any,
       modelTaskPackets: [task],
+      candidateGroups: [],
+      validationTests: [{
+        key: "zone:source-only",
+        verificationMode: "STATIC_PROOF_COMPLETION",
+        broadPlaythroughAllowed: false,
+        findingIds: ["bug:zone"],
+        issueTypes: ["BUG"], gameplayFlows: ["PROGRESSION"],
+        test: "Resolve the selected-map session owner from source",
+        assertions: [{findingId: "bug:zone", test: "Trace the guard"}],
+        missingProof: ["Source guard"],
+      }],
     });
     expect(brief.indexOf("## Immediate Decision")).toBeGreaterThan(0);
     expect(brief.indexOf("## Immediate Decision"))
@@ -1175,6 +1186,9 @@ describe("Map Audit Output V2 projection", () => {
     expect(brief.indexOf("## Immediate Decision"))
       .toBeLessThan(brief.indexOf("## Findings"));
     expect(brief).toContain("BUG 0 PROVEN / 1 NEED_VALIDATION");
+    expect(brief).toContain("Admitted BUG root groups (not additional findings)");
+    expect(brief).toContain("Pending deciding-proof groups (NOT defects)");
+    expect(brief).toContain("1 source/formal group(s), 0 narrow-runtime group(s)");
     expect(brief).toContain("Next decision [PROVE / GAMEPLAY_TRANSLATION]");
     expect(brief).toContain("SOURCE_ROLE_CANDIDATE");
     expect(brief).toContain("NOT checkpoint proof");

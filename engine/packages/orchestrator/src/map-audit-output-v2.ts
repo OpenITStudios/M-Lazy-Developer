@@ -21,6 +21,7 @@ import type {
 import type {
   AuditValidationTestGroup,
 } from "./map-audit-validation-plan.js";
+import type { ReadyAuditCandidateGroup } from "./map-audit-candidate-grouping.js";
 import type {
   AuditHonestyAssessment,
 } from "./map-audit-honesty.js";
@@ -802,6 +803,10 @@ export function formatSelectedMapAuditBrief(input: {
   readonly gameplayCatalog?: readonly ScriptAuthoredGameplayEntry[];
   readonly contentCollections?: readonly ScriptAuthoredContentCollection[];
   readonly modelTaskPackets: readonly AuditModelTaskPacket[];
+  /** Existing admitted BUG root candidates; absent outside a full audit run. */
+  readonly candidateGroups?: readonly ReadyAuditCandidateGroup[];
+  /** Existing scoped NEED_VALIDATION proof groups, not runtime commands. */
+  readonly validationTests?: readonly AuditValidationTestGroup[];
 }): string {
   const { report, intent, modelTaskPackets } = input;
   const waveStages = input.waveStages ?? [];
@@ -941,6 +946,39 @@ export function formatSelectedMapAuditBrief(input: {
       "; remaining evidence questions: " + report.unresolved.total +
       ". Neither is a bug verdict.",
   );
+  if (input.candidateGroups !== undefined) {
+    const includedLinks = new Set(input.candidateGroups.flatMap(group =>
+      group.causalLinkIds));
+    out.push(
+      "**Admitted BUG root groups (not additional findings):** " +
+        input.candidateGroups.length +
+        " structural group(s) covering " + includedLinks.size +
+        " PROVEN causal link(s). Candidate-grouping is only available " +
+        "after canonical admission, and does not merge independent " +
+        "downstream dependencies.",
+    );
+    for (const group of input.candidateGroups.slice(0, 3)) {
+      out.push("- Root " + concise(group.technicalOwnerId) +
+        " → " + concise(group.dependencyTargetId) +
+        "; " + group.causalLinkIds.length +
+        " related proven link(s); domains: " +
+        group.failureDomains.slice(0, 3).map(concise).join(", "));
+    }
+    if (input.candidateGroups.length > 3) out.push(
+      "Additional admitted root groups omitted: " +
+        (input.candidateGroups.length - 3));
+  }
+  if (input.validationTests !== undefined) {
+    const staticGroups = input.validationTests.filter(group =>
+      group.verificationMode === "STATIC_PROOF_COMPLETION").length;
+    const runtimeGroups = input.validationTests.length - staticGroups;
+    out.push(
+      "**Pending deciding-proof groups (NOT defects):** " + staticGroups +
+        " source/formal group(s), " + runtimeGroups +
+        " narrow-runtime group(s). The canonical earliest-stage " +
+        "model task remains the next required decision.",
+    );
+  }
   if (sourcedFeatures.length > 0) {
     out.push("**Selected-source mechanics to trace (sample):**");
     for (const feature of sourcedFeatures.slice(0, 5)) {

@@ -127,4 +127,48 @@ describe("map audit validation plan", () => {
       "Resolve the exact owner from selected-artifact evidence.",
     );
   });
+  it("splits a shared group name when scenario, issue type or proof mode differs", () => {
+    const basic: any = {
+      status: "NEED_VALIDATION",
+      causalLinkId: "link:a", scenarioId: "scenario:one",
+      issueType: "BUG", gameplayFlow: "PROGRESSION",
+      validationGroupKey: "arena:recheck",
+      validationTest: "Check the first condition in source.",
+      missingProof: "Source guard",
+    };
+    const items = [
+      basic,
+      { ...basic, causalLinkId: "link:b",
+        validationTest: "Check the second source condition." },
+      { ...basic, causalLinkId: "link:c",
+        scenarioId: "scenario:two" },
+      { ...basic, causalLinkId: "link:d",
+        issueType: "DESIGN_MISMATCH" },
+      { ...basic, causalLinkId: "link:e",
+        proofNavigation: { runtimeRequired: true },
+        validationTest: "Observe only the selected runtime boundary." },
+    ];
+    const groups = groupNeedValidationTests(items);
+    expect(groups).toHaveLength(4);
+    const common = groups.find(group => group.findingIds.includes("link:a"));
+    expect(common?.findingIds).toEqual(["link:a", "link:b"]);
+    expect(common?.verificationMode).toBe("STATIC_PROOF_COMPLETION");
+    const runtime = groups.find(group => group.findingIds.includes("link:e"));
+    expect(runtime?.verificationMode).toBe("NARROW_RUNTIME_VERIFICATION");
+    expect(groups.every(group => group.broadPlaythroughAllowed === false)).toBe(true);
+    expect(new Set(groups.map(group => group.key)).size).toBe(groups.length);
+  });
+
+  it("preserves the original validationGroupKey when there is no scope collision", () => {
+    const groups = groupNeedValidationTests([{
+      status: "NEED_VALIDATION",
+      causalLinkId: "link:single", scenarioId: "scenario:single",
+      issueType: "BUG", gameplayFlow: "PROGRESSION",
+      validationGroupKey: "stable:single",
+      validationTest: "Find one exact source witness.",
+      missingProof: "Source witness",
+    } as any]);
+    expect(groups[0]?.key).toBe("stable:single");
+  });
+
 });
