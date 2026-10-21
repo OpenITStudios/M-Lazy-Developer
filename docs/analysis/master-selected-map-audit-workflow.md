@@ -50,6 +50,16 @@ stage-ordered model task (or its blocking obligation), the source witness
 if available and the stopping rule. The extensive technical source
 hierarchy follows as navigation, not as the lead answer.
 
+During UNDERSTAND, A3–A6 checkpoint model tasks may now carry at
+most four selected-artifact, non-hypothetical Gameplay Intent subjects.
+An exact checkpoint-evidence/blocked-unknown link is preferred; a
+checkpoint-specific source-role fallback is labelled
+`SOURCE_ROLE_CANDIDATE` and **does not prove the blocker**. A7 uses
+only exact links and abstains on unrelated source content. The same
+bounded `knowledgeLookup` and existing typed-IR developer-reference
+selector receive those subjects. This is navigation in the existing
+model handoff, never closure of a Mandatory Audit checkpoint.
+
 If the operator explicitly enables the reviewed ZIP context with
 `--developer-practice`, the same `modelTaskPackets` may include bounded
 `developerPractice` hints and externally attributed test reports. Always

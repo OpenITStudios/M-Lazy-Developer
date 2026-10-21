@@ -1121,6 +1121,9 @@ describe("Map Audit Output V2 projection", () => {
       kind: "GAMEPLAY_TRANSLATION", decisionNeeded: "Trace zone settlement",
       goal: "Find the selected-map source branch",
       stopCondition: "Stop at deciding source or explicit gap",
+      subjectSelection: {
+        basis: "SOURCE_ROLE_CANDIDATE", omittedCandidates: 2,
+      },
       evidenceContext: [{
         kind: "selected-artifact-evidence",
         id: "site:zone", locator: "scripts/zone.ts:12",
@@ -1173,6 +1176,8 @@ describe("Map Audit Output V2 projection", () => {
       .toBeLessThan(brief.indexOf("## Findings"));
     expect(brief).toContain("BUG 0 PROVEN / 1 NEED_VALIDATION");
     expect(brief).toContain("Next decision [PROVE / GAMEPLAY_TRANSLATION]");
+    expect(brief).toContain("SOURCE_ROLE_CANDIDATE");
+    expect(brief).toContain("NOT checkpoint proof");
     expect(brief).toContain("scripts/zone.ts:12");
     expect(brief).toContain("Does the caller revalidate its session after await?");
     expect(brief).toContain("Do not infer a form bug from an unguarded helper alone.");

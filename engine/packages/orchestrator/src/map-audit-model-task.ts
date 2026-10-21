@@ -20,6 +20,7 @@ import type {
 } from "./inspection/gameplay-world-model.js";
 import type {
   MandatoryAuditProcedureReceipt,
+  MandatoryAuditCheckpointReceipt,
 } from "./inspection/mandatory-audit-procedure.js";
 import type {
   GameplayScenarioGraph,
@@ -120,6 +121,11 @@ export interface AuditModelTaskPacket {
   readonly evidenceIds: readonly string[];
   readonly evidenceContext: readonly AuditModelTaskEvidenceContext[];
   readonly unresolvedEvidenceIds: readonly string[];
+  /** Routing provenance, not an audit checkpoint or proof-state change. */
+  readonly subjectSelection?: {
+    readonly basis: "CHECKPOINT_EVIDENCE_LINK" | "SOURCE_ROLE_CANDIDATE";
+    readonly omittedCandidates: number;
+  };
   readonly knowledgeContext: readonly AuditModelTaskKnowledgeContext[];
   /** Route ChatGPT/source lookup from the current map, not from a generic bug taxonomy. */
   readonly knowledgeLookup?: AuditModelTaskKnowledgeLookup;
@@ -518,6 +524,63 @@ function knowledgeContextFor(
   });
 }
 
+/** Map UNDERSTAND checkpoints to actual Intent subjects without creating
+ * another mechanic extractor. Direct evidence/unknown links win; A3–A6 can
+ * use bounded source-backed role candidates when the receipt carries only
+ * IR/scenario IDs. A7 never falls back to unrelated gameplay subjects.
+ */
+export function selectCheckpointIntentSubjects(
+  checkpoint: MandatoryAuditCheckpointReceipt,
+  intent: GameplayIntentModel,
+): {
+  readonly subjectIds: readonly string[];
+  readonly basis?: "CHECKPOINT_EVIDENCE_LINK" | "SOURCE_ROLE_CANDIDATE";
+  readonly omittedCandidates: number;
+} {
+  if (checkpoint.block !== "UNDERSTAND" || !checkpoint.blocksPublication) {
+    return { subjectIds: [], omittedCandidates: 0 };
+  }
+  const kindsByCheckpoint: Readonly<Record<string, readonly string[]>> = {
+    A3: ["objective", "phase", "outcome"],
+    A4: ["state", "resource"],
+    A5: ["actor", "role", "lifecycle", "state"],
+    A6: ["objective", "phase", "outcome"],
+    A7: ["mechanic", "objective", "phase", "state", "lifecycle",
+      "resource", "actor", "role", "outcome", "spatial-region", "policy"],
+  };
+  const kinds = kindsByCheckpoint[checkpoint.id];
+  if (!kinds) return { subjectIds: [], omittedCandidates: 0 };
+  const eligibleKinds = new Set(kinds);
+  const evidenceById = new Map(intent.evidence.map(item => [item.id, item]));
+  const receiptIds = new Set([
+    ...checkpoint.evidenceIds,
+    ...checkpoint.obligations
+      .filter(item => item.required && !item.satisfied)
+      .flatMap(item => item.evidenceIds),
+  ]);
+  const blockedSubjectIds = new Set(intent.unknowns
+    .filter(item => receiptIds.has(item.id) ||
+      (item.evidenceIds ?? []).some(id => receiptIds.has(id)))
+    .flatMap(item => item.blockedSubjectIds));
+  const eligible = intent.nodes.filter(node =>
+    eligibleKinds.has(node.kind) && node.status !== "hypothesis" &&
+    node.evidenceIds.some(id =>
+      isCurrentArtifactSourceEvidence(evidenceById.get(id))));
+  const linked = eligible.filter(node => blockedSubjectIds.has(node.id) ||
+    node.evidenceIds.some(id => receiptIds.has(id)));
+  // A7 source debt may be enormous: use precise selected-source links only.
+  const candidates = linked.length > 0 ? linked :
+    checkpoint.id === "A7" ? [] : eligible;
+  const selected = candidates.slice(0, 4);
+  if (selected.length === 0) return { subjectIds: [], omittedCandidates: 0 };
+  return {
+    subjectIds: selected.map(node => node.id),
+    basis: linked.length > 0
+      ? "CHECKPOINT_EVIDENCE_LINK" : "SOURCE_ROLE_CANDIDATE",
+    omittedCandidates: candidates.length - selected.length,
+  };
+}
+
 function checkpointPackets(
   stage: SelectedMapAuditStage,
   procedure: MandatoryAuditProcedureReceipt,
@@ -546,6 +609,7 @@ function checkpointPackets(
         ...checkpoint.obligations.flatMap((item) => item.evidenceIds),
       ]);
       const evidence = evidenceContext(ids, intent);
+      const selection = selectCheckpointIntentSubjects(checkpoint, intent);
       return {
         schemaVersion: 1 as const,
         policy: "bounded-audit-model-task" as const,
@@ -560,7 +624,13 @@ function checkpointPackets(
         decisionNeeded:
           checkpoint.reason,
         checkpointId: checkpoint.id,
-        subjectIds: [],
+        subjectIds: selection.subjectIds,
+        ...(selection.basis === undefined ? {} : {
+          subjectSelection: {
+            basis: selection.basis,
+            omittedCandidates: selection.omittedCandidates,
+          },
+        }),
         componentIds: [],
         requiredKnowledgeIds: [],
         evidenceIds: ids,
@@ -998,10 +1068,26 @@ export function deriveAuditModelTaskPackets(input: {
           });
     // Reference cues require current-map source evidence and the matching
     // typed IR file; generic bug categories or user suspicion cannot admit them.
+    // Canonical Intent kinds supply scoped lookup language, not gameplay
+    // proof; matching still requires an exact typed IR witness at the source.
+    const subjectIds = new Set(knowledgeLookup?.matchedSubjectIds ?? []);
+    const kindDomains: Readonly<Record<string, readonly string[]>> = {
+      actor: ["entity"], role: ["player"],
+      phase: ["round", "timing"],
+      lifecycle: ["lifecycle", "session"],
+      state: ["state", "persistence"],
+      resource: ["state", "inventory"],
+      objective: ["progression"],
+      outcome: ["round", "progression"],
+      "spatial-region": ["spatial"],
+    };
     const domains = knowledgeLookup?.grounding === "SELECTED_ARTIFACT"
       ? [
           knowledgeLookup.query,
           ...packet.knowledgeContext.map((item) => item.domain),
+          ...input.intent.nodes
+            .filter(node => subjectIds.has(node.id))
+            .flatMap(node => [node.kind, ...(kindDomains[node.kind] ?? [])]),
         ].join(" ").toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean)
       : [];
     const versionQuestion = domains.some(term => [

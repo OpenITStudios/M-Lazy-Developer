@@ -55,6 +55,37 @@ answer it before proposing a Minecraft runtime test. A bounded source
 review may communicate independently supported mechanics/defects
 without claiming the full production audit closed.
 
+### UNDERSTAND checkpoint → selected-source subjects (Batch A)
+
+A3–A7 checkpoints are currently emitted by the canonical
+`mandatory-audit-procedure.ts`. Their technical receipt evidence often
+uses Scenario/IR identifiers rather than Gameplay Intent subject IDs.
+The existing `map-audit-model-task.ts` now performs a **read-only,
+bounded projection** to enable source-grounded investigation without
+changing a checkpoint's status:
+
+- **Direct route:** choose a non-hypothetical Intent node when its
+  selected-artifact evidence matches the checkpoint/unsatisfied obligation
+  evidence, or a checkpoint-linked Intent unknown explicitly blocks it.
+- **Role candidate route:** for A3 (journey), A4 (state), A5 (ownership),
+  or A6 (progression) only, choose up to four nodes of the corresponding
+  existing Intent kinds, all independently backed by selected-artifact
+  source. This is navigational context, **not** proof the node caused
+  the checkpoint to block.
+- **A7 semantic closure:** no generic fallback. Without an exact evidence
+  or linked unknown witness, it must abstain rather than sample the map
+  inventory arbitrarily.
+- **No promotion:** external/historical nodes and pure hypotheses never
+  qualify. Selected subjects then pass through the already existing
+  source-evidence lookup, typed Semantic IR join and optional developer
+  reference selector. The resulting task carries a `subjectSelection`
+  provenance marker and omitted count; no new graph, detector, expected
+  behavior, checkpoint closure, or bug report is created.
+
+The `--brief` formatter surfaces the route marker as **NOT checkpoint
+proof**. A candidate may direct ChatGPT to inspect a source path, but
+only the canonical audit/defect proof owners can resolve the blocker.
+
 ### External developer source: comparison, never replacement
 
 The supplied `minecraft-bedrock-agent-skills` v0.24.0 and

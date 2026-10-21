@@ -968,6 +968,11 @@ export function formatSelectedMapAuditBrief(input: {
       "**Next decision [" + firstTask.stage + " / " + firstTask.kind +
         "]:** " + concise(firstTask.decisionNeeded),
       "**Required next action:** " + concise(firstTask.goal),
+      ...(firstTask.subjectSelection === undefined ? [] : [
+        "**Source subject selection (NOT checkpoint proof):** " +
+          firstTask.subjectSelection.basis + "; omitted candidates " +
+          firstTask.subjectSelection.omittedCandidates,
+      ]),
       "**Stop when:** " + concise(firstTask.stopCondition),
       ...(locations.length === 0 ? [
         "**Source witness:** unresolved; do not substitute external guides.",
@@ -2210,6 +2215,11 @@ export function formatSelectedMapAuditBrief(input: {
         : ["  Missing source evidence: " +
           task.unresolvedEvidenceIds.slice(0, 5).map(concise).join("; ")]),
       "  Stop condition: " + concise(task.stopCondition),
+      ...(task.subjectSelection === undefined ? [] : [
+        "  Checkpoint source navigation (NOT proof of its blocker): " +
+          task.subjectSelection.basis + "; omitted " +
+          task.subjectSelection.omittedCandidates + " candidates",
+      ]),
       ...(locations.length === 0 ? [] :
         ["  Source: " + locations.slice(0, 4).map(concise).join("; ")]),
       ...(task.knowledgeLookup === undefined ? [] :
