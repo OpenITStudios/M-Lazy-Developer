@@ -315,6 +315,52 @@ Expected behavior must still come from the selected map's authored design and so
 For a defect, cite the selected-map trigger, state owner, effect, outcome and counterexample;
 when missing, record UNKNOWN rather than copying a developer preference.
 
+## Source-code-specific interpretation checklist
+
+These are **investigation checks extracted from the supplied v0.24.0
+developer module implementations**, not requirements to use those modules.
+For each selected-map comparison, first establish that the map contains
+the relevant mechanic and inspect the **actual selected-map call chain**.
+The upstream file's exact SHA-256 is indexed under `codeInventory`.
+
+| Developer module | What its code demonstrates | Check before concluding a map bug |
+|---|---|---|
+| `coords/coords.ts` | Distinguishes entity positions, block coordinates, references and bounded regions | Determine whether coordinates are block positions or entity points before inventing a half-block offset |
+| `display/display-service.ts` | Wraps title, subtitle, action-bar and localized text outputs | Identify whether screen output is transient, overridden or deliberately not persistent |
+| `display/hud-line.ts` | Composes multiple HUD sources into a player-scoped action-bar line | Trace each writer and its cleanup; competing HUD writers do not automatically imply a bug |
+| `entities/damage-rules.ts` | Applies attacker/damage decisions at the source's event boundary | Distinguish damage denied by design from attack event not reaching the listener |
+| `entities/entity-lifecycle.ts` | Tags owned entities, finds arena-scoped entities/drops and performs removal jobs | Follow spawn ownership, reset scope, and remove-versus-death consequences |
+| `forms/form-navigation.ts` | Routes named forms and menu selections via navigation state | Trace selected route, cancellation, next form and player identity |
+| `forms/form-service.ts` | Enforces newest-request ownership, busy retries and post-await session checks | A response callback is stale only if its map-specific session is invalid *and* no caller revalidates |
+| `game-results/game-results-contract.ts` | Produces bounded structured result records with canonical fields | Compare against the map's actual export contract; absence of this developer-specific export is not a game bug |
+| `game-results/game-results-export.ts` | Handles an authored `scriptevent` export and emits console records | Trace registered event handler, source of scores and platform execution; console output is not player-facing score |
+| `items/item-spec.ts` | Validates item specifications and builds/gives kits at runtime | Follow item creation, slot/quantity rules, ownership and inventory capacity |
+| `logging/log-core.ts` | Separates log levels, channels and throttled outputs | A suppressed debug line does not prove an event never executed |
+| `logging/log.ts` | Wires runtime logging, world/player context and safe guards | Separate diagnostic logging from real gameplay feedback |
+| `profiling/perf-probe.ts` | Samples execution costs and counts on scheduled intervals | Source-observed loops imply a performance question, not measured lag |
+| `sound/sound-service.ts` | Routes player/world sound, music, listener lifecycle and anti-spam | A sound call establishes an attempt, not a heard sound or win/loss event |
+| `sound/sound-throttle.ts` | Prevents repeated sound calls in a bounded window | Investigate cooldown state before diagnosing missing sound as faulty playback |
+| `teleport/teleport-service.ts` | Coordinates form close, camera fades, teleport, cancellation and urgent move | Reconstruct phase ownership and asynchronous cancellation before treating non-arrival as a bug |
+| `testing/fake-minecraft.ts` | Simulates selected server APIs for repeatability assertions | This is test-only code, not an accurate complete Minecraft runtime or source of native-game facts |
+| `time/event-log.ts` | Records lifecycle events through an injected persistence abstraction | Inspect event provenance, store availability and reload expectations |
+| `time/game-clock.ts` | Maintains world-load clock initialization, game tick and clock saving | Trace initialization, reentry, tick registration and restart persistence; wall-clock assumptions need evidence |
+| `time/ticks.ts` | Implements countdown, display time, cooldown and pause/resume helpers | Inspect tick boundary and pause/resume arithmetic rather than assume real-time seconds |
+
+The developer `modules/README.md` states that some projects copy modules
+into `packs/BP/scripts/modules/` using its installer, while the separate
+`database` component is hosted in another repository. Therefore matching
+module *names* or imports is insufficient to prove two map copies are
+byte-identical, and missing `database` code cannot be reconstructed from
+the included files alone.
+
+The original module `.test.ts` files are **external examples**, not an
+executed test suite for M-Lazy-Developer. Release tooling, skill prompt
+scripts, Skills Probe's test-world `packs/` source and VS Code helpers
+belong to their own developer/test harness and are not added to the
+production bug-finding engine. Their existence can direct manual
+investigation, but their execution or blanket code reuse is neither
+necessary nor safe to establish what an unrelated map does.
+
 ## Source-grounded audit task integration
 
 The developer v0.24.0 ZIP contains TypeScript implementation modules.
