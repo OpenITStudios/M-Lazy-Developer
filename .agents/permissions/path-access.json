@@ -148,6 +148,14 @@
     {
       "path": ".agents/skill-registry.json",
       "productDevelopment": "read-write"
+    },
+    {
+      "path": "experiments/developer-practice-signals.json",
+      "audit": "read",
+      "detectionDevelopment": "read",
+      "benchmark": "read",
+      "targetRepair": "read",
+      "productDevelopment": "read-write"
     }
   ]
 }
