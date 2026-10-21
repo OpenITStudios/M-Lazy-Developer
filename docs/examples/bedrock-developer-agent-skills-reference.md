@@ -9,6 +9,97 @@ lifecycle: ACTIVE
 
 # Bedrock Developer Agent Skills — Provisional Reference
 
+## Current supplied archives — 21 October 2026
+
+The following is a **reviewed, non-executable reference intake**. It supersedes the
+older archive inventory *for provenance and discovery only*, not Minecraft
+platform authority, skill lane selection, or selected-map gameplay proof.
+The machine-readable owner is the existing
+[`developer-practice-signals.json`](../../experiments/developer-practice-signals.json).
+Its original stable pattern IDs remain in place; three scoped interpretation
+questions have been added. **No raw third-party skill, installer, test pack,
+binary, module, or MCP configuration has been installed or vendored.**
+
+| Input | Identity | Contents | Decision |
+|---|---|---|---|
+| `minecraft-bedrock-agent-skills-main (1).zip` | SHA-256 `c516d1e7a16c6ae4aa6906083a1914e035015713b0c48dae2d864e5106af5f5b` | v0.24.0; 311 ZIP entries, 210 files, 22 active `skills/*/SKILL.md` | Fingerprint and selectively normalize |
+| `skills-probe-main.zip` | SHA-256 `04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203` | 572 files, 14,999,905 uncompressed bytes; Minecraft test project | Attribute selected external observations and preserve proof limits |
+
+The developer skills README identifies MIVUBI Zein as maintainer; ownership
+and redistribution license were not independently authenticated and neither
+archive provides a root LICENSE. The probe pins the **older v0.23.0** skill
+release at `f5b8275dd690ecb3d14efb001865c9b178143b55`; all 22 installed
+skill documents in that probe differ byte-for-byte from the v0.24.0 ZIP.
+Consequently these sources are **not** one identical tested build.
+
+### Current skill responsibility inventory
+
+| `bedrock-agent-team` | Workflow/project-specific; not map authority |
+| `bedrock-camera` | REFERENCE candidate; not a detector |
+| `bedrock-content` | REFERENCE candidate; not a detector |
+| `bedrock-coordinates` | REFERENCE candidate; not a detector |
+| `bedrock-data-persistence` | REFERENCE candidate; not a detector |
+| `bedrock-debug-logging` | REFERENCE candidate; not a detector |
+| `bedrock-debug-profiling` | REFERENCE candidate; not a detector |
+| `bedrock-entity-creation` | REFERENCE candidate; not a detector |
+| `bedrock-entity-lifecycle` | REFERENCE candidate; not a detector |
+| `bedrock-forms` | REFERENCE candidate; not a detector |
+| `bedrock-game-results` | Workflow/project-specific; not map authority |
+| `bedrock-game-time` | REFERENCE candidate; not a detector |
+| `bedrock-git-workflow` | Workflow/project-specific; not map authority |
+| `bedrock-onscreen-display` | REFERENCE candidate; not a detector |
+| `bedrock-project-setup` | Workflow/project-specific; not map authority |
+| `bedrock-release-export` | Workflow/project-specific; not map authority |
+| `bedrock-script-optimization` | REFERENCE candidate; not a detector |
+| `bedrock-sound` | REFERENCE candidate; not a detector |
+| `bedrock-teleport` | REFERENCE candidate; not a detector |
+| `bedrock-testing-policy` | Workflow/project-specific; not map authority |
+| `bedrock-text-glyphs` | REFERENCE candidate; not a detector |
+| `bedrock-version-targeting` | REFERENCE candidate; not a detector |
+
+The old `bedrock-skill-feedback` skill is **absent** from the new active
+22-skill ZIP; its old record is not promoted as current source content.
+`bedrock-camera`, `bedrock-content`, and `bedrock-script-optimization`
+supply three additional investigation questions in the existing JSON
+companion. Team-specific `bedrock-game-results`, the multi-agent process,
+project setup, and release/export conventions remain workflow reference
+only, never universal Minecraft correctness requirements.
+
+### Skills Probe evidence consumed as external reports
+
+| Source | Upstream report | Permitted interpretation |
+|---|---|---|
+| `docs/test-runs/2026-10-18-t20-agent.md` | T20: PASS for a scoped camera visibility/restoration scene in Education 26.32 | Camera/chunk evidence candidate, not a universal failure detector |
+| `docs/test-runs/2026-10-21-p49-labels.md` | P49: FAIL particle glyph label order, overlap and far cutoff in its specific probe implementation | Negative control against assuming particle labels are always readable or per-viewer |
+| `docs/P50-GLYPH-PROBE.md` | P50: native custom glyph test **pending** | Planned fixture only; no verified rendering |
+
+The referenced report content and hashes are recorded in
+`experiments/developer-practice-signals.json`. They are upstream author/tester
+claims examined as text; ChatGPT has **not** replayed the client and must not
+convert them into current-map observations, broad engine facts, or a benchmark
+PASS. Importing the full `skills-probe` package would instead add a
+separate Minecraft game, admin/config assumptions and large binary media,
+none of which is a required dependency for Lazy-Developer.
+
+### Promotion and execution boundary
+
+Existing `.agents/skill-registry.json` remains the only active skill
+routing authority. This intake preserves the conditional `REFERENCE`
+context path in `workflow/resource-context.ts` and
+`workflow/context-compiler.ts`; new patterns only become relevant when
+independent selected-map Semantic IR emits an exact supported cue, the
+operator opts in, and the requested question-domain matches. A mere
+source-signal match cannot assert a bug, proof of behavior, or platform
+compatibility. Official/version-matched verification is still required
+before a Minecraft fact is promoted to `engine/knowledge/`.
+
+### Historical inventory below
+
+The following earlier snapshot and its pending/research inventory are
+kept for reproducibility, **not current source metadata**. Its old
+`9452f5...` archive SHA and 16-skill count must not be confused with the
+two new supplied ZIPs; Git history preserves former active records.
+
 **Status of material: PROVISIONAL / UNDER REVIEW.** This is a non-canonical,
 user-supplied developer-practice reference, not a platform fact catalog,
 installed agent skill, game-design specification, detector rule, or execution

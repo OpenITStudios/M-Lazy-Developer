@@ -20,6 +20,41 @@ finding, installed agent skill, or new analyzer.
 **Original source inventory/provenance:** [ZIP reference](../examples/bedrock-developer-agent-skills-reference.md).
 Stable document identity is this frontmatter `id`; update in place.
 
+## 21 October 2026: two-archive selective intake
+
+The user supplied `minecraft-bedrock-agent-skills-main (1).zip` (v0.24.0,
+22 active skill files) and `skills-probe-main.zip` (test project with
+an **older v0.23.0** skills lock). Their original uploaded ZIP SHA-256
+identities, all 22 current `SKILL.md` digests, skill classifications,
+and three scoped probe-result references now live in the existing
+[`developer-practice-signals.json`](../../experiments/developer-practice-signals.json).
+The source inventory/triage is documented in the existing
+[skills reference](../examples/bedrock-developer-agent-skills-reference.md).
+There are **16 source-reviewed reference hints**: the previous 13 stable
+IDs plus bounded scene camera, JSON-versus-script state ownership and
+idempotent recurring work questions. Six team/project workflow skills
+cannot be selected as map-audit evidence.
+
+**Probe facts are upstream reports, not reproduced gameplay proof.**
+T20 reports an Education 26.32 camera scene PASS with defined scene
+conditions; P49 reports FAIL for its custom particle-glyph labeling
+layout/cutoff; P50's custom glyph display remains untested natively.
+The older pending/research queue from the original 16-skill archive is
+superseded as *current intake*, not silently treated as confirmed false.
+Latest authoring guidance may suggest targeted investigation, but cannot
+override source-authored game design, independently verified API/version
+knowledge, or stronger observed selected-map evidence.
+
+The existing `compileDeveloperPracticeReferenceContext()` is already
+the consumption point. New records use the **same** bounded exact
+Semantic IR witness and max-two selection, not a new retriever.
+For scene cameras, `teleport` is only a candidate to inspect the actual
+camera call and chunk ownership; for data storage, dynamic property
+read/write is only a candidate to inspect state ownership; and for
+idempotence, `system.runInterval` is only a reason to trace an
+effect/guard. None establishes visual failure, data corruption, or lag
+without selected-source and appropriate runtime evidence.
+
 ## Why this is separate from the other knowledge owners
 
 - **Source ZIP**: developer statements, example code, prior project surveys,
@@ -50,8 +85,8 @@ are navigable with the existing section-level retrieval.
    code samples. Record archive SHA-256 and exact file counts.
 2. **Compare snapshots.** The JSON `sourceSnapshot.archiveSha256` signals
    whether the archive changed. Compare `sourceFiles[].sha256` for all
-   **16 active SKILL.md**, and `deferredSources[].sha256` for **15 pending
-   notes, 4 research documents and the feedback README**. Added, removed
+   **currently declared active SKILL.md** (22 in the 2026-10-21 ZIP), and
+   `deferredSources[].sha256` only for files present in that same snapshot. Added, removed
    or changed files are reviewed separately; change outside these 36 tracked
    files still requires inspecting the new archive's full inventory before
    calling an update complete. Untracked referenced examples/scripts can
@@ -121,16 +156,16 @@ injection or ungrounded positive classification.
 
 ## Available semantic cues and intentionally excluded material
 
-The JSON inventories **all 16 active skill documents**. **13**
-are individually normalized as **13 source-reviewed, noncanonical hints**:
+The JSON inventories **all 22 active skill documents**. **16**
+are individually normalized as **16 source-reviewed, noncanonical hints**:
 forms, entity lifecycle, state storage, game time, teleport, coordinates,
 version targeting, debug logging, **entity damage policy**, **HUD lifecycle**,
 **sound feedback**, **localized text/glyph**, and **performance instrumentation**.
 Some are team-preference hints, not platform/genre-neutral best practices.
 
-The other three skills (`bedrock-git-workflow`, `bedrock-testing-policy`,
-`bedrock-skill-feedback`) are explicitly
-`DEVELOPMENT_WORKFLOW_ONLY`. Their fingerprints are tracked for incremental
+The six workflow/project-scoped skills (`bedrock-agent-team`, `bedrock-game-results`,
+`bedrock-git-workflow`, `bedrock-project-setup`, `bedrock-release-export`,
+`bedrock-testing-policy`) are explicitly `DEVELOPMENT_WORKFLOW_ONLY`. Their fingerprints are tracked for incremental
 updates but they **must not** participate in map-design reference selection.
 
 | Observed selected-map question | One candidate reference | Counter-reading always kept |
@@ -283,11 +318,12 @@ never because this ZIP says the pattern is preferred.
 
 ## Acceptance / evidence ceiling
 
-This curated snapshot makes **all active skills discoverable and
-fingerprinted**, **13 interpretation records searchable** and a conservative
+This curated snapshot makes **all 22 active skills discoverable and
+fingerprinted**, **16 interpretation records searchable** and a conservative
 subset conditionally selectable from existing typed Semantic IR through
-the opt-in Context Compiler contract, and **20 pending/research/
-feedback source documents** traceable for future comparison. The other ZIP
+the opt-in Context Compiler contract. The former **20 pending/research/feedback**
+source records belonged to a prior ZIP; they are no longer current `deferredSources`
+and remain traceable in Git history. The other ZIP
 contents (code examples, assets, checkers, archive/history) remain in the
 external original source and are not claimed fully ingested.
 

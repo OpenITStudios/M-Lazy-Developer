@@ -5,18 +5,21 @@
   "usagePolicy": "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF",
   "lifecycle": "PROVISIONAL_UPDATABLE",
   "sourceSnapshot": {
-    "sourceName": "minecraft-bedrock-agent-skills-main.zip",
-    "archiveSha256": "9452f529add3c1616cfaf2bc1d415e66925bec9a78c7a3c83520483d97294a34",
-    "zipEntries": 240,
-    "files": 149,
-    "activeSkillDocuments": 16,
-    "pendingDocuments": 15,
-    "sourceAttribution": "User states this material was supplied by a map developer; original author and license not independently verified",
+    "sourceName": "minecraft-bedrock-agent-skills-main (1).zip",
+    "release": "v0.24.0",
+    "archiveSha256": "c516d1e7a16c6ae4aa6906083a1914e035015713b0c48dae2d864e5106af5f5b",
+    "zipEntries": 311,
+    "files": 210,
+    "uncompressedBytes": 1056006,
+    "activeSkillDocuments": 22,
+    "pendingDocuments": 0,
+    "sourceAttribution": "README identifies maintainer MIVUBI Zein; archive ownership and redistribution license were not independently authenticated; no LICENSE file was present",
     "binaryIncludedInRepo": false,
-    "normalizedPatternCount": 13,
-    "interpretationEligibleSkillCount": 13,
-    "workflowOnlySkillCount": 3,
-    "deferredSourceFilesTracked": 20
+    "normalizedPatternCount": 16,
+    "interpretationEligibleSkillCount": 16,
+    "workflowOnlySkillCount": 6,
+    "deferredSourceFilesTracked": 0,
+    "intakeEvidence": "Uploaded archive was inventoried and selected SKILL.md sections were inspected as data; no ZIP-supplied executable was run"
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -26,9 +29,33 @@
   },
   "sourceFiles": [
     {
+      "id": "src.bedrock-agent-team",
+      "path": "skills/bedrock-agent-team/SKILL.md",
+      "sha256": "fad3abde7cb836e8882b68260e2649c34568848062dece5945beff922a7ed63a",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+    },
+    {
+      "id": "src.bedrock-camera",
+      "path": "skills/bedrock-camera/SKILL.md",
+      "sha256": "f2b0fef74ead98d32ab22212c14355ba724553ca93a6c6c8918cfe8238181223",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "INTERPRETATION_CANDIDATE"
+    },
+    {
+      "id": "src.bedrock-content",
+      "path": "skills/bedrock-content/SKILL.md",
+      "sha256": "86d6cd3d34af566cc1fd085cc0609661776c2a593c1c03ae6cfd992c9db9ec4c",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "INTERPRETATION_CANDIDATE"
+    },
+    {
       "id": "src.bedrock-coordinates",
       "path": "skills/bedrock-coordinates/SKILL.md",
-      "sha256": "1bded4cec147bf743d5f68f9d4938e062c0044e909d32084d1e73a988b519c4f",
+      "sha256": "5dc41ba318340c9cb2e09eaa427a6600cff9a1c9da33f202751a3aa4db241e33",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -36,7 +63,7 @@
     {
       "id": "src.bedrock-data-persistence",
       "path": "skills/bedrock-data-persistence/SKILL.md",
-      "sha256": "3cd770878a24fc1d4a6866a540d8f638ec1d5fff272fb6f345625afb1ec380ef",
+      "sha256": "5058058f53eba5bce2e551ec3ad0663b21e1015ba9b00b3a1bc37d2c3592290d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -44,7 +71,7 @@
     {
       "id": "src.bedrock-debug-logging",
       "path": "skills/bedrock-debug-logging/SKILL.md",
-      "sha256": "4224409020ad7809884e32249b9fa59e3cc6c8f24b0f0ab76185e7308243e26a",
+      "sha256": "7afcfdcab48994a73e4799b2dcdbf04accb58101e899831a81eb9001b6ced383",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -52,7 +79,7 @@
     {
       "id": "src.bedrock-debug-profiling",
       "path": "skills/bedrock-debug-profiling/SKILL.md",
-      "sha256": "84dd1726863a78f3f8f8b0e039521918649fb47a680d93e4f9c1c1a4f7fe1a42",
+      "sha256": "c88fd3f3aa1ce8060103dadb3c3a75fa9caad89d5040739cc4504f3d4c68f167",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -60,7 +87,7 @@
     {
       "id": "src.bedrock-entity-creation",
       "path": "skills/bedrock-entity-creation/SKILL.md",
-      "sha256": "d2fd964475f0219e4e3becfaf6431135793509b77cc8ec5198fb5a775f4c7348",
+      "sha256": "fdabc04bde600ee213ab9c4f00cf62c420c5dbcf11644cfd94bc9353a06d2f16",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -68,7 +95,7 @@
     {
       "id": "src.bedrock-entity-lifecycle",
       "path": "skills/bedrock-entity-lifecycle/SKILL.md",
-      "sha256": "e5e3e21addceb91cebd7ab8bdb244a5e1dda5dec26ba5ea40a8267024ed1312f",
+      "sha256": "66bc1c375b69a4f77581ecaa7e444a75a72985d9deba7ecb923e7d2c0a374887",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -76,15 +103,23 @@
     {
       "id": "src.bedrock-forms",
       "path": "skills/bedrock-forms/SKILL.md",
-      "sha256": "3e04bd878be88ff42f24918856639597f004808a2877bbf374de3c08b97b7ef3",
+      "sha256": "b53a714df982f5a82ffa5bab99e96667b7a814fd9b43d34ee49857084dc8b00d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
     },
     {
+      "id": "src.bedrock-game-results",
+      "path": "skills/bedrock-game-results/SKILL.md",
+      "sha256": "df7016e73f666ae8cdc4ee85aaca3a0df7ea591598367c9409333c1e5153cfc9",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+    },
+    {
       "id": "src.bedrock-game-time",
       "path": "skills/bedrock-game-time/SKILL.md",
-      "sha256": "304172eafd0a3eb072420ad25d0f8b14c804fc2183316ef8982c3843d12f4745",
+      "sha256": "19020cd79144d97bf2d90532dd381769565e33b89db8baa3a6ba33acf9e7345b",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -92,7 +127,7 @@
     {
       "id": "src.bedrock-git-workflow",
       "path": "skills/bedrock-git-workflow/SKILL.md",
-      "sha256": "f93e65c1c233f73f6d51ed57273035c998d5f8cc564019c2bbc327fd054cb388",
+      "sha256": "f16339ca3540762239a54911029f2d2a9bfd5fb00ba62caeabfdf5c6d1003551",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
@@ -100,23 +135,39 @@
     {
       "id": "src.bedrock-onscreen-display",
       "path": "skills/bedrock-onscreen-display/SKILL.md",
-      "sha256": "6b5f78e46a2e35ee082c3ac4837c479f205fdf621e633f0e8e371d218e80c5d3",
+      "sha256": "7d46ad4ab1c1db89005caa581e64934a26589fe40d4ed5dccd92d6b0c621744b",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
     },
     {
-      "id": "src.bedrock-skill-feedback",
-      "path": "skills/bedrock-skill-feedback/SKILL.md",
-      "sha256": "8a4b648b264c49dbb3fa04da86252c5ca37858d697007432143ca195dd496f63",
+      "id": "src.bedrock-project-setup",
+      "path": "skills/bedrock-project-setup/SKILL.md",
+      "sha256": "4847c359066a5e1a6c1f883d8b0ed9d1ea77031fa87abb7ac7a1988784abf8e0",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
     },
     {
+      "id": "src.bedrock-release-export",
+      "path": "skills/bedrock-release-export/SKILL.md",
+      "sha256": "a098711c23f9c465e42c4e476087a103b6e98202d8fe086cbc4a03a037d1cc7e",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+    },
+    {
+      "id": "src.bedrock-script-optimization",
+      "path": "skills/bedrock-script-optimization/SKILL.md",
+      "sha256": "2ec6fc08349443404b6355eef6d64ce61e030399bd4a5b3a3e19c5f467e55d82",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "INTERPRETATION_CANDIDATE"
+    },
+    {
       "id": "src.bedrock-sound",
       "path": "skills/bedrock-sound/SKILL.md",
-      "sha256": "88dfaeaa27b1be29460ca6bd8c502bb942cc20a2844f1c4dfbec4a3a6db91a9e",
+      "sha256": "43ffd47a805a106bc795fd00bc993f006e137799350e4134cc15312c820ae722",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -124,7 +175,7 @@
     {
       "id": "src.bedrock-teleport",
       "path": "skills/bedrock-teleport/SKILL.md",
-      "sha256": "8b9f2f62098f21856342a68afffc0be82873643579da506de8528f18cd24b096",
+      "sha256": "9649019396eb379e3894d6f388b2ca77267bb76c3bdd5be49fc056af7da52eb9",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -132,7 +183,7 @@
     {
       "id": "src.bedrock-testing-policy",
       "path": "skills/bedrock-testing-policy/SKILL.md",
-      "sha256": "d8fed8cf9e043ca0ab2321ce8f36e495baa73636a6767b66a4784f6810d61b25",
+      "sha256": "31dc114e0d2e5d95eb35b4bc900825e219b9bc708a32ab7d66da195e5907d407",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
@@ -140,7 +191,7 @@
     {
       "id": "src.bedrock-text-glyphs",
       "path": "skills/bedrock-text-glyphs/SKILL.md",
-      "sha256": "f6c902e664e7ff14e9c3228b0fc3bf45bda6cb464b3a69119177c09040b76da3",
+      "sha256": "ee501c6f84b58281b7478cf5f3e58a6994648ca25967c541daea0d7e43576b8d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -148,7 +199,7 @@
     {
       "id": "src.bedrock-version-targeting",
       "path": "skills/bedrock-version-targeting/SKILL.md",
-      "sha256": "3acaee706f958c67b44ba6764e3bf771cbc992284b346548d00716077aa42a65",
+      "sha256": "dc86b63fced03ff861096f0591b73723b5d5eb0cb92719ed3ab2cfd5b4543e99",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE"
@@ -513,128 +564,134 @@
       "negativeControl": "A pin mismatch requires verification of actual dependency and runtime target, not assumptions from filenames",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
       "prohibits": "Do not use a version pinned in this developer ZIP as the selected map's runtime profile"
+    },
+    {
+      "id": "developer.hint.camera.player-chunk-coverage",
+      "sourceId": "src.bedrock-camera",
+      "heading": "The rule: chunks load around the player, so move the player to the scene",
+      "kind": "IMPLEMENTATION_PATTERN",
+      "status": "SOURCE_REVIEWED",
+      "domains": [
+        "cinematic",
+        "camera",
+        "spatial"
+      ],
+      "sourceSignals": [
+        "teleport"
+      ],
+      "question": "When a selected map attempts a scene-camera relocation, does it explicitly account for player-centered loaded/chunk-visible space and later restore player state?",
+      "candidateRelations": [
+        "camera scene request → player/location dependency",
+        "teleport attempt → possible visual load boundary"
+      ],
+      "negativeControl": "An in-range camera or intentionally distant noninteractive view can be correct; a teleport site by itself neither proves camera usage nor that rendering failed.",
+      "versionApplicability": "REFERENCE_REPORT_EDUCATION_26.32_2026-10-18_NOT_GENERALIZED",
+      "prohibits": "Never infer sky-only rendering or force a behind-camera teleport for an unrelated map from a teleport cue; require selected-source camera linkage and scoped visual proof."
+    },
+    {
+      "id": "developer.hint.content.static-vs-state",
+      "sourceId": "src.bedrock-content",
+      "heading": "Decide",
+      "kind": "IMPLEMENTATION_PATTERN",
+      "status": "SOURCE_REVIEWED",
+      "domains": [
+        "state",
+        "persistence",
+        "content"
+      ],
+      "sourceSignals": [
+        "getDynamicProperty",
+        "setDynamicProperty"
+      ],
+      "question": "Is the observed dynamic-property read/write backed by the selected map's own state ownership, or is static JSON configuration being confused with mutable runtime state?",
+      "candidateRelations": [
+        "dynamic-property operation → authored state owner",
+        "saved runtime state → reload/rejoin lifecycle candidate"
+      ],
+      "negativeControl": "Dynamic properties may intentionally coexist with JSON components, scoreboard displays or temporary state; a reference project's architecture is not this map's game design.",
+      "versionApplicability": "SOURCE_TARGET_EDUCATION_26.32_NO_INDEPENDENT_GENERALIZATION",
+      "prohibits": "Never reclassify a world or player state store as a bug merely because it differs from the reference team's JSON-versus-script convention."
+    },
+    {
+      "id": "developer.hint.script.repeated-work",
+      "sourceId": "src.bedrock-script-optimization",
+      "heading": "Setup that can run any number of times",
+      "kind": "IMPLEMENTATION_PATTERN",
+      "status": "SOURCE_REVIEWED",
+      "domains": [
+        "performance",
+        "scheduler",
+        "lifecycle"
+      ],
+      "sourceSignals": [
+        "system.runInterval"
+      ],
+      "question": "Does an observed recurring callback repeat an irreversible effect or spawn instead of reconciling existing authored objects, and what call/state guard governs the path?",
+      "candidateRelations": [
+        "interval callback → potential repeated effect",
+        "reconcile path → idempotency/ownership question"
+      ],
+      "negativeControl": "A periodic callback or repeated update can be intentional, bounded, and efficient; the source pattern's T17 observations do not establish measured lag in another map.",
+      "versionApplicability": "REFERENCE_REPORT_EDUCATION_26.32_2026-10-17_NOT_GENERALIZED",
+      "prohibits": "Never classify an interval as a performance bug or claim duplicate entities without inspecting the selected map's guard, current object identity, and proof."
     }
   ],
-  "deferredSources": [
+  "deferredSources": [],
+  "probeSnapshot": {
+    "sourceName": "skills-probe-main.zip",
+    "archiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+    "files": 572,
+    "uncompressedBytes": 14999905,
+    "observedSkillsLockTag": "v0.23.0",
+    "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
+    "companionSkillArchiveRelease": "v0.24.0",
+    "identityWarning": "Probe's installed v0.23.0 skill tree is not byte-identical to the supplied v0.24.0 skill archive; observations retain their original scoped source identities.",
+    "licenseWarning": "No root LICENSE found; scripts, Minecraft packs, media and user-specific test harness are not vendored.",
+    "executionBoundary": "Third-party self-reported native reports inspected as text; no Minecraft client, test harness, dependencies, installers or scripts were executed here."
+  },
+  "probeEvidence": [
     {
-      "path": "feedback/README.md",
-      "sha256": "2487222f56595bcf41254a33174cc8aaa3c7ff784c46c6b20c7d52be6d2425a8",
-      "kind": "SOURCE_FEEDBACK_PROCESS",
-      "auditUsage": "NOT_ELIGIBLE"
+      "id": "probe.t20.camera-loading",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "date": "2026-10-18",
+      "edition": "minecraft-education",
+      "version": "26.32",
+      "sourcePath": "docs/test-runs/2026-10-18-t20-agent.md",
+      "sourceSha256": "ea899484a950f1afb17eb817f02486310a343ddd9fd21735cebb32edf68a1bfd",
+      "relatedSkillIds": [
+        "src.bedrock-camera"
+      ],
+      "scope": "Camera render visibility and restoration in the described Skills Probe scene; not independently replayed or generalized across versions.",
+      "limits": "Other scenes, render distances, multiplayer and target artifacts require their own evidence."
     },
     {
-      "path": "pending/custom-components-v2.md",
-      "sha256": "20692801b7a52c0bf5b5a0a25dc73d168d201449e454cb6d284fc5bc90174e21",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
+      "id": "probe.p49.particle-labels",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "date": "2026-10-21",
+      "edition": "minecraft-education",
+      "version": "26.32",
+      "sourcePath": "docs/test-runs/2026-10-21-p49-labels.md",
+      "sourceSha256": "0c44e66e3f6676b932d99dd9e6ff43046f37d97099a0db037277b678aea030e4",
+      "relatedSkillIds": [
+        "src.bedrock-text-glyphs",
+        "src.bedrock-onscreen-display"
+      ],
+      "scope": "Particle-glyph name label reversed/overlapping in some camera views; far cutoff failed in tested fixture.",
+      "limits": "Report concerns particular probe implementation; native nametags and other approaches must not be marked broken."
     },
     {
-      "path": "pending/damage-sensor-tests.md",
-      "sha256": "484ff9403343460956ba9b1f5e306951a525cd21a507d43e6b25973bd01802bb",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/data-export.md",
-      "sha256": "f9b464e6eb23f59e8c18abe5b16dd246189f6e461a35f38e74f77e3859b7200e",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/database-module-evaluation.md",
-      "sha256": "750c0d21d99b9b5cca34395361819c7dd49abe57dc4a490148ab9bf722412f65",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/education-command-tests.md",
-      "sha256": "d90ec0caaf35b950840f07e0e7be99996192b78db1c2d872ae073777704ccef2",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/entity-query-volume.md",
-      "sha256": "8172fa2c613b06f6e8cc3b154607d8b71a66fb5f11b38d950a255a934c7ea3cf",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/fill-vs-fillblocks.md",
-      "sha256": "acecd522bc76220b21db1254865c7609fa80e29326b55bd7aa895548fedae45a",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/json-vs-script.md",
-      "sha256": "15e3829c3ecac0d1965dbdb75e3e85f6b9173542a73c4669ccdc6834024f77c2",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/module-layout.md",
-      "sha256": "857a63b53be53342cbf0392d148417a228b950fca517f183639b266c87ba6deb",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/scoreboard-cross-pack.md",
-      "sha256": "032d11ecb2e079edd2b6323f67866fda9ca0430ba88d56d0d77ccb78d5b8a17e",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/sound-instance-2-10.md",
-      "sha256": "7747312e6c93b0c65f64ac87ee472151051fed6d16c99e78ae4fac64e701483e",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/sound-stream-dev-lock.md",
-      "sha256": "9ef19ec0339bb974766e30f411f124869dc2c49b2eb5ebc7b4c0cead65ca8c6a",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/subpacks-memory-tier.md",
-      "sha256": "6c52df555945dfbcec8b98cdbb644e75c3596186cad6607939a5cc56d6cbe68a",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/tooling-to-evaluate.md",
-      "sha256": "9f3f86bcc1e285f49041c5f0cb179881827059d794a943608bfd04521d634e5b",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "pending/world-export.md",
-      "sha256": "713453d85e49c2ecb6e4942391781217635b8d0068195c366d97f101dcc9c0f0",
-      "kind": "UNREVIEWED_PENDING",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "research/damage-sensor.md",
-      "sha256": "ea7871a0cff8e4e2a93346da2c9b86094cb6b7b1cf80024ef098745c938d2735",
-      "kind": "UNVERIFIED_RESEARCH",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "research/external-comparison.md",
-      "sha256": "bb662e30310334265cbfd9c684a3ddff1bec9d11c7b3e8618b50513ae6392c93",
-      "kind": "UNVERIFIED_RESEARCH",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "research/external-skills.md",
-      "sha256": "785ac451e756ea34de11f8c4a423e7142721cca03782447d9baf002963ea3c3b",
-      "kind": "UNVERIFIED_RESEARCH",
-      "auditUsage": "NOT_ELIGIBLE"
-    },
-    {
-      "path": "research/skills-audit-2026-10-10.md",
-      "sha256": "9a7abe723a86b5b7c4ea2140b6364bd2002945712e49ee2cddf630319d1ee73c",
-      "kind": "UNVERIFIED_RESEARCH",
-      "auditUsage": "NOT_ELIGIBLE"
+      "id": "probe.p50.custom-glyphs",
+      "status": "UPSTREAM_PENDING_NATIVE_TEST",
+      "date": "2026-10-21",
+      "edition": "minecraft-education",
+      "version": "26.32",
+      "sourcePath": "docs/P50-GLYPH-PROBE.md",
+      "sourceSha256": "8de99ec38c3414bd5ee116e17c892486f711a9f84e642ba0149dd09daf751000",
+      "relatedSkillIds": [
+        "src.bedrock-text-glyphs"
+      ],
+      "scope": "Generated E5 glyph-cell fixture and scripted test plan; native rendering not yet established.",
+      "limits": "Do not call the glyph design visually verified or infer cross-client/font compatibility."
     }
   ]
 }

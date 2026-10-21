@@ -22,6 +22,20 @@ Use for manifests, functions, commands, references, semantic graph, diagnostics,
 8. Derive diagnostics from facts; do not mutate source.
 9. Use topology as a derived view, never a universal arena assumption.
 
+## External developer-practice reference boundary
+
+When selected-artifact evidence raises a specific semantic question,
+consult `docs/analysis/developer-practice-context.md` and the existing
+`experiments/developer-practice-signals.json` only as `REFERENCE` inputs.
+Use the selected Semantic IR's exact source IDs and the existing opt-in
+`compileDeveloperPracticeReferenceContext()` (maximum two hints), not
+raw keyword matching or wholesale execution of uploaded skills.
+The 2026-10-21 intake includes scoped camera/chunk, JSON-versus-script
+state ownership and idempotent scheduling questions plus the upstream
+Skills Probe's negative and unverified cases. Do not convert those
+external reports into platform facts, map intent, BUG disposition,
+analyzer mutations, or a claim that Minecraft was run here.
+
 ## Efficiency
 
 Prefer content hashes, selective parsing, and change-scoped invalidation over full rescans.
