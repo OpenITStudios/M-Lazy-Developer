@@ -176,6 +176,29 @@ export interface DeveloperPracticeReferenceData {
     readonly sha256: string;
     readonly auditUsage?: string;
   }[];
+  /** Exact source-file identities from developer ZIP; never imports or executable dependencies. */
+  readonly codeInventory?: {
+    readonly codeModules: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly ownerSkill: string;
+      readonly usage: string;
+    }[];
+    readonly unitTests: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly usage: string;
+    }[];
+  };
+  /** Scope-limited, historical upstream test reports (not map evidence). */
+  readonly probeEvidence?: readonly {
+    readonly id: string;
+    readonly sourcePath: string;
+    readonly sourceSha256: string;
+    readonly status: string;
+    readonly summary: string;
+    readonly relatedSkillIds: readonly string[];
+  }[];
   readonly patterns: readonly {
     readonly id: string;
     readonly sourceId: string;
@@ -302,6 +325,18 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly sha256: string;
       readonly symbols: readonly string[];
     };
+    /** Relevant companion module source references, never code from the target artifact. */
+    readonly codeModules?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+    }[];
+    /** Upstream probes are investigation clues only, not bug proof. */
+    readonly upstreamProbes?: readonly {
+      readonly id: string;
+      readonly sourcePath: string;
+      readonly status: string;
+      readonly summary: string;
+    }[];
   }[];
   readonly omitted: number;
 }
@@ -367,6 +402,33 @@ export function compileDeveloperPracticeReferenceContext(input: {
       matchingEvidenceIds: sorted(matches.map(item => item.evidenceId)),
       matchingSourcePaths: sorted(matches.map(item => item.sourcePath)),
       matchingSignals: sorted(matches.map(item => item.signal)),
+      ...(data.codeInventory === undefined ? {} : {
+        codeModules: data.codeInventory.codeModules
+          .filter((item) =>
+            item.ownerSkill === source.id &&
+            item.usage === "SOURCE_IMPLEMENTATION_REFERENCE" &&
+            /^modules\/[a-z0-9-]+\/[a-z0-9-]+\.ts$/.test(item.path) &&
+            /^[a-f0-9]{64}$/.test(item.sha256))
+          .slice(0, 5)
+          .map((item) => ({ path: item.path, sha256: item.sha256 })),
+      }),
+      ...(data.probeEvidence === undefined ? {} : {
+        upstreamProbes: data.probeEvidence
+          .filter((item) =>
+            item.relatedSkillIds.includes(source.id) &&
+            item.status.startsWith("UPSTREAM_REPORTED_") &&
+            /^[a-f0-9]{64}$/.test(item.sourceSha256))
+          // Favor newer, explicitly scoped developer observations over stale
+          // generic early probes; even newer PASS remains only a question.
+          .sort((a, b) => b.sourcePath.localeCompare(a.sourcePath))
+          .slice(0, 2)
+          .map((item) => ({
+            id: item.id,
+            sourcePath: item.sourcePath,
+            status: item.status,
+            summary: item.summary,
+          })),
+      }),
       ...(pattern.referenceCode !== undefined &&
           /^modules\/[a-z0-9-]+\/[a-z0-9-]+\.ts$/.test(pattern.referenceCode.path) &&
           /^[a-f0-9]{64}$/.test(pattern.referenceCode.sha256)

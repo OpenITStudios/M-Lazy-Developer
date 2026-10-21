@@ -36,6 +36,18 @@ Skills Probe's negative and unverified cases. Do not convert those
 external reports into platform facts, map intent, BUG disposition,
 analyzer mutations, or a claim that Minecraft was run here.
 
+## Complete external implementation reference boundaries
+
+Developer v0.24.0 source examples comprise 20 TypeScript modules with
+eight accompanying module tests. The existing
+`experiments/developer-practice-signals.json` tracks all module paths and
+hashes, plus all 22 Skills Probe reports and their attribution. Model
+task context may include bounded same-skill code/probe pointers only
+after an exact selected-map Semantic IR cue. It does not call or import
+any external runtime implementation. Test-only fake Minecraft, result
+export adapters and external store dependencies must not become
+source-independent gameplay invariants. Unsupported cues remain explicit.
+
 ## Efficiency
 
 Prefer content hashes, selective parsing, and change-scoped invalidation over full rescans.

@@ -21,7 +21,16 @@
     "deferredSourceFilesTracked": 0,
     "intakeEvidence": "Uploaded archive was inventoried and selected SKILL.md sections were inspected as data; no ZIP-supplied executable was run",
     "codeReferencesTracked": 10,
-    "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map."
+    "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map.",
+    "codeImplementationFiles": 20,
+    "codeUnitTestFiles": 8,
+    "otherCodeSurfaces": {
+      "skillScripts": 44,
+      "developerTools": 18,
+      "projectConfiguration": 2,
+      "developerTestUtilities": 1,
+      "note": "Security-filtered source reference, not vendored runtime code. This inventory is not a claim that every script has been semantically consumed."
+    }
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -736,51 +745,495 @@
     "companionSkillArchiveRelease": "v0.24.0",
     "identityWarning": "Probe's installed v0.23.0 skill tree is not byte-identical to the supplied v0.24.0 skill archive; observations retain their original scoped source identities.",
     "licenseWarning": "No root LICENSE found; scripts, Minecraft packs, media and user-specific test harness are not vendored.",
-    "executionBoundary": "Third-party self-reported native reports inspected as text; no Minecraft client, test harness, dependencies, installers or scripts were executed here."
+    "executionBoundary": "Third-party self-reported native reports inspected as text; no Minecraft client, test harness, dependencies, installers or scripts were executed here.",
+    "reportsIndexed": 22,
+    "evidenceScope": "Individual upstream outcomes may differ within a report; mixed and partial statuses must preserve original per-case qualification.",
+    "otherCodeSurfaces": {
+      "probePackScriptFiles": 56,
+      "probeToolScriptFiles": 13,
+      "duplicatedInstalledSkillScripts": 86,
+      "note": "Probe scripts, command blocks, texture/effects and assets are environment-specific fixtures; do not promote to gameplay truth."
+    }
   },
   "probeEvidence": [
     {
-      "id": "probe.t20.camera-loading",
-      "status": "UPSTREAM_REPORTED_PASS",
-      "date": "2026-10-18",
-      "edition": "minecraft-education",
-      "version": "26.32",
-      "sourcePath": "docs/test-runs/2026-10-18-t20-agent.md",
-      "sourceSha256": "ea899484a950f1afb17eb817f02486310a343ddd9fd21735cebb32edf68a1bfd",
+      "id": "probe.report.2026-10-10-agent",
+      "sourcePath": "docs/test-runs/2026-10-10-agent.md",
+      "sourceSha256": "47a126042a782455f2c80ef6b7413f56650da7aa0c8a16fac1604c07c0ec5888",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "custom item/block, entity, UI and mechanics probes",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
       "relatedSkillIds": [
-        "src.bedrock-camera"
+        "src.bedrock-entity-creation",
+        "src.bedrock-entity-lifecycle",
+        "src.bedrock-onscreen-display",
+        "src.bedrock-forms",
+        "src.bedrock-sound"
       ],
-      "scope": "Camera render visibility and restoration in the described Skills Probe scene; not independently replayed or generalized across versions.",
-      "limits": "Other scenes, render distances, multiplayer and target artifacts require their own evidence."
+      "edition": "education",
+      "version": "26.32"
     },
     {
-      "id": "probe.p49.particle-labels",
+      "id": "probe.report.2026-10-15-p14-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-p14-agent.md",
+      "sourceSha256": "25e3db9b261d40203c219b099cfa067929d4ecb4fe1165531193e39efe6d7a02",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "action bar timing measured; remote cloud environment blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-onscreen-display"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-p21-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-p21-agent.md",
+      "sourceSha256": "af8bc515dce152dff6a6ccc31762a5be077e27693e289dd3872b63a63fad5648",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "P08 control and P21 numeric result; screenshot blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-entity-creation"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-p29-run2-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-p29-run2-agent.md",
+      "sourceSha256": "20a98c4fac07b8f6bafb504c50289310a0c4afb5882d66ac7de049f12a51d83f",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "action bar clear fade versus space replacement",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-onscreen-display"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-t10-playback-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-t10-playback-agent.md",
+      "sourceSha256": "68489944a7d05fbfbdda02e7ef25d5d694ef1ec1c9290c3bc8c09f98c1996836",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "sound playback pass, P29 rerun blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-sound",
+        "src.bedrock-onscreen-display"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-t11-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-t11-agent.md",
+      "sourceSha256": "426c8c98af1846d079f1371bbda43567962968a125a186ce06b19fb5c7e3d1af",
       "status": "UPSTREAM_REPORTED_FAIL",
-      "date": "2026-10-21",
-      "edition": "minecraft-education",
-      "version": "26.32",
+      "summary": "P30 failed twice; P31/P33 passed and P32 timing differed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-content",
+        "src.bedrock-entity-lifecycle"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-t8-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-t8-agent.md",
+      "sourceSha256": "87357382870b16ea79c342613613c3595d20c67152e09070ec13207b1db56a44",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "sound stream export six-trial protocol incomplete",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-sound"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-t8-run2-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-t8-run2-agent.md",
+      "sourceSha256": "82100844c101b7c87315db9bf5d2e56a8e3373710764fae1e5837a5ed6a0ba91",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "changed-file sound export trials",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-sound"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-15-t9-agent",
+      "sourcePath": "docs/test-runs/2026-10-15-t9-agent.md",
+      "sourceSha256": "fdbed88c5c0590ac8f81f63d7905b23eb58178cff01a0ba3b7bb2cfde373129c",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "chunk loading observations; pass means tests completed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-coordinates",
+        "src.bedrock-teleport"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-16-t12-agent",
+      "sourcePath": "docs/test-runs/2026-10-16-t12-agent.md",
+      "sourceSha256": "c77fd230f7a44969e2acb2d973294b85d2dd2ca2192d0da89f45f82658eab278",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "entity visual failed; timing pass and stutter blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-entity-creation",
+        "src.bedrock-script-optimization"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-16-t13-agent",
+      "sourcePath": "docs/test-runs/2026-10-16-t13-agent.md",
+      "sourceSha256": "5b752692b4d9da21c03d3c8ad1db67d840ed7cef89cdbd283cf2d6e9938f39d8",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "results export scenarios",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-game-results"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-16-t14-agent",
+      "sourcePath": "docs/test-runs/2026-10-16-t14-agent.md",
+      "sourceSha256": "a5fc72a698a63ff7729ca5a57894a30ad2e3bfe6ab689240f73773c21f15ef60",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "command-coordinate probe",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-coordinates",
+        "src.bedrock-teleport"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-16-t14b-agent",
+      "sourcePath": "docs/test-runs/2026-10-16-t14b-agent.md",
+      "sourceSha256": "e02eaefbcb4d8221730fd9e559a62387516d3262a91375d3970c1a49e71a56be",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "mixed and decimal command-coordinate probe",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-coordinates",
+        "src.bedrock-teleport"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-17-t15-agent",
+      "sourcePath": "docs/test-runs/2026-10-17-t15-agent.md",
+      "sourceSha256": "bc0f339602ffc1fc6c685deb041402630d2d23db1238e48aee78c33248c6468c",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "audio lessons tests",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-sound",
+        "src.bedrock-content"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-17-t16-agent",
+      "sourcePath": "docs/test-runs/2026-10-17-t16-agent.md",
+      "sourceSha256": "47641c63581074e92e68e82c34c22cc785b3bd1bfc5da4d417bf9fa009163557",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "script API relative performance measurements",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-debug-profiling",
+        "src.bedrock-script-optimization"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-17-t17-agent",
+      "sourcePath": "docs/test-runs/2026-10-17-t17-agent.md",
+      "sourceSha256": "4c59141c0e27814d110d0d4d50d374cd73e6e928bdda3e33e701443b84b8732b",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "repeated setup and unloaded chunk behavior",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-script-optimization",
+        "src.bedrock-entity-lifecycle"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-17-t18-agent",
+      "sourcePath": "docs/test-runs/2026-10-17-t18-agent.md",
+      "sourceSha256": "9bf57dd213fc57a53830901133d639591e2e0576903679124ff5541e711ec7a7",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "capture tools passed, strict scenario timing failed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-debug-profiling"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-17-t19-agent",
+      "sourcePath": "docs/test-runs/2026-10-17-t19-agent.md",
+      "sourceSha256": "7b3ff2f5ee6c68faee2945cd97f91ff13ef1e131b944609fb0bbe5b5149289c1",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "simulation players beta API unavailable in Education world setup",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-version-targeting"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-18-t20-agent",
+      "sourcePath": "docs/test-runs/2026-10-18-t20-agent.md",
+      "sourceSha256": "ea899484a950f1afb17eb817f02486310a343ddd9fd21735cebb32edf68a1bfd",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "scoped camera scene/render/restoration",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-camera",
+        "src.bedrock-teleport"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-18-t20b-agent",
+      "sourcePath": "docs/test-runs/2026-10-18-t20b-agent.md",
+      "sourceSha256": "5c5cd62bb9b7e820793ba994d744bf3c8e8cca84b060ce51b2327b66e08e0c54",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "camera/chunk first three passes, reload blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-camera",
+        "src.bedrock-teleport"
+      ],
+      "edition": "education",
+      "version": "26.32"
+    },
+    {
+      "id": "probe.report.2026-10-21-p49-labels",
       "sourcePath": "docs/test-runs/2026-10-21-p49-labels.md",
       "sourceSha256": "0c44e66e3f6676b932d99dd9e6ff43046f37d97099a0db037277b678aea030e4",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "particle label ordering/readability/distance cutoff",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
       "relatedSkillIds": [
         "src.bedrock-text-glyphs",
         "src.bedrock-onscreen-display"
       ],
-      "scope": "Particle-glyph name label reversed/overlapping in some camera views; far cutoff failed in tested fixture.",
-      "limits": "Report concerns particular probe implementation; native nametags and other approaches must not be marked broken."
+      "edition": "education",
+      "version": "26.32"
     },
     {
-      "id": "probe.p50.custom-glyphs",
-      "status": "UPSTREAM_PENDING_NATIVE_TEST",
-      "date": "2026-10-21",
-      "edition": "minecraft-education",
-      "version": "26.32",
-      "sourcePath": "docs/P50-GLYPH-PROBE.md",
-      "sourceSha256": "8de99ec38c3414bd5ee116e17c892486f711a9f84e642ba0149dd09daf751000",
+      "id": "probe.report.2026-10-21-p50-glyphs",
+      "sourcePath": "docs/test-runs/2026-10-21-p50-glyphs.md",
+      "sourceSha256": "848e07af95bd27b9f6f8e5b178c8eb8323aae669fb68c4806eddf6934fb9a227",
+      "status": "UPSTREAM_REPORTED_PARTIAL",
+      "summary": "custom glyph native chat/action bar/title pass with overlap and blocked cases",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
       "relatedSkillIds": [
-        "src.bedrock-text-glyphs"
+        "src.bedrock-text-glyphs",
+        "src.bedrock-onscreen-display"
       ],
-      "scope": "Generated E5 glyph-cell fixture and scripted test plan; native rendering not yet established.",
-      "limits": "Do not call the glyph design visually verified or infer cross-client/font compatibility."
+      "edition": "education",
+      "version": "26.32"
     }
-  ]
+  ],
+  "codeInventory": {
+    "scope": "Entire modules/*.ts source surface from v0.24.0 skill ZIP; full source contents remain in the supplied archive, not copied into the Lazy-Developer engine.",
+    "codeModules": [
+      {
+        "path": "modules/coords/coords.ts",
+        "sha256": "9ec21dfd2c8e47cde89e95ecc809a9f368a4080ee0dcd2b93536a9b4abccf1cc",
+        "ownerSkill": "src.bedrock-coordinates",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/display/display-service.ts",
+        "sha256": "1a75aba423bd2e542107f92e463cac1965730946e86ad2ad53197a54ca5cd1f6",
+        "ownerSkill": "src.bedrock-onscreen-display",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/display/hud-line.ts",
+        "sha256": "118f2629e128cd54ed77b7436c75a94549212208ea3017aa0eb834c08f6e4ac2",
+        "ownerSkill": "src.bedrock-onscreen-display",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/entities/damage-rules.ts",
+        "sha256": "ca84e075c27882bf4350e23adbd8a3f663286e8805ecb5143d1e79a9ba52317f",
+        "ownerSkill": "src.bedrock-entity-creation",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/entities/entity-lifecycle.ts",
+        "sha256": "ad4574ae975ee578ac9f6ecd794d4d1d2365dab7d9838da1ae0eafb11a53d7ed",
+        "ownerSkill": "src.bedrock-entity-lifecycle",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/forms/form-navigation.ts",
+        "sha256": "26f5fea58d5b01985e3591b3a34690230217d19d86cfc459d20cb26e4aa90338",
+        "ownerSkill": "src.bedrock-forms",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/forms/form-service.ts",
+        "sha256": "5b750e93e8f3b02798e6d15efc036a78d21f8928e90c825967b4f391660470ac",
+        "ownerSkill": "src.bedrock-forms",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/game-results/game-results-contract.ts",
+        "sha256": "0fc57cac2d30d7a3bf1c2eeb14146700662cde79eabf94babd7f451f7bdbb7a4",
+        "ownerSkill": "src.bedrock-game-results",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/game-results/game-results-export.ts",
+        "sha256": "c635bc0dc8a2651b698eece95667b157e5f8e8120c7db1072671a62735560b9e",
+        "ownerSkill": "src.bedrock-game-results",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/items/item-spec.ts",
+        "sha256": "79f959d53c262ea510066a974d8cdb42fbf380fcf00042c9dd66bbbf1dc9f116",
+        "ownerSkill": "src.bedrock-data-persistence",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/logging/log-core.ts",
+        "sha256": "c1dd1b88b02e515d815b4c974f966e2d194273f78efbc55f40883bc6c6efc674",
+        "ownerSkill": "src.bedrock-debug-logging",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/logging/log.ts",
+        "sha256": "29ee5c95cccec51586efb61ecfdaa8af0df294a35ef5c74aa1d9c58a3f8dfeeb",
+        "ownerSkill": "src.bedrock-debug-logging",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/profiling/perf-probe.ts",
+        "sha256": "920c39b2233d90186eb0cdf9a98d3bbc69ac1257ca124ca1dcd285df13a42349",
+        "ownerSkill": "src.bedrock-debug-profiling",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/sound/sound-service.ts",
+        "sha256": "2cd01f7358b80100edcb5f8e2e8a6041f833b7174f922bcba9c0471741ad8449",
+        "ownerSkill": "src.bedrock-sound",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/sound/sound-throttle.ts",
+        "sha256": "c6b24362be1a260b909305020b99f7c5874617b62d4d47a9a4f1358494563848",
+        "ownerSkill": "src.bedrock-sound",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/teleport/teleport-service.ts",
+        "sha256": "4a4970123be96b97d618db2d0be69419cd77c3f8ba1d21512f58817cbbbaa4aa",
+        "ownerSkill": "src.bedrock-teleport",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/testing/fake-minecraft.ts",
+        "sha256": "8c9b0bb99f6bbaa67643e459e9d248539c5a5fded909e7635ec9d8a8d1fd2587",
+        "ownerSkill": "src.bedrock-script-optimization",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/time/event-log.ts",
+        "sha256": "3f8dd646d4957f9be48f9286aa3e0faf207fe79c6f5c3ec3508a2709937db6c1",
+        "ownerSkill": "src.bedrock-game-time",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/time/game-clock.ts",
+        "sha256": "da3e1071af00990adafef05214c8e8325309339c3f9663db8675cd33708ffb1d",
+        "ownerSkill": "src.bedrock-game-time",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/time/ticks.ts",
+        "sha256": "920bb4b3d648165cc45bbf75254967cbb7e1baded099beff98fcdc320d3f99d5",
+        "ownerSkill": "src.bedrock-game-time",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      }
+    ],
+    "unitTests": [
+      {
+        "path": "modules/coords/coords.test.ts",
+        "sha256": "22c4e0896b926417f3741b9f3e267d7b4cca8848c3d36a04ea51bfd8b9a9a572",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/game-results/game-results-contract.test.ts",
+        "sha256": "89a951a1814e11432b9fe97c224bd8d4204395e1167ac55d43c59ee1c0551461",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/logging/log-core.test.ts",
+        "sha256": "035766f8ee3a9297ad027826991837072b019a6dca282dd25f78cccb9abf761e",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/sound/sound-throttle.test.ts",
+        "sha256": "55a2832d5f2c094e631f8c466e86f0795174185bf80021876d4cdac7c77aff42",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/testing/fake-minecraft.test.ts",
+        "sha256": "9e5d59afb993d083238487bfd5cfc753fc6f5f24bc7a561055d6df73b9ca52cb",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/testing/fake-wiring.test.ts",
+        "sha256": "1808950ea122311689f6a5405bd5157c925616889b041212fc9a705d024eb759",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/time/event-log.test.ts",
+        "sha256": "947b05b47ed6cbd2c23d370b823c2d6cd690031cc3cc43460a9e6e9b113c274d",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/time/ticks.test.ts",
+        "sha256": "14a0f798bc82faff93af93aa33b808ea4d34f52bb72afa1dbc105e0f58c12635",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      }
+    ],
+    "externalModuleDependencies": [
+      {
+        "name": "database",
+        "repository": "achmadawdi/minecraft-bedrock-store",
+        "status": "NOT_INCLUDED_IN_SOURCE_ZIP"
+      }
+    ],
+    "securityBoundary": "DO_NOT_EXECUTE_OR_AUTO_IMPORT_EXTERNAL_CODE",
+    "runtimeApplicability": "Versioned @minecraft/server 2.8.0 and @minecraft/server-ui 2.1.0 examples, not universal runtime facts"
+  }
 }

@@ -350,6 +350,56 @@ that map does; a designer-approved expected behavior determines whether
 it is wrong. An intentional alternative to the developer's programming
 style is not a bug.
 
+## Comprehensive source inventory and probe-trace intake
+
+The 2026-10-21 uploaded developer v0.24.0 archive contains **20 non-test
+TypeScript module implementations plus 8 module tests**, alongside 22 active
+SKILL.md descriptions, their companion references/scripts/assets, 18 tooling
+source files, 44 per-skill script files and six developer-release test reports.
+The companion Skills Probe archive contains **22 distinct narrative test-run
+reports**, 56 pack script source files, 13 tool source files, and additional
+installed skill files and binary Minecraft test fixtures.
+
+The existing JSON reference companion now includes:
+- `codeInventory.codeModules[]`: all 20 module implementation paths, exact
+  upstream SHA-256, originating skill and non-executable reference role;
+- `codeInventory.unitTests[]`: all eight module test files, with SHA-256;
+- `probeEvidence[]`: all 22 upstream test-run reports with exact source
+  identity, coarse result and related source skill IDs.
+
+The repository's `compileDeveloperPracticeReferenceContext()` consumes
+these two indexes when a **current-map typed Semantic IR cue, relevant question
+and same selected-map source file** have already selected a reference pattern.
+The model receives a bounded set of same-skill developer module locations
+and historical probe reports as **questions and counterexamples**, never
+as map-evidence/bug receipts. The source archive remains external; the code
+files were not vendored or imported into M-Lazy-Developer's execution path.
+
+**Do not confuse complete inventory with complete semantic execution.**
+The 20 module implementation files have identifiable candidate roles, but
+some are project-specific (game-results), test-only (fake-minecraft), or
+depend on an external, separately versioned database repository
+(`achmadawdi/minecraft-bedrock-store`, not present in the ZIP). Directly
+installing them in the checker would merge a Minecraft game's runtime
+with a static analyzer. The original source is used as an inspected,
+version-pinned comparison reference, and not an automatically executed package.
+
+**Upstream probe report interpretation:** `PASS` can mean only a test
+protocol completed, while a report may simultaneously include subcase
+failures, visual deviations, blocked steps, or a mismatched target profile.
+In particular P50's **actual 2026-10-21 native report** records partial
+successful glyph rendering and blocked tests; the earlier P50 **plan** is
+not the final execution state. P30 failed twice in T11, T12 failed its
+visual criterion, and T20b could not finish reload. No result may be
+promoted into current-map expected behavior without independent grounding.
+
+The eight interpreter patterns without a cue supplied by the current
+typed Semantic IR remain **not automatically selectable**, including
+form lifecycle and HUD controls. Do not rewrite a `SKILL.md` signal string
+to claim a nonexistent parser observation. Those topics remain available
+for targeted ChatGPT source-level tracing; a future generalized IR/parser
+enhancement must prove an exact source-site witness before automatic matching.
+
 ## Maturity and promotion
 
 The JSON records start at `SOURCE_REVIEWED`: the source claim was inspected,

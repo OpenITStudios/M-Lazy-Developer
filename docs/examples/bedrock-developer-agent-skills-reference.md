@@ -93,6 +93,38 @@ source-signal match cannot assert a bug, proof of behavior, or platform
 compatibility. Official/version-matched verification is still required
 before a Minecraft fact is promoted to `engine/knowledge/`.
 
+## Full source inventory cross-check (21 October 2026)
+
+The curated machine companion
+[`developer-practice-signals.json`](../../experiments/developer-practice-signals.json)
+now inventories **20 TypeScript production/example modules and 8
+TypeScript module test files**, and separately all **22 markdown probe
+execution reports** with original SHA-256 and associated skill scope.
+Both ZIPs were examined as data, and neither was executed or copied wholesale.
+
+This is full **module-and-test-file traceability**, not full source
+vendoring, a claim that every JavaScript/Minecraft fixture is analyzed,
+or proof that those modules run in any audited world. Other source
+surfaces include the developer ZIP's skill/tool scripts, the probe's
+Minecraft pack scripts, and the probe's installer/agent scripts; they
+remain environment-specific or potentially unsafe inputs until the
+specific need is demonstrated. No new runtime dependency has been added.
+
+The Skills Probe source lock points to **v0.23.0**, whereas the supplied
+developer skill ZIP is **v0.24.0**. Upstream PASS/FAIL/BLOCKED/PARTIAL
+statuses therefore remain tightly tied to the described Education 26.32
+test environment and each exact report. **P50 is PARTIAL in the actual
+native test report**, not wholly pending; previous wording referenced
+a planning document instead of that completed (but incomplete) run.
+
+The existing resource context owner can now attach only those module
+and probe pointers that share the selected reference pattern's skill
+identity and exact typed current-map semantic witness. Its result is a
+reference guide for the analyst, not imported game code or authoritative
+map gameplay. Full execution of ZIP-supplied scripts is prohibited during
+intake. The separately hosted `minecraft-bedrock-store` database module
+is not included in either source snapshot and cannot be assumed present.
+
 ### Historical inventory below
 
 The following earlier snapshot and its pending/research inventory are
