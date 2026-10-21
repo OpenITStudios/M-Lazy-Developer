@@ -188,6 +188,12 @@ export interface DeveloperPracticeReferenceData {
     readonly negativeControl: string;
     readonly versionApplicability: string;
     readonly prohibits: string;
+    /** Example module source from developer ZIP, not selected-map identity. */
+    readonly referenceCode?: {
+      readonly path: string;
+      readonly sha256: string;
+      readonly symbols: readonly string[];
+    };
   }[];
 }
 
@@ -291,6 +297,11 @@ export interface CompiledDeveloperPracticeReferenceContext {
     readonly matchingEvidenceIds: readonly string[];
     readonly matchingSourcePaths: readonly string[];
     readonly matchingSignals: readonly string[];
+    readonly referenceCode?: {
+      readonly path: string;
+      readonly sha256: string;
+      readonly symbols: readonly string[];
+    };
   }[];
   readonly omitted: number;
 }
@@ -307,6 +318,8 @@ export function compileDeveloperPracticeReferenceContext(input: {
   /** Canonical source observations, not user-provided lookup labels. */
   readonly semanticIr: SemanticIr;
   readonly domains: readonly string[];
+  /** Optional selected-artifact file locators to constrain relevance. */
+  readonly sourceLocators?: readonly string[];
   readonly maximum?: number;
 }): CompiledDeveloperPracticeReferenceContext | undefined {
   const { data, selectedArtifactId } = input;
@@ -315,9 +328,16 @@ export function compileDeveloperPracticeReferenceContext(input: {
       !/^[a-f0-9]{64}$/.test(data.sourceSnapshot.archiveSha256) ||
       !selectedArtifactId.trim()) return undefined;
   const queryDomains = new Set(input.domains.filter(Boolean));
+  const locators = input.sourceLocators?.map(value => value.trim()).filter(Boolean);
+  if (input.sourceLocators !== undefined && !locators?.length) return undefined;
   const observed = developerPracticeSignalsFromSemanticIr(
     input.semanticIr, selectedArtifactId,
-  );
+  ).filter(item => locators === undefined || locators.some(locator =>
+    locator === item.sourcePath ||
+    locator.startsWith(item.sourcePath + ":") ||
+    locator.startsWith(item.sourcePath + "#") ||
+    locator.startsWith(item.sourcePath + "@")
+  ));
   if (queryDomains.size === 0 || observed.length === 0) return undefined;
   const sourceById = new Map(data.sourceFiles.map(file => [file.id, file]));
   const sorted = (items: readonly string[]) => [...new Set(items)].sort();
@@ -347,6 +367,15 @@ export function compileDeveloperPracticeReferenceContext(input: {
       matchingEvidenceIds: sorted(matches.map(item => item.evidenceId)),
       matchingSourcePaths: sorted(matches.map(item => item.sourcePath)),
       matchingSignals: sorted(matches.map(item => item.signal)),
+      ...(pattern.referenceCode !== undefined &&
+          /^modules\/[a-z0-9-]+\/[a-z0-9-]+\.ts$/.test(pattern.referenceCode.path) &&
+          /^[a-f0-9]{64}$/.test(pattern.referenceCode.sha256)
+        ? { referenceCode: {
+            path: pattern.referenceCode.path,
+            sha256: pattern.referenceCode.sha256,
+            symbols: sorted(pattern.referenceCode.symbols),
+          } }
+        : {}),
     }];
   }).sort((a, b) =>
     b.matchingEvidenceIds.length - a.matchingEvidenceIds.length ||

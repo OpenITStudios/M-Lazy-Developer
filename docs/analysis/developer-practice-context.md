@@ -301,6 +301,55 @@ assuming that arbitrary `.dimension` properties represent
 Minecraft API objects. A developer audio hint still cannot prove a
 game terminal, delivered sound, intended player experience, or defect.
 
+## Developer source implementation trace
+
+The supplied developer skills archive includes implementation modules, not only written advice.
+During a selected map bug audit, treat modules as examples of how a mechanic can be implemented;
+identify whether the selected map actually uses the exact module and follow its real callers.
+Compare the selected archive's file hash with the upstream module before claiming equivalence.
+
+A form continuation can check its current session after an awaited user response;
+entity removal for cleanup can differ from gameplay death; a teleport may be cancelled
+when its original round ends. These are candidate explanations, not universal rules.
+Expected behavior must still come from the selected map's authored design and source.
+For a defect, cite the selected-map trigger, state owner, effect, outcome and counterexample;
+when missing, record UNKNOWN rather than copying a developer preference.
+
+## Source-grounded audit task integration
+
+The developer v0.24.0 ZIP contains TypeScript implementation modules.
+Ten existing reference patterns now link their relevant original
+`modules/*/*.ts` file SHA-256 digests and exported entrypoints.
+These links document upstream implementation provenance; they do not
+claim that an audited map imports those exact files. An exact file match
+requires comparing actual selected-map bytes, not function names or
+similar style.
+
+The existing production `runSelectedMapAudit()` accepts an optional
+`developerPractice` reference payload. The normal CLI exposes an explicit
+`--developer-practice` opt-in that loads the curated JSON, not the ZIP.
+Selected-map model task packets now receive up to two matching hints
+**only** when the task has source-backed Intent subjects and locators,
+typed Semantic IR from the selected map at the same file, and a relevant
+question domain. Each hint retains its own question, negative control,
+prohibited inference, and optional code reference. The default audit
+behavior remains unchanged without opt-in.
+
+Source locators are matched exactly to the IR file or at its `:line`,
+`#anchor`, or `@site` boundary. Unrecognized source locator formats
+abstain; no fallback to lexical matches is allowed. A later audit
+resolution may retain the hint only when question and selected-source
+witnesses remain identical. This is model task guidance, **never** a
+new expected-behavior policy, a defect-finding detector, automatic
+source hydration, or Minecraft runtime verification.
+
+For map bug finding, compare the selected code's actual call chain
+against the developer example **only after** checking whether the same
+module is present. The relevant source chain still determines what
+that map does; a designer-approved expected behavior determines whether
+it is wrong. An intentional alternative to the developer's programming
+style is not a bug.
+
 ## Maturity and promotion
 
 The JSON records start at `SOURCE_REVIEWED`: the source claim was inspected,

@@ -1,6 +1,12 @@
 import type {
   GameplayIntentModel,
 } from "../../gameplay-intent/src/index.js";
+import type { SemanticIr } from "../../semantic-ir/src/index.js";
+import {
+  compileDeveloperPracticeReferenceContext,
+  type CompiledDeveloperPracticeReferenceContext,
+  type DeveloperPracticeReferenceData,
+} from "./workflow/resource-context.js";
 import { scoreTextDocuments } from "../../analysis-planner/src/index.js";
 import type {
   KnowledgeApplicability,
@@ -118,6 +124,8 @@ export interface AuditModelTaskPacket {
   readonly knowledgeLookup?: AuditModelTaskKnowledgeLookup;
   /** Bounded, source-grounded Knowledge references; never a detector proof. */
   readonly retrievedKnowledge?: AuditModelTaskKnowledgeSelection;
+  /** Optional reference questions; never a gameplay assertion or proof. */
+  readonly developerPractice?: CompiledDeveloperPracticeReferenceContext;
   readonly unresolvedObligationIds: readonly string[];
   readonly userSearchContext?: {
     readonly authorityNote: string;
@@ -742,6 +750,8 @@ export function deriveAuditModelTaskPackets(input: {
   readonly auditObligations?: readonly AuditObligation[];
   readonly userIntent?: AuditUserIntentEnvelope;
   readonly knowledgeCatalog?: KnowledgeCatalog;
+  readonly developerPractice?: DeveloperPracticeReferenceData;
+  readonly semanticIr?: SemanticIr;
   /** Only edition identity may be checked here; API/version remain unverified. */
   readonly knowledgeEdition?: KnowledgeEdition;
 }): readonly AuditModelTaskPacket[] {
@@ -983,6 +993,28 @@ export function deriveAuditModelTaskPackets(input: {
               ? {}
               : { edition: input.knowledgeEdition }),
           });
+    // Reference cues require current-map source evidence and the matching
+    // typed IR file; generic bug categories or user suspicion cannot admit them.
+    const domains = knowledgeLookup?.grounding === "SELECTED_ARTIFACT"
+      ? [
+          knowledgeLookup.query,
+          ...packet.knowledgeContext.map((item) => item.domain),
+        ].join(" ").toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean)
+      : [];
+    const reference = input.developerPractice === undefined ||
+      input.semanticIr === undefined ||
+      !input.intent.artifactId ||
+      knowledgeLookup?.grounding !== "SELECTED_ARTIFACT" ||
+      knowledgeLookup.sourceLocators.length === 0 ||
+      domains.length === 0
+        ? undefined
+        : compileDeveloperPracticeReferenceContext({
+            data: input.developerPractice,
+            selectedArtifactId: input.intent.artifactId,
+            semanticIr: input.semanticIr,
+            domains: [...new Set(domains)],
+            sourceLocators: knowledgeLookup.sourceLocators,
+          });
     return {
       ...packet,
       ...(userSearchContext === undefined
@@ -990,6 +1022,7 @@ export function deriveAuditModelTaskPackets(input: {
         : { userSearchContext }),
       ...(knowledgeLookup === undefined ? {} : { knowledgeLookup }),
       ...(retrievedKnowledge === undefined ? {} : { retrievedKnowledge }),
+      ...(reference?.items.length ? { developerPractice: reference } : {}),
     };
   });
 }

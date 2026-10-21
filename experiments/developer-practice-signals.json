@@ -19,7 +19,9 @@
     "interpretationEligibleSkillCount": 16,
     "workflowOnlySkillCount": 6,
     "deferredSourceFilesTracked": 0,
-    "intakeEvidence": "Uploaded archive was inventoried and selected SKILL.md sections were inspected as data; no ZIP-supplied executable was run"
+    "intakeEvidence": "Uploaded archive was inventoried and selected SKILL.md sections were inspected as data; no ZIP-supplied executable was run",
+    "codeReferencesTracked": 10,
+    "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map."
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -231,7 +233,17 @@
       ],
       "negativeControl": "Fractional authored coordinates can already be exact intended positions; block operations do not require centering",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Never adjust map coordinates or claim a spatial bug based on an unconditional +0.5 rule"
+      "prohibits": "Never adjust map coordinates or claim a spatial bug based on an unconditional +0.5 rule",
+      "referenceCode": {
+        "path": "modules/coords/coords.ts",
+        "sha256": "9ec21dfd2c8e47cde89e95ecc809a9f368a4080ee0dcd2b93536a9b4abccf1cc",
+        "symbols": [
+          "spawnPoint",
+          "resolvePoint",
+          "blockOf",
+          "inArena"
+        ]
+      }
     },
     {
       "id": "developer.hint.entity.damage-owner",
@@ -258,7 +270,15 @@
       ],
       "negativeControl": "An entity with a static damage sensor may correctly implement its full behavior without a Script API handler",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not assume invulnerability, friendly-fire policy or required script handlers from component names alone, or equate authored sensor with live damage prevention"
+      "prohibits": "Do not assume invulnerability, friendly-fire policy or required script handlers from component names alone, or equate authored sensor with live damage prevention",
+      "referenceCode": {
+        "path": "modules/entities/damage-rules.ts",
+        "sha256": "ca84e075c27882bf4350e23adbd8a3f663286e8805ecb5143d1e79a9ba52317f",
+        "symbols": [
+          "registerDamageRules",
+          "attackingPlayer"
+        ]
+      }
     },
     {
       "id": "developer.hint.entity.removal-vs-death",
@@ -285,7 +305,16 @@
       ],
       "negativeControl": "A kill used for intentional combat outcome and a removal used for cleanup can both be valid",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Never equate remove/despawn with a win, or require one removal method for all maps"
+      "prohibits": "Never equate remove/despawn with a win, or require one removal method for all maps",
+      "referenceCode": {
+        "path": "modules/entities/entity-lifecycle.ts",
+        "sha256": "ad4574ae975ee578ac9f6ecd794d4d1d2365dab7d9838da1ae0eafb11a53d7ed",
+        "symbols": [
+          "spawnOwned",
+          "despawn",
+          "removeInJob"
+        ]
+      }
     },
     {
       "id": "developer.hint.forms.stale-response",
@@ -312,7 +341,16 @@
       ],
       "negativeControl": "A legitimately persistent, non-session-specific form is not automatically stale",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not classify an unguarded form as a bug without selected-map design and reachable effect evidence"
+      "prohibits": "Do not classify an unguarded form as a bug without selected-map design and reachable effect evidence",
+      "referenceCode": {
+        "path": "modules/forms/form-service.ts",
+        "sha256": "5b750e93e8f3b02798e6d15efc036a78d21f8928e90c825967b4f391660470ac",
+        "symbols": [
+          "openForm",
+          "closeFormsFor",
+          "registerFormSafety"
+        ]
+      }
     },
     {
       "id": "developer.hint.hud.message-owner",
@@ -341,7 +379,16 @@
       ],
       "negativeControl": "A command-driven HUD or multiple independently scoped display owners may be intentional and correct in a particular map",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not require a single HUD adapter or diagnose a stale HUD from source calls without verifying player-visible output and approved behavior"
+      "prohibits": "Do not require a single HUD adapter or diagnose a stale HUD from source calls without verifying player-visible output and approved behavior",
+      "referenceCode": {
+        "path": "modules/display/display-service.ts",
+        "sha256": "1a75aba423bd2e542107f92e463cac1965730946e86ad2ad53197a54ca5cd1f6",
+        "symbols": [
+          "showTitle",
+          "showActionBar",
+          "clearTitle"
+        ]
+      }
     },
     {
       "id": "developer.hint.logging.player-vs-dev",
@@ -425,7 +472,15 @@
       ],
       "negativeControl": "High call frequency alone does not prove lag or a performance bug; performance depends on actual target device, concurrency and measured timings",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not report runtime lag from a static hot-spot signature, copy the author's performance percentages, or assume a 30-player target applies to other maps"
+      "prohibits": "Do not report runtime lag from a static hot-spot signature, copy the author's performance percentages, or assume a 30-player target applies to other maps",
+      "referenceCode": {
+        "path": "modules/profiling/perf-probe.ts",
+        "sha256": "920c39b2233d90186eb0cdf9a98d3bbc69ac1257ca124ca1dcd285df13a42349",
+        "symbols": [
+          "probe",
+          "count"
+        ]
+      }
     },
     {
       "id": "developer.hint.sound.feedback-vs-outcome",
@@ -454,7 +509,16 @@
       ],
       "negativeControl": "An intentional music or sound cue may not correspond to a terminal win/lose action; no sound is required by default",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not treat an authored sound reference as delivered audio, a win condition, or evidence that an event succeeded"
+      "prohibits": "Do not treat an authored sound reference as delivered audio, a win condition, or evidence that an event succeeded",
+      "referenceCode": {
+        "path": "modules/sound/sound-service.ts",
+        "sha256": "2cd01f7358b80100edcb5f8e2e8a6041f833b7174f922bcba9c0471741ad8449",
+        "symbols": [
+          "playFor",
+          "playForAll",
+          "playAt"
+        ]
+      }
     },
     {
       "id": "developer.hint.teleport.ui-transition",
@@ -480,7 +544,15 @@
       ],
       "negativeControl": "An immediate teleport without fade can be valid if selected-map design expects it",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not require soft teleport universally or classify bare teleport as a bug without evidence"
+      "prohibits": "Do not require soft teleport universally or classify bare teleport as a bug without evidence",
+      "referenceCode": {
+        "path": "modules/teleport/teleport-service.ts",
+        "sha256": "4a4970123be96b97d618db2d0be69419cd77c3f8ba1d21512f58817cbbbaa4aa",
+        "symbols": [
+          "softTeleport",
+          "urgentTeleport"
+        ]
+      }
     },
     {
       "id": "developer.hint.text.localization-vs-design",
@@ -537,7 +609,16 @@
       ],
       "negativeControl": "Wall-clock timestamps may be intentional telemetry or an approved design requirement",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not infer a time bug solely from Date.now or silently require 20 TPS as a runtime observation"
+      "prohibits": "Do not infer a time bug solely from Date.now or silently require 20 TPS as a runtime observation",
+      "referenceCode": {
+        "path": "modules/time/game-clock.ts",
+        "sha256": "da3e1071af00990adafef05214c8e8325309339c3f9663db8675cd33708ffb1d",
+        "symbols": [
+          "gameTick",
+          "initGameClock",
+          "onGameTick"
+        ]
+      }
     },
     {
       "id": "developer.hint.version.compatibility",
@@ -633,7 +714,15 @@
       ],
       "negativeControl": "A periodic callback or repeated update can be intentional, bounded, and efficient; the source pattern's T17 observations do not establish measured lag in another map.",
       "versionApplicability": "REFERENCE_REPORT_EDUCATION_26.32_2026-10-17_NOT_GENERALIZED",
-      "prohibits": "Never classify an interval as a performance bug or claim duplicate entities without inspecting the selected map's guard, current object identity, and proof."
+      "prohibits": "Never classify an interval as a performance bug or claim duplicate entities without inspecting the selected map's guard, current object identity, and proof.",
+      "referenceCode": {
+        "path": "modules/time/game-clock.ts",
+        "sha256": "da3e1071af00990adafef05214c8e8325309339c3f9663db8675cd33708ffb1d",
+        "symbols": [
+          "onGameTick",
+          "initGameClock"
+        ]
+      }
     }
   ],
   "deferredSources": [],

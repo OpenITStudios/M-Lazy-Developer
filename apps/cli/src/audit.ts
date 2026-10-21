@@ -8,6 +8,7 @@ import {
   type InspectTargetProfile,
   type SelectedMapAuditModelResponseBatch,
   type SelectedMapAuditRuntimeTarget,
+  type SelectedMapAuditInput,
 } from "../../../engine/packages/orchestrator/src/index.js";
 import { loadKnowledgeDirectory } from "../../../engine/packages/knowledge/src/index.js";
 import { parseCliTargetOptions } from "./target-options.js";
@@ -35,9 +36,17 @@ async function main(): Promise<void> {
   let offsetSupplied = false;
   let responsesPath: string | undefined;
   let expectedArtifactFingerprint: string | undefined;
+  let developerPracticeRequested = false;
 
   for (let index = 0; index < rawArgs.length; index += 1) {
     const argument = rawArgs[index]!;
+    if (argument === "--developer-practice") {
+      if (developerPracticeRequested) {
+        throw new Error("--developer-practice may only be supplied once");
+      }
+      developerPracticeRequested = true;
+      continue;
+    }
     if (argument === "--brief" || argument === "--handoff") {
       if ((argument === "--brief" && brief) ||
           (argument === "--handoff" && handoff)) {
@@ -89,7 +98,7 @@ async function main(): Promise<void> {
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--handoff-offset N] [--responses model.json] [target options]");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--handoff-offset N] [--responses model.json] [--developer-practice] [target options]");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -103,6 +112,13 @@ async function main(): Promise<void> {
   }
 
   const knowledge = await loadKnowledgeDirectory(resolve("engine/knowledge"));
+  // Explicit operator opt-in. Load only the vetted repository reference data,
+  // never install or execute any script from an uploaded external ZIP.
+  const developerPractice = developerPracticeRequested
+    ? JSON.parse(await readFile(
+        resolve("experiments/developer-practice-signals.json"), "utf8",
+      )) as NonNullable<SelectedMapAuditInput["developerPractice"]>
+    : undefined;
   const audit = await runSelectedMapAudit({
     artifactPath: resolve(input),
     ...(expectedArtifactFingerprint === undefined
@@ -110,6 +126,7 @@ async function main(): Promise<void> {
       : { expectedArtifactFingerprint }),
     target: runtimeTarget(target),
     knowledgeCatalog: knowledge,
+    ...(developerPractice === undefined ? {} : { developerPractice }),
     telemetry: [],
   });
   // Responses are not proof. The canonical resolution gate validates all

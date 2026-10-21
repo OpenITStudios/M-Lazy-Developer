@@ -1,6 +1,7 @@
 import type {
   KnowledgeCatalog,
 } from "../../knowledge/src/index.js";
+import type { DeveloperPracticeReferenceData } from "./workflow/resource-context.js";
 import type {
   MapClassificationRoutingHint,
 } from "./map-classification-routing.js";
@@ -165,6 +166,8 @@ export interface SelectedMapAuditInput {
    */
   readonly target?: SelectedMapAuditRuntimeTarget;
   readonly knowledgeCatalog?: KnowledgeCatalog;
+  /** Approved external developer patterns; reference-only model guidance. */
+  readonly developerPractice?: DeveloperPracticeReferenceData;
   readonly telemetry?: readonly TelemetryEvent[] | TelemetryBatch;
   readonly runtimeProbeTranscript?: RuntimeProbeTranscript;
   /**
@@ -787,6 +790,7 @@ function assembleSelectedMapAuditRun(
   runtimeProbeTranscript?: RuntimeProbeTranscript,
   knowledgeCatalog?: KnowledgeCatalog,
   previousModelTaskPackets?: readonly AuditModelTaskPacket[],
+  developerPractice?: DeveloperPracticeReferenceData,
 ): SelectedMapAuditRun {
   const identity =
     deriveSelectedMapAuditIdentity(inspection);
@@ -861,6 +865,10 @@ function assembleSelectedMapAuditRun(
     auditObligations:
       control.auditObligations,
     ...(knowledgeCatalog === undefined ? {} : { knowledgeCatalog }),
+    ...(developerPractice === undefined ? {} : {
+      developerPractice,
+      semanticIr: inspection.semanticIrModel,
+    }),
     ...(knowledgeEdition === undefined ? {} : { knowledgeEdition }),
   });
   // resolveSelectedMapAudit reuses the same immutable artifact but may have
@@ -870,16 +878,26 @@ function assembleSelectedMapAuditRun(
     (previousModelTaskPackets ?? []).map((task) => [task.id, task]),
   );
   const modelTaskPackets = freshModelTaskPackets.map((task) => {
-    if (task.retrievedKnowledge !== undefined) return task;
     const previous = previousById.get(task.id);
-    if (
-      previous?.retrievedKnowledge === undefined ||
-      previous.decisionNeeded !== task.decisionNeeded ||
-      previous.knowledgeLookup?.query !== task.knowledgeLookup?.query ||
-      JSON.stringify(previous.knowledgeLookup?.sourceEvidenceIds ?? []) !==
-        JSON.stringify(task.knowledgeLookup?.sourceEvidenceIds ?? [])
-    ) return task;
-    return { ...task, retrievedKnowledge: previous.retrievedKnowledge };
+    const sameEvidence = previous !== undefined &&
+      previous.decisionNeeded === task.decisionNeeded &&
+      previous.knowledgeLookup?.query === task.knowledgeLookup?.query &&
+      JSON.stringify(previous.knowledgeLookup?.sourceEvidenceIds ?? []) ===
+        JSON.stringify(task.knowledgeLookup?.sourceEvidenceIds ?? []) &&
+      JSON.stringify(previous.knowledgeLookup?.sourceLocators ?? []) ===
+        JSON.stringify(task.knowledgeLookup?.sourceLocators ?? []);
+    if (!sameEvidence) return task;
+    return {
+      ...task,
+      ...(task.retrievedKnowledge === undefined &&
+          previous?.retrievedKnowledge !== undefined
+        ? { retrievedKnowledge: previous.retrievedKnowledge }
+        : {}),
+      ...(task.developerPractice === undefined &&
+          previous?.developerPractice?.selectedArtifactId === inspection.artifactId
+        ? { developerPractice: previous.developerPractice }
+        : {}),
+    };
   });
   const allFindings = [
     ...control.issueLanes.BUG,
@@ -1145,6 +1163,8 @@ export async function runSelectedMapAudit(
     userIntent,
     input.runtimeProbeTranscript,
     input.knowledgeCatalog,
+    undefined,
+    input.developerPractice,
   );
 }
 

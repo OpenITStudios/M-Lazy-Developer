@@ -33,6 +33,32 @@ Selected World
 
 Do not classify implementation anomalies as bugs before this contract exists.
 
+## Developer code as a guide to authored gameplay
+
+The supplied developer source is useful for recognizing implementation intent,
+but it is **not** a design specification for every selected map.
+
+When the map contains forms, entity cleanup, teleport, scheduled callbacks,
+audio, UI, persistence, or custom components:
+
+1. Read the **selected-map** caller and callee, then reconstruct
+   trigger → guard → state owner → effect → player outcome → cleanup/reset.
+2. Consult only the relevant developer reference in
+   `docs/analysis/developer-practice-context.md`; where a source-code hash
+   is supplied in `experiments/developer-practice-signals.json`, compare
+   it with the selected map's module bytes before claiming the *same code*
+   runs. A similar symbol name is not a file match.
+3. Trace delayed answers and callbacks after `await`, arena/session identity,
+   scoreboard/dynamic-property ownership, and cancellation after round
+   transitions. Developer implementations illustrate testable counterexamples,
+   not mandates that every map follow their architecture.
+4. Establish a BUG only from a selected-version expected/actual contradiction.
+   Keep unrelated valid designs as EXPECTED and insufficient evidence UNKNOWN.
+   External Skills Probe observations do not replace target-specific proof.
+
+The optional `--developer-practice` source path to model task packets
+provides bounded REFERENCE questions, never a new detector or proof receipt.
+
 ## REA-derived investigation
 
 Apply these questions inside the existing UNDERSTAND/FORMALIZE work, not as a second
