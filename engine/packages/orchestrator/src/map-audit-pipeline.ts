@@ -292,6 +292,25 @@ export interface SelectedMapAuditModelHandoff {
     /** Existing directed source paths, not chronological player sessions. */
     readonly sourceDesignPaths: NonNullable<MapAuditOutputV2["gameplayStructure"]>["gameplayJourneyCandidates"];
     readonly omittedSourceDesignPaths: number;
+    /** Source-only resolved inter-region calls and immediate target operations.
+     * Not proof of callback activation, live cancellation or player arrival.
+     */
+    readonly sourceHandoffs: readonly {
+      readonly sourceFlowId: string;
+      readonly edgeId: string;
+      readonly fromRegionId: string;
+      readonly toRegionId: string;
+      readonly kind: "synchronous-call" | "event-dispatch" | "deferred" | "periodic";
+      readonly source: import("../../project-model/src/index.js").SourceRef;
+      readonly scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
+      readonly generationGuard: "EXPLICIT_SOURCE_CHECK" | "UNRESOLVED" | "NOT_RECORDED";
+      readonly directTargetStateWriteIds: readonly string[];
+      readonly directTargetWorldEffectIds: readonly string[];
+      readonly directTargetReleaseIds: readonly string[];
+      readonly omittedDirectTargetSteps: number;
+      readonly proof: "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION";
+    }[];
+    readonly omittedSourceHandoffs: number;
     readonly unresolved: MapAuditOutputV2["unresolved"];
   };
   readonly taskCount: number;
@@ -342,6 +361,25 @@ export function projectSelectedMapAuditModelHandoff(
       rule.includes("=partition-proof-required") ||
       rule.includes("=unknown"));
   const selected = audit.modelTaskPackets.slice(offset, offset + limit);
+  const handoffFlows =
+    audit.mapAuditReport.gameplayStructure?.sourceFlowCandidates ?? [];
+  const handoffsByEdge = new Map<string, {
+    sourceFlowId: string;
+    handoff: NonNullable<typeof handoffFlows[number]["sourceHandoffs"]>[number];
+  }>();
+  for (const flow of handoffFlows) {
+    for (const handoff of flow.sourceHandoffs ?? []) {
+      if (!handoffsByEdge.has(handoff.edgeId)) {
+        handoffsByEdge.set(handoff.edgeId, {
+          sourceFlowId: flow.id, handoff,
+        });
+      }
+    }
+  }
+  const handoffs = [...handoffsByEdge.values()].sort((a, b) =>
+    a.handoff.edgeId.localeCompare(b.handoff.edgeId));
+  const omittedHandoffsInFlows = handoffFlows.reduce((sum, flow) =>
+    sum + (flow.omittedSourceHandoffs ?? 0), 0);
   return {
     schemaVersion: 1,
     policy: "selected-map-audit-model-handoff",
@@ -393,6 +431,23 @@ export function projectSelectedMapAuditModelHandoff(
         .slice(0, 6),
       omittedSourceDesignPaths: Math.max(0,
         (audit.mapAuditReport.gameplayStructure?.gameplayJourneyCandidates.length ?? 0) - 6),
+      sourceHandoffs: handoffs.slice(0, 12).map(({ sourceFlowId, handoff }) => ({
+        sourceFlowId,
+        edgeId: handoff.edgeId,
+        fromRegionId: handoff.fromRegionId,
+        toRegionId: handoff.toRegionId,
+        kind: handoff.kind,
+        source: handoff.source,
+        ...(handoff.scheduler === undefined ? {} : { scheduler: handoff.scheduler }),
+        generationGuard: handoff.generationGuard,
+        directTargetStateWriteIds: handoff.directTargetStateWriteIds,
+        directTargetWorldEffectIds: handoff.directTargetWorldEffectIds,
+        directTargetReleaseIds: handoff.directTargetReleaseIds,
+        omittedDirectTargetSteps: handoff.omittedDirectTargetSteps,
+        proof: handoff.proof,
+      })),
+      omittedSourceHandoffs:
+        Math.max(0, handoffs.length - 12) + omittedHandoffsInFlows,
       unresolved: audit.mapAuditReport.unresolved,
     },
     taskCount: audit.modelTaskPackets.length,

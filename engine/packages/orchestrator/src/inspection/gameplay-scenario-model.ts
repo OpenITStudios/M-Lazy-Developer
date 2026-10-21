@@ -130,6 +130,25 @@ export interface GameplaySourceFlowCandidate {
   readonly unresolvedExecutionEdgeIds: readonly string[];
   readonly temporalRelationIds: readonly string[];
   readonly branchPoints: readonly ObservedBranchPoint[];
+  /** Exact resolved IR edges with material sites in their direct target region.
+   * Not a proof that the callback fired, survived reset, or caused those sites.
+   */
+  readonly sourceHandoffs?: readonly {
+    readonly edgeId: string;
+    readonly fromRegionId: string;
+    readonly toRegionId: string;
+    readonly kind: "synchronous-call" | "event-dispatch" | "deferred" | "periodic";
+    readonly source: import("../../../project-model/src/index.js").SourceRef;
+    readonly scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
+    readonly generationGuard: "EXPLICIT_SOURCE_CHECK" | "UNRESOLVED" | "NOT_RECORDED";
+    readonly directTargetStepIds: readonly string[];
+    readonly directTargetStateWriteIds: readonly string[];
+    readonly directTargetWorldEffectIds: readonly string[];
+    readonly directTargetReleaseIds: readonly string[];
+    readonly omittedDirectTargetSteps: number;
+    readonly proof: "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION";
+  }[];
+  readonly omittedSourceHandoffs?: number;
   readonly sourceSteps: readonly {
     readonly id: string;
     readonly kind: "state" | "resource-action" | "return" | "world-effect";

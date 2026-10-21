@@ -1015,6 +1015,62 @@ export function formatSelectedMapAuditBrief(input: {
       "override the game understanding, confirmed findings or next decision above.",
     "",
   );
+  // Unlike broad trace co-membership, these are literal resolved IR edges.
+  // Their target steps belong directly to the target region, but still
+  // require player/session reachability and guard evaluation before any BUG.
+  const sourceHandoffs = new Map<string, {
+    readonly flowId: string;
+    readonly edge: NonNullable<
+      NonNullable<MapAuditOutputV2["gameplayStructure"]>
+        ["sourceFlowCandidates"][number]["sourceHandoffs"]
+    >[number];
+  }>();
+  for (const flow of report.gameplayStructure?.sourceFlowCandidates ?? []) {
+    for (const edge of flow.sourceHandoffs ?? []) {
+      if (!sourceHandoffs.has(edge.edgeId)) {
+        sourceHandoffs.set(edge.edgeId, { flowId: flow.id, edge });
+      }
+    }
+  }
+  const selectedHandoffs = [...sourceHandoffs.values()]
+    .sort((a, b) => a.edge.edgeId.localeCompare(b.edge.edgeId));
+  if (selectedHandoffs.length > 0) {
+    out.push(
+      "### Cross-region source handoffs (RESOLVED CODE EDGES; NOT EXECUTION)",
+      "Each entry records a single resolved source call or callback link to " +
+        "the DIRECT target region. Other steps in the same broad trace are " +
+        "not presumed causal successors. A guard check observed in source " +
+        "is not proof that a stale callback was cancelled.",
+    );
+    for (const { edge } of selectedHandoffs.slice(0, 8)) {
+      const site = edge.source.relativePath +
+        (edge.source.range?.lineStart === undefined ? "" :
+          ":" + edge.source.range.lineStart);
+      out.push(
+        "- " + edge.kind +
+          (edge.scheduler === undefined ? "" : " [" + edge.scheduler + "]") +
+          ": " + concise(edge.fromRegionId) + " → " +
+          concise(edge.toRegionId),
+        "  Call site: " + concise(site) +
+          "; generation guard: " + edge.generationGuard,
+        "  Direct target state writes: " +
+          edge.directTargetStateWriteIds.slice(0, 4).map(concise).join("; ") +
+          "; world effect attempts: " +
+          edge.directTargetWorldEffectIds.slice(0, 4).map(concise).join("; ") +
+          "; resource releases: " +
+          edge.directTargetReleaseIds.slice(0, 4).map(concise).join("; ") +
+          "; additional target steps omitted: " + edge.omittedDirectTargetSteps,
+      );
+    }
+    if (selectedHandoffs.length > 8) {
+      out.push("Additional resolved source handoffs not expanded: " +
+        (selectedHandoffs.length - 8));
+    }
+    const truncated = (report.gameplayStructure?.sourceFlowCandidates ?? [])
+      .reduce((n, flow) => n + (flow.omittedSourceHandoffs ?? 0), 0);
+    if (truncated > 0) out.push("Other handoffs truncated at source flow: " +
+      truncated + " (not proof of absence).");
+  }
   // Navigation over the EXISTING canonical Intent owns edges. This is
   // source-structure containment, never a chronological player journey.
   // Show the discovered shape first, before technical evidence inventories.

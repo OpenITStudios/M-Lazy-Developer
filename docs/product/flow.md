@@ -86,6 +86,40 @@ The `--brief` formatter surfaces the route marker as **NOT checkpoint
 proof**. A candidate may direct ChatGPT to inspect a source path, but
 only the canonical audit/defect proof owners can resolve the blocker.
 
+### Batch B — cross-region causal investigation (source edges only)
+
+The existing Scenario Compiler now projects `sourceHandoffs` from
+**resolved Semantic IR execution edges** within an existing source flow.
+Unlike simply listing everything reached by a broad trace, each handoff
+records its precise `edgeId`, caller and callee region, synchronous/
+event/deferred/periodic kind, authored source location, optional scheduler,
+and the **direct** callee-region state writes, world-effect attempts and
+resource releases. Its generation-guard field distinguishes a source
+check, an unresolved guard and a check not recorded in the IR.
+
+```text
+selected-map trigger/event source
+→ resolved call or deferred-callback edge [exact edge ID]
+→ actual target region [same artifact]
+→ direct target-state writes / effect attempts / releases
+→ open question: guards, identity, state relevance, return/cleanup
+→ existing scenario + counterproof reasoning (NEVER auto-confirm bug)
+```
+
+When a target is unresolved, points to a different artifact, or contains
+only unrelated operations in a broad trace, **no direct target handoff
+is invented**. The view is bounded (24 edges per source flow; eight
+direct target steps per edge) with omitted counts, and is derived from
+the existing IR rather than a second behavioral graph. It does not
+establish actual execution order between regions, that a timer fired,
+that a form/session guard was satisfied, or that player teleport/
+cleanup occurred. Source-level guard presence is not a runtime result.
+
+The existing `gameplayStructure.sourceFlowCandidates[]` carries those
+source-only handoffs, `--brief` shows bounded navigation, and the
+existing `--handoff` model projection includes a deduplicated subset.
+No issue classification or proof/admission gate is changed.
+
 ### External developer source: comparison, never replacement
 
 The supplied `minecraft-bedrock-agent-skills` v0.24.0 and

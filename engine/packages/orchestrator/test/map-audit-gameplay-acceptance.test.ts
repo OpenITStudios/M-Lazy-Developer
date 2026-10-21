@@ -227,6 +227,16 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(sourceFlow?.sourceSteps.some(step => step.id === teleport!.id)).toBe(true);
       expect(sourceFlow?.sourceSteps.some(step =>
         step.kind === "state" && step.executionRegionId === edge!.to)).toBe(true);
+      const directHandoff = sourceFlow?.sourceHandoffs?.find(item =>
+        item.edgeId === edge!.id);
+      expect(directHandoff).toMatchObject({
+        edgeId: edge!.id,
+        toRegionId: edge!.to,
+        kind: "synchronous-call",
+        proof: "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION",
+      });
+      expect(directHandoff?.directTargetWorldEffectIds).toContain(teleport!.id);
+      expect(directHandoff?.directTargetStateWriteIds.length).toBeGreaterThan(0);
       expect(result.inspection.gameplayIntent.model.nodes.some(node =>
         node.kind === "mechanic" &&
         node.label === "NPC interaction: Start Challenge" &&
@@ -239,7 +249,12 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(brief).toContain("# Selected Map Audit");
       expect(brief).toContain("NPC interaction: Start Challenge");
       expect(brief).toContain("Source-derived relations: activation");
+      expect(brief).toContain("Cross-region source handoffs");
+      expect(brief).toContain("RESOLVED CODE EDGES; NOT EXECUTION");
       const handoff = projectSelectedMapAuditModelHandoff(result);
+      expect(handoff.gameUnderstanding.sourceHandoffs.some(item =>
+        item.edgeId === edge!.id && item.toRegionId === edge!.to &&
+        item.directTargetWorldEffectIds.includes(teleport!.id))).toBe(true);
       expect(handoff.gameUnderstanding.sourceStateIdentityQuestions).toEqual([]);
       expect(handoff.gameUnderstanding.omittedSourceStateIdentityQuestions)
         .toBe(0);

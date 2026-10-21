@@ -37,11 +37,25 @@
     },
     "auditTarget": {
       "type": "object",
-      "required": ["edition", "source"],
+      "required": [
+        "edition",
+        "source"
+      ],
       "properties": {
-        "edition": { "enum": ["bedrock", "education", "unknown"] },
-        "minecraftVersion": { "type": "string", "minLength": 1 },
-        "source": { "const": "selected-audit-runtime-target-not-live-observation" }
+        "edition": {
+          "enum": [
+            "bedrock",
+            "education",
+            "unknown"
+          ]
+        },
+        "minecraftVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "const": "selected-audit-runtime-target-not-live-observation"
+        }
       },
       "additionalProperties": false
     },
@@ -5125,6 +5139,136 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "sourceHandoffs": {
+                "type": "array",
+                "description": "Bounded resolved selected-source IR edge and directly owned target-region step references. Not activation, temporal execution, or gameplay proof.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "edgeId",
+                    "fromRegionId",
+                    "toRegionId",
+                    "kind",
+                    "source",
+                    "generationGuard",
+                    "directTargetStepIds",
+                    "directTargetStateWriteIds",
+                    "directTargetWorldEffectIds",
+                    "directTargetReleaseIds",
+                    "omittedDirectTargetSteps",
+                    "proof"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "edgeId": {
+                      "type": "string"
+                    },
+                    "fromRegionId": {
+                      "type": "string"
+                    },
+                    "toRegionId": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "synchronous-call",
+                        "event-dispatch",
+                        "deferred",
+                        "periodic"
+                      ]
+                    },
+                    "source": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "artifactId",
+                        "relativePath"
+                      ],
+                      "properties": {
+                        "artifactId": {
+                          "type": "string"
+                        },
+                        "relativePath": {
+                          "type": "string"
+                        },
+                        "jsonPointer": {
+                          "type": "string"
+                        },
+                        "range": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [],
+                          "properties": {
+                            "lineStart": {
+                              "type": "integer"
+                            },
+                            "lineEnd": {
+                              "type": "integer"
+                            },
+                            "columnStart": {
+                              "type": "integer"
+                            },
+                            "columnEnd": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "scheduler": {
+                      "enum": [
+                        "run",
+                        "runTimeout",
+                        "runInterval",
+                        "runJob"
+                      ]
+                    },
+                    "generationGuard": {
+                      "enum": [
+                        "EXPLICIT_SOURCE_CHECK",
+                        "UNRESOLVED",
+                        "NOT_RECORDED"
+                      ]
+                    },
+                    "directTargetStepIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "directTargetStateWriteIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "directTargetWorldEffectIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "directTargetReleaseIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "omittedDirectTargetSteps": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "proof": {
+                      "const": "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION"
+                    }
+                  }
+                }
+              },
+              "omittedSourceHandoffs": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Exact edge handoffs truncated from this source-flow navigation view; not proof of absence."
               }
             }
           }

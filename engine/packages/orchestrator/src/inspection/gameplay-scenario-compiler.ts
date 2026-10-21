@@ -2086,7 +2086,7 @@ function runtimeEdgeState(
  * Only exact IR IDs can join across regions. Record all material operations
  * without synthesizing mechanic names or claiming a player-visible journey.
  */
-function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlowCandidate[] {
+export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlowCandidate[] {
   const execution = semanticIrExecutionTraces(ir);
   const regions = new Map(ir.execution.regions.map(region => [region.id, region]));
   const stepsByRegion = new Map<string, GameplaySourceFlowCandidate["sourceSteps"][number][]>();
@@ -2136,6 +2136,7 @@ function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlowCandid
         (a.source.jsonPointer ?? "").localeCompare(b.source.jsonPointer ?? "") ||
         a.id.localeCompare(b.id)));
   const relations = ir.execution.authoredBehaviorRelations ?? [];
+  const edgesById = new Map(ir.execution.edges.map(edge => [edge.id, edge]));
   const build = (input: {
     readonly entryRegionId: string;
     readonly entryKind: GameplaySourceFlowCandidate["entryKind"];
@@ -2149,10 +2150,60 @@ function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlowCandid
     const ids = new Set(steps.map(step => step.id));
     const resolvedEdges = new Set(input.executionEdgeIds.filter(id =>
       !input.unresolvedExecutionEdgeIds.includes(id)));
+    const traceRegions = new Set(input.regionIds);
+    // A broad trace can contain many disjoint branches. Correlate only the
+    // exact resolved edge with steps directly owned by its target region;
+    // other steps in the trace are NOT implied successors of that edge.
+    const sourceHandoffs = [...resolvedEdges].sort()
+      .flatMap(id => {
+        const edge = edgesById.get(id);
+        if (!edge || edge.resolution !== "resolved" || !edge.to ||
+            edge.from === edge.to ||
+            !traceRegions.has(edge.from) || !traceRegions.has(edge.to)) {
+          return [];
+        }
+        const from = regions.get(edge.from);
+        const to = regions.get(edge.to);
+        if (!from || !to ||
+            edge.source.artifactId !== from.source.artifactId ||
+            edge.source.artifactId !== to.source.artifactId) return [];
+        const steps = ordered([edge.to]);
+        const selected = steps.slice(0, 8);
+        return [{
+          edgeId: edge.id,
+          fromRegionId: edge.from,
+          toRegionId: edge.to,
+          kind: edge.kind,
+          source: edge.source,
+          ...(edge.scheduler === undefined ? {} : { scheduler: edge.scheduler }),
+          generationGuard: edge.guardEvidence === "explicit-generation-check" &&
+              edge.generationGuardSource !== undefined
+            ? "EXPLICIT_SOURCE_CHECK" as const
+            : edge.guardEvidence !== undefined
+              ? "UNRESOLVED" as const : "NOT_RECORDED" as const,
+          directTargetStepIds: selected.map(step => step.id),
+          directTargetStateWriteIds: selected
+            .filter(step => step.kind === "state" &&
+              (step.operation === "write" || step.operation === "clear" ||
+               step.operation === "delete"))
+            .map(step => step.id),
+          directTargetWorldEffectIds: selected
+            .filter(step => step.kind === "world-effect")
+            .map(step => step.id),
+          directTargetReleaseIds: selected
+            .filter(step => step.kind === "resource-action" &&
+              step.operation === "release")
+            .map(step => step.id),
+          omittedDirectTargetSteps: steps.length - selected.length,
+          proof: "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION" as const,
+        }];
+      });
     return {
       id: "source-flow:" + encodeURIComponent(input.entryRegionId),
       ...input,
       sourceSteps: steps,
+      sourceHandoffs: sourceHandoffs.slice(0, 24),
+      omittedSourceHandoffs: Math.max(0, sourceHandoffs.length - 24),
       // Unknown/possible targets remain in canonical IR but must not
       // become an EXACT source activation via another resolved call in
       // the same broad source trace. A relation with its own /function
