@@ -93,6 +93,20 @@ source-signal match cannot assert a bug, proof of behavior, or platform
 compatibility. Official/version-matched verification is still required
 before a Minecraft fact is promoted to `engine/knowledge/`.
 
+### Current provenance owner — do not duplicate its status registry
+
+The current reference counts, per-file SHA-256 hashes, probe statuses and
+skill associations are **owned by**
+[`experiments/developer-practice-signals.json`](../../experiments/developer-practice-signals.json).
+Tables below are a dated human review of that pinned intake, **not**
+another machine registry or a dynamically updated native-test scoreboard.
+On a replacement ZIP, compare that JSON first; review this illustration
+only for affected meanings. Keep developer archive v0.24.0 and the
+Skills Probe v0.23.0 lock separate even if module names coincide.
+A reused module label never proves identical bytes or Minecraft runtime
+compatibility. The external `docs/test-runs` paths cited here are paths
+**inside the supplied ZIP**, not new files stored in this repository.
+
 ## Full source inventory cross-check (21 October 2026)
 
 The curated machine companion

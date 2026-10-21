@@ -36,19 +36,25 @@ Skills Probe's negative and unverified cases. Do not convert those
 external reports into platform facts, map intent, BUG disposition,
 analyzer mutations, or a claim that Minecraft was run here.
 
-## Complete external implementation reference boundaries
+## External source inventory and proof boundary
 
-Developer v0.24.0 source examples comprise 20 TypeScript modules with
-eight accompanying module tests, plus 56 Skills Probe pack-source files
-(four installed database files, module mirrors, fixtures and project
-entrypoints). The existing
-`experiments/developer-practice-signals.json` tracks all module paths and
-hashes, plus all 22 Skills Probe reports and their attribution. Model
-task context may include bounded same-skill code/probe pointers only
-after an exact selected-map Semantic IR cue. It does not call or import
-any external runtime implementation. Test-only fake Minecraft, result
-export adapters, versioned database modules and test fixtures must not become
-source-independent gameplay invariants. Unsupported cues remain explicit.
+For developer skill/module source and Skills Probe fixture/report coverage,
+consult the single machine snapshot:
+`experiments/developer-practice-signals.json`.
+`sourceFiles`, `patterns`, `codeInventory` and `probeEvidence` own
+the exact counts, paths, hashes and upstream statuses. This skill must not
+maintain a competing count or assert all ZIP content was semantically
+integrated, installed or executed. The probe's skill lock differs from
+the supplied developer ZIP release; do not silently treat them as
+byte-identical.
+
+Model task context may include bounded same-skill code/probe pointers
+only after an exact selected-map Semantic IR cue. No external runtime
+implementation is called or imported. Fake Minecraft test code,
+result-export adapters, database modules, test fixtures and graphical
+assets must not become source-independent gameplay invariants.
+Unsupported source evidence means an investigation gap, never a
+fabricated BUG or native test result.
 
 ## Efficiency
 

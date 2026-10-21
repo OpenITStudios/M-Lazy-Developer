@@ -192,6 +192,31 @@ These responsibilities may compose each other but must not become independent pr
   Its source SHA and report provenance are comparison records, not authority
   for map gameplay.
 
+### Existing governance verifiers — enforcement, not semantic ownership
+
+The existing `tooling/repository/verify-engine-ownership.mjs`
+compares the package/analyzer ownership registries with their physical
+domains. The current `engine/packages/ownership.json` and
+`engine/analyzers/ownership.json` correctly classify the package/domain
+directories; they must **not** be extended with individual formatter or
+handoff functions. The `orchestrator` package remains the sole module
+owner for those internal views.
+
+`tooling/repository/verify-selected-map-audit-entrypoint.mjs`
+keeps the one production audit door, guards admission, and checks the
+stable named re-exports for the read-only formatter and model handoff
+against exactly one implementation each. The handoff and brief must
+never implement issue admission, audit mutation or a second public
+entrypoint.
+
+`tooling/repository/verify-documentation-ownership.mjs`
+keeps documentation in its existing domains and checks ZIP reference
+metadata against its single machine snapshot. The source-of-truth
+for developer skill identities, original archive SHAs, module/report
+inventory and upstream probe statuses is
+`experiments/developer-practice-signals.json`. None of these checks
+establishes gameplay truth or a verified Minecraft runtime result.
+
 ## Knowledge access owners
 
 ```text

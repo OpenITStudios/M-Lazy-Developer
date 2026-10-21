@@ -182,6 +182,125 @@ if (!analysisReadme.includes("bug-finding-coverage.md")) {
   failures.push("docs/analysis/README.md must route to canonical bug-finding coverage.");
 }
 
+// Developer ZIP metadata is the ONE machine-readable snapshot/evidence
+// owner. Documentation and skill descriptions are human routes, never
+// alternative counts or native-test status registries.
+const developerMetadataPath = "experiments/developer-practice-signals.json";
+const developerMetadata = JSON.parse(
+  readFileSync(developerMetadataPath, "utf8"),
+);
+const skillSources = developerMetadata.sourceFiles ?? [];
+const patterns = developerMetadata.patterns ?? [];
+const codeInventory = developerMetadata.codeInventory ?? {};
+const packSources = codeInventory.probePackSources ?? [];
+const reports = developerMetadata.probeEvidence ?? [];
+const sourceById = new Set(skillSources.map(item => item.id));
+const validSha = value => typeof value === "string" &&
+  /^[a-f0-9]{64}$/.test(value);
+const expectedCounts = [
+  ["activeSkillDocuments", developerMetadata.sourceSnapshot?.activeSkillDocuments, skillSources.length],
+  ["normalizedPatternCount", developerMetadata.sourceSnapshot?.normalizedPatternCount, patterns.length],
+  ["codeImplementationFiles", developerMetadata.sourceSnapshot?.codeImplementationFiles, (codeInventory.codeModules ?? []).length],
+  ["codeUnitTestFiles", developerMetadata.sourceSnapshot?.codeUnitTestFiles, (codeInventory.unitTests ?? []).length],
+  ["reportsIndexed", developerMetadata.probeSnapshot?.reportsIndexed, reports.length],
+  ["sourcePackFiles", developerMetadata.probeSnapshot?.sourcePackFiles, packSources.length],
+];
+for (const [name, declared, actual] of expectedCounts) {
+  if (!Number.isSafeInteger(declared) || declared !== actual) {
+    failures.push(developerMetadataPath + ": " + name +
+      " must match its actual source inventory (" + actual + ").");
+  }
+}
+if (developerMetadata.authority !== "REFERENCE" ||
+    developerMetadata.usagePolicy !==
+      "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF" ||
+    !validSha(developerMetadata.sourceSnapshot?.archiveSha256) ||
+    !validSha(developerMetadata.probeSnapshot?.archiveSha256)) {
+  failures.push(developerMetadataPath +
+    ": external ZIP identity and non-authoritative usage policy must remain intact.");
+}
+function requireUniqueExternalIds(label, values) {
+  if (values.some(value => typeof value !== "string" || !value.trim()) ||
+      new Set(values).size !== values.length) {
+    failures.push(developerMetadataPath + ": duplicate/invalid " + label + " identity.");
+  }
+}
+requireUniqueExternalIds("skill", skillSources.map(item => item.id));
+requireUniqueExternalIds("interpretation pattern", patterns.map(item => item.id));
+requireUniqueExternalIds("probe report", reports.map(item => item.id));
+requireUniqueExternalIds("module path", (codeInventory.codeModules ?? []).map(item => item.path));
+requireUniqueExternalIds("module test path", (codeInventory.unitTests ?? []).map(item => item.path));
+requireUniqueExternalIds("probe pack path", packSources.map(item => item.path));
+for (const item of [
+  ...skillSources,
+  ...(codeInventory.codeModules ?? []),
+  ...(codeInventory.unitTests ?? []),
+  ...packSources,
+]) {
+  if (!validSha(item.sha256)) {
+    failures.push(developerMetadataPath +
+      ": external reference source has an invalid SHA-256: " + item.path);
+  }
+}
+const moduleByPath = new Map((codeInventory.codeModules ?? [])
+  .map(item => [item.path, item.sha256]));
+for (const item of codeInventory.codeModules ?? []) {
+  if (!sourceById.has(item.ownerSkill)) {
+    failures.push(developerMetadataPath +
+      ": module code reference lacks a current skill owner: " + item.path);
+  }
+}
+const packByPath = new Map(packSources.map(item => [item.path, item.sha256]));
+for (const pattern of patterns) {
+  if (!sourceById.has(pattern.sourceId) ||
+      !Array.isArray(pattern.sourceSignals) || !pattern.sourceSignals.length ||
+      !Array.isArray(pattern.domains) || !pattern.domains.length) {
+    failures.push(developerMetadataPath +
+      ": interpretation pattern has no eligible skill/domain/source cue: " +
+      pattern.id);
+  }
+  if (pattern.referenceCode !== undefined &&
+      (!validSha(pattern.referenceCode.sha256) ||
+       moduleByPath.get(pattern.referenceCode.path) !==
+         pattern.referenceCode.sha256)) {
+    failures.push(developerMetadataPath +
+      ": pattern code example is not the pinned module source: " +
+      pattern.id);
+  }
+}
+for (const report of reports) {
+  if (!validSha(report.sourceSha256) ||
+      !report.status?.startsWith("UPSTREAM_REPORTED_") ||
+      report.proofAuthority !==
+        "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF" ||
+      !Array.isArray(report.relatedSkillIds) ||
+      report.relatedSkillIds.some(id => !sourceById.has(id))) {
+    failures.push(developerMetadataPath +
+      ": probe identity or skill attribution is invalid: " + report.id);
+  }
+  for (const fixture of report.fixtureSources ?? []) {
+    if (!validSha(fixture.sha256) ||
+        packByPath.get(fixture.path) !== fixture.sha256) {
+      failures.push(developerMetadataPath +
+        ": probe fixture does not resolve to the pinned source inventory: " +
+        report.id + " / " + fixture.path);
+    }
+  }
+}
+const developerDocs = [
+  "docs/analysis/developer-practice-context.md",
+  "docs/examples/bedrock-developer-agent-skills-reference.md",
+  ".agents/skills/m-bedrock-content-analysis/SKILL.md",
+];
+for (const path of developerDocs) {
+  const contents = readFileSync(path, "utf8");
+  if (!contents.includes("experiments/developer-practice-signals.json") ||
+      !contents.includes("REFERENCE")) {
+    failures.push(path +
+      ": developer ZIP references must route through the pinned REFERENCE metadata.");
+  }
+}
+
 if (failures.length) {
   console.error("Documentation ownership violations:");
   for (const failure of failures) console.error("- " + failure);

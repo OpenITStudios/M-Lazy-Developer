@@ -71,6 +71,14 @@ const PROCEDURE_SUPPORT_PATH =
   "engine/packages/orchestrator/src/inspection/mandatory-audit-support.ts";
 const ROUTING_DOC_PATH =
   "docs/analysis/README.md";
+const OUTPUT_OWNER_PATH =
+  "engine/packages/orchestrator/src/map-audit-output-v2.ts";
+const BRIEF_VIEW_PATH =
+  "engine/packages/orchestrator/src/reporting/map-audit-brief.ts";
+const MODEL_TASK_OWNER_PATH =
+  "engine/packages/orchestrator/src/map-audit-model-task.ts";
+const MODEL_HANDOFF_VIEW_PATH =
+  "engine/packages/orchestrator/src/reporting/map-audit-model-handoff.ts";
 
 function requireText(path, fragments) {
   const source = readFileSync(path, "utf8");
@@ -93,6 +101,49 @@ function forbidText(path, fragments) {
           fragment,
       );
     }
+  }
+}
+
+/**
+ * Read-only views are separate implementations but not new audit entrypoints.
+ * Inspect declarations/exports, not a comment that happens to mention a name.
+ */
+function ownsNamedFunction(path, name) {
+  const source = parse(path);
+  return source.statements.some(statement =>
+    ts.isFunctionDeclaration(statement) &&
+    statement.name?.text === name &&
+    statement.body !== undefined
+  );
+}
+
+function reexportsNamedFunction(path, name, specifier) {
+  const source = parse(path);
+  return source.statements.some(statement =>
+    ts.isExportDeclaration(statement) &&
+    statement.moduleSpecifier !== undefined &&
+    ts.isStringLiteral(statement.moduleSpecifier) &&
+    statement.moduleSpecifier.text === specifier &&
+    statement.exportClause !== undefined &&
+    ts.isNamedExports(statement.exportClause) &&
+    statement.exportClause.elements.some(element =>
+      element.name.text === name &&
+      (element.propertyName?.text ?? name) === name)
+  );
+}
+
+function requireReadOnlyView(ownerPath, viewPath, functionName, route) {
+  if (!reexportsNamedFunction(ownerPath, functionName, route)) {
+    issues.push(ownerPath + " must preserve one named public re-export of " +
+      functionName + " from " + route + ".");
+  }
+  if (ownsNamedFunction(ownerPath, functionName)) {
+    issues.push(ownerPath + " must not contain a duplicate " +
+      functionName + "() body.");
+  }
+  if (!ownsNamedFunction(viewPath, functionName)) {
+    issues.push(viewPath + " must own the sole " +
+      functionName + "() implementation.");
   }
 }
 
@@ -152,6 +203,39 @@ for (const path of filesUnder("apps")) {
   }
 }
 
+
+requireReadOnlyView(
+  OUTPUT_OWNER_PATH,
+  BRIEF_VIEW_PATH,
+  "formatSelectedMapAuditBrief",
+  "./reporting/map-audit-brief.js",
+);
+requireReadOnlyView(
+  PIPELINE_PATH,
+  MODEL_HANDOFF_VIEW_PATH,
+  "projectSelectedMapAuditModelHandoff",
+  "./reporting/map-audit-model-handoff.js",
+);
+requireText(PIPELINE_PATH, [
+  "runSelectedMapAudit(",
+  "applySelectedMapAuditModelResponses(",
+  "MODEL_RESOLVABLE_KINDS.has(task.kind)",
+]);
+requireText(MODEL_TASK_OWNER_PATH, [
+  "export const MODEL_RESOLVABLE_KINDS:",
+]);
+requireText(MODEL_HANDOFF_VIEW_PATH, [
+  "MODEL_RESOLVABLE_KINDS.has(task.kind)",
+  "import type { SelectedMapAuditRun }",
+]);
+forbidText(BRIEF_VIEW_PATH, [
+  "export function projectMapAuditOutputV2(",
+  "export async function runSelectedMapAudit(",
+]);
+forbidText(MODEL_HANDOFF_VIEW_PATH, [
+  "export function applySelectedMapAuditModelResponses(",
+  "export async function runSelectedMapAudit(",
+]);
 
 requireText(PIPELINE_PATH, [
   'policy: "selected-map-audit-single-entry"',

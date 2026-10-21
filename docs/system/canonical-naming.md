@@ -517,6 +517,25 @@ Forbidden update naming patterns for new owners/resources include:
 
 A version suffix is allowed only when version is part of the real product/schema identity (for example Bug Report V2), not as a substitute for updating an existing owner.
 
+## Third-party ZIP and derived-view naming
+
+The `experiments/developer-practice-signals.json` snapshot has one
+stable current identity. Its referenced module files, probe fixtures and
+native report paths are **external source identities**: an indexed
+reference is not a locally installed module or an executed test. A new
+archive is a new provenance *revision*, not a reason to mint a competing
+`-v2`, `-latest`, `-copy` or `final` reference catalog. Preserve
+each origin release/lock and file SHA independently.
+
+The public names `MapAuditOutputV2`,
+`formatSelectedMapAuditBrief` and
+`projectSelectedMapAuditModelHandoff` remain stable contracts.
+Named re-exports from `map-audit-output-v2.ts` and
+`map-audit-pipeline.ts` are compatibility entrypoints only; the
+human brief and read-only model handoff have exactly one implementation
+under `reporting/`. Read-only presentation modules do not own
+admission, persistence, source evidence or Expected Behavior.
+
 ## Data lifecycle vocabulary
 
 Resource lifecycle uses one state vocabulary:

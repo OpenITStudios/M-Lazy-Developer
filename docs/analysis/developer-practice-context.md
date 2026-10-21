@@ -26,7 +26,7 @@ The user supplied `minecraft-bedrock-agent-skills-main (1).zip` (v0.24.0,
 22 active skill files) and `skills-probe-main.zip` (test project with
 an **older v0.23.0** skills lock). Their original uploaded ZIP SHA-256
 identities, all 22 current `SKILL.md` digests, skill classifications,
-and three scoped probe-result references now live in the existing
+and the indexed upstream probe-report inventory now live in the existing
 [`developer-practice-signals.json`](../../experiments/developer-practice-signals.json).
 The source inventory/triage is documented in the existing
 [skills reference](../examples/bedrock-developer-agent-skills-reference.md).
@@ -86,11 +86,15 @@ are navigable with the existing section-level retrieval.
 2. **Compare snapshots.** The JSON `sourceSnapshot.archiveSha256` signals
    whether the archive changed. Compare `sourceFiles[].sha256` for all
    **currently declared active SKILL.md** (22 in the 2026-10-21 ZIP), and
-   `deferredSources[].sha256` only for files present in that same snapshot. Added, removed
-   or changed files are reviewed separately; change outside these 36 tracked
-   files still requires inspecting the new archive's full inventory before
-   calling an update complete. Untracked referenced examples/scripts can
-   change independently of `SKILL.md` and must NOT be assumed stable.
+   `deferredSources[].sha256` only for files present in that same snapshot.
+   The active ZIP currently has **22** tracked skill documents and **no**
+   `deferredSources`; counts are owned by the JSON snapshot, not this prose.
+   Compare `codeInventory.codeModules`, `codeInventory.unitTests`,
+   `codeInventory.probePackSources`, and `probeEvidence` source hashes
+   when their upstream files change. Added, removed or changed files need
+   explicit review; scripts/fixtures outside the indexed subsets are not
+   presumed stable or fully semantically consumed. Always inspect the new
+   archive's complete entry inventory before calling an update complete.
 3. **Normalize into existing IDs.** Update `patterns[].id` in place when
    the meaning is the same; preserve original source path, source-file SHA,
    exact heading, question, candidate relations, applicability and negative
@@ -514,6 +518,34 @@ from explicit current Knowledge and Developer Practice snapshots when
 provided; otherwise they are omitted on a new continuation revision.
 This fail-closed behavior does not erase the selected map's authored
 evidence, completed source analysis, or prior externally stored history.
+
+### One provenance owner and one governance route
+
+The current selected developer/probe archive **identities**, exact per-file
+hashes, skill ownership, 16 interpretation candidates, source inventory and
+22 report attributions belong only to
+`experiments/developer-practice-signals.json`. Its `sourceSnapshot`,
+`probeSnapshot`, `sourceFiles`, `patterns`, `codeInventory`, and
+`probeEvidence` are **external reference records**, not installed
+Minecraft source modules or a native execution ledger. The documentation
+in this file and the examples directory is only a *human interpretation
+route* into those records.
+
+The existing repository governance verifier
+`tooling/repository/verify-documentation-ownership.mjs` owns static
+consistency assertions between snapshot counts, stable IDs, report→skill
+links and probe→fixture path/SHA identity. The established
+`tooling/repository/verify-selected-map-audit-entrypoint.mjs` owns
+single-entry and read-only presentation re-export boundaries. Neither
+verifier creates another audit/report/proof authority. Updating ZIPs
+must update the existing JSON and this routed reference **in place**,
+never introduce `developer-practice-v2` or another registry.
+
+The source-scoped reference selector remains opt-in. A native probe
+`PASS`, `FAIL`, `PARTIAL` or `BLOCKED` is still an *upstream,
+version-scoped statement*, not a claim verified by Lazy-Developer or
+selected-map proof. Source inventory presence does not mean that all
+scripts, assets or pack behavior have been executed or understood.
 
 ## Maturity and promotion
 
