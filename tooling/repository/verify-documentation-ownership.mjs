@@ -193,6 +193,8 @@ const skillSources = developerMetadata.sourceFiles ?? [];
 const patterns = developerMetadata.patterns ?? [];
 const codeInventory = developerMetadata.codeInventory ?? {};
 const packSources = codeInventory.probePackSources ?? [];
+const developerTools = codeInventory.developerWorkflowSources ?? [];
+const probeTools = codeInventory.probeToolSources ?? [];
 const reports = developerMetadata.probeEvidence ?? [];
 const sourceById = new Set(skillSources.map(item => item.id));
 const validSha = value => typeof value === "string" &&
@@ -204,6 +206,12 @@ const expectedCounts = [
   ["codeUnitTestFiles", developerMetadata.sourceSnapshot?.codeUnitTestFiles, (codeInventory.unitTests ?? []).length],
   ["reportsIndexed", developerMetadata.probeSnapshot?.reportsIndexed, reports.length],
   ["sourcePackFiles", developerMetadata.probeSnapshot?.sourcePackFiles, packSources.length],
+  ["methodologyRecordsTracked", developerMetadata.sourceSnapshot?.methodologyRecordsTracked,
+    skillSources.filter(item => item.methodology !== undefined).length],
+  ["developerWorkflowScriptSourcesTracked", developerMetadata.sourceSnapshot?.developerWorkflowScriptSourcesTracked,
+    developerTools.length],
+  ["probeToolScriptSourcesTracked", developerMetadata.probeSnapshot?.probeToolScriptSourcesTracked,
+    probeTools.length],
 ];
 for (const [name, declared, actual] of expectedCounts) {
   if (!Number.isSafeInteger(declared) || declared !== actual) {
@@ -231,15 +239,78 @@ requireUniqueExternalIds("probe report", reports.map(item => item.id));
 requireUniqueExternalIds("module path", (codeInventory.codeModules ?? []).map(item => item.path));
 requireUniqueExternalIds("module test path", (codeInventory.unitTests ?? []).map(item => item.path));
 requireUniqueExternalIds("probe pack path", packSources.map(item => item.path));
+requireUniqueExternalIds("developer source tool path", developerTools.map(item => item.path));
+requireUniqueExternalIds("probe tool path", probeTools.map(item => item.path));
 for (const item of [
   ...skillSources,
   ...(codeInventory.codeModules ?? []),
   ...(codeInventory.unitTests ?? []),
   ...packSources,
+  ...developerTools,
+  ...probeTools,
 ]) {
   if (!validSha(item.sha256)) {
     failures.push(developerMetadataPath +
       ": external reference source has an invalid SHA-256: " + item.path);
+  }
+}
+const skillPathById = new Map(skillSources.map(item => [item.id, item.path]));
+const methodKinds = new Set([
+  "MAP_SOURCE_INTERPRETATION", "DEVELOPMENT_WORKFLOW_PROVENANCE",
+]);
+for (const skill of skillSources) {
+  const method = skill.methodology;
+  if (!method ||
+      !methodKinds.has(method.applicability) ||
+      method.proofBoundary !==
+        "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" ||
+      method.applicability !==
+        (skill.auditUsage === "INTERPRETATION_CANDIDATE"
+          ? "MAP_SOURCE_INTERPRETATION"
+          : "DEVELOPMENT_WORKFLOW_PROVENANCE") ||
+      !Array.isArray(method.sourceSections) ||
+      method.sourceSections.length < 2 ||
+      new Set(method.sourceSections).size !== method.sourceSections.length ||
+      !Array.isArray(method.investigationSteps) ||
+      method.investigationSteps.length < 2 ||
+      method.investigationSteps.length > 6 ||
+      !method.investigationSteps.every(step =>
+        typeof step === "string" && step.trim()) ||
+      typeof method.objective !== "string" || !method.objective.trim() ||
+      typeof method.disconfirmingCase !== "string" ||
+      !method.disconfirmingCase.trim()) {
+    failures.push(developerMetadataPath +
+      ": current skill lacks a complete source-pinned, non-authoritative method: " +
+      skill.id);
+  }
+}
+for (const pattern of patterns) {
+  const owner = skillSources.find(item => item.id === pattern.sourceId);
+  if (owner?.methodology?.applicability !== "MAP_SOURCE_INTERPRETATION") {
+    failures.push(developerMetadataPath +
+      ": audit pattern cannot use development-only method: " + pattern.id);
+  }
+}
+for (const tool of developerTools) {
+  if (tool.ownerSkill !== undefined) {
+    if (!skillPathById.has(tool.ownerSkill) ||
+        !tool.path.startsWith(skillPathById.get(tool.ownerSkill).replace(/\/SKILL\.md$/, "/"))) {
+      failures.push(developerMetadataPath +
+        ": developer checker points outside its pinned skill: " + tool.path);
+    }
+  }
+  if (!["SKILL_TOOL_SOURCE_REFERENCE", "TEMPLATE_SOURCE_REFERENCE",
+        "DEVELOPER_TOOL_SOURCE_REFERENCE", "DEVELOPER_TOOL_TEST_SOURCE"]
+        .includes(tool.kind)) {
+    failures.push(developerMetadataPath +
+      ": developer tool source has unsupported classification: " + tool.path);
+  }
+}
+for (const tool of probeTools) {
+  if (!["PROBE_TOOL_SOURCE_REFERENCE", "PROBE_TOOL_TEST_SOURCE"]
+      .includes(tool.kind)) {
+    failures.push(developerMetadataPath +
+      ": probe script is not classified as external tool source: " + tool.path);
   }
 }
 const moduleByPath = new Map((codeInventory.codeModules ?? [])

@@ -107,6 +107,27 @@ A reused module label never proves identical bytes or Minecraft runtime
 compatibility. The external `docs/test-runs` paths cited here are paths
 **inside the supplied ZIP**, not new files stored in this repository.
 
+### Methodology and auxiliary source coverage
+
+The active source metadata includes one structured method under each
+of the 22 SHA-pinned SKILL.md identities. Six are development/release
+workflow provenance; 16 are source-interpretation candidates tied
+to existing audit signal patterns. Each method has the original
+skill-heading citations, a bounded investigative sequence and an
+explicit disconfirming case. It is a translation of developer practice
+into the **existing** evidence architecture, not wholesale installation
+of external runtime code or a new gameplay specification.
+
+The `codeInventory` also records individual SHA-pinned paths for
+48 additional developer-source checker/template/tool files and
+13 standalone Skills Probe tools; they were inventoried directly
+from both supplied ZIPs, **not executed**. Skill-local helpers may be
+cited by a selected pattern; standalone tooling, third-party build
+scripts, native test fixtures, and external unit tests are reference
+surfaces with no authority to operate Minecraft or publish a result.
+The original ZIP archive SHA remains the only whole-archive identity
+for all other assets and unparsed content.
+
 ## Full source inventory cross-check (21 October 2026)
 
 The curated machine companion

@@ -9,6 +9,26 @@ lifecycle: ACTIVE
 
 # Development Discipline
 
+## Developer ZIP provenance within existing development discipline
+
+The exact developer method/source inventory is owned only by
+`experiments/developer-practice-signals.json`. Its
+`sourceFiles[].methodology` records come from pinned, user-provided
+developer SKILL.md sources. The six
+`DEVELOPMENT_WORKFLOW_PROVENANCE` entries provide examples for work
+handoff, source change boundaries, version/export contracts and
+verification triage—not a parallel source of authority.
+
+Apply useful **principles**, not the external team's workflow literally:
+one accountable owner, source-identified work, clear evidence ceiling,
+bounded edits, no default microtests, explicit release permission, and
+recorded unresolved proof. Do not import the ZIP's Bun/Regolith project,
+STATE.md watchdog, database library, install scripts or release
+commands into Lazy-Developer as an automatic prerequisite. Existing
+GitHub rules, user instructions and canonical semantics prevail.
+**If the user defers tests, do not run or claim tests**; still record
+source-only verification and the independent proof that remains.
+
 ## Development Operating Standard
 
 This is the mandatory behavior contract for every `SYSTEM DEVELOPMENT` task, including Product Development and Detection Development. Before material edits, the selected development skill must apply DOS; citing this document without following its decisions is not compliance. Do not create a second workflow or status owner.

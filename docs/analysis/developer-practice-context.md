@@ -117,6 +117,68 @@ are navigable with the existing section-level retrieval.
    normalized records and their update decisions; keep the original ZIP with
    the user for future source-level comparison.
 
+## Unified developer methodology — the existing reference spine
+
+The supplied developer ZIP is not a loose collection of heuristics.
+Its full set of **22 active skill methodologies** is now recorded
+**inside the original `sourceFiles[]` entries** of
+`experiments/developer-practice-signals.json`, bound to their exact
+SKILL.md source SHA-256, heading anchors and original archive revision.
+This is one machine owner; no second registry or new inference engine.
+Each method records:
+
+- `objective`: what that developer skill is attempting to distinguish;
+- `sourceSections`: real numbered headings in the pinned SKILL.md;
+- `investigationSteps`: three source-oriented questions/inspections;
+- `disconfirmingCase`: a legitimate alternative to check first;
+- `proofBoundary`: external methodology is never selected-map gameplay proof.
+
+**Sixteen** skills with `INTERPRETATION_CANDIDATE` are used only after
+a source-grounded task and exact typed Semantic IR/manifest cue select
+their existing `pattern`. The selected method becomes part of that
+same `developerPractice.items[]` model task and `--brief` guidance,
+alongside module source, linked unit-test **source**, skill-local
+checker source, installed probe module mirrors and upstream reports.
+All are hash-pinned **source references**; unit tests, checkers,
+Minecraft fixtures and native probes are **NOT executed**.
+
+**Six** `DEVELOPMENT_WORKFLOW_ONLY` skills (agent-team,
+game-results, git-workflow, project-setup, release-export,
+testing-policy) inform development/review disciplines only.
+Their module/checker examples are useful when the relevant
+engineering task explicitly needs them; they are **never admitted
+into a selected-map bug task merely because of their ZIP presence**.
+User instructions and canonical M-Lazy-Developer permissions override
+upstream prescriptions to run Bun, scaffold projects, use external
+agents, run Minecraft, publish releases, or execute tests.
+
+The machine `codeInventory` also tracks exact SHA-256 of the previously
+indexed 20 developer modules, 8 module unit-test files and 56 probe-pack
+TypeScript sources **plus 48 developer auxiliary script/template/tool
+sources and 13 Skills Probe tool sources**. All listed paths refer to
+files **inside the supplied ZIP archives**. Byte-level inventory
+coverage is broader than semantic interpretation coverage; not every
+graphic, build fixture, generated asset or third-party game component
+should become executable code in Lazy-Developer.
+
+Methodology-to-decision route:
+
+```text
+One selected map / source fact
+→ canonical Intent subject and typed IR observation
+→ existing task domain + exact source-locator join
+→ existing source-reviewed developer pattern (max 2)
+→ SHA-pinned skill method + examples/probe provenance
+→ developer questions + disconfirming alternative
+→ existing scenario/counterproof/proof admission
+→ PROVEN / NEED_VALIDATION / UNKNOWN / expected behavior
+```
+
+The same reference also distinguishes developer **preferences** from
+Minecraft platform rules and map-specific gameplay design. One source
+method cannot create a new `GameplayIntent` node, mutate a source
+asset, classify BUG, or override a selected runtime/version boundary.
+
 ## Usage in the existing selected-map audit flow
 
 No new audit stage or engine authority is introduced.

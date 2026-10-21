@@ -19,7 +19,7 @@
     "interpretationEligibleSkillCount": 16,
     "workflowOnlySkillCount": 6,
     "deferredSourceFilesTracked": 0,
-    "intakeEvidence": "Uploaded archive was inventoried and selected SKILL.md sections were inspected as data; no ZIP-supplied executable was run",
+    "intakeEvidence": "Both supplied archives were re-opened as untrusted data. All 22 active developer SKILL.md method headings were inspected and curated into sourceFiles[].methodology; exact SHA-pinned code/tool/probe source inventories are attributed without executing, vendoring or independently proving the ZIP claims.",
     "codeReferencesTracked": 10,
     "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map.",
     "codeImplementationFiles": 20,
@@ -30,7 +30,9 @@
       "projectConfiguration": 2,
       "developerTestUtilities": 1,
       "note": "Security-filtered source reference, not vendored runtime code. This inventory is not a claim that every script has been semantically consumed."
-    }
+    },
+    "methodologyRecordsTracked": 22,
+    "developerWorkflowScriptSourcesTracked": 48
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -45,7 +47,23 @@
       "sha256": "fad3abde7cb836e8882b68260e2649c34568848062dece5945beff922a7ed63a",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "methodology": {
+        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "sourceSections": [
+          "1. Roles",
+          "3. Flow per task",
+          "4. Briefs and replies"
+        ],
+        "objective": "Preserve one accountable implementation owner with separate read-only review and explicit approval boundaries.",
+        "investigationSteps": [
+          "Identify who owns the concrete change and exact source revision.",
+          "Keep a self-contained source/proof handoff; separate reviewer/tester observations from implementation authority.",
+          "State what was changed, what evidence is available, and what remains unresolved."
+        ],
+        "disconfirmingCase": "This ZIP's specific multi-agent provider, watchdog and STATE.md arrangement is not automatically available or approved in this ChatGPT/GitHub environment.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-camera",
@@ -53,7 +71,23 @@
       "sha256": "f2b0fef74ead98d32ab22212c14355ba724553ca93a6c6c8918cfe8238181223",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. The rule: chunks load around the player, so move the player to the scene",
+          "3. Restore everything, always",
+          "4. Verify in game"
+        ],
+        "objective": "Distinguish authored camera movement from actual chunk/render coverage and restoration.",
+        "investigationSteps": [
+          "Locate the exact scene camera entry and player/chunk ownership in selected source.",
+          "Trace player relocation, visibility rules, scene activation and restoration paths.",
+          "Inspect early exits, disconnects and other paths that could bypass restoration."
+        ],
+        "disconfirmingCase": "A teleport witness alone does not prove a camera/chunk defect or that a scene actually rendered.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-content",
@@ -61,7 +95,24 @@
       "sha256": "86d6cd3d34af566cc1fd085cc0609661776c2a593c1c03ae6cfd992c9db9ec4c",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Decide",
+          "2. Custom item and block components (V2)",
+          "3. Shared state: entity properties",
+          "4. Timers: JSON `minecraft:timer` or a script deadline"
+        ],
+        "objective": "Decide whether authored content belongs to native JSON, Script API or a version-scoped shared-state bridge.",
+        "investigationSteps": [
+          "Identify the exact component and target format/version before deciding its implementation semantics.",
+          "Trace native event wiring to script registration or state property ownership as authored.",
+          "Check tick-boundary visibility and timer alternatives without assuming an immediate update."
+        ],
+        "disconfirmingCase": "A JSON/script design different from the ZIP preference is not a bug; probe outcomes are scoped to their original Education version.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-coordinates",
@@ -69,7 +120,24 @@
       "sha256": "5dc41ba318340c9cb2e09eaa427a6600cff9a1c9da33f202751a3aa4db241e33",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. The spawn-point rule (entities and players only)",
+          "2. Say what kind of coordinate it is",
+          "3. Bounds and sizes",
+          "4. Commands vs Script API"
+        ],
+        "objective": "Distinguish block, entity/player, relative and bounded region coordinates before alleging placement errors.",
+        "investigationSteps": [
+          "Classify each authored position as block coordinate, entity position, offset or region extent.",
+          "Trace transformation, arena offset and command-vs-API interpretation from exact source.",
+          "Check dimensions, negative positions and fractional values against actual authored intent."
+        ],
+        "disconfirmingCase": "Do not apply unconditional +0.5 offsets or claim a location mismatch from a fractional position alone.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-data-persistence",
@@ -77,7 +145,24 @@
       "sha256": "5058058f53eba5bce2e551ec3ad0663b21e1015ba9b00b3a1bc37d2c3592290d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Three places for data",
+          "4. Runtime state: the database module (one door)",
+          "5. World vs player storage",
+          "8. Scoreboards"
+        ],
+        "objective": "Separate authored configuration, mutable runtime state, persistence authority and display mirrors.",
+        "investigationSteps": [
+          "Identify whether each value is immutable design configuration, durable state or only a visual projection.",
+          "Trace exact source owner for reads, writes, migration/reconnect and namespace identity.",
+          "Look for secondary writers, reset/recovery branches and stale player/arena state before judging persistence."
+        ],
+        "disconfirmingCase": "The ZIP's world database module is an example, not a required map dependency or proof that alternative storage is broken.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-debug-logging",
@@ -85,7 +170,23 @@
       "sha256": "7afcfdcab48994a73e4799b2dcdbf04accb58101e899831a81eb9001b6ced383",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Console only, never player chat",
+          "2. One logger, one global config",
+          "4. No spam"
+        ],
+        "objective": "Differentiate developer diagnostics from player-visible messages, preserving ownership and noise budgets.",
+        "investigationSteps": [
+          "Trace typed message/console API caller and recipient from source.",
+          "Check if the output is gameplay feedback, dev telemetry or an intended accessible UI signal.",
+          "Inspect repetition and throttle ownership rather than assuming every sendMessage is logging."
+        ],
+        "disconfirmingCase": "A selected map can deliberately use player chat for gameplay; the ZIP team's logging convention is not a universal game requirement.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-debug-profiling",
@@ -93,7 +194,23 @@
       "sha256": "c88fd3f3aa1ce8060103dadb3c3a75fa9caad89d5040739cc4504f3d4c68f167",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Debugging, cheapest first",
+          "2. Profiling",
+          "3. Check"
+        ],
+        "objective": "Trace performance hypotheses to concrete source work and measured costs, not method names.",
+        "investigationSteps": [
+          "Identify event frequency, call ownership and bounded operation count from source.",
+          "Distinguish always-on loops from per-player/per-arena work and reconcilers.",
+          "Request a narrowly specified profile observation only when source-cost reasoning remains insufficient."
+        ],
+        "disconfirmingCase": "A getEntities or scheduled callback is not automatically a measurable bottleneck.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-entity-creation",
@@ -101,7 +218,24 @@
       "sha256": "fdabc04bde600ee213ab9c4f00cf62c420c5dbcf11644cfd94bc9353a06d2f16",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Files of a custom entity",
+          "2. Display entities (holograms, markers, floating text)",
+          "3. Damage: JSON or script?",
+          "4. `minecraft:damage_sensor` rules"
+        ],
+        "objective": "Reconstruct entity BP/RP assets, damage semantics and version-specific authored behavior.",
+        "investigationSteps": [
+          "Join the entity definition, controller, geometry and events by exact identifier/source owner.",
+          "Check version-appropriate damage sensor, component group and display conventions.",
+          "Trace effect/damage handlers and possible legitimate alternate paths."
+        ],
+        "disconfirmingCase": "A display entity, marker, or JSON damage handler may be an intentional alternative to scripted behavior.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-entity-lifecycle",
@@ -109,7 +243,24 @@
       "sha256": "66bc1c375b69a4f77581ecaa7e444a75a72985d9deba7ecb923e7d2c0a374887",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Removing entities: choose by intent",
+          "2. A despawn event when something outside script removes the entity",
+          "3. Spawning and ownership",
+          "4. Cleanup and reset"
+        ],
+        "objective": "Separate authored kill, remove, despawn, ownership and cleanup semantics.",
+        "investigationSteps": [
+          "Trace exact spawn owner, arena/session tagging and subsequent lifecycle API calls.",
+          "Compare kill-versus-remove consequences and event expectations with selected source.",
+          "Follow terminal/reset, delayed callback and unload/despawn alternatives before diagnosing leaked entities."
+        ],
+        "disconfirmingCase": "Entity.remove is not equivalent to a death event and is not inherently defective.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-forms",
@@ -117,7 +268,24 @@
       "sha256": "b53a714df982f5a82ffa5bab99e96667b7a814fd9b43d34ee49857084dc8b00d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Form types (server-ui 2.x)",
+          "2. One form service",
+          "3. Force-close rules",
+          "4. Logic vs adapter"
+        ],
+        "objective": "Trace form lifecycle, async response generation ownership and state-machine authority.",
+        "investigationSteps": [
+          "Locate typed form creation, show, cancellation and close/reset call sites.",
+          "Identify which player/session generation owns the response and its subsequent mutation.",
+          "Check caller-side stale-response guards, navigation mappings and legitimate dismissal outcomes."
+        ],
+        "disconfirmingCase": "A helper lacking a local guard is not proof of a bug when its caller already validates session state.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-game-results",
@@ -125,7 +293,24 @@
       "sha256": "df7016e73f666ae8cdc4ee85aaca3a0df7ea591598367c9409333c1e5153cfc9",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "methodology": {
+        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "sourceSections": [
+          "1. How the export works",
+          "2. The record",
+          "3. The map's adapter",
+          "5. Changes that need a written notice to Daigon before delivery"
+        ],
+        "objective": "Keep scoring/export contracts, schema migration and stakeholder approval distinct from gameplay correctness.",
+        "investigationSteps": [
+          "Identify the current map's own result export envelope and adapter if one exists.",
+          "Trace stable participant/result IDs and finalized event semantics without guessing scores.",
+          "Record source-owned external contract/version requirements and explicit approval before release."
+        ],
+        "disconfirmingCase": "The ZIP's Daigon-specific scoring schema is an external delivery agreement, not a required protocol for every Minecraft map.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-game-time",
@@ -133,7 +318,24 @@
       "sha256": "19020cd79144d97bf2d90532dd381769565e33b89db8baa3a6ba33acf9e7345b",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. The rule",
+          "2. The only exceptions: record, never decide",
+          "3. Script API time tools (stable 2.x)",
+          "4. Pattern"
+        ],
+        "objective": "Distinguish game ticks, authored deadlines, wall-clock logging and pause/resume semantics.",
+        "investigationSteps": [
+          "Locate time source, scheduler registration, clock persistence and deadline sites.",
+          "Trace countdown/cooldown progress under pause/reload and restart boundaries from source.",
+          "Separate recorded timestamps from actual game-state decisions and version-scoped timer behavior."
+        ],
+        "disconfirmingCase": "Wall-clock values used only for logging are not evidence of a gameplay timing defect.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-git-workflow",
@@ -141,7 +343,23 @@
       "sha256": "f16339ca3540762239a54911029f2d2a9bfd5fb00ba62caeabfdf5c6d1003551",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "methodology": {
+        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "sourceSections": [
+          "1. Start of every task",
+          "3. During and after the task",
+          "5. Never without explicit permission"
+        ],
+        "objective": "Keep work scoped to a pinned source revision and explicit write/merge authority.",
+        "investigationSteps": [
+          "Pin exact GitHub branch/commit and owner before mutation.",
+          "Stage a coherent change with source/proof limits and preserve repository continuity.",
+          "Verify remote commit identity and never infer permission for merges, release or environment execution."
+        ],
+        "disconfirmingCase": "ZIP team workflow commands are not commands to run in ChatGPT and do not override the repository's canonical GitHub permissions.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-onscreen-display",
@@ -149,7 +367,24 @@
       "sha256": "7d46ad4ab1c1db89005caa581e64934a26589fe40d4ed5dccd92d6b0c621744b",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. The rule",
+          "3. Implementation pattern",
+          "4. Action bar ownership",
+          "5. The `hud:` channel (titles as a json_ui data channel)"
+        ],
+        "objective": "Trace display content ownership, HUD priority and transient player-facing state.",
+        "investigationSteps": [
+          "Locate exact title/subtitle/action bar API or command sites.",
+          "Identify message owner, prioritization, clear/restore branches and client/session context.",
+          "Distinguish display attempts from player-visible success and gameplay terminal state."
+        ],
+        "disconfirmingCase": "A setTitle or setActionBar source call does not prove display overlap, delivery or victory.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-project-setup",
@@ -157,7 +392,24 @@
       "sha256": "4847c359066a5e1a6c1f883d8b0ed9d1ea77031fa87abb7ac7a1988784abf8e0",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "methodology": {
+        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "sourceSections": [
+          "1. Decide first (ask the user when not given)",
+          "2. Scaffold",
+          "8. Existing projects (older than the skills)",
+          "9. Features in <ns>/"
+        ],
+        "objective": "Prefer reading existing pack/source ownership before introducing scaffolds or alternate system architecture.",
+        "investigationSteps": [
+          "Identify target edition/version, current project manifest and canonical feature owners.",
+          "Reuse existing source/API contracts and namespace boundaries instead of duplicating modules.",
+          "Only plan migrations with explicit evidence, approval and preserved data/behavior contracts."
+        ],
+        "disconfirmingCase": "The ZIP's Bun/Regolith project template is not a prerequisite for this existing GitHub-only Lazy-Developer repository.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-release-export",
@@ -165,7 +417,24 @@
       "sha256": "a098711c23f9c465e42c4e476087a103b6e98202d8fe086cbc4a03a037d1cc7e",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "methodology": {
+        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "sourceSections": [
+          "1. assets/",
+          "3. What `bun run release` does",
+          "4. Release checklist",
+          "Validation"
+        ],
+        "objective": "Keep release packaging, compatibility checks, source licensing and explicit approval distinct from development source updates.",
+        "investigationSteps": [
+          "Identify exact pack/manifest/asset inputs and versioned release contract.",
+          "Account for licensing, configuration, generated assets and existing bundle/export responsibilities.",
+          "Do not claim release readiness without matching environment evidence and explicit user authorization."
+        ],
+        "disconfirmingCase": "A successful archive or unchanged source commit alone is not proof of installed/world gameplay compatibility.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-script-optimization",
@@ -173,7 +442,24 @@
       "sha256": "2ec6fc08349443404b6355eef6d64ce61e030399bd4a5b3a3e19c5f467e55d82",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Shape: logic returns, one writer applies",
+          "2. Write only on change",
+          "3. Setup that can run any number of times",
+          "4. Event first, slow reconcile second"
+        ],
+        "objective": "Analyze repeated work, effect ownership, idempotent setup and safe reconciliation.",
+        "investigationSteps": [
+          "Find actual scheduler/event registration, operation frequency and state owner.",
+          "Trace whether effects are written only on change and whether setup can run repeatedly safely.",
+          "Check hidden legitimate work, co-owners and measured impact before suggesting optimization."
+        ],
+        "disconfirmingCase": "system.runInterval is not intrinsically a performance bug or evidence of repeated harmful writes.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-sound",
@@ -181,7 +467,24 @@
       "sha256": "43ffd47a805a106bc795fd00bc993f006e137799350e4134cc15312c820ae722",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Where sounds come from",
+          "2. Defining sounds (`RP/sounds/sound_definitions.json`)",
+          "5. Playing sounds from script",
+          "6. Ambience from entities"
+        ],
+        "objective": "Separate authored audio identifiers, playback attempts, RP registration and audible player context.",
+        "investigationSteps": [
+          "Join BP audio calls and RP definitions by exact identifier and selected pack scope.",
+          "Trace per-player, positional or entity-sourced sound recipient and timing.",
+          "Consider volume/streaming/stop semantics and runtime audio uncertainty before claiming an audible defect."
+        ],
+        "disconfirmingCase": "An authored playSound call is not proof the client heard it or that it marks game victory.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-teleport",
@@ -189,7 +492,24 @@
       "sha256": "9649019396eb379e3894d6f388b2ca77267bb76c3bdd5be49fc056af7da52eb9",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. The rule",
+          "2. Soft teleport sequence",
+          "3. Exceptions",
+          "4. Commands and functions"
+        ],
+        "objective": "Trace target placement, UI/camera transition, ownership and failure/restoration paths.",
+        "investigationSteps": [
+          "Locate the exact teleport API/command and resolved target location.",
+          "Trace session, pending forms, fade/camera sequence and valid exceptional urgent paths.",
+          "Inspect cancellation, player validity, safe landing and state restoration candidates."
+        ],
+        "disconfirmingCase": "The ZIP's soft-teleport preference is not a mandatory map rule, nor is a direct teleport automatically a bug.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-testing-policy",
@@ -197,7 +517,24 @@
       "sha256": "31dc114e0d2e5d95eb35b4bc900825e219b9bc708a32ab7d66da195e5907d407",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY"
+      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "methodology": {
+        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "sourceSections": [
+          "1. Rules",
+          "2. Change -> checks",
+          "3. When a test is warranted",
+          "4. Reporting"
+        ],
+        "objective": "Bound verification to changed critical behavior and report the actual proof ceiling accurately.",
+        "investigationSteps": [
+          "Identify changed source owner and whether the change affects crucial data/state semantics.",
+          "Prefer one focused behavior invariant over new microtests or unrelated suites.",
+          "List only checks genuinely performed; when the user postpones tests, preserve that constraint without execution claims."
+        ],
+        "disconfirmingCase": "Authoring a unit test or writing a checklist is not evidence that a test executed or that Minecraft gameplay passed.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-text-glyphs",
@@ -205,7 +542,24 @@
       "sha256": "ee501c6f84b58281b7478cf5f3e58a6994648ca25967c541daea0d7e43576b8d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. ASCII only",
+          "2. Glyphs and emoji: registered or not allowed",
+          "3. Sending text: Script API first",
+          "4. The name tag exception"
+        ],
+        "objective": "Trace localization, glyph registration and actual message channel without assuming visual delivery.",
+        "investigationSteps": [
+          "Join text keys, glyph atlas and message API sites to the owning resource pack.",
+          "Identify UI channel, fallback text and participant-specific rendering intent.",
+          "Review upstream partial glyph/overlap outcomes within their original tested client scope only."
+        ],
+        "disconfirmingCase": "An unregistered glyph in one locale is not evidence every client fails; a PASS in another fixture is not universal.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     },
     {
       "id": "src.bedrock-version-targeting",
@@ -213,7 +567,24 @@
       "sha256": "dc86b63fced03ff861096f0591b73723b5d5eb0cb92719ed3ab2cfd5b4543e99",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "INTERPRETATION_CANDIDATE"
+      "auditUsage": "INTERPRETATION_CANDIDATE",
+      "methodology": {
+        "applicability": "MAP_SOURCE_INTERPRETATION",
+        "sourceSections": [
+          "1. Inspect first",
+          "2. Decide",
+          "3. Record the target (`bedrock-target.json`)",
+          "5. Content format_version and pins"
+        ],
+        "objective": "Distinguish declared engine/API pins, authored content formats and actual target runtime.",
+        "investigationSteps": [
+          "Read selected pack manifest min-engine and dependency versions at their exact source identities.",
+          "Compare per-content format_version and feature requirements with a separately grounded edition/client version.",
+          "Keep incompatible/unknown target conditions unresolved until version-appropriate authority is available."
+        ],
+        "disconfirmingCase": "Manifest dependency pins alone do not establish the client/runtime version or prove compatibility.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
     }
   ],
   "patterns": [
@@ -756,7 +1127,8 @@
     },
     "sourcePackFiles": 56,
     "databaseInstalledVersion": "2.1.1",
-    "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified."
+    "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified.",
+    "probeToolScriptSourcesTracked": 13
   },
   "probeEvidence": [
     {
@@ -1739,6 +2111,346 @@
         "sha256": "1c45cd83f0ef852ad0d51d280347581e9e8589ffdc9942ecb471d3fb9ced0d10",
         "kind": "PROBE_CONFIGURATION_SOURCE"
       }
-    ]
+    ],
+    "developerWorkflowSources": [
+      {
+        "path": "skills/bedrock-agent-team/scripts/brief.mjs",
+        "sha256": "6d12406293e53d69f14738d728f3e5886dc8cbf4314518acf6f37ddbf09461f2",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-agent-team"
+      },
+      {
+        "path": "skills/bedrock-coordinates/scripts/check-coords.mjs",
+        "sha256": "44db782e13f07434aca7a3c5fd122844e1ba9b10ffb64832392b40756007016a",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-coordinates"
+      },
+      {
+        "path": "skills/bedrock-data-persistence/scripts/check-data.mjs",
+        "sha256": "0698a4e7616347e8ab73a945f1c5047b01e08d4178f717604b16734e658e7bee",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-data-persistence"
+      },
+      {
+        "path": "skills/bedrock-debug-logging/scripts/check-logging.mjs",
+        "sha256": "86637b1e01dec8bbfe04dc0fc41217023bc1a0721f38136859af2d7e67c0c060",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-debug-logging"
+      },
+      {
+        "path": "skills/bedrock-debug-profiling/scripts/capture-common.mjs",
+        "sha256": "02d148ba4fc4486cf9b9e156315d266f73cacd3b413d6e7680c50c6120d08b65",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-debug-profiling"
+      },
+      {
+        "path": "skills/bedrock-debug-profiling/scripts/diag-summary.mjs",
+        "sha256": "11d11da262db6e839b5d6f013f236d701a24c7e3b1d756b374c65ac510804fb6",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-debug-profiling"
+      },
+      {
+        "path": "skills/bedrock-debug-profiling/scripts/profile-summary.mjs",
+        "sha256": "8acba79585e37249440f1c8942d9eeabe86dc5a1f01dadf554fe6686474c2f13",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-debug-profiling"
+      },
+      {
+        "path": "skills/bedrock-entity-creation/scripts/add-testing-entities.mjs",
+        "sha256": "69a4bd4f19ac2f3835c446ccb96e0a93010770e277ab27fff8ff6b2357a22336",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-entity-creation"
+      },
+      {
+        "path": "skills/bedrock-entity-creation/scripts/check-damage.mjs",
+        "sha256": "eadb9d4b6aec19301463cd3fa5440550d8d5671d9ff89c0c912c4dbfb1379376",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-entity-creation"
+      },
+      {
+        "path": "skills/bedrock-entity-creation/scripts/check-models.mjs",
+        "sha256": "fa13be45077d6daecafa3213e427069c4bd33aea8c103d8d126b43e31d589e9d",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-entity-creation"
+      },
+      {
+        "path": "skills/bedrock-entity-lifecycle/scripts/check-entities.mjs",
+        "sha256": "468632196e5b67727cff314542c74a50232bc01880a63d4db390e8dc7b4e15d3",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-entity-lifecycle"
+      },
+      {
+        "path": "skills/bedrock-forms/scripts/check-forms.mjs",
+        "sha256": "0708c34cedf2136ae5ed7685f270fe429785642cc1bd33b3bfc3c8248d987250",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-forms"
+      },
+      {
+        "path": "skills/bedrock-game-results/scripts/check-results-log.mjs",
+        "sha256": "b48f4af76cbd22b06fff177b624115fb8c281a4b9a7c3ed7844b7e7f9278d6e2",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-game-results"
+      },
+      {
+        "path": "skills/bedrock-game-time/scripts/find-wall-clock.mjs",
+        "sha256": "4fa826a4c1becee814cf270cb638bf47abb70aad692fdb84b7c715169096324e",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-game-time"
+      },
+      {
+        "path": "skills/bedrock-git-workflow/scripts/git-check.mjs",
+        "sha256": "2bb863f76fd2a1af1b1a08681dacb72a310a2431b8560b7140c5cc05695a2493",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-git-workflow"
+      },
+      {
+        "path": "skills/bedrock-onscreen-display/scripts/find-display-commands.mjs",
+        "sha256": "3c61317a3641d5adb30802a1ae82a691dde66a9b3b6310bfa1be3e7b6751c444",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-onscreen-display"
+      },
+      {
+        "path": "skills/bedrock-project-setup/assets/template/packs/BP/scripts/__NAMESPACE__/common/store.ts",
+        "sha256": "e06d5b206a4f7f5e6462ddb12a8926026c788e442798bf5255361d75580120bd",
+        "kind": "TEMPLATE_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-project-setup"
+      },
+      {
+        "path": "skills/bedrock-project-setup/assets/template/packs/BP/scripts/config/admin.config.ts",
+        "sha256": "620a12db45694d00ba23647d18e17992c51f4e9f88ba19686869c70471546203",
+        "kind": "TEMPLATE_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-project-setup"
+      },
+      {
+        "path": "skills/bedrock-project-setup/assets/template/packs/BP/scripts/main.ts",
+        "sha256": "15237b2b3afa13ee7a9435878352c84b808a11f36b6232b41a0d33e8cf8486fc",
+        "kind": "TEMPLATE_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-project-setup"
+      },
+      {
+        "path": "skills/bedrock-project-setup/assets/template/packs/BP/scripts/types/runtime.d.ts",
+        "sha256": "1c45cd83f0ef852ad0d51d280347581e9e8589ffdc9942ecb471d3fb9ced0d10",
+        "kind": "TEMPLATE_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-project-setup"
+      },
+      {
+        "path": "skills/bedrock-project-setup/scripts/new-project.mjs",
+        "sha256": "eebd9a6e92fcc54c4d808924e8c49d6e8bfb1c9fe71270bc3ffd949db1f89c80",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-project-setup"
+      },
+      {
+        "path": "skills/bedrock-sound/scripts/check-sounds.mjs",
+        "sha256": "922dd11cc459ad9cec59a4aa45066271903775e1bcade116d05f1378031721c9",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-sound"
+      },
+      {
+        "path": "skills/bedrock-sound/scripts/make-test-tone.mjs",
+        "sha256": "d7da100cbcb4fba7023a5d852942acc4d799c76ea04d83250b817a2f9bb846f9",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-sound"
+      },
+      {
+        "path": "skills/bedrock-teleport/scripts/check-teleports.mjs",
+        "sha256": "43db2f7159ce4bd0df6f6d33657d4abda5c9056e9dc6281b982d9d3bacb7d385",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-teleport"
+      },
+      {
+        "path": "skills/bedrock-testing-policy/scripts/pick-checks.mjs",
+        "sha256": "be30e014e3f297efb3853b2679e9a2fd7abfd8fa75effc4466cd72e2c451ff85",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-testing-policy"
+      },
+      {
+        "path": "skills/bedrock-text-glyphs/scripts/check-text.mjs",
+        "sha256": "60c87f3fd195e9bfb702a4058ced47dd031ad7b7f28cd093559a6caf20749b8f",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-text-glyphs"
+      },
+      {
+        "path": "skills/bedrock-text-glyphs/scripts/glyph-png.mjs",
+        "sha256": "0441408933e6049d2b84a64eafcc0179bc8ff91b974be630cce3a60dce2f757d",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-text-glyphs"
+      },
+      {
+        "path": "skills/bedrock-text-glyphs/scripts/make-glyph-sheet.mjs",
+        "sha256": "6f5fcfede98a10ac05a88a25751b26194fe9b2b9182eae632be5fe23e974b256",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-text-glyphs"
+      },
+      {
+        "path": "skills/bedrock-version-targeting/scripts/upgrade-check.mjs",
+        "sha256": "24f8b6d7a451b987270569f85d21107ad2c7e1217e50b667606755e70411843f",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-version-targeting"
+      },
+      {
+        "path": "skills/bedrock-version-targeting/scripts/version-info.mjs",
+        "sha256": "0f8d2092ac4331377886a4b926369d282328ab3afce7145ec3d5dd2f4dfc7c49",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-version-targeting"
+      },
+      {
+        "path": "tools/check-modules.mjs",
+        "sha256": "1939b19b646d69e37e96f7631147f3673129ac4f936a52be6bdb9dac681a3977",
+        "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/check-skills.mjs",
+        "sha256": "391c887aed93fab2849801b0f15eac51cbbe0ba6b63ba150e31b3890aece6314",
+        "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/code-only.mjs",
+        "sha256": "8560d9706ac8491df048a6cb6ed71e2d3ba1be0f50af4df98d46269a2fef7328",
+        "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/release.mjs",
+        "sha256": "587d9207692dbf891926d975079a5c6b5d86e22bd51faadad8cb5be07385060b",
+        "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/tests/brief.test.mjs",
+        "sha256": "10e8cfc57552938910ce30959abd4d390c954d9f747293416f4a43e96d087784",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/check-entities.test.mjs",
+        "sha256": "26e8912fdf3e1a5605205d34794ed64040ba3e250ed862e76863e50b36df6d6a",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/check-logging.test.mjs",
+        "sha256": "0e9d39c0b9ffc8bc8e76776be213c244de8a517b727e1ce1979b2f56e759c0cb",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/check-models.test.mjs",
+        "sha256": "7110710804b0727d41c029dd59ee0941eb35fcf39c8f584fe2143d8c891fb6a0",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/check-results-log.test.mjs",
+        "sha256": "a07c17344ff3bed583972a01060ee6f521cfb41a88cbbc6e0f7528f2917e4ea3",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/check-skills.test.mjs",
+        "sha256": "8562a91fa07a113f79c1c2e2e1205e1e4a242a9e8ab425b2c5d3f32538682d6e",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/checkers.test.mjs",
+        "sha256": "fa21c00c6bfd94a0f0c2b9499afbaa3157f37c80d68f1af56eef55d338615626",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/code-only.test.mjs",
+        "sha256": "aba5eabbf9cbec13b766168b3c617645f99a23c549fad0c1ebde5d6597293516",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/make-glyph-sheet.test.mjs",
+        "sha256": "991e58596a230dfd13b4082e046c6eb0e07ccb47c416297e90567e5b15717ff3",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/perf-summary.test.mjs",
+        "sha256": "2c2c619045c4483922afb2257a37db930fa3355e41c98fefa2e6e728d833a7d9",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/sync.test.mjs",
+        "sha256": "d9045fc6af91e9059627aac3bdeeedf4d180bb91e330b1d99eeb9ec7d966554b",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/testing-entities.test.mjs",
+        "sha256": "e51b03a562bca5e703e1b72d3bf443efe74a0dc60edde2e7c91882e7726d9e66",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/versions.test.mjs",
+        "sha256": "5067c555600c711e242abaa3c2f1e6c233842c8417de4699ab292bca7e3903da",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/verify-quiet.mjs",
+        "sha256": "80209e85b8173842bbc2cd19ef46074d55b3be3e666a236936e439a9adad65b3",
+        "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
+      }
+    ],
+    "probeToolSources": [
+      {
+        "path": "tools/build-bundles.mjs",
+        "sha256": "07947c6c4ce49bb219ffe3ee2c258f43433e04316aee283f7afcc93e13addeb4",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/check.mjs",
+        "sha256": "40d84411eb87130697f08e972036635ac53191b86ffbbfb76c376feab0eb20af",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/glyph-icons/make-inputs.mjs",
+        "sha256": "d7622892a39cd625585ea7b7b386af8c3b73b21043e7bc53cc2f6bf37269d409",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/make-cache-test-worlds.mjs",
+        "sha256": "ffc3dbe1ce69317fbfb57e3e9dc2fcbf24b4bde1151a77d2c5cf51bc26280f48",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/make-label-probe.py",
+        "sha256": "436bba3fe16c8ece71381597d3a557a1e062ce46855255a0a202a09ff8eb322b",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/make-multiplayer-test-world.mjs",
+        "sha256": "201581529123f1bac13c4db1bbd93f5e08f5dcc9262fb13634d523648015c05c",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/make-textures.mjs",
+        "sha256": "84f732d9cf059819f491440b784664239e3d2139c9856d55c3af5f6a9f3b2647",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/regolith/compile-scripts.js",
+        "sha256": "a107db5e40dda40ded9542ce38a6ed333e4e62f760c900eb79f52572a2684699",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/regolith/hud-variant.js",
+        "sha256": "090c03b78e4d146acaf57e5762b0a6db50598e9586246ddef129e4064b080f00",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/sync.mjs",
+        "sha256": "2b50f07ae3d4cf00596bc0cc77cd8db3afef595633aa66a6954bcc63e9d56ee2",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/verify-quiet.mjs",
+        "sha256": "80209e85b8173842bbc2cd19ef46074d55b3be3e666a236936e439a9adad65b3",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/vscode-debug-keep-listening/extension.js",
+        "sha256": "e9ccab75031e01d136307e4396f9d5f3bbca9db30171d11c2dbd51ec2d88f7fb",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/vscode-debug-keep-listening/extension.test.js",
+        "sha256": "7be5494c1fce2c38d8b65be9d4d5e72a665810d51b50443d7f7bc5dbcfdc500d",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      }
+    ],
+    "untrackedSourcePolicy": "This is an exact, typed-script/tool-source subset from both uploaded ZIPs; it is a developer reference and is not executed, installed, licensed for redistribution, or a claim all assets have been semantically analyzed."
   }
 }

@@ -177,6 +177,16 @@ export interface DeveloperPracticeReferenceData {
     readonly path: string;
     readonly sha256: string;
     readonly auditUsage?: string;
+    /** Curated from exact headings of this SHA-pinned developer SKILL.md. */
+    readonly methodology?: {
+      readonly applicability:
+        "MAP_SOURCE_INTERPRETATION" | "DEVELOPMENT_WORKFLOW_PROVENANCE";
+      readonly sourceSections: readonly string[];
+      readonly objective: string;
+      readonly investigationSteps: readonly string[];
+      readonly disconfirmingCase: string;
+      readonly proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF";
+    };
   }[];
   /** Exact source-file identities from developer ZIP; never imports or executable dependencies. */
   readonly codeInventory?: {
@@ -196,6 +206,21 @@ export interface DeveloperPracticeReferenceData {
       readonly sha256: string;
       readonly kind: string;
       readonly ownerSkill?: string;
+    }[];
+    /** Exact source files from developer tool/checker/scripts/template.
+     * These MUST NOT be executed by reference retrieval.
+     */
+    readonly developerWorkflowSources?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly kind: string;
+      readonly ownerSkill?: string;
+    }[];
+    /** Standalone Skills Probe tool code. No selected-map proof authority. */
+    readonly probeToolSources?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly kind: string;
     }[];
   };
   /** Scope-limited, historical upstream test reports (not map evidence). */
@@ -378,6 +403,23 @@ export interface CompiledDeveloperPracticeReferenceContext {
     readonly matchingEvidenceIds: readonly string[];
     readonly matchingSourcePaths: readonly string[];
     readonly matchingSignals: readonly string[];
+    /** Ordered, SHA-pinned developer method; selected ONLY with exact
+     * current-map typed witness and never a new map design/proof rule.
+     */
+    readonly methodology?: {
+      readonly applicability: "MAP_SOURCE_INTERPRETATION";
+      readonly sourceSections: readonly string[];
+      readonly objective: string;
+      readonly investigationSteps: readonly string[];
+      readonly disconfirmingCase: string;
+      readonly proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF";
+    };
+    /** Selected module's upstream unit tests. Source examples, NOT executed. */
+    readonly sourceTests?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly usage: "EXTERNAL_TEST_SOURCE_NOT_EXECUTED";
+    }[];
     /** Source-authored pack declarations; never observed client versions. */
     readonly manifestDeclarations?: readonly {
       readonly sourcePath: string;
@@ -400,6 +442,12 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly path: string;
       readonly sha256: string;
     }[];
+    /** Exact upstream per-skill checker source, not an executable step. */
+    readonly methodTools?: readonly {
+      readonly path: string;
+      readonly sha256: string;
+      readonly kind: "SKILL_TOOL_SOURCE_REFERENCE";
+    }[];
     /** Upstream probes are investigation clues only, not bug proof. */
     readonly upstreamProbes?: readonly {
       readonly id: string;
@@ -408,8 +456,12 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly summary: string;
       readonly fixtureSources?: readonly { readonly path: string; readonly sha256: string }[];
     }[];
-    /** Four installed store module sources are present only in the probe ZIP. */
+    /** Exact installed database source; probe-zip only, not imported. */
     readonly probeInstalledModules?: readonly { readonly path: string; readonly sha256: string }[];
+    /** Versioned installed developer module mirrors, not live map modules.
+     * Their hashes may differ from companion ZIP v0.24.0.
+     */
+    readonly probeMirrors?: readonly { readonly path: string; readonly sha256: string }[];
   }[];
   readonly omitted: number;
 }
@@ -501,6 +553,25 @@ export function compileDeveloperPracticeReferenceContext(input: {
       ? relatedManifests.filter(item => matches.some(match =>
           match.sourcePath === item.source.relativePath))
       : [];
+    const method = source.methodology;
+    const eligibleMethod = method?.applicability === "MAP_SOURCE_INTERPRETATION" &&
+      method.proofBoundary ===
+        "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" &&
+      method.sourceSections.length > 0 &&
+      method.investigationSteps.length >= 2 &&
+      method.investigationSteps.length <= 6 &&
+      !!method.objective.trim() && !!method.disconfirmingCase.trim();
+    const ownedModuleDirectories = new Set((data.codeInventory?.codeModules ?? [])
+      .filter(item => item.ownerSkill === source.id &&
+        item.usage === "SOURCE_IMPLEMENTATION_REFERENCE" &&
+        /^[a-f0-9]{64}$/.test(item.sha256))
+      .map(item => item.path.split("/").slice(0, 2).join("/")));
+    const sourceTests = (data.codeInventory?.unitTests ?? [])
+      .filter(test => test.usage === "EXTERNAL_TEST_SOURCE_NOT_EXECUTED" &&
+        /^[a-f0-9]{64}$/.test(test.sha256) &&
+        ownedModuleDirectories.has(test.path.split("/").slice(0, 2).join("/")))
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .slice(0, 4);
     return [{
       patternId: pattern.id,
       sourceId: source.id,
@@ -515,6 +586,39 @@ export function compileDeveloperPracticeReferenceContext(input: {
       matchingEvidenceIds: sorted(matches.map(item => item.evidenceId)),
       matchingSourcePaths: sorted(matches.map(item => item.sourcePath)),
       matchingSignals: sorted(matches.map(item => item.signal)),
+      ...(eligibleMethod && method !== undefined ? {
+        methodology: {
+          applicability: "MAP_SOURCE_INTERPRETATION" as const,
+          sourceSections: [...method.sourceSections],
+          objective: method.objective,
+          investigationSteps: [...method.investigationSteps],
+          disconfirmingCase: method.disconfirmingCase,
+          proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
+        },
+      } : {}),
+      ...(sourceTests.length === 0 ? {} : {
+        sourceTests: sourceTests.map(test => ({
+          path: test.path,
+          sha256: test.sha256,
+          usage: "EXTERNAL_TEST_SOURCE_NOT_EXECUTED" as const,
+        })),
+      }),
+      ...((data.codeInventory?.developerWorkflowSources ?? []).some(item =>
+        item.ownerSkill === source.id &&
+        item.kind === "SKILL_TOOL_SOURCE_REFERENCE" &&
+        /^[a-f0-9]{64}$/.test(item.sha256)) ? {
+        methodTools: (data.codeInventory?.developerWorkflowSources ?? [])
+          .filter(item => item.ownerSkill === source.id &&
+            item.kind === "SKILL_TOOL_SOURCE_REFERENCE" &&
+            /^[a-f0-9]{64}$/.test(item.sha256))
+          .sort((a,b) => a.path.localeCompare(b.path))
+          .slice(0, 3)
+          .map(item => ({
+            path: item.path,
+            sha256: item.sha256,
+            kind: "SKILL_TOOL_SOURCE_REFERENCE" as const,
+          })),
+      } : {}),
       ...(declarations.length === 0 ? {} : {
         manifestDeclarations: declarations.map(item => ({
           sourcePath: item.source.relativePath,
@@ -540,6 +644,14 @@ export function compileDeveloperPracticeReferenceContext(input: {
           .map((item) => ({ path: item.path, sha256: item.sha256 })),
       }),
       ...(data.codeInventory?.probePackSources === undefined ? {} : {
+        probeMirrors: data.codeInventory.probePackSources
+          .filter(item =>
+            item.kind === "PROBE_MODULE_MIRROR" &&
+            item.ownerSkill === source.id &&
+            /^[a-f0-9]{64}$/.test(item.sha256))
+          .sort((a,b) => a.path.localeCompare(b.path))
+          .slice(0, 4)
+          .map(item => ({ path: item.path, sha256: item.sha256 })),
         probeInstalledModules: data.codeInventory.probePackSources
           .filter((item) =>
             item.kind === "PROBE_DATABASE_MODULE" &&

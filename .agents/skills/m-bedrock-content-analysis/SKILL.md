@@ -36,6 +36,18 @@ Skills Probe's negative and unverified cases. Do not convert those
 external reports into platform facts, map intent, BUG disposition,
 analyzer mutations, or a claim that Minecraft was run here.
 
+## Unified methodology selection
+
+The same `experiments/developer-practice-signals.json` contains all
+22 pinned `sourceFiles[].methodology` records. At a matching
+selected-artifact source/typed-IR site, the existing
+`compileDeveloperPracticeReferenceContext()` can now attach the
+source chapter, three-step reasoning path, disconfirming alternative
+and corresponding code/checker/probe references. **Use these as
+questions, not mandatory game behavior or test instructions.**
+Six development-only methods stay outside map audit selection.
+A referenced helper or unit test is historical source, **NOT RUN**.
+
 ## External source inventory and proof boundary
 
 For developer skill/module source and Skills Probe fixture/report coverage,

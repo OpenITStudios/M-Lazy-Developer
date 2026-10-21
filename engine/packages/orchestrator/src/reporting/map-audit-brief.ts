@@ -248,6 +248,11 @@ export function formatSelectedMapAuditBrief(input: {
       const guide = firstTask.developerPractice.items[0]!;
       out.push(
         "**Developer reference (NOT proof):** " + concise(guide.question),
+        ...(guide.methodology === undefined ? [] : [
+          "**Developer investigation path:** " +
+            concise(guide.methodology.investigationSteps[0] ??
+              guide.methodology.objective),
+        ]),
         "**Design counterexample to check:** " + concise(guide.negativeControl),
       );
     }
@@ -1550,6 +1555,26 @@ export function formatSelectedMapAuditBrief(input: {
           concise(guide.question),
         "  Counterexample: " + concise(guide.negativeControl),
         "  Forbidden inference: " + concise(guide.prohibits),
+        ...(guide.methodology === undefined ? [] : [
+          "  Developer method (EXTERNAL REFERENCE; NOT map proof): " +
+            concise(guide.methodology.objective),
+          "  Source chapters: " + guide.methodology.sourceSections
+            .slice(0, 4).map(concise).join("; "),
+          ...guide.methodology.investigationSteps.slice(0, 3)
+            .map((step, index) =>
+              "  Method step " + (index + 1) + ": " + concise(step)),
+          "  Disconfirm before diagnosis: " +
+            concise(guide.methodology.disconfirmingCase),
+        ]),
+        ...(guide.sourceTests ?? []).slice(0, 2).map(test =>
+          "  Developer unit-test source (NOT RUN): " +
+            concise(test.path) + " / sha256:" + test.sha256),
+        ...(guide.methodTools ?? []).slice(0, 2).map(item =>
+          "  Upstream developer checker source (REFERENCE; NOT RUN): " +
+            concise(item.path) + " / sha256:" + item.sha256),
+        ...(guide.probeMirrors ?? []).slice(0, 2).map(item =>
+          "  Probe installed module mirror (EXTERNAL, NOT RUN): " +
+            concise(item.path) + " / sha256:" + item.sha256),
         "  Exact selected-IR sites: " +
           guide.matchingEvidenceIds.slice(0, 4).map(concise).join("; "),
         ...(guide.referenceCode === undefined ? [] : [

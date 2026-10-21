@@ -178,6 +178,24 @@ lifecycle protects read-only retrieval. Neither is a second
 checkpoint, another source of Expected Behavior or proof that a
 previously opened Minecraft map behaved in a particular way.
 
+### One developer-method investigation path
+
+The existing, opt-in `developerPractice` context can now deliver
+the relevant SHA-pinned developer methodology **within the same bounded
+model task**: actual SKILL.md chapter references, a three-step source
+investigation, a concrete design counterexample, and linked example
+module/unit-test/checker/probe sources. This replaces scattered
+standalone developer advice with one source-grounded investigation
+path. Additional contexts remain omitted if no exact selected-map
+typed source cue exists.
+
+The six team/release/setup/result/testing workflow methods are
+development-only provenance. They cannot be chosen as gameplay
+Expected Behavior or as a detector. All external tool scripts,
+developer unit-test sources and probe reports are **NOT executed**
+during source reference retrieval. The current source artifact and
+canonical proof gate always decide the map finding.
+
 ### External developer source: comparison, never replacement
 
 The supplied `minecraft-bedrock-agent-skills` v0.24.0 and

@@ -31,6 +31,26 @@ Use only for detection-gap, detector false positive/negative, missing/stale plat
 - broaden into unrelated Product Development;
 - resume Map Bug Audit automatically.
 
+## User-supplied developer methodology (not a second skill system)
+
+For a relevant development concern, consult
+`docs/analysis/developer-practice-context.md` and its **single**
+`experiments/developer-practice-signals.json` source. The pinned
+`sourceFiles[].methodology` entries preserve the developer's real
+source chapters, investigation steps and disconfirming alternatives.
+Use the six `DEVELOPMENT_WORKFLOW_PROVENANCE` entries only where
+the activity matches their subject (ownership handoff, export,
+versioning, scoped verification). No ZIP-local build/test command,
+team agent, external tool or runtime dependency is implicitly
+approved; follow this repository's GitHub authority and the user's
+test deferral.
+
+For detecting map errors, use the 16 source-interpretation
+methodologies only through the current-map selected source and
+existing `compileDeveloperPracticeReferenceContext()`, never by
+adding global ZIP-derived defect rules. Preserve exact SHA, method
+question, counterexample and proof ceiling.
+
 ## Mandatory operating style
 
 Apply `docs/system/development-discipline.md#development-operating-standard` at task intake, before engine edits, and at completion. Discovery improvements must reject both unsupported confidence and unnecessary UNKNOWN; verify positive and negative examples without inventing new owners.
