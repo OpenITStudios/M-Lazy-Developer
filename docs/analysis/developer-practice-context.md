@@ -671,8 +671,8 @@ never because this ZIP says the pattern is preferred.
 ## Bundled/minified source-map precision
 
 The existing `recovery/source-map-binding.ts` source-map V3 decoder now
-carries the previous source index, original line and name deltas across
-generated lines, resets generated/original columns per line, and respects
+carries source index, original line, original column and name deltas
+across generated lines, resets only the generated column per line, and respects
 unmapped one-field segments. It rejects invalid segment arity and unsafe
 numeric values rather than inventing an original source position. This is
 a correction to the existing recovery owner, not a new source authority:

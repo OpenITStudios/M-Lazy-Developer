@@ -29,12 +29,12 @@ describe("source map binding", () => {
     const map = parseSourceMapV3({
       version: 3, sources: ["a.ts", "b.ts"], names: [],
       // First line maps to b.ts line 3, next segment preserves both deltas.
-      mappings: "ACEA;AAAA",
+      mappings: "ACEI;AAAA",
     });
     expect(bindGeneratedPosition(map, 2, 0)).toEqual(
       expect.objectContaining({
         status: "resolved", source: "b.ts", originalLine: 3,
-        originalColumn: 0,
+        originalColumn: 4,
       }),
     );
   });

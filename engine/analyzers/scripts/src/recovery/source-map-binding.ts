@@ -124,10 +124,12 @@ export function bindGeneratedPosition(
     };
   }
 
-  // Source, original line and name VLQ deltas carry across generated lines.
-  // Generated and original columns reset at the start of EACH line.
+  // Only the generated column resets on each line. Source index, original
+  // line, original column and name index all carry across generated lines.
+  // See ECMA-426 source map mappings structure, section 5.1.
   let sourceIndex = 0;
   let originalLine = 0;
+  let originalColumn = 0;
   let nameIndex = 0;
   let best: {
     sourceIndex: number;
@@ -138,7 +140,6 @@ export function bindGeneratedPosition(
 
   for (let lineIndex = 0; lineIndex < generatedLine; lineIndex++) {
     let generated = 0;
-    let originalColumn = 0;
     const targetLine = lineIndex === generatedLine - 1;
     for (const segment of lines[lineIndex]!.split(",")) {
       if (!segment) continue;
