@@ -6,6 +6,10 @@ import {
   satisfiedScenarioKnowledgeReceipt,
   uniqueScenarioKnowledgeRequirement,
 } from "./gameplay-scenario-knowledge.js";
+import {
+  classifyGameplayIssue,
+  type GameplayIssueFailureDomain,
+} from "../../../diagnostic-reasoning/src/index.js";
 
 /** Exact selected-artifact subject/scope relation; not a proof of reachability or delivery. */
 export function capabilityDeliveryMatchesScope(
@@ -121,6 +125,44 @@ function unique(values: readonly string[] | undefined): readonly string[] {
   return [...new Set(
     (values ?? []).map((value) => value.trim()).filter(Boolean),
   )].sort();
+}
+
+/**
+ * Source owner for family-specific counterproof obligations. PROVE/REPORT
+ * consume this same policy; they must not define a competing dimension list.
+ */
+const FAMILY_COUNTERPROOF_CRITERIA: Readonly<Partial<Record<
+  GameplayIssueFailureDomain,
+  { readonly criterionId: string; readonly dimensions: readonly CounterProofSearchDimension[] }
+>>> = {
+  "progression-wave-objective": {
+    criterionId: "reconciliation-exhausted",
+    dimensions: ["guard", "exclusion", "scope"],
+  },
+  "arena-multi-arena": {
+    criterionId: "arena-counterproof-exhausted",
+    dimensions: ["owner", "guard", "generation", "cleanup", "exclusion", "scope"],
+  },
+  "inventory-economy": {
+    criterionId: "idempotency-exclusion-exhausted",
+    dimensions: ["guard", "generation", "exclusion", "scope"],
+  },
+  "state-ownership": {
+    criterionId: "ownership-counterproof-exhausted",
+    dimensions: ["owner", "guard", "exclusion", "scope"],
+  },
+  "player-lifecycle": {
+    criterionId: "recovery-counterproof-exhausted",
+    dimensions: ["owner", "generation", "cleanup", "guard", "scope"],
+  },
+};
+
+export function familyCounterProofDimensionsForCriterion(
+  criterionId: string,
+): readonly CounterProofSearchDimension[] {
+  return Object.values(FAMILY_COUNTERPROOF_CRITERIA)
+    .find((item) => item?.criterionId === criterionId)
+    ?.dimensions ?? [];
 }
 
 export function requiredCounterProofDimensions(
@@ -370,6 +412,17 @@ export function requiredCounterProofDimensions(
     required.add("representation");
   }
 
+  if (scenario !== undefined &&
+      (link.componentIds.length > 0 || link.knowledgeRequirementIds.length > 0)) {
+    const failureDomain = classifyGameplayIssue({
+      gameplayStage: scenario.gameplayStage,
+      scenarioLabel: scenario.label,
+      componentIds: link.componentIds,
+      knowledgeDomains: [...knowledgeDomains],
+    }).failureDomain;
+    for (const dimension of FAMILY_COUNTERPROOF_CRITERIA[failureDomain]
+      ?.dimensions ?? []) required.add(dimension);
+  }
   return [...required].sort();
 }
 
@@ -548,6 +601,14 @@ function validateResolution(
             ": confirmed defect requires NO_BLOCKING_PROOF conclusion.",
         );
       }
+      // Source/graph freshness is checked by the same canonical search
+      // contract consumed at PROVE; a self-attested receipt is insufficient.
+      if (!counterProofSearchIsGraphGrounded(graph, link, scenario, search)) {
+        issues.push(
+          link.id +
+            ": counter-proof receipt is not an exact, complete canonical search for the current causal graph.",
+        );
+      }
     }
   }
 
@@ -706,11 +767,11 @@ function dimensionEvidenceFor(
   dimension: CounterProofSearchDimension,
 ): readonly string[] {
   const componentHints: Readonly<Record<CounterProofSearchDimension, readonly string[]>> = {
-    owner: ["runtime:arena", "runtime:persistence", "runtime:inventory", "runtime:state"],
+    owner: ["runtime:arena", "runtime:persistence", "runtime:inventory", "runtime:state", "runtime:chunks"],
     guard: [],
-    generation: ["runtime:arena", "runtime:persistence"],
+    generation: ["runtime:arena", "runtime:persistence", "runtime:chunks"],
     scope: [],
-    cleanup: ["runtime:arena-cleanup", "runtime:structures", "runtime:inventory"],
+    cleanup: ["runtime:arena-cleanup", "runtime:structures", "runtime:inventory", "runtime:chunks"],
     exclusion: [],
     geometry: ["runtime:spatial", "runtime:structures", "runtime:arena-replica-integrity"],
     capability: ["runtime:player-capability"],
@@ -721,6 +782,9 @@ function dimensionEvidenceFor(
   const exact = EXACT_COUNTERPROOF_DIMENSIONS.has(dimension);
   const evidence = dimensionCandidates(graph, contradicted, dimension)
     .filter((candidate) =>
+      // A source-bound witness on the exact contradicted link already has
+      // identity authority. Hints only constrain neighboring candidate links.
+      candidate.id === contradicted.id ||
       componentHints[dimension].length === 0 ||
       candidate.componentIds.some((id) => componentHints[dimension].includes(id))
     )
@@ -860,6 +924,67 @@ export function automaticCounterProofSearch(
  * components and source-bound scope/exclusion witnesses from the owner.
  * This source-level decision never asserts live Minecraft guard execution.
  */
+/**
+ * The graph's current counterproof owner, not an externally asserted
+ * exhaustive flag, authorizes a source-bounded NO_BLOCKING_PROOF receipt.
+ * Compare the full dimension inventory and each exact witness/scope set.
+ * A prior receipt cannot survive a changed Scenario Graph by identity alone.
+ */
+export function counterProofSearchIsGraphGrounded(
+  graph: GameplayScenarioGraph,
+  contradicted: GameplayCausalLink,
+  scenario: GameplayScenarioGraph["scenarios"][number] | undefined,
+  submitted: CounterProofSearchReceipt | undefined,
+): boolean {
+  if (submitted === undefined ||
+      submitted.schemaVersion !== 1 ||
+      submitted.policy !== "bounded-counterproof-search" ||
+      submitted.conclusion !== "NO_BLOCKING_PROOF" ||
+      submitted.exhaustiveWithinScope !== true ||
+      !Array.isArray(submitted.scopeIds) ||
+      !Array.isArray(submitted.evidenceIds) ||
+      !Array.isArray(submitted.searchedDimensions) ||
+      !Array.isArray(submitted.dimensionReceipts)) return false;
+
+  const canonical = automaticCounterProofSearch(
+    graph, contradicted, scenario,
+  );
+  if (!canonical.exhaustiveWithinScope ||
+      canonical.conclusion !== "NO_BLOCKING_PROOF") return false;
+
+  const sameIds = (left: readonly string[], right: readonly string[]) => {
+    const a = unique(left);
+    const b = unique(right);
+    return a.length === left.length &&
+      b.length === right.length &&
+      a.length === b.length &&
+      a.every((value, index) => value === b[index]);
+  };
+  if (!sameIds(submitted.scopeIds, canonical.scopeIds) ||
+      !sameIds(submitted.searchedDimensions, canonical.searchedDimensions) ||
+      submitted.searchedDimensions.length !== submitted.dimensionReceipts.length ||
+      submitted.evidenceIds.length === 0 ||
+      !submitted.evidenceIds.every((id) =>
+        canonical.evidenceIds.includes(id)
+      )) return false;
+
+  return canonical.dimensionReceipts.every((expected) => {
+    const found = submitted.dimensionReceipts.filter((item) =>
+      item.dimension === expected.dimension
+    );
+    const receipt = found[0];
+    return found.length === 1 &&
+      receipt !== undefined &&
+      receipt.exhaustiveWithinScope === true &&
+      expected.exhaustiveWithinScope === true &&
+      Array.isArray(receipt.evidenceIds) &&
+      Array.isArray(receipt.scopeIds) &&
+      receipt.evidenceIds.length > 0 &&
+      sameIds(receipt.evidenceIds, expected.evidenceIds) &&
+      sameIds(receipt.scopeIds, expected.scopeIds);
+  });
+}
+
 function counterProofAppliesAtCommit(
   candidate: GameplayCausalLink,
   contradicted: GameplayCausalLink,

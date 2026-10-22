@@ -4,6 +4,8 @@ import {
 } from "../../diagnostic-reasoning/src/index.js";
 import {
   blockingCounterProofFor,
+  counterProofSearchIsGraphGrounded,
+  familyCounterProofDimensionsForCriterion,
   type GameplayDefectResolution,
 } from "./inspection/gameplay-defect-resolution.js";
 import type {
@@ -169,43 +171,6 @@ const IMPACT_PATH_CRITERIA = new Set([
   "player-degradation-derived",
 ]);
 
-const FAMILY_COUNTERPROOF_DIMENSIONS: Readonly<
-  Partial<Record<string, readonly string[]>>
-> = {
-  "reconciliation-exhausted": [
-    "guard",
-    "exclusion",
-    "scope",
-  ],
-  "arena-counterproof-exhausted": [
-    "owner",
-    "guard",
-    "generation",
-    "cleanup",
-    "exclusion",
-    "scope",
-  ],
-  "idempotency-exclusion-exhausted": [
-    "guard",
-    "generation",
-    "exclusion",
-    "scope",
-  ],
-  "ownership-counterproof-exhausted": [
-    "owner",
-    "guard",
-    "exclusion",
-    "scope",
-  ],
-  "recovery-counterproof-exhausted": [
-    "owner",
-    "generation",
-    "cleanup",
-    "guard",
-    "scope",
-  ],
-};
-
 function derivedFamilyCriterionEvidence(input: {
   criterionId: string;
   link: GameplayScenarioGraph["causalLinks"][number] | undefined;
@@ -215,11 +180,10 @@ function derivedFamilyCriterionEvidence(input: {
   const { criterionId, link, resolution, knowledgeEvidenceByDomain } = input;
   if (link === undefined || link.status !== "CONTRADICTED") return [];
 
+  // Only the contradiction owner, not an externally supplied resolution or
+  // loosely related scenario neighbor, can supply family source evidence.
   const contradictionEvidence = [
-    ...new Set([
-      ...link.evidenceIds,
-      ...(resolution.evidenceIds ?? []),
-    ]),
+    ...new Set(link.evidenceIds),
   ].filter(Boolean);
   const impactEvidence =
     link.impactPathComponentIds.length > 0 &&
@@ -227,70 +191,40 @@ function derivedFamilyCriterionEvidence(input: {
       ? [...link.impactPathEvidenceIds]
       : [];
   const familyCounterproofDimensions =
-    FAMILY_COUNTERPROOF_DIMENSIONS[criterionId] ?? [];
+    familyCounterProofDimensionsForCriterion(criterionId);
   const searchedDimensions =
     resolution.counterProofSearch?.searchedDimensions ?? [];
-  const requiredCounterproofDimensions =
-    familyCounterproofDimensions.filter((dimension) =>
+  if (familyCounterproofDimensions.length > 0) {
+    // A family claim such as reconciliation-exhausted cannot be established
+    // by the subset that happened to be searched. Every declared family
+    // dimension needs one exhaustive receipt from the current source graph.
+    if (!familyCounterproofDimensions.every((dimension) =>
       searchedDimensions.includes(dimension as any)
-    );
-  if (
-    familyCounterproofDimensions.length > 0 &&
-    requiredCounterproofDimensions.length > 0
-  ) {
+    )) return [];
     const receipts =
       resolution.counterProofSearch?.dimensionReceipts ?? [];
-    const matched = requiredCounterproofDimensions.map(
-      (dimension) =>
-        receipts.find(
-          (receipt) =>
-            receipt.dimension === dimension &&
-            receipt.exhaustiveWithinScope === true &&
-            receipt.evidenceIds.length > 0,
-        ),
-    );
-    if (matched.some((receipt) => receipt === undefined)) {
-      return [];
-    }
-    return [
-      ...new Set(
-        matched.flatMap(
-          (receipt) => receipt?.evidenceIds ?? [],
-        ),
-      ),
-    ].sort();
-  }
-  const dimensionEvidence = (
-    dimensions: readonly string[],
-  ): readonly string[] =>
-    resolution.counterProofSearch?.dimensionReceipts
-      .filter(
-        (receipt) =>
-          dimensions.includes(receipt.dimension) &&
-          receipt.exhaustiveWithinScope === true,
+    const matched = familyCounterproofDimensions.map((dimension) =>
+      receipts.filter((receipt) =>
+        receipt.dimension === dimension &&
+        receipt.exhaustiveWithinScope === true &&
+        receipt.evidenceIds.length > 0
       )
-      .flatMap((receipt) => receipt.evidenceIds) ?? [];
-
-  if (criterionId === "commit-revalidation-missing") {
-    return dimensionEvidence([
-      "generation",
-      "guard",
-      "exclusion",
-    ]);
+    );
+    if (matched.some((records) => records.length !== 1)) return [];
+    return [...new Set(matched.flatMap((records) =>
+      records[0]?.evidenceIds ?? []
+    ))].sort();
   }
-  if (criterionId === "cleanup-containment-missing") {
-    return dimensionEvidence([
-      "cleanup",
-      "geometry",
-      "scope",
-    ]);
-  }
-  if (criterionId === "restore-outcome-derived") {
-    return dimensionEvidence([
-      "generation",
-      "cleanup",
-      "owner",
-    ]);
+  if (
+    criterionId === "commit-revalidation-missing" ||
+    criterionId === "cleanup-containment-missing" ||
+    criterionId === "restore-outcome-derived"
+  ) {
+    // Presence of a guard, cleanup or owner witness proves the positive
+    // observation, not that revalidation/containment/recovery is missing.
+    // These negative-outcome criteria require an independently grounded
+    // explicit family receipt from the contradicted causal owner.
+    return [];
   }
   if (IMPACT_PATH_CRITERIA.has(criterionId)) {
     return impactEvidence;
@@ -399,14 +333,28 @@ export function assessReadyResolutionSaturation(
   // exact-target exclusion still present in the canonical Scenario Graph.
   const graphBlockingProofIds =
     link === undefined ? [] : blockingCounterProofFor(graph, link);
+  // PROVE re-evaluates the current canonical source graph. A stale or
+  // self-asserted receipt from another analysis revision cannot grant PROVEN.
   const counterProofCleared =
-    resolution.counterProofSearch?.conclusion ===
-      "NO_BLOCKING_PROOF" &&
-    resolution.counterProofSearch
-      .exhaustiveWithinScope === true &&
+    link !== undefined &&
+    counterProofSearchIsGraphGrounded(
+      graph, link, scenario, resolution.counterProofSearch,
+    ) &&
     counterProofEvidenceBound &&
     graphBlockingProofIds.length === 0;
 
+  const familyReceipt =
+    resolution.familyProof;
+  const familyReceiptSchemaValid = familyReceipt === undefined ||
+    (familyReceipt.schemaVersion === 1 &&
+      familyReceipt.policy === "family-proof-receipt" &&
+      familyReceipt.failureDomain === classification.failureDomain &&
+      familyReceipt.criteria.every((item) =>
+        FAMILY_CRITERIA[classification.failureDomain]
+          .some((criterion) => criterion.id === item.id)
+      ) &&
+      new Set(familyReceipt.criteria.map((item) => item.id)).size ===
+        familyReceipt.criteria.length);
   const universalCriteria:
     AuditProofSaturationCriterion[] = [
       {
@@ -477,15 +425,18 @@ export function assessReadyResolutionSaturation(
         evidenceIds: counterProofIds.filter((id) =>
           knownEvidenceIds.has(id)),
       },
+      {
+        id: "family-proof-receipt-valid",
+        description:
+          "Optional family proof has supported schema, owned criteria and no duplicate criterion identities.",
+        satisfied: familyReceiptSchemaValid,
+        evidenceIds: [],
+      },
     ];
 
-  const familyReceipt =
-    resolution.familyProof;
   const familyReceiptById = new Map(
-    (familyReceipt?.criteria ?? []).map((item) => [
-      item.id,
-      item,
-    ]),
+    (familyReceiptSchemaValid ? familyReceipt?.criteria ?? [] : [])
+      .map((item) => [item.id, item]),
   );
   const familyCriteria =
     FAMILY_CRITERIA[
@@ -505,6 +456,31 @@ export function assessReadyResolutionSaturation(
         : criterion.id.includes("residency-requirement")
           ? "chunk-simulation"
           : undefined;
+      const counterproofFamilyDimensions =
+        familyCounterProofDimensionsForCriterion(criterion.id);
+      const familyCounterproofReceipts =
+        resolution.counterProofSearch?.dimensionReceipts ?? [];
+      const familyCounterproofEvidence = counterProofCleared &&
+        counterproofFamilyDimensions.length > 0 &&
+        counterproofFamilyDimensions.every((dimension) =>
+          familyCounterproofReceipts.some((item) =>
+            item.dimension === dimension &&
+            item.exhaustiveWithinScope &&
+            item.evidenceIds.length > 0
+          )
+        )
+        ? familyCounterproofReceipts
+          .filter((item) => counterproofFamilyDimensions.includes(item.dimension))
+          .flatMap((item) => item.evidenceIds)
+        : [];
+      // Negative claims and direct reachable/grounded claims must not take
+      // arbitrary evidence from other links in the same scenario.
+      const sourceSpecificFamilyClaim =
+        criterion.id === "commit-revalidation-missing" ||
+        criterion.id === "cleanup-containment-missing" ||
+        criterion.id === "restore-outcome-derived" ||
+        criterion.id.includes("reachable") ||
+        criterion.id.includes("grounded");
       const allowedCriterionEvidenceIds =
         IMPACT_PATH_CRITERIA.has(criterion.id)
           ? new Set(
@@ -512,9 +488,13 @@ export function assessReadyResolutionSaturation(
                 ? link.impactPathEvidenceIds
                 : [],
             )
-          : requiredKnowledgeDomain === undefined
-            ? undefined
-            : new Set(knowledgeEvidenceByDomain.get(requiredKnowledgeDomain) ?? []);
+          : counterproofFamilyDimensions.length > 0
+            ? new Set(familyCounterproofEvidence)
+            : requiredKnowledgeDomain !== undefined
+              ? new Set(knowledgeEvidenceByDomain.get(requiredKnowledgeDomain) ?? [])
+              : sourceSpecificFamilyClaim
+                ? new Set(link?.evidenceIds ?? [])
+                : undefined;
       const explicitEvidence =
         receipt?.satisfied === true &&
         receipt.evidenceIds.length > 0 &&
@@ -533,7 +513,11 @@ export function assessReadyResolutionSaturation(
               link,
               resolution,
               knowledgeEvidenceByDomain,
-            }).filter((id) => knownEvidenceIds.has(id));
+            }).filter((id) =>
+              knownEvidenceIds.has(id) &&
+              (allowedCriterionEvidenceIds === undefined ||
+                allowedCriterionEvidenceIds.has(id))
+            );
       const criterionEvidence = [
         ...new Set([
           ...explicitEvidence,
@@ -548,11 +532,10 @@ export function assessReadyResolutionSaturation(
       };
     });
 
-  const missingUniversalCriteriaIds =
-    universalCriteria
-      .filter((item) => !item.satisfied)
-      .map((item) => item.id)
-      .sort();
+  const missingUniversalCriteriaIds = universalCriteria
+    .filter((item) => !item.satisfied)
+    .map((item) => item.id)
+    .sort();
   const missingFamilyCriteriaIds =
     familyCriteria
       .filter((item) => !item.satisfied)

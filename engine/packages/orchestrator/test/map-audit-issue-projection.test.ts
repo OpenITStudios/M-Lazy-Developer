@@ -6,6 +6,7 @@ import {
 } from "../src/map-audit-issue-projection.js";
 import {
   assessGameplayDefectResolutionGate,
+  automaticCounterProofSearch,
 } from "../src/inspection/gameplay-defect-resolution.js";
 import {
   projectAllNeedValidationAuditIssues,
@@ -57,13 +58,22 @@ const graph: GameplayScenarioGraph = {
       evidenceIds: [
         "world:arena-count",
         "capacity:safe-concurrency",
+        ...(["owner", "guard", "generation", "cleanup", "exclusion", "scope"]
+          .map((dimension) => "source:capacity-" + dimension)),
       ],
       subjectIds: ["policy:arena"],
       componentIds: ["runtime:arena"],
       knowledgeRequirementIds: [],
       impactPathComponentIds: [],
       impactPathEvidenceIds: [],
-      dimensionEvidence: {},
+      dimensionEvidence: {
+        owner: ["source:capacity-owner"],
+        guard: ["source:capacity-guard"],
+        generation: ["source:capacity-generation"],
+        cleanup: ["source:capacity-cleanup"],
+        exclusion: ["source:capacity-exclusion"],
+        scope: ["source:capacity-scope"],
+      },
       status: "CONTRADICTED",
       reason: "Six arenas are visible but only two can run concurrently.",
     },
@@ -73,13 +83,18 @@ const graph: GameplayScenarioGraph = {
       fromComponentId: "runtime:entities",
       toComponentId: "objective:wave",
       purpose: "Wave progression requires successful entity spawn.",
-      evidenceIds: ["source:wave"],
+      evidenceIds: ["source:wave", "source:wave-guard",
+        "source:wave-exclusion", "source:wave-scope"],
       subjectIds: ["objective:wave"],
       componentIds: ["runtime:entities"],
       knowledgeRequirementIds: [],
       impactPathComponentIds: [],
       impactPathEvidenceIds: [],
-      dimensionEvidence: {},
+      dimensionEvidence: {
+        guard: ["source:wave-guard"],
+        exclusion: ["source:wave-exclusion"],
+        scope: ["source:wave-scope"],
+      },
       status: "CONTRADICTED",
       reason: "Progression advances without the required spawn.",
     },
@@ -127,71 +142,14 @@ const gate: GameplayDefectResolutionGate = {
           {
             id: "arena-counterproof-exhausted",
             satisfied: true,
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
+            evidenceIds: ["owner", "guard", "generation", "cleanup",
+              "exclusion", "scope"].map((d) => "source:capacity-" + d),
           },
         ],
       },
-      counterProofSearch: {
-        schemaVersion: 1,
-        policy: "bounded-counterproof-search",
-        searchedDimensions: [
-          "guard",
-          "scope",
-          "exclusion",
-          "owner",
-        ],
-        dimensionReceipts: [
-          {
-            dimension: "guard",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          },
-          {
-            dimension: "scope",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          },
-          {
-            dimension: "exclusion",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          },
-          {
-            dimension: "owner",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          }
-        ],
-        scopeIds: [
-          "runtime:arena",
-          "policy:arena",
-        ],
-        evidenceIds: [
-          "world:arena-count",
-          "capacity:safe-concurrency",
-        ],
-        exhaustiveWithinScope: true,
-        conclusion: "NO_BLOCKING_PROOF",
-      },
+      counterProofSearch: automaticCounterProofSearch(
+        graph, graph.causalLinks[0]!, graph.scenarios[0],
+      ),
     },
     {
       causalLinkId: "link:progression",
@@ -220,57 +178,14 @@ const gate: GameplayDefectResolutionGate = {
           {
             id: "reconciliation-exhausted",
             satisfied: true,
-            evidenceIds: ["source:wave"],
+            evidenceIds: ["source:wave-guard", "source:wave-exclusion",
+              "source:wave-scope"],
           },
         ],
       },
-      counterProofSearch: {
-        schemaVersion: 1,
-        policy: "bounded-counterproof-search",
-        searchedDimensions: [
-          "guard",
-          "scope",
-          "exclusion",
-        ],
-        dimensionReceipts: [
-          {
-            dimension: "guard",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          },
-          {
-            dimension: "scope",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          },
-          {
-            dimension: "exclusion",
-            scopeIds: ["runtime:arena", "policy:arena"],
-            evidenceIds: [
-              "world:arena-count",
-              "capacity:safe-concurrency",
-            ],
-            exhaustiveWithinScope: true,
-          }
-        ],
-        scopeIds: [
-          "runtime:entities",
-          "objective:wave",
-        ],
-        evidenceIds: [
-          "source:wave",
-        ],
-        exhaustiveWithinScope: true,
-        conclusion: "NO_BLOCKING_PROOF",
-      },
+      counterProofSearch: automaticCounterProofSearch(
+        graph, graph.causalLinks[1]!, graph.scenarios[1],
+      ),
     },
   ],
   confirmedDefectReadyIds: [
@@ -293,23 +208,10 @@ describe("EVALUATE to PROVE to issue projection", () => {
   };
   const submitted = {
     ...gate.resolutions[0]!,
-    counterProofSearch: {
-      ...gate.resolutions[0]!.counterProofSearch!,
-      searchedDimensions: [
-        "owner", "guard", "generation", "scope", "cleanup", "exclusion",
-      ] as const,
-      dimensionReceipts: [
-        "owner", "guard", "generation", "scope", "cleanup", "exclusion",
-      ].map((dimension) => ({
-        dimension: dimension as
-          "owner" | "guard" | "generation" | "scope" | "cleanup" | "exclusion",
-        scopeIds: ["runtime:arena", "policy:arena"],
-        evidenceIds: ["world:arena-count", "capacity:safe-concurrency"],
-        exhaustiveWithinScope: true,
-      })),
-    },
+    counterProofSearch: automaticCounterProofSearch(
+      baseGraph, baseGraph.causalLinks[0]!, baseGraph.scenarios[0],
+    ),
   };
-
 
   it("publishes only source-bound evidence in PROVEN and NEED_VALIDATION", () => {
     const decorated = {
@@ -456,22 +358,18 @@ describe("EVALUATE to PROVE to issue projection", () => {
       ...baseGraph,
       causalLinks: [{
         ...baseGraph.causalLinks[0]!,
+        evidenceIds: [...baseGraph.causalLinks[0]!.evidenceIds, "source:owned-dimension"],
         dimensionEvidence: {
-          owner: ["source:owned-dimension"],
+          ...baseGraph.causalLinks[0]!.dimensionEvidence,
+          owner: ["source:capacity-owner", "source:owned-dimension"],
         },
       }],
     };
-    const search = {
-      ...submitted.counterProofSearch,
-      evidenceIds: [
-        ...submitted.counterProofSearch.evidenceIds,
-        "source:owned-dimension",
-      ],
-      dimensionReceipts: submitted.counterProofSearch.dimensionReceipts.map((item) =>
-        item.dimension === "owner"
-          ? { ...item, evidenceIds: ["source:owned-dimension"] }
-          : item),
-    };
+    const search = automaticCounterProofSearch(
+      graphWithDimensionEvidence,
+      graphWithDimensionEvidence.causalLinks[0]!,
+      graphWithDimensionEvidence.scenarios[0],
+    );
     const proof = assessGameplayDefectResolutionGate(graphWithDimensionEvidence, [{
       ...submitted,
       counterProofSearch: search,
@@ -567,7 +465,11 @@ describe("EVALUATE to PROVE to issue projection", () => {
           id: "link:capacity-exclusion",
           intentEdgeKind: "excludes",
           status: "PROVEN",
-          evidenceIds: ["source:exact-admission-guard"],
+          evidenceIds: ["source:exact-admission-guard", "source:exact-admission-scope"],
+          dimensionEvidence: {
+            exclusion: ["source:exact-admission-guard"],
+            scope: ["source:exact-admission-scope"],
+          },
         },
       ],
     };
@@ -590,7 +492,11 @@ describe("EVALUATE to PROVE to issue projection", () => {
           id: "link:late-exclusion",
           intentEdgeKind: "excludes",
           status: "PROVEN",
-          evidenceIds: ["source:late-exact-guard"],
+          evidenceIds: ["source:late-exact-guard", "source:late-exact-scope"],
+          dimensionEvidence: {
+            exclusion: ["source:late-exact-guard"],
+            scope: ["source:late-exact-scope"],
+          },
         },
       ],
     };

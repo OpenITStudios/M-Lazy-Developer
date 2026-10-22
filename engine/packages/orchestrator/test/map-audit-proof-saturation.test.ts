@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assessReadyResolutionSaturation } from "../src/map-audit-proof-saturation.js";
+import { automaticCounterProofSearch } from "../src/inspection/gameplay-defect-resolution.js";
 import { projectReadyAuditIssues } from "../src/map-audit-issue-projection.js";
 
 function graph(impactPathComponentIds: readonly string[], label = "wave-progression") {
@@ -10,6 +11,11 @@ function graph(impactPathComponentIds: readonly string[], label = "wave-progress
       gameplayStage: "PROGRESSION",
       purpose: "Complete the wave",
       componentIds: ["runtime:chunks", "objective:wave"],
+      sourceSubjectIds: ["objective:wave"],
+      playerCounts: [1],
+      causalLinkIds: ["l1"],
+      requiredKnowledgeIds: [],
+      composedScenarioIds: [],
     }],
     components: [
       { id: "runtime:chunks", label: "Chunk simulation" },
@@ -18,6 +24,9 @@ function graph(impactPathComponentIds: readonly string[], label = "wave-progress
     causalLinks: [{
       id: "l1",
       scenarioId: "s1",
+      fromComponentId: "runtime:chunks",
+      toComponentId: "objective:wave",
+      subjectIds: ["objective:wave"],
       status: "CONTRADICTED",
       purpose: "Actors remain simulated until completion.",
       reason: "Simulation ownership is insufficient.",
@@ -63,7 +72,117 @@ const resolution = {
   },
 };
 
+/**
+ * Positive source-graph fixture: every counterproof dimension is explicitly
+ * witnessed on the same contradiction. No runtime/Minecraft execution claim.
+ */
+function witnessedWave() {
+  const scenario = graph(["objective:wave"], "wave-progression");
+  scenario.scenarios[0] = {
+    ...scenario.scenarios[0],
+    sourceSubjectIds: ["objective:wave"],
+    playerCounts: [1],
+    causalLinkIds: ["l1"],
+    requiredKnowledgeIds: [],
+    composedScenarioIds: [],
+  };
+  const dimensions = [
+    "cleanup", "exclusion", "generation", "guard", "owner", "scope",
+  ] as const;
+  const witnesses = dimensions.map((dimension) =>
+    "source:proof:" + dimension
+  );
+  scenario.causalLinks[0] = {
+    ...scenario.causalLinks[0],
+    fromComponentId: "runtime:chunks",
+    toComponentId: "objective:wave",
+    subjectIds: ["objective:wave"],
+    evidenceIds: ["source:contradiction", ...witnesses],
+    dimensionEvidence: Object.fromEntries(dimensions.map((dimension) =>
+      [dimension, ["source:proof:" + dimension]]
+    )),
+  };
+  const link = scenario.causalLinks[0]!;
+  const search = automaticCounterProofSearch(
+    scenario, link, scenario.scenarios[0],
+  );
+  const complete = {
+    ...resolution,
+    evidenceIds: ["source:contradiction", ...witnesses],
+    counterProofSearch: search,
+    familyProof: {
+      schemaVersion: 1 as const,
+      policy: "family-proof-receipt" as const,
+      failureDomain: "progression-wave-objective",
+      criteria: [
+        { id: "completion-dependency-grounded", satisfied: true,
+          evidenceIds: ["source:contradiction"] },
+        { id: "failing-path-reachable", satisfied: true,
+          evidenceIds: ["source:contradiction"] },
+        { id: "reconciliation-exhausted", satisfied: true,
+          evidenceIds: ["source:proof:guard", "source:proof:exclusion", "source:proof:scope"] },
+      ],
+    },
+  };
+  return { scenario, complete };
+}
+
 describe("map audit proof saturation", () => {
+  it("admits a genuinely source-witnessed canonical PROVE receipt into the ready projection", () => {
+    const { scenario, complete } = witnessedWave();
+    expect(complete.counterProofSearch.exhaustiveWithinScope).toBe(true);
+    expect(complete.counterProofSearch.searchedDimensions).toEqual(
+      expect.arrayContaining(["scope", "guard", "exclusion", "owner", "generation", "cleanup"]),
+    );
+    const saturation = assessReadyResolutionSaturation(scenario, complete as any);
+    expect(saturation.saturated).toBe(true);
+    const result = projectReadyAuditIssues(scenario, {
+      confirmedDefectReadyIds: ["l1"],
+      resolutions: [complete],
+    } as any);
+    expect(result.map((item) => item.status)).toEqual(["PROVEN"]);
+  });
+
+  it("does not promote stale exhaustive claims after the canonical graph loses scope proof", () => {
+    const { scenario, complete } = witnessedWave();
+    scenario.causalLinks[0].dimensionEvidence.scope = [];
+    const saturation = assessReadyResolutionSaturation(scenario, complete as any);
+    expect(saturation.saturated).toBe(false);
+    expect(saturation.missingUniversalCriteriaIds).toContain("counter-proof-cleared");
+    expect(projectReadyAuditIssues(scenario, {
+      confirmedDefectReadyIds: ["l1"],
+      resolutions: [complete],
+    } as any)).toEqual([]);
+  });
+
+  it("does not accept a partial family search or a duplicate family receipt", () => {
+    const { scenario, complete } = witnessedWave();
+    const partial = {
+      ...complete,
+      counterProofSearch: {
+        ...complete.counterProofSearch,
+        searchedDimensions: ["scope"],
+        dimensionReceipts: complete.counterProofSearch.dimensionReceipts
+          .filter((item) => item.dimension === "scope"),
+      },
+    };
+    const partialAssessment = assessReadyResolutionSaturation(scenario, partial as any);
+    expect(partialAssessment.saturated).toBe(false);
+    expect(partialAssessment.missingFamilyCriteriaIds).toContain("reconciliation-exhausted");
+
+    const duplicate = {
+      ...complete,
+      familyProof: {
+        ...complete.familyProof,
+        criteria: [...complete.familyProof.criteria, complete.familyProof.criteria[0]!],
+      },
+    };
+    const duplicateAssessment = assessReadyResolutionSaturation(scenario, duplicate as any);
+    expect(duplicateAssessment.saturated).toBe(false);
+    expect(duplicateAssessment.missingUniversalCriteriaIds).toContain("family-proof-receipt-valid");
+  });
+
+
   it("keeps wave progression reconciliation unknown without dimension proof", () => {
     const result = assessReadyResolutionSaturation(
       graph([]),
@@ -153,19 +272,7 @@ describe("map audit proof saturation", () => {
   });
 
   it("blocks non-platform PROVEN promotion while causal-link knowledge is unresolved", () => {
-    const scenario = graph(["objective:wave"], "wave-progression");
-    const complete = {
-      ...resolution,
-      familyProof: {
-        schemaVersion: 1 as const,
-        policy: "family-proof-receipt" as const,
-        failureDomain: "progression-wave-objective",
-        criteria: [
-          "completion-dependency-grounded", "failing-path-reachable",
-          "reconciliation-exhausted",
-        ].map((id) => ({ id, satisfied: true, evidenceIds: ["source:contradiction"] })),
-      },
-    };
+    const { scenario, complete } = witnessedWave();
     expect(assessReadyResolutionSaturation(scenario, complete as any).saturated).toBe(true);
 
     scenario.knowledgeReceipts[0].status = "MISSING_REQUIRED_KNOWLEDGE";
@@ -207,21 +314,7 @@ describe("map audit proof saturation", () => {
   });
 
   it("rejects duplicate requirement ID owners even with SATISFIED scenario evidence", () => {
-    const baseline = graph(["objective:wave"], "wave-progression");
-    const complete = {
-      ...resolution,
-      familyProof: {
-        schemaVersion: 1 as const,
-        policy: "family-proof-receipt" as const,
-        failureDomain: "progression-wave-objective",
-        criteria: [
-          "completion-dependency-grounded", "failing-path-reachable",
-          "reconciliation-exhausted",
-        ].map((id) => ({
-          id, satisfied: true, evidenceIds: ["source:contradiction"],
-        })),
-      },
-    };
+    const { scenario: baseline, complete } = witnessedWave();
     expect(assessReadyResolutionSaturation(baseline, complete as any).saturated)
       .toBe(true);
     for (const duplicate of [
@@ -243,22 +336,8 @@ describe("map audit proof saturation", () => {
   });
 
   it("does not promote a causal link with a second foreign-domain Knowledge receipt", () => {
-    const worldGraph = graph(["objective:wave"], "wave-progression");
+    const { scenario: worldGraph, complete } = witnessedWave();
     const valid = worldGraph.knowledgeReceipts[0];
-    const complete = {
-      ...resolution,
-      familyProof: {
-        schemaVersion: 1 as const,
-        policy: "family-proof-receipt" as const,
-        failureDomain: "progression-wave-objective",
-        criteria: [
-          "completion-dependency-grounded", "failing-path-reachable",
-          "reconciliation-exhausted",
-        ].map((id) => ({
-          id, satisfied: true, evidenceIds: ["source:contradiction"],
-        })),
-      },
-    };
     expect(assessReadyResolutionSaturation(worldGraph, complete as any).saturated).toBe(true);
     for (const override of [
       { scenarioId: "scenario:foreign" },
@@ -288,23 +367,8 @@ describe("map audit proof saturation", () => {
     expect(result.missingFamilyCriteriaIds).toContain("platform-constraint-bound");
   });
   it("does not use invented resolution or foreign-scenario evidence to saturate proof", () => {
-    const scenario = graph(["objective:wave"], "wave-progression");
-    const criteria = [
-      "completion-dependency-grounded",
-      "failing-path-reachable",
-      "reconciliation-exhausted",
-    ].map((id) => ({
-      id, satisfied: true, evidenceIds: ["source:contradiction"],
-    }));
-    const complete = {
-      ...resolution,
-      familyProof: {
-        schemaVersion: 1 as const,
-        policy: "family-proof-receipt" as const,
-        failureDomain: "progression-wave-objective",
-        criteria,
-      },
-    };
+    const { scenario, complete } = witnessedWave();
+    const criteria = complete.familyProof.criteria;
     expect(assessReadyResolutionSaturation(scenario, complete as any).saturated)
       .toBe(true);
 
