@@ -271,6 +271,11 @@ The request must include:
   manually supplied signal names, filenames or generated map-design guesses;
 - the operator's precise question domain(s), e.g. `state` +
   `persistence`, `spatial`, or `scheduler`.
+- exact selected-map source locations: the model-task selector obtains these
+  from its already-grounded Knowledge lookup; the generic Context Compiler
+  reuses relevant selected-artifact Intent evidence/subject IDs unless the
+  caller explicitly provides a narrower source-locator set. No unscoped
+  whole-map reference retrieval occurs.
 
 The selector derives `SelectedArtifactReferenceSignal` from exact
 Semantic IR state operations, world effects, scheduler edges, parsed

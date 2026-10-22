@@ -342,8 +342,19 @@ export function compileContextPack(
       input.sectionSelection,
       input.sectionLimit,
     );
-  // Never let context from another version of the map enter the pack.
-  // A reference is explicit opt-in and cannot change gameplay closure.
+  // Reuse the context request's already-selected Intent/evidence scope.
+  // Do not scan the whole map for a relevant-looking ZIP method.
+  const requestedIntentSubjects = new Set(input.relevantIntentSubjectIds ?? []);
+  const currentSubjectEvidence = new Set(input.intent.nodes
+    .filter(node => requestedIntentSubjects.has(node.id) &&
+      node.status !== "hypothesis")
+    .flatMap(node => node.evidenceIds));
+  const currentRequestedEvidence = new Set(input.relevantEvidenceIds ?? []);
+  const selectedSourceLocators = unique(input.intent.evidence
+    .filter(item => item.scope === "selected-artifact" &&
+      (currentSubjectEvidence.has(item.id) || currentRequestedEvidence.has(item.id)))
+    .map(item => item.locator));
+  // External references never alter authored Intent, game rules or proof.
   const developerPractice = input.developerPractice === undefined ||
       input.intent.artifactId === undefined
     ? undefined
@@ -352,7 +363,8 @@ export function compileContextPack(
         selectedArtifactId: input.intent.artifactId,
         semanticIr: input.developerPractice.semanticIr,
         domains: input.developerPractice.domains,
-        sourceLocators: input.developerPractice.sourceLocators ?? [],
+        sourceLocators: input.developerPractice.sourceLocators ??
+          selectedSourceLocators,
       });
   const semanticPool =
     semanticCandidates(
