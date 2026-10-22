@@ -7,7 +7,7 @@ import {
 import {
   SCRIPT_PARSER_REVISION,
   parseScriptFile,
-  analyzeScriptSourceRecovery,
+  sourceMapReferenceFromScript,
   parseSourceMapV3,
   bindGeneratedPosition,
 } from "../../../../analyzers/scripts/src/index.js";
@@ -379,9 +379,8 @@ export async function indexInspectionSources(
         parsedScripts.push({ node, text, parsed });
         indexedFiles += 1;
 
-        const sourceMapReference = analyzeScriptSourceRecovery(
-          file.relativePath, text,
-        ).sourceMapReference;
+        // This does not need a second AST pass on bundled/minified scripts.
+        const sourceMapReference = sourceMapReferenceFromScript(text);
         if (sourceMapReference !== undefined) {
           const record: InspectionScriptSourceMapNavigation = {
             generatedPath: file.relativePath,

@@ -23,6 +23,13 @@ export interface ScriptSourceRecoveryProfile {
   limitations: readonly string[];
 }
 
+/** A cheap metadata lookup; full source-shape analysis parses the AST only
+ * when that separate question is actually needed.
+ */
+export function sourceMapReferenceFromScript(text: string): string | undefined {
+  return text.match(/[#@]\\s*sourceMappingURL=([^\\s*]+)/)?.[1];
+}
+
 export function analyzeScriptSourceRecovery(
   path: string,
   text: string,
@@ -42,8 +49,7 @@ export function analyzeScriptSourceRecovery(
   };
   visit(file);
 
-  const sourceMapReference =
-    text.match(/[#@]\s*sourceMappingURL=([^\s*]+)/)?.[1];
+  const sourceMapReference = sourceMapReferenceFromScript(text);
   const bundlerHints = [
     /__webpack_require__/.test(text) ? "webpack-runtime" : undefined,
     /webpackChunk/.test(text) ? "webpack-chunk" : undefined,
