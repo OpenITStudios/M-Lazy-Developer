@@ -173,15 +173,24 @@ function candidateCapabilities(
     .filter((capability) => {
       const order =
         LEVEL_ORDER[capability.evidenceLevel];
-      const advancesLevel =
-        order > currentOrder &&
-        order <= requiredOrder;
-      const advancesTrait =
+      // Increasing the evidence *level* does not answer a goal whose
+      // required evidence *trait* is still missing. A wrong-kind analyzer
+      // would otherwise run before the planner eventually reports a gap.
+      // Only a goal-bearing producer is eligible; its explicit unmet
+      // prerequisites remain selected by prerequisiteChoice() below.
+      const advancesRequiredTrait =
+        missingTraits.length > 0 &&
         order <= requiredOrder &&
         producesMissingTrait(
           capability,
           missingTraits,
         );
+      // Once all required traits are present, a level-only capability may
+      // supply the exact minimum proof tier without escalating further.
+      const reachesRequiredLevel =
+        missingTraits.length === 0 &&
+        order > currentOrder &&
+        order === requiredOrder;
 
       return (
         !completed.has(capability.id) &&
@@ -192,23 +201,12 @@ function candidateCapabilities(
           capability,
           input.relevantTags,
         ) &&
-        (advancesLevel || advancesTrait)
+        (advancesRequiredTrait || reachesRequiredLevel)
       );
     })
     .sort(
       (a, b) =>
-        Number(
-          !producesMissingTrait(
-            a,
-            missingTraits,
-          ),
-        ) -
-          Number(
-            !producesMissingTrait(
-              b,
-              missingTraits,
-            ),
-          ) ||
+        // All eligible candidates already advance the actual goal.
         tagOverlapCount(
           b,
           input.relevantTags,
@@ -425,7 +423,7 @@ export function planMinimumSufficientAnalysis(
       skippedCapabilityIds:
         input.capabilities.map((item) => item.id).sort(),
       reasons: [
-        "No relevant capability available in the current context can advance the required evidence level or missing evidence traits.",
+        "No remaining relevant capability can supply a missing goal trait or reach the required evidence level; unrelated analyzers are not scheduled.",
         ...(missingEvidenceTraits.length === 0
           ? []
           : [
@@ -468,7 +466,7 @@ export function planMinimumSufficientAnalysis(
     evidenceLevel: selected.evidenceLevel,
     cost: selected.cost,
     reasons: [
-      "Selected as the next lowest-cost relevant evidence action.",
+      "Selected as the next goal-relevant evidence action; cost is a tie-breaker after evidence scope and level.",
       ...(selected.deterministic
         ? ["Deterministic capability preferred."]
         : []),

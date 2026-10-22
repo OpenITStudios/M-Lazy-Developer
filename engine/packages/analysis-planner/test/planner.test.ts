@@ -229,6 +229,33 @@ describe(
     );
 
     it(
+      "stops instead of running unrelated analyzers when no capability can supply the goal trait",
+      () => {
+        // Static and semantic levels are reachable, but neither
+        // analyzer can supply the required 'intent-grounded' evidence.
+        // It would be wasted analysis to run them just to increase level.
+        const wrongKindCapabilities = capabilities.filter((capability) =>
+          capability.id === "source-graph" ||
+          capability.id === "expensive-semantic"
+        );
+        const plan = planMinimumSufficientAnalysis({
+          goal: "intent-classification",
+          relevantTags: ["session"],
+          context: "LOCAL_ARTIFACT",
+          capabilities: wrongKindCapabilities,
+        });
+
+        expect(plan.disposition).toBe("capability-gap");
+        expect(plan.steps).toEqual([]);
+        expect(plan.missingEvidenceTraits).toEqual(["intent-grounded"]);
+        expect(plan.skippedCapabilityIds).toEqual([
+          "expensive-semantic",
+          "source-graph",
+        ]);
+      },
+    );
+
+    it(
       "requires Minecraft context instead of pretending static analysis can prove runtime behavior",
       () => {
         const plan =
