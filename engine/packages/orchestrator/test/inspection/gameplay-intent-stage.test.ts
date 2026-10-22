@@ -1083,7 +1083,9 @@ describe("exact Semantic IR provenance in Gameplay Intent", () => {
       intent.evidence.some(evidence =>
         evidence.id === call.id &&
         evidence.scope === "selected-artifact" &&
-        evidence.locator === mainPath))).toBe(true);
+        evidence.locator === mainPath + ":" +
+          call.source.range?.lineStart + ":" +
+          call.source.range?.columnStart))).toBe(true);
     expect(ir.execution.outcomes?.some(outcome =>
       outcome.source.relativePath === arenaPath &&
       outcome.value === "finish")).toBe(true);

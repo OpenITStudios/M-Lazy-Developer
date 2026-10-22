@@ -119,6 +119,13 @@ export function buildGameplayIntentModel(
     ).map(item => item.parsed.source.relativePath),
     ...(input.selectedSourceInventoryPaths ?? []),
   ]);
+  // One source-to-locator adapter for authored IR witnesses and read-only
+  // source navigation. A file-only ref remains file scoped.
+  const sourceLocator = (source: SourceRef): string =>
+    source.relativePath +
+      (source.range?.lineStart === undefined ? "" :
+        ":" + source.range.lineStart + ":" +
+        (source.range.columnStart ?? 1));
   const selectedSourceLocator = (locator: string): boolean =>
     selectedArtifactSourcePaths.has(locator) ||
     // Localized strings retain their original file#Lline locator.
@@ -428,7 +435,7 @@ export function buildGameplayIntentModel(
         evidence.set(matched.id, {
           id: matched.id,
           origin: "source-code",
-          locator: matched.source.relativePath,
+          locator: sourceLocator(matched.source),
           scope: "selected-artifact",
           summary: "Exact cross-script Semantic IR call site and executable target. Gameplay purpose and actual execution remain inferred.",
         });
@@ -1173,10 +1180,7 @@ export function buildGameplayIntentModel(
     const path = script.source.relativePath.replaceAll("\\", "/");
     ownerPaths.set(path, [...(ownerPaths.get(path) ?? []), script]);
   }
-  const sourceLocator = (source: SourceRef): string =>
-    source.relativePath + (source.range === undefined ? "" :
-      ":" + source.range.lineStart + ":" +
-      (source.range.columnStart ?? 1));
+
   // Authored content tree is source OWNERSHIP, not a runtime transition.
   // Reuse canonical Gameplay Intent subjects and explicit "owns" relations,
   // including scripts without a source-content reader or player-state method.

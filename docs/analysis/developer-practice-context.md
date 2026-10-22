@@ -688,6 +688,16 @@ inline-data or cross-pack maps abstain with an explicit non-fatal
 navigation status. The recovered source view must never cause an
 unrelated map file or ZIP example to become gameplay authority.
 
+## Precise Gameplay Intent locators for cross-file calls
+
+When a uniquely resolved cross-file call matches its canonical Semantic IR
+source edge, Gameplay Intent retains the actual caller's line and column in
+the existing selected-artifact evidence locator. The bounded developer
+method selector can therefore distinguish separate calls in one minified
+bundle, instead of taking every source cue from the whole file. This
+changes only evidence navigation; it neither authorizes a game rule nor
+confirms that a callback executed or a session state persisted.
+
 ## Proven cross-module parameter references in Semantic IR
 
 A resolved ESM call can now retain the existing cross-file analyzer's
