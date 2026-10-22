@@ -12,17 +12,29 @@ export interface AuditDemandReconciliation {
   readonly missingDomains: readonly AnalysisKnowledgeDomain[];
   readonly stable: boolean;
   readonly passCount: number;
-  /** Actual per-pass indexing observations; not audit authorization or a speedup claim. */
+  /** Actual per-pass observations, not audit authorization or speedup proof.
+   * inspectionElapsedMs covers one prepared inspection (working copy, DB,
+   * source indexing and downstream analysis); it excludes initial ZIP
+   * extraction and final Map Audit report assembly.
+   */
   readonly sourceIndexPasses?: readonly (NonNullable<
     InspectArtifactResult["sourceIndexWork"]
-  > & { readonly pass: number })[];
+  > & {
+    readonly pass: number;
+    readonly inspectionElapsedMs?: number;
+  })[];
 }
 
 export function reconcileSelectedMapAuditDemand(
   inspection: InspectArtifactResult,
   passCount = 1,
   previous?: AuditDemandReconciliation,
+  inspectionElapsedMs?: number,
 ): AuditDemandReconciliation {
+  if (inspectionElapsedMs !== undefined &&
+      (!Number.isFinite(inspectionElapsedMs) || inspectionElapsedMs < 0)) {
+    throw new Error("Inspection duration must be finite and nonnegative.");
+  }
   if (!Number.isInteger(passCount) || passCount < 1) {
     throw new Error(
       "Audit demand reconciliation passCount must be a positive integer.",
@@ -45,6 +57,7 @@ export function reconcileSelectedMapAuditDemand(
     ...(inspection.sourceIndexWork === undefined ? [] : [{
       pass: passCount,
       ...inspection.sourceIndexWork,
+      ...(inspectionElapsedMs === undefined ? {} : { inspectionElapsedMs }),
     }]),
   ];
   return {

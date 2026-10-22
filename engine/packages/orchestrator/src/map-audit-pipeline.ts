@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import type {
   KnowledgeCatalog,
 } from "../../knowledge/src/index.js";
@@ -562,6 +563,7 @@ async function inspectSelectedMapToDemandFixedPoint(
           ),
         ];
 
+      const firstStartedAt = performance.now();
       const firstInspection = await inspect(
         productionInspectTarget(
           input.target,
@@ -573,10 +575,15 @@ async function inspectSelectedMapToDemandFixedPoint(
         input.mapClassificationHint,
         input.expectedArtifactFingerprint,
       );
+      const firstInspectionElapsedMs = Math.max(
+        0, performance.now() - firstStartedAt,
+      );
       const firstReconciliation =
         reconcileSelectedMapAuditDemand(
           firstInspection,
           1,
+          undefined,
+          firstInspectionElapsedMs,
         );
       if (firstReconciliation.stable) {
         return {
@@ -592,6 +599,7 @@ async function inspectSelectedMapToDemandFixedPoint(
         ]),
       ].sort();
 
+      const secondStartedAt = performance.now();
       const secondInspection = await inspect(
         productionInspectTarget(
           input.target,
@@ -609,11 +617,15 @@ async function inspectSelectedMapToDemandFixedPoint(
           "Selected .mcworld changed between inspection passes; refusing mixed-version audit.",
         );
       }
+      const secondInspectionElapsedMs = Math.max(
+        0, performance.now() - secondStartedAt,
+      );
       const secondReconciliation =
         reconcileSelectedMapAuditDemand(
           secondInspection,
           2,
           firstReconciliation,
+          secondInspectionElapsedMs,
         );
 
       if (!secondReconciliation.stable) {

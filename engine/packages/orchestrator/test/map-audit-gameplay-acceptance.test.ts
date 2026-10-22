@@ -183,7 +183,9 @@ function expectReconstructionContract(
   expect(passes?.every((step, index) =>
     step.pass === index + 1 &&
     Number.isFinite(step.elapsedMs) &&
-    step.elapsedMs >= 0
+    step.elapsedMs >= 0 &&
+    Number.isFinite(step.inspectionElapsedMs) &&
+    step.inspectionElapsedMs! >= step.elapsedMs
   )).toBe(true);
   if (passes?.length === 2 && passes[0]?.snapshotReusable) {
     expect(passes[1]?.action).toBe("REUSED");
