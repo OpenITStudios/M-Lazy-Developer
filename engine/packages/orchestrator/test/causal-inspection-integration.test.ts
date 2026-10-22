@@ -510,6 +510,97 @@ describe("inspection causal analysis", () => {
     }
   });
 
+  it("retains only exact guarded-return evidence in the authored scenario guard dimension", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-direct-return-guard-"));
+    try {
+      const scripts = join(root, "behavior_packs", "demo", "scripts");
+      await mkdir(scripts, { recursive: true });
+      const filename = join(scripts, "session.js");
+      const inspect = async (suffix: string) => inspectDirectory(
+        root, "fixture:direct-return-guard:" + suffix,
+        { edition: "bedrock", staticExecutionDimension: "overworld" },
+        "fixture-fingerprint-" + suffix, catalog,
+      );
+      await writeFile(filename, [
+        "function decideReconnect(state) {",
+        '  if (state.pendingCleanup) return { action: "cleanup" };',
+        '  return { action: "lobby" };',
+        "}",
+      ].join("\n"), "utf8");
+
+      const guarded = await inspect("guarded");
+      const intent = guarded.gameplayIntent.model;
+      const relation = intent.edges.find((edge) =>
+        edge.kind === "requires" && edge.status === "authored" &&
+        edge.from.includes("outcome:decide-reconnect-cleanup") &&
+        intent.nodes.some((node) =>
+          node.id === edge.to && node.kind === "policy"
+        )
+      );
+      expect(relation).toBeDefined();
+      const returnWitness = (guarded.semanticIrModel.execution.outcomes ?? [])
+        .find((item) => item.value === "cleanup" &&
+          item.source.relativePath.endsWith("session.js"));
+      expect(returnWitness).toBeDefined();
+      expect(relation?.evidenceIds).toContain(returnWitness!.id);
+      const matching = guarded.hiddenGameplayDefects.scenarioAudit.graph.causalLinks
+        .filter((link) => link.fromComponentId === relation?.from &&
+          link.toComponentId === relation?.to);
+      expect(matching.length).toBeGreaterThan(0);
+      expect(matching.every((link) =>
+        link.dimensionEvidence.guard?.includes(returnWitness!.id)
+      )).toBe(true);
+      expect(matching.every((link) =>
+        link.dimensionEvidence.scope === undefined &&
+        link.dimensionEvidence.exclusion === undefined
+      )).toBe(true);
+      // Merely classifying a lifecycle return is not proof of a gameplay run.
+      expect(guarded.hiddenGameplayDefects.scenarioAudit.graph.sourceFlowCandidates
+        ?.every((candidate) => candidate.runtimeStatus === "NOT_OBSERVED"))
+        .toBe(true);
+
+      // Same named outcome also has an unguarded return. Its policy relation
+      // remains observable, but full authored guard coverage is absent.
+      await writeFile(filename, [
+        "function decideReconnect(state) {",
+        '  if (state.pendingCleanup) return { action: "cleanup" };',
+        '  return { action: "cleanup" };',
+        "}",
+      ].join("\n"), "utf8");
+      const uncovered = await inspect("unguarded-alternative");
+      const secondIntent = uncovered.gameplayIntent.model;
+      expect(secondIntent.invariants.some((item) =>
+        item.id.startsWith("inv:admissible-policy:") &&
+        item.id.includes("decide-reconnect-cleanup"))).toBe(false);
+      const otherLinks = uncovered.hiddenGameplayDefects.scenarioAudit.graph.causalLinks
+        .filter((link) => link.intentEdgeKind === "requires" &&
+          link.fromComponentId.includes("decide-reconnect-cleanup"));
+      expect(otherLinks.every((link) =>
+        (link.dimensionEvidence.guard ?? []).length === 0
+      )).toBe(true);
+
+      // Even when every literal return site is directly guarded, two
+      // different policy owners cannot borrow one another's guard proof.
+      await writeFile(filename, [
+        "function decideReconnect(state) {",
+        '  if (state.pendingCleanup) return { action: "cleanup" };',
+        '  if (state.forceCleanup) return { action: "cleanup" };',
+        '  return { action: "lobby" };',
+        "}",
+      ].join("\n"), "utf8");
+      const ambiguous = await inspect("two-different-guards");
+      const policyLinks = ambiguous.hiddenGameplayDefects.scenarioAudit.graph.causalLinks
+        .filter((link) => link.intentEdgeKind === "requires" &&
+          link.fromComponentId.includes("decide-reconnect-cleanup"));
+      expect(policyLinks.length).toBeGreaterThan(1);
+      expect(policyLinks.every((link) =>
+        (link.dimensionEvidence.guard ?? []).length === 0
+      )).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("does not attach a runtime stall observation from a different operation scope", async () => {
     const root = await mkdtemp(join(tmpdir(), "m-bedrock-causal-wrong-scope-test-"));
     try {

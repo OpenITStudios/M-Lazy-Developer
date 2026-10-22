@@ -143,6 +143,80 @@ function provenImpactPathFrom(
  * Runtime component IDs, derived labels and summary counts are navigation,
  * not evidence that a guard, ownership or geometry obligation is satisfied.
  */
+/**
+ * Reuse the canonical, source-reviewed outcome-policy coverage invariant.
+ * One authored outcome can have multiple policy relations; without an exact
+ * single owner we cannot attribute the coverage to any one guard.
+ *
+ * The admitted witness is an actual Semantic IR return-outcome ID preserved
+ * on BOTH the authored relation and its complete direct-guard invariant.
+ * It proves an authored return was guarded, NOT that an authorization rule
+ * blocked gameplay, not an exclusion, and not a player/arena scope claim.
+ */
+function authoredOutcomeGuardWitnessesByEdge(
+  intent: GameplayIntentModel,
+  selectedEvidenceIds: ReadonlySet<string>,
+): ReadonlyMap<string, readonly string[]> {
+  const nodeById = new Map(intent.nodes.map((node) => [node.id, node]));
+  const evidenceById = new Map(intent.evidence
+    .filter((record) =>
+      record.scope === "selected-artifact" &&
+      record.origin === "source-code"
+    )
+    .map((record) => [record.id, record]));
+  const coverageBySubject = new Map<string, GameplayIntentModel["invariants"][number][]>();
+  for (const item of intent.invariants) {
+    if (!item.id.startsWith("inv:admissible-policy:")) continue;
+    const subject = item.id.slice("inv:admissible-policy:".length);
+    const list = coverageBySubject.get(subject) ?? [];
+    list.push(item);
+    coverageBySubject.set(subject, list);
+  }
+  const policyEdgesByOutcome = new Map<string, GameplayIntentEdge[]>();
+  for (const edge of intent.edges) {
+    if (
+      edge.kind !== "requires" ||
+      edge.status !== "authored" ||
+      nodeById.get(edge.from)?.kind !== "outcome" ||
+      nodeById.get(edge.to)?.kind !== "policy"
+    ) continue;
+    const list = policyEdgesByOutcome.get(edge.from) ?? [];
+    list.push(edge);
+    policyEdgesByOutcome.set(edge.from, list);
+  }
+
+  const byEdge = new Map<string, readonly string[]>();
+  for (const [outcomeId, candidates] of policyEdgesByOutcome) {
+    // Coverage of one outcome does not prove which of multiple distinct
+    // predicates gates any particular relationship.
+    if (candidates.length !== 1) continue;
+    const edge = candidates[0]!;
+    const policy = nodeById.get(edge.to);
+    if (!policy?.policyPredicate ||
+        policy.policyPredicate.kind === "unknown" ||
+        edgeStatus(edge, selectedEvidenceIds) !== "PROVEN") continue;
+    const coverage = coverageBySubject.get(outcomeId) ?? [];
+    if (coverage.length !== 1 ||
+        coverage[0]!.id !== "inv:admissible-policy:" + outcomeId ||
+        coverage[0]!.status !== "authored" ||
+        coverage[0]!.strength !== "must" ||
+        coverage[0]!.subjectIds.length !== 1 ||
+        coverage[0]!.subjectIds[0] !== outcomeId) continue;
+
+    const guardedReturnIds = [...new Set(edge.evidenceIds.filter((id) => {
+      const observed = evidenceById.get(id);
+      return selectedEvidenceIds.has(id) &&
+        coverage[0]!.evidenceIds.includes(id) &&
+        id.startsWith("return-outcome:") &&
+        observed !== undefined &&
+        // The IR return SITE must be known, not merely the file path.
+        /:[1-9]\d*:[1-9]\d*$/.test(observed.locator);
+    }))].sort();
+    if (guardedReturnIds.length > 0) byEdge.set(edge.id, guardedReturnIds);
+  }
+  return byEdge;
+}
+
 function dimensionEvidenceForRuntimeComponent(
   componentId: string,
   world: GameplayWorldModel,
@@ -2816,6 +2890,9 @@ export function compileGameplayScenarioGraph(
   const sourceEvidenceIds = new Set(input.intent.evidence
     .filter(record => record.scope === "selected-artifact")
     .map(record => record.id));
+  const authoredGuardWitnessesByEdge = authoredOutcomeGuardWitnessesByEdge(
+    input.intent, sourceEvidenceIds,
+  );
   const playerCounts = presetPlayerCounts(input.preset);
   // A classified name-only declaration is not an observed gameplay flow.
   // Do not promote hypothetical source structure into a player-facing
@@ -3222,6 +3299,7 @@ export function compileGameplayScenarioGraph(
         edge.to, allowed, input.intent, sourceEvidenceIds,
       );
       const causalStatus = edgeStatus(edge, sourceEvidenceIds);
+      const guardWitnessIds = authoredGuardWitnessesByEdge.get(edge.id) ?? [];
       causalLinks.push({
         id: "edge:" + scenario.id + ":" + edge.id,
         scenarioId: scenario.id,
@@ -3247,7 +3325,9 @@ export function compileGameplayScenarioGraph(
         knowledgeRequirementIds: [],
         impactPathComponentIds: impactPath.impactPathComponentIds,
         impactPathEvidenceIds: impactPath.impactPathEvidenceIds,
-        dimensionEvidence: {},
+        dimensionEvidence: guardWitnessIds.length > 0
+          ? { guard: guardWitnessIds }
+          : {},
         intentEdgeKind: edge.kind,
         status: causalStatus,
         reason:
