@@ -30,7 +30,7 @@ import { formatSelectedMapAuditBrief } from "../src/map-audit-output-v2.js";
  * Exercise the real .mcworld -> single selected-map audit -> operator output,
  * without a second extractor, a private map, or genre-specific expectations.
  */
-type Case = "dialogue" | "animation" | "ambiguous-target";
+type Case = "dialogue" | "animation" | "ambiguous-target" | "authored-content";
 
 async function syntheticMcworld(kind: Case): Promise<{
   archive: string;
@@ -49,7 +49,16 @@ async function syntheticMcworld(kind: Case): Promise<{
       version: [1, 0, 0],
       min_engine_version: [1, 20, 0],
     },
-    modules: [{ type: "data", uuid: moduleUuid, version: [1, 0, 0] }],
+    modules: [
+      { type: "data", uuid: moduleUuid, version: [1, 0, 0] },
+      ...(kind === "authored-content" ? [{
+        type: "script",
+        language: "javascript",
+        entry: "scripts/main.js",
+        uuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaac",
+        version: [1, 0, 0],
+      }] : []),
+    ],
   });
   try {
     await mkdir(join(first, "functions", "arena"), { recursive: true });
@@ -63,6 +72,25 @@ async function syntheticMcworld(kind: Case): Promise<{
         ? "setblock 1 64 1 stone\n"
         : "scoreboard players set @p session 1\ntp @p 5 70 5\n",
     );
+    if (kind === "authored-content") {
+      await mkdir(join(first, "scripts"), { recursive: true });
+      await writeFile(join(first, "scripts", "main.js"), [
+        'const game = { stages: [{ id: "stage_1", name: "Outpost", mobs: [',
+        ' { wave: 1, spawn: [{type:"demo:melee",coordinates:"1 2 3"}] },',
+        ' { wave: 2, spawn: [{type:"demo:boss",coordinates:"4 5 6"}] }',
+        '] }] };',
+        'export const games = [',
+        ' {gameplayId:"combat_trial",gameplayName:"Combat Trial",gameplayNumber:1},',
+        ' {gameplayId:"capture_run",gameplayName:"Capture Run",gameplayNumber:5}',
+        '];',
+        'export const GuessText = [',
+        ' {text:"Camera",difficulty:"easy"},',
+        ' {text:"Cart",difficulty:"easy"},',
+        ' {text:"Globe",difficulty:"medium"}',
+        '];',
+        'const hud = {wave:"Wave", level:"Level"};',
+      ].join("\n"));
+    }
     const packs = [{
       pack_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       version: [1, 0, 0],
@@ -431,6 +459,51 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       await fixture.cleanup();
     }
   });
+  it("retains three independent authored source-content styles in the bounded model handoff", async () => {
+    const fixture = await syntheticMcworld("authored-content");
+    try {
+      const audit = await runSelectedMapAudit({ artifactPath: fixture.archive });
+      expectReconstructionContract(audit);
+      const handoff = projectSelectedMapAuditModelHandoff(audit);
+      const content = handoff.gameUnderstanding.authoredContent;
+      expect(content.basis).toBe("SOURCE_CONTAINMENT_ONLY_NOT_GAMEPLAY_ORDER");
+      expect(handoff.gameUnderstanding.gameplayFlowBasis)
+        .toBe("AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY");
+      expect(content.omittedRoots).toBe(0);
+
+      const stage = content.roots.find(item => item.label.includes("Outpost"));
+      expect(stage?.children.map(item => item.label))
+        .toEqual(["Wave 1", "Wave 2"]);
+      expect(stage?.sourceLocator).toContain("scripts/main.js");
+      expect(stage?.children[0]?.children.some(item =>
+        item.label.startsWith("Spawn recipe "))).toBe(true);
+
+      const catalogue = content.roots.filter(item =>
+        item.label.startsWith("gameplay: "));
+      expect(catalogue.map(item => item.label)).toEqual([
+        "gameplay: Combat Trial (#1)",
+        "gameplay: Capture Run (#5)",
+      ]);
+      expect(catalogue.every(item => item.directChildCount === 0))
+        .toBe(true);
+
+      const pool = content.roots.find(item => item.label === "GuessText");
+      expect(pool?.children.map(item => item.label))
+        .toEqual(["easy", "medium"]);
+      expect(pool?.children[0]?.children.map(item => item.label))
+        .toEqual(["Camera", "Cart"]);
+      expect(content.roots.some(item => item.label === "Wave"))
+        .toBe(false);
+      // A literal content tree must never become a playable state or
+      // a claimed player journey merely by entering an LLM handoff.
+      expect(audit.inspection.gameplayIntent.model.nodes
+        .filter(node => node.id.includes(":authored-source:"))
+        .every(node => node.kind === "resource")).toBe(true);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
 });
 
 describe("model handoff Knowledge owner boundary", () => {

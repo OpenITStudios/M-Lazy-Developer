@@ -29,6 +29,33 @@ export interface SelectedMapAuditModelHandoff {
         NonNullable<MapAuditOutputV2["gameplayStructure"]>["mechanicReconstructions"][number]["sourceActivationCandidates"];
     }[];
     readonly omittedFeatures: number;
+    /** Literal source containment from the SAME canonical Gameplay Intent
+     * model. Resources here are content, not activated phases or gameplay
+     * scenarios; absence from a bounded preview never proves absence.
+     */
+    readonly authoredContent: {
+      readonly basis: "SOURCE_CONTAINMENT_ONLY_NOT_GAMEPLAY_ORDER";
+      readonly roots: readonly {
+        readonly id: string;
+        readonly label: string;
+        readonly sourceLocator: string;
+        readonly directChildCount: number;
+        readonly children: readonly {
+          readonly id: string;
+          readonly label: string;
+          readonly sourceLocator: string;
+          readonly directChildCount: number;
+          readonly children: readonly {
+            readonly id: string;
+            readonly label: string;
+            readonly sourceLocator: string;
+          }[];
+          readonly omittedChildren: number;
+        }[];
+        readonly omittedChildren: number;
+      }[];
+      readonly omittedRoots: number;
+    };
     /** Selected-source memory alias uncertainty; not game/runtime scope. */
     readonly sourceStateIdentityQuestions: readonly {
       readonly id: string;
@@ -104,6 +131,94 @@ export interface SelectedMapAuditModelHandoff {
   readonly proofBoundary: "MODEL_RESPONSE_IS_UNTRUSTED_UNTIL_CANONICAL_ENGINE_ADMISSION";
 }
 
+/**
+ * Bounded source-content navigation from the canonical Intent graph.
+ * A stage/wave, gameplay catalogue, or choice collection is a source resource;
+ * its nested 'owns' relation cannot grant playable chronology, delivery,
+ * execution, or scenario/issue proof.
+ */
+function projectSelectedAuthoredContent(
+  model: SelectedMapAuditRun["inspection"]["gameplayIntent"]["model"],
+): SelectedMapAuditModelHandoff["gameUnderstanding"]["authoredContent"] {
+  const selectedEvidence = new Map(model.evidence
+    .filter(item => item.scope === "selected-artifact")
+    .map(item => [item.id, item] as const));
+  const authored = model.nodes.filter(node =>
+    node.kind === "resource" &&
+    (node.id.includes(":authored-source:") ||
+      node.id.startsWith("resource:authored-content:")) &&
+    node.evidenceIds.some(id => selectedEvidence.has(id)));
+  const byId = new Map(authored.map(node => [node.id, node] as const));
+  const children = new Map<string, string[]>();
+  const contained = new Set<string>();
+  for (const edge of model.edges) {
+    if (!edge.id.startsWith("authored-content-owns:") ||
+        edge.kind !== "owns" || edge.status !== "inferred" ||
+        !byId.has(edge.from) || !byId.has(edge.to) ||
+        !edge.evidenceIds.some(id => selectedEvidence.has(id))) continue;
+    const siblings = children.get(edge.from) ?? [];
+    if (!siblings.includes(edge.to)) siblings.push(edge.to);
+    children.set(edge.from, siblings);
+    contained.add(edge.to);
+  }
+  const locator = (id: string): string =>
+    byId.get(id)?.evidenceIds
+      .map(evidenceId => selectedEvidence.get(evidenceId))
+      .find(item => item !== undefined)?.locator ??
+    "UNRESOLVED_SELECTED_SOURCE";
+  // Source order, not lexicographic Stage 1, Stage 10, Stage 2.
+  const sourceOrder = (a: string, b: string): number => {
+    const parse = (id: string) => {
+      const site = locator(id);
+      const match = /^(.*):([0-9]+):([0-9]+)$/.exec(site);
+      return match
+        ? { path: match[1]!, line: Number(match[2]),
+            column: Number(match[3]) }
+        : { path: site, line: 0, column: 0 };
+    };
+    const left = parse(a);
+    const right = parse(b);
+    return left.path.localeCompare(right.path) ||
+      left.line - right.line || left.column - right.column ||
+      a.localeCompare(b);
+  };
+  const sortedChildren = (id: string): string[] =>
+    [...(children.get(id) ?? [])].sort(sourceOrder);
+  const roots = authored.filter(node => !contained.has(node.id))
+    .sort((a, b) => sourceOrder(a.id, b.id));
+  const visibleRoots = roots.slice(0, 16);
+  return {
+    basis: "SOURCE_CONTAINMENT_ONLY_NOT_GAMEPLAY_ORDER",
+    roots: visibleRoots.map(root => {
+      const direct = sortedChildren(root.id);
+      return {
+        id: root.id,
+        label: root.label,
+        sourceLocator: locator(root.id),
+        directChildCount: direct.length,
+        children: direct.slice(0, 4).map(childId => {
+          const child = byId.get(childId)!;
+          const nested = sortedChildren(childId);
+          return {
+            id: child.id,
+            label: child.label,
+            sourceLocator: locator(childId),
+            directChildCount: nested.length,
+            children: nested.slice(0, 2).map(grandchildId => ({
+              id: grandchildId,
+              label: byId.get(grandchildId)!.label,
+              sourceLocator: locator(grandchildId),
+            })),
+            omittedChildren: Math.max(0, nested.length - 2),
+          };
+        }),
+        omittedChildren: Math.max(0, direct.length - 4),
+      };
+    }),
+    omittedRoots: Math.max(0, roots.length - visibleRoots.length),
+  };
+}
+
 export function projectSelectedMapAuditModelHandoff(
   audit: SelectedMapAuditRun,
   offset = 0,
@@ -119,6 +234,9 @@ export function projectSelectedMapAuditModelHandoff(
       .includes(link.status))
     .map((link) => link.id));
   const features = audit.mapAuditReport.gameplayStructure?.features ?? [];
+  const authoredContent = projectSelectedAuthoredContent(
+    audit.inspection.gameplayIntent.model,
+  );
   const activationByFeature = new Map(
     (audit.mapAuditReport.gameplayStructure?.mechanicReconstructions ?? [])
       .map(item => [item.featureId, item.sourceActivationCandidates] as const),
@@ -179,6 +297,7 @@ export function projectSelectedMapAuditModelHandoff(
           (activationByFeature.get(feature.id) ?? []).slice(0, 3),
       })),
       omittedFeatures: Math.max(0, features.length - 16),
+      authoredContent,
       sourceStateIdentityQuestions: sourceStateIdentityQuestions.slice(0, 8)
         .map(item => ({
           id: item.id,
