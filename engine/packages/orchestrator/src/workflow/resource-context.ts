@@ -358,6 +358,14 @@ export function developerPracticeSignalsFromSemanticIr(
       add(region.id, region.source, "world.beforeEvents.entityHurt");
     }
   }
+  // Exact native entity events inform JSON-versus-script reasoning, never
+  // prove activation of the authored event.
+  for (const relation of ir.execution.authoredBehaviorRelations ?? []) {
+    if (relation.kind === "entity-event-trigger" &&
+        relation.resolution === "EXACT_REFERENCE") {
+      add(relation.id, relation.source, "native-entity-event");
+    }
+  }
   // Only parser-classified Script API receivers can add lifecycle cues.
   // The canonical API symbol can be Entity.teleport for a Player receiver,
   // so retain receiverType rather than deciding from symbol spelling.

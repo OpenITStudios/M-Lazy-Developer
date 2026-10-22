@@ -980,6 +980,7 @@
       "sourceSignals": [
         "system.currentTick",
         "system.runTimeout",
+        "system.runInterval",
         "Date.now",
         "performance.now"
       ],
@@ -1063,9 +1064,10 @@
       ],
       "sourceSignals": [
         "getDynamicProperty",
-        "setDynamicProperty"
+        "setDynamicProperty",
+        "native-entity-event"
       ],
-      "question": "Is the observed dynamic-property read/write backed by the selected map's own state ownership, or is static JSON configuration being confused with mutable runtime state?",
+      "question": "Does this selected map express a native JSON entity event or mutable Script API state, and which behavior or state owner is authoritative?",
       "candidateRelations": [
         "dynamic-property operation → authored state owner",
         "saved runtime state → reload/rejoin lifecycle candidate"

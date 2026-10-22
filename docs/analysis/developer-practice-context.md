@@ -319,10 +319,10 @@ context with the original question, sample relation hypotheses,
 source-file SHA, and source-archive SHA. A mismatch, absent typed IR source proof, workflow-only source or unknown
 source alias results in abstention.
 Selecting a hint **cannot** change Game Design closure or issue disposition.
-This opt-in context exists as source code; it does not run automatically
-from `runSelectedMapAudit()`. Repository TypeScript execution, full
-ContextCompiler pipeline acceptance and automatic source/ZIP hydration
-have not been demonstrated.
+The CLI now supplies the pinned curated snapshot to `runSelectedMapAudit()`
+by default; API callers supply it explicitly. Selection is conditional
+on source evidence. Repository TypeScript execution, full ContextCompiler
+pipeline acceptance and automatic source/ZIP hydration are not demonstrated.
 
 **Real-source calibration example (HISTORICAL only):**
 [developer-practice UI context source inspection](../../engine/reliability/history/audit-runs/learning/developer-practice-ui-context-2026-10-13.json).
@@ -486,14 +486,14 @@ requires comparing actual selected-map bytes, not function names or
 similar style.
 
 The existing production `runSelectedMapAudit()` accepts an optional
-`developerPractice` reference payload. The normal CLI exposes an explicit
-`--developer-practice` opt-in that loads the curated JSON, not the ZIP.
+`developerPractice` reference payload. The normal CLI loads the curated JSON by default, not the ZIP;
+the old `--developer-practice` flag remains accepted for compatibility.
 Selected-map model task packets now receive up to two matching hints
 **only** when the task has source-backed Intent subjects and locators,
 typed Semantic IR from the selected map at the same file, and a relevant
 question domain. Each hint retains its own question, negative control,
-prohibited inference, and optional code reference. The default audit
-behavior remains unchanged without opt-in.
+prohibited inference, and optional code reference. An audit without an exact selected-source witness remains unchanged even
+with the curated ZIP guidance loaded.
 
 Source locators are matched exactly to the IR file or at its `:line`,
 `#anchor`, or `@site` boundary. Unrecognized source locator formats
@@ -580,7 +580,7 @@ Compound domain IDs from the Knowledge owner (`script-api`,
 `client-feedback`, etc.) retain their complete identity; free-text
 question terms are only auxiliary lookup cues. Developer reference
 selection still requires an exact selected-source IR observation and
-approved opt-in input.
+a vetted snapshot supplied by the caller (automatically by the CLI).
 
 Audit continuation never silently inherits an older model packet's
 `retrievedKnowledge` or `developerPractice`. Those views are recompiled
@@ -611,7 +611,8 @@ verifier creates another audit/report/proof authority. Updating ZIPs
 must update the existing JSON and this routed reference **in place**,
 never introduce `developer-practice-v2` or another registry.
 
-The source-scoped reference selector remains opt-in. A native probe
+The source-scoped selector stays conditional; only direct API callers need
+explicit injection. A native probe
 `PASS`, `FAIL`, `PARTIAL` or `BLOCKED` is still an *upstream,
 version-scoped statement*, not a claim verified by Lazy-Developer or
 selected-map proof. Source inventory presence does not mean that all
@@ -637,7 +638,7 @@ never because this ZIP says the pattern is preferred.
 This curated snapshot makes **all 22 active skills discoverable and
 fingerprinted**, **16 interpretation records searchable** and a conservative
 subset conditionally selectable from existing typed Semantic IR through
-the opt-in Context Compiler contract. The former **20 pending/research/feedback**
+the existing Context Compiler contract. The former **20 pending/research/feedback**
 source records belonged to a prior ZIP; they are no longer current `deferredSources`
 and remain traceable in Git history. The other ZIP
 contents (code examples, assets, checkers, archive/history) remain in the
