@@ -12,11 +12,16 @@ export interface AuditDemandReconciliation {
   readonly missingDomains: readonly AnalysisKnowledgeDomain[];
   readonly stable: boolean;
   readonly passCount: number;
+  /** Actual per-pass indexing observations; not audit authorization or a speedup claim. */
+  readonly sourceIndexPasses?: readonly (NonNullable<
+    InspectArtifactResult["sourceIndexWork"]
+  > & { readonly pass: number })[];
 }
 
 export function reconcileSelectedMapAuditDemand(
   inspection: InspectArtifactResult,
   passCount = 1,
+  previous?: AuditDemandReconciliation,
 ): AuditDemandReconciliation {
   if (!Number.isInteger(passCount) || passCount < 1) {
     throw new Error(
@@ -35,6 +40,13 @@ export function reconcileSelectedMapAuditDemand(
     .filter((domain) => !analyzed.has(domain))
     .sort();
 
+  const sourceIndexPasses = [
+    ...(previous?.sourceIndexPasses ?? []),
+    ...(inspection.sourceIndexWork === undefined ? [] : [{
+      pass: passCount,
+      ...inspection.sourceIndexWork,
+    }]),
+  ];
   return {
     policy: "monotonic-rig-demand-reconciliation",
     analyzedDomains: [...analyzed].sort(),
@@ -42,5 +54,6 @@ export function reconcileSelectedMapAuditDemand(
     missingDomains: missing,
     stable: missing.length === 0,
     passCount,
+    ...(sourceIndexPasses.length === 0 ? {} : { sourceIndexPasses }),
   };
 }

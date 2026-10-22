@@ -144,6 +144,17 @@ export interface InspectDirectoryResult {
    * evidence validation. Callers must not rebuild a second inventory.
    */
   fileInventory: readonly FileInventoryEntry[];
+  /** Observed source-index work only; never gameplay, proof, or full audit duration. */
+  sourceIndexWork?: {
+    readonly action: "PARSED" | "REUSED";
+    /** Includes source indexing or cloning plus snapshot preparation, not downstream analyses. */
+    readonly elapsedMs: number;
+    readonly relevantFiles: number;
+    readonly indexedFiles: number;
+    readonly parseFailures: number;
+    /** Eligible for a second pass in this one fingerprint-bound inspection. */
+    readonly snapshotReusable: boolean;
+  };
   packs: InspectedPack[];
   functions: number;
   scripts: number;

@@ -177,6 +177,17 @@ function expectReconstructionContract(
     .toBe(result.inspection.fingerprint);
   expect(result.mapAuditReport.artifactFingerprint)
     .toMatch(/^[a-f0-9]{64}$/);
+  const passes = result.demandReconciliation.sourceIndexPasses;
+  expect(passes?.length).toBe(result.demandReconciliation.passCount);
+  expect(passes?.[0]?.action).toBe("PARSED");
+  expect(passes?.every((step, index) =>
+    step.pass === index + 1 &&
+    Number.isFinite(step.elapsedMs) &&
+    step.elapsedMs >= 0
+  )).toBe(true);
+  if (passes?.length === 2 && passes[0]?.snapshotReusable) {
+    expect(passes[1]?.action).toBe("REUSED");
+  }
   expect(result.mapAuditReport.auditTarget).toMatchObject({
     source: "selected-audit-runtime-target-not-live-observation",
   });

@@ -68,6 +68,12 @@ describe("inspectArtifact", () => {
     )).rejects.toThrow(/SHA-256 differs/);
 
     expect(result.archiveEntries).toBeGreaterThan(0);
+    // Malformed native structures are not eligible for parsed-index reuse.
+    expect(result.sourceIndexWork).toMatchObject({
+      action: "PARSED",
+      snapshotReusable: false,
+    });
+    expect(result.sourceIndexWork?.parseFailures).toBeGreaterThan(0);
     expect(result.packs[0]?.type).toBe("behavior_pack");
     expect(result.functions).toBe(1);
     expect(result.structures).toBe(1);
@@ -106,6 +112,22 @@ describe("inspectArtifact", () => {
         expect(initial.functions).toBe(expanded.functions);
         expect(initial.gameplayDiscoveryClosure.sourceParseFailures).toBe(0);
         expect(expanded.gameplayDiscoveryClosure.sourceParseFailures).toBe(0);
+        expect(initial.sourceIndexWork).toMatchObject({
+          action: "PARSED",
+          snapshotReusable: true,
+          parseFailures: 0,
+        });
+        expect(expanded.sourceIndexWork).toMatchObject({
+          action: "REUSED",
+          snapshotReusable: true,
+          parseFailures: 0,
+        });
+        for (const pass of [initial, expanded]) {
+          expect(pass.sourceIndexWork?.elapsedMs).toBeGreaterThanOrEqual(0);
+          expect(Number.isFinite(pass.sourceIndexWork?.elapsedMs)).toBe(true);
+          expect(pass.sourceIndexWork?.indexedFiles)
+            .toBe(pass.gameplayDiscoveryClosure.sourceIndexedFiles);
+        }
         expect(expanded.fingerprint).toBe(fingerprint);
         return [initial, expanded];
       },

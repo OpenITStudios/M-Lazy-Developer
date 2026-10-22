@@ -613,6 +613,7 @@ async function inspectSelectedMapToDemandFixedPoint(
         reconcileSelectedMapAuditDemand(
           secondInspection,
           2,
+          firstReconciliation,
         );
 
       if (!secondReconciliation.stable) {

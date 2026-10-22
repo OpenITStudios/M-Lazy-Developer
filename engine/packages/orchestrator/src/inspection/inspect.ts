@@ -1,4 +1,5 @@
 export { structureIdentifier } from "./inspect-identifiers.js";
+import { performance } from "node:perf_hooks";
 import { discoverInspectionPacks } from "./inspect-packs.js";
 import {
   indexInspectionSources,
@@ -153,6 +154,7 @@ export async function inspectDirectory(
   // pass's graph enrichment, diagnostics and downstream consumers cannot
   // alter the second pass. Parser failures are never cached: retry them
   // against the independent working copy, like failed native DB reads.
+  const sourceIndexStartedAt = performance.now();
   const sourceSnapshot = sourceInventoryReuse === undefined
     ? undefined
     : parsedSourceIndexSnapshots.get(sourceInventoryReuse);
@@ -185,6 +187,15 @@ export async function inspectDirectory(
       }
     }
   }
+  const sourceIndexWork: NonNullable<InspectDirectoryResult["sourceIndexWork"]> = {
+    action: sourceSnapshot === undefined ? "PARSED" : "REUSED",
+    elapsedMs: Math.max(0, performance.now() - sourceIndexStartedAt),
+    relevantFiles: sourceIndex.coverage.relevantFiles,
+    indexedFiles: sourceIndex.coverage.indexedFiles,
+    parseFailures: sourceIndex.coverage.parseFailures.length,
+    snapshotReusable: sourceInventoryReuse !== undefined &&
+      parsedSourceIndexSnapshots.has(sourceInventoryReuse),
+  };
   const {
     graph,
     nodes,
@@ -533,8 +544,9 @@ export async function inspectDirectory(
       knowledgeRuntime.validationCases,
   });
 
-  return buildInspectionResult({
-    artifactId,
+  return {
+    ...buildInspectionResult({
+      artifactId,
     ...(sourceFingerprint === undefined
       ? {}
       : { sourceFingerprint }),
@@ -562,6 +574,8 @@ export async function inspectDirectory(
     ...(mapClassification === undefined
       ? {}
       : { mapClassification }),
-    diagnostics,
-  });
+      diagnostics,
+    }),
+    sourceIndexWork,
+  };
 }
