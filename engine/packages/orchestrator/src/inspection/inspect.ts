@@ -41,7 +41,10 @@ import {
   deriveAuthoredEntityBehaviorRelations,
 } from "./entity-event-evidence.js";
 import { buildInspectionSemanticIr } from "../diagnosis/semantic-ir-stage.js";
-import { deriveCrossFileCallEdges } from "../../../../analyzers/scripts/src/index.js";
+import {
+  deriveCrossFileCallEdges,
+  type CrossFileCallEdge,
+} from "../../../../analyzers/scripts/src/index.js";
 import { semanticIrDiagnostics } from "../diagnosis/semantic-ir-diagnostics.js";
 import { buildGameplayIntentModel } from "./gameplay-intent-stage.js";
 import {
@@ -78,6 +81,11 @@ export interface InspectionFileInventoryReuse {
   readonly artifactId: string;
   readonly sourceFingerprint: string;
   files?: FileInventoryEntry[];
+  /** Same source bytes as the cached parser snapshot. Absent for no
+   * module calls, failed clone, or a source-index pass with parse failures.
+   * Never a second graph/evidence authority.
+   */
+  crossFileCallEdges?: CrossFileCallEdge[];
 }
 
 /**
@@ -222,20 +230,41 @@ export async function inspectDirectory(
           },
     );
 
-  // Monolithic bundles without relative imports have no cross-file
-  // executable call candidates; avoid parsing their scripts twice.
-  const crossFileCallEdges = parsedScripts.some(({ parsed }) =>
+  // Cross-file source call edges are also a pure function of the pinned
+  // selected scripts. On modular maps the analyzer reparses every module
+  // into a TypeScript AST. Reuse only when the parsed-index snapshot is
+  // reused; domain requests, model tasks, and runtime proof are NOT cached.
+  const hasCrossFileImports = parsedScripts.some(({ parsed }) =>
     parsed.imports.some(item =>
       item.kind === "relative" && !item.typeOnly &&
-      item.importSyntax === undefined))
-    ? deriveCrossFileCallEdges(
-        parsedScripts.flatMap(({ parsed, text }) => text === undefined ? [] : [{
-          path: parsed.source.relativePath,
-          text,
-          source: parsed.source,
-        }]),
-      )
-    : [];
+      item.importSyntax === undefined));
+  const cachedCrossFileCalls = sourceSnapshot === undefined
+    ? undefined
+    : sourceInventoryReuse?.crossFileCallEdges;
+  const crossFileCallEdges = cachedCrossFileCalls !== undefined
+    ? structuredClone(cachedCrossFileCalls)
+    : hasCrossFileImports
+      ? deriveCrossFileCallEdges(
+          parsedScripts.flatMap(({ parsed, text }) =>
+            text === undefined ? [] : [{
+              path: parsed.source.relativePath,
+              text,
+              source: parsed.source,
+            }]),
+        )
+      : [];
+  if (cachedCrossFileCalls === undefined && hasCrossFileImports &&
+      sourceInventoryReuse !== undefined &&
+      parsedSourceIndexSnapshots.has(sourceInventoryReuse)) {
+    try {
+      sourceInventoryReuse.crossFileCallEdges =
+        structuredClone(crossFileCallEdges);
+    } catch {
+      // A non-cloneable future edge payload must not block source
+      // inspection; fall back to canonical reanalysis on the next pass.
+      delete sourceInventoryReuse.crossFileCallEdges;
+    }
+  }
   const authoredBehaviorRelations = deriveAuthoredEntityBehaviorRelations({
     entities: parsedEntities.map(item => item.parsed),
     controllerSources: nodes.filter(node =>

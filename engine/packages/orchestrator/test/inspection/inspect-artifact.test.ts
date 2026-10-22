@@ -12,6 +12,7 @@ import {
 async function createSyntheticWorldTree(
   root: string,
   includeOpaqueStructure = true,
+  includeModularScripts = false,
 ): Promise<void> {
   const pack = join(root, "behavior_packs/demo");
   await mkdir(join(pack, "functions"), { recursive: true });
@@ -44,6 +45,20 @@ async function createSyntheticWorldTree(
 
   if (includeOpaqueStructure) {
     await writeFile(join(pack, "structures/demo/test.mcstructure"), "opaque-fixture");
+  }
+  if (includeModularScripts) {
+    await mkdir(join(pack, "scripts"), { recursive: true });
+    await writeFile(join(pack, "scripts/round-helper.js"), [
+      'export function resolveRound() {',
+      '  return "ready";',
+      '}',
+    ].join("\n"));
+    await writeFile(join(pack, "scripts/round-manager.js"), [
+      'import { resolveRound } from "./round-helper.js";',
+      'export function beginRound() {',
+      '  return resolveRound();',
+      '}',
+    ].join("\n"));
   }
 }
 
@@ -97,7 +112,7 @@ describe("inspectArtifact", () => {
     await mkdir(world, { recursive: true });
     // Cache-eligible fixture: the separate parse-failure case above keeps
     // the malformed structure, but this one must exercise source reuse.
-    await createSyntheticWorldTree(world, false);
+    await createSyntheticWorldTree(world, false, true);
     await packageDirectoryDeterministically(world, archive);
     const fingerprint = await sha256File(archive);
     // Distinct RIG demand is the reason production can require pass two.
@@ -151,6 +166,16 @@ describe("inspectArtifact", () => {
       fingerprint,
     );
     expect(passes).toHaveLength(2);
+    // The modular JavaScript importer exercises cross-file AST analysis,
+    // not only the mcfunction source-index clone. A resolved, source-owned
+    // call must survive reuse without manufacturing player chronology.
+    const resolvedHandoff = passes[1]?.semanticIrModel.execution.edges.find(
+      edge => edge.kind === "synchronous-call" &&
+        edge.resolution === "resolved" &&
+        edge.targetLabel === "resolveRound"
+    );
+    expect(resolvedHandoff).toBeDefined();
+    expect(resolvedHandoff?.to).toContain("round-helper.js");
 
     // The second pass must stay semantically equivalent to a standalone
     // inspection that does not share physical-inventory or LevelDB results.
