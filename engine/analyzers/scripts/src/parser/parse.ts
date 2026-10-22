@@ -287,17 +287,17 @@ const GENERATION_GUARD_PATTERN =
 
 function deferredScheduler(
   call: ts.CallExpression,
-  namedBindings: ReadonlyMap<string, { module: string; importedName: string }>,
+  file: ts.SourceFile,
+  typedSchedulerSites: ReadonlySet<string>,
 ): ScriptDeferredCallback["scheduler"] | undefined {
   if (!ts.isPropertyAccessExpression(call.expression)) return undefined;
-  const chain = propertyAccessChain(call.expression);
-  if (chain.length !== 2) return undefined;
-
-  const root = chain[0];
-  const method = chain[1];
-  const binding = root ? namedBindings.get(root) : undefined;
-  const canonicalRoot = binding?.importedName ?? root;
-  if (canonicalRoot !== "system") return undefined;
+  const method = call.expression.name.text;
+  const start = file.getLineAndCharacterOfPosition(call.getStart(file));
+  // Reuse parser-typed System method calls. An unbound or shadowed
+  // identifier named "system" is not scheduler evidence.
+  if (!typedSchedulerSites.has(
+    `${start.line + 1}:${start.character + 1}:${method}`,
+  )) return undefined;
 
   if (
     method === "run" ||
@@ -2372,6 +2372,13 @@ export function parseScriptFile(
     spatialOffsetTransforms.map((item) => item.functionName),
   );
   const namedMinecraftBindings = minecraftNamedBindings(file);
+  // Derive scheduler eligibility once from typed receiver inference instead
+  // of repeatedly guessing from a source identifier's spelling.
+  const typedSchedulerSites = new Set(methodCalls
+    .filter(call => call.receiverType === "System" &&
+      ["run", "runTimeout", "runInterval", "runJob"].includes(call.method))
+    .map(call => [call.source.range?.lineStart ?? 0,
+      call.source.range?.columnStart ?? 0, call.method].join(":")));
   const namespaceMinecraftBindings = minecraftNamespaceBindings(file);
   const canonicalMinecraftMember = (
     expression: ts.Expression,
@@ -3072,7 +3079,7 @@ export function parseScriptFile(
         }
       }
 
-      const scheduler = deferredScheduler(node, namedMinecraftBindings);
+      const scheduler = deferredScheduler(node, file, typedSchedulerSites);
       if (scheduler) {
         const callback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
         const namedScheduledCallback = namedCallback(node);
