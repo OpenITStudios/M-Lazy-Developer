@@ -9,6 +9,22 @@ const source = {
 };
 
 describe("script analyzer", () => {
+  it("keeps helper-return receiver identity inside its original lexical scope", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'function original() { return world; }',
+      'function use() {',
+      '  original().sendMessage("real");',
+      '  { const original = () => ({ sendMessage() {} });',
+      '    original().sendMessage("local"); }',
+      '}',
+    ].join("\n"), source);
+    const candidates = parsed.methodCalls.filter(call =>
+      call.symbol === "world.sendMessage");
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.source.range?.lineStart).toBe(4);
+  });
+
   it("does not confuse catch or for bindings with an outer local callback", () => {
     const parsed = parseScriptFile("scripts/main", [
       'import { system } from "@minecraft/server";',

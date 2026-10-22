@@ -688,6 +688,16 @@ inline-data or cross-pack maps abstain with an explicit non-fatal
 navigation status. The recovered source view must never cause an
 unrelated map file or ZIP example to become gameplay authority.
 
+## Receiver scope in modular and minified sources
+
+The canonical `receiver-inference.ts` helper-return classification
+now respects lexical shadow bindings when inferring a typed Script API
+receiver from a directly invoked top-level function. An identically
+named local parameter or callback inside a bundled/minified block must
+not inherit a Minecraft receiver type from an unrelated module helper.
+This preserves the existing narrow inference for the real helper call
+without inventing runtime linkage from minified names.
+
 ## Bounded modular source identity
 
 The canonical `analyzers/scripts/src/parser/cross-file-call.ts`

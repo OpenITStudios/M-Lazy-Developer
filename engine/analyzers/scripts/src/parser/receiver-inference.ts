@@ -158,6 +158,16 @@ function lookup(scope: Scope, name: string): ReceiverValueType | undefined {
   return undefined;
 }
 
+function hasLexicalBinding(scope: Scope, name: string): boolean {
+  let current: Scope | undefined = scope;
+  while (current) {
+    // A null value is still an authored shadow, not an absent binding.
+    if (current.values.has(name)) return true;
+    current = current.parent;
+  }
+  return false;
+}
+
 /** Local bindings with no supported type are shadows, not inherited aliases. */
 function bindName(scope: Scope, name: ts.BindingName, type?: ReceiverValueType): void {
   if (ts.isIdentifier(name)) {
@@ -646,7 +656,11 @@ function inferExpressionType(
 
   if (ts.isCallExpression(node)) {
     if (ts.isIdentifier(node.expression)) {
-      return functionReturns.get(node.expression.text);
+      // A local callback, parameter or import can reuse a top-level helper's
+      // minified name. Never inherit the helper's return receiver through
+      // that lexical shadow.
+      return hasLexicalBinding(scope, node.expression.text)
+        ? undefined : functionReturns.get(node.expression.text);
     }
 
     if (ts.isPropertyAccessExpression(node.expression)) {
