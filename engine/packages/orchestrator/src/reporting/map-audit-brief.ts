@@ -226,12 +226,23 @@ export function formatSelectedMapAuditBrief(input: {
     }
   }
   if (input.scriptSourceMapNavigation?.length) {
-    const entries = input.scriptSourceMapNavigation;
+    // Put maps supporting the current bounded investigation first, rather
+    // than sampling unrelated bundles by inventory order.
+    const relevantLocators = firstTask?.knowledgeLookup?.sourceLocators ?? [];
+    const applicable = (path: string): boolean =>
+      relevantLocators.some(locator =>
+        locator === path || locator.startsWith(path + ":") ||
+        locator.startsWith(path + "#") || locator.startsWith(path + "@"));
+    const entries = [...input.scriptSourceMapNavigation].sort((a, b) =>
+      Number(applicable(b.generatedPath)) - Number(applicable(a.generatedPath)) ||
+      a.generatedPath.localeCompare(b.generatedPath));
     out.push("**Bundled script source-map navigation (NOT gameplay proof):**");
     for (const mapping of entries.slice(0, 3)) {
       out.push("- " + concise(mapping.generatedPath) + " → " +
         (mapping.mapPath === undefined ? "unavailable map" :
-          concise(mapping.mapPath)) + " [" + mapping.status + "]");
+          concise(mapping.mapPath)) + " [" + mapping.status + "]",
+        ...(mapping.reason === undefined ? [] :
+          ["  Limit: " + concise(mapping.reason)]));
       for (const site of mapping.sites.slice(0, 3)) {
         out.push("  " + concise(site.generatedLocator) +
           " → claimed original " + concise(site.originalLocator) +
