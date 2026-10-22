@@ -33,6 +33,9 @@ import type {
   GameplayDefectResolutionGate,
 } from "./inspection/gameplay-defect-resolution.js";
 import {
+  sourceBoundAuditEvidenceIds,
+} from "./map-audit-proof-saturation.js";
+import {
   SELECTED_MAP_AUDIT_STAGE_ORDER,
   type SelectedMapAuditAdmission,
   type SelectedMapAuditStage,
@@ -743,21 +746,13 @@ function provePackets(
       const scenario = graph.scenarios.find(
         (item) => item.id === link.scenarioId,
       );
-      const requirements = unique(link.knowledgeRequirementIds).flatMap((id) => {
-        const required = uniqueScenarioKnowledgeRequirement(
-          graph, id, link.scenarioId,
-        );
-        return required === undefined ? [] : [required];
-      });
       const needsTranslation =
         gate.gameplayTranslationRequiredIds.includes(link.id);
       const requirementIds = unique(link.knowledgeRequirementIds);
-      const ids = unique([
-        ...link.evidenceIds,
-        ...requirements.flatMap((requirement) =>
-          satisfiedScenarioKnowledgeReceipt(graph, requirement)?.evidenceIds ?? []
-        ),
-      ]);
+      // Handoff and proof admission must consume one authoritative evidence
+      // boundary. A task cannot lose already sourced dimension witnesses or
+      // gain unrelated sibling evidence merely from scenario proximity.
+      const ids = sourceBoundAuditEvidenceIds(graph, link.id);
       const evidence = evidenceContext(ids, intent);
       return {
         schemaVersion: 1 as const,

@@ -122,10 +122,12 @@ function nonEmpty(value: string | undefined): boolean {
 function causalSourceEvidenceIds(
   link: GameplayScenarioGraph["causalLinks"][number],
 ): readonly string[] {
+  // Raw dimensionEvidence is a typed claim, not an independent source
+  // authority. Counterproof must first bind its witness to the exact link
+  // and scope; only admitted canonical dimension receipts join the report.
   return [...new Set([
     ...link.evidenceIds,
     ...link.impactPathEvidenceIds,
-    ...Object.values(link.dimensionEvidence ?? {}).flat(),
   ])].filter(nonEmpty).sort();
 }
 

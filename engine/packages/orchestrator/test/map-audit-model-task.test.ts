@@ -3,8 +3,22 @@ import type { GameplayIntentModel } from "../../../packages/gameplay-intent/src/
 import type { MandatoryAuditCheckpointReceipt } from "../src/inspection/mandatory-audit-procedure.js";
 import {
   deriveAuditModelKnowledgeLookup,
+  deriveAuditModelTaskPackets,
   selectCheckpointIntentSubjects,
 } from "../src/map-audit-model-task.js";
+import {
+  applySelectedMapAuditModelResponses,
+  type SelectedMapAuditRun,
+} from "../src/map-audit-pipeline.js";
+import {
+  sourceBoundAuditEvidenceIds,
+} from "../src/map-audit-proof-saturation.js";
+import type {
+  GameplayScenarioGraph,
+} from "../src/inspection/gameplay-scenario-model.js";
+import type {
+  GameplayDefectResolutionGate,
+} from "../src/inspection/gameplay-defect-resolution.js";
 import {
   compileDeveloperPracticeReferenceContext,
 } from "../src/workflow/resource-context.js";
@@ -195,5 +209,173 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
       semanticIr: ir, domains: ["state"],
       sourceLocators: ["behavior_packs/other/scripts/main.ts:1"],
     })?.items ?? []).toHaveLength(0);
+  });
+});
+
+
+describe("PROVE model evidence handoff", () => {
+  it("preserves exact analyzer witnesses while rejecting a neighboring source and duplicate identity", () => {
+    const artifactId = "artifact:selected";
+    const id = "link:admission";
+    const siblingId = "link:sibling";
+    const scenarioId = "scenario:admission";
+    const ownId = "source:admission";
+    const guardId = "source:guard";
+    const neighborId = "source:neighbor";
+    const fakeId = "source:unbound-claim";
+
+    // Reduced selected-artifact Source -> Intent contract. A sibling in the
+    // same scenario shares a subject but not the operation being diagnosed.
+    const intent: GameplayIntentModel = {
+      schemaVersion: 1,
+      id: "intent:selected",
+      artifactId,
+      evidence: [ownId, guardId, neighborId].map((evidenceId, i) => ({
+        id: evidenceId, origin: "source-code" as const,
+        scope: "selected-artifact" as const,
+        locator: "behavior_packs/demo/scripts/admission.js:" + (i + 10) + ":2",
+        summary: "Selected source witness",
+      })),
+      nodes: [{
+        id: "policy:admission", kind: "policy", label: "Admission",
+        status: "authored", evidenceIds: [ownId],
+      }],
+      edges: [],
+      invariants: [],
+      unknowns: [],
+    };
+    const target: GameplayScenarioGraph["causalLinks"][number] = {
+      id, scenarioId,
+      fromComponentId: "runtime:arena",
+      toComponentId: "policy:admission",
+      purpose: "Arena admission must stay valid.",
+      status: "CONTRADICTED",
+      reason: "A required admission state is contradicted.",
+      evidenceIds: [ownId, guardId],
+      subjectIds: ["policy:admission"],
+      componentIds: ["runtime:arena", "policy:admission"],
+      knowledgeRequirementIds: [],
+      impactPathComponentIds: [],
+      impactPathEvidenceIds: [],
+      dimensionEvidence: { guard: [guardId], scope: [fakeId] },
+    };
+    const graph: GameplayScenarioGraph = {
+      schemaVersion: 1,
+      policy: "scenario-driven-causal-audit",
+      scenarios: [{
+        id: scenarioId, label: "arena-capacity-plus-one",
+        gameplayStage: "READY_START",
+        purpose: "Check arena admission.",
+        sourceSubjectIds: ["policy:admission"],
+        componentIds: ["runtime:arena", "policy:admission"],
+        causalLinkIds: [id, siblingId],
+        playerCounts: [2], requiredKnowledgeIds: [], composedScenarioIds: [],
+      }],
+      components: [],
+      causalLinks: [target, {
+        ...target,
+        id: siblingId,
+        fromComponentId: "runtime:other",
+        toComponentId: "policy:other",
+        status: "PROVEN",
+        evidenceIds: [neighborId],
+        dimensionEvidence: {},
+      }],
+      knowledgeRequirements: [],
+      knowledgeReceipts: [],
+      requiredInspectionGraph: {
+        policy: "required-inspection-graph",
+        nodes: [], receipts: [],
+      },
+    };
+    const authorized = sourceBoundAuditEvidenceIds(graph, id);
+    expect(authorized).toContain(ownId);
+    expect(authorized).toContain(guardId);
+    expect(authorized).not.toContain(neighborId);
+    expect(authorized).not.toContain(fakeId);
+
+    const gate: GameplayDefectResolutionGate = {
+      status: "BLOCKED",
+      contradictedCausalLinkIds: [id],
+      resolutions: [],
+      confirmedDefectReadyIds: [],
+      blockingCounterProofIds: [],
+      runtimeProofRequiredIds: [],
+      detectionGapIds: [],
+      gameplayTranslationRequiredIds: [],
+      counterProofSearchRequiredIds: [id],
+      issues: [],
+    };
+    const revision = "revision:selected";
+    const tasks = deriveAuditModelTaskPackets({
+      admission: {
+        policy: "selected-map-audit-ordered-admission",
+        status: "BLOCKED", firstBlockingStage: "PROVE", issues: [],
+      },
+      procedure: {} as any,
+      graph, defectResolution: gate, intent, auditRevision: revision,
+      world: {} as any,
+    });
+    const task = tasks.find((item) =>
+      item.causalLinkId === id && item.kind === "COUNTERPROOF_SEARCH"
+    );
+    expect(task).toBeDefined();
+    expect(task?.evidenceIds).toEqual(authorized);
+    expect(task?.evidenceContext.some((item) => item.id === guardId &&
+      item.kind === "selected-artifact-evidence")).toBe(true);
+    expect(task?.evidenceIds).not.toContain(neighborId);
+    expect(task?.evidenceIds).not.toContain(fakeId);
+
+    // A genuine source mention in a model prompt does not authorize that
+    // source as proof for a different causal-link target.
+    const fingerprint = "a".repeat(64);
+    const audit = {
+      identity: { artifactId, artifactFingerprint: fingerprint },
+      auditRevision: revision,
+      modelTaskPackets: tasks,
+      inspection: { hiddenGameplayDefects: {
+        scenarioAudit: { graph, defectResolution: gate },
+      } },
+    } as unknown as SelectedMapAuditRun;
+    const responses = {
+      schemaVersion: 1 as const,
+      policy: "selected-map-audit-model-responses" as const,
+      artifactId, artifactFingerprint: fingerprint, auditRevision: revision,
+      resolutions: [{
+        taskId: task!.id,
+        resolution: {
+          causalLinkId: id,
+          scenarioId,
+          disposition: "COUNTERPROOF_SEARCH_REQUIRED" as const,
+          evidenceIds: [neighborId],
+        },
+      }],
+    };
+    expect(() => applySelectedMapAuditModelResponses({
+      audit, responses,
+    })).toThrow(/unverified or out-of-scope evidence/);
+
+    const duplicate = {
+      ...audit,
+      inspection: { hiddenGameplayDefects: {
+        scenarioAudit: {
+          graph: {
+            ...graph, causalLinks: [...graph.causalLinks, { ...target }],
+          },
+          defectResolution: gate,
+        },
+      } },
+    } as unknown as SelectedMapAuditRun;
+    expect(() => applySelectedMapAuditModelResponses({
+      audit: duplicate,
+      responses: {
+        ...responses,
+        resolutions: [{
+          ...responses.resolutions[0]!,
+          resolution: { ...responses.resolutions[0]!.resolution,
+            evidenceIds: [ownId] },
+        }],
+      },
+    })).toThrow(/ambiguous causal scope/);
   });
 });

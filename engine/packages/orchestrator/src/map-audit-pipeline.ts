@@ -76,6 +76,9 @@ import {
   type ReadyAuditIssueProjection,
 } from "./map-audit-issue-projection.js";
 import {
+  sourceBoundAuditEvidenceIds,
+} from "./map-audit-proof-saturation.js";
+import {
   projectNeedValidationAuditIssues,
 } from "./map-audit-validation-projection.js";
 import {
@@ -1162,12 +1165,14 @@ export function applySelectedMapAuditModelResponses(input: {
     }
     const link = byLink.get(task.causalLinkId);
     if (!link ||
+        graph.causalLinks.filter((item) => item.id === task.causalLinkId).length !== 1 ||
+        graph.scenarios.filter((item) => item.id === link.scenarioId).length !== 1 ||
         !["CONTRADICTED", "RUNTIME_BLOCKED", "DETECTION_GAP"]
           .includes(link.status) ||
         (resolution.scenarioId !== undefined &&
           resolution.scenarioId !== link.scenarioId) ||
         !dispositionSet.has(resolution.disposition)) {
-      throw new Error("Model response has unsupported causal scope/disposition.");
+      throw new Error("Model response has unsupported or ambiguous causal scope/disposition.");
     }
     if (seenTasks.has(task.id) || seenLinks.has(link.id)) {
       throw new Error("Duplicate model response for a task/causal link.");
@@ -1187,22 +1192,13 @@ export function applySelectedMapAuditModelResponses(input: {
       }
     }
 
-    const overlaps = (left: readonly string[], right: readonly string[]) =>
-      left.some((id) => right.includes(id));
-    const related = graph.causalLinks.filter((candidate) =>
-      candidate.scenarioId === link.scenarioId &&
-      (candidate.id === link.id ||
-        overlaps(candidate.subjectIds, link.subjectIds) ||
-        overlaps(candidate.componentIds, link.componentIds)));
-    const allowedEvidence = new Set([
-      ...task.evidenceContext
-        .filter((evidence) => evidence.kind === "selected-artifact-evidence")
-        .map((evidence) => evidence.id),
-      ...related.flatMap((candidate) => [
-        ...candidate.evidenceIds,
-        ...Object.values(candidate.dimensionEvidence ?? {}).flat(),
-      ]),
-    ]);
+    // A model task is a read-only navigation hint, not an evidence owner.
+    // Admission must use precisely the same unique-link, typed-dimension,
+    // satisfied-Knowledge authority as PROVE and REPORT. Neighboring links
+    // and a task's broader source context cannot add proof.
+    const allowedEvidence = new Set(
+      sourceBoundAuditEvidenceIds(graph, link.id),
+    );
     const claimedEvidence = [
       ...(resolution.evidenceIds ?? []),
       ...(resolution.counterProofEvidenceIds ?? []),
