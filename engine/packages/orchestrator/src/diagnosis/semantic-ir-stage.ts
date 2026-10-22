@@ -559,13 +559,15 @@ export function buildInspectionSemanticIr(
       const profilingQuery =
         (call.receiverType === "World" && call.method === "getAllPlayers") ||
         (call.receiverType === "Dimension" && call.method === "getEntities");
+      const formClosing = call.receiverType === "UIManager" &&
+        call.method === "closeAllForms";
       const formPresentation =
         (call.receiverType === "ActionFormData" ||
          call.receiverType === "ModalFormData" ||
          call.receiverType === "MessageFormData") && call.method === "show";
       if (!entityLifecycle && !playerFeedback &&
           !displayFeedback && !cameraPresentation &&
-          !profilingQuery && !formPresentation) continue;
+          !profilingQuery && !formClosing && !formPresentation) continue;
       const regionId = ensureScriptRegion(
         parsed, call.executionRegion ?? "module", call.source,
       );

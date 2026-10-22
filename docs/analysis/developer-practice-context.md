@@ -332,6 +332,12 @@ operations now also require a parser-inferred World, Player, Entity or
 ItemStack receiver; a local helper merely named getDynamicProperty does
 not become durable Minecraft state evidence.
 
+An actual `@minecraft/server-ui` import of `uiManager` (including aliases)
+now supplies a typed `UIManager.closeAllForms` source cue alongside
+form `.show()`. The reference guide can ask about pending forms and
+stale session responses, but a close request is not proof of successful
+closure or correct generation checks.
+
 The existing typed event-subscription regions also route
 `world.afterEvents.entityDie` and `world.afterEvents.entityRemove`
 to the entity-lifecycle reference alongside parsed kill/remove API

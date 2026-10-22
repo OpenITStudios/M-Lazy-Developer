@@ -113,7 +113,7 @@ function minecraftSingletonBindings(
 }
 
 /** Treat only constructors imported from the official UI module as forms. */
-function seedMinecraftUiConstructors(scope: Scope, file: ts.SourceFile): void {
+function seedMinecraftUiBindings(scope: Scope, file: ts.SourceFile): void {
   const supported = new Set([
     "ActionFormData", "ModalFormData", "MessageFormData",
   ]);
@@ -126,7 +126,10 @@ function seedMinecraftUiConstructors(scope: Scope, file: ts.SourceFile): void {
     if (!named || !ts.isNamedImports(named)) continue;
     for (const element of named.elements) {
       const imported = element.propertyName?.text ?? element.name.text;
-      if (!element.isTypeOnly && supported.has(imported)) {
+      if (element.isTypeOnly) continue;
+      if (imported === "uiManager") {
+        scope.values.set(element.name.text, "UIManager");
+      } else if (supported.has(imported)) {
         scope.values.set(
           element.name.text,
           (imported + "Constructor") as ReceiverValueType,
@@ -687,7 +690,7 @@ function inferFunctionReturns(
   const output = new Map<string, ReceiverValueType>();
   const root = childScope();
   seedMinecraftSingletons(root, minecraftSingletonBindings(file));
-  seedMinecraftUiConstructors(root, file);
+  seedMinecraftUiBindings(root, file);
 
   for (const statement of file.statements) {
     if (!ts.isFunctionDeclaration(statement) || !statement.name) continue;
@@ -927,7 +930,7 @@ export function inferScriptMethodCalls(
   const singletonBindings = minecraftSingletonBindings(file);
   const rootScope = childScope();
   seedMinecraftSingletons(rootScope, singletonBindings);
-  seedMinecraftUiConstructors(rootScope, file);
+  seedMinecraftUiBindings(rootScope, file);
   const trustedSpawnForward = uniqueSpawnPlayerForward(file, singletonBindings);
   const importedWorlds = isImportedMinecraftWorld(file);
 
@@ -1130,7 +1133,7 @@ export function inferScriptPropertyAccesses(
   const singletonBindings = minecraftSingletonBindings(file);
   const rootScope = childScope();
   seedMinecraftSingletons(rootScope, singletonBindings);
-  seedMinecraftUiConstructors(rootScope, file);
+  seedMinecraftUiBindings(rootScope, file);
 
   const recordProperty = (
     node: ts.PropertyAccessExpression,
@@ -1322,7 +1325,7 @@ export function inferScriptPropertyWrites(
   const singletonBindings = minecraftSingletonBindings(file);
   const rootScope = childScope();
   seedMinecraftSingletons(rootScope, singletonBindings);
-  seedMinecraftUiConstructors(rootScope, file);
+  seedMinecraftUiBindings(rootScope, file);
 
   const record = (
     access: ts.PropertyAccessExpression,

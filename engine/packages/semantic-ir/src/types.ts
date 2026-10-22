@@ -255,11 +255,12 @@ export interface AuthoredScriptApiCall {
   readonly receiverType:
     | "Entity" | "Player" | "World" | "Dimension"
     | "ScreenDisplay" | "Camera"
-    | "ActionFormData" | "ModalFormData" | "MessageFormData";
+    | "ActionFormData" | "ModalFormData" | "MessageFormData"
+    | "UIManager";
   readonly method:
     | "kill" | "remove" | "teleport" | "sendMessage"
     | "setActionBar" | "setTitle" | "setHudVisibility"
-    | "setCamera" | "clear" | "show"
+    | "setCamera" | "clear" | "show" | "closeAllForms"
     | "getAllPlayers" | "getEntities";
   readonly symbol: string;
   readonly inference: "direct" | "bounded";

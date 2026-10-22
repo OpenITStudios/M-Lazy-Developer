@@ -153,6 +153,7 @@ export type ScriptApiReceiverType =
   | "ActionFormData"
   | "ModalFormData"
   | "MessageFormData"
+  | "UIManager"
   | "Dimension"
   | "Scoreboard"
   | "ScoreboardObjective"

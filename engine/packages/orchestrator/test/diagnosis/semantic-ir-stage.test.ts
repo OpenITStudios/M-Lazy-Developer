@@ -397,9 +397,10 @@ describe("inspection semantic IR", () => {
     const relativePath = "behavior_packs/demo/scripts/hub.ts";
     const parsed = parseScriptFile("hub", [
       'import { world, system } from "@minecraft/server";',
-      'import { ActionFormData as Menu } from "@minecraft/server-ui";',
+      'import { ActionFormData as Menu, uiManager as manager } from "@minecraft/server-ui";',
       'function interact(player: Player, target: Entity) {',
       '  new Menu().title("Pick").button("Ready").show(player);',
+      '  manager.closeAllForms(player);',
       '  player.onScreenDisplay.setActionBar("Preparing");',
       '  player.teleport({ x: 1, y: 2, z: 3 });',
       '  player.camera.setCamera("minecraft:free", { location: { x: 2, y: 3, z: 4 } });',
@@ -423,6 +424,7 @@ describe("inspection semantic IR", () => {
     const calls = ir.execution.apiCalls ?? [];
     expect(calls.map(call => call.symbol)).toEqual(expect.arrayContaining([
       "ActionFormData.show",
+      "UIManager.closeAllForms",
       "ScreenDisplay.setActionBar",
       "Entity.teleport",
       "Camera.setCamera",
@@ -451,6 +453,7 @@ describe("inspection semantic IR", () => {
       .map(item => item.signal);
     expect(signals).toEqual(expect.arrayContaining([
       "ActionFormData",
+      "closeAllForms",
       "onScreenDisplay.setActionBar",
       "player.teleport",
       "camera.setCamera",
@@ -473,6 +476,7 @@ describe("inspection semantic IR", () => {
       'class ActionFormData { show() {} }',
       'const local = new ActionFormData();',
       'local.show();',
+      'const manager = { closeAllForms() {} }; manager.closeAllForms();',
       'const player = { onScreenDisplay: { setActionBar() {} }, camera: { setCamera() {}, clear() {} } };',
       'player.onScreenDisplay.setActionBar("not minecraft");',
       'player.camera.setCamera("minecraft:free"); player.camera.clear();',

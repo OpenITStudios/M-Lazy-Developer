@@ -404,6 +404,9 @@ export function developerPracticeSignalsFromSemanticIr(
       if (call.method === "setHudVisibility") {
         add(call.id, call.source, "setHudVisibility");
       }
+    } else if (call.receiverType === "UIManager" &&
+               call.method === "closeAllForms") {
+      add(call.id, call.source, "closeAllForms");
     } else if (["ActionFormData", "ModalFormData", "MessageFormData"]
                  .includes(call.receiverType) && call.method === "show") {
       add(call.id, call.source, call.receiverType);
