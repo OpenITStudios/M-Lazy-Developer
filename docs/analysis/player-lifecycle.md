@@ -196,3 +196,13 @@ Minecraft platform facts referenced by this analysis are owned by:
 - [Player Runtime](../../engine/knowledge/player-runtime/player-runtime-bedrock.json)
 
 This document owns audit/failure-model guidance. The linked knowledge files own platform facts and applicability.
+
+### Source-typed player persistence evidence
+
+The selected-script session summary counts dynamic-property access attempts
+only when the existing AST receiver inference identifies a `Player`.
+An arbitrary helper named `playerCache` is not player-persistent state,
+while a typed player alias is still visible. Join, spawn and leave event
+subscriptions require an actual `@minecraft/server` runtime import; source
+presence alone does not establish session cleanup, generation invalidation,
+or post-reconnect state correctness.

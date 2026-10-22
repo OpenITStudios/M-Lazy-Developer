@@ -25,14 +25,18 @@ export function analyzePlayerSessionLifecycle(
   const playerLeaveSubscriptions = events.filter(
     (event) => event.root === "world" && event.phase === "afterEvents" && event.event === "playerLeave",
   ).length;
+  // Reuse the parser's typed receiver identity, not a variable name such
+  // as "playerCache" or "myPlayer". A write/read is source-authored only;
+  // it never proves durable state, session ownership or reconnection.
+  const playerStateMethods = new Set([
+    "getDynamicProperty", "setDynamicProperty",
+    "clearDynamicProperties", "getDynamicPropertyIds",
+    "getDynamicPropertyTotalByteCount",
+  ]);
   const persistentPlayerStateAccesses = scripts.reduce(
-    (sum, script) =>
-      sum +
-      script.dynamicProperties.filter(
-        (access) =>
-          access.receiverHint !== undefined &&
-          /player/i.test(access.receiverHint),
-      ).length,
+    (sum, script) => sum + script.methodCalls.filter(call =>
+      call.receiverType === "Player" && playerStateMethods.has(call.method)
+    ).length,
     0,
   );
   const deferredCallbacks = scripts.reduce(
