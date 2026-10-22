@@ -10,6 +10,9 @@ import type {
 import type {
   InspectTargetProfile,
 } from "../core/types.js";
+import {
+  isAuthoredSourceContentNode,
+} from "./gameplay-scenario-knowledge.js";
 
 export interface PreflightKnowledgeDemandInput {
   readonly intent?: GameplayIntentModel;
@@ -59,9 +62,15 @@ export function derivePreflightKnowledgeDemand(
     nodes.some(
       (node) => node.kind === "spatial-region",
     );
+  // Literal stage/wave recipes, mode catalogues and choice pools are
+  // navigation-only content, not gameplay resources requiring inventory or
+  // economy analysis. Use the same classifier as the Scenario Graph;
+  // selected-script evidence and explicitly demanded domains still prevail.
   const hasResource =
     nodes.some(
-      (node) => node.kind === "resource",
+      (node) =>
+        node.kind === "resource" &&
+        !isAuthoredSourceContentNode(node),
     );
 
   if (

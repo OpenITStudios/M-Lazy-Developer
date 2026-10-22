@@ -11,6 +11,9 @@ import type {
 } from "../../src/inspection/gameplay-world-model.js";
 import type { GameplayIntentModel } from
   "../../../../packages/gameplay-intent/src/index.js";
+import {
+  derivePreflightKnowledgeDemand,
+} from "../../src/inspection/preflight-knowledge-demand.js";
 
 function world(): GameplayWorldModel {
   return {
@@ -270,6 +273,34 @@ describe("conditional gameplay knowledge dependencies", () => {
     // Source catalogue and wave tree are NOT deleted from the canonical Intent.
     expect(model.nodes).toHaveLength(5);
     expect(model.edges).toHaveLength(3);
+
+    // Preflight is the real runtime-analysis consumer. Content-only sources
+    // must not trigger inventory/economy without gameplay-source evidence.
+    const contentOnly: GameplayIntentModel = {
+      ...model,
+      nodes: nodes.filter(isAuthoredSourceContentNode),
+      edges: model.edges.filter(edge =>
+        edge.id.startsWith("authored-content-owns:")),
+    };
+    const demand = (
+      intent: GameplayIntentModel,
+      required: readonly ("inventory-state" | "economy-reward")[] = [],
+    ) => derivePreflightKnowledgeDemand({
+      intent,
+      scripts: [],
+      entityCount: 0,
+      target: { requiredKnowledgeDomains: required },
+    });
+    const contentDemand = demand(contentOnly);
+    expect(contentDemand).toContain("state-flow");
+    expect(contentDemand).not.toContain("inventory-state");
+    expect(contentDemand).not.toContain("economy-reward");
+
+    // Real gameplay resources and caller-demanded domains remain included.
+    expect(demand(model)).toContain("inventory-state");
+    expect(demand(model)).toContain("economy-reward");
+    expect(demand(contentOnly, ["inventory-state", "economy-reward"]))
+      .toEqual(["economy-reward", "inventory-state", "state-flow"]);
   });
 
 });
