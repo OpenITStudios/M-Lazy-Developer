@@ -688,6 +688,17 @@ inline-data or cross-pack maps abstain with an explicit non-fatal
 navigation status. The recovered source view must never cause an
 unrelated map file or ZIP example to become gameplay authority.
 
+## Proven cross-module parameter references in Semantic IR
+
+A resolved ESM call can now retain the existing cross-file analyzer's
+exact lexical argument-to-formal parameter evidence on its canonical
+Semantic IR execution edge. The validator rejects foreign caller/target
+source ownership, duplicate parameter indices and handoffs on unresolved
+calls. This helps follow authored session and arena parameters across
+modules without inferring runtime object equality, persistence, or
+successful game mechanics. Unresolved callbacks, minified names and
+ambiguous export targets still abstain.
+
 ## Type-only imports are not runtime gameplay edges
 
 The canonical script parser retains ESM `import type` and

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseMcFunction } from "../../../../analyzers/functions/src/index.js";
-import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import { parseScriptFile, deriveCrossFileCallEdges } from "../../../../analyzers/scripts/src/index.js";
 import {
   semanticIrSummary,
   semanticIrExecutionTraces,
@@ -264,6 +264,52 @@ describe("inspection semantic IR", () => {
       trace.resourceReleaseActionIds.includes(release.id))).toBe(true);
     expect(semanticIrSummary(ir).authoredReturnOutcomes).toBe(2);
     expect(semanticIrSummary(ir).authoredResourceReleases).toBeGreaterThanOrEqual(1);
+  });
+
+  it("retains exact cross-file state-parameter handoff without claiming runtime identity", () => {
+    const prefix = "behavior_packs/demo/scripts/";
+    const a = { artifactId: "selected", relativePath: prefix + "main.js" };
+    const b = { artifactId: "selected", relativePath: prefix + "cleanup.js" };
+    const mainText = [
+      'import { finish as close } from "./cleanup.js";',
+      "function join(arena, member) {",
+      "  const copy = arena;",
+      "  close(copy, member);",
+      "}",
+    ].join("\n");
+    const targetText = "export function finish(ctx, player) { return ctx; }";
+    const main = parseScriptFile("main", mainText, a);
+    const target = parseScriptFile("cleanup", targetText, b);
+    const calls = deriveCrossFileCallEdges([
+      { path: a.relativePath, source: a, text: mainText },
+      { path: b.relativePath, source: b, text: targetText },
+    ]);
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [], parsedScripts: [{ parsed: main }, { parsed: target }],
+      crossFileCallEdges: calls,
+    });
+    const edge = ir.execution.edges.find(e =>
+      e.kind === "synchronous-call" && e.targetLabel === "close");
+    expect(edge?.resolution).toBe("resolved");
+    expect(edge?.argumentParameterBindings).toEqual([
+      expect.objectContaining({
+        index: 0, argumentName: "arena", parameterName: "ctx",
+        viaConstAliases: [expect.objectContaining({ name: "copy" })],
+      }),
+      expect.objectContaining({
+        index: 1, argumentName: "member", parameterName: "player",
+      }),
+    ]);
+    expect(edge?.argumentParameterBindings?.every(binding =>
+      binding.argumentSource.relativePath === a.relativePath &&
+      binding.parameterSource.relativePath === b.relativePath
+    )).toBe(true);
+    const unresolved = buildInspectionSemanticIr({
+      parsedFunctions: [], parsedScripts: [{ parsed: main }],
+      crossFileCallEdges: calls,
+    });
+    expect(unresolved.execution.edges.find(e =>
+      e.targetLabel === "close")?.argumentParameterBindings).toBeUndefined();
   });
 
   it("carries authored tick roots into periodic Semantic IR without claiming missing targets", () => {

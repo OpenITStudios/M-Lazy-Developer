@@ -48,6 +48,20 @@ export interface ExecutionEdge {
   scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
   /** Parsed local-call branching, not proof that a condition was satisfied. */
   controlFlow?: "unconditional" | "conditional" | "deferred";
+  /** Exact caller-to-callee source formals for a uniquely resolved call.
+   * A lexical handoff never proves runtime session or state identity.
+   */
+  argumentParameterBindings?: readonly {
+    readonly index: number;
+    readonly argumentName: string;
+    readonly parameterName: string;
+    readonly argumentSource: SourceRef;
+    readonly parameterSource: SourceRef;
+    readonly viaConstAliases?: readonly {
+      readonly name: string;
+      readonly source: SourceRef;
+    }[];
+  }[];
   lexicalGuards?: readonly AuthoredBranchGuard[];
   /** Necessary source-time decisions from preceding early exits. */
   precedenceGuards?: readonly AuthoredBranchGuard[];

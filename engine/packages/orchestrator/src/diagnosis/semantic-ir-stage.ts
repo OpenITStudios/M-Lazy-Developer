@@ -987,6 +987,19 @@ export function buildInspectionSemanticIr(
       resolution: to === undefined ? "unresolved" : "resolved",
       controlFlow: call.controlFlow,
       source: call.source,
+      // The existing ESM analyzer owns the precise lexical handoff.
+      ...(to === undefined || !call.argumentParameterBindings?.length ? {} : {
+        argumentParameterBindings: call.argumentParameterBindings.map(binding => ({
+          index: binding.index,
+          argumentName: binding.argumentName,
+          parameterName: binding.parameterName,
+          argumentSource: binding.argumentSource,
+          parameterSource: binding.parameterSource,
+          ...(binding.viaConstAliases === undefined ? {} : {
+            viaConstAliases: [...binding.viaConstAliases],
+          }),
+        })),
+      }),
       ...irGuardEvidence(callGuards?.lexicalGuards, callGuards?.precedenceGuards),
     });
   }

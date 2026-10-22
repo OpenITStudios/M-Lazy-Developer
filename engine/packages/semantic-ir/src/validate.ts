@@ -178,6 +178,30 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
     } else if (edge.to !== undefined) {
       errors.push("Unresolved execution edge must not have a resolved target: " + edge.id);
     }
+    // Only a fully resolved cross-script source edge may carry lexical
+    // actual/formal parameter evidence, never execution or state proof.
+    const handoffs = edge.argumentParameterBindings ?? [];
+    if (handoffs.length && (edge.kind !== "synchronous-call" ||
+        edge.resolution !== "resolved" || edge.to === undefined)) {
+      errors.push("Argument handoff requires resolved source call: " + edge.id);
+    }
+    const destination = ir.execution.regions.find(region => region.id === edge.to);
+    const indices = new Set<number>();
+    for (const binding of handoffs) {
+      if (!Number.isSafeInteger(binding.index) || binding.index < 0 ||
+          indices.has(binding.index) || !binding.argumentName.trim() ||
+          !binding.parameterName.trim() ||
+          binding.argumentSource.artifactId !== edge.source.artifactId ||
+          binding.argumentSource.relativePath !== edge.source.relativePath ||
+          binding.parameterSource.artifactId !== destination?.source?.artifactId ||
+          binding.parameterSource.relativePath !== destination?.source?.relativePath ||
+          binding.viaConstAliases?.some(alias =>
+            !alias.name.trim() || alias.source.artifactId !== edge.source.artifactId ||
+            alias.source.relativePath !== edge.source.relativePath)) {
+        errors.push("Invalid authored argument handoff: " + edge.id);
+      }
+      indices.add(binding.index);
+    }
   }
 
   for (const flow of ir.execution.controlFlow ?? []) {
