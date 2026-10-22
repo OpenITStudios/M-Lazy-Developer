@@ -137,6 +137,9 @@ The TypeScript CLI source specifies that `npm run audit -- <selected.mcworld>`, 
 
 The exact selected map artifact is current gameplay authority. Historical evidence and user/client symptoms may guide search but never replace current-artifact proof.
 
+**Developer source reference:** The CLI now reads the pinned `experiments/developer-practice-signals.json` snapshot in the standard selected-map audit. This is a curated index of the two original developer ZIPs: 22 source-pinned skill methodologies (16 map-interpretation candidates and six development-only), with linked module/test/probe provenance. An investigation receives at most two hints **only** when its current selected-map Intent source, typed Semantic IR witness and question domain match. The developer ZIP is authoritative for its author's methods and source examples—not for the selected map's intended design, independently verified Minecraft platform behavior or live proof. The external modules and probe packs are not installed or executed by this integration. The canonical owners and methodology update procedure remain in [Developer-Practice Context](docs/analysis/developer-practice-context.md).
+
+
 ## Project state and planning
 
 ```text
