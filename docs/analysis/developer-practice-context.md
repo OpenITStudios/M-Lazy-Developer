@@ -205,6 +205,12 @@ selected-map source evidence
 
 A bounded operator decision should select **at most two** relevant patterns
 only when the selected-artifact evidence raises a specific question.
+Both the audit model-task path and the generic Context Compiler require an
+explicit selected-map source locator; without it the reference selector
+abstains instead of harvesting unrelated Semantic IR sites. A pattern whose
+source lacks a pinned interpretation methodology also abstains. Opt-in remains
+explicit (`--developer-practice` in the audit CLI), with the same canonical
+Knowledge and selected-map evidence taking precedence.
 `sourceSignals[]` are *search cues*, not exact source observations: symbol
 matches, filenames and similar words cannot by themselves establish an
 execution path, state owner, mechanic or design contract. Each selected
@@ -640,3 +646,7 @@ TypeScript retrieval consumer or any selected-map audit. At the next
 updated ZIP, compare digests and affected stable record IDs. Automatic
 interpretation-rule injection is intentionally not implemented; a full
 selected-world pipeline acceptance remains an independent requirement.
+Static metadata checks enforce that each of the 16 interpretation skills
+has a matching pattern and that the six development-only skills stay out of
+map interpretation. These checks validate routing completeness, not use on
+real worlds or improved detection accuracy.

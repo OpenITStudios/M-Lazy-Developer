@@ -478,7 +478,7 @@ export function compileDeveloperPracticeReferenceContext(input: {
   /** Canonical source observations, not user-provided lookup labels. */
   readonly semanticIr: SemanticIr;
   readonly domains: readonly string[];
-  /** Optional selected-artifact file locators to constrain relevance. */
+  /** Required in practice: no exact selected-source locator means abstain. */
   readonly sourceLocators?: readonly string[];
   /** Real selected-map pack manifests, never caller-supplied guessed versions. */
   readonly manifestWitnesses?: readonly DeveloperPracticeManifestWitness[];
@@ -491,10 +491,12 @@ export function compileDeveloperPracticeReferenceContext(input: {
       !selectedArtifactId.trim()) return undefined;
   const queryDomains = new Set(input.domains.filter(Boolean));
   const locators = input.sourceLocators?.map(value => value.trim()).filter(Boolean);
-  if (input.sourceLocators !== undefined && !locators?.length) return undefined;
+  // A task must identify the selected-map source it is investigating.
+  // Without this boundary, unrelated source sites could supply ZIP guidance.
+  if (!locators?.length) return undefined;
   const observed = developerPracticeSignalsFromSemanticIr(
     input.semanticIr, selectedArtifactId,
-  ).filter(item => locators === undefined || locators.some(locator =>
+  ).filter(item => locators.some(locator =>
     sourceLocatorMatchesSourcePath(locator, item.sourcePath)
   ));
   // Manifest evidence uses the existing selected-map pack owner. A manifest
@@ -561,6 +563,9 @@ export function compileDeveloperPracticeReferenceContext(input: {
       method.investigationSteps.length >= 2 &&
       method.investigationSteps.length <= 6 &&
       !!method.objective.trim() && !!method.disconfirmingCase.trim();
+    // The current ZIP intake is methodology-led. Legacy hint-only or
+    // workflow-only records must not become map interpretation advice.
+    if (!eligibleMethod || method === undefined) return [];
     const ownedModuleDirectories = new Set((data.codeInventory?.codeModules ?? [])
       .filter(item => item.ownerSkill === source.id &&
         item.usage === "SOURCE_IMPLEMENTATION_REFERENCE" &&

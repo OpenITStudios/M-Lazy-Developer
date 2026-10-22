@@ -114,6 +114,17 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
         path: "skills/bedrock-data-persistence/SKILL.md",
         sha256: "b".repeat(64),
         auditUsage: "INTERPRETATION_CANDIDATE",
+        methodology: {
+          applicability: "MAP_SOURCE_INTERPRETATION" as const,
+          sourceSections: ["1. Source meaning", "2. Counterexample"],
+          objective: "Identify the actual selected-map state owner.",
+          investigationSteps: [
+            "Inspect the exact selected source.",
+            "Compare its intended behavior with an alternative explanation.",
+          ],
+          disconfirmingCase: "An intentional world-scope state key may be valid.",
+          proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
+        },
       }],
       patterns: [{
         id: "developer.hint.persistence.state-ownership",

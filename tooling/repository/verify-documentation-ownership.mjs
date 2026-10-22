@@ -202,6 +202,10 @@ const validSha = value => typeof value === "string" &&
 const expectedCounts = [
   ["activeSkillDocuments", developerMetadata.sourceSnapshot?.activeSkillDocuments, skillSources.length],
   ["normalizedPatternCount", developerMetadata.sourceSnapshot?.normalizedPatternCount, patterns.length],
+  ["interpretationEligibleSkillCount", developerMetadata.sourceSnapshot?.interpretationEligibleSkillCount,
+    skillSources.filter(item => item.auditUsage === "INTERPRETATION_CANDIDATE").length],
+  ["workflowOnlySkillCount", developerMetadata.sourceSnapshot?.workflowOnlySkillCount,
+    skillSources.filter(item => item.auditUsage === "DEVELOPMENT_WORKFLOW_ONLY").length],
   ["codeImplementationFiles", developerMetadata.sourceSnapshot?.codeImplementationFiles, (codeInventory.codeModules ?? []).length],
   ["codeUnitTestFiles", developerMetadata.sourceSnapshot?.codeUnitTestFiles, (codeInventory.unitTests ?? []).length],
   ["reportsIndexed", developerMetadata.probeSnapshot?.reportsIndexed, reports.length],
@@ -282,6 +286,19 @@ for (const skill of skillSources) {
     failures.push(developerMetadataPath +
       ": current skill lacks a complete source-pinned, non-authoritative method: " +
       skill.id);
+  }
+}
+const routedSkillIds = new Set(patterns.map(item => item.sourceId));
+for (const skill of skillSources) {
+  if (skill.auditUsage === "INTERPRETATION_CANDIDATE" &&
+      !routedSkillIds.has(skill.id)) {
+    failures.push(developerMetadataPath +
+      ": interpretation skill has no source-reviewed pattern: " + skill.id);
+  }
+  if (!["INTERPRETATION_CANDIDATE", "DEVELOPMENT_WORKFLOW_ONLY"]
+      .includes(skill.auditUsage)) {
+    failures.push(developerMetadataPath +
+      ": unclassified developer skill: " + skill.id);
   }
 }
 for (const pattern of patterns) {

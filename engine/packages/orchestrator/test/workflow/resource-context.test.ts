@@ -287,6 +287,17 @@ describe("developer practice manifest-scoped version hints", () => {
       path: "skills/bedrock-version-targeting/SKILL.md",
       sha256: "b".repeat(64),
       auditUsage: "INTERPRETATION_CANDIDATE",
+      methodology: {
+        applicability: "MAP_SOURCE_INTERPRETATION" as const,
+        sourceSections: ["1. Source meaning", "2. Counterexample"],
+        objective: "Interpret the selected manifest declaration.",
+        investigationSteps: [
+          "Inspect the exact selected source.",
+          "Compare its intended behavior with an alternative explanation.",
+        ],
+        disconfirmingCase: "Manifest versions do not prove an executed runtime.",
+        proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
+      },
     }],
     patterns: [{
       id: "developer.hint.version.compatibility",

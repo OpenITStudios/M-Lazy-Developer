@@ -70,6 +70,8 @@ export interface ContextCompilerRequest {
     readonly semanticIr: SemanticIr;
     /** Specific interpretation question domains, chosen independently. */
     readonly domains: readonly string[];
+    /** Exact selected-map source locators; omitted/empty means no ZIP hints. */
+    readonly sourceLocators?: readonly string[];
   };
   budget?: Partial<ContextCompilerBudget>;
 }
@@ -350,6 +352,7 @@ export function compileContextPack(
         selectedArtifactId: input.intent.artifactId,
         semanticIr: input.developerPractice.semanticIr,
         domains: input.developerPractice.domains,
+        sourceLocators: input.developerPractice.sourceLocators ?? [],
       });
   const semanticPool =
     semanticCandidates(
