@@ -1190,6 +1190,30 @@ const arenas = joins.map((entry, index) => {
     ]);
   });
 
+  it("retains type imports without promoting them into runtime module use", () => {
+    const parsed = parseScriptFile("scripts/types", [
+      'import type { World } from "@minecraft/server";',
+      'import { type Player, system } from "@minecraft/server";',
+      'import { type Config } from "./config.js";',
+      'import "./startup.js";',
+    ].join("\n"), source);
+    expect(parsed.imports.map(item => ({
+      module: item.module, typeOnly: item.typeOnly ?? false,
+      bindings: item.bindings,
+    }))).toEqual([
+      { module: "@minecraft/server", typeOnly: true, bindings: [] },
+      { module: "@minecraft/server", typeOnly: false, bindings: ["system"] },
+      { module: "./config.js", typeOnly: true, bindings: [] },
+      { module: "./startup.js", typeOnly: false, bindings: [] },
+    ]);
+    expect(summarizeMinecraftModules([parsed])).toEqual([{
+      module: "@minecraft/server", files: ["scripts/types"],
+      bindings: ["system"],
+    }]);
+    expect(resolveScriptImports([parsed]).find(item =>
+      item.module === "./config.js")?.typeOnly).toBe(true);
+  });
+
   it("resolves relative script imports and summarizes Minecraft modules", () => {
     const main = parseScriptFile(
       "scripts/main",

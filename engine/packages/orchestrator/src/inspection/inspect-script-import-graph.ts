@@ -26,6 +26,8 @@ export function populateInspectionScriptImportGraph(
   };
 
   for (const resolution of resolutions) {
+    // Preserve types in source inventory, never as runtime import edges.
+    if (resolution.typeOnly) continue;
     const from = uniqueNode(resolution.fromSourcePath);
     if (!from) continue;
 

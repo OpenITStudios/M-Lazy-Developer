@@ -84,6 +84,8 @@ export interface ScriptImport {
   kind: "minecraft" | "relative" | "external" | "unresolved";
   bindings: string[];
   source: SourceRef;
+  /** Static type reference only, not a Minecraft/runtime module load. */
+  typeOnly?: boolean;
   /**
    * Undefined means ordinary static ESM import. Dynamic forms are only
    * authored requests: source lookup does not prove module execution.

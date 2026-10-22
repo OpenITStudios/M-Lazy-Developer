@@ -688,6 +688,17 @@ inline-data or cross-pack maps abstain with an explicit non-fatal
 navigation status. The recovered source view must never cause an
 unrelated map file or ZIP example to become gameplay authority.
 
+## Type-only imports are not runtime gameplay edges
+
+The canonical script parser retains ESM `import type` and
+`import { type X }` in its source inventory, but distinguishes them
+from imports with runtime bindings. The existing import resolver carries
+this provenance; the Script Import Graph omits type-only runtime edges,
+the cross-file call pass does not wake on type-only-only modules, and
+Minecraft module usage excludes type-only dependencies. Mixed runtime
+and type ESM imports preserve just their runtime bindings. No new
+analysis lane, graph, expected behavior or gameplay proof is introduced.
+
 ## Receiver scope in modular and minified sources
 
 The canonical `receiver-inference.ts` helper-return classification

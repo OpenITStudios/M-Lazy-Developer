@@ -141,7 +141,7 @@ function sourceSequentialSite(
 
 function importBindings(node: ts.ImportDeclaration): string[] {
   const clause = node.importClause;
-  if (!clause) return [];
+  if (!clause || clause.isTypeOnly) return [];
 
   const bindings: string[] = [];
   if (clause.name) bindings.push(clause.name.text);
@@ -150,7 +150,9 @@ function importBindings(node: ts.ImportDeclaration): string[] {
   if (named && ts.isNamespaceImport(named)) {
     bindings.push(named.name.text);
   } else if (named && ts.isNamedImports(named)) {
-    for (const element of named.elements) bindings.push(element.name.text);
+    for (const element of named.elements) {
+      if (!element.isTypeOnly) bindings.push(element.name.text);
+    }
   }
 
   return bindings;
@@ -2795,15 +2797,18 @@ export function parseScriptFile(
     }
     if (ts.isImportDeclaration(node) && ts.isStringLiteralLike(node.moduleSpecifier)) {
       const module = node.moduleSpecifier.text;
+      const clause = node.importClause;
+      const named = clause?.namedBindings;
+      const typeOnly = clause?.isTypeOnly === true ||
+        (named && ts.isNamedImports(named) && named.elements.length > 0 &&
+          named.elements.every(element => element.isTypeOnly));
       imports.push({
         module,
         kind: classifyModule(module),
         bindings: importBindings(node),
         source: lineSource(file, node, source),
+        ...(typeOnly ? { typeOnly: true } : {}),
       });
-
-      const clause = node.importClause;
-      const named = clause?.namedBindings;
       if (module.startsWith("@minecraft/") && named && ts.isNamedImports(named)) {
         for (const element of named.elements) {
           const importedName = element.propertyName?.text ?? element.name.text;

@@ -136,7 +136,8 @@ export async function inspectDirectory(
   // executable call candidates; avoid parsing their scripts twice.
   const crossFileCallEdges = parsedScripts.some(({ parsed }) =>
     parsed.imports.some(item =>
-      item.kind === "relative" && item.importSyntax === undefined))
+      item.kind === "relative" && !item.typeOnly &&
+      item.importSyntax === undefined))
     ? deriveCrossFileCallEdges(
         parsedScripts.flatMap(({ parsed, text }) => text === undefined ? [] : [{
           path: parsed.source.relativePath,

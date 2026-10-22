@@ -13,7 +13,8 @@ export function summarizeMinecraftModules(
 
   for (const file of files) {
     for (const imported of file.imports) {
-      if (imported.kind !== "minecraft") continue;
+      // Importing a type is not evidence of runtime Minecraft API use.
+      if (imported.kind !== "minecraft" || imported.typeOnly) continue;
       const current = byModule.get(imported.module) ?? {
         files: new Set<string>(),
         bindings: new Set<string>(),

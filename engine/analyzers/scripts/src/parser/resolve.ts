@@ -40,6 +40,8 @@ export interface ScriptImportResolution {
   targetSourcePath?: string;
   status: "resolved" | "unresolved" | "external";
   targetIdentifier?: string;
+  /** Runtime-insignificant ESM type import, retained for source inventory. */
+  typeOnly?: boolean;
   /** Source-site receipt only. Presence does not establish module execution. */
   importSyntax?: "dynamic-literal" | "dynamic-expression";
   executionRegion?: string;
@@ -69,6 +71,7 @@ export function resolveScriptImports(
         fromIdentifier: file.identifier,
         fromSourcePath: file.source.relativePath,
         module: imported.module,
+        ...(imported.typeOnly ? { typeOnly: true } : {}),
         ...(imported.importSyntax === undefined ? {} : {
           importSyntax: imported.importSyntax,
           executionRegion: imported.executionRegion,
