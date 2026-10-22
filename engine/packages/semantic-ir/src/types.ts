@@ -247,18 +247,20 @@ export interface SourceControlFlowRegion {
 
 /** Typed Script API call observed by the existing parser in one source file.
  * This is an authored call attempt, never proof of a gameplay outcome.
- * Only selected lifecycle, HUD, form and message surfaces are projected.
+ * Only bounded lifecycle, HUD, form, camera and profiling source
+ * surfaces are projected. A query attempt is not measured performance.
  */
 export interface AuthoredScriptApiCall {
   readonly id: string;
   readonly receiverType:
-    | "Entity" | "Player" | "World"
+    | "Entity" | "Player" | "World" | "Dimension"
     | "ScreenDisplay" | "Camera"
     | "ActionFormData" | "ModalFormData" | "MessageFormData";
   readonly method:
     | "kill" | "remove" | "teleport" | "sendMessage"
     | "setActionBar" | "setTitle" | "setHudVisibility"
-    | "setCamera" | "clear" | "show";
+    | "setCamera" | "clear" | "show"
+    | "getAllPlayers" | "getEntities";
   readonly symbol: string;
   readonly inference: "direct" | "bounded";
   readonly source: SourceRef;

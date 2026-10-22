@@ -64,6 +64,8 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
         (method === "setActionBar" || method === "setTitle" ||
          method === "setHudVisibility")) ||
       (owner === "Camera" && (method === "setCamera" || method === "clear")) ||
+      (owner === "World" && method === "getAllPlayers") ||
+      (owner === "Dimension" && method === "getEntities") ||
       ((owner === "ActionFormData" || owner === "ModalFormData" ||
         owner === "MessageFormData") && method === "show");
     const symbol = owner === "World" ? "world." + method :

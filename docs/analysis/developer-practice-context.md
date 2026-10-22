@@ -316,6 +316,12 @@ audible feedback; the canonical typed parser/IR bridge alone admits each
 document it separately, but no automatic developer-reference selection
 is claimed for it.
 
+Source-typed `World.getAllPlayers()` and `Dimension.getEntities()` now
+flow through the same Semantic IR call representation into profiling
+reference questions. These calls are *authored attempts*, not proof of
+high frequency, large query cost or runtime lag. The original developer
+profiling module and Skills Probe remain external reference evidence.
+
 This helper filters to SOURCE_REVIEWED/CORROBORATED, interpretation-eligible
 source files with SHA-256 provenance, selected-source locator and exact
 typed signal+domain matches, and a

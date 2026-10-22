@@ -552,13 +552,18 @@ export function buildInspectionSemanticIr(
          call.method === "setHudVisibility");
       const cameraPresentation = call.receiverType === "Camera" &&
         (call.method === "setCamera" || call.method === "clear");
+      // Only source-typed API queries inform profiling questions.
+      // They never establish frequency, workload size or actual lag.
+      const profilingQuery =
+        (call.receiverType === "World" && call.method === "getAllPlayers") ||
+        (call.receiverType === "Dimension" && call.method === "getEntities");
       const formPresentation =
         (call.receiverType === "ActionFormData" ||
          call.receiverType === "ModalFormData" ||
          call.receiverType === "MessageFormData") && call.method === "show";
       if (!entityLifecycle && !playerFeedback &&
           !displayFeedback && !cameraPresentation &&
-          !formPresentation) continue;
+          !profilingQuery && !formPresentation) continue;
       const regionId = ensureScriptRegion(
         parsed, call.executionRegion ?? "module", call.source,
       );

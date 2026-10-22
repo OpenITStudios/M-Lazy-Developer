@@ -404,6 +404,8 @@ describe("inspection semantic IR", () => {
       '  player.teleport({ x: 1, y: 2, z: 3 });',
       '  player.camera.setCamera("minecraft:free", { location: { x: 2, y: 3, z: 4 } });',
       '  player.camera.clear();',
+      '  world.getAllPlayers();',
+      '  player.dimension.getEntities({ type: "minecraft:zombie" });',
       '  target.kill();',
       '  world.sendMessage("Updated");',
       '  const fake = { show() {}, kill() {}, setActionBar() {}, setCamera() {} };',
@@ -422,6 +424,8 @@ describe("inspection semantic IR", () => {
       "Entity.teleport",
       "Camera.setCamera",
       "Camera.clear",
+      "world.getAllPlayers",
+      "Dimension.getEntities",
       "Entity.kill",
       "world.sendMessage",
     ]));
@@ -440,6 +444,8 @@ describe("inspection semantic IR", () => {
       "player.teleport",
       "camera.setCamera",
       "camera.clear",
+      "getAllPlayers",
+      "getEntities",
       "Entity.kill",
       "sendMessage",
       "world.beforeEvents.entityHurt",
@@ -458,6 +464,8 @@ describe("inspection semantic IR", () => {
       'player.camera.setCamera("minecraft:free"); player.camera.clear();',
       'const entity = { remove() {} };',
       'entity.remove();',
+      'const dimension = { getEntities() {} }; dimension.getEntities();',
+      'const world = { getAllPlayers() {} }; world.getAllPlayers();',
     ].join("\n"), {
       artifactId: "selected", relativePath: "scripts/fake.js",
     });

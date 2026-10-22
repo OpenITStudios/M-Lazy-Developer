@@ -379,6 +379,12 @@ export function developerPracticeSignalsFromSemanticIr(
                (call.method === "setCamera" || call.method === "clear")) {
       // Only Player.camera-backed receivers enter typed Semantic IR.
       add(call.id, call.source, "camera." + call.method);
+    } else if (call.receiverType === "World" &&
+               call.method === "getAllPlayers") {
+      add(call.id, call.source, "getAllPlayers");
+    } else if (call.receiverType === "Dimension" &&
+               call.method === "getEntities") {
+      add(call.id, call.source, "getEntities");
     } else if (call.receiverType === "ScreenDisplay" &&
                ["setActionBar", "setTitle", "setHudVisibility"].includes(call.method)) {
       add(call.id, call.source, "onScreenDisplay." + call.method);
