@@ -317,14 +317,15 @@ document it separately, but no automatic developer-reference selection
 is claimed for it.
 
 This helper filters to SOURCE_REVIEWED/CORROBORATED, interpretation-eligible
-source files with SHA-256 provenance, exact signal+domain matches, and a
+source files with SHA-256 provenance, selected-source locator and exact
+typed signal+domain matches, and a
 default maximum of **two** reference patterns. It returns `REFERENCE`
 context with the original question, sample relation hypotheses,
 `negativeControl`, `prohibits`, matching selected-evidence IDs,
 source-file SHA, and source-archive SHA. A mismatch, absent typed IR source proof, workflow-only source or unknown
 source alias results in abstention.
 Selecting a hint **cannot** change Game Design closure or issue disposition.
-The CLI now supplies the pinned curated snapshot to `runSelectedMapAudit()`
+The CLI supplies the pinned curated snapshot to `runSelectedMapAudit()`
 by default; API callers supply it explicitly. Selection is conditional
 on source evidence. Repository TypeScript execution, full ContextCompiler
 pipeline acceptance and automatic source/ZIP hydration are not demonstrated.
