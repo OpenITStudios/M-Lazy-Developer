@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessGameplayDefectResolutionGate, requiredCounterProofDimensions } from "../src/inspection/gameplay-defect-resolution.js";
+import { assessGameplayDefectResolutionGate, automaticCounterProofSearch, requiredCounterProofDimensions } from "../src/inspection/gameplay-defect-resolution.js";
 
 function graph(componentIds: readonly string[], domain?: string) {
   return {
@@ -84,4 +84,28 @@ describe("gameplay defect proof dimensions", () => {
       "COUNTERPROOF_SEARCH_REQUIRED",
     );
   });
+
+  it("does not borrow generic causal-link evidence as geometry counterproof", () => {
+    const value = graph(["runtime:spatial"], "spatial-authority");
+    const search = automaticCounterProofSearch(
+      value, value.causalLinks[0], value.scenarios[0],
+    );
+    expect(search.searchedDimensions).not.toContain("geometry");
+    expect(search.exhaustiveWithinScope).toBe(false);
+  });
+
+  it("keeps genuine dimension-tagged geometry evidence available", () => {
+    const value = graph(["runtime:spatial"], "spatial-authority");
+    value.causalLinks[0].dimensionEvidence = {
+      geometry: ["geometry:observed-voxel"],
+    };
+    const search = automaticCounterProofSearch(
+      value, value.causalLinks[0], value.scenarios[0],
+    );
+    expect(search.searchedDimensions).toContain("geometry");
+    expect(search.dimensionReceipts.find(
+      (receipt: { dimension: string }) => receipt.dimension === "geometry",
+    )?.evidenceIds).toContain("geometry:observed-voxel");
+  });
+
 });

@@ -655,21 +655,29 @@ function dimensionEvidenceFor(
   const directDimensionEvidence =
     boundedDimensionEvidence(contradicted, dimension);
 
+  // Typed proof dimensions cannot borrow generic component/knowledge IDs.
+  // For scope/guard/exclusion the legacy coverage search remains conservative
+  // until those dimensions have a dedicated selected-source witness contract.
+  const explicitDimensions = new Set<CounterProofSearchDimension>([
+    "owner", "generation", "cleanup", "geometry", "capability",
+    "world-rule", "activation", "representation",
+  ]);
   return [
     ...new Set([
       ...directDimensionEvidence,
       ...scoped
-        .filter(
-          (candidate) =>
-            hints.length === 0 ||
-            candidate.componentIds.some((id) =>
-              hints.includes(id)
-            ),
+        .filter((candidate) =>
+          hints.length === 0 ||
+          candidate.componentIds.some((id) => hints.includes(id))
         )
-        .flatMap((candidate) => [
-          ...candidate.evidenceIds,
-          ...boundedDimensionEvidence(candidate, dimension),
-        ])
+        .flatMap((candidate) =>
+          explicitDimensions.has(dimension)
+            ? boundedDimensionEvidence(candidate, dimension)
+            : [
+                ...candidate.evidenceIds,
+                ...boundedDimensionEvidence(candidate, dimension),
+              ]
+        )
         .filter(Boolean),
     ]),
   ].sort();

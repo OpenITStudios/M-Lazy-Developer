@@ -78,218 +78,97 @@ function edgeStatus(
       : "DETECTION_GAP";
 }
 
-function impactPathFrom(
+/**
+ * Only authored relations with selected-artifact evidence can close an
+ * objective/outcome impact path. Keep the exact traversed edges and their
+ * proof IDs together so an inferred parallel relation cannot supply proof.
+ */
+function provenImpactPathFrom(
   startId: string,
   scenarioComponentIds: ReadonlySet<string>,
   intent: GameplayIntentModel,
-): readonly string[] {
+  sourceEvidenceIds: ReadonlySet<string>,
+): Pick<GameplayCausalLink, "impactPathComponentIds" | "impactPathEvidenceIds"> {
+  const empty = {
+    impactPathComponentIds: [],
+    impactPathEvidenceIds: [],
+  };
   const terminalKinds = new Set<GameplayIntentNode["kind"]>([
     "objective",
     "outcome",
   ]);
-  const byId = new Map(
-    intent.nodes.map((node) => [node.id, node]),
-  );
-  const queue: string[][] = [[startId]];
+  const byId = new Map(intent.nodes.map((node) => [node.id, node]));
+  const queue: { nodeIds: string[]; evidenceIds: string[] }[] = [{
+    nodeIds: [startId], evidenceIds: [],
+  }];
   const visited = new Set<string>([startId]);
+  const impactKinds = new Set<GameplayIntentEdge["kind"]>([
+    "produces", "transitions-to", "recovers-to",
+    "wins-by", "loses-by", "requires",
+  ]);
 
-  for (let queueIndex = 0; queueIndex < queue.length; queueIndex += 1) {
-    const path = queue[queueIndex]!;
-    const currentId = path[path.length - 1]!;
+  for (let i = 0; i < queue.length; i += 1) {
+    const path = queue[i]!;
+    const currentId = path.nodeIds[path.nodeIds.length - 1]!;
     const current = byId.get(currentId);
-    if (
-      path.length > 1 &&
-      current !== undefined &&
-      terminalKinds.has(current.kind)
-    ) {
-      return path;
+    if (path.nodeIds.length > 1 && current && terminalKinds.has(current.kind)) {
+      return {
+        impactPathComponentIds: path.nodeIds,
+        impactPathEvidenceIds: [...new Set(path.evidenceIds)].sort(),
+      };
     }
-
-    const nextIds = intent.edges
-      .filter(
-        (edge) =>
-          edge.status !== "hypothesis" &&
-          edge.evidenceIds.length > 0 &&
-          edge.from === currentId &&
-          scenarioComponentIds.has(edge.to) &&
-          (
-            edge.kind === "produces" ||
-            edge.kind === "transitions-to" ||
-            edge.kind === "recovers-to" ||
-            edge.kind === "wins-by" ||
-            edge.kind === "loses-by" ||
-            edge.kind === "requires"
-          ),
-      )
-      .map((edge) => edge.to)
-      .sort();
-
-    for (const nextId of nextIds) {
-      if (visited.has(nextId)) continue;
-      visited.add(nextId);
-      queue.push([...path, nextId]);
+    const next = intent.edges.filter((edge) =>
+      edge.from === currentId &&
+      scenarioComponentIds.has(edge.to) &&
+      impactKinds.has(edge.kind) &&
+      edgeStatus(edge, sourceEvidenceIds) === "PROVEN"
+    ).sort((a, b) => a.to.localeCompare(b.to) || a.id.localeCompare(b.id));
+    for (const edge of next) {
+      if (visited.has(edge.to)) continue;
+      visited.add(edge.to);
+      queue.push({
+        nodeIds: [...path.nodeIds, edge.to],
+        evidenceIds: [
+          ...path.evidenceIds,
+          ...edge.evidenceIds.filter((id) => sourceEvidenceIds.has(id)),
+        ],
+      });
     }
   }
-  return [];
+  return empty;
 }
 
+/**
+ * Proof dimensions require source-bound evidence IDs from their real owner.
+ * Runtime component IDs, derived labels and summary counts are navigation,
+ * not evidence that a guard, ownership or geometry obligation is satisfied.
+ */
 function dimensionEvidenceForRuntimeComponent(
   componentId: string,
   world: GameplayWorldModel,
 ): GameplayCausalLink["dimensionEvidence"] {
-  const fallback = (id: string): readonly string[] => [id];
-  const ids = (values: readonly string[], id: string) =>
-    values.length > 0 ? [...new Set(values)].sort() : fallback(id);
-
+  const unique = (ids: readonly string[]) => [...new Set(ids)].sort();
   switch (componentId) {
-    case "runtime:arena": {
-      const ownerIds = world.arenas.globalState.assessments.map(
-        (item) =>
-          "arena-global:" +
-          item.mutationId +
-          ":" +
-          item.status,
-      );
-      return {
-        owner: ids(ownerIds, "runtime:arena"),
-        generation: fallback("runtime:arena"),
-      };
-    }
-    case "runtime:arena-cleanup": {
-      const cleanupIds = world.arenas.cleanup.lifecycle.assessments.map(
-        (item) =>
-          "arena-cleanup:" +
-          item.scriptId +
-          ":" +
-          item.tableName +
-          ":" +
-          item.status,
-      );
-      return {
-        cleanup: ids(cleanupIds, "runtime:arena-cleanup"),
-        owner: ids(cleanupIds, "runtime:arena-cleanup"),
-      };
-    }
-    case "runtime:persistence": {
-      const propertyIds = (world.persistence?.propertiesDetail ?? []).map(
-        (item) =>
-          "persistence:" +
-          item.scriptId +
-          ":" +
-          item.propertyId +
-          ":" +
-          item.scope +
-          ":" +
-          item.lifetime,
-      );
-      return {
-        owner: ids(propertyIds, "runtime:persistence"),
-        generation: ids(propertyIds, "runtime:persistence"),
-        cleanup: ids(propertyIds, "runtime:persistence"),
-      };
-    }
-    case "runtime:inventory": {
-      const inventoryIds = world.inventory.assessments.map(
-        (item) =>
-          "inventory:" +
-          item.scriptId +
-          ":" +
-          item.executionRegion +
-          ":" +
-          item.status,
-      );
-      return {
-        owner: ids(inventoryIds, "runtime:inventory"),
-        cleanup: ids(inventoryIds, "runtime:inventory"),
-      };
-    }
-    case "runtime:structures":
-      return {
-        cleanup: fallback("runtime:structures"),
-        geometry: fallback("runtime:structures"),
-      };
-    case "runtime:spatial":
-      return {
-        geometry: fallback("runtime:spatial"),
-      };
     case "runtime:arena-replica-integrity": {
-      const replicaIds = world.arenas.replicaProof.flatMap(
-        (item) =>
-          item.evidenceIds.length > 0
-            ? item.evidenceIds
-            : [
-                "arena-replica:" +
-                item.arenaId +
-                ":" +
-                item.status,
-              ],
-      );
-      return {
-        geometry: ids(
-          replicaIds,
-          "runtime:arena-replica-integrity",
-        ),
-      };
+      const geometry = unique(world.arenas.replicaProof
+        .filter((item) =>
+          item.status === "complete-proof" &&
+          item.mismatchCount === 0 &&
+          item.unresolvedBlocks === 0
+        )
+        .flatMap((item) => item.evidenceIds));
+      return geometry.length > 0 ? { geometry } : {};
     }
     case "runtime:player-capability": {
-      const capabilityIds = world.capabilityExposure.exposures.flatMap(
-        (item) =>
-          item.evidenceIds.length > 0
-            ? item.evidenceIds
-            : [
-                "capability:" +
-                item.capabilityId +
-                ":" +
-                item.status,
-              ],
-      );
-      return {
-        capability: ids(
-          capabilityIds,
-          "runtime:player-capability",
-        ),
-        activation: ids(
-          capabilityIds,
-          "runtime:player-capability",
-        ),
-      };
+      const capability = unique(world.capabilityExposure.exposures
+        .filter((item) => item.status === "guarded" || item.status === "blocked")
+        .flatMap((item) => item.evidenceIds));
+      // Capability observations alone do not prove guard activation.
+      return capability.length > 0 ? { capability } : {};
     }
-    case "runtime:world-rules":
-      return {
-        "world-rule": fallback("runtime:environment"),
-      };
-    case "runtime:client-reconciliation":
-      return world.clientReconciliation.predictedMutationCancellations > 0
-        ? {}
-        : {
-            representation:
-              fallback("runtime:client-reconciliation"),
-          };
     default:
       return {};
   }
-}
-
-function impactPathEvidenceIds(
-  path: readonly string[],
-  intent: GameplayIntentModel,
-): readonly string[] {
-  if (path.length < 2) return [];
-  const evidence: string[] = [];
-  for (let index = 0; index < path.length - 1; index += 1) {
-    const from = path[index]!;
-    const to = path[index + 1]!;
-    const edge = intent.edges.find(
-      (item) =>
-        item.from === from &&
-        item.to === to &&
-        item.status !== "hypothesis" &&
-        item.evidenceIds.length > 0,
-    );
-    if (edge === undefined) return [];
-    evidence.push(...edge.evidenceIds);
-  }
-  return [...new Set(evidence)].sort();
 }
 
 function stageForNode(
@@ -626,6 +505,25 @@ function aggregateCannotBeScoped(
 }
 
 
+/**
+ * A domain-wide lack of detected problems is not positive proof of a
+ * selected scenario. Preserve UNKNOWN when its relevant owner produced no
+ * source-correlated assessment, even if other parts of the map were scanned.
+ */
+function missingScenarioScopeEvidence(
+  sourceLocators: readonly string[],
+  matchedAssessments: number,
+  domain: string,
+): Pick<GameplayCausalLink, "status" | "reason"> | undefined {
+  if (matchedAssessments > 0) return undefined;
+  return {
+    status: "DETECTION_GAP",
+    reason: sourceLocators.length === 0
+      ? domain + " has no selected-artifact source locator for this scenario; no scoped positive proof is available."
+      : domain + " has no assessment matching this scenario's selected-artifact source locators; absence of contradiction is not proof.",
+  };
+}
+
 function runtimeEdgeState(
   componentId: string,
   world: GameplayWorldModel,
@@ -668,6 +566,16 @@ function runtimeEdgeState(
           status: "DETECTION_GAP",
           reason:
             "The same gamerule has multiple selected-artifact values; lifecycle/order intent must be resolved before treating either value as the effective world baseline.",
+        };
+      }
+      if (
+        world.worldRules.writes === 0 ||
+        world.worldRules.naturalMobSpawning === "unresolved" ||
+        world.worldRules.naturalMobSpawning === "conflicted"
+      ) {
+        return {
+          status: "DETECTION_GAP",
+          reason: "World-rule authority has no resolved, selected-source rule writer/state; non-conflict alone cannot prove the effective environment baseline.",
         };
       }
       return {
@@ -738,6 +646,16 @@ function runtimeEdgeState(
             "Privileged/admin early-return bypasses exist and require exact scope/impact proof before they can be classified safe or defective.",
         };
       }
+      if (
+        world.capabilityExposure.exposures.length === 0 ||
+        world.capabilityExposure.unresolved > 0 ||
+        world.capabilityExposure.exposures.some((item) => item.status === "unknown")
+      ) {
+        return {
+          status: "DETECTION_GAP",
+          reason: "Player capability mutations are present, but no source-correlated authorization/activation assessment establishes their safety.",
+        };
+      }
       return {
         status: "PROVEN",
         reason:
@@ -795,6 +713,16 @@ function runtimeEdgeState(
         };
       }
       if (
+        !world.spatial.authority.configured ||
+        !world.spatial.authority.policyValid ||
+        world.spatial.authority.resolved === 0
+      ) {
+        return {
+          status: "DETECTION_GAP",
+          reason: "Spatial mutation/interaction exists but there is no resolved, valid authority policy covering this dependency.",
+        };
+      }
+      if (
         world.spatial.authority.uncovered > 0 ||
         world.spatial.authority.unknownRegions > 0 ||
         world.spatial.unresolvedScriptMutations > 0
@@ -828,6 +756,20 @@ function runtimeEdgeState(
           status: "DETECTION_GAP",
           reason:
             "Arena replica proof is incomplete or bounded. A configured/playable replica cannot inherit canonical arena safety until world/topology proof is complete or every material delta is classified.",
+        };
+      }
+      if (
+        world.arenas.replicaProof.length <
+          Math.max(1, (world.arenas.count ?? 1) - 1) ||
+        world.arenas.replicaProof.some((item) =>
+          item.status !== "complete-proof" ||
+          item.mismatchCount > 0 ||
+          item.unresolvedBlocks > 0
+        )
+      ) {
+        return {
+          status: "DETECTION_GAP",
+          reason: "Configured arena replicas have no source-bound complete equivalence proof; a lack of recorded divergence is not positive evidence.",
         };
       }
       return {
@@ -1031,6 +973,10 @@ function runtimeEdgeState(
             "Arena lifecycle/isolation evidence remains unresolved.",
         };
       }
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedIsolation.length + scopedGlobalAssessments.length, "Arena lifecycle/isolation",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason: "Arena ownership/capacity evidence has no unresolved contradiction for this dependency.",
@@ -1131,6 +1077,10 @@ function runtimeEdgeState(
         };
       }
 
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedLeases.length, "Chunk/ticking ownership",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -1647,6 +1597,10 @@ function runtimeEdgeState(
             "Entity behavior has static-analysis limitations and no scoped actor proof for this scenario.",
         };
       }
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedAi.length + scopedNavigation.length, "Entity AI/navigation",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -1685,6 +1639,10 @@ function runtimeEdgeState(
         "Combat lifecycle",
       );
       if (contamination) return contamination;
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedPaths.length, "Combat lifecycle",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -1757,6 +1715,10 @@ function runtimeEdgeState(
             "Inventory identity/equipment or initial-session restore ownership remains unresolved. Resolve the source-side initialSpawn guard/ownership before requesting a reconnect playtest.",
         };
       }
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedAssessments.length, "Inventory lifecycle",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -1776,7 +1738,8 @@ function runtimeEdgeState(
       }
       if (
         ledger.partial > 0 ||
-        world.arenas.cleanup.unresolved > 0
+        world.arenas.cleanup.unresolved > 0 ||
+        ledger.complete !== ledger.resources
       ) {
         return {
           status: "DETECTION_GAP",
@@ -1900,6 +1863,10 @@ function runtimeEdgeState(
             "Scoped persistence scope/lifetime remains unresolved.",
         };
       }
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedProperties.length + scopedResultRecords.length, "Persistence/recovery",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -1971,6 +1938,10 @@ function runtimeEdgeState(
             "Structure analysis contains aggregate problems, but this scenario lacks source scope for a safe contradiction.",
         };
       }
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedLoads.length + scopedTransitions.length, "World/structure setup",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -2067,6 +2038,10 @@ function runtimeEdgeState(
             "Economy/reward evidence remains unresolved, including reward-to-cleanup journal ordering where source ordering cannot yet be proven.",
         };
       }
+      const missingScope = missingScenarioScopeEvidence(
+        sourceLocators, scopedPaths.length, "Economy/reward",
+      );
+      if (missingScope) return missingScope;
       return {
         status: "PROVEN",
         reason:
@@ -3243,7 +3218,9 @@ export function compileGameplayScenarioGraph(
     for (const edge of input.intent.edges) {
       if (!allowed.has(edge.from) || !allowed.has(edge.to)) continue;
       if (!componentIds.has(edge.from) || !componentIds.has(edge.to)) continue;
-      const impactPath = impactPathFrom(edge.to, allowed, input.intent);
+      const impactPath = provenImpactPathFrom(
+        edge.to, allowed, input.intent, sourceEvidenceIds,
+      );
       const causalStatus = edgeStatus(edge, sourceEvidenceIds);
       causalLinks.push({
         id: "edge:" + scenario.id + ":" + edge.id,
@@ -3268,8 +3245,8 @@ export function compileGameplayScenarioGraph(
           ]),
         ].sort(),
         knowledgeRequirementIds: [],
-        impactPathComponentIds: impactPath,
-        impactPathEvidenceIds: impactPathEvidenceIds(impactPath, input.intent),
+        impactPathComponentIds: impactPath.impactPathComponentIds,
+        impactPathEvidenceIds: impactPath.impactPathEvidenceIds,
         dimensionEvidence: {},
         intentEdgeKind: edge.kind,
         status: causalStatus,
@@ -3329,7 +3306,7 @@ export function compileGameplayScenarioGraph(
               (item) =>
                 item.requirementId === requirement.id,
             );
-      const sourceEvidenceIds = new Set(
+      const anchorEvidenceIds = new Set(
         [
           ...(requirement?.subjectIds ?? []),
           ...(requirement?.componentIds ?? []),
@@ -3343,12 +3320,15 @@ export function compileGameplayScenarioGraph(
       const sourceLocators = input.intent.evidence
         .filter(
           (item) =>
-            sourceEvidenceIds.has(item.id) &&
+            anchorEvidenceIds.has(item.id) &&
             item.scope === "selected-artifact",
         )
         .map((item) => item.locator)
         .filter(Boolean);
 
+      const impactPath = provenImpactPathFrom(
+        anchorId, new Set(scenario.componentIds), input.intent, sourceEvidenceIds,
+      );
       causalLinks.push({
         id: "edge:" + scenarioId + ":" + component.id,
         scenarioId,
@@ -3356,9 +3336,9 @@ export function compileGameplayScenarioGraph(
         toComponentId: anchorId,
         purpose: component.gameplayPurpose,
         evidenceIds:
-          receipt?.evidenceIds.length
+          receipt?.status === "SATISFIED"
             ? [...receipt.evidenceIds]
-            : [...component.evidenceIds],
+            : [],
         subjectIds:
           requirement === undefined
             ? [...scenario.sourceSubjectIds]
@@ -3378,19 +3358,8 @@ export function compileGameplayScenarioGraph(
             relevantRequirements.map((item) => item.id),
             knowledgeRequirements,
           ),
-        impactPathComponentIds: impactPathFrom(
-          anchorId,
-          new Set(scenario.componentIds),
-          input.intent,
-        ),
-        impactPathEvidenceIds: impactPathEvidenceIds(
-          impactPathFrom(
-            anchorId,
-            new Set(scenario.componentIds),
-            input.intent,
-          ),
-          input.intent,
-        ),
+        impactPathComponentIds: impactPath.impactPathComponentIds,
+        impactPathEvidenceIds: impactPath.impactPathEvidenceIds,
         dimensionEvidence:
           dimensionEvidenceForRuntimeComponent(
             component.id,
