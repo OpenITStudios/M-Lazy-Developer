@@ -69,18 +69,17 @@ function resolveRelative(
     [dirname(importer), specifier].filter(Boolean).join("/"),
   );
   const stem = base.replace(/\.(?:[cm]?[jt]sx?)$/i, "");
-  return [
-    base,
-    stem,
-    stem + ".ts",
-    stem + ".tsx",
-    stem + ".js",
-    stem + ".jsx",
-    stem + "/index.ts",
-    stem + "/index.tsx",
-    stem + "/index.js",
-    stem + "/index.jsx",
-  ].find((candidate) => known.has(candidate));
+  // An exact authored target is authoritative. For TS transpiler .js
+  // specifiers, use a fallback only if exactly one source candidate exists.
+  // Never silently choose the first of multiple .ts/.js copies.
+  if (known.has(base)) return base;
+  const alternatives = [
+    stem, stem + ".ts", stem + ".tsx", stem + ".js", stem + ".jsx",
+    stem + "/index.ts", stem + "/index.tsx",
+    stem + "/index.js", stem + "/index.jsx",
+  ];
+  const matches = [...new Set(alternatives.filter(candidate => known.has(candidate)))];
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 function scriptKind(path: string): ts.ScriptKind {
@@ -261,6 +260,8 @@ function moduleExports(
 
   for (const statement of file.statements) {
     if (ts.isExportDeclaration(statement)) {
+      // Type-only exports do not create runtime module call edges.
+      if (statement.isTypeOnly) continue;
       const moduleSpecifier =
         statement.moduleSpecifier &&
         ts.isStringLiteralLike(statement.moduleSpecifier)
@@ -270,6 +271,7 @@ function moduleExports(
 
       if (moduleSpecifier && clause && ts.isNamedExports(clause)) {
         for (const item of clause.elements) {
+          if (item.isTypeOnly) continue;
           namedReExports.push({
             exportedName: item.name.text,
             importedName:
@@ -287,6 +289,7 @@ function moduleExports(
 
       if (!moduleSpecifier && clause && ts.isNamedExports(clause)) {
         for (const item of clause.elements) {
+          if (item.isTypeOnly) continue;
           localExports.set(
             item.name.text,
             item.propertyName?.text ?? item.name.text,
@@ -801,9 +804,12 @@ function resolveExportTarget(
   const nextStack = new Set(stack);
   nextStack.add(key);
 
-  const named = info.namedReExports.find(
+  const namedMatches = info.namedReExports.filter(
     (item) => item.exportedName === exportName,
   );
+  // A conflicting barrel export must not resolve by declaration order.
+  if (namedMatches.length > 1) return undefined;
+  const named = namedMatches[0];
   if (named) {
     const targetModule = resolveRelative(
       modulePath,

@@ -5,6 +5,40 @@ import {
 import { parseScriptFile } from "../../src/parser/parse.js";
 
 describe("cross-file call resolution", () => {
+  it("refuses ambiguous extension fallbacks and type-only barrel exports", () => {
+    const file = (name: string, text: string) => ({
+      path: "behavior_packs/map/scripts/" + name,
+      text,
+      source: { artifactId: "selected",
+        relativePath: "behavior_packs/map/scripts/" + name },
+    });
+    const main = file("main.ts", [
+      'import { open } from "./entry";',
+      "open();",
+    ].join("\n"));
+    const entryTs = file("entry.ts", "export function open() {}");
+    const entryJs = file("entry.js", "export function open() {}");
+    expect(deriveCrossFileCallEdges([main, entryTs, entryJs])[0])
+      .toMatchObject({ status: "unresolved" });
+    expect(deriveCrossFileCallEdges([main, entryTs])[0])
+      .toMatchObject({ status: "resolved", targetModule: entryTs.path });
+
+    const bar = file("bar.ts", "export function open() {}");
+    const typeOnly = file("entry.ts", [
+      'export type { open } from "./bar";',
+    ].join("\n"));
+    const typedMain = file("main.ts", [
+      'import { open } from "./entry";',
+      "open();",
+    ].join("\n"));
+    expect(deriveCrossFileCallEdges([typedMain, typeOnly, bar])[0])
+      .toMatchObject({ status: "unresolved" });
+    const runtimeBarrel = file("entry.ts",
+      'export { type Debug, open } from "./bar";');
+    expect(deriveCrossFileCallEdges([typedMain, runtimeBarrel, bar])[0])
+      .toMatchObject({ status: "resolved" });
+  });
+
   it("resolves named ESM imports across TypeScript .js specifiers", () => {
     const edges = deriveCrossFileCallEdges([
       {

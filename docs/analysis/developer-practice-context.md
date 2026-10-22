@@ -688,6 +688,19 @@ inline-data or cross-pack maps abstain with an explicit non-fatal
 navigation status. The recovered source view must never cause an
 unrelated map file or ZIP example to become gameplay authority.
 
+## Bounded modular source identity
+
+The canonical `analyzers/scripts/src/parser/cross-file-call.ts`
+ESM resolver now rejects ambiguous candidate extensions instead of
+selecting the first available `.ts` or `.js` implementation. Authored
+exact paths keep precedence, while transpiler-style `.js` references
+may fall back to `.ts` only if the chosen target is unique.
+Type-only re-exports are not executable module bridges, and duplicate
+named re-export targets abstain. This preserves source ownership in
+modular and compiled maps without guessing calls from minified aliases.
+The map audit's existing selected-source evidence and gameplay proof
+requirements remain unchanged.
+
 ## Bundled/minified source-map precision
 
 The existing `recovery/source-map-binding.ts` source-map V3 decoder now
