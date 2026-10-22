@@ -176,7 +176,7 @@ export function buildGameplayIntentModel(
       evidence.set(match.id, {
         id: match.id,
         origin: "source-code",
-        locator: match.source.relativePath,
+        locator: sourceLocator(match.source),
         scope: "selected-artifact",
         summary: "Exact authored state-write identity; effective state, transition and runtime result remain unproven.",
       });
@@ -234,7 +234,7 @@ export function buildGameplayIntentModel(
       evidence.set(match.id, {
         id: match.id,
         origin: "source-code",
-        locator: match.source.relativePath,
+        locator: sourceLocator(match.source),
         scope: "selected-artifact",
         summary: "Exact authored return-site identity; game terminal meaning and activation are not established.",
       });
@@ -259,7 +259,7 @@ export function buildGameplayIntentModel(
       evidence.set(match.id, {
         id: match.id,
         origin: "source-code",
-        locator: match.source.relativePath,
+        locator: sourceLocator(match.source),
         scope: "selected-artifact",
         summary: "Exact authored resource action inside a classified function; release does not prove gameplay cleanup.",
       });
@@ -478,7 +478,7 @@ export function buildGameplayIntentModel(
         evidence.set(matched.id, {
           id: matched.id,
           origin: "source-code",
-          locator: matched.source.relativePath,
+          locator: sourceLocator(matched.source),
           scope: "selected-artifact",
           summary: "Exact Semantic IR event/scheduler execution edge; gameplay purpose remains inferred.",
         });
@@ -494,7 +494,7 @@ export function buildGameplayIntentModel(
         evidence.set(temporal.id, {
           id: temporal.id,
           origin: "source-code",
-          locator: temporal.source.relativePath,
+          locator: sourceLocator(temporal.source),
           scope: "selected-artifact",
           summary: "Exact Semantic IR temporal relation; runtime scheduling remains unverified.",
         });
@@ -526,7 +526,7 @@ export function buildGameplayIntentModel(
         exactIrEvidenceIds.add(matched.id);
         evidence.set(matched.id, {
           id: matched.id, origin: "source-code",
-          locator: matched.source.relativePath, scope: "selected-artifact",
+          locator: sourceLocator(matched.source), scope: "selected-artifact",
           summary: "Exact authored return for inferred producer relationship; gameplay meaning and execution remain unproven.",
         });
       }

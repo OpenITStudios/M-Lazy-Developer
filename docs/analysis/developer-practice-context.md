@@ -698,6 +698,18 @@ bundle, instead of taking every source cue from the whole file. This
 changes only evidence navigation; it neither authorizes a game rule nor
 confirms that a callback executed or a session state persisted.
 
+## Exact state, cleanup and callback evidence navigation
+
+The selected-artifact Gameplay Intent evidence projection now preserves
+source line and column on individually matched state writes, return sites,
+resource releases, and resolved event/scheduler/temporal edges. This
+reuses the existing source locator helper without changing evidence IDs,
+the owning Semantic IR, or BUG/PROVEN classification. In one-line
+bundles, the curated developer ZIP selector can scope follow-up
+questions to the specific operation instead of pulling unrelated
+reference methods from the entire script. File-level unknown source
+regions remain file-level rather than being given fabricated positions.
+
 ## Qualified lifecycle navigation uses executable call regions
 
 The existing qualified lifecycle source graph now uses the cross-file

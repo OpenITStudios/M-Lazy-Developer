@@ -928,7 +928,8 @@ describe("exact Semantic IR provenance in Gameplay Intent", () => {
       expect(model.evidence.find(e => e.id === item.id)).toEqual(
         expect.objectContaining({
           origin: "source-code", scope: "selected-artifact",
-          locator: source.relativePath,
+          locator: source.relativePath + ":" + item.source.range?.lineStart +
+            ":" + item.source.range?.columnStart,
         }));
     }
     expect(model.edges.filter(edge => edge.evidenceIds.some(id =>
