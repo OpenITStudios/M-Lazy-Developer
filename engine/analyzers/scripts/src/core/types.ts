@@ -149,6 +149,7 @@ export type ScriptApiReceiverType =
   | "Player"
   | "Entity"
   | "ScreenDisplay"
+  | "Camera"
   | "ActionFormData"
   | "ModalFormData"
   | "MessageFormData"

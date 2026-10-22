@@ -550,12 +550,15 @@ export function buildInspectionSemanticIr(
       const displayFeedback = call.receiverType === "ScreenDisplay" &&
         (call.method === "setActionBar" || call.method === "setTitle" ||
          call.method === "setHudVisibility");
+      const cameraPresentation = call.receiverType === "Camera" &&
+        (call.method === "setCamera" || call.method === "clear");
       const formPresentation =
         (call.receiverType === "ActionFormData" ||
          call.receiverType === "ModalFormData" ||
          call.receiverType === "MessageFormData") && call.method === "show";
       if (!entityLifecycle && !playerFeedback &&
-          !displayFeedback && !formPresentation) continue;
+          !displayFeedback && !cameraPresentation &&
+          !formPresentation) continue;
       const regionId = ensureScriptRegion(
         parsed, call.executionRegion ?? "module", call.source,
       );

@@ -260,6 +260,8 @@ function propertyType(
   if (receiver === "Player" && property === "onScreenDisplay") {
     return "ScreenDisplay";
   }
+  // Derive a Camera only from a known Player; never from a same-named method.
+  if (receiver === "Player" && property === "camera") return "Camera";
   return undefined;
 }
 

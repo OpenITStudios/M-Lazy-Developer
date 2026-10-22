@@ -253,12 +253,12 @@ export interface AuthoredScriptApiCall {
   readonly id: string;
   readonly receiverType:
     | "Entity" | "Player" | "World"
-    | "ScreenDisplay"
+    | "ScreenDisplay" | "Camera"
     | "ActionFormData" | "ModalFormData" | "MessageFormData";
   readonly method:
     | "kill" | "remove" | "teleport" | "sendMessage"
     | "setActionBar" | "setTitle" | "setHudVisibility"
-    | "show";
+    | "setCamera" | "clear" | "show";
   readonly symbol: string;
   readonly inference: "direct" | "bounded";
   readonly source: SourceRef;
