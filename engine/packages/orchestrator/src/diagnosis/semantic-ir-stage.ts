@@ -24,6 +24,7 @@ import {
   type AuthoredReturnOutcome,
   type AuthoredWorldEffect,
   type AuthoredScriptApiCall,
+  type AuthoredScriptApiPropertyRead,
   type AuthoredResourceAction,
   type ExecutionRegion,
   type ExecutionRegionKind,
@@ -140,6 +141,7 @@ export function buildInspectionSemanticIr(
   const resourceActions = new Map<string, AuthoredResourceAction>();
   const worldEffects = new Map<string, AuthoredWorldEffect>();
   const apiCalls = new Map<string, AuthoredScriptApiCall>();
+  const apiPropertyReads = new Map<string, AuthoredScriptApiPropertyRead>();
   const sourceControlFlow = new Map<string, SourceControlFlowRegion>();
   const ambiguousControlRegions = new Set<string>();
   const worldEffectCounts = new Map<string, number>();
@@ -581,6 +583,24 @@ export function buildInspectionSemanticIr(
         inference: call.inference,
         source: call.source,
         executionRegionId: regionId,
+      });
+    }
+
+    // Keep this one Script API property in the existing typed IR path.
+    // A currentTick read is not a clock model, proof of persistence or lag.
+    for (const access of parsed.propertyAccesses) {
+      if (access.receiverType !== "System" ||
+          access.property !== "currentTick" ||
+          access.symbol !== "system.currentTick") continue;
+      const key = ["api-property", "system.currentTick",
+        sourceToken(access.source)].join(":");
+      apiPropertyReads.set(key, {
+        id: key,
+        receiverType: "System",
+        property: "currentTick",
+        symbol: "system.currentTick",
+        inference: access.inference,
+        source: access.source,
       });
     }
 
@@ -1117,6 +1137,10 @@ export function buildInspectionSemanticIr(
       ),
       edges: executionEdges,
       apiCalls: [...apiCalls.values()].sort((a, b) => a.id.localeCompare(b.id)),
+      ...(apiPropertyReads.size === 0 ? {} : {
+        apiPropertyReads: [...apiPropertyReads.values()]
+          .sort((a, b) => a.id.localeCompare(b.id)),
+      }),
       outcomes: [...outcomes.values()].sort((a, b) => a.id.localeCompare(b.id)),
       worldEffects: [...worldEffects.values()].sort((a, b) => a.id.localeCompare(b.id)),
       controlFlow: [...sourceControlFlow.values()].filter(item =>

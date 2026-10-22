@@ -84,6 +84,18 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
       errors.push("Authored API call crosses source ownership: " + call.id);
     }
   }
+  for (const duplicate of duplicateIds(ir.execution.apiPropertyReads ?? [])) {
+    errors.push("Duplicate authored API property read id: " + duplicate);
+  }
+  for (const read of ir.execution.apiPropertyReads ?? []) {
+    if (read.receiverType !== "System" ||
+        read.property !== "currentTick" ||
+        read.symbol !== "system.currentTick" ||
+        !["direct", "bounded"].includes(read.inference) ||
+        !read.source.artifactId || !read.source.relativePath) {
+      errors.push("Invalid typed authored API property read: " + read.id);
+    }
+  }
   for (const duplicate of duplicateIds(ir.execution.authoredBehaviorRelations ?? [])) {
     errors.push("Duplicate authored behavior relation id: " + duplicate);
   }

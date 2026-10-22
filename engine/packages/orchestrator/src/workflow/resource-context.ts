@@ -363,6 +363,14 @@ export function developerPracticeSignalsFromSemanticIr(
     }
     // Observed subscription source does not prove that an event fired.
   }
+  // Game ticks are a typed property read, not a scheduled callback.
+  for (const read of ir.execution.apiPropertyReads ?? []) {
+    if (read.receiverType === "System" &&
+        read.property === "currentTick" &&
+        read.symbol === "system.currentTick") {
+      add(read.id, read.source, "system.currentTick");
+    }
+  }
   // Exact native entity events inform JSON-versus-script reasoning, never
   // prove activation of the authored event.
   for (const relation of ir.execution.authoredBehaviorRelations ?? []) {

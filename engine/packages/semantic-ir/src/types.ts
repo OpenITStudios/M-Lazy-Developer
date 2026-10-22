@@ -267,6 +267,18 @@ export interface AuthoredScriptApiCall {
   readonly executionRegionId: string;
 }
 
+/** Parser-typed read of the Bedrock game tick counter. It only establishes
+ * an authored API read, not a persistent clock or a working countdown.
+ */
+export interface AuthoredScriptApiPropertyRead {
+  readonly id: string;
+  readonly receiverType: "System";
+  readonly property: "currentTick";
+  readonly symbol: "system.currentTick";
+  readonly inference: "direct" | "bounded";
+  readonly source: SourceRef;
+}
+
 export interface SemanticIr {
   schemaVersion: 1;
   execution: {
@@ -274,6 +286,8 @@ export interface SemanticIr {
     edges: readonly ExecutionEdge[];
     /** Typed lifecycle API witnesses; not source-name/lexical matches. */
     apiCalls?: readonly AuthoredScriptApiCall[];
+    /** Exact source-backed game-tick property reads, not measured time. */
+    apiPropertyReads?: readonly AuthoredScriptApiPropertyRead[];
     outcomes?: readonly AuthoredReturnOutcome[];
     worldEffects?: readonly AuthoredWorldEffect[];
     controlFlow?: readonly SourceControlFlowRegion[];

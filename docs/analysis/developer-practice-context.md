@@ -322,6 +322,14 @@ reference questions. These calls are *authored attempts*, not proof of
 high frequency, large query cost or runtime lag. The original developer
 profiling module and Skills Probe remain external reference evidence.
 
+An actual imported `system.currentTick` property read is now carried as
+a bounded, source-identified `apiPropertyReads` witness in the existing
+Semantic IR. The time methodology can distinguish that read from an
+authored scheduler callback. Neither observation proves persistence,
+elapsed time, pause handling or an actual clock failure. Bare identifiers
+without a Script API runtime import are not accepted as typed singleton
+receivers or scheduler evidence.
+
 The existing typed event-subscription regions also route
 `world.afterEvents.entityDie` and `world.afterEvents.entityRemove`
 to the entity-lifecycle reference alongside parsed kill/remove API

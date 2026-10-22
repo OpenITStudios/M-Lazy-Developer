@@ -396,7 +396,7 @@ describe("inspection semantic IR", () => {
     const artifactId = "selected:developer-reference";
     const relativePath = "behavior_packs/demo/scripts/hub.ts";
     const parsed = parseScriptFile("hub", [
-      'import { world } from "@minecraft/server";',
+      'import { world, system } from "@minecraft/server";',
       'import { ActionFormData as Menu } from "@minecraft/server-ui";',
       'function interact(player: Player, target: Entity) {',
       '  new Menu().title("Pick").button("Ready").show(player);',
@@ -405,6 +405,7 @@ describe("inspection semantic IR", () => {
       '  player.camera.setCamera("minecraft:free", { location: { x: 2, y: 3, z: 4 } });',
       '  player.camera.clear();',
       '  world.getAllPlayers();',
+      '  const nowTick = system.currentTick;',
       '  player.dimension.getEntities({ type: "minecraft:zombie" });',
       '  target.kill();',
       '  world.sendMessage("Updated");',
@@ -437,6 +438,14 @@ describe("inspection semantic IR", () => {
     expect(calls.filter(call => call.method === "kill")).toHaveLength(1);
     expect(calls.every(call => call.source.artifactId === artifactId &&
       call.source.relativePath === relativePath)).toBe(true);
+    expect(ir.execution.apiPropertyReads).toEqual([
+      expect.objectContaining({
+        receiverType: "System",
+        property: "currentTick",
+        symbol: "system.currentTick",
+        source: expect.objectContaining({ artifactId, relativePath }),
+      }),
+    ]);
 
     const signals = developerPracticeSignalsFromSemanticIr(ir, artifactId)
       .map(item => item.signal);
@@ -448,6 +457,7 @@ describe("inspection semantic IR", () => {
       "camera.clear",
       "getAllPlayers",
       "getEntities",
+      "system.currentTick",
       "Entity.kill",
       "sendMessage",
       "world.beforeEvents.entityHurt",
@@ -471,6 +481,7 @@ describe("inspection semantic IR", () => {
       'const dimension = { getEntities() {} }; dimension.getEntities();',
       'const world = { getAllPlayers() {} }; world.getAllPlayers();',
       'system.runInterval(() => {}, 20);',
+      'const phantomTick = system.currentTick;',
     ].join("\n"), {
       artifactId: "selected", relativePath: "scripts/fake.js",
     });
@@ -478,6 +489,7 @@ describe("inspection semantic IR", () => {
       parsedFunctions: [], parsedScripts: [{ parsed }],
     });
     expect(ir.execution.apiCalls).toEqual([]);
+    expect(ir.execution.apiPropertyReads ?? []).toHaveLength(0);
     expect(developerPracticeSignalsFromSemanticIr(ir, "selected"))
       .not.toEqual(expect.arrayContaining(["system.runInterval"]));
   });
