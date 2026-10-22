@@ -70,7 +70,8 @@ describe("gameplay defect proof dimensions", () => {
       graph(["runtime:spatial"], "spatial-authority"),
     );
     const receipt = gate.resolutions[0]?.counterProofSearch;
-    expect(receipt?.searchedDimensions).toContain("scope");
+    expect(receipt?.searchedDimensions).not.toContain("scope");
+    expect(receipt?.exhaustiveWithinScope).toBe(false);
     expect(receipt?.searchedDimensions).not.toContain("guard");
     expect(receipt?.searchedDimensions).not.toContain("exclusion");
   });

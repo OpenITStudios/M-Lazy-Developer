@@ -437,6 +437,18 @@ function validateResolution(
         ...link.componentIds,
       ]);
       const searchScopeIds = unique(search.scopeIds);
+      const canonicalSearch = automaticCounterProofSearch(graph, link, scenario);
+      if (
+        searchScopeIds.length !== linkScopeIds.size ||
+        searchScopeIds.some((id) => !linkScopeIds.has(id))
+      ) {
+        issues.push(link.id +
+          ": exhaustive counter-proof search must bind the entire exact causal-link scope.");
+      }
+      if (search.exhaustiveWithinScope && !canonicalSearch.exhaustiveWithinScope) {
+        issues.push(link.id +
+          ": counter-proof exhaustion is not established by canonical dimension witnesses.");
+      }
       const scopedEvidenceIds = new Set(graph.causalLinks
         .filter((candidate) =>
           candidate.scenarioId === link.scenarioId &&
@@ -467,16 +479,23 @@ function validateResolution(
           (item) => item.dimension === dimension,
         );
         const receipt = matches[0];
+        const verifiedEvidence = new Set(
+          dimensionEvidenceFor(graph, link, dimension),
+        );
+        const verifiedExhaustion =
+          dimensionScopeClosed(graph, link, dimension);
         if (
           matches.length !== 1 ||
           receipt === undefined ||
           unique(receipt.scopeIds).length === 0 ||
           unique(receipt.evidenceIds).length === 0 ||
           receipt.exhaustiveWithinScope !== true ||
+          unique(receipt.scopeIds).length !== searchScopeIds.length ||
           unique(receipt.scopeIds).some((id) =>
             !searchScopeIds.includes(id)) ||
+          !verifiedExhaustion ||
           unique(receipt.evidenceIds).some((id) =>
-            !scopedEvidenceIds.has(id))
+            !scopedEvidenceIds.has(id) || !verifiedEvidence.has(id))
         ) {
           issues.push(
             link.id +
@@ -589,37 +608,67 @@ function overlapping(
   return right.some((item) => set.has(item));
 }
 
+/** Exact commitment identity, not a shared label or a same-scenario neighbor. */
+function sameCommitTarget(
+  left: GameplayCausalLink,
+  right: GameplayCausalLink,
+): boolean {
+  return left.scenarioId === right.scenarioId &&
+    left.fromComponentId === right.fromComponentId &&
+    left.toComponentId === right.toComponentId;
+}
+
+const EXACT_COUNTERPROOF_DIMENSIONS = new Set<CounterProofSearchDimension>([
+  "guard", "scope", "exclusion",
+]);
+
+function dimensionCandidates(
+  graph: GameplayScenarioGraph,
+  contradicted: GameplayCausalLink,
+  dimension: CounterProofSearchDimension,
+): readonly GameplayCausalLink[] {
+  return graph.causalLinks.filter((candidate) =>
+    candidate.scenarioId === contradicted.scenarioId &&
+    (
+      EXACT_COUNTERPROOF_DIMENSIONS.has(dimension)
+        ? sameCommitTarget(candidate, contradicted)
+        : candidate.id === contradicted.id ||
+          overlapping(candidate.subjectIds, contradicted.subjectIds) ||
+          overlapping(candidate.componentIds, contradicted.componentIds)
+    )
+  );
+}
+
+/**
+ * Exhaustion within a graph scope requires a dimension-specific witness and
+ * no unresolved candidate at that exact target. This is not whole-map proof.
+ */
 function dimensionScopeClosed(
   graph: GameplayScenarioGraph,
   contradicted: GameplayCausalLink,
   dimension: CounterProofSearchDimension,
 ): boolean {
-  const evidenceIds = dimensionEvidenceFor(
-    graph,
-    contradicted,
-    dimension,
-  );
+  const evidenceIds = dimensionEvidenceFor(graph, contradicted, dimension);
   if (evidenceIds.length === 0) return false;
 
-  const relevant = graph.causalLinks.filter(
-    (candidate) =>
-      candidate.scenarioId === contradicted.scenarioId &&
-      (
-        candidate.id === contradicted.id ||
-        overlapping(candidate.subjectIds, contradicted.subjectIds) ||
-        overlapping(candidate.componentIds, contradicted.componentIds)
-      ) &&
-      (
-        candidate.id === contradicted.id ||
-        (boundedDimensionEvidence(candidate, dimension).length ?? 0) > 0
-      ),
-  );
+  const exact = EXACT_COUNTERPROOF_DIMENSIONS.has(dimension);
+  const relevant = dimensionCandidates(graph, contradicted, dimension)
+    .filter((candidate) =>
+      exact ||
+      candidate.id === contradicted.id ||
+      boundedDimensionEvidence(candidate, dimension).length > 0
+    );
   if (relevant.length === 0) return false;
-  return relevant.every(
-    (candidate) =>
-      candidate.evidenceIds.length > 0 &&
-      candidate.status !== "DETECTION_GAP" &&
-      candidate.status !== "RUNTIME_BLOCKED",
+  return relevant.every((candidate) =>
+    candidate.evidenceIds.length > 0 &&
+    candidate.status !== "DETECTION_GAP" &&
+    candidate.status !== "RUNTIME_BLOCKED" &&
+    (
+      !exact ||
+      boundedDimensionEvidence(candidate, dimension).some((id) =>
+        candidate.evidenceIds.includes(id)
+      )
+    )
   );
 }
 
@@ -628,16 +677,6 @@ function dimensionEvidenceFor(
   contradicted: GameplayCausalLink,
   dimension: CounterProofSearchDimension,
 ): readonly string[] {
-  const scoped = graph.causalLinks.filter(
-    (candidate) =>
-      candidate.scenarioId === contradicted.scenarioId &&
-      (
-        candidate.id === contradicted.id ||
-        overlapping(candidate.subjectIds, contradicted.subjectIds) ||
-        overlapping(candidate.componentIds, contradicted.componentIds)
-      ),
-  );
-
   const componentHints: Readonly<Record<CounterProofSearchDimension, readonly string[]>> = {
     owner: ["runtime:arena", "runtime:persistence", "runtime:inventory", "runtime:state"],
     guard: [],
@@ -651,45 +690,29 @@ function dimensionEvidenceFor(
     activation: ["runtime:player-capability"],
     representation: ["runtime:client-reconciliation"],
   };
-  const hints = componentHints[dimension];
-  const directDimensionEvidence =
-    boundedDimensionEvidence(contradicted, dimension);
-
-  // Typed proof dimensions cannot borrow generic component/knowledge IDs.
-  // For scope/guard/exclusion the legacy coverage search remains conservative
-  // until those dimensions have a dedicated selected-source witness contract.
-  const explicitDimensions = new Set<CounterProofSearchDimension>([
-    "owner", "generation", "cleanup", "geometry", "capability",
-    "world-rule", "activation", "representation",
-  ]);
-  return [
-    ...new Set([
-      ...directDimensionEvidence,
-      ...scoped
-        .filter((candidate) =>
-          hints.length === 0 ||
-          candidate.componentIds.some((id) => hints.includes(id))
-        )
-        .flatMap((candidate) =>
-          explicitDimensions.has(dimension)
-            ? boundedDimensionEvidence(candidate, dimension)
-            : [
-                ...candidate.evidenceIds,
-                ...boundedDimensionEvidence(candidate, dimension),
-              ]
-        )
-        .filter(Boolean),
-    ]),
-  ].sort();
+  const exact = EXACT_COUNTERPROOF_DIMENSIONS.has(dimension);
+  const evidence = dimensionCandidates(graph, contradicted, dimension)
+    .filter((candidate) =>
+      componentHints[dimension].length === 0 ||
+      candidate.componentIds.some((id) => componentHints[dimension].includes(id))
+    )
+    .flatMap((candidate) => {
+      const witnesses = boundedDimensionEvidence(candidate, dimension);
+      // A signed-off generic evidence list cannot masquerade as a bounded
+      // guard, scope or exclusion witness on the same causal target.
+      return exact
+        ? witnesses.filter((id) => candidate.evidenceIds.includes(id))
+        : witnesses;
+    });
+  return unique(evidence);
 }
 
-/** A missing dimension is unknown evidence, never an exhaustive counterproof. */
+/** Missing dimension evidence is unresolved, never an exhaustive search. */
 function boundedDimensionEvidence(
   link: GameplayCausalLink,
   dimension: CounterProofSearchDimension,
 ): readonly string[] {
-  if (!(dimension in link.dimensionEvidence)) return [];
-  return link.dimensionEvidence[dimension as keyof GameplayCausalLink["dimensionEvidence"]] ?? [];
+  return link.dimensionEvidence[dimension] ?? [];
 }
 
 function runtimeQuestionFor(
@@ -721,16 +744,10 @@ export function automaticCounterProofSearch(
       contradicted,
       scenario,
     );
+  // A required dimension is not automatically searched by its mere name.
   const automaticallySearchable =
     requiredDimensions.filter((dimension) =>
-      dimension === "guard" ||
-      dimension === "scope" ||
-      dimension === "exclusion" ||
-      dimensionEvidenceFor(
-        graph,
-        contradicted,
-        dimension,
-      ).length > 0
+      dimensionEvidenceFor(graph, contradicted, dimension).length > 0
     );
   const scopeIds = [
     ...new Set([
@@ -778,10 +795,7 @@ export function automaticCounterProofSearch(
         return {
           dimension,
           scopeIds,
-          evidenceIds:
-            dimensionEvidence.length > 0
-              ? dimensionEvidence
-              : evidenceIds,
+          evidenceIds: dimensionEvidence,
           exhaustiveWithinScope:
             dimensionScopeClosed(
               graph,
@@ -792,10 +806,10 @@ export function automaticCounterProofSearch(
       }),
     scopeIds,
     evidenceIds,
-    // This receipt is exhaustive only within the already-closed selected-
-    // artifact scenario graph. Runtime-unknown semantics never reach this
-    // branch as a source-confirmed contradiction; they remain RUNTIME_BLOCKED
-    // or DETECTION_GAP with targeted test obligations.
+    // Bounded graph-scope exhaustion only: all demanded dimensions have
+    // witnesses and no corresponding modeled dependency remains unresolved.
+    // This does not establish whole-map completeness or Minecraft runtime
+    // correctness; missing source witnesses remain outstanding obligations.
     exhaustiveWithinScope:
       requiredDimensions.every((dimension) =>
         automaticallySearchable.includes(dimension) &&
@@ -812,38 +826,28 @@ export function automaticCounterProofSearch(
   };
 }
 
+/**
+ * A PROVEN source relation named "excludes" is not by itself proof that a
+ * live exclusion/guard applies at the contradicted operation. The canonical
+ * semantic owner must attach its exact exclusion witness to the edge.
+ */
 function counterProofAppliesAtCommit(
   candidate: GameplayCausalLink,
   contradicted: GameplayCausalLink,
 ): boolean {
   if (
-    candidate.scenarioId !== contradicted.scenarioId ||
+    !sameCommitTarget(candidate, contradicted) ||
     candidate.status !== "PROVEN" ||
     candidate.intentEdgeKind !== "excludes" ||
+    !overlapping(candidate.subjectIds, contradicted.subjectIds) ||
     candidate.evidenceIds.length === 0
-  ) {
-    return false;
-  }
+  ) return false;
 
-  const exactTarget =
-    candidate.toComponentId ===
-      contradicted.toComponentId;
-  const exactDependency =
-    candidate.fromComponentId ===
-      contradicted.fromComponentId &&
-    candidate.toComponentId ===
-      contradicted.toComponentId;
-  const sameSubjectAtTarget =
-    exactTarget &&
-    overlapping(
-      candidate.subjectIds,
-      contradicted.subjectIds,
-    );
-
-  return (
-    exactDependency ||
-    sameSubjectAtTarget
+  const exclusionWitnesses = unique(
+    boundedDimensionEvidence(candidate, "exclusion"),
   );
+  return exclusionWitnesses.length > 0 &&
+    exclusionWitnesses.every((id) => candidate.evidenceIds.includes(id));
 }
 
 export function blockingCounterProofFor(
@@ -857,7 +861,9 @@ export function blockingCounterProofFor(
         contradicted,
       )
     )
-    .flatMap((candidate) => candidate.evidenceIds)
+    // Only the exact witnessed exclusion IDs can dismiss a contradiction.
+    // Other evidence attached to the same authored relation is contextual.
+    .flatMap((candidate) => boundedDimensionEvidence(candidate, "exclusion"))
     .filter(Boolean)
     .filter(
       (id, index, all) =>
@@ -1142,7 +1148,8 @@ export function assessGameplayDefectResolutionGate(
               "BLOCKING_COUNTERPROOF" as const,
           }
         : translationReady
-        ? missingAutomaticDimensions.length > 0
+        ? missingAutomaticDimensions.length > 0 ||
+          !automaticSearch.exhaustiveWithinScope
           ? {
               gameplayTrigger:
                 scenario.purpose,

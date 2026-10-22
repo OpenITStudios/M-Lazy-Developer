@@ -98,8 +98,17 @@ export interface GameplayCausalLink {
   readonly impactPathComponentIds: readonly string[];
   /** Selected-artifact evidence for every proven edge in impactPathComponentIds. Empty when no complete proven path exists. */
   readonly impactPathEvidenceIds: readonly string[];
-  /** Bounded world-model evidence already scoped to this dependency, keyed by proof dimension. */
-  readonly dimensionEvidence: Readonly<Partial<Record<"owner" | "generation" | "cleanup" | "geometry" | "capability" | "world-rule" | "activation" | "representation", readonly string[]>>>;
+  /**
+   * Source-correlated witness IDs, keyed by the exact counterproof dimension.
+   * Presence is not an exhaustive-search certificate. In particular, guard,
+   * scope and exclusion may be filled only by their semantic evidence owner;
+   * a scenario or runtime-component ID is never a guard/scope/exclusion proof.
+   */
+  readonly dimensionEvidence: Readonly<Partial<Record<
+    "owner" | "guard" | "generation" | "scope" | "cleanup" | "exclusion" |
+    "geometry" | "capability" | "world-rule" | "activation" | "representation",
+    readonly string[]
+  >>>;
   readonly intentEdgeKind?: import("../../../gameplay-intent/src/index.js").GameplayIntentEdgeKind;
   readonly status: GameplayCausalLinkStatus;
   /** Required only for RUNTIME_BLOCKED; identifies the irreducible native-runtime semantic. */

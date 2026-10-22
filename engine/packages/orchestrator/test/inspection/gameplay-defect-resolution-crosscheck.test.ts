@@ -113,15 +113,12 @@ describe("gameplay defect resolution crosscheck depth", () => {
     expect(
       result.counterProofSearchRequiredIds,
     ).toEqual(["link:arena-capacity"]);
+    // No dimension is automatically covered by the raw contradiction IDs.
     expect(
       result.resolutions[0]?.counterProofSearch?.searchedDimensions,
-    ).toEqual([
-      "exclusion",
-      "generation",
-      "guard",
-      "owner",
-      "scope",
-    ]);
+    ).toEqual([]);
+    expect(result.resolutions[0]?.counterProofSearch?.exhaustiveWithinScope)
+      .toBe(false);
   });
 
   it("never drops a counter-proof dimension by selecting the first ambiguous Knowledge ID", () => {
@@ -211,6 +208,7 @@ describe("gameplay defect resolution crosscheck depth", () => {
         {
           ...graph.causalLinks[0]!,
           id: "link:exact-guard",
+          dimensionEvidence: { exclusion: ["source:exact-guard"] },
           scenarioId: "preset:arena-capacity",
           fromComponentId: "runtime:arena",
           toComponentId: "policy:arena-capacity",
@@ -285,6 +283,7 @@ describe("gameplay defect resolution crosscheck depth", () => {
         {
           ...graph.causalLinks[0]!,
           id: "link:real-exclusion",
+          dimensionEvidence: { exclusion: ["source:exact-guard"] },
           intentEdgeKind: "excludes",
           status: "PROVEN",
           evidenceIds: ["source:exact-guard"],
@@ -310,6 +309,32 @@ describe("gameplay defect resolution crosscheck depth", () => {
     expect(forged.resolutions[0]?.counterProofEvidenceIds).toEqual(["source:exact-guard"]);
   });
 
+  it("does not allow incidental evidence on a proven exclusion to dismiss the same target", () => {
+    const exact: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [
+        ...graph.causalLinks,
+        {
+          ...graph.causalLinks[0]!,
+          id: "link:exact-exclusion-with-context",
+          intentEdgeKind: "excludes",
+          status: "PROVEN",
+          evidenceIds: ["source:exclusion-proof", "source:incidental-context"],
+          dimensionEvidence: { exclusion: ["source:exclusion-proof"] },
+        },
+      ],
+    };
+    const result = assessGameplayDefectResolutionGate(exact, [{
+      causalLinkId: "link:arena-capacity",
+      disposition: "BLOCKING_COUNTERPROOF",
+      counterProofEvidenceIds: ["source:incidental-context"],
+    }]);
+    expect(result.status).toBe("BLOCKED");
+    expect(result.issues.join(" ")).toMatch(/foreign or unsupported evidence/i);
+    expect(result.resolutions[0]?.counterProofEvidenceIds)
+      .toEqual(["source:exclusion-proof"]);
+  });
+
   it("does not accept supplied defect confirmation when source-proven exclusion blocks it", () => {
     const withGuard: GameplayScenarioGraph = {
       ...graph,
@@ -318,6 +343,7 @@ describe("gameplay defect resolution crosscheck depth", () => {
         {
           ...graph.causalLinks[0]!,
           id: "link:source-guard",
+          dimensionEvidence: { exclusion: ["source:exact-guard"] },
           intentEdgeKind: "excludes",
           status: "PROVEN",
           evidenceIds: ["source:exact-guard"],
@@ -333,26 +359,97 @@ describe("gameplay defect resolution crosscheck depth", () => {
     expect(result.blockingCounterProofIds).toEqual(["link:arena-capacity"]);
   });
 
-  it("accepts confirmation only after all context-relevant dimensions were searched", () => {
+  it("rejects supplied exhaustive receipts that only repeat generic causal evidence", () => {
     const result = assessGameplayDefectResolutionGate(
       graph,
       [resolution([
-        "owner",
-        "guard",
-        "generation",
-        "scope",
-        "cleanup",
-        "exclusion",
+        "owner", "guard", "generation", "scope", "cleanup", "exclusion",
       ])],
     );
 
-    expect(result.status).toBe(
-      "READY_FOR_PROPOSED_BUG_SET",
+    expect(result.status).toBe("BLOCKED");
+    expect(result.confirmedDefectReadyIds).toEqual([]);
+    expect(result.counterProofSearchRequiredIds).toEqual(["link:arena-capacity"]);
+    expect(result.issues.join(" ")).toMatch(
+      /canonical dimension witnesses|source-bound scope\/evidence/i,
     );
-    expect(result.confirmedDefectReadyIds).toEqual([
-      "link:arena-capacity",
-    ]);
   });
+
+  it("retains confirmed disposition when the canonical target has distinct witnessed dimensions", () => {
+    // A model-level fixture representing a bounded upstream source analysis,
+    // not a claim that this suite executed an actual Minecraft artifact.
+    const dimensionEvidence = {
+      cleanup: ["source:cleanup"],
+      exclusion: ["source:exclusion"],
+      generation: ["source:generation"],
+      guard: ["source:guard"],
+      owner: ["source:owner"],
+      scope: ["source:scope"],
+    };
+    const witnessed: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [{
+        ...graph.causalLinks[0]!,
+        evidenceIds: [
+          ...graph.causalLinks[0]!.evidenceIds,
+          ...Object.values(dimensionEvidence).flat(),
+        ],
+        dimensionEvidence,
+      }],
+    };
+    const result = assessGameplayDefectResolutionGate(witnessed);
+    expect(result.status).toBe("READY_FOR_PROPOSED_BUG_SET");
+    expect(result.confirmedDefectReadyIds).toEqual(["link:arena-capacity"]);
+    expect(result.resolutions[0]?.counterProofSearch?.exhaustiveWithinScope)
+      .toBe(true);
+  });
+
+  it("does not accept an authored exclusion without an exact exclusion witness", () => {
+    const authored: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [
+        ...graph.causalLinks,
+        {
+          ...graph.causalLinks[0]!,
+          id: "link:declaration-only-exclusion",
+          status: "PROVEN",
+          intentEdgeKind: "excludes",
+          evidenceIds: ["source:declared-exclusion"],
+        },
+      ],
+    };
+    const result = assessGameplayDefectResolutionGate(authored);
+    expect(result.blockingCounterProofIds).toEqual([]);
+    expect(result.counterProofSearchRequiredIds).toEqual(["link:arena-capacity"]);
+  });
+
+  it("does not borrow a same-subject exclusion or scope witness from another target", () => {
+    const differentTarget: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [
+        ...graph.causalLinks,
+        {
+          ...graph.causalLinks[0]!,
+          id: "link:different-commit-target",
+          status: "PROVEN",
+          toComponentId: "policy:other",
+          intentEdgeKind: "excludes",
+          evidenceIds: ["source:other-exclusion"],
+          dimensionEvidence: {
+            scope: ["source:other-exclusion"],
+            exclusion: ["source:other-exclusion"],
+          },
+        },
+      ],
+    };
+    const result = assessGameplayDefectResolutionGate(differentTarget);
+    expect(result.blockingCounterProofIds).toEqual([]);
+    expect(result.resolutions[0]?.counterProofSearch?.searchedDimensions)
+      .not.toContain("scope");
+    expect(result.resolutions[0]?.counterProofSearch?.searchedDimensions)
+      .not.toContain("exclusion");
+  });
+
   it("requires geometry counter-proof for physical escape claims", () => {
     const spatialGraph: GameplayScenarioGraph = {
       ...graph,
