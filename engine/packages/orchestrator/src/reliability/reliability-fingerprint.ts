@@ -11,7 +11,7 @@ import type {
   MapCompatibilityFingerprint,
   ReliabilityDomain,
 } from "../../../reliability/src/index.js";
-import type { InspectedPack, InspectTargetProfile } from "../types.js";
+import type { InspectedPack, InspectTargetProfile } from "../core/types.js";
 import type {
   CausalChain,
   CausalIncident,

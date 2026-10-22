@@ -4,8 +4,8 @@ import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
 import type {
   InspectDirectoryResult,
   InspectTargetProfile,
-} from "../types.js";
-import { inspectArtifact } from "../inspect-artifact.js";
+} from "../core/types.js";
+import { inspectArtifact } from "../inspection/inspect-artifact.js";
 import { loadArenaRegionContractsFile } from "./arena-region-contract-load.js";
 import type {
   ArenaReplicaProofQualityStatus,

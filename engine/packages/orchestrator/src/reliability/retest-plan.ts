@@ -7,7 +7,7 @@ import type {
   RegressionCase,
   RetestPlan,
 } from "../../../reliability/src/index.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 
 export interface ArtifactRetestPlanInput {
   artifactPath: string;

@@ -1,9 +1,9 @@
 import type {
   RepairStrategyEnumeration,
-} from "../repair-strategy-enumeration.js";
+} from "./repair-strategy-enumeration.js";
 import type {
   ProviderRepairRealization,
-} from "../repair-strategy-enumeration.js";
+} from "./repair-strategy-enumeration.js";
 import type {
   RepairTransformHintRealization,
 } from "./script-transform-hint-realizer.js";

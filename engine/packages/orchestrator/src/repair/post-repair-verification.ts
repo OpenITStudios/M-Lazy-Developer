@@ -4,7 +4,7 @@ import type {
 import type {
   InspectArtifactResult,
 } from "../inspection/inspect-artifact.js";
-import { assessArenaProofReuse, type ArenaProofReuseReport } from "../arena-proof-reuse.js";
+import { assessArenaProofReuse, type ArenaProofReuseReport } from "../arena/arena-proof-reuse.js";
 import { derivePostRepairValidationObligations, type PostRepairValidationObligations } from "./post-repair-validation-obligations.js";
 
 export type PostRepairVerificationStatus =

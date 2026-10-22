@@ -14,7 +14,7 @@ import {
 } from "./script-transform-postcondition.js";
 import {
   buildInspectionSemanticIr,
-} from "../semantic-ir-stage.js";
+} from "../diagnosis/semantic-ir-stage.js";
 
 export interface ScriptTransformSemanticImpactProof {
   status: "proven" | "blocked";

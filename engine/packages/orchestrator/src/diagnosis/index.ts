@@ -49,7 +49,7 @@ export * from "./telemetry-load.js";
 export {
   parseTelemetryText as parseRawTelemetryText,
   type TelemetryTextParseOptions,
-} from "../telemetry-text.js";
+} from "./telemetry-text.js";
 export * from "./topology-runtime-evidence.js";
 // The raw/JSONL parser is already exported as parseRawTelemetryText above.
 // The loader parser remains parseTelemetryText from telemetry-load.

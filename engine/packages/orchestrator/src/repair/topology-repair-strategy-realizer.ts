@@ -1,20 +1,20 @@
 import type { SemanticGraph } from "../../../graph/src/index.js";
 import type {
   RepairableTopologyCandidate,
-} from "../topology-analysis.js";
+} from "../inspection/topology-analysis.js";
 import {
   planLinearTopologyRepair,
 } from "../../../repair/src/index.js";
 import type {
   ProviderRepairRealization,
   RepairStrategyEnumeration,
-} from "../repair-strategy-enumeration.js";
+} from "./repair-strategy-enumeration.js";
 import type {
   RepairStrategyProviderRegistry,
-} from "../repair-strategy-provider.js";
+} from "./repair-strategy-provider.js";
 import type {
   RepairRealizerRegistry,
-} from "../repair-realizer-registry.js";
+} from "./repair-realizer-registry.js";
 
 export function realizeLinearTopologyRepairStrategy(
   enumeration: RepairStrategyEnumeration,

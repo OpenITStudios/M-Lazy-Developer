@@ -1,4 +1,4 @@
-import type { InspectDirectoryResult } from "../types.js";
+import type { InspectDirectoryResult } from "../core/types.js";
 
 export interface CausalComparisonSnapshot {
   chains: number;

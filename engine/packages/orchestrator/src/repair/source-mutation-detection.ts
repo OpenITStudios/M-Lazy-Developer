@@ -4,7 +4,7 @@ import { stateAccessesFromEffects } from "../../../../analyzers/topology/src/ind
 import { likelyGlobalAccess } from "../../../../analyzers/topology/src/index.js";
 import type { SourceMutation } from "../../../reliability-search/src/index.js";
 import type { SourceMutationDetector } from "../../../reliability-search/src/index.js";
-import { analyzeFunctionTopology } from "../topology-analysis.js";
+import { analyzeFunctionTopology } from "../inspection/topology-analysis.js";
 
 export interface SourceMutationFixture {
   identifier: string;

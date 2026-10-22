@@ -1,5 +1,5 @@
 import type { RuntimeEvidenceRecord } from "../../../project-model/src/index.js";
-import type { analyzeFunctionTopology } from "../topology-analysis.js";
+import type { analyzeFunctionTopology } from "../inspection/topology-analysis.js";
 
 type TopologyAnalysis = ReturnType<typeof analyzeFunctionTopology>;
 

@@ -16,7 +16,7 @@ import {
   compileRuntimeProbeRequests,
   type RuntimeProbeCompilationIssue,
   type RuntimeProbeRequestCompilerOptions,
-} from "../runtime-probe-request-compiler.js";
+} from "./runtime-probe-request-compiler.js";
 
 export interface IncidentDiagnosticProbeAnalysis {
   incidentId: string;

@@ -13,14 +13,14 @@ import type { PreservationReadinessResult } from "../../../preservation/src/inde
 import {
   evaluateRepairAdmissionPipeline,
   type RepairAdmissionPipelineResult,
-} from "../repair-admission-pipeline.js";
+} from "./repair-admission-pipeline.js";
 import {
   decideRepairAdmission,
   type RepairAdmissionDecision,
-} from "../repair-admission.js";
+} from "./repair-admission.js";
 import type {
   RepairBlastRadiusPolicy,
-} from "../repair-counterfactual-types.js";
+} from "./repair-counterfactual-types.js";
 
 export type RepairStrategyClass =
   | "implementation-repair"

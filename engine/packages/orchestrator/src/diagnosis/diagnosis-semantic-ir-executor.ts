@@ -9,7 +9,7 @@ import type {
 import {
   buildInspectionSemanticIr,
   type InspectionSemanticIrInput,
-} from "../semantic-ir-stage.js";
+} from "./semantic-ir-stage.js";
 import type {
   InspectionSourceIndex,
 } from "../inspection/inspect-source-index.js";

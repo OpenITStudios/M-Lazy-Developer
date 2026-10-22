@@ -30,7 +30,7 @@ import {
 } from "../inspection/inspect-script-import-graph.js";
 import type { PatchTransaction } from "../../../repair/src/index.js";
 import type { MutationWorkspace } from "../../../repair/src/index.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 
 function sameSource(
   actual: { relativePath?: string; range?: { lineStart?: number } } | undefined,

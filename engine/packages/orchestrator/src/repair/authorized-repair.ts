@@ -17,7 +17,7 @@ import {
   proveStaticGraphPreservation,
   type StaticGraphPreservationProof,
 } from "../diagnosis/static-graph-preservation-proof.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 import type { RepairProofBundle } from "./repair-proof-bundle.js";
 import { validateRepairProofBundle } from "./repair-proof-bundle.js";
 import { validatePatchTransaction } from "./repair-validation.js";

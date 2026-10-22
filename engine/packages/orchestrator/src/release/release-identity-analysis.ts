@@ -3,7 +3,7 @@ import {
   type ReleaseIdentityObservation,
 } from "../../../../analyzers/diagnostics/src/index.js";
 import type { DiagnosticFinding } from "../../../diagnostics/src/index.js";
-import type { InspectedPack, InspectTargetProfile } from "../types.js";
+import type { InspectedPack, InspectTargetProfile } from "../core/types.js";
 import type { ScriptSafeConfigAnalysis } from "../inspection/script-safe-config-analysis.js";
 
 export interface ReleaseIdentityAnalysis {

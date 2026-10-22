@@ -8,7 +8,7 @@ import type {
   RuntimeProbeRequestBundle,
 } from "../../../project-model/src/index.js";
 import { parseRuntimeProbeRequestBundle } from "../../../project-model/src/index.js";
-import type { InspectDirectoryResult } from "../types.js";
+import type { InspectDirectoryResult } from "../core/types.js";
 import { planDiagnosticProbes } from "../diagnosis/diagnostic-probe-planning.js";
 import {
   compileRuntimeProbeRequests,

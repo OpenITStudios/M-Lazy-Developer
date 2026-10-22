@@ -1,5 +1,5 @@
-import type { RepairLifecycleState } from "../repair-lifecycle.js";
-import { repairReleaseEligible } from "../repair-lifecycle.js";
+import type { RepairLifecycleState } from "./repair-lifecycle.js";
+import { repairReleaseEligible } from "./repair-lifecycle.js";
 
 export type PackageStagingDisposition =
   | "staging-eligible"

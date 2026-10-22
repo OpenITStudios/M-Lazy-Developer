@@ -3,10 +3,10 @@ import type {
 } from "../../../diagnosis-pipeline/src/index.js";
 import type {
   SemanticAffectedPlan,
-} from "../semantic-affected-plan.js";
+} from "./semantic-affected-plan.js";
 import type {
   SelectiveValidationPlan,
-} from "../selective-validation-plan.js";
+} from "./selective-validation-plan.js";
 
 export interface ZeroWasteExecutionSummary {
   diagnosis: {

@@ -13,8 +13,8 @@ import type {
   RepairBlastRadiusDecision,
   RepairCounterfactualImpact,
   RepairImpactTrace,
-} from "../repair-counterfactual-types.js";
-import type { RepairAdmissionDecision } from "../repair-admission.js";
+} from "./repair-counterfactual-types.js";
+import type { RepairAdmissionDecision } from "./repair-admission.js";
 
 export interface RepairProofPostTransformBinding {
   transactionId: string;

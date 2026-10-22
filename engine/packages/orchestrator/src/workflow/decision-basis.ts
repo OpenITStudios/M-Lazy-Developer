@@ -25,7 +25,7 @@ import {
 import type {
   RuntimeEvidenceIntegrityReport,
 } from "../../../project-model/src/index.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 import {
   repairRealizerRegistryRevision,
   type RepairRealizerRegistry,

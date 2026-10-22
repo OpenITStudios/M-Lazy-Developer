@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type {
   RepairStrategyProviderProposal,
-} from "../repair-strategy-provider.js";
+} from "./repair-strategy-provider.js";
 
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) {

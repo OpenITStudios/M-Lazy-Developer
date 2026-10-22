@@ -10,7 +10,7 @@ import {
 } from "../../../project-model/src/index.js";
 import type {
   ScriptSafeConfigAnalysis,
-} from "../script-safe-config-analysis.js";
+} from "../inspection/script-safe-config-analysis.js";
 
 export interface ScriptArenaLayoutFallback {
   layout: ArenaSpatialLayout;
