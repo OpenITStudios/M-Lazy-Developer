@@ -449,8 +449,8 @@ function sourceLocatorMatchesReferenceSignal(
   }
   // A source-symbol locator lacks an independently resolved symbol identity
   // in this IR witness. Never guess its meaning from the filename.
-  const position = /^:([1-9]\\d*)(?::([1-9]\\d*))?$/.exec(suffix);
-  const localized = /^#L([1-9]\\d*)(?:-L?([1-9]\\d*))?(?::([1-9]\\d*))?$/.exec(suffix);
+  const position = /^:([1-9]\d*)(?::([1-9]\d*))?$/.exec(suffix);
+  const localized = /^#L([1-9]\d*)(?:-L?([1-9]\d*))?(?::([1-9]\d*))?$/.exec(suffix);
   if (!position && !localized) return false;
   const fromLine = Number((position ?? localized)![1]);
   const toLine = localized?.[2] === undefined
