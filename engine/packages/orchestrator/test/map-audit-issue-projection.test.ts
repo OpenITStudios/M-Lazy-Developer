@@ -670,6 +670,29 @@ describe("map audit issue projection", () => {
       "scenario:capacity:" + requirementId);
   });
 
+  it("reports unresolved canonical counterproof as pending rather than already cleared", () => {
+    const staleScope: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: graph.causalLinks.map((link) =>
+        link.id === "link:capacity"
+          ? { ...link, dimensionEvidence: { ...link.dimensionEvidence, scope: [] } }
+          : link),
+    };
+    const ready = projectReadyAuditIssues(staleScope, gate);
+    expect(ready.find((item) => item.causalLinkId === "link:capacity"))
+      .toBeUndefined();
+    const pending = projectAllNeedValidationAuditIssues(staleScope, gate)
+      .find((item) => item.causalLinkId === "link:capacity");
+    expect(pending?.status).toBe("NEED_VALIDATION");
+    expect(pending?.validationReason).toContain(
+      "canonical counter-proof search is incomplete or disputed",
+    );
+    expect(pending?.validationTest).toContain(
+      "Resolve the canonical source-scoped counter-proof",
+    );
+    expect(pending?.missingProof).toContain("counter-proof-cleared");
+  });
+
   it("keeps confirmation NEED_VALIDATION until family proof receipt is complete", () => {
     const { familyProof: _omittedFamilyProof, ...unprovenResolution } =
       gate.resolutions[1]!;

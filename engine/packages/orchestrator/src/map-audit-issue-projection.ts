@@ -269,6 +269,11 @@ export function projectReadyAuditIssues(
           classification,
           issueType,
         } = context;
+        // Resolve the permitted evidence set once per finding, rather than
+        // rescanning the canonical graph for every supplied evidence ID.
+        const authorizedEvidenceIds = new Set(
+          sourceBoundAuditEvidenceIds(graph, link.id),
+        );
         return [{
           status: "PROVEN" as const,
           issueType,
@@ -295,7 +300,7 @@ export function projectReadyAuditIssues(
           evidenceIds: [...new Set([
             ...link.evidenceIds,
             ...(resolution.evidenceIds ?? []).filter((id) =>
-              sourceBoundAuditEvidenceIds(graph, link.id).includes(id)),
+              authorizedEvidenceIds.has(id)),
           ])].sort(),
           ...(link.knowledgeRequirementIds.length === 0
             ? {}

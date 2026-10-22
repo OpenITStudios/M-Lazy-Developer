@@ -3,6 +3,7 @@ import {
   type GameplayIssueFailureDomain,
 } from "../../diagnostic-reasoning/src/index.js";
 import {
+  automaticCounterProofSearch,
   blockingCounterProofFor,
   counterProofSearchIsGraphGrounded,
   familyCounterProofDimensionsForCriterion,
@@ -114,35 +115,33 @@ function nonEmpty(value: string | undefined): boolean {
 }
 
 /**
- * Evidence admitted for one causal finding must originate from its own
- * selected-scenario graph neighborhood or its uniquely owned, satisfied
- * Knowledge requirements. Resolution/model text is not an evidence source.
+ * Evidence of a causal contradiction belongs to the exact causal link.
+ * Overlapping subject/component membership is only discovery context; it
+ * cannot make another link's source observations proof of this contradiction.
  */
 function causalSourceEvidenceIds(
-  graph: GameplayScenarioGraph,
   link: GameplayScenarioGraph["causalLinks"][number],
 ): readonly string[] {
-  const scoped = graph.causalLinks.filter((candidate) =>
-    candidate.scenarioId === link.scenarioId &&
-    (candidate.id === link.id ||
-      (candidate.subjectIds ?? []).some((id) =>
-        (link.subjectIds ?? []).includes(id)) ||
-      (candidate.componentIds ?? []).some((id) =>
-        (link.componentIds ?? []).includes(id)))
-  );
-  return [...new Set(scoped.flatMap((candidate) => [
-    ...candidate.evidenceIds,
-    ...candidate.impactPathEvidenceIds,
-    ...Object.values(candidate.dimensionEvidence ?? {}).flat(),
-  ]))].filter(nonEmpty).sort();
+  return [...new Set([
+    ...link.evidenceIds,
+    ...link.impactPathEvidenceIds,
+    ...Object.values(link.dimensionEvidence ?? {}).flat(),
+  ])].filter(nonEmpty).sort();
 }
 
 export function sourceBoundAuditEvidenceIds(
   graph: GameplayScenarioGraph,
   causalLinkId: string,
 ): readonly string[] {
-  const link = graph.causalLinks.find((item) => item.id === causalLinkId);
-  if (link === undefined) return [];
+  const owned = graph.causalLinks.filter((item) => item.id === causalLinkId);
+  // Duplicate link/scenario identities are ambiguous, not a first-match
+  // license to use evidence from a different operation or source revision.
+  if (owned.length !== 1) return [];
+  const link = owned[0]!;
+  const scenarios = graph.scenarios.filter((item) =>
+    item.id === link.scenarioId
+  );
+  if (scenarios.length !== 1) return [];
   const knowledgeEvidence = link.knowledgeRequirementIds.flatMap((id) => {
     const requirement = uniqueScenarioKnowledgeRequirement(
       graph, id, link.scenarioId,
@@ -150,8 +149,14 @@ export function sourceBoundAuditEvidenceIds(
     return requirement === undefined ? [] :
       satisfiedScenarioKnowledgeReceipt(graph, requirement)?.evidenceIds ?? [];
   });
+  // Reuse exact dimension witnesses from the sole counterproof owner.
+  // Do not import every nearby link's generic evidenceIds into reporting.
+  const searched = automaticCounterProofSearch(
+    graph, link, scenarios[0],
+  );
   return [...new Set([
-    ...causalSourceEvidenceIds(graph, link),
+    ...causalSourceEvidenceIds(link),
+    ...searched.dimensionReceipts.flatMap((receipt) => receipt.evidenceIds),
     ...knowledgeEvidence,
   ])].filter(nonEmpty).sort();
 }
@@ -235,13 +240,16 @@ function derivedFamilyCriterionEvidence(input: {
   if (criterionId.includes("residency-requirement")) {
     return knowledgeEvidenceByDomain.get("chunk-simulation") ?? [];
   }
+  if (criterionId.includes("reachable")) {
+    // CONTRADICTED does not prove that the failing action can be reached.
+    // A reachability claim needs a separate, exact-source family receipt;
+    // its evidence must be attached to this causal link, not a neighbor.
+    return [];
+  }
   if (
-    criterionId.includes("reachable") ||
-    (
-      criterionId.includes("grounded") &&
-      !criterionId.includes("platform") &&
-      !criterionId.includes("residency")
-    )
+    criterionId.includes("grounded") &&
+    !criterionId.includes("platform") &&
+    !criterionId.includes("residency")
   ) {
     return contradictionEvidence;
   }
@@ -252,15 +260,14 @@ export function assessReadyResolutionSaturation(
   graph: GameplayScenarioGraph,
   resolution: GameplayDefectResolution,
 ): AuditProofSaturationAssessment {
-  const link = graph.causalLinks.find(
-    (item) => item.id === resolution.causalLinkId,
+  const owned = graph.causalLinks.filter((item) =>
+    item.id === resolution.causalLinkId
   );
-  const scenario =
-    link === undefined
-      ? undefined
-      : graph.scenarios.find(
-          (item) => item.id === link.scenarioId,
-        );
+  const link = owned.length === 1 ? owned[0] : undefined;
+  const scenarios = link === undefined ? [] : graph.scenarios.filter(
+    (item) => item.id === link.scenarioId,
+  );
+  const scenario = scenarios.length === 1 ? scenarios[0] : undefined;
 
   // The causal link, not a supplied resolution, owns required knowledge.
   // Every exact scenario requirement must have one matching satisfied receipt;
@@ -286,7 +293,8 @@ export function assessReadyResolutionSaturation(
   );
   const knownEvidenceIds = new Set(authorizedEvidenceIds);
   const causalEvidenceIds = link === undefined
-    ? [] : causalSourceEvidenceIds(graph, link);
+    ? [] : causalSourceEvidenceIds(link);
+  const contradictionEvidenceIds = link?.evidenceIds.filter(nonEmpty) ?? [];
   const evidenceIds = [
     ...new Set([
       ...(link?.evidenceIds ?? []),
@@ -405,9 +413,9 @@ export function assessReadyResolutionSaturation(
       {
         id: "evidence-bound",
         description:
-          "At least one selected-artifact/analysis evidence id supports the contradiction.",
-        satisfied: causalEvidenceIds.length > 0,
-        evidenceIds: causalEvidenceIds,
+          "The exact contradicted causal link carries source evidence for its own failure.",
+        satisfied: contradictionEvidenceIds.length > 0,
+        evidenceIds: contradictionEvidenceIds,
       },
       {
         id: "required-knowledge-satisfied",

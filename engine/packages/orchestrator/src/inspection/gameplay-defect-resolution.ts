@@ -848,54 +848,31 @@ export function automaticCounterProofSearch(
     ]),
   ].sort();
 
-  const scopedLinks = graph.causalLinks.filter(
-    (candidate) =>
-      candidate.scenarioId === contradicted.scenarioId &&
-      (
-        candidate.id === contradicted.id ||
-        overlapping(candidate.subjectIds, scopeIds) ||
-        overlapping(candidate.componentIds, scopeIds)
-      ),
-  );
-
   const blocking = blockingCounterProofFor(
     graph,
     contradicted,
   );
-
-  const evidenceIds = [
-    ...new Set([
-      ...contradicted.evidenceIds,
-      ...scopedLinks.flatMap((candidate) =>
-        candidate.evidenceIds
-      ),
-    ]),
-  ].filter(Boolean).sort();
+  // Only typed, scope-relevant dimension witnesses may cross the
+  // counterproof -> PROVE/REPORT boundary. Shared scenario membership or
+  // one overlapping subject never turns a neighboring source ID into proof.
+  const dimensionReceipts = automaticallySearchable.map((dimension) => ({
+    dimension,
+    scopeIds,
+    evidenceIds: dimensionEvidenceFor(graph, contradicted, dimension),
+    exhaustiveWithinScope: dimensionScopeClosed(
+      graph, contradicted, dimension,
+    ),
+  }));
+  const evidenceIds = unique([
+    ...contradicted.evidenceIds,
+    ...dimensionReceipts.flatMap((receipt) => receipt.evidenceIds),
+  ]).filter(Boolean);
 
   return {
     schemaVersion: 1,
     policy: "bounded-counterproof-search",
     searchedDimensions: automaticallySearchable,
-    dimensionReceipts:
-      automaticallySearchable.map((dimension) => {
-        const dimensionEvidence =
-          dimensionEvidenceFor(
-            graph,
-            contradicted,
-            dimension,
-          );
-        return {
-          dimension,
-          scopeIds,
-          evidenceIds: dimensionEvidence,
-          exhaustiveWithinScope:
-            dimensionScopeClosed(
-              graph,
-              contradicted,
-              dimension,
-            ),
-        };
-      }),
+    dimensionReceipts,
     scopeIds,
     evidenceIds,
     // Bounded graph-scope exhaustion only: all demanded dimensions have

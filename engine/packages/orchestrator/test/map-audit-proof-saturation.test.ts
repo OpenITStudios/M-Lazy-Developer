@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { assessReadyResolutionSaturation } from "../src/map-audit-proof-saturation.js";
+import {
+  assessReadyResolutionSaturation,
+  sourceBoundAuditEvidenceIds,
+} from "../src/map-audit-proof-saturation.js";
 import { automaticCounterProofSearch } from "../src/inspection/gameplay-defect-resolution.js";
 import { projectReadyAuditIssues } from "../src/map-audit-issue-projection.js";
 
@@ -128,6 +131,69 @@ function witnessedWave() {
 }
 
 describe("map audit proof saturation", () => {
+  it("keeps unrelated same-scenario evidence outside the causal target and report", () => {
+    const { scenario, complete } = witnessedWave();
+    scenario.causalLinks.push({
+      ...scenario.causalLinks[0]!,
+      id: "l2:neighbor",
+      fromComponentId: "runtime:other",
+      evidenceIds: ["source:neighbor-only"],
+      dimensionEvidence: {},
+      impactPathComponentIds: [],
+      impactPathEvidenceIds: [],
+    });
+    const owner = scenario.causalLinks[0]!;
+    const search = automaticCounterProofSearch(
+      scenario, owner, scenario.scenarios[0],
+    );
+    expect(search.evidenceIds).not.toContain("source:neighbor-only");
+    expect(sourceBoundAuditEvidenceIds(scenario, owner.id))
+      .not.toContain("source:neighbor-only");
+    expect(sourceBoundAuditEvidenceIds(scenario, owner.id))
+      .toContain("source:proof:scope");
+    expect(assessReadyResolutionSaturation(scenario, complete as any).saturated)
+      .toBe(true);
+
+    // A sibling cannot rescue the contradiction when the target loses
+    // its source identity. Neither its impact nor its dimension receipts
+    // are proof of the target's contradictory behavior.
+    scenario.causalLinks[0] = {
+      ...owner, evidenceIds: [], impactPathEvidenceIds: [],
+    };
+    const missing = assessReadyResolutionSaturation(scenario, complete as any);
+    expect(missing.missingUniversalCriteriaIds).toContain("evidence-bound");
+    expect(projectReadyAuditIssues(scenario, {
+      confirmedDefectReadyIds: [owner.id],
+      resolutions: [complete],
+    } as any)).toEqual([]);
+  });
+
+  it("requires independently supplied reachability proof and unambiguous link identity", () => {
+    const { scenario, complete } = witnessedWave();
+    const noReachability = {
+      ...complete,
+      familyProof: {
+        ...complete.familyProof,
+        criteria: complete.familyProof.criteria.filter((criterion) =>
+          criterion.id !== "failing-path-reachable"
+        ),
+      },
+    };
+    const pending = assessReadyResolutionSaturation(scenario, noReachability as any);
+    expect(pending.saturated).toBe(false);
+    expect(pending.missingFamilyCriteriaIds).toContain("failing-path-reachable");
+
+    const duplicateLink = {
+      ...scenario,
+      causalLinks: [...scenario.causalLinks, { ...scenario.causalLinks[0]! }],
+    };
+    expect(sourceBoundAuditEvidenceIds(duplicateLink, "l1")).toEqual([]);
+    expect(assessReadyResolutionSaturation(duplicateLink, complete as any).saturated)
+      .toBe(false);
+    expect(assessReadyResolutionSaturation(scenario, complete as any).saturated)
+      .toBe(true);
+  });
+
   it("admits a genuinely source-witnessed canonical PROVE receipt into the ready projection", () => {
     const { scenario, complete } = witnessedWave();
     expect(complete.counterProofSearch.exhaustiveWithinScope).toBe(true);

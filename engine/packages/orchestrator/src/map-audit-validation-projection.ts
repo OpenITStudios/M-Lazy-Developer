@@ -105,6 +105,11 @@ export function projectNeedValidationAuditIssues(
         ...saturation.missingUniversalCriteriaIds,
         ...saturation.missingFamilyCriteriaIds,
       ];
+      const counterProofPending = saturation.missingUniversalCriteriaIds
+        .includes("counter-proof-cleared");
+      const authorizedEvidenceIds = new Set(
+        sourceBoundAuditEvidenceIds(graph, link.id),
+      );
 
       return [{
         status: "NEED_VALIDATION" as const,
@@ -135,23 +140,26 @@ export function projectNeedValidationAuditIssues(
             ...(resolution.evidenceIds ?? []),
             ...(resolution.counterProofSearch?.evidenceIds ?? []),
           ].filter((id) =>
-            sourceBoundAuditEvidenceIds(graph, link.id).includes(id))),
+            authorizedEvidenceIds.has(id))),
         ].sort(),
         ...(link.knowledgeRequirementIds.length
           ? { knowledgeRequirementIds: [...new Set(link.knowledgeRequirementIds)].sort() }
           : {}),
-        validationReason:
-          "The gameplay defect is causally translated and blocking counter-proof is cleared, but minimum sufficient proof is not yet saturated.",
+        validationReason: counterProofPending
+          ? "A source-grounded contradiction has been translated, but the canonical counter-proof search is incomplete or disputed; a confirmed gameplay defect is not established."
+          : "The gameplay contradiction is translated and bounded counter-proof is cleared, but minimum sufficient proof remains unsatisfied.",
         missingProof:
           missingCriteria.length > 0
             ? "Unsatisfied proof criteria: " +
               missingCriteria.join(", ") +
               "."
             : "Minimum sufficient proof remains incomplete.",
-        validationTest:
-          "Resolve only the unsatisfied proof criteria for '" +
-          scenario.label +
-          "'. Do not broaden testing or request runtime evidence for already-satisfied dimensions.",
+        validationTest: counterProofPending
+          ? "Resolve the canonical source-scoped counter-proof and only the other missing proof criteria for '" +
+            scenario.label + "'. Do not treat an unverified guard as cleared."
+          : "Resolve only the unsatisfied proof criteria for '" +
+            scenario.label +
+            "'. Do not broaden testing or request runtime evidence for already-satisfied dimensions.",
         validationGroupKey:
           scenario.id +
           ":" +
