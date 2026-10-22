@@ -81,7 +81,7 @@ export function semanticIrDiagnostics(
     // unrelated event handler, ambiguous target or other selected artifact.
     const visited = new Set<string>();
     const queue = [relation.to];
-    const callIds = new Set<string>();
+    const traversedCalls: typeof ir.execution.edges[number][] = [];
     const mutatingSites = new Map<string, typeof ir.state.operations[number]>();
     for (let i = 0; i < queue.length && i < 64; i += 1) {
       const regionId = queue[i]!;
@@ -93,13 +93,33 @@ export function semanticIrDiagnostics(
         }
       }
       for (const edge of callsByRegion.get(regionId) ?? []) {
-        callIds.add(edge.id);
-        if (edge.to !== undefined && !visited.has(edge.to) &&
-            !queue.includes(edge.to) && queue.length < 64) {
-          queue.push(edge.to);
-        }
+        if (edge.to === undefined) continue;
+        const alreadyReached = visited.has(edge.to) || queue.includes(edge.to);
+        if (!alreadyReached && queue.length >= 64) continue;
+        traversedCalls.push(edge);
+        if (!alreadyReached) queue.push(edge.to);
       }
     }
+    // Keep only calls on an authored route toward a mutation; an
+    // unrelated helper invoked by the same callback is NOT evidence of
+    // that mutation. Reverse reachability uses only the bounded traversal.
+    const reachesMutation = new Set([...mutatingSites.values()]
+      .map(op => op.executionRegionId));
+    for (let i = 0; i < 64; i += 1) {
+      let grew = false;
+      for (const call of traversedCalls) {
+        if (call.to && reachesMutation.has(call.to) &&
+            !reachesMutation.has(call.from)) {
+          reachesMutation.add(call.from);
+          grew = true;
+        }
+      }
+      if (!grew) break;
+    }
+    const relevantCallIds = [...new Set(traversedCalls
+      .filter(call => call.to && reachesMutation.has(call.to) &&
+        reachesMutation.has(call.from))
+      .map(call => call.id))].sort();
     const mutatedSurfaces = [...new Set([...mutatingSites.values()]
       .map(op => op.surfaceId))].sort();
     if (mutatedSurfaces.length === 0) continue;
@@ -120,7 +140,7 @@ export function semanticIrDiagnostics(
         mutatedStateSurfaceIds: mutatedSurfaces,
         // Source receipts for narrow investigation; never runtime proof.
         authoredStateMutationIds: [...mutatingSites.keys()].sort(),
-        resolvedSynchronousCallEdgeIds: [...callIds].sort(),
+        resolvedSynchronousCallEdgeIds: relevantCallIds,
         temporalKind: relation.kind,
       },
     }));

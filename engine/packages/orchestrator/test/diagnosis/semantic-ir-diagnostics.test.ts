@@ -95,8 +95,8 @@ describe("semantic IR diagnostics", () => {
       execution: {
         regions: [
           region("caller", origin), region("callback", origin),
-          region("cleanup", helper), region("another-callback", origin),
-          region("foreign", unrelated),
+          region("cleanup", helper), region("harmless", helper),
+          region("another-callback", origin), region("foreign", unrelated),
         ],
         edges: [{
           id: "enqueue", from: "caller", to: "callback",
@@ -104,6 +104,10 @@ describe("semantic IR diagnostics", () => {
         }, {
           id: "call-cleanup", from: "callback", to: "cleanup",
           kind: "synchronous-call", targetLabel: "cleanup",
+          resolution: "resolved", source: origin,
+        }, {
+          id: "call-harmless", from: "callback", to: "harmless",
+          kind: "synchronous-call", targetLabel: "unrelatedHelper",
           resolution: "resolved", source: origin,
         }, {
           id: "enqueue-second", from: "callback", to: "another-callback",
