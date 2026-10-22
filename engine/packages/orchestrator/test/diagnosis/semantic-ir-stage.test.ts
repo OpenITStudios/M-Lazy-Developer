@@ -479,7 +479,8 @@ describe("inspection semantic IR", () => {
       'const entity = { remove() {} };',
       'entity.remove();',
       'const dimension = { getEntities() {} }; dimension.getEntities();',
-      'const world = { getAllPlayers() {} }; world.getAllPlayers();',
+      'const world = { getAllPlayers() {}, afterEvents: { entityDie: { subscribe() {} } } };',
+      'world.getAllPlayers(); world.afterEvents.entityDie.subscribe(() => {});',
       'system.runInterval(() => {}, 20);',
       'const phantomTick = system.currentTick;',
     ].join("\n"), {
@@ -490,8 +491,10 @@ describe("inspection semantic IR", () => {
     });
     expect(ir.execution.apiCalls).toEqual([]);
     expect(ir.execution.apiPropertyReads ?? []).toHaveLength(0);
-    expect(developerPracticeSignalsFromSemanticIr(ir, "selected"))
-      .not.toEqual(expect.arrayContaining(["system.runInterval"]));
+    const hints = developerPracticeSignalsFromSemanticIr(ir, "selected")
+      .map(item => item.signal);
+    expect(hints).not.toContain("system.runInterval");
+    expect(hints).not.toContain("entityDie");
   });
 
 });

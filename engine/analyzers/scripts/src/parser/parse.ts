@@ -166,7 +166,8 @@ function minecraftNamedBindings(file: ts.SourceFile): Map<string, {
     if (
       !ts.isImportDeclaration(statement) ||
       !ts.isStringLiteralLike(statement.moduleSpecifier) ||
-      statement.moduleSpecifier.text !== "@minecraft/server"
+      statement.moduleSpecifier.text !== "@minecraft/server" ||
+      statement.importClause?.isTypeOnly
     ) {
       continue;
     }
@@ -175,6 +176,7 @@ function minecraftNamedBindings(file: ts.SourceFile): Map<string, {
     if (!bindings || !ts.isNamedImports(bindings)) continue;
 
     for (const element of bindings.elements) {
+      if (element.isTypeOnly) continue;
       output.set(element.name.text, {
         module: "@minecraft/server",
         importedName: element.propertyName?.text ?? element.name.text,
@@ -3167,17 +3169,20 @@ export function parseScriptFile(
         const root = chain[0];
         const phase = chain[1];
         const event = chain[2];
-        const rootBinding = root ? namedMinecraftBindings.get(root) : undefined;
-        const canonicalRoot =
-          rootBinding &&
-          (rootBinding.importedName === "world" || rootBinding.importedName === "system")
-            ? rootBinding.importedName
-            : root;
-
+        // The event chain must resolve to an unshadowed runtime singleton
+        // import. A user-local 'world.afterEvents' lookalike remains unknown.
+        let rootExpression: ts.Expression = node.expression.expression;
+        while (ts.isPropertyAccessExpression(rootExpression)) {
+          rootExpression = rootExpression.expression;
+        }
+        const rootBinding = root && ts.isIdentifier(rootExpression) &&
+          rootExpression.text === root && !isShadowed(rootExpression)
+            ? namedMinecraftBindings.get(root)
+            : undefined;
+        const canonicalRoot = rootBinding?.importedName;
         const normalizedRoot: ScriptEventSubscription["root"] =
           canonicalRoot === "world" || canonicalRoot === "system"
-            ? canonicalRoot
-            : "unknown";
+            ? canonicalRoot : "unknown";
         const normalizedPhase: ScriptEventSubscription["phase"] =
           phase === "beforeEvents" || phase === "afterEvents" ? phase : "unknown";
 
