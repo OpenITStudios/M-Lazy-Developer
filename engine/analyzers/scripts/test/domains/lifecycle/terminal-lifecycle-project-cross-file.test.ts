@@ -42,6 +42,8 @@ describe("qualified cross-file call graph", () => {
             "scripts/cleanup.ts",
           targetExport:
             "cleanupArena",
+          targetRegion:
+            "function:cleanupArena",
           localName:
             "cleanupArena",
           controlFlow:
@@ -71,5 +73,31 @@ describe("qualified cross-file call graph", () => {
     ).toContain(
       "module:scripts/cleanup.ts#function:releaseArena",
     );
+  });
+
+  it("keeps a missing executable target region unresolved instead of guessing a cleanup function", () => {
+    const call = {
+      callerModule: "scripts/main.ts",
+      callerRegion: "function:finishGame",
+      targetModule: "scripts/cleanup.ts",
+      targetExport: "cleanupArena",
+      localName: "cleanupArena",
+      controlFlow: "unconditional" as const,
+      status: "resolved" as const,
+      source: { artifactId: "map", relativePath: "scripts/main.ts" },
+    };
+    const graph = composeQualifiedScriptLifecycleProjectGraph([
+      { fileId: "scripts/main.ts", localFunctionCalls: [] },
+      { fileId: "scripts/cleanup.ts", localFunctionCalls: [] },
+    ], [call]);
+    expect(graph.callEdges[0]?.targetRegion)
+      .toBe("unresolved:scripts/main.ts->cleanupArena");
+    expect(graph.reachableReleaseFunctions).toEqual([]);
+    const exact = composeQualifiedScriptLifecycleProjectGraph([
+      { fileId: "scripts/main.ts", localFunctionCalls: [] },
+      { fileId: "scripts/cleanup.ts", localFunctionCalls: [] },
+    ], [{ ...call, targetRegion: "function:actualCleanup" }]);
+    expect(exact.callEdges[0]?.targetRegion)
+      .toBe("module:scripts/cleanup.ts#function:actualCleanup");
   });
 });

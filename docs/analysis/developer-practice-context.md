@@ -698,6 +698,16 @@ bundle, instead of taking every source cue from the whole file. This
 changes only evidence navigation; it neither authorizes a game rule nor
 confirms that a callback executed or a session state persisted.
 
+## Qualified lifecycle navigation uses executable call regions
+
+The existing qualified lifecycle source graph now uses the cross-file
+analyzer's unique `targetRegion`, not a guessed function name derived
+from an export alias. A call with a missing executable target stays
+unresolved even if it claims `status: "resolved"`. This prevents
+misleading cleanup and reset reachability through re-export barrels,
+class methods or callback closures. Release naming remains a
+source-navigation hint, never proof that Minecraft cleanup executed.
+
 ## Proven cross-module parameter references in Semantic IR
 
 A resolved ESM call can now retain the existing cross-file analyzer's

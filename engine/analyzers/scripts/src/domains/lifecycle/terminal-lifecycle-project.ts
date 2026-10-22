@@ -212,6 +212,8 @@ export function composeQualifiedScriptLifecycleProjectGraph(
       ),
     );
 
+  // Never derive an executable region from a re-exported name.
+  // The ESM owner supplies exact callback/static-method source identity.
   const externalEdges =
     crossFileCalls.map(
       (call) => ({
@@ -221,15 +223,10 @@ export function composeQualifiedScriptLifecycleProjectGraph(
             call.callerRegion,
           ),
         targetRegion:
-          call.status ===
-            "resolved" &&
-          call.targetModule !==
-            undefined
-            ? qualifiedRegion(
-                call.targetModule,
-                "function:" +
-                  call.targetExport,
-              )
+          call.status === "resolved" &&
+          call.targetModule !== undefined &&
+          call.targetRegion !== undefined
+            ? qualifiedRegion(call.targetModule, call.targetRegion)
             : (
                 "unresolved:" +
                 call.callerModule +
