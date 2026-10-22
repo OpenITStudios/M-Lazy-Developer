@@ -28,6 +28,10 @@ export function formatSelectedMapAuditBrief(input: {
   readonly waveStages?: readonly ScriptWaveStage[];
   readonly gameplayCatalog?: readonly ScriptAuthoredGameplayEntry[];
   readonly contentCollections?: readonly ScriptAuthoredContentCollection[];
+  /** Read-only map navigation from selected artifact, never runtime evidence. */
+  readonly scriptSourceMapNavigation?: readonly import(
+    "../inspection/inspect-source-index.js"
+  ).InspectionScriptSourceMapNavigation[];
   readonly modelTaskPackets: readonly AuditModelTaskPacket[];
   /** Existing admitted BUG root candidates; absent outside a full audit run. */
   readonly candidateGroups?: readonly ReadyAuditCandidateGroup[];
@@ -220,6 +224,24 @@ export function formatSelectedMapAuditBrief(input: {
       out.push("Other authored candidates not listed: " +
         (sourcedFeatures.length - 5) + ".");
     }
+  }
+  if (input.scriptSourceMapNavigation?.length) {
+    const entries = input.scriptSourceMapNavigation;
+    out.push("**Bundled script source-map navigation (NOT gameplay proof):**");
+    for (const mapping of entries.slice(0, 3)) {
+      out.push("- " + concise(mapping.generatedPath) + " → " +
+        (mapping.mapPath === undefined ? "unavailable map" :
+          concise(mapping.mapPath)) + " [" + mapping.status + "]");
+      for (const site of mapping.sites.slice(0, 3)) {
+        out.push("  " + concise(site.generatedLocator) +
+          " → claimed original " + concise(site.originalLocator) +
+          " [" + concise(site.symbol) + "; UNVERIFIED original source]");
+      }
+      if (mapping.omittedSites) out.push("  Other typed sites omitted: " +
+        mapping.omittedSites);
+    }
+    if (entries.length > 3) out.push("Other source-map references omitted: " +
+      (entries.length - 3));
   }
   if (firstTask !== undefined) {
     const locations = [...new Set([

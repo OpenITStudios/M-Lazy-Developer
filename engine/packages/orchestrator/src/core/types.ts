@@ -153,6 +153,10 @@ export interface InspectDirectoryResult {
   authoredGameplayCatalog: readonly ScriptAuthoredGameplayEntry[];
   /** Content categories and choices declared in source, NOT round delivery. */
   authoredContentCollections: readonly ScriptAuthoredContentCollection[];
+  /** Navigation-only source map metadata; generated source remains authority. */
+  scriptSourceMapNavigation?: readonly import(
+    "../inspection/inspect-source-index.js"
+  ).InspectionScriptSourceMapNavigation[];
   scriptApiUsage: ScriptApiUsageInventory;
   scriptSafeConfig: ScriptSafeConfigAnalysis;
   scriptSpatial: ScriptSpatialAnalysis;

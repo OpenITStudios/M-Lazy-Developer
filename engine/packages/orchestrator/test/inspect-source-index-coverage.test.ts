@@ -32,6 +32,45 @@ describe("inspection source index coverage", () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
+  it("keeps bundled map navigation scoped and non-authoritative", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-map-navigation-"));
+    try {
+      const path = "behavior_packs/demo/scripts/main.js";
+      const mapPath = path + ".map";
+      await mkdir(join(root, "behavior_packs/demo/scripts"), { recursive: true });
+      await writeFile(join(root, path),
+        'import { world } from "@minecraft/server";\n' +
+        'world.sendMessage("ready");\n//# sourceMappingURL=main.js.map');
+      await writeFile(join(root, mapPath), JSON.stringify({
+        version: 3, file: "main.js",
+        sources: ["src/main.ts"], names: [], mappings: "AAAA;AAAA",
+      }));
+      const result = await indexInspectionSources(root, "selected", [
+        { relativePath: path, size: 140 },
+        { relativePath: mapPath, size: 110 },
+      ]);
+      expect(result.scriptSourceMapNavigation).toEqual([
+        expect.objectContaining({
+          generatedPath: path, mapPath, status: "mapped",
+          sites: expect.arrayContaining([expect.objectContaining({
+            symbol: "world.sendMessage",
+            originalLocator: expect.stringContaining("src/main.ts:1:1"),
+          })]),
+        }),
+      ]);
+      expect(result.coverage.physicalFiles).toBe(2);
+      expect(result.coverage.parseFailures).toHaveLength(0);
+      // Archive contents, not the map's 'src/main.ts', remain source proof.
+      await writeFile(join(root, path),
+        'world.sendMessage("unknown");\n//# sourceMappingURL=../outside.js.map');
+      const second = await indexInspectionSources(root, "selected", [
+        { relativePath: path, size: 120 },
+        { relativePath: mapPath, size: 110 },
+      ]);
+      expect(second.scriptSourceMapNavigation[0]?.status).toBe("unavailable");
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it("accounts for inventoried but unreadable function and script without false nodes", async () => {
     const root = await mkdtemp(join(tmpdir(), "m-bedrock-missing-sources-"));
     try {

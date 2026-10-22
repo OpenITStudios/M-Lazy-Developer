@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import {
   FUNCTION_PARSER_REVISION,
   parseMcFunction,
@@ -7,6 +7,9 @@ import {
 import {
   SCRIPT_PARSER_REVISION,
   parseScriptFile,
+  analyzeScriptSourceRecovery,
+  parseSourceMapV3,
+  bindGeneratedPosition,
 } from "../../../../analyzers/scripts/src/index.js";
 import type { ParsedScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import {
@@ -95,6 +98,22 @@ export interface InspectionTickFunctionRegistration {
   functions: readonly string[];
 }
 
+/** Read-only recovery aid. A .map file can be supplied by a publisher and
+ * must never replace the actual selected archive's generated source proof.
+ */
+export interface InspectionScriptSourceMapNavigation {
+  readonly generatedPath: string;
+  readonly mapPath?: string;
+  readonly status: "mapped" | "unavailable" | "invalid";
+  readonly sites: readonly {
+    generatedLocator: string;
+    originalLocator: string;
+    symbol: string;
+  }[];
+  readonly omittedSites: number;
+  readonly reason?: string;
+}
+
 export interface InspectionSourceIndex {
   graph: SemanticGraph;
   nodes: SemanticNode[];
@@ -107,6 +126,8 @@ export interface InspectionSourceIndex {
     parsed: ParsedScriptFile;
     text?: string;
   }>;
+  /** Only present when a selected script explicitly references a source map. */
+  scriptSourceMapNavigation: InspectionScriptSourceMapNavigation[];
   parsedEntities: Array<{
     node: SemanticNode;
     parsed: ReturnType<typeof parseEntityDefinition>;
@@ -267,6 +288,9 @@ export async function indexInspectionSources(
   const nodes: SemanticNode[] = [];
   const parsedFunctions: InspectionSourceIndex["parsedFunctions"] = [];
   const parsedScripts: InspectionSourceIndex["parsedScripts"] = [];
+  const scriptSourceMapNavigation: InspectionScriptSourceMapNavigation[] = [];
+  const physicalByPath = new Map(files.map(item =>
+    [item.relativePath.replaceAll("\\", "/"), item] as const));
   const parsedEntities: InspectionSourceIndex["parsedEntities"] = [];
   const parsedDialogueDocuments:
     InspectionSourceIndex["parsedDialogueDocuments"] = [];
@@ -354,6 +378,106 @@ export async function indexInspectionSources(
         nodes.push(node);
         parsedScripts.push({ node, text, parsed });
         indexedFiles += 1;
+
+        const sourceMapReference = analyzeScriptSourceRecovery(
+          file.relativePath, text,
+        ).sourceMapReference;
+        if (sourceMapReference !== undefined) {
+          const record: InspectionScriptSourceMapNavigation = {
+            generatedPath: file.relativePath,
+            status: "unavailable",
+            sites: [],
+            omittedSites: 0,
+          };
+          // No network, inline data URLs, arbitrary paths or filesystem
+          // traversal. The actual .map MUST be inventoried in this archive.
+          const validReference = /^[a-zA-Z0-9_.%/ -]+\.map$/.test(
+            sourceMapReference,
+          ) && !sourceMapReference.includes("\\") &&
+            !sourceMapReference.startsWith("/");
+          const mapPath = validReference
+            ? posix.normalize(posix.join(
+                posix.dirname(file.relativePath), sourceMapReference,
+              ))
+            : undefined;
+          const packSegments = file.relativePath.split("/");
+          const scriptsIndex = packSegments.lastIndexOf("scripts");
+          const packRoot = scriptsIndex < 0 ? "" :
+            packSegments.slice(0, scriptsIndex).join("/");
+          const withinPack = mapPath !== undefined &&
+            !mapPath.startsWith("../") && mapPath !== ".." &&
+            (packRoot === "" || mapPath.startsWith(packRoot + "/"));
+          const mapInventory = withinPack && mapPath !== undefined
+            ? physicalByPath.get(mapPath) : undefined;
+          if (!mapInventory || mapPath === undefined ||
+              mapInventory.size > 2_000_000) {
+            scriptSourceMapNavigation.push({
+              ...record,
+              reason: "Referenced map is untrusted, absent, outside its pack or exceeds the 2 MB review budget.",
+            });
+          } else {
+            try {
+              const rawMap = await readFile(join(root, mapPath), "utf8");
+              const map = parseSourceMapV3(rawMap);
+              if (map.file !== undefined &&
+                  posix.basename(map.file) !== posix.basename(file.relativePath)) {
+                throw new Error("Source map declares a different generated script.");
+              }
+              const candidates = [
+                ...parsed.methodCalls.map(call => ({
+                  source: call.source, symbol: call.symbol,
+                })),
+                ...parsed.propertyAccesses.map(access => ({
+                  source: access.source, symbol: access.symbol,
+                })),
+              ].filter(candidate =>
+                candidate.source.range?.lineStart !== undefined &&
+                candidate.source.range.columnStart !== undefined)
+                .sort((a, b) =>
+                  a.source.range!.lineStart! - b.source.range!.lineStart! ||
+                  a.source.range!.columnStart! - b.source.range!.columnStart! ||
+                  a.symbol.localeCompare(b.symbol));
+              const unique = new Map(candidates.map(candidate =>
+                [[candidate.source.range!.lineStart,
+                  candidate.source.range!.columnStart,
+                  candidate.symbol].join(":"), candidate] as const));
+              const bounded = [...unique.values()].slice(0, 16);
+              const sites = bounded.flatMap(candidate => {
+                const generatedLine = candidate.source.range!.lineStart!;
+                const generatedColumn = candidate.source.range!.columnStart! - 1;
+                const bound = bindGeneratedPosition(
+                  map, generatedLine, generatedColumn,
+                );
+                if (bound.status !== "resolved" ||
+                    !bound.source || !bound.originalLine ||
+                    bound.originalColumn === undefined) return [];
+                return [{
+                  generatedLocator: file.relativePath + ":" +
+                    generatedLine + ":" + (generatedColumn + 1),
+                  originalLocator: bound.source.slice(0, 250) + ":" +
+                    bound.originalLine + ":" + (bound.originalColumn + 1),
+                  symbol: candidate.symbol,
+                }];
+              });
+              scriptSourceMapNavigation.push({
+                generatedPath: file.relativePath,
+                mapPath,
+                status: sites.length > 0 ? "mapped" : "unavailable",
+                sites,
+                omittedSites: Math.max(0, unique.size - bounded.length),
+                ...(sites.length ? {} : {
+                  reason: "No bounded typed API sites had resolvable original positions.",
+                }),
+              });
+            } catch (error) {
+              scriptSourceMapNavigation.push({
+                ...record, mapPath, status: "invalid",
+                reason: error instanceof Error ? error.message.slice(0, 180) :
+                  "Invalid source-map data.",
+              });
+            }
+          }
+        }
       } catch (error) {
         parseFailures.push({ relativePath: file.relativePath, kind: "script",
           reason: error instanceof Error ? error.message : String(error) });
@@ -805,6 +929,7 @@ export async function indexInspectionSources(
     nodes,
     parsedFunctions,
     parsedScripts,
+    scriptSourceMapNavigation,
     parsedEntities,
     parsedDialogueDocuments,
     parsedStructureModels,

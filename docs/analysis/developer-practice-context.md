@@ -668,6 +668,26 @@ Promote a map-specific expected behavior only with approved map-/mode-
 scoped intent or sufficient authored evidence from the selected version;
 never because this ZIP says the pattern is preferred.
 
+## Source-map navigation in the selected-map inspection
+
+The existing `inspection/inspect-source-index.ts` now reads a
+script-declared, inventoried `.map` file only when its relative path
+stays inside the current selected pack and the map is below a bounded
+2 MB review budget. It uses the canonical Source Map V3 decoder and
+parser-typed Script API call/property sites to supply a small,
+deterministic generated-to-original **navigation view**. Results stay
+inside `InspectDirectoryResult.scriptSourceMapNavigation` and the
+existing read-only `--brief` output; no second report, source index or
+gameplay detector is created.
+
+Original `sources[]` locations from `.map` are **publisher claims**,
+not verified selected-artifact file identities. Original names cannot
+replace the generated source locator in Semantic IR, create gameplay
+mechanics, or close bug proof. Invalid, missing, oversized, external,
+inline-data or cross-pack maps abstain with an explicit non-fatal
+navigation status. The recovered source view must never cause an
+unrelated map file or ZIP example to become gameplay authority.
+
 ## Bundled/minified source-map precision
 
 The existing `recovery/source-map-binding.ts` source-map V3 decoder now

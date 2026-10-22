@@ -702,6 +702,7 @@ export function buildInspectionResult(
       item.parsed.authoredGameplayCatalog ?? []),
     authoredContentCollections: parsedScripts.flatMap(item =>
       item.parsed.authoredContentCollections ?? []),
+    scriptSourceMapNavigation: [...input.sourceIndex.scriptSourceMapNavigation],
     scriptApiUsage,
     scriptSafeConfig,
     scriptSpatial,
