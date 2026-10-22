@@ -100,16 +100,33 @@ describe("inspectArtifact", () => {
     await createSyntheticWorldTree(world, false);
     await packageDirectoryDeterministically(world, archive);
     const fingerprint = await sha256File(archive);
+    // Distinct RIG demand is the reason production can require pass two.
+    // An empty requested-domain list would exercise the same semantics
+    // twice and miss stale graph, knowledge and report projections.
+    const expandedTarget = {
+      requiredKnowledgeDomains: [
+        "economy-reward",
+        "inventory-state",
+        "temporal-ownership",
+      ] as const,
+    };
 
     const passes = await withPreparedArtifactInspection(
       archive,
       async (inspect) => {
         const initial = await inspect({});
-        const expanded = await inspect({ requiredKnowledgeDomains: [] });
+        const expanded = await inspect(expandedTarget);
         expect(initial.artifactId).toBe(expanded.artifactId);
         expect(initial.fingerprint).toBe(expanded.fingerprint);
         expect(initial.archiveEntries).toBe(expanded.archiveEntries);
         expect(initial.functions).toBe(expanded.functions);
+        expect(initial.gameplayWorld.analysisDemand)
+          .not.toContain("temporal-ownership");
+        expect(expanded.gameplayWorld.analysisDemand)
+          .toEqual(expect.arrayContaining(expandedTarget.requiredKnowledgeDomains));
+        // Source meaning is independent of downstream demand expansion.
+        expect(initial.gameplayIntent.model)
+          .toEqual(expanded.gameplayIntent.model);
         expect(initial.gameplayDiscoveryClosure.sourceParseFailures).toBe(0);
         expect(expanded.gameplayDiscoveryClosure.sourceParseFailures).toBe(0);
         expect(initial.sourceIndexWork).toMatchObject({
@@ -137,9 +154,10 @@ describe("inspectArtifact", () => {
 
     // The second pass must stay semantically equivalent to a standalone
     // inspection that does not share physical-inventory or LevelDB results.
-    const fresh = await inspectArtifact(archive, {
-      requiredKnowledgeDomains: [],
-    });
+    const fresh = await inspectArtifact(archive, expandedTarget);
+    expect(fresh.sourceIndexWork?.action).toBe("PARSED");
+    expect(passes[1]?.sourceIndexWork?.indexedFiles)
+      .toBe(fresh.sourceIndexWork?.indexedFiles);
     expect(passes[1]?.fileInventory).toEqual(fresh.fileInventory);
     expect(passes[1]?.authoredWaveStages).toEqual(fresh.authoredWaveStages);
     expect(passes[1]?.authoredContentCollections)
@@ -149,6 +167,17 @@ describe("inspectArtifact", () => {
     expect(passes[1]?.gameplayIntent.model).toEqual(fresh.gameplayIntent.model);
     expect(passes[1]?.semanticIrModel).toEqual(fresh.semanticIrModel);
     expect(passes[1]?.gameplayDiscoveryClosure).toEqual(fresh.gameplayDiscoveryClosure);
+    // Semantic and defect decisions must agree with a cold analysis of the
+    // same artifact and exact expanded knowledge requirements. Comparing only
+    // parser/Intent output would not detect stale analysis downstream.
+    expect(passes[1]?.gameplayWorld).toEqual(fresh.gameplayWorld);
+    expect(passes[1]?.hiddenGameplayDefects.scenarioAudit.graph)
+      .toEqual(fresh.hiddenGameplayDefects.scenarioAudit.graph);
+    expect(passes[1]?.hiddenGameplayDefects.scenarioAudit.defectResolution)
+      .toEqual(fresh.hiddenGameplayDefects.scenarioAudit.defectResolution);
+    expect(passes[1]?.mandatoryAuditProcedure)
+      .toEqual(fresh.mandatoryAuditProcedure);
+    expect(passes[1]?.diagnostics).toEqual(fresh.diagnostics);
     expect(passes[1]?.worldDatabase.nativeScan).toEqual(fresh.worldDatabase.nativeScan);
     expect(await sha256File(archive)).toBe(fingerprint);
   });
