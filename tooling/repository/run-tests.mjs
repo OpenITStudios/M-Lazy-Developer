@@ -34,7 +34,7 @@ function discoverSourceTests() {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = dir + "/" + entry.name;
       if (entry.isDirectory() && !ignored.has(entry.name)) walk(path);
-      else if (entry.isFile() && /\\.test\\.(ts|tsx|js|mjs|cjs)$/.test(entry.name)) tests.push(path);
+      else if (entry.isFile() && /\.test\.(ts|tsx|js|mjs|cjs)$/.test(entry.name)) tests.push(path);
     }
   }
   for (const root of [".agents", "apps", "engine", "tooling"]) walk(root);
