@@ -9,7 +9,10 @@ import {
   withPreparedArtifactInspection,
 } from "../../src/inspection/inspect-artifact.js";
 
-async function createSyntheticWorldTree(root: string): Promise<void> {
+async function createSyntheticWorldTree(
+  root: string,
+  includeOpaqueStructure = true,
+): Promise<void> {
   const pack = join(root, "behavior_packs/demo");
   await mkdir(join(pack, "functions"), { recursive: true });
   await mkdir(join(pack, "structures/demo"), { recursive: true });
@@ -39,7 +42,9 @@ async function createSyntheticWorldTree(root: string): Promise<void> {
     ].join("\n") + "\n",
   );
 
-  await writeFile(join(pack, "structures/demo/test.mcstructure"), "opaque-fixture");
+  if (includeOpaqueStructure) {
+    await writeFile(join(pack, "structures/demo/test.mcstructure"), "opaque-fixture");
+  }
 }
 
 describe("inspectArtifact", () => {
@@ -84,7 +89,9 @@ describe("inspectArtifact", () => {
     const world = join(root, "world");
     const archive = join(root, "selected.mcworld");
     await mkdir(world, { recursive: true });
-    await createSyntheticWorldTree(world);
+    // Cache-eligible fixture: the separate parse-failure case above keeps
+    // the malformed structure, but this one must exercise source reuse.
+    await createSyntheticWorldTree(world, false);
     await packageDirectoryDeterministically(world, archive);
     const fingerprint = await sha256File(archive);
 
@@ -97,6 +104,8 @@ describe("inspectArtifact", () => {
         expect(initial.fingerprint).toBe(expanded.fingerprint);
         expect(initial.archiveEntries).toBe(expanded.archiveEntries);
         expect(initial.functions).toBe(expanded.functions);
+        expect(initial.gameplayDiscoveryClosure.sourceParseFailures).toBe(0);
+        expect(expanded.gameplayDiscoveryClosure.sourceParseFailures).toBe(0);
         expect(expanded.fingerprint).toBe(fingerprint);
         return [initial, expanded];
       },
@@ -109,6 +118,12 @@ describe("inspectArtifact", () => {
     const fresh = await inspectArtifact(archive, {
       requiredKnowledgeDomains: [],
     });
+    expect(passes[1]?.fileInventory).toEqual(fresh.fileInventory);
+    expect(passes[1]?.authoredWaveStages).toEqual(fresh.authoredWaveStages);
+    expect(passes[1]?.authoredContentCollections)
+      .toEqual(fresh.authoredContentCollections);
+    expect(passes[1]?.scriptSourceMapNavigation)
+      .toEqual(fresh.scriptSourceMapNavigation);
     expect(passes[1]?.gameplayIntent.model).toEqual(fresh.gameplayIntent.model);
     expect(passes[1]?.semanticIrModel).toEqual(fresh.semanticIrModel);
     expect(passes[1]?.gameplayDiscoveryClosure).toEqual(fresh.gameplayDiscoveryClosure);

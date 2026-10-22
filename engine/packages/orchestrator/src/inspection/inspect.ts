@@ -1,6 +1,10 @@
 export { structureIdentifier } from "./inspect-identifiers.js";
 import { discoverInspectionPacks } from "./inspect-packs.js";
-import { indexInspectionSources } from "./inspect-source-index.js";
+import {
+  indexInspectionSources,
+  type InspectionSourceIndex,
+} from "./inspect-source-index.js";
+import { SemanticGraph } from "../../../graph/src/index.js";
 import { analyzeInspectionScriptCompatibility } from "./inspect-script-compatibility.js";
 import { populateInspectionScriptImportGraph } from "./inspect-script-import-graph.js";
 import { enrichInspectionSemanticGraph } from "./inspect-graph-enrichment.js";
@@ -75,6 +79,17 @@ export interface InspectionFileInventoryReuse {
   files?: FileInventoryEntry[];
 }
 
+/**
+ * Reuse only source-derived parsing inside one hash-pinned prepared audit.
+ * The key is the existing ephemeral inventory-reuse owner, not a persisted
+ * cache or a second gameplay-evidence authority. Keep the source-only graph
+ * snapshot separate from the graph that the first pass will enrich.
+ */
+const parsedSourceIndexSnapshots = new WeakMap<
+  InspectionFileInventoryReuse,
+  Omit<InspectionSourceIndex, "graph">
+>();
+
 export async function inspectDirectory(
   root: string,
   artifactId = "art_working",
@@ -133,11 +148,43 @@ export async function inspectDirectory(
     files,
   );
 
-  const sourceIndex = await indexInspectionSources(
-    root,
-    artifactId,
-    files,
-  );
+  // RIG's second pass changes demanded analysis domains, not selected
+  // source bytes. Rehydrate fresh node and parser objects so the first
+  // pass's graph enrichment, diagnostics and downstream consumers cannot
+  // alter the second pass. Parser failures are never cached: retry them
+  // against the independent working copy, like failed native DB reads.
+  const sourceSnapshot = sourceInventoryReuse === undefined
+    ? undefined
+    : parsedSourceIndexSnapshots.get(sourceInventoryReuse);
+  let sourceIndex: InspectionSourceIndex;
+  if (sourceSnapshot !== undefined) {
+    const parsed = structuredClone(sourceSnapshot);
+    const graph = new SemanticGraph();
+    for (const node of parsed.nodes) graph.addNode(node);
+    sourceIndex = { ...parsed, graph };
+  } else {
+    sourceIndex = await indexInspectionSources(root, artifactId, files);
+    if (sourceInventoryReuse !== undefined &&
+        sourceIndex.coverage.parseFailures.length === 0) {
+      const { graph: indexedGraph, ...parsed } = sourceIndex;
+      // Source indexing currently produces nodes only. If a future parser
+      // adds edges or unaccounted graph nodes, conservatively re-index the
+      // next pass instead of silently dropping source evidence.
+      if (indexedGraph.allEdges().length === 0 &&
+          indexedGraph.allNodes().length === parsed.nodes.length) {
+        try {
+          parsedSourceIndexSnapshots.set(
+            sourceInventoryReuse,
+            structuredClone(parsed),
+          );
+        } catch {
+          // Unsupported clone payloads must not block auditing. Keep the
+          // canonical parser as the next pass's fallback.
+          parsedSourceIndexSnapshots.delete(sourceInventoryReuse);
+        }
+      }
+    }
+  }
   const {
     graph,
     nodes,
