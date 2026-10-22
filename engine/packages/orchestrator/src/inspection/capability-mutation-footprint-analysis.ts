@@ -9,7 +9,7 @@ import type {
 } from "./player-capability-surface-analysis.js";
 import type {
   SpatialAuthorityCoverageReport,
-} from "../spatial-authority-analysis.js";
+} from "./spatial-authority-analysis.js";
 
 export type CapabilityMutationSurface =
   | "inventory"

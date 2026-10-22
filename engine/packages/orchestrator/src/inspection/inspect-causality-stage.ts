@@ -10,7 +10,7 @@ import type {
 } from "../../../project-model/src/index.js";
 import type {
   InspectTargetProfile,
-} from "../types.js";
+} from "../core/types.js";
 import type {
   analyzeTelemetryContinuity,
 } from "../../../project-model/src/index.js";

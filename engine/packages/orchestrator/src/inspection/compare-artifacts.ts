@@ -1,8 +1,8 @@
 import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
 import { inspectArtifact, type InspectArtifactResult } from "./inspect-artifact.js";
-import type { InspectTargetProfile } from "../types.js";
-import { diffWorldDbNative, type WorldDbNativeDiff } from "../world-db-diff.js";
-import { compareCausalAnalysis, type CausalComparison } from "../causal-comparison.js";
+import type { InspectTargetProfile } from "../core/types.js";
+import { diffWorldDbNative, type WorldDbNativeDiff } from "./world-db-diff.js";
+import { compareCausalAnalysis, type CausalComparison } from "../diagnosis/causal-comparison.js";
 import {
   compareGameplayIntentModels,
   type GameplayIntentModelComparison,

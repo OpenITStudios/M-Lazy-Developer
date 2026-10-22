@@ -23,7 +23,7 @@ import {
   knowledgeRuntimeDiagnostics,
 } from "../../../../analyzers/diagnostics/src/index.js";
 import { mergeRuntimeEvidenceRecords } from "../../../../analyzers/diagnostics/src/index.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 
 export interface InspectionKnowledgeProfileResolution {
   profile?: EffectiveKnowledgeProfile;

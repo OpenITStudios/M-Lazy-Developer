@@ -12,7 +12,7 @@ import type {
   InspectDirectoryResult,
   InspectedPack,
   InspectTargetProfile,
-} from "../types.js";
+} from "../core/types.js";
 import { planInspectionRepairs } from "../repair/repair-planning.js";
 import { deriveReliabilityFingerprint } from "../reliability/reliability-fingerprint.js";
 import { deriveScriptApiUsage } from "./script-api-usage.js";

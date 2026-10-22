@@ -1,7 +1,7 @@
 import type {
   RuntimeDiagnosticPredicateEvidence,
   RuntimeExperimentDiagnosticBridge,
-} from "../runtime-experiment-diagnostic-evidence.js";
+} from "../diagnosis/runtime-experiment-diagnostic-evidence.js";
 
 export type EntityNavigationRuntimeDisposition =
   | "dynamic-congestion-supported"

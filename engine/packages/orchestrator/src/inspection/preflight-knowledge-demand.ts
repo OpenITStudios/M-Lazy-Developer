@@ -9,7 +9,7 @@ import type {
 } from "../../../../analyzers/scripts/src/index.js";
 import type {
   InspectTargetProfile,
-} from "../types.js";
+} from "../core/types.js";
 
 export interface PreflightKnowledgeDemandInput {
   readonly intent?: GameplayIntentModel;

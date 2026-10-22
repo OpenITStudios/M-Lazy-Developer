@@ -1,4 +1,4 @@
-import type { WorldDbNativeSummary } from "../world-db-analysis.js";
+import type { WorldDbNativeSummary } from "./world-db-analysis.js";
 
 export interface NativeCountDelta {
   before: number;

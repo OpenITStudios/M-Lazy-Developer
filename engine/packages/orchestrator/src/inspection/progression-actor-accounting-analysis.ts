@@ -23,7 +23,7 @@ import type {
 import type {
   ArenaLifecycleAnalysis,
   ArenaLifecycleTerminalAssessment,
-} from "../arena-lifecycle-analysis.js";
+} from "../arena/arena-lifecycle-analysis.js";
 
 export type ProgressionCounterKind =
   | "variable"

@@ -16,12 +16,12 @@ import type {
 } from "../../../reliability/src/index.js";
 import { compareArtifacts, type ArtifactComparisonResult } from "./compare-artifacts.js";
 import { inspectArtifact } from "./inspect-artifact.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 import {
   correlateScriptUsageWithUpdate,
   type ScriptUpdateCorrelation,
-} from "../script-update-correlation.js";
-import { causalRetestReasons } from "../causal-retest.js";
+} from "./script-update-correlation.js";
+import { causalRetestReasons } from "../diagnosis/causal-retest.js";
 
 export interface VersionAwareEvidenceLink {
   updateEntryId: string;

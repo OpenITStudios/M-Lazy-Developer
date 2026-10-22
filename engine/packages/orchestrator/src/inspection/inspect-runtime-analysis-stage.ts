@@ -7,7 +7,7 @@ import {
 import { structureRuntimeDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
 import type { DiagnosticFinding } from "../../../diagnostics/src/index.js";
 import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js";
-import type { InspectTargetProfile } from "../types.js";
+import type { InspectTargetProfile } from "../core/types.js";
 import type { InspectionSourceIndex } from "./inspect-source-index.js";
 import { analyzeFunctionTopology } from "./topology-analysis.js";
 import { analyzeStructureAndChunkRuntime } from "./structure-runtime-analysis.js";

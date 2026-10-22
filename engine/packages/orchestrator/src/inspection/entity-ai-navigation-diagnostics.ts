@@ -7,7 +7,7 @@ import type {
 } from "./entity-ai-stack-analysis.js";
 import type {
   RouteNavigationEnvironmentAnalysis,
-} from "../route-navigation-environment-analysis.js";
+} from "./route-navigation-environment-analysis.js";
 
 export function entityAiNavigationDiagnostics(
   aiStack: EntityAiStackAnalysis,

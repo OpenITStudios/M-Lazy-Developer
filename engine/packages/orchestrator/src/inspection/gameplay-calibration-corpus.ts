@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
 import type {
   InspectTargetProfile,
-} from "../types.js";
+} from "../core/types.js";
 import {
   inspectArtifact,
 } from "./inspect-artifact.js";
