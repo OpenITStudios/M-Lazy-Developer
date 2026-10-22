@@ -109,10 +109,18 @@ native LevelDB reads never share mutable working state. The selected ZIP is
 hash-checked on preparation and throughout the inspection scope, with archive
 changes aborting rather than producing mixed-version evidence.
 
-Only the ZIP preparation is reused; the second necessary RIG analysis is
-still performed. This creates no persistent cache, competing audit entrypoint
-or Minecraft runtime proof. The standalone `inspectArtifact()` signature and
-existing TARGET → REPORT stage gates remain unchanged.
+ZIP preparation, the file inventory/content hashes, and successful native
+LevelDB metadata summaries are reused when the second RIG pass is required.
+Failed native reads are retried rather than silently promoted to success.
+File reuse is bound to the selected artifact ID and fingerprint, and each
+pass receives its own inventory objects and LevelDB summary copy.
+
+**Gameplay/source parsing, Semantic IR, diagnosis and proof still run again**
+for expanded RIG demand. Their mutable graphs are not cached without a
+measured bottleneck and equivalent end-to-end results. The reuse is transient,
+not a persistent cache, competing audit entrypoint or Minecraft runtime proof.
+The standalone `inspectArtifact()` signature and existing TARGET → REPORT
+stage gates remain unchanged.
 
 ## Stage rule
 

@@ -4,10 +4,16 @@ import { tmpdir } from "node:os";
 import { NORMAL_EXTRACTION_BUDGET } from "../../../archive/src/index.js";
 import { extractZipSafely, type ZipInventoryResult } from "../../../archive/src/index.js";
 import { sha256File, artifactIdFromFingerprint } from "../../../artifact/src/index.js";
-import { inspectDirectory } from "./inspect.js";
+import {
+  inspectDirectory,
+  type InspectionFileInventoryReuse,
+} from "./inspect.js";
 import type { InspectDirectoryResult, InspectTargetProfile } from "../core/types.js";
 import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
-import { analyzeWorldDbNative } from "./world-db-analysis.js";
+import {
+  analyzeWorldDbNative,
+  type WorldDbNativeSummary,
+} from "./world-db-analysis.js";
 import { worldDbRuntimeEvidence } from "./world-db-runtime-evidence.js";
 import { correlateEmbeddedCommandsWithNativeChunks } from "./embedded-native-correlation.js";
 import type { TelemetryBatch, TelemetryEvent } from "../../../project-model/src/index.js";
@@ -64,6 +70,8 @@ interface PreparedArtifactSource {
   readonly sourceRoot: string;
   readonly fingerprint: string;
   readonly inventory: ZipInventoryResult;
+  readonly sourceInventoryReuse: InspectionFileInventoryReuse;
+  nativeWorldDb?: WorldDbNativeSummary;
 }
 
 type PreparedArtifactInspect = (
@@ -140,7 +148,14 @@ async function inspectPreparedArtifact(
     // Native LevelDB readers can create files; each pass has its own copy.
     await cp(prepared.sourceRoot, workingRoot, { recursive: true });
 
-    const nativeWorldDb = await analyzeWorldDbNative(workingRoot);
+    // Native DB summary is determined by selected source bytes, not by
+    // RIG knowledge demand. Do not cache FAILED reads: retry them on pass 2.
+    const nativeWorldDb = prepared.nativeWorldDb === undefined
+      ? await analyzeWorldDbNative(workingRoot)
+      : structuredClone(prepared.nativeWorldDb);
+    if (prepared.nativeWorldDb === undefined && nativeWorldDb.status !== "failed") {
+      prepared.nativeWorldDb = structuredClone(nativeWorldDb);
+    }
     const result = await inspectDirectory(
       workingRoot,
       artifactId,
@@ -153,6 +168,7 @@ async function inspectPreparedArtifact(
       runtimeProbeResponses,
       runtimeProbeTranscript?.droppedExchanges ?? 0,
       mapClassification,
+      prepared.sourceInventoryReuse,
     );
 
     const levelName = await readFile(
@@ -1167,6 +1183,10 @@ export async function withPreparedArtifactInspection<T>(
     }
     const prepared: PreparedArtifactSource = {
       sessionRoot, sourceRoot, fingerprint, inventory,
+      sourceInventoryReuse: {
+        artifactId: artifactIdFromFingerprint(fingerprint),
+        sourceFingerprint: fingerprint,
+      },
     };
     const result = await visit((
       target,

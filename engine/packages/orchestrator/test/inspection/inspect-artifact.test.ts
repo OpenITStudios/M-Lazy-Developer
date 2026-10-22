@@ -103,6 +103,16 @@ describe("inspectArtifact", () => {
       fingerprint,
     );
     expect(passes).toHaveLength(2);
+
+    // The second pass must stay semantically equivalent to a standalone
+    // inspection that does not share physical-inventory or LevelDB results.
+    const fresh = await inspectArtifact(archive, {
+      requiredKnowledgeDomains: [],
+    });
+    expect(passes[1]?.gameplayIntent.model).toEqual(fresh.gameplayIntent.model);
+    expect(passes[1]?.semanticIrModel).toEqual(fresh.semanticIrModel);
+    expect(passes[1]?.gameplayDiscoveryClosure).toEqual(fresh.gameplayDiscoveryClosure);
+    expect(passes[1]?.worldDatabase.nativeScan).toEqual(fresh.worldDatabase.nativeScan);
     expect(await sha256File(archive)).toBe(fingerprint);
   });
 

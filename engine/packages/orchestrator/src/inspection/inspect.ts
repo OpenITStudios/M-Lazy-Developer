@@ -14,7 +14,7 @@ import { classifyContentPath } from "../../../../analyzers/discovery/src/index.j
 import { referenceDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
 import { duplicateManifestUuidDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
 import { buildFilesystemInventory } from "../../../project-model/src/index.js";
-import type { RuntimeEvidenceRecord } from "../../../project-model/src/index.js";
+import type { FileInventoryEntry, RuntimeEvidenceRecord } from "../../../project-model/src/index.js";
 import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
 import type {
   InspectDirectoryResult,
@@ -64,6 +64,17 @@ import type {
   GameDesignMapClassification,
 } from "../../../game-design-spec/src/index.js";
 
+/**
+ * Transient, fingerprint-bound physical source inventory for repeated RIG
+ * passes of the same selected ZIP. No filesystem state or gameplay proof is
+ * persisted here. Domain-specific analyses must still be re-evaluated.
+ */
+export interface InspectionFileInventoryReuse {
+  readonly artifactId: string;
+  readonly sourceFingerprint: string;
+  files?: FileInventoryEntry[];
+}
+
 export async function inspectDirectory(
   root: string,
   artifactId = "art_working",
@@ -76,6 +87,7 @@ export async function inspectDirectory(
   runtimeProbeResponses: readonly RuntimeProbeResponse[] = [],
   runtimeProbeDroppedExchanges = 0,
   mapClassification?: GameDesignMapClassification,
+  sourceInventoryReuse?: InspectionFileInventoryReuse,
 ): Promise<InspectDirectoryResult> {
   const runtimeEvidenceStage =
     prepareInspectionRuntimeEvidence({
@@ -92,8 +104,28 @@ export async function inspectDirectory(
     runtimeProbeEvidenceIntegrity,
     diagnostics,
   } = runtimeEvidenceStage;
-  const files = await buildFilesystemInventory(root);
+  if (
+    sourceInventoryReuse !== undefined &&
+    (
+      sourceFingerprint === undefined ||
+      sourceInventoryReuse.artifactId !== artifactId ||
+      sourceInventoryReuse.sourceFingerprint !== sourceFingerprint
+    )
+  ) {
+    throw new Error(
+      "Selected source inventory reuse does not match the current artifact fingerprint.",
+    );
+  }
+
+  // Content hashing is independent of RIG demand, so it is safe to reuse
+  // within this already hash-pinned artifact invocation.
+  const files = sourceInventoryReuse?.files === undefined
+    ? await buildFilesystemInventory(root)
+    : sourceInventoryReuse.files.map((file) => ({ ...file }));
   for (const file of files) file.kindHint = classifyContentPath(file.relativePath).kindHint;
+  if (sourceInventoryReuse !== undefined && sourceInventoryReuse.files === undefined) {
+    sourceInventoryReuse.files = files.map((file) => ({ ...file }));
+  }
 
   const { packs, manifests } = await discoverInspectionPacks(
     root,
