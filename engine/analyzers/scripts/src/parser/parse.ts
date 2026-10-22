@@ -10,6 +10,7 @@ import type {
   ParsedScriptFile,
   RestrictedExecutionMutation,
   ScriptCapabilityUse,
+  ScriptMethodCall,
   ScriptEventSubscription,
   ScriptEntityEventTrigger,
   ScriptDeferredCallback,
@@ -287,19 +288,27 @@ function callbackNode(call: ts.CallExpression): ts.Node | undefined {
 const GENERATION_GUARD_PATTERN =
   /(?:generation|epoch|revision|rev|token|operationId|sessionId|roundId|lifeId|entityId)/i;
 
+function typedMethodAt(
+  call: ts.CallExpression,
+  file: ts.SourceFile,
+  typedMethodSites: ReadonlyMap<string, ScriptMethodCall>,
+): ScriptMethodCall | undefined {
+  if (!ts.isPropertyAccessExpression(call.expression)) return undefined;
+  const position = file.getLineAndCharacterOfPosition(call.getStart(file));
+  return typedMethodSites.get(
+    `${position.line + 1}:${position.character + 1}:${call.expression.name.text}`,
+  );
+}
+
 function deferredScheduler(
   call: ts.CallExpression,
   file: ts.SourceFile,
-  typedSchedulerSites: ReadonlySet<string>,
+  typedMethodSites: ReadonlyMap<string, ScriptMethodCall>,
 ): ScriptDeferredCallback["scheduler"] | undefined {
-  if (!ts.isPropertyAccessExpression(call.expression)) return undefined;
-  const method = call.expression.name.text;
-  const start = file.getLineAndCharacterOfPosition(call.getStart(file));
-  // Reuse parser-typed System method calls. An unbound or shadowed
-  // identifier named "system" is not scheduler evidence.
-  if (!typedSchedulerSites.has(
-    `${start.line + 1}:${start.character + 1}:${method}`,
-  )) return undefined;
+  // Reuse the parser's receiver identity rather than a "system" token.
+  if (typedMethodAt(call, file, typedMethodSites)?.receiverType !== "System")
+    return undefined;
+  const method = (call.expression as ts.PropertyAccessExpression).name.text;
 
   if (
     method === "run" ||
@@ -2374,13 +2383,12 @@ export function parseScriptFile(
     spatialOffsetTransforms.map((item) => item.functionName),
   );
   const namedMinecraftBindings = minecraftNamedBindings(file);
-  // Derive scheduler eligibility once from typed receiver inference instead
-  // of repeatedly guessing from a source identifier's spelling.
-  const typedSchedulerSites = new Set(methodCalls
-    .filter(call => call.receiverType === "System" &&
-      ["run", "runTimeout", "runInterval", "runJob"].includes(call.method))
-    .map(call => [call.source.range?.lineStart ?? 0,
-      call.source.range?.columnStart ?? 0, call.method].join(":")));
+  // One already-inferred source-site lookup for scheduler, persistence and
+  // other typed API interpretation. No second naming-based parser.
+  const typedMethodSites = new Map(methodCalls.map(call => [
+    [call.source.range?.lineStart ?? 0,
+      call.source.range?.columnStart ?? 0, call.method].join(":"), call,
+  ] as const));
   const namespaceMinecraftBindings = minecraftNamespaceBindings(file);
   const canonicalMinecraftMember = (
     expression: ts.Expression,
@@ -3081,7 +3089,7 @@ export function parseScriptFile(
         }
       }
 
-      const scheduler = deferredScheduler(node, file, typedSchedulerSites);
+      const scheduler = deferredScheduler(node, file, typedMethodSites);
       if (scheduler) {
         const callback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
         const namedScheduledCallback = namedCallback(node);
@@ -3259,12 +3267,20 @@ export function parseScriptFile(
       }
 
       const method = chain.at(-1);
+      const typedStorageCall = typedMethodAt(node, file, typedMethodSites);
+      const storageOwner = typedStorageCall?.receiverType;
+      // Dynamic-property calls must belong to an identifiable Minecraft
+      // receiver. A same-named user helper is NOT persistent state evidence.
       if (
-        method === "getDynamicProperty" ||
-        method === "setDynamicProperty" ||
-        method === "clearDynamicProperties" ||
-        method === "getDynamicPropertyIds" ||
-        method === "getDynamicPropertyTotalByteCount"
+        (storageOwner === "World" || storageOwner === "Player" ||
+         storageOwner === "Entity" || storageOwner === "ItemStack") &&
+        (
+          method === "getDynamicProperty" ||
+          method === "setDynamicProperty" ||
+          method === "clearDynamicProperties" ||
+          method === "getDynamicPropertyIds" ||
+          method === "getDynamicPropertyTotalByteCount"
+        )
       ) {
         const access: DynamicPropertyAccess = {
           operation: dynamicPropertyOperation(method),

@@ -476,8 +476,10 @@ describe("inspection semantic IR", () => {
       'const player = { onScreenDisplay: { setActionBar() {} }, camera: { setCamera() {}, clear() {} } };',
       'player.onScreenDisplay.setActionBar("not minecraft");',
       'player.camera.setCamera("minecraft:free"); player.camera.clear();',
-      'const entity = { remove() {} };',
-      'entity.remove();',
+      'const entity = { remove() {}, getDynamicProperty() { return 4; } };',
+      'entity.remove(); entity.getDynamicProperty("round");',
+      'const storage = { setDynamicProperty() {}, getDynamicProperty() { return 2; } };',
+      'storage.setDynamicProperty("round", 1); storage.getDynamicProperty("round");',
       'const dimension = { getEntities() {} }; dimension.getEntities();',
       'const world = { getAllPlayers() {}, afterEvents: { entityDie: { subscribe() {} } } };',
       'world.getAllPlayers(); world.afterEvents.entityDie.subscribe(() => {});',
@@ -491,10 +493,13 @@ describe("inspection semantic IR", () => {
     });
     expect(ir.execution.apiCalls).toEqual([]);
     expect(ir.execution.apiPropertyReads ?? []).toHaveLength(0);
+    expect(ir.state.operations).toEqual([]);
     const hints = developerPracticeSignalsFromSemanticIr(ir, "selected")
       .map(item => item.signal);
     expect(hints).not.toContain("system.runInterval");
     expect(hints).not.toContain("entityDie");
+    expect(hints).not.toContain("getDynamicProperty");
+    expect(hints).not.toContain("setDynamicProperty");
   });
 
 });

@@ -326,9 +326,11 @@ An actual imported `system.currentTick` property read is now carried as
 a bounded, source-identified `apiPropertyReads` witness in the existing
 Semantic IR. The time methodology can distinguish that read from an
 authored scheduler callback. Neither observation proves persistence,
-elapsed time, pause handling or an actual clock failure. Bare identifiers
-without a Script API runtime import are not accepted as typed singleton
-receivers or scheduler evidence.
+elapsed time, pause handling or an actual clock failure. Bare identifiers without a Script API runtime import are not accepted as
+typed singleton receivers or scheduler evidence. Dynamic-property source
+operations now also require a parser-inferred World, Player, Entity or
+ItemStack receiver; a local helper merely named getDynamicProperty does
+not become durable Minecraft state evidence.
 
 The existing typed event-subscription regions also route
 `world.afterEvents.entityDie` and `world.afterEvents.entityRemove`
