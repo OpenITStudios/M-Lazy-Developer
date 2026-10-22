@@ -698,6 +698,20 @@ bundle, instead of taking every source cue from the whole file. This
 changes only evidence navigation; it neither authorizes a game rule nor
 confirms that a callback executed or a session state persisted.
 
+## Deferred session state and exact cross-file cleanup calls
+
+The existing `semantic-ir-diagnostics.ts` generation/ownership evidence
+gap now follows a bounded chain of uniquely resolved, synchronous
+source-call edges from an authored deferred callback to state mutation
+sites (including helpers in other script files). It does not traverse
+another event, deferred, or periodic edge, a foreign artifact, or an
+unresolved target. Its output retains the exact state operation and
+call-edge IDs as investigation receipts. Even this source path cannot
+prove that the callback fired, the generation guard matched, the stored
+key represents the session owner, or that cleanup succeeded: it remains
+a NEED-VALIDATION-style guard/ownership *question*, not a bug verdict.
+The existing diagnostic code and classification are retained.
+
 ## Exact state, cleanup and callback evidence navigation
 
 The selected-artifact Gameplay Intent evidence projection now preserves

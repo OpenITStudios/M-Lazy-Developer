@@ -82,6 +82,86 @@ describe("semantic IR diagnostics", () => {
     )).toBe(true);
   });
 
+  it("traces callback state writes through exact helpers, not unrelated event paths", () => {
+    const origin = { artifactId: "selected", relativePath: "scripts/main.js" };
+    const helper = { artifactId: "selected", relativePath: "scripts/cleanup.js" };
+    const unrelated = { artifactId: "other", relativePath: "scripts/foreign.js" };
+    const region = (id: string, source: typeof origin) => ({
+      id, kind: "script-function" as const, ownerId: "script",
+      label: id, source,
+    });
+    const ir: SemanticIr = {
+      schemaVersion: 1,
+      execution: {
+        regions: [
+          region("caller", origin), region("callback", origin),
+          region("cleanup", helper), region("another-callback", origin),
+          region("foreign", unrelated),
+        ],
+        edges: [{
+          id: "enqueue", from: "caller", to: "callback",
+          kind: "deferred", targetLabel: "cb", resolution: "resolved", source: origin,
+        }, {
+          id: "call-cleanup", from: "callback", to: "cleanup",
+          kind: "synchronous-call", targetLabel: "cleanup",
+          resolution: "resolved", source: origin,
+        }, {
+          id: "enqueue-second", from: "callback", to: "another-callback",
+          kind: "deferred", targetLabel: "later",
+          resolution: "resolved", source: origin,
+        }, {
+          id: "call-foreign", from: "callback", to: "foreign",
+          kind: "synchronous-call", targetLabel: "foreign",
+          resolution: "resolved", source: origin,
+        }],
+      },
+      state: {
+        surfaces: [
+          { id: "cleanup-state", ref: { kind: "dynamic-property", key: "session" } },
+          { id: "next-state", ref: { kind: "dynamic-property", key: "next" } },
+          { id: "foreign-state", ref: { kind: "dynamic-property", key: "foreign" } },
+        ],
+        operations: [{
+          id: "cleanup-write", executionRegionId: "cleanup",
+          surfaceId: "cleanup-state", operation: "write", source: helper,
+        }, {
+          id: "next-write", executionRegionId: "another-callback",
+          surfaceId: "next-state", operation: "write", source: origin,
+        }, {
+          id: "foreign-write", executionRegionId: "foreign",
+          surfaceId: "foreign-state", operation: "write", source: unrelated,
+        }],
+        authorityBindings: [],
+      },
+      temporal: { relations: [{
+        id: "time:enqueue", from: "caller", to: "callback",
+        kind: "deferred", targetLabel: "cb", resolution: "resolved",
+        guardEvidence: "unresolved", source: origin,
+      }] },
+    };
+    const candidate = semanticIrDiagnostics(ir).find(item =>
+      item.code === "SEMANTIC_IR_DEFERRED_STATE_GUARD_UNKNOWN");
+    expect(candidate).toBeDefined();
+    expect(candidate?.data).toEqual(expect.objectContaining({
+      mutatedStateSurfaceIds: ["cleanup-state"],
+      authoredStateMutationIds: ["cleanup-write"],
+      resolvedSynchronousCallEdgeIds: ["call-cleanup"],
+    }));
+    const guarded = { ...ir, temporal: { relations: [{
+      ...ir.temporal.relations[0]!,
+      guardEvidence: "explicit-generation-check" as const,
+    }] } };
+    expect(semanticIrDiagnostics(guarded).some(item =>
+      item.code === "SEMANTIC_IR_DEFERRED_STATE_GUARD_UNKNOWN")).toBe(false);
+    const unresolved = { ...ir, execution: { ...ir.execution,
+      edges: ir.execution.edges.map(edge => edge.id === "call-cleanup"
+        ? { ...edge, to: undefined, resolution: "unresolved" as const }
+        : edge),
+    } };
+    expect(semanticIrDiagnostics(unresolved).some(item =>
+      item.code === "SEMANTIC_IR_DEFERRED_STATE_GUARD_UNKNOWN")).toBe(false);
+  });
+
   it("does not flag guarded deferred mutation", () => {
     const ir: SemanticIr = {
       schemaVersion: 1,
