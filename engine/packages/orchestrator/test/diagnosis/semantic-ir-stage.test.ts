@@ -272,9 +272,11 @@ describe("inspection semantic IR", () => {
     const b = { artifactId: "selected", relativePath: prefix + "cleanup.js" };
     const mainText = [
       'import { finish as close } from "./cleanup.js";',
+      'import { system } from "@minecraft/server";',
       "function join(arena, member) {",
       "  const copy = arena;",
       "  close(copy, member);",
+      "  system.runTimeout(() => { close(copy, member); }, 2);",
       "}",
     ].join("\n");
     const targetText = "export function finish(ctx, player) { return ctx; }";
@@ -289,7 +291,8 @@ describe("inspection semantic IR", () => {
       crossFileCallEdges: calls,
     });
     const edge = ir.execution.edges.find(e =>
-      e.kind === "synchronous-call" && e.targetLabel === "close");
+      e.kind === "synchronous-call" && e.targetLabel === "close" &&
+      e.source.range?.lineStart === 5);
     expect(edge?.resolution).toBe("resolved");
     expect(edge?.argumentParameterBindings).toEqual([
       expect.objectContaining({
@@ -304,6 +307,16 @@ describe("inspection semantic IR", () => {
       binding.argumentSource.relativePath === a.relativePath &&
       binding.parameterSource.relativePath === b.relativePath
     )).toBe(true);
+    // The nested call is synchronous inside a deferred callback. Preserve
+    // both authored edges instead of mistaking the callee for a scheduler.
+    const callbackCall = ir.execution.edges.find(e =>
+      e.kind === "synchronous-call" && e.targetLabel === "close" &&
+      e.source.range?.lineStart === 6);
+    expect(callbackCall?.resolution).toBe("resolved");
+    expect(callbackCall?.controlFlow).toBe("deferred");
+    expect(ir.execution.edges.some(e =>
+      e.kind === "deferred" && e.scheduler === "runTimeout" &&
+      e.resolution === "resolved" && e.to === callbackCall?.from)).toBe(true);
     const unresolved = buildInspectionSemanticIr({
       parsedFunctions: [], parsedScripts: [{ parsed: main }],
       crossFileCallEdges: calls,
