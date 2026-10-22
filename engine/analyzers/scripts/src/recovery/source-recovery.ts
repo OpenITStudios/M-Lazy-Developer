@@ -27,7 +27,7 @@ export interface ScriptSourceRecoveryProfile {
  * when that separate question is actually needed.
  */
 export function sourceMapReferenceFromScript(text: string): string | undefined {
-  return text.match(/[#@]\\s*sourceMappingURL=([^\\s*]+)/)?.[1];
+  return text.match(/[#@]\s*sourceMappingURL=([^\s*]+)/)?.[1];
 }
 
 export function analyzeScriptSourceRecovery(
