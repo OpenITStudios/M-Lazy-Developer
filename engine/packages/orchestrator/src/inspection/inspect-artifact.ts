@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, cp, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { NORMAL_EXTRACTION_BUDGET } from "../../../archive/src/index.js";
-import { extractZipSafely, inventoryZip } from "../../../archive/src/index.js";
+import { extractZipSafely } from "../../../archive/src/index.js";
 import { sha256File, artifactIdFromFingerprint } from "../../../artifact/src/index.js";
 import { inspectDirectory } from "./inspect.js";
 import type { InspectDirectoryResult, InspectTargetProfile } from "../core/types.js";
@@ -111,8 +111,11 @@ export async function inspectArtifact(
   try {
     await mkdir(sourceRoot, { recursive: true });
     await mkdir(workingRoot, { recursive: true });
-    const inventory = await inventoryZip(path);
-    await extractZipSafely(path, sourceRoot, NORMAL_EXTRACTION_BUDGET);
+    // Extraction already validates and returns the archive inventory.
+    // Keep the separate working copy: native LevelDB readers can create files.
+    const inventory = await extractZipSafely(
+      path, sourceRoot, NORMAL_EXTRACTION_BUDGET,
+    );
     await cp(sourceRoot, workingRoot, { recursive: true });
 
     const nativeWorldDb = await analyzeWorldDbNative(workingRoot);

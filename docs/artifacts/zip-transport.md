@@ -18,6 +18,6 @@ The current transport uses @zip.js/zip.js and keeps the following ownership spli
 
 The library is configured with strict entry validation. Application budgets are evaluated before extraction begins.
 
-Extraction writes individual entry streams to disk and does not intentionally buffer whole expanded archives in memory.
+Extraction writes individual entry streams to disk and does not intentionally buffer whole expanded archives in memory. `extractZipSafely()` returns the already validated `ZipInventoryResult`; the selected-map inspection reuses it rather than independently reopening the ZIP for a second inventory. A distinct extraction pass is still necessary after preflight validation.
 
 Deterministic packaging uses sorted relative paths and fixed timestamps, then output should be reopened through the same inventory path before it is considered package-verified.

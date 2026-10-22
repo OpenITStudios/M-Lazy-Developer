@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "f30953f8adda4722ec721dbf21de527266a8ac85",
+  "sourceCommit": "fa5e22c75044de2ea66628a9642c5b4ef86eb014",
   "classification": "path-based provisional routing; not a semantic review or test pass",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
@@ -4237,6 +4237,18 @@
       "rationale": "Seven explicit positive and negative cases protect receipt identity, knowledge domain obligations, and conditional scenario requirements."
     },
     {
+      "path": "engine/packages/orchestrator/test/inspection/gameplay-source-handoff.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "pending-semantic-review",
+      "triage": {
+        "basis": "path-and-directory-only",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "read-assertions-before-decision"
+      }
+    },
+    {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-surface-discovery.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -4937,6 +4949,18 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
+        "action": "read-assertions-before-decision"
+      }
+    },
+    {
+      "path": "engine/packages/orchestrator/test/map-audit-model-task.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "pending-semantic-review",
+      "triage": {
+        "basis": "path-and-directory-only",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
         "action": "read-assertions-before-decision"
       }
     },
