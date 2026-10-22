@@ -603,6 +603,7 @@
         "teleport",
         "spawn",
         "setblock",
+        "block-mutation",
         "floor",
         "0.5"
       ],
@@ -1038,16 +1039,16 @@
         "spatial"
       ],
       "sourceSignals": [
-        "teleport"
+        "camera.setCamera"
       ],
       "question": "When a selected map attempts a scene-camera relocation, does it explicitly account for player-centered loaded/chunk-visible space and later restore player state?",
       "candidateRelations": [
         "camera scene request → player/location dependency",
         "teleport attempt → possible visual load boundary"
       ],
-      "negativeControl": "An in-range camera or intentionally distant noninteractive view can be correct; a teleport site by itself neither proves camera usage nor that rendering failed.",
+      "negativeControl": "A source-backed camera request does not prove any chunk-loading issue, and an in-range view can be intentional.",
       "versionApplicability": "REFERENCE_REPORT_EDUCATION_26.32_2026-10-18_NOT_GENERALIZED",
-      "prohibits": "Never infer sky-only rendering or force a behind-camera teleport for an unrelated map from a teleport cue; require selected-source camera linkage and scoped visual proof."
+      "prohibits": "Never infer sky-only rendering or force a behind-camera teleport from a camera request; require selected-source relocation/restoration analysis and scoped visual proof."
     },
     {
       "id": "developer.hint.content.static-vs-state",

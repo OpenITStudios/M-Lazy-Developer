@@ -36,15 +36,15 @@ async function main(): Promise<void> {
   let offsetSupplied = false;
   let responsesPath: string | undefined;
   let expectedArtifactFingerprint: string | undefined;
-  let developerPracticeRequested = false;
+  let legacyDeveloperPracticeFlagSeen = false;
 
   for (let index = 0; index < rawArgs.length; index += 1) {
     const argument = rawArgs[index]!;
     if (argument === "--developer-practice") {
-      if (developerPracticeRequested) {
+      if (legacyDeveloperPracticeFlagSeen) {
         throw new Error("--developer-practice may only be supplied once");
       }
-      developerPracticeRequested = true;
+      legacyDeveloperPracticeFlagSeen = true;
       continue;
     }
     if (argument === "--brief" || argument === "--handoff") {
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--handoff-offset N] [--responses model.json] [--developer-practice] [target options]");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--handoff-offset N] [--responses model.json] [target options]");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -112,13 +112,12 @@ async function main(): Promise<void> {
   }
 
   const knowledge = await loadKnowledgeDirectory(resolve("engine/knowledge"));
-  // Explicit operator opt-in. Load only the vetted repository reference data,
-  // never install or execute any script from an uploaded external ZIP.
-  const developerPractice = developerPracticeRequested
-    ? JSON.parse(await readFile(
-        resolve("experiments/developer-practice-signals.json"), "utf8",
-      )) as NonNullable<SelectedMapAuditInput["developerPractice"]>
-    : undefined;
+  // Curated developer methodology is available by default, but remains
+  // advisory and selected-source-scoped. Never execute the upstream ZIP.
+  // The previous --developer-practice flag remains a compatible no-op.
+  const developerPractice = JSON.parse(await readFile(
+    resolve("experiments/developer-practice-signals.json"), "utf8",
+  )) as NonNullable<SelectedMapAuditInput["developerPractice"]>;
   const audit = await runSelectedMapAudit({
     artifactPath: resolve(input),
     ...(expectedArtifactFingerprint === undefined
@@ -126,7 +125,7 @@ async function main(): Promise<void> {
       : { expectedArtifactFingerprint }),
     target: runtimeTarget(target),
     knowledgeCatalog: knowledge,
-    ...(developerPractice === undefined ? {} : { developerPractice }),
+    developerPractice,
     telemetry: [],
   });
   // Responses are not proof. The canonical resolution gate validates all
@@ -141,7 +140,7 @@ async function main(): Promise<void> {
         // Reuse the same explicit source snapshot loaded for this invocation,
         // not reference excerpts copied from an earlier model packet.
         knowledgeCatalog: knowledge,
-        ...(developerPractice === undefined ? {} : { developerPractice }),
+        developerPractice,
       });
   const output = handoff
     ? JSON.stringify(

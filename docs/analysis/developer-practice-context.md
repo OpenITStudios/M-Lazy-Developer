@@ -208,9 +208,10 @@ only when the selected-artifact evidence raises a specific question.
 Both the audit model-task path and the generic Context Compiler require an
 explicit selected-map source locator; without it the reference selector
 abstains instead of harvesting unrelated Semantic IR sites. A pattern whose
-source lacks a pinned interpretation methodology also abstains. Opt-in remains
-explicit (`--developer-practice` in the audit CLI), with the same canonical
-Knowledge and selected-map evidence taking precedence.
+source lacks a pinned interpretation methodology also abstains. The CLI uses this vetted snapshot by default; API callers continue to opt
+in explicitly. The legacy `--developer-practice` flag remains accepted
+without changing behavior. Canonical Knowledge and selected-map evidence
+take precedence.
 `sourceSignals[]` are *search cues*, not exact source observations: symbol
 matches, filenames and similar words cannot by themselves establish an
 execution path, state owner, mechanic or design contract. Each selected
@@ -260,7 +261,8 @@ A future ZIP is expected to evolve.
 The existing `workflow/resource-context.ts` owns
 `compileDeveloperPracticeReferenceContext()`; `workflow/context-compiler.ts`
 accepts it as an **explicit optional** `ContextCompilerRequest.developerPractice`
-input. No new retrieval graph or stored gameplay authority is introduced.
+input for API callers. The production CLI loads the curated ZIP snapshot
+by default; no manual flag is required. No new retrieval graph or stored gameplay authority is introduced.
 The request must include:
 
 - already-loaded current-version `developer-practice-signals.json`;

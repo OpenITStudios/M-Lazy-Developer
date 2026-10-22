@@ -330,6 +330,12 @@ export function developerPracticeSignalsFromSemanticIr(
       // This is a typed/parsing-backed teleport attempt; it does not prove
       // Player.teleport, player arrival or any design requirement.
       add(effect.id, effect.source, "teleport");
+    } else if (effect.kind === "entity-spawn") {
+      // Sourced spawn attempt, never observed actor placement.
+      add(effect.id, effect.source, "spawn");
+    } else if (effect.kind === "block-mutation") {
+      // Scoped block mutation, not evidence of a placement defect.
+      add(effect.id, effect.source, "block-mutation");
     } else if (effect.kind === "audio-feedback" &&
                effect.mechanism === "script-api") {
       // A typed Player/Dimension.playSound source attempt, NOT verified
@@ -361,6 +367,10 @@ export function developerPracticeSignalsFromSemanticIr(
       add(call.id, call.source, "Entity." + call.method);
     } else if (call.receiverType === "Player" && call.method === "teleport") {
       add(call.id, call.source, "player.teleport");
+    } else if (call.receiverType === "Camera" &&
+               (call.method === "setCamera" || call.method === "clear")) {
+      // Only Player.camera-backed receivers enter typed Semantic IR.
+      add(call.id, call.source, "camera." + call.method);
     } else if (call.receiverType === "ScreenDisplay" &&
                ["setActionBar", "setTitle", "setHudVisibility"].includes(call.method)) {
       add(call.id, call.source, "onScreenDisplay." + call.method);

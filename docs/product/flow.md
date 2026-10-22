@@ -180,8 +180,10 @@ previously opened Minecraft map behaved in a particular way.
 
 ### One developer-method investigation path
 
-The existing, opt-in `developerPractice` context can now deliver
-the relevant SHA-pinned developer methodology **within the same bounded
+The CLI now loads the vetted `developerPractice` snapshot by default;
+the API keeps explicit injection. Selection requires exact selected-map
+source evidence and matching typed Semantic IR/question context. The same
+bounded context can deliver the relevant SHA-pinned developer methodology **within the same bounded
 model task**: actual SKILL.md chapter references, a three-step source
 investigation, a concrete design counterexample, and linked example
 module/unit-test/checker/probe sources. This replaces scattered
