@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 // Normal development checks whole user-facing paths, not every micro regression.
@@ -24,6 +24,23 @@ const acceptanceVitestFiles = [
 const acceptanceNativeFiles = ["apps/report-system-next/client.acceptance.test.mjs"];
 const inventoryPath = resolve("tooling/repository/test-inventory.json");
 const lanes = ["safety", "acceptance", "runtime", "regression", "development"];
+
+// The lane inventory must cover every source test; otherwise a new test could
+// silently disappear from lane-based execution without changing full Vitest.
+function discoverSourceTests() {
+  const tests = [];
+  const ignored = new Set(["node_modules", ".git", "dist", "coverage", ".svelte-kit"]);
+  function walk(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = dir + "/" + entry.name;
+      if (entry.isDirectory() && !ignored.has(entry.name)) walk(path);
+      else if (entry.isFile() && /\\.test\\.(ts|tsx|js|mjs|cjs)$/.test(entry.name)) tests.push(path);
+    }
+  }
+  for (const root of [".agents", "apps", "engine", "tooling"]) walk(root);
+  return tests;
+}
+
 function loadInventory() {
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
   if (!Array.isArray(data.tests)) throw new Error("Invalid test inventory");
@@ -35,6 +52,13 @@ function loadInventory() {
       throw new Error("Stale or invalid test inventory entry: " + item.path);
     }
     paths.add(item.path);
+  }
+  const missing = discoverSourceTests().filter((path) => !paths.has(path));
+  if (missing.length > 0) {
+    throw new Error(
+      "Test lane inventory omits " + missing.length + " source test(s): " +
+      missing.slice(0, 5).join(", ") + ". Classify them before using lanes.",
+    );
   }
   return data.tests;
 }

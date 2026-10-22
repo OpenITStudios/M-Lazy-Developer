@@ -25,8 +25,12 @@ approval. Tests about safety may currently exist outside the safety lane.
 `test:lane -- acceptance` is inventory-derived and is **not** the same
 selection as the maintained `npm test` acceptance contract.
 
-Before lane execution, the runner refuses duplicate, missing or malformed
-inventory paths instead of silently skipping them. The complete regression
-path remains available and `verify:source` continues to use it.
+Before lane execution or lane listing, the existing runner refuses duplicate,
+missing or malformed inventory paths **and** checks actual `*.test.*` files
+under `.agents/`, `apps/`, `engine/` and `tooling/` against the inventory.
+A newly added test must be classified rather than silently omitted from lanes.
+This is a routing integrity check, not an executed test result. The default
+acceptance, focused, and complete regression execution routes are unchanged,
+and `verify:source` continues to use the complete route.
 The GitHub CI verification workflows on Local remain disabled.
 No test or production source has been deleted by this routing change.
