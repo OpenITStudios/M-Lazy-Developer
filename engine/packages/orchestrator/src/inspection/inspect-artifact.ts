@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, cp, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { NORMAL_EXTRACTION_BUDGET } from "../../../archive/src/index.js";
-import { extractZipSafely } from "../../../archive/src/index.js";
+import { extractZipSafely, type ZipInventoryResult } from "../../../archive/src/index.js";
 import { sha256File, artifactIdFromFingerprint } from "../../../artifact/src/index.js";
 import { inspectDirectory } from "./inspect.js";
 import type { InspectDirectoryResult, InspectTargetProfile } from "../core/types.js";
@@ -59,16 +59,26 @@ export interface InspectArtifactResult extends InspectDirectoryResult {
   levelName?: string;
 }
 
-export async function inspectArtifact(
-  path: string,
-  target: InspectTargetProfile = {},
+interface PreparedArtifactSource {
+  readonly sessionRoot: string;
+  readonly sourceRoot: string;
+  readonly fingerprint: string;
+  readonly inventory: ZipInventoryResult;
+}
+
+type PreparedArtifactInspect = (
+  target?: InspectTargetProfile,
   knowledgeCatalog?: KnowledgeCatalog,
-  telemetry: readonly TelemetryEvent[] | TelemetryBatch = [],
+  telemetry?: readonly TelemetryEvent[] | TelemetryBatch,
   runtimeProbeTranscript?: RuntimeProbeTranscript,
   mapClassificationHint?: MapClassificationRoutingHint,
   expectedArtifactFingerprint?: string,
-): Promise<InspectArtifactResult> {
-  const fingerprint = await sha256File(path);
+) => Promise<InspectArtifactResult>;
+
+function assertExpectedArchiveFingerprint(
+  fingerprint: string,
+  expectedArtifactFingerprint?: string,
+): void {
   if (expectedArtifactFingerprint !== undefined) {
     const expected = expectedArtifactFingerprint
       .replace(/^sha256:/i, "")
@@ -79,6 +89,26 @@ export async function inspectArtifact(
       );
     }
   }
+}
+
+/** Re-evaluate the prepared immutable source on an independent working copy. */
+async function inspectPreparedArtifact(
+  path: string,
+  prepared: PreparedArtifactSource,
+  target: InspectTargetProfile = {},
+  knowledgeCatalog?: KnowledgeCatalog,
+  telemetry: readonly TelemetryEvent[] | TelemetryBatch = [],
+  runtimeProbeTranscript?: RuntimeProbeTranscript,
+  mapClassificationHint?: MapClassificationRoutingHint,
+  expectedArtifactFingerprint?: string,
+): Promise<InspectArtifactResult> {
+  const fingerprint = await sha256File(path);
+  if (fingerprint !== prepared.fingerprint) {
+    throw new Error(
+      "Selected .mcworld changed since preparation; refusing mixed-version audit.",
+    );
+  }
+  assertExpectedArchiveFingerprint(fingerprint, expectedArtifactFingerprint);
   const mapClassification =
     mapClassificationHint === undefined
       ? undefined
@@ -104,19 +134,11 @@ export async function inspectArtifact(
     runtimeProbeTranscript?.exchanges.map(
       (exchange) => exchange.response,
     ) ?? [];
-  const sessionRoot = await mkdtemp(join(tmpdir(), "m-bedrock-inspect-"));
-  const sourceRoot = join(sessionRoot, "source");
-  const workingRoot = join(sessionRoot, "working");
-
+  const workingRoot = await mkdtemp(join(prepared.sessionRoot, "working-"));
   try {
-    await mkdir(sourceRoot, { recursive: true });
-    await mkdir(workingRoot, { recursive: true });
-    // Extraction already validates and returns the archive inventory.
-    // Keep the separate working copy: native LevelDB readers can create files.
-    const inventory = await extractZipSafely(
-      path, sourceRoot, NORMAL_EXTRACTION_BUDGET,
-    );
-    await cp(sourceRoot, workingRoot, { recursive: true });
+    const inventory = prepared.inventory;
+    // Native LevelDB readers can create files; each pass has its own copy.
+    await cp(prepared.sourceRoot, workingRoot, { recursive: true });
 
     const nativeWorldDb = await analyzeWorldDbNative(workingRoot);
     const result = await inspectDirectory(
@@ -1112,6 +1134,89 @@ export async function inspectArtifact(
       },
     };
   } finally {
+    await rm(workingRoot, { recursive: true, force: true });
+  }
+}
+
+/** One transient ZIP preparation shared only within a selected audit invocation.
+ * A second RIG pass recomputes the analysis, never the source extraction.
+ * This does not own an audit stage, status, cache, or persisted authority.
+ */
+export async function withPreparedArtifactInspection<T>(
+  path: string,
+  visit: (inspect: PreparedArtifactInspect) => Promise<T>,
+  expectedArtifactFingerprint?: string,
+  mapClassificationHint?: MapClassificationRoutingHint,
+): Promise<T> {
+  const fingerprint = await sha256File(path);
+  assertExpectedArchiveFingerprint(fingerprint, expectedArtifactFingerprint);
+  if (mapClassificationHint !== undefined) {
+    assertMapClassificationRoutingHint(mapClassificationHint, fingerprint);
+  }
+  const sessionRoot = await mkdtemp(join(tmpdir(), "m-bedrock-inspect-"));
+  const sourceRoot = join(sessionRoot, "source");
+  try {
+    await mkdir(sourceRoot, { recursive: true });
+    const inventory = await extractZipSafely(
+      path, sourceRoot, NORMAL_EXTRACTION_BUDGET,
+    );
+    if (await sha256File(path) !== fingerprint) {
+      throw new Error(
+        "Selected .mcworld changed during archive extraction; resolve the current artifact again.",
+      );
+    }
+    const prepared: PreparedArtifactSource = {
+      sessionRoot, sourceRoot, fingerprint, inventory,
+    };
+    const result = await visit((
+      target,
+      knowledgeCatalog,
+      telemetry,
+      runtimeProbeTranscript,
+      mapClassificationHint,
+      expectedArtifactFingerprint,
+    ) => inspectPreparedArtifact(
+      path,
+      prepared,
+      target,
+      knowledgeCatalog,
+      telemetry,
+      runtimeProbeTranscript,
+      mapClassificationHint,
+      expectedArtifactFingerprint,
+    ));
+    if (await sha256File(path) !== fingerprint) {
+      throw new Error(
+        "Selected .mcworld changed during prepared audit; resolve the current artifact again.",
+      );
+    }
+    return result;
+  } finally {
     await rm(sessionRoot, { recursive: true, force: true });
   }
+}
+
+/** Existing standalone inspection API remains compatible. */
+export async function inspectArtifact(
+  path: string,
+  target: InspectTargetProfile = {},
+  knowledgeCatalog?: KnowledgeCatalog,
+  telemetry: readonly TelemetryEvent[] | TelemetryBatch = [],
+  runtimeProbeTranscript?: RuntimeProbeTranscript,
+  mapClassificationHint?: MapClassificationRoutingHint,
+  expectedArtifactFingerprint?: string,
+): Promise<InspectArtifactResult> {
+  return withPreparedArtifactInspection(
+    path,
+    (inspect) => inspect(
+      target,
+      knowledgeCatalog,
+      telemetry,
+      runtimeProbeTranscript,
+      mapClassificationHint,
+      expectedArtifactFingerprint,
+    ),
+    expectedArtifactFingerprint,
+    mapClassificationHint,
+  );
 }

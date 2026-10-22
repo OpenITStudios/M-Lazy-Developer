@@ -4,7 +4,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { packageDirectoryDeterministically } from "../../../archive/src/index.js";
 import { sha256File } from "../../../artifact/src/index.js";
-import { inspectArtifact } from "../../src/inspection/inspect-artifact.js";
+import {
+  inspectArtifact,
+  withPreparedArtifactInspection,
+} from "../../src/inspection/inspect-artifact.js";
 
 async function createSyntheticWorldTree(root: string): Promise<void> {
   const pack = join(root, "behavior_packs/demo");
@@ -74,6 +77,33 @@ describe("inspectArtifact", () => {
     expect(result.gameplayDiscoveryClosure.semanticUnderstandingGapPaths)
       .toEqual([...result.gameplayDiscoveryClosure.semanticUnderstandingGapPaths].sort());
 
+  });
+
+  it("reuses one hash-pinned source across separate inspection passes", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-audit-passes-"));
+    const world = join(root, "world");
+    const archive = join(root, "selected.mcworld");
+    await mkdir(world, { recursive: true });
+    await createSyntheticWorldTree(world);
+    await packageDirectoryDeterministically(world, archive);
+    const fingerprint = await sha256File(archive);
+
+    const passes = await withPreparedArtifactInspection(
+      archive,
+      async (inspect) => {
+        const initial = await inspect({});
+        const expanded = await inspect({ requiredKnowledgeDomains: [] });
+        expect(initial.artifactId).toBe(expanded.artifactId);
+        expect(initial.fingerprint).toBe(expanded.fingerprint);
+        expect(initial.archiveEntries).toBe(expanded.archiveEntries);
+        expect(initial.functions).toBe(expanded.functions);
+        expect(expanded.fingerprint).toBe(fingerprint);
+        return [initial, expanded];
+      },
+      fingerprint,
+    );
+    expect(passes).toHaveLength(2);
+    expect(await sha256File(archive)).toBe(fingerprint);
   });
 
   it("produces byte-identical archives for identical trees", async () => {

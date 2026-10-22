@@ -99,6 +99,21 @@ inspect-identifiers
 inspect-runtime-evidence
 ```
 
+### RIG demand reconciliation and ZIP source reuse
+
+The canonical `runSelectedMapAudit()` may need a second inspection when
+Required Inspection Graph demand expands. Both passes share **one validated
+ZIP extraction** through `withPreparedArtifactInspection()` in the existing
+inspection owner. Each pass gets a fresh, disposable working directory;
+native LevelDB reads never share mutable working state. The selected ZIP is
+hash-checked on preparation and throughout the inspection scope, with archive
+changes aborting rather than producing mixed-version evidence.
+
+Only the ZIP preparation is reused; the second necessary RIG analysis is
+still performed. This creates no persistent cache, competing audit entrypoint
+or Minecraft runtime proof. The standalone `inspectArtifact()` signature and
+existing TARGET → REPORT stage gates remain unchanged.
+
 ## Stage rule
 
 Create or extract an inspection stage only when all of these are true:

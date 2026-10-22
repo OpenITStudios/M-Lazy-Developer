@@ -20,7 +20,7 @@ import type {
   InspectTargetProfile,
 } from "./core/types.js";
 import {
-  inspectArtifact,
+  withPreparedArtifactInspection,
   type InspectArtifactResult,
 } from "./inspection/inspect-artifact.js";
 import {
@@ -548,81 +548,87 @@ async function inspectSelectedMapToDemandFixedPoint(
   readonly inspection: InspectArtifactResult;
   readonly reconciliation: AuditDemandReconciliation;
 }> {
-  const initialRequiredDomains:
-    NonNullable<InspectTargetProfile["requiredKnowledgeDomains"]> = [
-      ...deriveAuditUserIntentKnowledgeDemand(
-        input.userIntent,
-      ),
-    ];
-
-  const firstInspection = await inspectArtifact(
+  // Reconcile demand without unpacking the selected map twice.
+  return withPreparedArtifactInspection(
     input.artifactPath,
-    productionInspectTarget(
-      input.target,
-      initialRequiredDomains,
-    ),
-    input.knowledgeCatalog,
-    input.telemetry ?? [],
-    input.runtimeProbeTranscript,
-    input.mapClassificationHint,
+    async (inspect) => {
+      const initialRequiredDomains:
+        NonNullable<InspectTargetProfile["requiredKnowledgeDomains"]> = [
+          ...deriveAuditUserIntentKnowledgeDemand(
+            input.userIntent,
+          ),
+        ];
+
+      const firstInspection = await inspect(
+        productionInspectTarget(
+          input.target,
+          initialRequiredDomains,
+        ),
+        input.knowledgeCatalog,
+        input.telemetry ?? [],
+        input.runtimeProbeTranscript,
+        input.mapClassificationHint,
+        input.expectedArtifactFingerprint,
+      );
+      const firstReconciliation =
+        reconcileSelectedMapAuditDemand(
+          firstInspection,
+          1,
+        );
+      if (firstReconciliation.stable) {
+        return {
+          inspection: firstInspection,
+          reconciliation: firstReconciliation,
+        };
+      }
+
+      const reconciledDomains = [
+        ...new Set([
+          ...initialRequiredDomains,
+          ...firstReconciliation.requiredDomains,
+        ]),
+      ].sort();
+
+      const secondInspection = await inspect(
+        productionInspectTarget(
+          input.target,
+          reconciledDomains,
+        ),
+        input.knowledgeCatalog,
+        input.telemetry ?? [],
+        input.runtimeProbeTranscript,
+        input.mapClassificationHint,
+        input.expectedArtifactFingerprint,
+      );
+      // Both passes must describe one immutable selected artifact.
+      if (secondInspection.fingerprint !== firstInspection.fingerprint) {
+        throw new Error(
+          "Selected .mcworld changed between inspection passes; refusing mixed-version audit.",
+        );
+      }
+      const secondReconciliation =
+        reconcileSelectedMapAuditDemand(
+          secondInspection,
+          2,
+        );
+
+      if (!secondReconciliation.stable) {
+        throw new Error(
+          "RIG knowledge demand did not converge after the bounded reconciliation pass. " +
+            "Refusing repeated full-artifact reinspection; unresolved domain(s): " +
+            secondReconciliation.missingDomains.join(", ") +
+            ".",
+        );
+      }
+
+      return {
+        inspection: secondInspection,
+        reconciliation: secondReconciliation,
+      };
+    },
     input.expectedArtifactFingerprint,
-  );
-  const firstReconciliation =
-    reconcileSelectedMapAuditDemand(
-      firstInspection,
-      1,
-    );
-  if (firstReconciliation.stable) {
-    return {
-      inspection: firstInspection,
-      reconciliation: firstReconciliation,
-    };
-  }
-
-  const reconciledDomains = [
-    ...new Set([
-      ...initialRequiredDomains,
-      ...firstReconciliation.requiredDomains,
-    ]),
-  ].sort();
-
-  const secondInspection = await inspectArtifact(
-    input.artifactPath,
-    productionInspectTarget(
-      input.target,
-      reconciledDomains,
-    ),
-    input.knowledgeCatalog,
-    input.telemetry ?? [],
-    input.runtimeProbeTranscript,
     input.mapClassificationHint,
-    input.expectedArtifactFingerprint,
   );
-  // Both passes must describe one immutable selected artifact.
-  if (secondInspection.fingerprint !== firstInspection.fingerprint) {
-    throw new Error(
-      "Selected .mcworld changed between inspection passes; refusing mixed-version audit.",
-    );
-  }
-  const secondReconciliation =
-    reconcileSelectedMapAuditDemand(
-      secondInspection,
-      2,
-    );
-
-  if (!secondReconciliation.stable) {
-    throw new Error(
-      "RIG knowledge demand did not converge after the bounded reconciliation pass. " +
-        "Refusing repeated full-artifact reinspection; unresolved domain(s): " +
-        secondReconciliation.missingDomains.join(", ") +
-        ".",
-    );
-  }
-
-  return {
-    inspection: secondInspection,
-    reconciliation: secondReconciliation,
-  };
 }
 
 function assembleSelectedMapAuditRun(
