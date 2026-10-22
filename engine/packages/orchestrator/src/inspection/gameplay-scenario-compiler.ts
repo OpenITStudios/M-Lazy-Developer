@@ -220,6 +220,8 @@ function authoredOutcomeGuardWitnessesByEdge(
 function dimensionEvidenceForRuntimeComponent(
   componentId: string,
   world: GameplayWorldModel,
+  sourceLocators: readonly string[],
+  selectedSourceEvidenceLocators: ReadonlyMap<string, string>,
 ): GameplayCausalLink["dimensionEvidence"] {
   const unique = (ids: readonly string[]) => [...new Set(ids)].sort();
   switch (componentId) {
@@ -234,10 +236,29 @@ function dimensionEvidenceForRuntimeComponent(
       return geometry.length > 0 ? { geometry } : {};
     }
     case "runtime:player-capability": {
-      const capability = unique(world.capabilityExposure.exposures
-        .filter((item) => item.status === "guarded" || item.status === "blocked")
-        .flatMap((item) => item.evidenceIds));
-      // Capability observations alone do not prove guard activation.
+      // Not every "blocked" status is a source-backed protection: an absent
+      // trigger is not the same as a disabled release or an active guard.
+      // These IDs describe the capability assessment only. They do not
+      // establish this scenario's guard, scope or blocking exclusion.
+      // A protected capability elsewhere in the map cannot satisfy this
+      // scenario. Match full selected-source file identities (not basenames
+      // or similar labels), then preserve only the matched witness IDs.
+      const scopedFiles = new Set(sourceLocators.map(sourceFileIdentity));
+      const capability = scopedFiles.size === 0 ? [] : unique(
+        world.capabilityExposure.exposures
+          .filter((item) =>
+            (item.status === "blocked" &&
+              item.resolutionBasis === "release-disabled") ||
+            (item.status === "guarded" &&
+              item.resolutionBasis === "active-authorization-guard")
+          )
+          .flatMap((item) => item.evidenceIds.filter((id) => {
+            const source = selectedSourceEvidenceLocators.get(id) ??
+              (id.includes("/") || id.includes("\\") ? id : undefined);
+            return source !== undefined &&
+              scopedFiles.has(sourceFileIdentity(source));
+          }))
+      );
       return capability.length > 0 ? { capability } : {};
     }
     default:
@@ -506,6 +527,13 @@ function runtimeComponents(
 
 function normalizedLocator(value: string): string {
   return value.replaceAll("\\", "/").toLowerCase();
+}
+
+/** Exact file identity, ignoring only source range suffixes. */
+function sourceFileIdentity(value: string): string {
+  return normalizedLocator(value)
+    .replace(/#l[1-9][0-9]*$/, "")
+    .replace(/:[1-9][0-9]*:[1-9][0-9]*$/, "");
 }
 
 function scriptMatchesScenarioScope(
@@ -2890,6 +2918,12 @@ export function compileGameplayScenarioGraph(
   const sourceEvidenceIds = new Set(input.intent.evidence
     .filter(record => record.scope === "selected-artifact")
     .map(record => record.id));
+  const selectedSourceEvidenceLocators = new Map(input.intent.evidence
+    .filter((record) =>
+      record.scope === "selected-artifact" &&
+      record.origin === "source-code"
+    )
+    .map((record) => [record.id, record.locator] as const));
   const authoredGuardWitnessesByEdge = authoredOutcomeGuardWitnessesByEdge(
     input.intent, sourceEvidenceIds,
   );
@@ -3444,6 +3478,8 @@ export function compileGameplayScenarioGraph(
           dimensionEvidenceForRuntimeComponent(
             component.id,
             input.world,
+            sourceLocators,
+            selectedSourceEvidenceLocators,
           ),
         ...runtimeEdgeState(
           component.id,

@@ -44,10 +44,21 @@ export interface CapabilityExposureInput {
   readonly evidenceIds?: readonly string[];
 }
 
+/**
+ * Why the exposure evaluator returned a protected-looking status.
+ * A missing trigger is an observation of analyzed coverage, not proof that
+ * a configured release switch or an active authorization guard blocks play.
+ */
+export type CapabilityExposureResolutionBasis =
+  | "release-disabled"
+  | "trigger-absent"
+  | "active-authorization-guard";
+
 export interface CapabilityExposureAssessment {
   readonly capabilityId: string;
   readonly capabilityLabel: string;
   readonly status: CapabilityExposureStatus;
+  readonly resolutionBasis?: CapabilityExposureResolutionBasis;
   readonly prerequisiteReachability:
     | "reachable"
     | "unreachable"
@@ -92,6 +103,7 @@ export function assessCapabilityExposure(
       capabilityId: input.capabilityId,
       capabilityLabel: input.capabilityLabel,
       status: "blocked",
+      resolutionBasis: "release-disabled",
       prerequisiteReachability,
       impact: input.playerImpact,
       reasons,
@@ -105,6 +117,7 @@ export function assessCapabilityExposure(
       capabilityId: input.capabilityId,
       capabilityLabel: input.capabilityLabel,
       status: "blocked",
+      resolutionBasis: "trigger-absent",
       prerequisiteReachability,
       impact: input.playerImpact,
       reasons,
@@ -118,11 +131,16 @@ export function assessCapabilityExposure(
   ) {
     const activation = input.guardActivation ?? "unknown";
     if (activation === "active" || activation === "not-required") {
-      reasons.push("Required authorization is enforced by an active production guard.");
+      reasons.push(activation === "active"
+        ? "Required authorization is enforced by an active production guard."
+        : "Authorization is marked enforced with no activation requirement; no active guard witness is established.");
       return {
         capabilityId: input.capabilityId,
         capabilityLabel: input.capabilityLabel,
         status: "guarded",
+        ...(activation === "active"
+          ? { resolutionBasis: "active-authorization-guard" as const }
+          : {}),
         prerequisiteReachability,
         impact: input.playerImpact,
         reasons,

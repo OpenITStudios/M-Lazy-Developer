@@ -208,14 +208,14 @@ describe("gameplay defect resolution crosscheck depth", () => {
         {
           ...graph.causalLinks[0]!,
           id: "link:exact-guard",
-          dimensionEvidence: { exclusion: ["source:exact-guard"] },
+          dimensionEvidence: { exclusion: ["source:exact-guard"], scope: ["source:exact-scope"] },
           scenarioId: "preset:arena-capacity",
           fromComponentId: "runtime:arena",
           toComponentId: "policy:arena-capacity",
           purpose: "Exclude unavailable arena admission.",
-          evidenceIds: ["source:exact-guard"],
+          evidenceIds: ["source:exact-guard", "source:exact-scope"],
           subjectIds: ["policy:arena-capacity"],
-          componentIds: ["runtime:arena"],
+          componentIds: ["runtime:arena", "policy:arena-capacity"],
           intentEdgeKind: "excludes",
           status: "PROVEN",
           reason:
@@ -233,6 +233,61 @@ describe("gameplay defect resolution crosscheck depth", () => {
       "link:arena-capacity",
     ]);
     expect(result.confirmedDefectReadyIds).toEqual([]);
+  });
+
+  it("does not suppress a defect without complete subject scope and an explicit scope witness", () => {
+    const base = graph.causalLinks[0]!;
+    const exact = {
+      ...base,
+      id: "link:source-exclusion",
+      status: "PROVEN" as const,
+      intentEdgeKind: "excludes" as const,
+      evidenceIds: ["source:guard", "source:scope"],
+      dimensionEvidence: { exclusion: ["source:guard"], scope: ["source:scope"] },
+    };
+    const withoutScopeEvidence: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [base, { ...exact, dimensionEvidence: { exclusion: ["source:guard"] } }],
+    };
+    const broaderSubject: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [base, { ...exact, subjectIds: [...base.subjectIds, "arena:foreign"] }],
+    };
+    const partialComponents: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [base, { ...exact, componentIds: ["runtime:arena"] }],
+    };
+    const exactMatch: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [base, exact],
+    };
+    for (const candidate of [withoutScopeEvidence, broaderSubject, partialComponents]) {
+      const result = assessGameplayDefectResolutionGate(candidate);
+      expect(result.blockingCounterProofIds).toEqual([]);
+      expect(result.counterProofSearchRequiredIds).toContain(base.id);
+    }
+    expect(assessGameplayDefectResolutionGate(exactMatch).blockingCounterProofIds)
+      .toEqual([base.id]);
+  });
+
+  it("does not confuse an authored return guard witness with completed blocking-guard search", () => {
+    const base = graph.causalLinks[0]!;
+    const guarded: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [{
+        ...base,
+        intentEdgeKind: "requires",
+        evidenceIds: [...base.evidenceIds, "source:observed-return", "source:modeled-scope"],
+        dimensionEvidence: { guard: ["source:observed-return"], scope: ["source:modeled-scope"] },
+      }],
+    };
+    const result = assessGameplayDefectResolutionGate(guarded);
+    const guardReceipt = result.resolutions[0]?.counterProofSearch?.dimensionReceipts
+      .find((receipt) => receipt.dimension === "guard");
+    expect(guardReceipt?.evidenceIds).toEqual(["source:observed-return"]);
+    expect(guardReceipt?.exhaustiveWithinScope).toBe(false);
+    expect(result.confirmedDefectReadyIds).toEqual([]);
+    expect(result.counterProofSearchRequiredIds).toEqual([base.id]);
   });
 
   it("rejects a supplied blocking counter-proof without a graph-backed exclusion", () => {
@@ -283,10 +338,10 @@ describe("gameplay defect resolution crosscheck depth", () => {
         {
           ...graph.causalLinks[0]!,
           id: "link:real-exclusion",
-          dimensionEvidence: { exclusion: ["source:exact-guard"] },
+          dimensionEvidence: { exclusion: ["source:exact-guard"], scope: ["source:exact-scope"] },
           intentEdgeKind: "excludes",
           status: "PROVEN",
-          evidenceIds: ["source:exact-guard"],
+          evidenceIds: ["source:exact-guard", "source:exact-scope"],
         },
       ],
     };
@@ -319,8 +374,8 @@ describe("gameplay defect resolution crosscheck depth", () => {
           id: "link:exact-exclusion-with-context",
           intentEdgeKind: "excludes",
           status: "PROVEN",
-          evidenceIds: ["source:exclusion-proof", "source:incidental-context"],
-          dimensionEvidence: { exclusion: ["source:exclusion-proof"] },
+          evidenceIds: ["source:exclusion-proof", "source:incidental-context", "source:exact-scope"],
+          dimensionEvidence: { exclusion: ["source:exclusion-proof"], scope: ["source:exact-scope"] },
         },
       ],
     };
@@ -343,10 +398,10 @@ describe("gameplay defect resolution crosscheck depth", () => {
         {
           ...graph.causalLinks[0]!,
           id: "link:source-guard",
-          dimensionEvidence: { exclusion: ["source:exact-guard"] },
+          dimensionEvidence: { exclusion: ["source:exact-guard"], scope: ["source:exact-scope"] },
           intentEdgeKind: "excludes",
           status: "PROVEN",
-          evidenceIds: ["source:exact-guard"],
+          evidenceIds: ["source:exact-guard", "source:exact-scope"],
         },
       ],
     };

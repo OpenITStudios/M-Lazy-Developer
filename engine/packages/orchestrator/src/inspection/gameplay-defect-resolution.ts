@@ -618,6 +618,26 @@ function sameCommitTarget(
     left.toComponentId === right.toComponentId;
 }
 
+/**
+ * Exclusions must address the complete exact modeled dependency, not merely
+ * overlap one subject or borrow a guard intended for a neighboring arena.
+ * Runtime session/arena identity still requires an independent proof owner.
+ */
+function sameModeledScope(
+  left: GameplayCausalLink,
+  right: GameplayCausalLink,
+): boolean {
+  const leftSubjects = unique(left.subjectIds);
+  const rightSubjects = unique(right.subjectIds);
+  const leftComponents = unique(left.componentIds);
+  const rightComponents = unique(right.componentIds);
+  return leftSubjects.length > 0 && leftComponents.length > 0 &&
+    leftSubjects.length === rightSubjects.length &&
+    leftComponents.length === rightComponents.length &&
+    leftSubjects.every((id) => rightSubjects.includes(id)) &&
+    leftComponents.every((id) => rightComponents.includes(id));
+}
+
 const EXACT_COUNTERPROOF_DIMENSIONS = new Set<CounterProofSearchDimension>([
   "guard", "scope", "exclusion",
 ]);
@@ -631,7 +651,8 @@ function dimensionCandidates(
     candidate.scenarioId === contradicted.scenarioId &&
     (
       EXACT_COUNTERPROOF_DIMENSIONS.has(dimension)
-        ? sameCommitTarget(candidate, contradicted)
+        ? sameCommitTarget(candidate, contradicted) &&
+          sameModeledScope(candidate, contradicted)
         : candidate.id === contradicted.id ||
           overlapping(candidate.subjectIds, contradicted.subjectIds) ||
           overlapping(candidate.componentIds, contradicted.componentIds)
@@ -659,6 +680,13 @@ function dimensionScopeClosed(
       boundedDimensionEvidence(candidate, dimension).length > 0
     );
   if (relevant.length === 0) return false;
+  // The authored return-policy guard witness from Gameplay Intent shows
+  // that a branch is guarded. It does NOT prove that all alternative
+  // blocking guards have been searched for this dependency.
+  if (dimension === "guard" && relevant.some((candidate) =>
+    candidate.intentEdgeKind === "requires" &&
+    boundedDimensionEvidence(candidate, "guard").length > 0
+  )) return false;
   return relevant.every((candidate) =>
     candidate.evidenceIds.length > 0 &&
     candidate.status !== "DETECTION_GAP" &&
@@ -827,9 +855,10 @@ export function automaticCounterProofSearch(
 }
 
 /**
- * A PROVEN source relation named "excludes" is not by itself proof that a
- * live exclusion/guard applies at the contradicted operation. The canonical
- * semantic owner must attach its exact exclusion witness to the edge.
+ * A PROVEN source relation named "excludes" does not establish that a
+ * blocking guard covers the same operation. Require exact modeled subjects,
+ * components and source-bound scope/exclusion witnesses from the owner.
+ * This source-level decision never asserts live Minecraft guard execution.
  */
 function counterProofAppliesAtCommit(
   candidate: GameplayCausalLink,
@@ -837,16 +866,23 @@ function counterProofAppliesAtCommit(
 ): boolean {
   if (
     !sameCommitTarget(candidate, contradicted) ||
+    !sameModeledScope(candidate, contradicted) ||
     candidate.status !== "PROVEN" ||
     candidate.intentEdgeKind !== "excludes" ||
-    !overlapping(candidate.subjectIds, contradicted.subjectIds) ||
     candidate.evidenceIds.length === 0
   ) return false;
 
+  const scopeWitnesses = unique(
+    boundedDimensionEvidence(candidate, "scope"),
+  );
   const exclusionWitnesses = unique(
     boundedDimensionEvidence(candidate, "exclusion"),
   );
-  return exclusionWitnesses.length > 0 &&
+  // An exclusion without an exact selected-source scope witness is only a
+  // nearby declaration. Require both distinct proof obligations to be bound
+  // to the same candidate, not just to neighboring scenario links.
+  return scopeWitnesses.length > 0 && exclusionWitnesses.length > 0 &&
+    scopeWitnesses.every((id) => candidate.evidenceIds.includes(id)) &&
     exclusionWitnesses.every((id) => candidate.evidenceIds.includes(id));
 }
 

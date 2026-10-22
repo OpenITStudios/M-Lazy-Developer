@@ -867,6 +867,8 @@ export interface GameplayWorldModel {
         | "unknown";
       evidenceIds: readonly string[];
       reasons: readonly string[];
+      /** Diagnostic assessment basis, not gameplay scope or execution proof. */
+      resolutionBasis?: CapabilityExposureSummary["exposures"][number]["resolutionBasis"];
     }[];
   };
   playerCapabilities: {
@@ -2927,6 +2929,9 @@ export function deriveGameplayWorldModel(
           impact: item.impact,
           evidenceIds: [...item.evidenceIds],
           reasons: [...item.reasons],
+          ...(item.resolutionBasis === undefined
+            ? {}
+            : { resolutionBasis: item.resolutionBasis }),
         })) ?? [],
     },
     playerCapabilities: {

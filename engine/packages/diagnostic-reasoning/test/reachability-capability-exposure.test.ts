@@ -86,6 +86,37 @@ describe("generic gameplay exploitability reasoning", () => {
     ).toBe("reachable");
   });
 
+  it("distinguishes absent trigger, disabled release and active guard without inventing protection", () => {
+    const base = {
+      capabilityId: "capability:test",
+      capabilityLabel: "Test capability",
+      playerImpact: "state" as const,
+      evidenceIds: ["source:flag"],
+      releaseEnabled: "enabled" as const,
+      authorization: "required-and-enforced" as const,
+      triggerPresent: true,
+    };
+    const disabled = assessCapabilityExposure({ ...base, releaseEnabled: "disabled" });
+    const triggerAbsent = assessCapabilityExposure({ ...base, triggerPresent: false });
+    const activeGuard = assessCapabilityExposure({ ...base, guardActivation: "active" });
+    const unknownGuard = assessCapabilityExposure({ ...base, guardActivation: "unknown" });
+    const notRequiredGuard = assessCapabilityExposure({ ...base, guardActivation: "not-required" });
+
+    expect(disabled).toMatchObject({
+      status: "blocked", resolutionBasis: "release-disabled",
+    });
+    expect(triggerAbsent).toMatchObject({
+      status: "blocked", resolutionBasis: "trigger-absent",
+    });
+    expect(activeGuard).toMatchObject({
+      status: "guarded", resolutionBasis: "active-authorization-guard",
+    });
+    expect(unknownGuard.status).toBe("potentially-exposed");
+    expect(unknownGuard.resolutionBasis).toBeUndefined();
+    expect(notRequiredGuard.resolutionBasis).toBeUndefined();
+    expect(disabled.evidenceIds).toEqual(["source:flag"]);
+  });
+
   it("does not traverse a missing intermediate node", () => {
     const path = findGameplayReachability({
       ...graph,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveGameplayWorldModel } from "../../src/inspection/gameplay-world-model.js";
+import { compileGameplayScenarioGraph } from "../../src/inspection/gameplay-scenario-compiler.js";
 
 describe("gameplay world model", () => {
   it("summarizes gameplay and arena subsystems without copying raw evidence", () => {
@@ -99,6 +100,136 @@ describe("gameplay world model", () => {
     const result = deriveGameplayWorldModel(source);
 
     expect(result.arenas.count).toBe(3);
+
+    const scopedCapability = deriveGameplayWorldModel({
+      ...source,
+      capabilityExposure: {
+        exposed: 0, potentiallyExposed: 0, releaseBlocking: 0, unresolved: 0,
+        exposures: [
+          {
+            capabilityId: "capability:missing-trigger",
+            capabilityLabel: "Unknown entry",
+            status: "blocked",
+            resolutionBasis: "trigger-absent",
+            prerequisiteReachability: "unknown",
+            impact: "state",
+            evidenceIds: ["source:missing-entry"],
+            reasons: ["No trigger path seen"],
+          },
+          {
+            capabilityId: "capability:guarded",
+            capabilityLabel: "Guarded entry",
+            status: "guarded",
+            resolutionBasis: "active-authorization-guard",
+            prerequisiteReachability: "reachable",
+            impact: "progression",
+            evidenceIds: ["source:activated-guard"],
+            reasons: ["Active guard verified by source owner"],
+          },
+        ],
+      },
+    });
+    expect(scopedCapability.capabilityExposure.exposures.map((item) => [
+      item.capabilityId, item.resolutionBasis,
+    ])).toEqual([
+      ["capability:missing-trigger", "trigger-absent"],
+      ["capability:guarded", "active-authorization-guard"],
+    ]);
+
+    // Reuse the real scenario compiler to verify exact source-scope selection:
+    // the same basename in another pack is not the selected guard's owner.
+    const scenarioSource: Parameters<typeof deriveGameplayWorldModel>[0] = {
+      ...source,
+      intent: {
+        schemaVersion: 1,
+        id: "intent:capability-scope",
+        evidence: [{
+          id: "source:owner",
+          origin: "source-code",
+          scope: "selected-artifact",
+          locator: "behavior_packs/a/scripts/policy.js:10:2",
+          summary: "Exact selected policy source",
+        }],
+        nodes: [{
+          id: "policy:guarded-capability",
+          kind: "policy",
+          label: "Capability restriction",
+          status: "authored",
+          evidenceIds: ["source:owner"],
+        }],
+        edges: [],
+        invariants: [],
+        unknowns: [],
+      },
+      capabilityExposure: {
+        exposed: 1, potentiallyExposed: 0, releaseBlocking: 0, unresolved: 0,
+        exposures: [
+          {
+            capabilityId: "capability:exposed",
+            capabilityLabel: "Exposure discovered",
+            status: "exposed",
+            prerequisiteReachability: "reachable",
+            impact: "state",
+            evidenceIds: ["behavior_packs/a/scripts/policy.js"],
+            reasons: [],
+          },
+          {
+            capabilityId: "capability:selected",
+            capabilityLabel: "Selected guard",
+            status: "guarded",
+            resolutionBasis: "active-authorization-guard",
+            prerequisiteReachability: "reachable",
+            impact: "state",
+            evidenceIds: ["behavior_packs/a/scripts/policy.js"],
+            reasons: [],
+          },
+          {
+            capabilityId: "capability:foreign",
+            capabilityLabel: "Foreign guard",
+            status: "guarded",
+            resolutionBasis: "active-authorization-guard",
+            prerequisiteReachability: "reachable",
+            impact: "state",
+            evidenceIds: ["behavior_packs/b/scripts/policy.js"],
+            reasons: [],
+          },
+          {
+            capabilityId: "capability:missing-trigger",
+            capabilityLabel: "No trigger",
+            status: "blocked",
+            resolutionBasis: "trigger-absent",
+            prerequisiteReachability: "unknown",
+            impact: "state",
+            evidenceIds: ["behavior_packs/a/scripts/policy.js"],
+            reasons: [],
+          },
+        ],
+      },
+    };
+    const preset: Parameters<typeof compileGameplayScenarioGraph>[0]["preset"] = {
+      schemaVersion: 1,
+      policy: "selected-map-scenario-audit",
+      scenarios: [{
+        id: "capability-scope",
+        kind: "player-capability-integrity",
+        flowStage: "ACTIVE_GAMEPLAY",
+        proofMode: "static-first",
+        reason: "Inspect capability guard ownership",
+        questions: [],
+        requiredKnowledgeDomains: ["platform-constraints"],
+      }],
+    };
+    const scopeGraph = compileGameplayScenarioGraph({
+      intent: scenarioSource.intent,
+      world: deriveGameplayWorldModel(scenarioSource),
+      preset,
+    });
+    const capabilityLink = scopeGraph.causalLinks.find((link) =>
+      link.scenarioId === "preset:capability-scope" &&
+      link.fromComponentId === "runtime:player-capability");
+    expect(capabilityLink).toBeDefined();
+    expect(capabilityLink?.dimensionEvidence.capability)
+      .toEqual(["behavior_packs/a/scripts/policy.js"]);
 
     const capacityEvidence = {
       requestedConcurrentArenas: 6,
