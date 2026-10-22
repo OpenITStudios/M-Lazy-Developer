@@ -1075,6 +1075,61 @@ describe(
       });
     });
 
+    it("retains each event of a shared named callback in both progression proofs", () => {
+      const directSource = [
+        'import { world } from "@minecraft/server";',
+        "let currentWave = 0;",
+        "function onShared() { currentWave++; }",
+        "function onDeath() { currentWave++; }",
+        "world.afterEvents.entityDie.subscribe(onShared);",
+        "world.afterEvents.playerLeave.subscribe(onShared);",
+        "world.afterEvents.entityDie.subscribe(onDeath);",
+      ].join("\n");
+      const direct = parsed(directSource);
+      const directOrdinal =
+        deriveScriptProgressionOrdinalAdvanceEvidence(
+          directSource,
+          direct.parsed.source,
+        );
+      const directResult = analyzeProgressionActorAccounting(
+        [direct], [], [], undefined, [], [], [], [], [],
+        directOrdinal,
+      );
+      expect(directResult.provenCrossIngressOrdinalAdvances).toBe(1);
+      expect(directResult.crossIngressOrdinalAdvances).toMatchObject([{
+        ingress: "world.afterEvents.entityDie",
+        target: "currentWave",
+        totalAmount: 2,
+      }]);
+
+      const indirectSource = [
+        'import { world } from "@minecraft/server";',
+        "let currentWave = 0;",
+        "function nextWave() { currentWave++; }",
+        "function onShared() { nextWave(); }",
+        "function onDeath() { nextWave(); }",
+        "world.afterEvents.entityDie.subscribe(onShared);",
+        "world.afterEvents.playerLeave.subscribe(onShared);",
+        "world.afterEvents.entityDie.subscribe(onDeath);",
+      ].join("\n");
+      const indirect = parsed(indirectSource);
+      const indirectOrdinal =
+        deriveScriptProgressionOrdinalAdvanceEvidence(
+          indirectSource,
+          indirect.parsed.source,
+        );
+      const indirectResult = analyzeProgressionActorAccounting(
+        [indirect], [], [], undefined, [], [], [], [], [],
+        indirectOrdinal,
+      );
+      expect(indirectResult.provenCrossIngressEffectCalls).toBe(1);
+      expect(indirectResult.crossIngressEffectCalls).toMatchObject([{
+        ingress: "world.afterEvents.entityDie",
+        status: "contradicted",
+        directOrdinalAmount: 1,
+      }]);
+    });
+
     it("does not merge different event types into one proven ordinal cross-ingress", () => {
       const source = [
         "world.afterEvents.entityDie.subscribe(() => {",

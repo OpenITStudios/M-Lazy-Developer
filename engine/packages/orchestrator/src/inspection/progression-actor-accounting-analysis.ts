@@ -2190,10 +2190,41 @@ function stateTransitionAssessments(
     );
 }
 
+/**
+ * Both progression causal analyses use the same exact event subscriptions.
+ * One named callback can serve multiple events; do not overwrite earlier
+ * subscriptions or promote unknown/shadowed event roots into gameplay proof.
+ */
+function eventIngressByCaller(
+  scripts: readonly NormalizedScript[],
+): ReadonlyMap<string, readonly string[]> {
+  const registrations = new Map<string, Set<string>>();
+  for (const script of scripts) {
+    const path = script.parsed.source.relativePath;
+    for (const subscription of script.parsed.events) {
+      if (
+        subscription.callbackRegion === undefined ||
+        subscription.root === "unknown" ||
+        subscription.phase === "unknown"
+      ) continue;
+      const caller = localNode(path, subscription.callbackRegion);
+      const ingress =
+        subscription.root + "." + subscription.phase + "." + subscription.event;
+      const ingresses = registrations.get(caller) ?? new Set<string>();
+      ingresses.add(ingress);
+      registrations.set(caller, ingresses);
+    }
+  }
+  return new Map([...registrations].map(([caller, ingresses]) => [
+    caller, [...ingresses].sort(),
+  ]));
+}
+
 function progressionCrossIngressOrdinalAdvances(
   scripts: readonly NormalizedScript[],
   evidence:
     readonly ScriptProgressionOrdinalAdvanceEvidence[],
+  ingressByCaller: ReadonlyMap<string, readonly string[]>,
 ): ProgressionCrossIngressOrdinalAssessment[] {
   const output:
     ProgressionCrossIngressOrdinalAssessment[] = [];
@@ -2201,33 +2232,6 @@ function progressionCrossIngressOrdinalAdvances(
   for (const script of scripts) {
     const path =
       script.parsed.source.relativePath;
-    const ingressByCallback =
-      new Map<string, string>();
-
-    for (
-      const subscription of
-        script.parsed.events
-    ) {
-      if (
-        subscription.callbackRegion ===
-          undefined ||
-        subscription.root ===
-          "unknown" ||
-        subscription.phase ===
-          "unknown"
-      ) {
-        continue;
-      }
-      ingressByCallback.set(
-        subscription.callbackRegion,
-        subscription.root +
-          "." +
-          subscription.phase +
-          "." +
-          subscription.event,
-      );
-    }
-
     const groups =
       new Map<
         string,
@@ -2248,24 +2252,22 @@ function progressionCrossIngressOrdinalAdvances(
             "single",
       )
     ) {
-      const ingress =
-        ingressByCallback.get(
-          item.executionRegion,
-        );
-      if (!ingress) continue;
-
-      const key =
-        ingress +
-        "\0" +
-        item.target;
-      const group =
-        groups.get(key) ?? {
-          ingress,
-          target: item.target,
-          items: [],
-        };
-      group.items.push(item);
-      groups.set(key, group);
+      for (const ingress of (
+        ingressByCaller.get(localNode(path, item.executionRegion)) ?? []
+      )) {
+        const key =
+          ingress +
+          "\0" +
+          item.target;
+        const group =
+          groups.get(key) ?? {
+            ingress,
+            target: item.target,
+            items: [],
+          };
+        group.items.push(item);
+        groups.set(key, group);
+      }
     }
 
     for (const group of groups.values()) {
@@ -2313,18 +2315,6 @@ function progressionCrossIngressOrdinalAdvances(
 const PROGRESSION_EFFECT_TARGET =
   /(?:next.*(?:wave|round|level|stage)|advance|progress|complete|finish|end(?:wave|round|level|stage)|proceed)/i;
 
-function canonicalEffectTarget(
-  path: string,
-  region: string,
-): string {
-  return (
-    "module:" +
-    path +
-    "#" +
-    region
-  );
-}
-
 function progressionCrossIngressEffects(
   scripts: readonly NormalizedScript[],
   crossFileCalls:
@@ -2333,41 +2323,8 @@ function progressionCrossIngressEffects(
     readonly ScriptProgressionOrdinalAdvanceEvidence[],
   idempotencyEvidence:
     readonly ScriptProgressionIdempotencyEvidence[],
+  ingressByCaller: ReadonlyMap<string, readonly string[]>,
 ): ProgressionCrossIngressEffectAssessment[] {
-  const ingressByCaller =
-    new Map<string, string>();
-
-  for (const script of scripts) {
-    const path =
-      script.parsed.source.relativePath;
-    for (
-      const subscription of
-        script.parsed.events
-    ) {
-      if (
-        subscription.callbackRegion ===
-          undefined ||
-        subscription.root ===
-          "unknown" ||
-        subscription.phase ===
-          "unknown"
-      ) {
-        continue;
-      }
-      ingressByCaller.set(
-        canonicalEffectTarget(
-          path,
-          subscription.callbackRegion,
-        ),
-        subscription.root +
-          "." +
-          subscription.phase +
-          "." +
-          subscription.event,
-      );
-    }
-  }
-
   const groups =
     new Map<
       string,
@@ -2394,31 +2351,25 @@ function progressionCrossIngressEffects(
     }
 
     const caller =
-      canonicalEffectTarget(
+      localNode(
         callerPath,
         callerRegion,
       );
-    const ingress =
-      ingressByCaller.get(caller);
-    if (!ingress) return;
-
-    const target =
-      canonicalEffectTarget(
-        targetPath,
-        targetRegion,
-      );
-    const key =
-      ingress +
-      "\0" +
-      target;
-    const group =
-      groups.get(key) ?? {
-        ingress,
-        target,
-        callers: new Set<string>(),
-      };
-    group.callers.add(caller);
-    groups.set(key, group);
+    const target = localNode(targetPath, targetRegion);
+    for (const ingress of ingressByCaller.get(caller) ?? []) {
+      const key =
+        ingress +
+        "\0" +
+        target;
+      const group =
+        groups.get(key) ?? {
+          ingress,
+          target,
+          callers: new Set<string>(),
+        };
+      group.callers.add(caller);
+      groups.set(key, group);
+    }
   };
 
   for (const script of scripts) {
@@ -2467,7 +2418,7 @@ function progressionCrossIngressEffects(
     new Map(
       idempotencyEvidence.map(
         (item) => [
-          canonicalEffectTarget(
+          localNode(
             item.source.relativePath,
             item.functionRegion,
           ),
@@ -2487,7 +2438,7 @@ function progressionCrossIngressEffects(
       )
   ) {
     const key =
-      canonicalEffectTarget(
+      localNode(
         item.source.relativePath,
         item.executionRegion,
       );
@@ -3131,6 +3082,7 @@ export function analyzeProgressionActorAccounting(
 ): ProgressionActorAccountingAnalysis {
   const scripts =
     inputs.map(normalizedInput);
+  const ingressByCaller = eventIngressByCaller(scripts);
   const progressionAdvances =
     progressionAdvanceOwnership(
       scripts,
@@ -3140,6 +3092,7 @@ export function analyzeProgressionActorAccounting(
     progressionCrossIngressOrdinalAdvances(
       scripts,
       ordinalAdvanceEvidence,
+      ingressByCaller,
     );
   const crossIngressEffectCalls =
     progressionCrossIngressEffects(
@@ -3147,6 +3100,7 @@ export function analyzeProgressionActorAccounting(
       crossFileCalls,
       ordinalAdvanceEvidence,
       idempotencyEvidence,
+      ingressByCaller,
     );
   const stateTransitions =
     stateTransitionAssessments(
