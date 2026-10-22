@@ -668,6 +668,17 @@ Promote a map-specific expected behavior only with approved map-/mode-
 scoped intent or sufficient authored evidence from the selected version;
 never because this ZIP says the pattern is preferred.
 
+## Bundled/minified source-map precision
+
+The existing `recovery/source-map-binding.ts` source-map V3 decoder now
+carries the previous source index, original line and name deltas across
+generated lines, resets generated/original columns per line, and respects
+unmapped one-field segments. It rejects invalid segment arity and unsafe
+numeric values rather than inventing an original source position. This is
+a correction to the existing recovery owner, not a new source authority:
+a source map still does **not** prove a gameplay method ran or that a
+minified alias has Minecraft Script API semantics.
+
 ## Acceptance / evidence ceiling
 
 This curated snapshot makes **all 22 active skills discoverable and

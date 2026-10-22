@@ -35,15 +35,23 @@ function decodeVlq(segment: string): number[] {
 
     const continuation = (digit & 32) !== 0;
     const payload = digit & 31;
-    value += payload << shift;
+    // Mapping indexes can exceed a signed 32-bit integer. Bitwise shifts
+    // silently overflow; arithmetic keeps the VLQ result exact or rejects it.
+    value += payload * (2 ** shift);
+    if (!Number.isSafeInteger(value)) {
+      throw new Error("Base64 VLQ exceeds supported integer precision.");
+    }
 
     if (continuation) {
       shift += 5;
+      if (shift > 50) {
+        throw new Error("Base64 VLQ is too large.");
+      }
       continue;
     }
 
-    const negative = (value & 1) === 1;
-    const decoded = value >> 1;
+    const negative = value % 2 === 1;
+    const decoded = Math.floor(value / 2);
     values.push(negative ? -decoded : decoded);
     value = 0;
     shift = 0;
@@ -98,86 +106,89 @@ export function bindGeneratedPosition(
   generatedLine: number,
   generatedColumn: number,
 ): SourceMapBinding {
+  const invalid = (reason: string): SourceMapBinding => ({
+    generatedLine, generatedColumn, status: "invalid", reason,
+  });
   if (!Number.isInteger(generatedLine) || generatedLine < 1 ||
       !Number.isInteger(generatedColumn) || generatedColumn < 0) {
-    return {
-      generatedLine,
-      generatedColumn,
-      status: "invalid",
-      reason: "Generated position must use 1-based line and 0-based non-negative column.",
-    };
+    return invalid(
+      "Generated position must use 1-based line and 0-based non-negative column.",
+    );
   }
 
   const lines = map.mappings.split(";");
-  const line = lines[generatedLine - 1];
-  if (line === undefined) {
+  if (lines[generatedLine - 1] === undefined) {
     return {
-      generatedLine,
-      generatedColumn,
-      status: "unmapped",
+      generatedLine, generatedColumn, status: "unmapped",
       reason: "Generated line has no mapping entry.",
     };
   }
 
-  let generated = 0;
+  // Source, original line and name VLQ deltas carry across generated lines.
+  // Generated and original columns reset at the start of EACH line.
   let sourceIndex = 0;
   let originalLine = 0;
-  let originalColumn = 0;
   let nameIndex = 0;
-  let best:
-    | {
-        generated: number;
-        sourceIndex: number;
-        originalLine: number;
-        originalColumn: number;
-        nameIndex?: number;
-      }
-    | undefined;
+  let best: {
+    sourceIndex: number;
+    originalLine: number;
+    originalColumn: number;
+    nameIndex?: number;
+  } | undefined;
 
-  for (const rawSegment of line.split(",")) {
-    if (!rawSegment) continue;
-    let fields: number[];
-    try {
-      fields = decodeVlq(rawSegment);
-    } catch (error) {
-      return {
-        generatedLine,
-        generatedColumn,
-        status: "invalid",
-        reason: error instanceof Error ? error.message : "Invalid VLQ segment.",
-      };
+  for (let lineIndex = 0; lineIndex < generatedLine; lineIndex++) {
+    let generated = 0;
+    let originalColumn = 0;
+    const targetLine = lineIndex === generatedLine - 1;
+    for (const segment of lines[lineIndex]!.split(",")) {
+      if (!segment) continue;
+      let fields: number[];
+      try {
+        fields = decodeVlq(segment);
+      } catch (error) {
+        return invalid(error instanceof Error
+          ? error.message : "Invalid source-map VLQ segment.");
+      }
+      if (![1, 4, 5].includes(fields.length)) {
+        return invalid("Source-map segment must contain 1, 4 or 5 fields.");
+      }
+
+      generated += fields[0]!;
+      if (!Number.isSafeInteger(generated) || generated < 0) {
+        return invalid("Invalid generated source-map column.");
+      }
+      if (fields.length === 1) {
+        // A one-field segment explicitly cancels the prior mapped span.
+        if (targetLine && generated <= generatedColumn) best = undefined;
+      } else {
+        sourceIndex += fields[1]!;
+        originalLine += fields[2]!;
+        originalColumn += fields[3]!;
+        if (fields.length === 5) nameIndex += fields[4]!;
+        if (!Number.isSafeInteger(sourceIndex) ||
+            sourceIndex < 0 || sourceIndex >= map.sources.length ||
+            !Number.isSafeInteger(originalLine) || originalLine < 0 ||
+            !Number.isSafeInteger(originalColumn) || originalColumn < 0 ||
+            (fields.length === 5 &&
+              (!Number.isSafeInteger(nameIndex) ||
+               nameIndex < 0 || nameIndex >= map.names.length))) {
+          return invalid("Invalid original source-map position or index.");
+        }
+        if (targetLine && generated <= generatedColumn) {
+          best = {
+            sourceIndex, originalLine, originalColumn,
+            ...(fields.length === 5 ? { nameIndex } : {}),
+          };
+        }
+      }
+      if (targetLine && generated > generatedColumn) break;
     }
-
-    generated += fields[0] ?? 0;
-
-    if (fields.length >= 4) {
-      sourceIndex += fields[1]!;
-      originalLine += fields[2]!;
-      originalColumn += fields[3]!;
-      if (fields.length >= 5) {
-        nameIndex += fields[4]!;
-      }
-
-      if (generated <= generatedColumn) {
-        best = {
-          generated,
-          sourceIndex,
-          originalLine,
-          originalColumn,
-          ...(fields.length >= 5 ? { nameIndex } : {}),
-        };
-      }
-    }
-
-    if (generated > generatedColumn) break;
   }
 
-  if (!best || best.sourceIndex < 0 || best.sourceIndex >= map.sources.length) {
+  if (!best) {
     return {
-      generatedLine,
-      generatedColumn,
-      status: "unmapped",
-      reason: "No source-mapped segment covers the generated position.",
+      generatedLine, generatedColumn, status: "unmapped",
+      reason: "No mapped segment covers the generated position.",
     };
   }
 
@@ -192,9 +203,7 @@ export function bindGeneratedPosition(
     source: rootedSource,
     originalLine: best.originalLine + 1,
     originalColumn: best.originalColumn,
-    ...(best.nameIndex !== undefined &&
-        best.nameIndex >= 0 &&
-        best.nameIndex < map.names.length
+    ...(best.nameIndex !== undefined
       ? { name: map.names[best.nameIndex] }
       : {}),
     status: "resolved",
