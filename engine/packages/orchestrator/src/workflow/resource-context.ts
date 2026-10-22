@@ -275,6 +275,9 @@ export interface SelectedArtifactReferenceSignal {
   readonly evidenceId: string;
   readonly artifactId: string;
   readonly sourcePath: string;
+  /** The actual IR witness span, not inferred from the lookup question. */
+  readonly range?: SourceRef["range"];
+  readonly jsonPointer?: string;
   /** A recognized symbol/semantic cue. Exact token comparison only. */
   readonly signal: string;
 }
@@ -296,7 +299,7 @@ export function developerPracticeSignalsFromSemanticIr(
   const cues: SelectedArtifactReferenceSignal[] = [];
   const add = (
     evidenceId: string,
-    source: { readonly artifactId: string; readonly relativePath: string },
+    source: SourceRef,
     signal: string,
   ): void => {
     if (!evidenceId.trim() || source.artifactId !== selectedArtifactId ||
@@ -305,6 +308,9 @@ export function developerPracticeSignalsFromSemanticIr(
       evidenceId,
       artifactId: selectedArtifactId,
       sourcePath: source.relativePath,
+      ...(source.range === undefined ? {} : { range: source.range }),
+      ...(source.jsonPointer === undefined ? {} :
+        { jsonPointer: source.jsonPointer }),
       signal,
     });
   };
@@ -424,6 +430,49 @@ export function developerPracticeSignalsFromSemanticIr(
     a.sourcePath.localeCompare(b.sourcePath));
 }
 
+/**
+ * Match a specific authored site instead of matching everything in the
+ * same script. One-line bundles may contain unrelated operations thousands
+ * of columns apart. Source-map names and external ZIP text never authorize
+ * these joins; only the selected-artifact IR witness supplies the span.
+ */
+function sourceLocatorMatchesReferenceSignal(
+  locator: string,
+  witness: SelectedArtifactReferenceSignal,
+): boolean {
+  if (!sourceLocatorMatchesSourcePath(locator, witness.sourcePath)) return false;
+  const suffix = locator.slice(witness.sourcePath.length);
+  if (suffix === "") return true; // Explicit file-scope question.
+  if (suffix.startsWith("#/")) {
+    return witness.jsonPointer !== undefined &&
+      witness.jsonPointer === suffix.slice(1);
+  }
+  // A source-symbol locator lacks an independently resolved symbol identity
+  // in this IR witness. Never guess its meaning from the filename.
+  const position = /^:([1-9]\\d*)(?::([1-9]\\d*))?$/.exec(suffix);
+  const localized = /^#L([1-9]\\d*)(?:-L?([1-9]\\d*))?(?::([1-9]\\d*))?$/.exec(suffix);
+  if (!position && !localized) return false;
+  const fromLine = Number((position ?? localized)![1]);
+  const toLine = localized?.[2] === undefined
+    ? fromLine : Number(localized[2]);
+  const column = Number(position?.[2] ?? localized?.[3] ?? 0);
+  const range = witness.range;
+  if (toLine < fromLine || range?.lineStart === undefined) return false;
+  const endLine = range.lineEnd ?? range.lineStart;
+  if (fromLine > endLine || toLine < range.lineStart) return false;
+  // A column constraint names one precise source site. Do not allow an
+  // unrelated call elsewhere on the same minified source line.
+  if (column !== 0) {
+    if (fromLine === range.lineStart &&
+        range.columnStart !== undefined && column < range.columnStart)
+      return false;
+    if (fromLine === endLine &&
+        range.columnEnd !== undefined && column > range.columnEnd)
+      return false;
+  }
+  return true;
+}
+
 export interface CompiledDeveloperPracticeReferenceContext {
   readonly authority: "REFERENCE";
   readonly status: "INVESTIGATION_HINTS_ONLY";
@@ -537,7 +586,7 @@ export function compileDeveloperPracticeReferenceContext(input: {
   const observed = developerPracticeSignalsFromSemanticIr(
     input.semanticIr, selectedArtifactId,
   ).filter(item => locators.some(locator =>
-    sourceLocatorMatchesSourcePath(locator, item.sourcePath)
+    sourceLocatorMatchesReferenceSignal(locator, item)
   ));
   // Manifest evidence uses the existing selected-map pack owner. A manifest
   // may inform a task only when that task already has a source file in the

@@ -603,12 +603,13 @@ rewrite reference strings to simulate parser evidence.
 
 ### Canonical evidence and context lifecycle (Batch D/E)
 
-Source location matching is owned by
-`engine/packages/project-model/src/project/source-ref.ts`:
-`sourceLocatorMatchesSourcePath()` recognizes a canonical relative
-path and bounded line/column, localized line, JSON pointer or symbol
-suffix. It does **not** infer execution, and source ownership still requires
-the exact selected-artifact evidence scope.
+Source locator syntax/validation remains owned by
+`engine/packages/project-model/src/project/source-ref.ts`. The existing
+Resource Context selector now additionally compares the selected source
+witness with a locator's line/column or JSON pointer. Explicit file-only
+locators remain file-scoped; unresolved symbol locators or missing precise
+IR spans abstain instead of joining every operation in one minified bundle.
+This is source investigation routing, **not** evidence that code executed.
 
 Compound domain IDs from the Knowledge owner (`script-api`,
 `client-feedback`, etc.) retain their complete identity; free-text

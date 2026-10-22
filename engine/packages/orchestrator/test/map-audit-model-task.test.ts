@@ -152,7 +152,9 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
           executionRegionId: "exec:read",
           surfaceId: "surface:round",
           operation: "read" as const,
-          source: { artifactId: "selected", relativePath: path },
+          source: { artifactId: "selected", relativePath: path,
+            range: { lineStart: 14, lineEnd: 14,
+              columnStart: 3, columnEnd: 16 } },
         }],
         authorityBindings: [],
       },
@@ -168,6 +170,21 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
       "developer.hint.persistence.state-ownership",
     ]);
     expect(guidance?.items[0]?.matchingEvidenceIds).toContain("state-op:round");
+    // A one-line bundle can contain different methods at different columns.
+    // Do not attach the persistence hint to another position in that file.
+    for (const sourceLocators of [
+      [path + ":13:3"], [path + ":14:45"], [path + "#L15"],
+      [path + "@otherMethod"],
+    ]) {
+      expect(compileDeveloperPracticeReferenceContext({
+        data, selectedArtifactId: "selected", semanticIr: ir,
+        domains: ["state", "persistence"], sourceLocators,
+      })?.items ?? []).toHaveLength(0);
+    }
+    expect(compileDeveloperPracticeReferenceContext({
+      data, selectedArtifactId: "selected", semanticIr: ir,
+      domains: ["state"], sourceLocators: [path],
+    })?.items).toHaveLength(1);
     expect(compileDeveloperPracticeReferenceContext({
       data, selectedArtifactId: "another-artifact",
       semanticIr: ir, domains: ["state"],
