@@ -84,16 +84,16 @@ function childScope(parent?: Scope): Scope {
 function minecraftSingletonBindings(
   file: ts.SourceFile,
 ): Map<string, ScriptApiReceiverType> {
-  const output = new Map<string, ScriptApiReceiverType>([
-    ["world", "World"],
-    ["system", "System"],
-  ]);
+  // Script API singletons are imported module bindings, not JS globals.
+  // A bare identifier or unrelated import must never establish API evidence.
+  const output = new Map<string, ScriptApiReceiverType>();
 
   for (const statement of file.statements) {
     if (
       !ts.isImportDeclaration(statement) ||
       !ts.isStringLiteralLike(statement.moduleSpecifier) ||
-      statement.moduleSpecifier.text !== "@minecraft/server"
+      statement.moduleSpecifier.text !== "@minecraft/server" ||
+      statement.importClause?.isTypeOnly
     ) {
       continue;
     }
@@ -102,6 +102,7 @@ function minecraftSingletonBindings(
     if (!named || !ts.isNamedImports(named)) continue;
 
     for (const element of named.elements) {
+      if (element.isTypeOnly) continue;
       const importedName = element.propertyName?.text ?? element.name.text;
       if (importedName === "world") output.set(element.name.text, "World");
       if (importedName === "system") output.set(element.name.text, "System");

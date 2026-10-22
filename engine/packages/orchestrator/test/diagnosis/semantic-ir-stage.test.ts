@@ -470,6 +470,7 @@ describe("inspection semantic IR", () => {
       'entity.remove();',
       'const dimension = { getEntities() {} }; dimension.getEntities();',
       'const world = { getAllPlayers() {} }; world.getAllPlayers();',
+      'system.runInterval(() => {}, 20);',
     ].join("\n"), {
       artifactId: "selected", relativePath: "scripts/fake.js",
     });
@@ -477,6 +478,8 @@ describe("inspection semantic IR", () => {
       parsedFunctions: [], parsedScripts: [{ parsed }],
     });
     expect(ir.execution.apiCalls).toEqual([]);
+    expect(developerPracticeSignalsFromSemanticIr(ir, "selected"))
+      .not.toEqual(expect.arrayContaining(["system.runInterval"]));
   });
 
 });
