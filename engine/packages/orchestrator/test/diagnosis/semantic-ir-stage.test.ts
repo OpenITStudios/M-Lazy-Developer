@@ -412,6 +412,8 @@ describe("inspection semantic IR", () => {
       '  fake.show(); fake.kill(); fake.setActionBar(); fake.setCamera();',
       '}',
       'world.beforeEvents.entityHurt.subscribe(() => {});',
+      'world.afterEvents.entityDie.subscribe(() => {});',
+      'world.afterEvents.entityRemove.subscribe(() => {});',
     ].join("\n"), { artifactId, relativePath });
     const ir = buildInspectionSemanticIr({
       parsedFunctions: [],
@@ -449,6 +451,8 @@ describe("inspection semantic IR", () => {
       "Entity.kill",
       "sendMessage",
       "world.beforeEvents.entityHurt",
+      "entityDie",
+      "entityRemove",
     ]));
     expect(developerPracticeSignalsFromSemanticIr(ir, "different-world"))
       .toHaveLength(0);

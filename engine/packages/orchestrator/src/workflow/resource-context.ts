@@ -352,11 +352,16 @@ export function developerPracticeSignalsFromSemanticIr(
   // An event-source region comes from the parser's exact subscription,
   // not from an arbitrary string or a guessed gameplay event.
   for (const region of ir.execution.regions) {
-    if (region.kind === "event-source" &&
-        region.ownerId === "world" &&
-        region.label === "world.beforeEvents.entityHurt") {
+    if (region.kind !== "event-source" ||
+        region.ownerId !== "world") continue;
+    if (region.label === "world.beforeEvents.entityHurt") {
       add(region.id, region.source, "world.beforeEvents.entityHurt");
+    } else if (region.label === "world.afterEvents.entityDie") {
+      add(region.id, region.source, "entityDie");
+    } else if (region.label === "world.afterEvents.entityRemove") {
+      add(region.id, region.source, "entityRemove");
     }
+    // Observed subscription source does not prove that an event fired.
   }
   // Exact native entity events inform JSON-versus-script reasoning, never
   // prove activation of the authored event.
