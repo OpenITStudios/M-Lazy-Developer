@@ -2217,7 +2217,8 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
   // A source region can be the destination of many calls. Compute its
   // navigational priority once rather than rewalking it for every trace.
   const priorityByRegion = new Map([...stepsByRegion].map(([regionId, steps]) =>
-    [regionId, Math.min(2, ...steps.map(stepPriority))] as const));
+    [regionId, steps.reduce((priority, step) =>
+      Math.min(priority, stepPriority(step)), 2)] as const));
 
   // Sort only within an execution region: cross-region source order cannot
   // establish callback timing, world mutation success or terminal sequence.
