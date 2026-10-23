@@ -209,6 +209,110 @@ export function formatSelectedMapAuditBrief(input: {
         "model task remains the next required decision.",
     );
   }
+  // Actionable gameplay findings and deciding proof precede technical source navigation.
+  out.push("", "## Findings");
+  if (findings.length === 0) {
+    out.push("No published finding; **this does not mean the map is free of bugs**.");
+  }
+  for (const finding of findings.slice(0, 12)) {
+    const selectedSourceLocators = [...new Set(finding.evidenceIds.flatMap(id => {
+      const evidence = evidenceById.get(id);
+      return evidence?.scope === "selected-artifact" && evidence.locator
+        ? [evidence.locator] : [];
+    }))];
+    out.push(
+      "- [" + finding.status + "] " + finding.issueType + ": " +
+        concise(finding.issue),
+      "  Impact: " + concise(finding.playerImpact),
+      "  Expected / actual: " + concise(finding.expected) + " / " +
+        concise(finding.actual),
+      ...(finding.evidenceIds.length === 0
+        ? ["  Source evidence: UNRESOLVED"]
+        : ["  Evidence IDs: " +
+          finding.evidenceIds.slice(0, 5).map(concise).join("; ")]),
+      ...(selectedSourceLocators.length === 0 ? [] :
+        ["  Selected source location: " +
+          selectedSourceLocators.slice(0, 3).map(concise).join("; ")]),
+      ...(finding.reproduceSteps.length === 0 ? [] :
+        ["  First reproduction step (NOT EXECUTED): " +
+          concise(finding.reproduceSteps[0]!)]),
+      ...(finding.missingProof === undefined ? [] :
+        ["  Missing proof: " + concise(finding.missingProof)]),
+    );
+  }
+  if (findings.length > 12) {
+    out.push("Additional findings omitted: " + (findings.length - 12));
+  }
+  if (report.control.status === "BLOCKED" && findings.length > 0) {
+    out.push(
+      "These are scoped audit findings, not an approved issue set. " +
+      "Overall map review and publication remain BLOCKED.",
+    );
+  }
+  out.push("", "## Next Decision");
+  if (firstTask !== undefined) {
+    const locations = [...new Set([
+      ...(firstTask.knowledgeLookup?.sourceLocators ?? []),
+      ...firstTask.evidenceContext.flatMap(item =>
+        item.kind === "selected-artifact-evidence" && item.locator
+          ? [item.locator] : []),
+    ])];
+    out.push(
+      "**Next decision [" + firstTask.stage + " / " + firstTask.kind +
+        "]:** " + concise(firstTask.decisionNeeded),
+      "**Required next action:** " + concise(firstTask.goal),
+      ...(firstTask.subjectSelection === undefined ? [] : [
+        "**Source subject selection (NOT checkpoint proof):** " +
+          firstTask.subjectSelection.basis + "; omitted candidates " +
+          firstTask.subjectSelection.omittedCandidates,
+      ]),
+      "**Stop when:** " + concise(firstTask.stopCondition),
+      ...(locations.length === 0 ? [
+        "**Source witness:** unresolved; do not substitute external guides.",
+      ] : [
+        "**Source witness:** " + locations.slice(0, 3).map(concise).join("; "),
+      ]),
+    );
+    if (firstTask.developerPractice?.items.length) {
+      const guide = firstTask.developerPractice.items[0]!;
+      out.push(
+        "**Developer reference (NOT proof):** " + concise(guide.question),
+        ...(guide.methodology === undefined ? [] : [
+          "**Developer investigation path:** " +
+            concise(guide.methodology.investigationSteps[0] ??
+              guide.methodology.objective),
+        ]),
+        "**Design counterexample to check:** " + concise(guide.negativeControl),
+      );
+    }
+  } else if (firstObligation !== undefined) {
+    out.push(
+      "**Next obligation [" + firstObligation.stage + "]:** " +
+        concise(firstObligation.title),
+      "**Deciding evidence:** " + concise(firstObligation.missingProof),
+      "**Next check:** " + concise(firstObligation.validationTest),
+    );
+  } else if (pendingFindings.length > 0) {
+    out.push(
+      "**Next unresolved contradiction:** " + concise(pendingFindings[0]!.issue),
+      "**Deciding evidence:** " + concise(pendingFindings[0]!.missingProof ??
+        pendingFindings[0]!.validationReason ?? "not identified"),
+    );
+  } else {
+    out.push(
+      "**Next decision:** " +
+        (report.control.status === "BLOCKED"
+          ? "Current stage is blocked; no bounded source task was produced."
+          : "No pending model task is present in this view."),
+    );
+  }
+  out.push(
+    "",
+    "## Detailed Source Navigation (NOT A PLAYER PLAYTHROUGH)",
+    "Technical source trees below are investigative references. They do not " +
+      "override the game understanding, confirmed findings or next decision above.",
+    "",
+  );
   if (sourcedFeatures.length > 0) {
     out.push("**Selected-source mechanics to trace (sample):**");
     for (const feature of sourcedFeatures.slice(0, 5)) {
@@ -295,69 +399,6 @@ export function formatSelectedMapAuditBrief(input: {
     if (entries.length > 3) out.push("Other source-map references omitted: " +
       (entries.length - 3));
   }
-  if (firstTask !== undefined) {
-    const locations = [...new Set([
-      ...(firstTask.knowledgeLookup?.sourceLocators ?? []),
-      ...firstTask.evidenceContext.flatMap(item =>
-        item.kind === "selected-artifact-evidence" && item.locator
-          ? [item.locator] : []),
-    ])];
-    out.push(
-      "**Next decision [" + firstTask.stage + " / " + firstTask.kind +
-        "]:** " + concise(firstTask.decisionNeeded),
-      "**Required next action:** " + concise(firstTask.goal),
-      ...(firstTask.subjectSelection === undefined ? [] : [
-        "**Source subject selection (NOT checkpoint proof):** " +
-          firstTask.subjectSelection.basis + "; omitted candidates " +
-          firstTask.subjectSelection.omittedCandidates,
-      ]),
-      "**Stop when:** " + concise(firstTask.stopCondition),
-      ...(locations.length === 0 ? [
-        "**Source witness:** unresolved; do not substitute external guides.",
-      ] : [
-        "**Source witness:** " + locations.slice(0, 3).map(concise).join("; "),
-      ]),
-    );
-    if (firstTask.developerPractice?.items.length) {
-      const guide = firstTask.developerPractice.items[0]!;
-      out.push(
-        "**Developer reference (NOT proof):** " + concise(guide.question),
-        ...(guide.methodology === undefined ? [] : [
-          "**Developer investigation path:** " +
-            concise(guide.methodology.investigationSteps[0] ??
-              guide.methodology.objective),
-        ]),
-        "**Design counterexample to check:** " + concise(guide.negativeControl),
-      );
-    }
-  } else if (firstObligation !== undefined) {
-    out.push(
-      "**Next obligation [" + firstObligation.stage + "]:** " +
-        concise(firstObligation.title),
-      "**Deciding evidence:** " + concise(firstObligation.missingProof),
-      "**Next check:** " + concise(firstObligation.validationTest),
-    );
-  } else if (pendingFindings.length > 0) {
-    out.push(
-      "**Next unresolved contradiction:** " + concise(pendingFindings[0]!.issue),
-      "**Deciding evidence:** " + concise(pendingFindings[0]!.missingProof ??
-        pendingFindings[0]!.validationReason ?? "not identified"),
-    );
-  } else {
-    out.push(
-      "**Next decision:** " +
-        (report.control.status === "BLOCKED"
-          ? "Current stage is blocked; no bounded source task was produced."
-          : "No pending model task is present in this view."),
-    );
-  }
-  out.push(
-    "",
-    "## Detailed Source Navigation (NOT A PLAYER PLAYTHROUGH)",
-    "Technical source trees below are investigative references. They do not " +
-      "override the game understanding, confirmed findings or next decision above.",
-    "",
-  );
   // Orphaned source-region operations must remain visible to investigation
   // without inflating rooted gameplay-flow or activation counts. A missing
   // source edge is an evidence gap, NOT proof that Minecraft cannot reach it.
@@ -1556,34 +1597,6 @@ export function formatSelectedMapAuditBrief(input: {
   }
   if (journeys.length > 5) {
     out.push("Additional candidates omitted: " + (journeys.length - 5));
-  }
-  out.push("", "## Findings");
-  if (findings.length === 0) {
-    out.push("No published finding; **this does not mean the map is free of bugs**.");
-  }
-  for (const finding of findings.slice(0, 12)) {
-    out.push(
-      "- [" + finding.status + "] " + finding.issueType + ": " +
-        concise(finding.issue),
-      "  Impact: " + concise(finding.playerImpact),
-      "  Expected / actual: " + concise(finding.expected) + " / " +
-        concise(finding.actual),
-      ...(finding.evidenceIds.length === 0
-        ? ["  Source evidence: UNRESOLVED"]
-        : ["  Evidence IDs: " +
-          finding.evidenceIds.slice(0, 5).map(concise).join("; ")]),
-      ...(finding.missingProof === undefined ? [] :
-        ["  Missing proof: " + concise(finding.missingProof)]),
-    );
-  }
-  if (findings.length > 12) {
-    out.push("Additional findings omitted: " + (findings.length - 12));
-  }
-  if (report.control.status === "BLOCKED" && findings.length > 0) {
-    out.push(
-      "These are scoped audit findings, not an approved issue set. " +
-      "Overall map review and publication remain BLOCKED.",
-    );
   }
   // Use the canonical Audit Obligations rather than hiding them behind
   // optional model tasks or reconstructing a separate report-state owner.
