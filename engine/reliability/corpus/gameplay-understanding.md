@@ -122,6 +122,44 @@ authorize callback execution, branching outcome, player-facing delivery,
 party membership, stage chronology or a BUG verdict. No actual whole-map
 `runSelectedMapAudit()` or live Minecraft session was run for this claim.
 
+## Exact script-memory state writes versus computed party readiness — 2026-10-23
+
+Direct, isolated AST inspection of the **same pinned** Daigon Composite
+v1.1.17 original shows three distinct JavaScript assignment sites in
+`behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js`:
+
+- line **17607**: `session.status = "countdown"`
+- line **25610**: `session.status = "countdown"`
+- line **29851**: `session.status = "countdown"` (composite lobby countdown)
+
+`behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:1498`
+has `member.ready = !member.ready` in PartyService.handleReady, and
+`:1499` calls saveParty, which emits a PartyChanged application event in
+`:1371`. The composite runtime subscribes to PartyChanged at
+`chunk-7YEVMDUW.js:29708–29710`, calls the party-to-arena admission
+checks at `:29764–29793`, and calls `startCompositeLobbyCountdown`
+via `:29805–29845`.
+
+**Critical semantic boundary:** Equal code expressions like
+`session.status` do NOT establish runtime session identity or equal
+arena ownership. A computed ready flag is NOT the same source fact as a
+literal status assignment. The source event-bus and method chain are
+candidate relations; live event subscription, callback invocation,
+control-flow guard satisfaction, and observed countdown are
+**NOT EXECUTED / UNKNOWN**.
+
+The existing canonical Semantic IR already retains exact
+`script-memory` literal state-write operations and the existing
+SourceEffectSlice backward, resolved-edge `candidateIngress` paths.
+Their absence from the *ChatGPT-readable model handoff* was a navigation
+blind spot rather than a need for another parser, state graph, classifier,
+or map-specific rule. The read-only handoff should group equal literal
+target/value pairs for display **while retaining each distinct operation**
+and validate every incoming path by the exact directed IR edge IDs and
+region adjacency. Invalid or truncated source candidates must not be
+promoted to execution, gameplay order or defect proof. This observation
+has not been scored against a current-HEAD full `runSelectedMapAudit()`.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.

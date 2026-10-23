@@ -1301,4 +1301,122 @@ describe("Map Audit Output V2 projection", () => {
     expect(brief).not.toContain("PROVEN] BUG");
   });
 
+  it("keeps literal source-state writes and validates each directed ingress chain without inventing a session", () => {
+    const artifactId = "artifact:novel-game";
+    const sourcePath = "behavior_packs/demo/scripts/custom.js";
+    const from = "exec:script:custom:module";
+    const to = "exec:script:custom:function:start";
+    const other = "exec:script:custom:function:other";
+    const at = (line: number) => ({
+      artifactId, relativePath: sourcePath,
+      range: { lineStart: line, lineEnd: line,
+        columnStart: 3, columnEnd: 35 },
+    });
+    const edge = {
+      id: "edge:real", kind: "synchronous-call",
+      from, to, resolution: "resolved",
+      targetLabel: "start", source: at(3),
+    };
+    const operations = [to, other].map((region, index) => ({
+      id: index === 0 ? "state:real" : "state:unconnected",
+      executionRegionId: region,
+      surfaceId: "surface:session.status", operation: "write",
+      writtenValue: {kind: "literal", value: "countdown"},
+      source: at(index === 0 ? 10 : 20),
+      lexicalGuards: index === 0
+        ? [{expression: "partyReady", branch: "true", source: at(9)}]
+        : [],
+    }));
+    const ir = {
+      schemaVersion: 1,
+      execution: {
+        regions: [from, to, other].map(id => ({
+          id, ownerId: "custom", label: id, kind: "script-function",
+          source: at(1),
+        })),
+        edges: [edge], outcomes: [], worldEffects: [], apiCalls: [],
+      },
+      state: {
+        surfaces: [{
+          id: "surface:session.status",
+          ref: {kind: "script-memory", key: sourcePath + "::session.status"},
+        }],
+        operations, resourceActions: [], authorityBindings: [],
+      },
+      temporal: {relations: []},
+    };
+    const effectSlices = operations.map((op, index) => ({
+      effectId: op.id, effectKind: "state-mutation",
+      executionRegionId: op.executionRegionId, sourcePath,
+      status: "CANDIDATE_INGRESS",
+      candidateIngress: [{
+        entryRegionId: from,
+        regionIds: [from, op.executionRegionId],
+        executionEdgeIds: [edge.id],
+      }],
+    }));
+    const report: any = {
+      gameDesign: {
+        objective:"UNKNOWN", objectiveGrounding:"unresolved",
+        winCondition:"UNKNOWN", winConditionGrounding:"unresolved",
+        loseCondition:"UNKNOWN", loseConditionGrounding:"unresolved",
+      },
+      gameplayStructure: {
+        features:[], effectSlices, sourceFlowCandidates: [{
+          entryRegionId: from, sourceTraceStatus:"SOURCE_ROOT_TRACE",
+          regionIds:[from,to], sourceHandoffs:[],
+          omittedSourceHandoffs:0,
+        }], authoredBehaviorRelationships:[],
+        uninterpretedSourceFlows:[], mechanicReconstructions:[],
+        gameplayJourneyCandidates:[],
+      },
+      multiArena:{isolationRules:[]}, unresolved:{total:0},
+      stateTransitions:[], bugs:[], designMismatches:[],
+    };
+    const audit = {
+      identity:{artifactId,artifactFingerprint:"c".repeat(64)},
+      auditRevision:"revision:one",
+      currentStage:"UNDERSTAND",
+      allowedNextAction:"RESOLVE_BLOCKING_STAGE",
+      inspection: {
+        semanticIrModel:ir,
+        gameplayIntent:{model:{evidence:[],nodes:[],edges:[],
+          invariants:[],unknowns:[]}},
+        hiddenGameplayDefects:{scenarioAudit:{graph:{causalLinks:[]}}},
+      },
+      mapAuditReport:report, modelTaskPackets:[],
+      candidateGroups:[],validationTests:[],
+    } as unknown as SelectedMapAuditRun;
+    const handoff = projectSelectedMapAuditModelHandoff(audit);
+    expect(handoff.gameUnderstanding.sourceStateAssignments).toHaveLength(1);
+    const state = handoff.gameUnderstanding.sourceStateAssignments[0]!;
+    expect(state).toMatchObject({
+      authoredTarget:"session.status", assignedValue:"countdown",
+      scalarKind:"unknown", lexicalOnly:true,
+    });
+    expect(state.sites).toHaveLength(2);
+    const real = state.sites.find(site => site.operationId === "state:real");
+    const unrelated = state.sites.find(site =>
+      site.operationId === "state:unconnected");
+    expect(real?.authoredGuards[0]?.expression).toBe("partyReady");
+    expect(real?.sourcePaths[0]).toMatchObject({
+      sourceTraceStatus:"SOURCE_ROOT_TRACE",
+      linkage:"EXACT_RESOLVED_IR_CHAIN",
+      regionIds:[from,to],
+      executionEdgeIds:["edge:real"],
+      temporalBoundaryCount:0,
+    });
+    expect(real?.sourcePaths[0]?.edgeSites[0]?.sourceLocator)
+      .toBe(sourcePath + ":3:3");
+    // Sharing the source file and lexical variable is NOT a valid
+    // different-function caller path. The missing edge must fail closed.
+    expect(unrelated?.sourcePaths[0]?.linkage).toBe("IR_CHAIN_UNRESOLVED");
+    expect(unrelated?.sourcePaths[0]?.edgeSites).toEqual([]);
+    expect(state.sites.every(site =>
+      site.proof === "SCRIPT_LITERAL_WRITE_WITH_SOURCE_PATH_NOT_EXECUTED"))
+      .toBe(true);
+    expect(handoff.gameUnderstanding.omittedSourceStateAssignments).toBe(0);
+    expect(report.bugs).toEqual([]);
+  });
+
 });
