@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "id": "cal-composite-challenge-1-1-17",
+  "lane": "calibration",
+  "artifact": {
+    "label": "Daigon Composite Challenge v1.1.17 — SHA-bound packaged world",
+    "file": "Daigon Composite v1.1.17.mcworld",
+    "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+    "mapVersion": "1.1.17"
+  },
+  "target": {
+    "edition": "bedrock",
+    "minecraftVersion": "1.21.130"
+  },
+  "expected": {
+    "claims": [
+      {
+        "id": "CC117-BOOTSTRAP",
+        "subject": "The selected main module explicitly calls the Composite bootstrap from its module body",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/main.js:19:1"
+        ],
+        "proofCeiling": "AUTHORED_SOURCE_REQUEST_NOT_RUNTIME_INITIALIZATION"
+      },
+      {
+        "id": "CC117-JOIN",
+        "subject": "The selected party script-event switch has a direct party:join handler call",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:1276:11"
+        ],
+        "proofCeiling": "AUTHORED_DISPATCH_NOT_PLAYER_JOIN_SUCCESS"
+      },
+      {
+        "id": "CC117-READY",
+        "subject": "The selected party script-event switch has a direct party:ready handler call",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:1282:11"
+        ],
+        "proofCeiling": "AUTHORED_DISPATCH_NOT_COUNTDOWN_COMPLETION"
+      },
+      {
+        "id": "CC117-ACTIVATE",
+        "subject": "The selected Composite event-dispatch switch calls startComposite for its declared command",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29685:11"
+        ],
+        "proofCeiling": "AUTHORED_ENTRY_POINT_NOT_LIVE_SESSION"
+      },
+      {
+        "id": "CC117-DUAL-VALIDATION",
+        "subject": "Composite session start has distinct authored Defense and Attack validation calls",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29821:31",
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29826:30"
+        ],
+        "proofCeiling": "AUTHORED_GUARDS_NOT_ACTUAL_TEST_SUCCESS"
+      },
+      {
+        "id": "CC117-COUNTDOWN",
+        "subject": "Composite lobby countdown writes its countdown status and requests session persistence",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29851:5",
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29880:5"
+        ],
+        "proofCeiling": "AUTHORED_MUTATION_NOT_RUNTIME_PERSISTENCE"
+      },
+      {
+        "id": "CC117-LEAVE",
+        "subject": "Composite runtime subscribes to playerLeave for offline session evaluation",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29670:25"
+        ],
+        "proofCeiling": "AUTHORED_EVENT_REGISTRATION_NOT_DISCONNECT_TEST"
+      },
+      {
+        "id": "CC117-RECOVERY",
+        "subject": "Composite runtime requests a delayed recovery pass",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29712:31"
+        ],
+        "proofCeiling": "AUTHORED_DELAYED_REQUEST_NOT_SUCCESSFUL_RECOVERY"
+      },
+      {
+        "id": "CC117-OFFLINE-TERMINAL",
+        "subject": "An offline-expiry code path requests endCompositeGame with defeat/abandoned",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29750:22"
+        ],
+        "proofCeiling": "AUTHORED_CONDITIONAL_PATH_NOT_OBSERVED_TIMEOUT"
+      },
+      {
+        "id": "CC117-RESULT",
+        "subject": "Terminal handler invokes persistCompositeRunResult with session and outcome fields",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:30942:5"
+        ],
+        "proofCeiling": "AUTHORED_EXPORT_REQUEST_NOT_LOSSLESS_DELIVERY"
+      },
+      {
+        "id": "CC117-CLEANUP",
+        "subject": "Terminal handler requests active-level stop and resets Composite session",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:30970:5",
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:30999:32"
+        ],
+        "proofCeiling": "AUTHORED_CLEANUP_NOT_VERIFIED_POST_RESET_BASELINE"
+      },
+      {
+        "id": "CC117-NEG-NO-JOIN",
+        "subject": "The packaged source has no direct party join handler",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:1276:11"
+        ],
+        "proofCeiling": "STATIC_NEGATIVE_CONTROL_DIRECT_COUNTEREXAMPLE"
+      },
+      {
+        "id": "CC117-UNK-MULTI",
+        "subject": "Multiple independent multiplayer arena sessions completed at once in Minecraft",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:1276:11",
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29805:3"
+        ],
+        "proofCeiling": "RUNTIME_PROOF_REQUIRED_NOT_OBSERVED"
+      },
+      {
+        "id": "CC117-UNK-RESULT-DELIVERY",
+        "subject": "Every valid complete terminal record is durably exported without loss",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:30942:5"
+        ],
+        "proofCeiling": "RUNTIME_AND_TRANSPORT_PROOF_REQUIRED; PUBLISHER_REPORT_NOT_AUTHORITY"
+      },
+      {
+        "id": "CC117-UNK-REPLAY",
+        "subject": "Gameplay can complete, clean up and replay indefinitely without stale callbacks",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:30999:32",
+          "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:29712:31"
+        ],
+        "proofCeiling": "RUNTIME_MULTI_SESSION_PROOF_REQUIRED"
+      }
+    ],
+    "proofCeiling": "READ_ONLY_SOURCE; version is minimum declared by selected manifest, not verified runtime or host",
+    "sourceAuditScope": "Packaged main and generated scripts in the exact selected mcworld, not raw-source TypeScript."
+  },
+  "provenance": {
+    "frozenBeforeRun": true,
+    "source": "2026-10-23 independent ChatGPT read-only .mcworld ZIP and TypeScript AST inspection; exact byte SHA and each selected-source position checked BEFORE canonical engine output; calibration, not blind acceptance",
+    "engineOutputUsed": false,
+    "runtimeObserved": false,
+    "comparisonRule": "No scoring before actual exact-SHA runSelectedMapAudit output, edition/version reconciliation, and independent claim review.",
+    "externalDeveloperDocsRole": "advisory search pressure only; never current expected-behavior proof"
+  }
+}

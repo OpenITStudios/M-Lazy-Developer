@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_SELECTED_ARCHIVE_AST_INSPECTION",
+  "scope": "SOURCE_CENSUS_AND_INDEPENDENT_CALIBRATION_FREEZE",
+  "selectedMap": {
+    "driveFileId": "16nx1VFP_4q7OSpUNy93iTOtmfoJKFhYH",
+    "file": "Daigon Composite v1.1.17.mcworld",
+    "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+    "bytes": 20424962
+  },
+  "repositoryBaseline": "177907a7783ce0c7e128cb2b0791bb3ffc2a15d0",
+  "directExecution": {
+    "actor": "ChatGPT container",
+    "tools": "Node 22.16.0 / TypeScript AST / Python ZIP SHA-256 CRC",
+    "sourceJsChunksParsed": 5,
+    "sourceJsParseErrors": 0,
+    "eventSubscriptions": 78,
+    "typedEventSubscriptions": 78,
+    "distinctEventKinds": 19,
+    "eventCounts": {
+      "system.afterEvents.scriptEventReceive": 23,
+      "world.afterEvents.playerSpawn": 11,
+      "world.afterEvents.playerLeave": 7,
+      "world.afterEvents.entityDie": 7
+    },
+    "candidateStaticClassCallSites": 951,
+    "sourceRegionsWithLargeMixedOperationSyntax": 14,
+    "independentlyVerifiedSourceClaimCount": 15,
+    "independentlyVerifiedExactLocatorCount": 20,
+    "boundedOldSelectionFailure": "11 state-write operations before world-effect, release and result can fill all 8 navigation slots",
+    "boundedCorrectedSelection": "Category-aware selection preserves state-write, world-effect, release and result while keeping eight slots and original source ordering."
+  },
+  "calibration": {
+    "manifest": "engine/reliability/corpus/calibration.json",
+    "expectation": "engine/reliability/corpus/expectations/cal-composite-challenge-1-1-17.json",
+    "status": "candidate",
+    "score": "UNSCORABLE_NOT_EXECUTED"
+  },
+  "proofCeiling": "These are direct selected-archive syntax/source checks and one executed bounded Node selection demonstration; NOT canonical engine, full Scenario Graph, Minecraft runtime, or end-to-end repair.",
+  "unresolved": [
+    "No exact-HEAD runSelectedMapAudit output exists for this selected SHA.",
+    "Edition/version beyond declared Bedrock source format and minimum manifest is not runtime-observed.",
+    "No full player flow, multiplayer session, lossless external result transport or post-repair proof established."
+  ]
+}

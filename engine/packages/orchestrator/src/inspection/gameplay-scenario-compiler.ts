@@ -2214,6 +2214,24 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
       (step.operation === "write" ||
         step.operation === "clear" || step.operation === "delete"))
       ? 0 : step.kind === "return" ? 1 : 2;
+  // A direct target with many writes must not hide its distinct world
+  // effects, release sites or return outcomes behind the same eight slots.
+  // At most eight kinds exist; this is only balanced READ-ONLY navigation.
+  // None of the selected kinds proves that an action actually occurred.
+  const stepCategory = (
+    step: GameplaySourceFlowCandidate["sourceSteps"][number],
+  ): string => {
+    if (step.kind === "state") {
+      return step.operation === "write" ||
+        step.operation === "clear" || step.operation === "delete"
+        ? "state:" + step.operation : "state:read";
+    }
+    if (step.kind === "resource-action") {
+      return step.operation === "release"
+        ? "resource:release" : "resource:acquire";
+    }
+    return step.kind;
+  };
   // A source region can be the destination of many calls. Compute its
   // navigational priority once rather than rewalking it for every trace.
   const priorityByRegion = new Map([...stepsByRegion].map(([regionId, steps]) =>
@@ -2267,10 +2285,23 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
         // Preserve source order in the final projection after selecting the
         // eight most material DIRECT target sites. No transitive effects are
         // attributed to this edge.
-        const selectedIds = new Set([...steps]
-          .sort((a, b) => stepPriority(a) - stepPriority(b))
-          .slice(0, 8)
-          .map(step => step.id));
+        const selectedIds = new Set<string>();
+        const representedKinds = new Set<string>();
+        // Reserve one exact, source-ordered witness per represented kind
+        // before using the remaining slots for higher-priority operations.
+        // Eight kinds is an upper bound, so this does not grow the budget.
+        for (const step of steps) {
+          const category = stepCategory(step);
+          if (representedKinds.has(category)) continue;
+          representedKinds.add(category);
+          selectedIds.add(step.id);
+          if (selectedIds.size === 8) break;
+        }
+        for (const step of [...steps].sort((a, b) =>
+          stepPriority(a) - stepPriority(b))) {
+          if (selectedIds.size >= 8) break;
+          selectedIds.add(step.id);
+        }
         const selected = steps.filter(step => selectedIds.has(step.id));
         return [{
           edgeId: edge.id,

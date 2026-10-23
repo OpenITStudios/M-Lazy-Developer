@@ -186,6 +186,42 @@ describe("cross-region source handoff tracing", () => {
     expect(entry?.runtimeStatus).toBe("NOT_OBSERVED");
   });
 
+  it("does not hide world, release or terminal witnesses behind twelve earlier state writes", () => {
+    const ir = sample();
+    const source = (line: number) => ({
+      ...target,
+      range: { lineStart: line, lineEnd: line, columnStart: 1, columnEnd: 25 },
+    });
+    ir.state.operations = [
+      ...Array.from({ length: 12 }, (_, i) => ({
+        id: "op:write-many-" + i,
+        executionRegionId: "callback",
+        surfaceId: "state:round",
+        operation: "write" as const,
+        source: source(i + 1),
+      })),
+      ...ir.state.operations,
+    ];
+    ir.execution.outcomes = [{
+      id: "out:terminal",
+      executionRegionId: "callback",
+      propertyName: "status", value: "closed",
+      source: source(140),
+    }];
+    const flow = sourceFlowCandidates(ir)
+      .find(flow => flow.entryRegionId === "entry");
+    const handoff = flow?.sourceHandoffs?.find(x =>
+      x.edgeId === "edge:deferred");
+    expect(handoff?.directTargetStepIds).toHaveLength(8);
+    expect(handoff?.directTargetWorldEffectIds).toEqual(["effect:teleport"]);
+    expect(handoff?.directTargetReleaseIds).toEqual(["release:join-pad"]);
+    expect(handoff?.directTargetStepIds).toContain("out:terminal");
+    expect(handoff?.directTargetStateWriteIds.length).toBeGreaterThan(0);
+    expect(handoff?.omittedDirectTargetSteps).toBe(8);
+    expect(handoff?.directTargetStepIds).not.toContain("op:unrelated");
+    expect(flow?.runtimeStatus).toBe("NOT_OBSERVED");
+  });
+
   it("retains a late material call among thirty exact target handoffs", () => {
     const ir = sample();
     const ordinary = Array.from({ length: 28 }, (_, index) => ({

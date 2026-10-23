@@ -183,10 +183,10 @@
       },
       "readiness": {
         "artifactFingerprint": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
-        "frozenExpectation": "missing"
+        "frozenExpectation": "engine/reliability/corpus/expectations/cal-composite-challenge-1-1-17.json"
       },
-      "scope": "real-map modular bundled scripts; authoring source and official game guide are advisory only",
-      "note": "ChatGPT directly verified artifact bytes, ZIP CRC, 170 JSON parse results, 9 bundled script hashes, and 214 generated section-comment locations on 2026-10-23. NOT an executed runSelectedMapAudit(), independent scoring oracle, or live Minecraft proof. Historical Composite project binding remains v1.1.1."
+      "scope": "mixed supported/rejected/UNKNOWN source-flow calibration on exact published .mcworld; no runtime outcome",
+      "note": "15 independent source claims with 20 exact generated-JS locators were frozen by ChatGPT direct archive inspection before canonical engine execution; candidate UNSCORABLE until genuine exact-SHA output, target edition/version applicability, and independent reviewer decisions. Published developer 613 simulated tests are NOT runtime gameplay proof. Composite project.json remains v1.1.1."
     }
   ],
   "policy": {
