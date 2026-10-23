@@ -5,7 +5,10 @@
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
 import type { GameplayIntentEvidence } from "../../../gameplay-intent/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
-import { semanticIrSourceWriteContinuations } from "../../../semantic-ir/src/index.js";
+import {
+  semanticIrSourceWriteContinuations,
+  sourceSiteStrictlyAfter,
+} from "../../../semantic-ir/src/index.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import { MODEL_RESOLVABLE_KINDS } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
@@ -1000,23 +1003,13 @@ export function projectSelectedMapAuditModelHandoff(
           kind: "precedence" as const, guard,
         })),
       ];
-      const afterSite = (source: { relativePath: string; range?: {
-        lineStart?: number; columnStart?: number;
-      } }): boolean =>
-        source.relativePath === operation.source.relativePath &&
-        source.range?.lineStart !== undefined &&
-        operation.source.range?.lineStart !== undefined &&
-        (source.range.lineStart > operation.source.range.lineStart ||
-          (source.range.lineStart === operation.source.range.lineStart &&
-            (source.range.columnStart ?? 0) >
-              (operation.source.range.columnStart ?? 0)));
       const followingEdges = (sourceIr?.execution.edges ?? [])
         .filter(edge =>
           edge.resolution === "resolved" && edge.to !== undefined &&
           edge.from === operation.executionRegionId &&
           edge.source.artifactId === audit.identity.artifactId &&
           edge.kind !== "static-module-dependency" &&
-          afterSite(edge.source))
+          sourceSiteStrictlyAfter(operation.source, edge.source))
         .sort((a,b) =>
           (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
           (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||

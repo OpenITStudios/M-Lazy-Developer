@@ -457,6 +457,30 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
 
 
 
+/**
+ * Compares a fully spanned authored write with a following source call.
+ * TypeScript's source range is [start, end): a call nested inside the RHS is
+ * AFTER the assignment start but BEFORE the assignment completed. Treating
+ * that inner call as a continuation manufactures the wrong source ordering.
+ *
+ * Fail closed if either source lacks enough exact coordinates. This is
+ * lexical source order within one file, NOT control-flow or runtime proof.
+ */
+export function sourceSiteStrictlyAfter(
+  write: SemanticIr["state"]["operations"][number]["source"],
+  call: SemanticIr["execution"]["edges"][number]["source"],
+): boolean {
+  if (write.artifactId !== call.artifactId ||
+      write.relativePath !== call.relativePath ||
+      write.range?.lineEnd === undefined ||
+      write.range.columnEnd === undefined ||
+      call.range?.lineStart === undefined ||
+      call.range.columnStart === undefined) return false;
+  return call.range.lineStart > write.range.lineEnd ||
+    (call.range.lineStart === write.range.lineEnd &&
+      call.range.columnStart >= write.range.columnEnd);
+}
+
 /** A directed source-only call chain from one exact authored write site.
  * Its terminal evidence is located IN the last callee region, not proof that
  * the write caused that call, that guards held, or that the callee ran.
@@ -556,18 +580,6 @@ export function semanticIrSourceWriteContinuations(
       (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
       a.id.localeCompare(b.id));
   }
-  const afterWrite = (write: Edge["source"], call: Edge["source"]): boolean => {
-    if (write.artifactId !== call.artifactId ||
-        write.relativePath !== call.relativePath ||
-        write.range?.lineStart === undefined ||
-        call.range?.lineStart === undefined) return false;
-    if (call.range.lineStart !== write.range.lineStart) {
-      return call.range.lineStart > write.range.lineStart;
-    }
-    return write.range.columnStart !== undefined &&
-      call.range.columnStart !== undefined &&
-      call.range.columnStart > write.range.columnStart;
-  };
   const temporal = (edge: Edge): boolean =>
     edge.kind === "event-dispatch" ||
     edge.kind === "internal-event-dispatch" ||
@@ -618,7 +630,7 @@ export function semanticIrSourceWriteContinuations(
             (regions.get(edge.to!)?.source?.artifactId !== undefined &&
               regions.get(edge.to!)!.source!.artifactId !== write.source.artifactId) ||
             (current.executionEdgeIds.length === 0 &&
-              !afterWrite(write.source, edge.source))) continue;
+              !sourceSiteStrictlyAfter(write.source, edge.source))) continue;
         const isEvent = edge.kind === "event-dispatch" ||
           edge.kind === "internal-event-dispatch";
         if (isEvent && !eligibleEventEdgeIds.has(edge.id)) {

@@ -262,6 +262,41 @@ Minecraft event registration, guard evaluation, readiness, countdown or
 bug existence. Full exact-HEAD audit and independently scored cross-map
 semantics remain NOT EXECUTED / UNKNOWN.
 
+## Integration source-order falsification — 2026-10-24
+
+**Current scope is source-only, not a full pipeline or live-game result.**
+An isolated TypeScript AST inspection on SHA-verified original archive
+Beach Bedwars v1.1.0 found this exact source relation in minified
+`behavior_packs/Beach_Bedwars_BP/scripts/main.js`:
+
+| Source fact | Original source span | Status |
+| --- | --- | --- |
+| `t.ready = !!n && this.loading.sweep(e,n)` | 175:17079–17115 | Authored logical assignment; runtime value UNKNOWN |
+| `this.loading.sweep(e,n)` inside RHS | 175:17092–17115 | Within assignment evaluation, NOT a post-write call |
+| Earlier start-only comparator | write start 17079 versus call start 17092 | Incorrectly eligible as an after-write source continuation |
+| Full-span comparator | write end 17115 versus call start 17092 | Correctly excluded from after-write source continuation |
+
+The same independent AST inspection found a genuinely separate
+`member.ready = !member.ready` write at Composite
+`chunk-Q6BZV7BR.js:1498` and later
+`this.saveParty` call at :1499. This remains a permissible authored
+*source-order candidate*; the event-bus relay to countdown is still not
+successful callback/guard/player progression proof. BlitzBuild
+`domain/membership.js:129` has a separate logical membership-ready write
+but no matching nested RHS invocation in that assignment.
+
+Root-cause correction belongs to the existing canonical Semantic IR source
+site comparator; the selected-map ChatGPT handoff must consume the SAME
+full-range comparator for direct subsequent edges. Require known
+`lineEnd/columnEnd` of the write and `lineStart/columnStart` of the call,
+same artifact/file, and a call start at/after the exclusive write end.
+Absent exact source spans fail closed. This does not impose global JS
+chronology, alias resolution, branch satisfiability or actual execution.
+A single existing Semantic IR regression covers RHS-negative versus
+subsequent-positive, cross-artifact rejection and incomplete-range fail
+closed. **The new test is AUTHORED, not executed**; full exact-HEAD
+`runSelectedMapAudit` and cross-map defect scoring remain UNKNOWN.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.
