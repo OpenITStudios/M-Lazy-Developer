@@ -124,23 +124,21 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
       edge.resolution === "resolved" && edge.to !== undefined &&
       regions.get(edge.to)?.kind === "script-module")
     .map(edge => edge.to!));
-  // Restrict ONLY when a selected attached manifest and its static imports
-  // were fully resolved. A module merely present in the archive is not an
-  // independently declared gameplay entrypoint. An unrooted event source
-  // remains in regionsOutsideTraces rather than being promoted by its name.
+  // A manifest-rooted script may contain an event subscribe() inside an
+  // unused function. Merely loading that script does not make the callback
+  // an independently authored event entry. Registration eligibility must
+  // originate at the exact subscribe() execution region, reachable through
+  // the SAME existing source call/dependency graph. No event is asserted to
+  // have actually fired or even been registered at runtime.
   const manifestRoots = ir.execution.manifestScriptRoots;
   const declaredEntryPaths = new Set(manifestRoots?.entryPaths ?? []);
-  const reachableScriptPaths = new Set(
-    manifestRoots?.staticallyReachablePaths ?? []);
-  const inventoriedScriptPaths = new Set([...regions.values()]
-    .filter(region => region.kind === "script-module")
-    .flatMap(region => region.source ? [region.source.relativePath] : []));
-  const entryRegions = [...regions.values()].filter(region =>
-    (region.kind === "event-source" &&
-      (manifestRoots === undefined ||
-        !region.source ||
-        !inventoriedScriptPaths.has(region.source.relativePath) ||
-        reachableScriptPaths.has(region.source.relativePath))) ||
+  const isTypedEventRoot = (
+    region: SemanticIr["execution"]["regions"][number],
+  ): boolean => region.kind === "event-source" &&
+    (region.ownerId === "world" || region.ownerId === "system") &&
+    (region.label.startsWith(region.ownerId + ".afterEvents.") ||
+      region.label.startsWith(region.ownerId + ".beforeEvents."));
+  const nonEventEntryRegions = [...regions.values()].filter(region =>
     (region.kind === "script-module" && (
       manifestRoots === undefined
         ? !importedModules.has(region.id)
@@ -149,7 +147,59 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
     region.kind === "dialogue-command" ||
     region.kind === "behavior-animation" ||
     (region.kind === "mcfunction" && !incoming.has(region.id))
-  ).sort((a, b) => a.id.localeCompare(b.id));
+  );
+  const eligibleEvents = new Set<string>();
+  if (manifestRoots === undefined) {
+    // Unknown pack identity retains legacy source-only candidate coverage,
+    // but a lookalike, non-Minecraft event emitter cannot create an event
+    // entry just because it has an .afterEvents.x.subscribe spelling.
+    for (const region of regions.values()) {
+      if (isTypedEventRoot(region)) eligibleEvents.add(region.id);
+    }
+  } else {
+    const subscriptionsByRegion = new Map<string, string[]>();
+    for (const edge of ir.execution.edges) {
+      const eventRegion = regions.get(edge.from);
+      if (edge.kind !== "event-dispatch" ||
+          edge.registrationRegionId === undefined ||
+          !eventRegion || !isTypedEventRoot(eventRegion) ||
+          !regions.has(edge.registrationRegionId)) continue;
+      const source = regions.get(edge.registrationRegionId)?.source;
+      if (source?.artifactId !== edge.source.artifactId ||
+          source?.relativePath !== edge.source.relativePath) continue;
+      const owned = subscriptionsByRegion.get(edge.registrationRegionId) ?? [];
+      owned.push(edge.from);
+      subscriptionsByRegion.set(edge.registrationRegionId, owned);
+    }
+    // One fixed-point walk from manifest/script and other existing source
+    // roots. Nested event registration is eligible only when its containing
+    // callback is itself reached through another eligible event source.
+    const reachable = new Set(nonEventEntryRegions.map(region => region.id));
+    const queued = [...reachable];
+    const visit = (id: string): void => {
+      if (reachable.has(id) || !regions.has(id)) return;
+      reachable.add(id);
+      queued.push(id);
+    };
+    for (let index = 0; index < queued.length; index += 1) {
+      const id = queued[index]!;
+      for (const eventId of subscriptionsByRegion.get(id) ?? []) {
+        eligibleEvents.add(eventId);
+        visit(eventId);
+      }
+      for (const edge of outgoing.get(id) ?? []) {
+        if (edge.resolution !== "resolved" || !edge.to) continue;
+        // Only a verified subscribe() site admits an event root.
+        if (regions.get(edge.to)?.kind === "event-source") continue;
+        visit(edge.to);
+      }
+    }
+  }
+  const entryRegions = [
+    ...nonEventEntryRegions,
+    ...[...regions.values()].filter(region =>
+      isTypedEventRoot(region) && eligibleEvents.has(region.id)),
+  ].sort((a, b) => a.id.localeCompare(b.id));
   const coveredRegions = new Set<string>();
   const traces: ObservedExecutionTrace[] = entryRegions.map(entry => {
     const visited = new Set<string>([entry.id]);

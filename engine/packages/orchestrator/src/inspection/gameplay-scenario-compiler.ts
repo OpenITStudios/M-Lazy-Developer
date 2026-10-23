@@ -2316,6 +2316,8 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
           toRegionId: edge.to,
           kind: edge.kind,
           source: edge.source,
+          ...(edge.registrationRegionId === undefined ? {} :
+            { registrationRegionId: edge.registrationRegionId }),
           ...(edge.scheduler === undefined ? {} : { scheduler: edge.scheduler }),
           generationGuard: edge.guardEvidence === "explicit-generation-check" &&
               edge.generationGuardSource !== undefined

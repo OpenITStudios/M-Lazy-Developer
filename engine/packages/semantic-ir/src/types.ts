@@ -47,6 +47,11 @@ export interface ExecutionEdge {
   resolution: IrResolution;
   to?: string;
   source: SourceRef;
+  /** For event-dispatch only: exact execution region containing the authored
+   * Minecraft API subscribe() site. This links subscription eligibility to
+   * manifest-rooted source reachability; not proof of registration or delivery.
+   */
+  registrationRegionId?: string;
   scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
   /** Parsed local-call branching, not proof that a condition was satisfied. */
   controlFlow?: "unconditional" | "conditional" | "deferred";

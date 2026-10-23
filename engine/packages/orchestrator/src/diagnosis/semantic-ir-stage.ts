@@ -507,6 +507,15 @@ export function buildInspectionSemanticIr(
             event.callbackSource ?? event.source,
           )
         : undefined;
+      // A callback exists in source even when its subscribe() site is in
+      // an uncalled initialization function. Preserve its exact containing
+      // region, but only for import-bound Minecraft world/system events.
+      // The trace owner uses this to decide SOURCE-ELIGIBLE event roots;
+      // neither this ID nor the event edge proves runtime delivery.
+      const registrationRegionId = event.executionRegion !== undefined &&
+          event.root !== "unknown" && event.phase !== "unknown"
+        ? ensureScriptRegion(parsed, event.executionRegion, event.source)
+        : undefined;
       addEdge({
         from: eventId,
         kind: "event-dispatch",
@@ -516,6 +525,7 @@ export function buildInspectionSemanticIr(
         resolution: to ? "resolved" : "unresolved",
         ...(to ? { to } : {}),
         source: event.source,
+        ...(registrationRegionId === undefined ? {} : { registrationRegionId }),
       });
     }
 

@@ -148,6 +148,8 @@ export interface GameplaySourceFlowCandidate {
     readonly toRegionId: string;
     readonly kind: import("../../../semantic-ir/src/index.js").ExecutionEdgeKind;
     readonly source: import("../../../project-model/src/index.js").SourceRef;
+    /** Exact source region of subscribe(); source eligibility only. */
+    readonly registrationRegionId?: string;
     readonly scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
     readonly generationGuard: "EXPLICIT_SOURCE_CHECK" | "UNRESOLVED" | "NOT_RECORDED";
     readonly directTargetStepIds: readonly string[];

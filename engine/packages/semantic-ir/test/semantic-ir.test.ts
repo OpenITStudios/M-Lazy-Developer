@@ -130,4 +130,39 @@ describe("semantic IR", () => {
     }).some(error => error.includes("nonempty and unique"))).toBe(true);
   });
 
+
+  it("refuses a forged event subscription without an exact registration region", () => {
+    const invalid: SemanticIr = {
+      ...ir,
+      execution: {
+        ...ir.execution,
+        regions: [
+          ...ir.execution.regions,
+          {
+            id: "event:authored",
+            kind: "event-source",
+            ownerId: "world",
+            label: "world.afterEvents.playerSpawn",
+            source,
+          },
+        ],
+        edges: [
+          ...ir.execution.edges,
+          {
+            id: "edge:event-registration",
+            from: "event:authored",
+            kind: "event-dispatch",
+            targetLabel: "unknown-callback",
+            resolution: "unresolved",
+            source,
+            registrationRegionId: "missing:region",
+          },
+        ],
+      },
+    };
+    expect(validateSemanticIr(invalid)).toContain(
+      "Event registration region lacks exact source ownership: edge:event-registration",
+    );
+  });
+
 });

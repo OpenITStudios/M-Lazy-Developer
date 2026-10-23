@@ -199,6 +199,26 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
 
   for (const edge of ir.execution.edges) {
     errors.push(...validateSourceSequence(edge.sourceSequence, edge.source, edge.id));
+    if (edge.registrationRegionId !== undefined) {
+      const eventRegion = ir.execution.regions.find(region =>
+        region.id === edge.from);
+      const site = ir.execution.regions.find(region =>
+        region.id === edge.registrationRegionId);
+      const trustedEvent = eventRegion?.kind === "event-source" &&
+        (eventRegion.ownerId === "world" ||
+          eventRegion.ownerId === "system") &&
+        (eventRegion.label.startsWith(eventRegion.ownerId + ".afterEvents.") ||
+          eventRegion.label.startsWith(eventRegion.ownerId + ".beforeEvents."));
+      if (edge.kind !== "event-dispatch" || !trustedEvent ||
+          !site || site.kind === "event-source" ||
+          site.source?.artifactId !== edge.source.artifactId ||
+          site.source?.relativePath !== edge.source.relativePath ||
+          eventRegion.source?.artifactId !== edge.source.artifactId ||
+          eventRegion.source?.relativePath !== edge.source.relativePath) {
+        errors.push("Event registration region lacks exact source ownership: " +
+          edge.id);
+      }
+    }
     // Do not admit forged or cross-artifact module-load evidence. Only
     // uniquely known selected script modules in the authored static closure.
     if (edge.kind === "static-module-dependency") {

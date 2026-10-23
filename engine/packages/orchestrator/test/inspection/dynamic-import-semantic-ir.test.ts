@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import { semanticIrExecutionTraces } from "../../../semantic-ir/src/index.js";
 import { buildInspectionSemanticIr, scriptRegionId } from "../../src/diagnosis/semantic-ir-stage.js";
+import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
 
 const parsed = (path: string, text: string, artifactId = "selected-map") => {
   const source = { artifactId, relativePath: path };
@@ -86,6 +87,115 @@ describe("manifest-rooted static module dependencies", () => {
       edge.kind === "static-module-dependency")).toEqual([
         expect.objectContaining({ targetLabel: "./module.ts" }),
       ]);
+  });
+});
+
+describe("manifest-rooted event registration provenance", () => {
+  it("admits reachable subscriptions, including nested registration, but excludes unused and orphan handlers", () => {
+    const prefix = "behavior_packs/BP/scripts/";
+    const main = parsed(prefix + "main.js", 'import "./chunks/handlers.js";');
+    const handlers = parsed(prefix + "chunks/handlers.js", [
+      'import { world } from "@minecraft/server";',
+      'world.afterEvents.playerSpawn.subscribe(() => {});',
+      'function wireLeave() {',
+      '  world.afterEvents.playerLeave.subscribe(() => {',
+      '    world.setDynamicProperty("session:leave", true);',
+      '    world.afterEvents.entityHurt.subscribe(() => {',
+      '      world.setDynamicProperty("session:nested", true);',
+      '    });',
+      '  });',
+      '}',
+      'function dormant() {',
+      '  world.afterEvents.entityDie.subscribe(() => {',
+      '    world.setDynamicProperty("session:dormant", true);',
+      '  });',
+      '}',
+      'wireLeave();',
+      'const fake = { afterEvents: { pretend: { subscribe(_callback) {} } } };',
+      'fake.afterEvents.pretend.subscribe(() => {});',
+    ].join("\n"));
+    const orphan = parsed(prefix + "entries/unused.js", [
+      'import { world } from "@minecraft/server";',
+      'world.afterEvents.playerJoin.subscribe(() => {});',
+    ].join("\n"));
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [main, handlers, orphan],
+      manifestScriptRoots: {
+        entryPaths: [main.parsed.source.relativePath],
+        staticallyReachablePaths: [
+          main.parsed.source.relativePath,
+          handlers.parsed.source.relativePath,
+        ],
+      },
+    });
+    const eventRegion = (label: string, path = handlers.parsed.source.relativePath) =>
+      ir.execution.regions.find(region =>
+        region.kind === "event-source" &&
+        region.label === label && region.source?.relativePath === path);
+    const spawn = eventRegion("world.afterEvents.playerSpawn");
+    const leave = eventRegion("world.afterEvents.playerLeave");
+    const nested = eventRegion("world.afterEvents.entityHurt");
+    const dormant = eventRegion("world.afterEvents.entityDie");
+    const orphanJoin = eventRegion("world.afterEvents.playerJoin",
+      orphan.parsed.source.relativePath);
+    const fake = eventRegion("unknown.afterEvents.pretend");
+    expect([spawn, leave, nested, dormant, orphanJoin, fake].every(Boolean)).toBe(true);
+
+    const leaveRegistration = ir.execution.edges.find(edge =>
+      edge.kind === "event-dispatch" && edge.from === leave?.id);
+    expect(leaveRegistration?.registrationRegionId).toBe(
+      scriptRegionId(handlers.parsed.source, "function:wireLeave"));
+    expect(ir.execution.edges.find(edge =>
+      edge.kind === "event-dispatch" && edge.from === fake?.id)
+      ?.registrationRegionId).toBeUndefined();
+
+    const trace = semanticIrExecutionTraces(ir);
+    for (const event of [spawn, leave, nested]) {
+      expect(trace.traces.some(item => item.entryRegionId === event?.id)).toBe(true);
+    }
+    for (const event of [dormant, orphanJoin, fake]) {
+      expect(trace.traces.some(item => item.entryRegionId === event?.id)).toBe(false);
+      expect(trace.regionsOutsideTraces).toContain(event!.id);
+    }
+    const leaveFlow = sourceFlowCandidates(ir).find(flow =>
+      flow.entryRegionId === leave!.id);
+    expect(leaveFlow?.sourceHandoffs?.some(handoff =>
+      handoff.kind === "event-dispatch" &&
+      handoff.registrationRegionId === leaveRegistration?.registrationRegionId &&
+      handoff.directTargetStateWriteIds.length > 0 &&
+      handoff.proof === "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION")).toBe(true);
+    expect(leaveFlow?.runtimeStatus).toBe("NOT_OBSERVED");
+  });
+
+  it("retains unknown-attachment behavior without inventing registration reachability", () => {
+    const path = "behavior_packs/BP/scripts/main.js";
+    const file = parsed(path, [
+      'import { world } from "@minecraft/server";',
+      'function installLater() {',
+      '  world.afterEvents.playerLeave.subscribe(() => {});',
+      '}',
+    ].join("\n"));
+    const unbound = build(file);
+    expect(unbound.execution.manifestScriptRoots).toBeUndefined();
+    // Without a world-attached manifest, a listener is still an authored
+    // source possibility; it must NOT be labeled runtime-proven.
+    const event = unbound.execution.regions.find(region =>
+      region.kind === "event-source" &&
+      region.label === "world.afterEvents.playerLeave");
+    expect(event).toBeDefined();
+    expect(semanticIrExecutionTraces(unbound).traces.some(trace =>
+      trace.entryRegionId === event!.id)).toBe(true);
+    const rooted = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [file],
+      manifestScriptRoots: {
+        entryPaths: [path], staticallyReachablePaths: [path],
+      },
+    });
+    const blocked = semanticIrExecutionTraces(rooted);
+    expect(blocked.traces.some(trace => trace.entryRegionId === event!.id)).toBe(false);
+    expect(blocked.regionsOutsideTraces).toContain(event!.id);
   });
 });
 

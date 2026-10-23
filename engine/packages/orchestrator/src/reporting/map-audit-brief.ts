@@ -380,10 +380,11 @@ export function formatSelectedMapAuditBrief(input: {
   if (selectedHandoffs.length > 0) {
     out.push(
       "### Cross-region source handoffs (RESOLVED CODE EDGES; NOT EXECUTION)",
-      "Each entry records a single resolved source call or callback link to " +
-        "the DIRECT target region. Other steps in the same broad trace are " +
-        "not presumed causal successors. A guard check observed in source " +
-        "is not proof that a stale callback was cancelled.",
+      "Each entry records a resolved source dependency, call or callback " +
+        "link to its DIRECT target region. Event registration sites are " +
+        "source-reachable candidates, NOT proof that a listener was installed " +
+        "or delivered an event. Other steps in a broad trace are not " +
+        "presumed causal successors.",
     );
     for (const { edge } of selectedHandoffs.slice(0, 8)) {
       const site = edge.source.relativePath +
@@ -394,8 +395,10 @@ export function formatSelectedMapAuditBrief(input: {
           (edge.scheduler === undefined ? "" : " [" + edge.scheduler + "]") +
           ": " + concise(edge.fromRegionId) + " → " +
           concise(edge.toRegionId),
-        "  Call site: " + concise(site) +
-          "; generation guard: " + edge.generationGuard,
+        "  Source site: " + concise(site) +
+          "; generation guard: " + edge.generationGuard +
+          (edge.registrationRegionId === undefined ? "" :
+            "; registration region: " + concise(edge.registrationRegionId)),
         "  Direct target state writes: " +
           edge.directTargetStateWriteIds.slice(0, 4).map(concise).join("; ") +
           "; world effect attempts: " +
