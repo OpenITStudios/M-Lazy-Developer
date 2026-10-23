@@ -3,6 +3,8 @@
  * Canonical audit admission and response mutations remain in map-audit-pipeline.ts.
  */
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
+import type { GameplayIntentEvidence } from "../../../gameplay-intent/src/index.js";
+import type { SemanticIr } from "../../../semantic-ir/src/index.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import { MODEL_RESOLVABLE_KINDS } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
@@ -46,6 +48,61 @@ export interface SelectedMapAuditModelHandoff {
         readonly sourceLocator: string;
         readonly executionRegion: string;
         readonly syntax: "translate-object-literal";
+        /** Exact AST conditions on the translation expression, NOT a
+         * claim that the displayed message or player saw those conditions. */
+        readonly sourceConditions: NonNullable<
+          GameplayIntentEvidence["literalTranslationUse"]
+        >["sourceConditions"];
+        /** Read-only IR neighborhood anchored on the exact source region.
+         * Source trace membership, caller edges and target-region API
+         * calls do NOT prove the translation value was delivered.
+         */
+        readonly sourceContext: {
+          readonly status: "EXACT_IR_SOURCE_REGION_CONTEXT" |
+            "IR_SOURCE_REGION_UNRESOLVED";
+          readonly executionRegionId: string | null;
+          readonly incomingEdges: readonly {
+            readonly edgeId: string;
+            readonly fromRegionId: string;
+            readonly kind: string;
+            readonly sourceLocator: string;
+            readonly controlFlow: string;
+            readonly scheduler: string | null;
+            readonly authoredGuards: readonly string[];
+          }[];
+          readonly omittedIncomingEdges: number;
+          readonly outgoingEdges: readonly {
+            readonly edgeId: string;
+            readonly toRegionId: string;
+            readonly kind: string;
+            readonly sourceLocator: string;
+            readonly controlFlow: string;
+            readonly scheduler: string | null;
+            readonly authoredGuards: readonly string[];
+            /** DIRECT target region, not all steps of a broad source trace. */
+            readonly directTargetSites: readonly {
+              readonly id: string;
+              readonly kind: string;
+              readonly operation: string;
+              readonly sourceLocator: string;
+            }[];
+            readonly omittedDirectTargetSites: number;
+          }[];
+          readonly omittedOutgoingEdges: number;
+          readonly directRegionSites: readonly {
+            readonly id: string;
+            readonly kind: string;
+            readonly operation: string;
+            readonly sourceLocator: string;
+          }[];
+          readonly omittedDirectRegionSites: number;
+          readonly sourceTraceEntries: readonly {
+            readonly entryRegionId: string;
+            readonly sourceTraceStatus: string;
+          }[];
+          readonly omittedSourceTraceEntries: number;
+          readonly proof: "SOURCE_REGION_NAVIGATION_NOT_UI_DELIVERY_OR_GAME_CAUSALITY";
+        };
       }[];
       readonly omittedLiteralTranslationReferences: number;
       readonly sourceReferenceStatus:
@@ -361,6 +418,108 @@ export function projectSelectedMapAuditModelHandoff(
     copyWords(b) - copyWords(a) ||
     a.locator.localeCompare(b.locator) ||
     a.id.localeCompare(b.id));
+  // Canonical, selected-artifact IR navigation for exact lexical
+  // translation sites. Build local indexes ONCE: no second semantic model.
+  // Do not index the whole map's execution graph on unrelated reports.
+  // A source key join is useful only if one of the bounded locale entries
+  // actually has an authored literal reference.
+  const hasVisibleSourceReferences = rankedCopy.slice(0, 12).some(item =>
+    (refsByKey.get(item.playerFacingText!.key)?.length ?? 0) > 0);
+  const semanticIr: SemanticIr | undefined = hasVisibleSourceReferences
+    ? audit.inspection.semanticIrModel
+    : undefined;
+  const regionsById = new Map((semanticIr?.execution.regions ?? [])
+    .map(region => [region.id, region] as const));
+  type SourceSite = NonNullable<SelectedMapAuditModelHandoff[
+    "gameUnderstanding"]["playerFacingTextCues"][number][
+      "literalTranslationReferences"][number]["sourceContext"]>[
+        "directRegionSites"][number];
+  const siteByRegion = new Map<string, SourceSite[]>();
+  const location = (source: {relativePath:string; range?: {
+    lineStart?:number; columnStart?:number;
+  } | undefined}): string =>
+    source.relativePath + (source.range?.lineStart === undefined ? "" :
+      ":" + source.range.lineStart + ":" + (source.range.columnStart ?? 1));
+  const addSite = (regionId: string, site: SourceSite): void => {
+    const group = siteByRegion.get(regionId) ?? [];
+    group.push(site);
+    siteByRegion.set(regionId, group);
+  };
+  for (const item of semanticIr?.state.operations ?? []) {
+    if (item.source.artifactId !== audit.identity.artifactId) continue;
+    addSite(item.executionRegionId, {
+      id: item.id, kind: "state", operation: item.operation,
+      sourceLocator: location(item.source),
+    });
+  }
+  for (const item of semanticIr?.state.resourceActions ?? []) {
+    if (item.source.artifactId !== audit.identity.artifactId) continue;
+    addSite(item.executionRegionId, {
+      id: item.id, kind: "resource", operation: item.action,
+      sourceLocator: location(item.source),
+    });
+  }
+  for (const item of semanticIr?.execution.worldEffects ?? []) {
+    if (item.source.artifactId !== audit.identity.artifactId) continue;
+    addSite(item.executionRegionId, {
+      id: item.id, kind: "world-effect", operation: item.kind,
+      sourceLocator: location(item.source),
+    });
+  }
+  for (const item of semanticIr?.execution.outcomes ?? []) {
+    if (item.source.artifactId !== audit.identity.artifactId) continue;
+    addSite(item.executionRegionId, {
+      id: item.id, kind: "code-return", operation: item.propertyName,
+      sourceLocator: location(item.source),
+    });
+  }
+  for (const item of semanticIr?.execution.apiCalls ?? []) {
+    if (item.source.artifactId !== audit.identity.artifactId) continue;
+    addSite(item.executionRegionId, {
+      id: item.id, kind: "typed-api-call", operation: item.method,
+      sourceLocator: location(item.source),
+    });
+  }
+  for (const group of siteByRegion.values()) {
+    group.sort((a,b) =>
+      Number(b.kind === "typed-api-call" && b.operation === "sendMessage") -
+        Number(a.kind === "typed-api-call" && a.operation === "sendMessage") ||
+      a.sourceLocator.localeCompare(b.sourceLocator) ||
+      a.id.localeCompare(b.id));
+  }
+  const incomingByRegion = new Map<string, SemanticIr["execution"]["edges"][number][]>();
+  const outgoingByRegion = new Map<string, SemanticIr["execution"]["edges"][number][]>();
+  for (const edge of semanticIr?.execution.edges ?? []) {
+    if (edge.resolution !== "resolved" || edge.to === undefined ||
+        edge.source.artifactId !== audit.identity.artifactId ||
+        !regionsById.has(edge.from) || !regionsById.has(edge.to)) continue;
+    const incoming = incomingByRegion.get(edge.to) ?? [];
+    incoming.push(edge);
+    incomingByRegion.set(edge.to, incoming);
+    const outgoing = outgoingByRegion.get(edge.from) ?? [];
+    outgoing.push(edge);
+    outgoingByRegion.set(edge.from, outgoing);
+  }
+  for(const map of [incomingByRegion, outgoingByRegion]){
+    for(const group of map.values()) group.sort((a,b)=>a.id.localeCompare(b.id));
+  }
+  const sourceFlows = hasVisibleSourceReferences
+    ? audit.mapAuditReport.gameplayStructure?.sourceFlowCandidates ?? []
+    : [];
+  const traceEntriesByRegion = new Map<string, {
+    entryRegionId: string; sourceTraceStatus: string;
+  }[]>();
+  for(const flow of sourceFlows){
+    for(const regionId of flow.regionIds){
+      const group=traceEntriesByRegion.get(regionId)??[];
+      group.push({entryRegionId:flow.entryRegionId,
+        sourceTraceStatus:flow.sourceTraceStatus ?? "UNKNOWN"});
+      traceEntriesByRegion.set(regionId,group);
+    }
+  }
+  const edgeGuards = (edge: SemanticIr["execution"]["edges"][number]): string[] =>
+    [...(edge.lexicalGuards??[]),...(edge.precedenceGuards??[])]
+      .map(guard=>guard.expression+" ["+guard.branch+"] @ "+location(guard.source));
   const playerFacingTextCues: SelectedMapAuditModelHandoff[
     "gameUnderstanding"]["playerFacingTextCues"] =
     rankedCopy.slice(0, 12).map(item => ({
@@ -370,12 +529,63 @@ export function projectSelectedMapAuditModelHandoff(
       sourceLocator: item.locator,
       literalTranslationReferences:
         (refsByKey.get(item.playerFacingText!.key) ?? []).slice(0, 5)
-          .map(ref => ({
-            evidenceId: ref.id,
-            sourceLocator: ref.locator,
-            executionRegion: ref.literalTranslationUse!.executionRegion,
-            syntax: ref.literalTranslationUse!.syntax,
-          })),
+          .map(ref => {
+            const use = ref.literalTranslationUse!;
+            const regionId = use.executionRegionId;
+            const region = regionId === undefined ? undefined :
+              regionsById.get(regionId);
+            const exactRegion = region !== undefined &&
+              region.source.artifactId === audit.identity.artifactId &&
+              region.source.relativePath ===
+                ref.locator.replace(/:[1-9][0-9]*:[1-9][0-9]*$/, "");
+            const direct = exactRegion
+              ? siteByRegion.get(regionId!) ?? [] : [];
+            const inbound = exactRegion
+              ? incomingByRegion.get(regionId!) ?? [] : [];
+            const outbound = exactRegion
+              ? outgoingByRegion.get(regionId!) ?? [] : [];
+            const traces = exactRegion
+              ? traceEntriesByRegion.get(regionId!) ?? [] : [];
+            return {
+              evidenceId: ref.id,
+              sourceLocator: ref.locator,
+              executionRegion: use.executionRegion,
+              syntax: use.syntax,
+              sourceConditions: use.sourceConditions ?? [],
+              sourceContext: {
+                status: exactRegion
+                  ? "EXACT_IR_SOURCE_REGION_CONTEXT"
+                  : "IR_SOURCE_REGION_UNRESOLVED",
+                executionRegionId: exactRegion ? regionId! : null,
+                incomingEdges: inbound.slice(0, 4).map(edge => ({
+                  edgeId: edge.id, fromRegionId: edge.from,
+                  kind: edge.kind, sourceLocator: location(edge.source),
+                  controlFlow: edge.controlFlow ?? "UNRESOLVED",
+                  scheduler: edge.scheduler ?? null,
+                  authoredGuards: edgeGuards(edge).slice(0, 4),
+                })),
+                omittedIncomingEdges: Math.max(0, inbound.length - 4),
+                outgoingEdges: outbound.slice(0, 4).map(edge => {
+                  const sites = siteByRegion.get(edge.to!) ?? [];
+                  return {
+                    edgeId: edge.id, toRegionId: edge.to!,
+                    kind: edge.kind, sourceLocator: location(edge.source),
+                    controlFlow: edge.controlFlow ?? "UNRESOLVED",
+                    scheduler: edge.scheduler ?? null,
+                    authoredGuards: edgeGuards(edge).slice(0, 4),
+                    directTargetSites: sites.slice(0, 6),
+                    omittedDirectTargetSites: Math.max(0, sites.length - 6),
+                  };
+                }),
+                omittedOutgoingEdges: Math.max(0, outbound.length - 4),
+                directRegionSites: direct.slice(0, 8),
+                omittedDirectRegionSites: Math.max(0, direct.length - 8),
+                sourceTraceEntries: traces.slice(0, 4),
+                omittedSourceTraceEntries: Math.max(0, traces.length - 4),
+                proof: "SOURCE_REGION_NAVIGATION_NOT_UI_DELIVERY_OR_GAME_CAUSALITY",
+              },
+            };
+          }),
       omittedLiteralTranslationReferences: Math.max(0,
         (refsByKey.get(item.playerFacingText!.key)?.length ?? 0) - 5),
       sourceReferenceStatus:

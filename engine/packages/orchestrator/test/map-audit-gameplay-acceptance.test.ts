@@ -575,6 +575,17 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
         expect(cue?.literalTranslationReferences[0]?.sourceLocator)
           .toContain("/scripts/main.js:");
         expect(cue?.omittedLiteralTranslationReferences).toBe(0);
+        const sourceContext = cue?.literalTranslationReferences[0]?.sourceContext;
+        expect(sourceContext?.status).toBe("EXACT_IR_SOURCE_REGION_CONTEXT");
+        expect(sourceContext?.executionRegionId).toContain("exec:script:");
+        expect(sourceContext?.proof)
+          .toBe("SOURCE_REGION_NAVIGATION_NOT_UI_DELIVERY_OR_GAME_CAUSALITY");
+        expect(sourceContext?.incomingEdges).toEqual([]);
+        expect(sourceContext?.directRegionSites).toBeDefined();
+        expect(sourceContext?.sourceTraceEntries.every(item =>
+          item.sourceTraceStatus === "SOURCE_ROOT_TRACE" ||
+          item.sourceTraceStatus === "DISCONNECTED_SOURCE_REGION" ||
+          item.sourceTraceStatus === "UNKNOWN")).toBe(true);
       }
       expect(winner?.sourceReferenceStatus)
         .toBe("NO_LITERAL_TRANSLATE_REFERENCE_FOUND");
@@ -594,6 +605,8 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(copyBrief).toContain("welcome.guide");
       expect(copyBrief).toContain("daigon.ui.winner.red");
       expect(copyBrief).toContain("Literal script translate-property references: 1");
+      expect(copyBrief).toContain("Code-region context:");
+      expect(copyBrief).toContain("Region identity is NOT player reachability");
       expect(copyBrief).toContain("Literal script translate-property references: 0");
       expect(copyBrief).toContain("not proof unused");
       expect(copyBrief).toContain("NOT GAME DESIGN");

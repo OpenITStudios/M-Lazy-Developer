@@ -209,6 +209,23 @@ export function formatSelectedMapAuditBrief(input: {
               " [" + item.literalTranslationUse!.executionRegion + "]"))
               .join("; ") +
             (refs.length > 3 ? "; additional references omitted." : "."),
+          ...refs.slice(0, 2).map(item => {
+            const use = item.literalTranslationUse!;
+            const conditions = use.sourceConditions ?? [];
+            return "  Code-region context: " +
+              concise(use.executionRegionId ?? "IR_REGION_UNRESOLVED") +
+              "; lexical/early-exit condition(s) at expression: " +
+              conditions.length +
+              (conditions.length ? " [" +
+                conditions.slice(0, 2).map(condition =>
+                  concise(condition.condition) + " (" + condition.kind +
+                  "/" + condition.branch + " @ " +
+                  concise(condition.sourceLocator) + ")").join("; ") +
+                (conditions.length > 2 ? "; others omitted" : "") +
+                "]" : "") +
+              ". Region identity is NOT player reachability or proof " +
+              "that a later sendMessage delivered this translation.";
+          }),
         ]),
       );
     }

@@ -91,6 +91,37 @@ computed translation keys, and source aliases remain unproven/unknown. The
 parser revision must be updated when adding this evidence so cached results
 from an earlier parser are not mistaken for complete coverage.
 
+## Composite welcome-to-party separation — source reconstruction, 2026-10-23
+
+Selected immutable archive: Daigon Composite v1.1.17, SHA-256
+`aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4`.
+
+The player-facing copy `daigon.welcome.line2` promises a podium/party
+ready/countdown experience; it is **NOT a causal source edge** into the
+ready/countdown services. Direct read-only archive inspection found:
+
+- `behavior_packs/BP/scripts/chunks/chunk-7WKHHBF4.js:2317–2328`:
+  WelcomeService registers an initial-spawn event, checks initialSpawn and
+  an existing locked party, then schedules its welcome message helper.
+- Same script `:2339–2351`: `_sendWelcomeMessage` builds literal
+  translation objects and schedules `player.sendMessage(line)` calls.
+- `behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:1491–1516`:
+  PartyService handles `party:ready`, mutates member readiness and checks
+  whether party members are all ready.
+- `behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:17229–17241`:
+  GameManager.resumeCountdown checks a stored `countdown` session state
+  and can restart a countdown ticker.
+
+**Why this matters for unknown game understanding:** locating a sentence,
+an event listener, a state mutation and a countdown function in one world is
+not proof of an authored connected ready → countdown causal route. Existing
+Semantic IR region IDs, incoming/outgoing source edges and direct same-region
+operations are usable *investigation context*, provided the operator sees
+their proof boundaries. The source `translate` property itself cannot
+authorize callback execution, branching outcome, player-facing delivery,
+party membership, stage chronology or a BUG verdict. No actual whole-map
+`runSelectedMapAudit()` or live Minecraft session was run for this claim.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.

@@ -427,6 +427,14 @@ export function buildInspectionSemanticIr(
         regionSources.set(command.executionRegion, command.source);
       }
     }
+    // Existing IR script region, not a new execution graph. The literal
+    // translation can identify its lexical region even without a typed
+    // Minecraft API operation; its presence never proves activation.
+    for (const use of parsed.literalTranslationReferences ?? []) {
+      if (!regionSources.has(use.executionRegion)) {
+        regionSources.set(use.executionRegion, use.source);
+      }
+    }
     for (const call of parsed.methodCalls) {
       if (call.executionRegion) {
         regionSources.set(call.executionRegion, call.source);

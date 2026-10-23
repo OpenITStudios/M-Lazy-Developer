@@ -186,6 +186,8 @@ export function buildGameplayIntentModel(
     const authoredLocaleKeys = new Set([...evidence.values()]
       .flatMap(item => item.playerFacingText === undefined
         ? [] : [item.playerFacingText.key]));
+    const irRegions = new Map((input.semanticIr?.execution.regions ?? [])
+      .map(item => [item.id, item] as const));
     for (const { parsed: script } of [...selectedScripts, ...selectedContracts]) {
       for (const use of script.literalTranslationReferences ?? []) {
         if (!authoredLocaleKeys.has(use.key) ||
@@ -196,6 +198,31 @@ export function buildGameplayIntentModel(
             use.source.range?.lineStart === undefined ||
             use.source.range.columnStart === undefined) continue;
         const locator = sourceLocator(use.source);
+        // Region IDs share the existing parser/IR owner; a similarly named
+        // function in another script must not be used as the same origin.
+        const regionId = scriptRegionId(script.source, use.executionRegion);
+        const region = irRegions.get(regionId);
+        const exactRegion = region !== undefined &&
+          region.ownerId === script.identifier &&
+          region.source.artifactId === input.artifactId &&
+          region.source.relativePath === use.source.relativePath;
+        const sourceConditions = [
+          ...(use.lexicalGuards ?? []).map(guard => ({
+            kind: "lexical" as const, guard,
+          })),
+          ...(use.precedenceGuards ?? []).map(guard => ({
+            kind: "precedence" as const, guard,
+          })),
+        ].filter(({ guard }) =>
+          guard.source.artifactId === input.artifactId &&
+          guard.source.relativePath === use.source.relativePath &&
+          guard.source.range?.lineStart !== undefined &&
+          guard.source.range?.columnStart !== undefined)
+          .map(({ kind, guard }) => ({
+            kind, condition: guard.conditionText,
+            branch: guard.branch,
+            sourceLocator: sourceLocator(guard.source),
+          }));
         const id = "literal-translation-use:" + encodeURIComponent(
           input.artifactId + ":" + locator + ":" + use.key);
         evidence.set(id, {
@@ -211,6 +238,8 @@ export function buildGameplayIntentModel(
             key: use.key,
             syntax: use.syntax,
             executionRegion: use.executionRegion,
+            ...(exactRegion ? { executionRegionId: regionId } : {}),
+            ...(sourceConditions.length ? { sourceConditions } : {}),
           },
         });
       }

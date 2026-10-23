@@ -83,6 +83,17 @@ export interface GameplayIntentEvidence {
     readonly key: string;
     readonly syntax: "translate-object-literal";
     readonly executionRegion: string;
+    /** Only when the exact canonical IR script region was found; absence
+     * is an explicit source-graph identity gap, not proof of dead code. */
+    readonly executionRegionId?: string;
+    /** Expression-local source conditions; not necessarily guards on a
+     * later sendMessage() or the full player session lifecycle. */
+    readonly sourceConditions?: readonly {
+      readonly kind: "lexical" | "precedence";
+      readonly condition: string;
+      readonly branch: "true" | "false";
+      readonly sourceLocator: string;
+    }[];
   };
 }
 

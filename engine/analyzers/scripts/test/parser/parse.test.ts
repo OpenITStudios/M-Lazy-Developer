@@ -34,6 +34,34 @@ describe("script analyzer", () => {
     expect(refs.some(item => item.key === "dynamicKey")).toBe(false);
   });
 
+  it("retains exact source-branch context around a literal translation, not inferred UI execution", () => {
+    const parsed = parseScriptFile("scripts/guarded", [
+      "function showWelcome(ready) {",
+      "  if (!ready) return;",
+      '  const line = { translate: "welcome.guide" };',
+      '  if (ready) { const option = { translate: "party.ready" }; }',
+      "  return line;",
+      "}",
+    ].join("\n"), source);
+    const guide = parsed.literalTranslationReferences?.find(item =>
+      item.key === "welcome.guide");
+    const option = parsed.literalTranslationReferences?.find(item =>
+      item.key === "party.ready");
+    expect(guide?.executionRegion).toBe("function:showWelcome");
+    expect(guide?.source.range?.lineStart).toBe(3);
+    expect(guide?.precedenceGuards?.some(guard =>
+      guard.conditionText === "!ready" && guard.branch === "false"))
+      .toBe(true);
+    expect(option?.lexicalGuards?.some(guard =>
+      guard.conditionText === "ready" && guard.branch === "true"))
+      .toBe(true);
+    expect(option?.precedenceGuards?.some(guard =>
+      guard.conditionText === "!ready" && guard.branch === "false"))
+      .toBe(true);
+    // Conditions on source expression are NOT the same as proof of an
+    // observed message, gameplay objective or session transition.
+  });
+
 
   it("keeps helper-return receiver identity inside its original lexical scope", () => {
     const parsed = parseScriptFile("scripts/main", [

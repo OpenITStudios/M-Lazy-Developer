@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:7:typescript:" +
+  "m-bedrock-script-parser:8:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -2684,6 +2684,8 @@ export function parseScriptFile(
         source: lineSource(file, node.initializer, source),
         executionRegion: localExecutionRegionId(node, file),
         syntax: "translate-object-literal",
+        lexicalGuards: lexicalBranchGuards(node, file, source),
+        precedenceGuards: precedingEarlyExitGuards(node, file, source),
       });
     }
     if (ts.isCallExpression(node)) {

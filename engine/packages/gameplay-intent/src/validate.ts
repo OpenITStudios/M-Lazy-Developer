@@ -76,6 +76,11 @@ export function validateGameplayIntentModel(
          !evidence.literalTranslationUse.key.trim() ||
          !evidence.literalTranslationUse.executionRegion.trim() ||
          evidence.literalTranslationUse.syntax !== "translate-object-literal" ||
+         (evidence.literalTranslationUse.executionRegionId !== undefined &&
+          !evidence.literalTranslationUse.executionRegionId.startsWith("exec:script:")) ||
+         evidence.literalTranslationUse.sourceConditions?.some(condition =>
+           !condition.condition.trim() || !condition.sourceLocator.trim() ||
+           (condition.kind !== "lexical" && condition.kind !== "precedence")) ||
          !/:[1-9][0-9]*:[1-9][0-9]*$/.test(evidence.locator))) {
       issues.push({
         path: "evidence." + evidence.id + ".literalTranslationUse",

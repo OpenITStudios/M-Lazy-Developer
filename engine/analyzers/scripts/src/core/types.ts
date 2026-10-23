@@ -331,6 +331,10 @@ export interface ScriptLiteralTranslationReference {
   readonly source: SourceRef;
   readonly executionRegion: string;
   readonly syntax: "translate-object-literal";
+  /** Exact conditions enclosing the literal object expression, not the
+   * later UI API call, receiver identity, or successful presentation. */
+  readonly lexicalGuards?: readonly ScriptLexicalGuard[];
+  readonly precedenceGuards?: readonly ScriptLexicalGuard[];
 }
 
 export interface ScriptCommandLiteral {
