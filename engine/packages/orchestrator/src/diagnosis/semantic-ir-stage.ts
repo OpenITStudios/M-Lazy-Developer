@@ -878,13 +878,12 @@ export function buildInspectionSemanticIr(
       );
     }
 
-    // Authoring-neutral boolean property mutations are material source
-    // writes even when the member is NOT spelled state/status/phase. Reuse
-    // the existing authoredPropertyMutations AST evidence, never lexical
-    // rescanning. A SITE-QUALIFIED script-memory surface intentionally
-    // refuses to merge member.ready in two different functions or receivers.
-    // All effects/callers remain candidates; dynamic flags are not literal
-    // winners, accepted party readiness or a runtime state-machine contract.
+    // Authoring-neutral property Boolean/short-circuit syntax is source
+    // evidence even without conventional state/status/phase member names.
+    // A logical-expression is an UNKNOWN-value write, not a typed Boolean.
+    // Reuse authoredPropertyMutations AST evidence (no lexical rescanning);
+    // site-qualified script-memory surfaces never merge runtime receivers.
+    // All effects/callers remain candidates, not gameplay or bug proof.
     for (const mutation of parsed.authoredPropertyMutations ?? []) {
       const form = mutation.booleanAssignment;
       if (mutation.operator !== "=" || form === undefined ||

@@ -203,11 +203,14 @@ export interface StateOperation {
    * Names like `member.ready` and `session.ready` cannot establish a
    * common runtime object or gameplay status. A lexical self-negation is
    * NOT a proven successful boolean toggle in the presence of accessors.
+   * For logical-expression, the original short-circuit operation is retained
+   * with UNKNOWN value and UNKNOWN runtime type, never a typed Boolean.
    */
   authoredBooleanPropertyWrite?: {
     readonly targetExpression: string;
     readonly valueExpression: string;
-    readonly form: "literal-true" | "literal-false" | "self-negation";
+    readonly form: "literal-true" | "literal-false" | "self-negation" |
+      "logical-expression";
     readonly proof: "SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE";
   };
 }

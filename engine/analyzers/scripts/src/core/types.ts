@@ -208,7 +208,12 @@ export interface ScriptAuthoredPropertyMutation {
   /** Exact AST syntax only: no player-ready/phase semantics or runtime
    * receiver identity inferred from arbitrary property names.
    */
-  readonly booleanAssignment?: "literal-true" | "literal-false" | "self-negation";
+  /** "logical-expression" is a source-authored &&/|| expression with a
+   * syntactically Boolean operand. JavaScript short-circuit expressions may
+   * return non-Boolean values; never infer runtime truth or a gameplay state.
+   */
+  readonly booleanAssignment?: "literal-true" | "literal-false" |
+    "self-negation" | "logical-expression";
   readonly source: SourceRef;
   readonly lexicalGuards?: readonly ScriptLexicalGuard[];
   readonly precedenceGuards?: readonly ScriptLexicalGuard[];

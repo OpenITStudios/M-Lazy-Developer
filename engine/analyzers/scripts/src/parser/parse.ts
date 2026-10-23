@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:9:typescript:" +
+  "m-bedrock-script-parser:10:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -3037,11 +3037,50 @@ export function parseScriptFile(
         // For nested event/scheduler callbacks, only collect plausible
         // Boolean syntax; arbitrary callback property assignment is
         // intentionally outside this narrowly grounded source extension.
+        // A JS logical operator preserves its operand type. Preserve only
+        // a source expression with an exact Boolean-producing operand;
+        // neither && nor || is evidence the whole result is a Boolean.
+        // Exclude unrelated payload idioms such as label = player && name.
+        const booleanTerm = (expression: ts.Expression): boolean => {
+          const term = ts.isParenthesizedExpression(expression)
+            ? expression.expression : expression;
+          if (term.kind === ts.SyntaxKind.TrueKeyword ||
+              term.kind === ts.SyntaxKind.FalseKeyword ||
+              (ts.isPrefixUnaryExpression(term) &&
+               term.operator === ts.SyntaxKind.ExclamationToken)) return true;
+          if (!ts.isBinaryExpression(term)) return false;
+          // Explicit comparison kind switch also avoids a narrow array's
+          // .includes() signature rejecting a broader BinaryOperator type.
+          switch (term.operatorToken.kind) {
+            case ts.SyntaxKind.EqualsEqualsToken:
+            case ts.SyntaxKind.ExclamationEqualsToken:
+            case ts.SyntaxKind.EqualsEqualsEqualsToken:
+            case ts.SyntaxKind.ExclamationEqualsEqualsToken:
+            case ts.SyntaxKind.LessThanToken:
+            case ts.SyntaxKind.LessThanEqualsToken:
+            case ts.SyntaxKind.GreaterThanToken:
+            case ts.SyntaxKind.GreaterThanEqualsToken:
+            case ts.SyntaxKind.InKeyword:
+            case ts.SyntaxKind.InstanceOfKeyword:
+              return true;
+            default:
+              return false;
+          }
+        };
+        const logicalBooleanSyntax = op === "=" &&
+          ts.isBinaryExpression(node.right) &&
+          (node.right.operatorToken.kind ===
+            ts.SyntaxKind.AmpersandAmpersandToken ||
+           node.right.operatorToken.kind ===
+            ts.SyntaxKind.BarBarToken) &&
+          (booleanTerm(node.right.left) ||
+           booleanTerm(node.right.right));
         const callbackBooleanCandidate = op === "=" &&
           (node.right.kind === ts.SyntaxKind.TrueKeyword ||
            node.right.kind === ts.SyntaxKind.FalseKeyword ||
            (ts.isPrefixUnaryExpression(node.right) &&
-            node.right.operator === ts.SyntaxKind.ExclamationToken));
+            node.right.operator === ts.SyntaxKind.ExclamationToken) ||
+           logicalBooleanSyntax);
         if (executionRegion.startsWith("function:") ||
             (executionRegion.startsWith("callback@") &&
              callbackBooleanCandidate)) {
@@ -3050,10 +3089,11 @@ export function parseScriptFile(
             targetExpression: node.left.getText(file).slice(0, 180),
             valueExpression: node.right.getText(file).slice(0, 180),
             operator: op,
-            // Only exact boolean syntax. A computed read, a similarly
-            // spelled property, or source-name 'ready' is never an implicit
-            // boolean value or gameplay rule. The self-negation is lexical
-            // syntax; getter/setter side effects and runtime type are UNKNOWN.
+            // Only exact literal/negation or guarded Boolean-operand
+            // short-circuit source shapes. An arbitrary computed read,
+            // similarly spelled property, or source-name 'ready' is never
+            // a gameplay rule. Logical JS expressions may yield non-Boolean
+            // operands; runtime value/receiver identity remain UNKNOWN.
             ...(op !== "=" ? {} : (() => {
               const rhs = node.right;
               // Minified Bedrock JavaScript commonly writes !0 / !1
@@ -3079,7 +3119,10 @@ export function parseScriptFile(
                       (ts.isPropertyAccessExpression(rhs.operand) ||
                        ts.isElementAccessExpression(rhs.operand)) &&
                       rhs.operand.getText(file) === node.left.getText(file)
-                      ? "self-negation" as const : undefined;
+                      ? "self-negation" as const
+                      : logicalBooleanSyntax
+                        ? "logical-expression" as const
+                        : undefined;
               return booleanAssignment === undefined
                 ? {} : { booleanAssignment };
             })()),

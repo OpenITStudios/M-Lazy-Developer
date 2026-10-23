@@ -211,6 +211,57 @@ produced by executing the latest repository TypeScript, Vitest,
 `runSelectedMapAudit()` or Minecraft multiplayer. Treat scores as
 UNKNOWN until one actual same-HEAD audit with independent review.
 
+## Cross-style logical flag expressions — independent source review, 2026-10-24
+
+Three original archived worlds were directly SHA-256 verified again before this
+generic source parser correction (no repository TypeScript or Minecraft run):
+
+- **Composite v1.1.17**, SHA
+  `aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4`: authored
+  `member.ready = !member.ready` at
+  `chunk-Q6BZV7BR.js:1498:5`; the following
+  `this.saveParty(...)` at line 1499 calls an emit site inside
+  `saveParty` (line 1371). The source subscriber at
+  `chunk-7YEVMDUW.js:29708–29710` and countdown write at
+  `29851` are separate guarded/source events, NOT observed runtime activation.
+- **BlitzBuild v1.0.2**, SHA
+  `d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504`:
+  `domain/membership.js:129:13` assigns
+  `membership.ready = ready && membership.teamId !== undefined`.
+  This is an exact authored logical expression, not a literal true/false,
+  proven membership instance or validated readiness.
+- **Beach Bedwars v1.1.0**, SHA
+  `97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8`:
+  minified `main.js:175:17079` assigns
+  `t.ready = !!n && this.loading.sweep(e,n)`;
+  the same generated line at column 18000 separately writes
+  `n.ready = !1`. Do not merge these receivers or interpret
+  the callback return as successful world preparation.
+
+An isolated TypeScript AST pass recognized 54 JavaScript files, zero source
+syntax parse errors and 239 literal/self-negation Boolean-shaped property
+assignments across these three originals. A separate AST preflight of the
+narrow logical syntax rule identified one qualifying expression in BlitzBuild
+and one in Beach Bedwars, with none in Composite. The negative control
+`item.label = player && player.name` was rejected while
+`item.ready = !!player && item.active` remained a lexical candidate.
+**These are source-shape checks, not parser/IR output, mechanic coverage or
+defect recall.** Additional
+logical expressions are retained as
+`logical-expression` only when an authored `&&` / `||` expression includes
+an exact Boolean-producing syntactic operand (such as `!!x` or strict
+comparison); the final JS expression may return a non-Boolean. Store
+source-local operation/region/guards but **NO typed written value**.
+
+A bounded model handoff should cover distinct source paths, lexical
+targets/forms and regions before showing repeated similar assignments.
+Source-scope sampling is NOT instance-equivalence or a gameplay rule.
+Expensive directed continuation queries should run only for displayed sites,
+with an explicit omitted count. None of these changes proves actual
+Minecraft event registration, guard evaluation, readiness, countdown or
+bug existence. Full exact-HEAD audit and independently scored cross-map
+semantics remain NOT EXECUTED / UNKNOWN.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.

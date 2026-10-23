@@ -179,7 +179,11 @@ export interface SelectedMapAuditModelHandoff {
       readonly surfaceId: string;
       readonly targetExpression: string;
       readonly valueExpression: string;
-      readonly form: "literal-true" | "literal-false" | "self-negation";
+      /** logical-expression is short-circuit syntax, not proven Boolean.
+       * The exact expression is evidence; final value/type are UNKNOWN.
+       */
+      readonly form: "literal-true" | "literal-false" |
+        "self-negation" | "logical-expression";
       readonly sourceLocator: string;
       readonly executionRegionId: string;
       readonly sourceIngressStatus:
@@ -899,9 +903,9 @@ export function projectSelectedMapAuditModelHandoff(
       exactResolvedPath(path, operation.executionRegionId) &&
       sourceFlowByRoot.get(path.entryRegionId)?.sourceTraceStatus ===
         "SOURCE_ROOT_TRACE");
-  // Prioritize unambiguous self-negation and rooted source evidence.
-  // The bounded view may omit other properties; the canonical IR retains
-  // every observed site and the handoff reports the omitted count.
+  // Prioritize self-negation and rooted source evidence without calling
+  // a short-circuit result a typed Boolean. Retain all unselected source
+  // records in canonical IR; this is a bounded, balanced NAVIGATION view.
   const rankedBooleanCandidates = [...booleanCandidates].sort((a, b) =>
     Number(b.authoredBooleanPropertyWrite!.form === "self-negation") -
       Number(a.authoredBooleanPropertyWrite!.form === "self-negation") ||
@@ -913,6 +917,42 @@ export function projectSelectedMapAuditModelHandoff(
     a.source.relativePath.localeCompare(b.source.relativePath) ||
     (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
     a.id.localeCompare(b.id));
+  // One bounded sample per source file first, then distinct lexical
+  // targets/forms and function regions. Distinct sites are NEVER merged:
+  // the sampling key only prevents repeated same-shaped minified writes
+  // (e.cancel = !0 etc.) from crowding out other visible source sections.
+  // Every omitted site stays in the exact IR and omission count.
+  const selectedBooleanCandidates: typeof rankedBooleanCandidates = [];
+  const visibleBooleanIds = new Set<string>();
+  const selectDistinct = (keyOf: (
+    candidate: typeof booleanCandidates[number],
+  ) => string): void => {
+    const represented = new Set(selectedBooleanCandidates.map(keyOf));
+    for (const operation of rankedBooleanCandidates) {
+      if (selectedBooleanCandidates.length >= 20) break;
+      const key = keyOf(operation);
+      if (visibleBooleanIds.has(operation.id) || represented.has(key)) continue;
+      represented.add(key);
+      visibleBooleanIds.add(operation.id);
+      selectedBooleanCandidates.push(operation);
+    }
+  };
+  selectDistinct(operation => operation.source.relativePath);
+  selectDistinct(operation => JSON.stringify([
+    operation.source.relativePath,
+    operation.authoredBooleanPropertyWrite!.targetExpression,
+    operation.authoredBooleanPropertyWrite!.form,
+  ]));
+  selectDistinct(operation => JSON.stringify([
+    operation.executionRegionId,
+    operation.authoredBooleanPropertyWrite!.form,
+  ]));
+  for (const operation of rankedBooleanCandidates) {
+    if (selectedBooleanCandidates.length >= 20) break;
+    if (visibleBooleanIds.has(operation.id)) continue;
+    visibleBooleanIds.add(operation.id);
+    selectedBooleanCandidates.push(operation);
+  }
   // Use the existing source-root graph to admit event-bus edges. A merely
   // matching .on/.emit name never makes an event callback eligible.
   const rootedSourceFlows = (audit.mapAuditReport.gameplayStructure
@@ -921,9 +961,12 @@ export function projectSelectedMapAuditModelHandoff(
   const eligibleEventEdges = new Set(rootedSourceFlows.flatMap(flow =>
     (flow.executionEdgeIds ?? []).filter(id =>
       !(flow.unresolvedExecutionEdgeIds ?? []).includes(id))));
-  const continuations = sourceIr && booleanCandidates.length > 0
+  // The model handoff expands only twenty sites. Do not perform a bounded
+  // graph search for every other source flag that cannot be displayed.
+  const continuations = sourceIr && selectedBooleanCandidates.length > 0
     ? semanticIrSourceWriteContinuations(
-        sourceIr, booleanCandidates.map(item => item.id), eligibleEventEdges)
+        sourceIr, selectedBooleanCandidates.map(item => item.id),
+        eligibleEventEdges)
     : undefined;
   const continuationSiteById = new Map<string, {
     kind: "state" | "resource" | "world-effect" | "code-return";
@@ -945,7 +988,7 @@ export function projectSelectedMapAuditModelHandoff(
   }
   const sourceBooleanPropertyWrites: SelectedMapAuditModelHandoff[
     "gameUnderstanding"]["sourceBooleanPropertyWrites"] =
-    rankedBooleanCandidates.slice(0, 20).map(operation => {
+    selectedBooleanCandidates.map(operation => {
       const authored = operation.authoredBooleanPropertyWrite!;
       const effect = sourceEffectById.get(operation.id);
       const paths = effect?.candidateIngress ?? [];
