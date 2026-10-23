@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_ARCHIVE_SOURCE_INSPECTION",
+  "date": "2026-10-23",
+  "status": "PARTIAL_SOURCE_AND_PACKAGE_ONLY",
+  "repoBaseline": "a8724bde367f5f77392314b437a75cc826b081ab",
+  "selectedArtifact": {
+    "title": "Daigon Composite v1.1.17.mcworld",
+    "googleDriveFileId": "16nx1VFP_4q7OSpUNy93iTOtmfoJKFhYH",
+    "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+    "bytes": 20424962
+  },
+  "referenceSource": {
+    "title": "Daigon Composite v1.1.17 - Raw Source and World.zip",
+    "googleDriveFileId": "10P00opUK99gM5dGTEwjedrTCUcpCObL4",
+    "sha256": "72dbfe1c402a525c3523396fb76365e1ee6dc89f8220f2252ce1069a2b048ad9",
+    "role": "advisory source-lineage comparison only; selected .mcworld remains gameplay authority"
+  },
+  "directObservations": {
+    "worldZipEntries": 543,
+    "zipCrc": "OK",
+    "parsedJsonFiles": 170,
+    "jsonSyntaxErrors": 0,
+    "packagedJsFiles": 9,
+    "packagedJsMatchesRawBuildReport": 9,
+    "relativeEsmImportsResolved": true,
+    "mcstructureFilesInventoried": 77,
+    "rawScriptTsFilesInventoried": 175,
+    "bundledSourceSectionComments": 214,
+    "uniqueClaimedSourcePaths": 167,
+    "commentsMatchingProvidedRawSourcePaths": 214,
+    "shippedSourceMapFiles": 0,
+    "gameplaySessionsObserved": 0
+  },
+  "knownPublisherLimit": {
+    "source": "Raw Pack/docs/game-results-log-2026-10-14/acceptance-report.json",
+    "scope": "developer-supplied simulated Minecraft API evidence, NOT confirmed live-game defect",
+    "singleRecordBudgetBytes": 24576,
+    "oversizedTerminalBytes": 121282
+  },
+  "conclusions": [
+    "Packaged JavaScript corresponds byte-for-byte to 9 JS records in the supplied raw-source build report.",
+    "Source-section comments enable read-only generated-file-to-claimed-raw-file navigation without trustworthy original line positions.",
+    "No complete programmatic selected-map audit, first-pass detector score, repair, or live Minecraft outcome was established."
+  ],
+  "limitations": [
+    "Source-comment paths are untrusted navigation hints and cannot be promoted to original-source proof.",
+    "Parsed JSON and ZIP CRC are transport/syntax checks only.",
+    "Native LevelDB semantics, structure gameplay outcomes, concurrent arena behavior, runtime replays and post-repair closure have not been verified.",
+    "The project's canonical workspace project.json remains pinned to v1.1.1; this separate v1.1.17 sample does not update its bug report."
+  ],
+  "futureProof": [
+    "Execute the canonical runSelectedMapAudit against this same SHA before scoring.",
+    "Freeze an independently reviewed, scenario-scoped oracle using selected-artifact evidence and valid proof tiers.",
+    "Compare the generated-script findings and any approved repair against exact same-artifact before/after evidence."
+  ]
+}

@@ -248,6 +248,20 @@ export function formatSelectedMapAuditBrief(input: {
           " → claimed original " + concise(site.originalLocator) +
           " [" + concise(site.symbol) + "; UNVERIFIED original source]");
       }
+      // Esbuild may embed source-file section comments without shipping a .map.
+      // These are claimed filenames only: never infer original line numbers,
+      // claim that the raw source was supplied, or close an audit checkpoint.
+      const sections = mapping.claimedSourceSections ?? [];
+      if (sections.length > 0) {
+        out.push("  Compiler source-section hints (UNVERIFIED filenames; original line unknown):");
+        for (const section of sections.slice(0, 3)) {
+          out.push("  " + concise(section.generatedLocator) +
+            " → claimed source file " + concise(section.claimedOriginalPath));
+        }
+        const hidden = Math.max(0, sections.length - 3) +
+          (mapping.omittedSourceSections ?? 0);
+        if (hidden > 0) out.push("  Other source-section hints not shown: " + hidden + ".");
+      }
       if (mapping.omittedSites) out.push("  Other typed sites omitted: " +
         mapping.omittedSites);
     }

@@ -71,6 +71,45 @@ describe("inspection source index coverage", () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
+
+  it("navigates real-world-shaped esbuild chunks without pretending to have a source map", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-inline-source-hints-"));
+    try {
+      const path = "behavior_packs/BP/scripts/chunks/chunk-sample.js";
+      await mkdir(join(root, "behavior_packs/BP/scripts/chunks"), { recursive: true });
+      await writeFile(join(root, path), [
+        "// build:production",
+        "// packs/BP/scripts/modules/party/PartyService.ts",
+        "export function joinParty() { return 1; }",
+        "// packs/BP/scripts/../outside.ts",
+        "// packs/BP/scripts/modules/ctf_composite/GameManager.ts",
+        "export function startGame() { return joinParty(); }",
+      ].join("\n"));
+      const result = await indexInspectionSources(root, "sample:sha", [
+        { relativePath: path, size: 330 },
+      ]);
+      expect(result.scriptSourceMapNavigation).toEqual([
+        expect.objectContaining({
+          generatedPath: path,
+          status: "unavailable",
+          mapPath: undefined,
+          sites: [],
+          claimedSourceSections: [
+            { generatedLocator: path + ":2",
+              claimedOriginalPath: "packs/BP/scripts/modules/party/PartyService.ts" },
+            { generatedLocator: path + ":5",
+              claimedOriginalPath: "packs/BP/scripts/modules/ctf_composite/GameManager.ts" },
+          ],
+          omittedSourceSections: 0,
+        }),
+      ]);
+      expect(result.coverage.parseFailures).toHaveLength(0);
+      expect(result.coverage.indexedFiles).toBe(1);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("accounts for inventoried but unreadable function and script without false nodes", async () => {
     const root = await mkdtemp(join(tmpdir(), "m-bedrock-missing-sources-"));
     try {

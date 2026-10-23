@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeScriptSourceRecovery } from "../../src/recovery/source-recovery.js";
+import { analyzeScriptSourceRecovery, bundledSourceSectionsFromScript } from "../../src/recovery/source-recovery.js";
 
 describe("script source recovery", () => {
   it("recognizes modular compiled source", () => {
@@ -31,4 +31,27 @@ describe("script source recovery", () => {
       item.includes("source-map")
     )).toBe(true);
   });
+
+  it("reads bounded esbuild section comments only as claimed file hints", () => {
+    const text = [
+      "// build:production",
+      "// packs/BP/scripts/modules/party/PartyService.ts",
+      "function start() { return 1; }",
+      "// packs/BP/scripts/../private.ts",
+      "// packs/BP/scripts/modules/ctf_composite/GameManager.ts",
+      "export function begin() { return start(); }",
+    ].join("\n");
+    expect(bundledSourceSectionsFromScript(text, 1)).toEqual({
+      hints: [{
+        generatedLine: 2,
+        claimedOriginalPath: "packs/BP/scripts/modules/party/PartyService.ts",
+      }],
+      omitted: 1,
+    });
+    expect(bundledSourceSectionsFromScript("function f() {}", 4)).toEqual({
+      hints: [], omitted: 0,
+    });
+    expect(() => bundledSourceSectionsFromScript(text, 129)).toThrow();
+  });
+
 });

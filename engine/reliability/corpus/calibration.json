@@ -171,6 +171,22 @@
       "scope": "mixed-positive-negative-real-map-static-calibration",
       "execution": "NOT_EXECUTED: ChatGPT has binary and GitHub source reads, but not a complete runnable repository checkout with declared Node 24 toolchain.",
       "note": "Frozen independently of Lazy-Developer output. Do not score until canonical audit output from this exact SHA exists."
+    },
+    {
+      "id": "cal-composite-challenge-1-1-17",
+      "status": "candidate",
+      "artifactFile": "Daigon Composite v1.1.17.mcworld",
+      "externalArtifact": {
+        "provider": "google-drive",
+        "fileId": "16nx1VFP_4q7OSpUNy93iTOtmfoJKFhYH",
+        "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4"
+      },
+      "readiness": {
+        "artifactFingerprint": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+        "frozenExpectation": "missing"
+      },
+      "scope": "real-map modular bundled scripts; authoring source and official game guide are advisory only",
+      "note": "ChatGPT directly verified artifact bytes, ZIP CRC, 170 JSON parse results, 9 bundled script hashes, and 214 generated section-comment locations on 2026-10-23. NOT an executed runSelectedMapAudit(), independent scoring oracle, or live Minecraft proof. Historical Composite project binding remains v1.1.1."
     }
   ],
   "policy": {

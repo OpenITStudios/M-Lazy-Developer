@@ -30,6 +30,51 @@ export function sourceMapReferenceFromScript(text: string): string | undefined {
   return text.match(/[#@]\s*sourceMappingURL=([^\s*]+)/)?.[1];
 }
 
+
+/** Inline bundler comments are untrusted navigation hints, never source maps. */
+export interface BundledSourceSectionHint {
+  readonly generatedLine: number;
+  readonly claimedOriginalPath: string;
+}
+
+export interface BundledSourceSectionIndex {
+  readonly hints: readonly BundledSourceSectionHint[];
+  readonly omitted: number;
+}
+
+/** A bounded, read-only fallback for esbuild-style "// packs/.../file.ts"
+ * sections when the selected artifact has no usable .map file. It does not
+ * establish original line numbers, runtime execution, or source ownership.
+ */
+export function bundledSourceSectionsFromScript(
+  text: string,
+  maxHints = 64,
+): BundledSourceSectionIndex {
+  if (!Number.isSafeInteger(maxHints) || maxHints < 1 || maxHints > 128) {
+    throw new Error("Bundled source section limit must be an integer from 1 to 128.");
+  }
+  const hints: BundledSourceSectionHint[] = [];
+  let omitted = 0;
+  const lines = text.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]!;
+    if (!line.startsWith("// ")) continue;
+    const claimedOriginalPath = line.slice(3).trim();
+    if (claimedOriginalPath.length > 250 ||
+        !/^(?:packs|src|scripts)\/[A-Za-z0-9_. /-]+\.[cm]?[jt]sx?$/.test(claimedOriginalPath) ||
+        claimedOriginalPath.split("/").some(segment => segment === "." || segment === "..") ||
+        claimedOriginalPath.includes("//")) {
+      continue;
+    }
+    if (hints.length < maxHints) {
+      hints.push({ generatedLine: index + 1, claimedOriginalPath });
+    } else {
+      omitted += 1;
+    }
+  }
+  return { hints, omitted };
+}
+
 export function analyzeScriptSourceRecovery(
   path: string,
   text: string,

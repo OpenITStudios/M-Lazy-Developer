@@ -8,6 +8,7 @@ import {
   SCRIPT_PARSER_REVISION,
   parseScriptFile,
   sourceMapReferenceFromScript,
+  bundledSourceSectionsFromScript,
   parseSourceMapV3,
   bindGeneratedPosition,
 } from "../../../../analyzers/scripts/src/index.js";
@@ -111,6 +112,14 @@ export interface InspectionScriptSourceMapNavigation {
     symbol: string;
   }[];
   readonly omittedSites: number;
+  /** Claimed original filenames from generated source comments; NOT
+   * validated source maps or reliable original file/line provenance.
+   */
+  readonly claimedSourceSections?: readonly {
+    readonly generatedLocator: string;
+    readonly claimedOriginalPath: string;
+  }[];
+  readonly omittedSourceSections?: number;
   readonly reason?: string;
 }
 
@@ -381,13 +390,21 @@ export async function indexInspectionSources(
 
         // This does not need a second AST pass on bundled/minified scripts.
         const sourceMapReference = sourceMapReferenceFromScript(text);
+        const claimedSections = bundledSourceSectionsFromScript(text);
+        const record: InspectionScriptSourceMapNavigation = {
+          generatedPath: file.relativePath,
+          status: "unavailable",
+          sites: [],
+          omittedSites: 0,
+          ...(claimedSections.hints.length === 0 ? {} : {
+            claimedSourceSections: claimedSections.hints.map(hint => ({
+              generatedLocator: file.relativePath + ":" + hint.generatedLine,
+              claimedOriginalPath: hint.claimedOriginalPath,
+            })),
+            omittedSourceSections: claimedSections.omitted,
+          }),
+        };
         if (sourceMapReference !== undefined) {
-          const record: InspectionScriptSourceMapNavigation = {
-            generatedPath: file.relativePath,
-            status: "unavailable",
-            sites: [],
-            omittedSites: 0,
-          };
           // No network, inline data URLs, arbitrary paths or filesystem
           // traversal. The actual .map MUST be inventoried in this archive.
           const validReference = /^[a-zA-Z0-9_.%/ -]+\.map$/.test(
@@ -476,6 +493,11 @@ export async function indexInspectionSources(
               });
             }
           }
+        } else if (claimedSections.hints.length > 0) {
+          scriptSourceMapNavigation.push({
+            ...record,
+            reason: "No source-map reference. Generated section comments are unverified filename hints; original source lines are unknown.",
+          });
         }
       } catch (error) {
         parseFailures.push({ relativePath: file.relativePath, kind: "script",
