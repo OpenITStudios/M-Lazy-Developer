@@ -177,6 +177,46 @@ export function buildGameplayIntentModel(
     }
   }
 
+  // A literal script `{ translate: "key" }` may refer to a selected-world
+  // locale key. It is an independent CODE site, not a delivered UI message
+  // or proof that the locale entry is the actual rendered translation.
+  // Reuse the parser's exact authored property sites; do not grep code text
+  // or correlate by phrase similarity. More than one pack can define a key.
+  if (input.artifactId !== undefined) {
+    const authoredLocaleKeys = new Set([...evidence.values()]
+      .flatMap(item => item.playerFacingText === undefined
+        ? [] : [item.playerFacingText.key]));
+    for (const { parsed: script } of [...selectedScripts, ...selectedContracts]) {
+      for (const use of script.literalTranslationReferences ?? []) {
+        if (!authoredLocaleKeys.has(use.key) ||
+            use.source.artifactId !== input.artifactId ||
+            use.source.artifactId !== script.source.artifactId ||
+            use.source.relativePath !== script.source.relativePath ||
+            !selectedArtifactSourcePaths.has(use.source.relativePath) ||
+            use.source.range?.lineStart === undefined ||
+            use.source.range.columnStart === undefined) continue;
+        const locator = sourceLocator(use.source);
+        const id = "literal-translation-use:" + encodeURIComponent(
+          input.artifactId + ":" + locator + ":" + use.key);
+        evidence.set(id, {
+          id,
+          origin: "source-code",
+          scope: "selected-artifact",
+          locator,
+          summary: "Exact authored translate-property string literal refers " +
+            "to selected-world locale key " + use.key +
+            "; call reachability, player-facing delivery, pack selection " +
+            "and intended gameplay semantics remain UNKNOWN.",
+          literalTranslationUse: {
+            key: use.key,
+            syntax: use.syntax,
+            executionRegion: use.executionRegion,
+          },
+        });
+      }
+    }
+  }
+
   // Only an exact authored assignment (target, value, region, location and
   // artifact) may inherit its Semantic IR identity. Same-named state labels,
   // source co-location and ambiguous matches are not state-transition proof.

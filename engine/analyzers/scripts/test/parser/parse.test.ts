@@ -9,6 +9,32 @@ const source = {
 };
 
 describe("script analyzer", () => {
+  it("retains exact authored translate-key object references, never random strings or computed keys", () => {
+    const script = [
+      'player.sendMessage({ translate: "welcome.guide" });',
+      'const message = { translate: "daigon.welcome.line2" };',
+      'const unrelated = "daigon.ui.winner.red";',
+      'const computed = { translate: dynamicKey };',
+      'const extra = { "translate": "translated.other" };',
+      'const template = { translate: `translated.template` };',
+    ].join("\n");
+    const parsed = parseScriptFile("scripts/main", script, source);
+    const refs = parsed.literalTranslationReferences ?? [];
+    expect(refs.map(item => item.key)).toEqual([
+      "welcome.guide", "daigon.welcome.line2",
+      "translated.other", "translated.template",
+    ]);
+    expect(refs.map(item => item.source.range?.lineStart)).toEqual([1, 2, 5, 6]);
+    expect(refs.every(item =>
+      item.syntax === "translate-object-literal" &&
+      item.source.artifactId === source.artifactId &&
+      item.source.relativePath === source.relativePath &&
+      item.source.range?.columnStart !== undefined)).toBe(true);
+    expect(refs.some(item => item.key === "daigon.ui.winner.red")).toBe(false);
+    expect(refs.some(item => item.key === "dynamicKey")).toBe(false);
+  });
+
+
   it("keeps helper-return receiver identity inside its original lexical scope", () => {
     const parsed = parseScriptFile("scripts/main", [
       'import { world } from "@minecraft/server";',

@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:6:typescript:" +
+  "m-bedrock-script-parser:7:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -19,6 +19,7 @@ import type {
   ScriptLexicalGuard,
   ScriptBlockMatchGuard,
   ScriptCommandLiteral,
+  ScriptLiteralTranslationReference,
   ScriptAuthoredPropertyMutation,
   ScriptUnresolvedReceiverCall,
   ScriptImport,
@@ -2455,6 +2456,7 @@ export function parseScriptFile(
   const propertyWrites = inferScriptPropertyWrites(file, source);
   const entityEventTriggers: ScriptEntityEventTrigger[] = [];
   const commandLiterals: ScriptCommandLiteral[] = [];
+  const literalTranslationReferences: ScriptLiteralTranslationReference[] = [];
   const authoredPropertyMutations: ScriptAuthoredPropertyMutation[] = [];
   const unresolvedReceiverCalls: ScriptUnresolvedReceiverCall[] = [];
   const lifecycleMemberExposures = inferScriptLifecycleMemberExposures(
@@ -2668,6 +2670,22 @@ export function parseScriptFile(
   ];
 
   const visit = (node: ts.Node): void => {
+    // Only a literal `translate` PROPERTY in a parsed object. A key found
+    // in a string/comment, a dynamically computed key, or an unrelated
+    // `text`/game-state property must not establish a localization join.
+    // This records authored syntax, not a displayed message or API call.
+    if (ts.isPropertyAssignment(node) &&
+        (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) &&
+        node.name.text === "translate" &&
+        ts.isStringLiteralLike(node.initializer) &&
+        node.initializer.text.trim()) {
+      literalTranslationReferences.push({
+        key: node.initializer.text,
+        source: lineSource(file, node.initializer, source),
+        executionRegion: localExecutionRegionId(node, file),
+        syntax: "translate-object-literal",
+      });
+    }
     if (ts.isCallExpression(node)) {
       // Calls on method parameters or nested receivers are authored source
       // attempts, not resolved same-class calls. Retain them separately.
@@ -3595,6 +3613,7 @@ export function parseScriptFile(
     propertyWrites,
     entityEventTriggers,
     commandLiterals,
+    literalTranslationReferences,
     lifecycleMemberExposures,
     moduleMemberAccesses,
     importedSymbols,

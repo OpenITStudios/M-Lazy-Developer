@@ -37,6 +37,22 @@ export interface SelectedMapAuditModelHandoff {
       readonly key: string;
       readonly text: string;
       readonly sourceLocator: string;
+      /** Exact key match to authored script `{ translate: "key" }` sites.
+       * Neither a recorded key nor a matching translation proves the text
+       * was displayed, the owning call fired or the chosen pack/locale.
+       */
+      readonly literalTranslationReferences: readonly {
+        readonly evidenceId: string;
+        readonly sourceLocator: string;
+        readonly executionRegion: string;
+        readonly syntax: "translate-object-literal";
+      }[];
+      readonly omittedLiteralTranslationReferences: number;
+      readonly sourceReferenceStatus:
+        "EXACT_LITERAL_TRANSLATE_SOURCE_REFERENCE" |
+        "NO_LITERAL_TRANSLATE_REFERENCE_FOUND";
+      /** One key may be authored by both behavior and resource packs. */
+      readonly matchingLocaleDefinitionCount: number;
       readonly proof: "LITERAL_SELECTED_SOURCE_COPY_NOT_GAME_DESIGN";
     }[];
     readonly omittedPlayerFacingTextCues: number;
@@ -309,7 +325,30 @@ export function projectSelectedMapAuditModelHandoff(
       item.scope === "selected-artifact" &&
       item.origin === "translation" &&
       item.playerFacingText !== undefined);
-  // Prefer explanatory sentences over short status tokens for navigation,
+  const sourceTranslationRefs = audit.inspection.gameplayIntent.model.evidence
+    .filter(item =>
+      item.scope === "selected-artifact" &&
+      item.origin === "source-code" &&
+      item.literalTranslationUse !== undefined);
+  const refsByKey = new Map<string, typeof sourceTranslationRefs>();
+  for (const reference of sourceTranslationRefs) {
+    const key = reference.literalTranslationUse!.key;
+    const list = refsByKey.get(key) ?? [];
+    list.push(reference);
+    refsByKey.set(key, list);
+  }
+  for (const list of refsByKey.values()) {
+    list.sort((a, b) => a.locator.localeCompare(b.locator) ||
+      a.id.localeCompare(b.id));
+  }
+  const definitionCounts = new Map<string, number>();
+  for (const item of allCopy) {
+    const key = item.playerFacingText!.key;
+    definitionCounts.set(key, (definitionCounts.get(key) ?? 0) + 1);
+  }
+  // Prefer source-referenced explanatory sentences for investigation,
+  // never for approval or truthfulness of a game's objective.
+  // Generic result announcements remain available even when not referenced.
   // never for design authority. Preserve all omitted source cues in Intent.
   const copyWords = (item: typeof allCopy[number]): number =>
     item.playerFacingText!.text
@@ -317,6 +356,8 @@ export function projectSelectedMapAuditModelHandoff(
       .replace(/[\uE000-\uF8FF]/g, " ")
       .trim().split(/\s+/).filter(Boolean).length;
   const rankedCopy = [...allCopy].sort((a, b) =>
+    Number((refsByKey.get(b.playerFacingText!.key)?.length ?? 0) > 0) -
+      Number((refsByKey.get(a.playerFacingText!.key)?.length ?? 0) > 0) ||
     copyWords(b) - copyWords(a) ||
     a.locator.localeCompare(b.locator) ||
     a.id.localeCompare(b.id));
@@ -327,6 +368,22 @@ export function projectSelectedMapAuditModelHandoff(
       key: item.playerFacingText!.key,
       text: item.playerFacingText!.text,
       sourceLocator: item.locator,
+      literalTranslationReferences:
+        (refsByKey.get(item.playerFacingText!.key) ?? []).slice(0, 5)
+          .map(ref => ({
+            evidenceId: ref.id,
+            sourceLocator: ref.locator,
+            executionRegion: ref.literalTranslationUse!.executionRegion,
+            syntax: ref.literalTranslationUse!.syntax,
+          })),
+      omittedLiteralTranslationReferences: Math.max(0,
+        (refsByKey.get(item.playerFacingText!.key)?.length ?? 0) - 5),
+      sourceReferenceStatus:
+        (refsByKey.get(item.playerFacingText!.key)?.length ?? 0) > 0
+          ? "EXACT_LITERAL_TRANSLATE_SOURCE_REFERENCE"
+          : "NO_LITERAL_TRANSLATE_REFERENCE_FOUND",
+      matchingLocaleDefinitionCount:
+        definitionCounts.get(item.playerFacingText!.key) ?? 0,
       proof: "LITERAL_SELECTED_SOURCE_COPY_NOT_GAME_DESIGN",
     }));
   const sourceRelations = audit.mapAuditReport.gameplayStructure

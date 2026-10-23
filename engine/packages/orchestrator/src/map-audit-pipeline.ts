@@ -794,7 +794,11 @@ function assembleSelectedMapAuditRun(
             // must NOT inflate "unlinked semantic evidence" or claim a
             // missing Scenario Graph node for every translation sentence.
             .filter((item) => item.scope === "selected-artifact" &&
-              item.playerFacingText === undefined)
+              item.playerFacingText === undefined &&
+              // Source-only translate-literal sites are independent
+              // navigation evidence, not a mechanic needing Scenario Graph
+              // placement or proof of delivered UI.
+              item.literalTranslationUse === undefined)
             .map((item) => item.id),
         ...(inspection.gameplayWorld.arenas.count === undefined
           ? {}

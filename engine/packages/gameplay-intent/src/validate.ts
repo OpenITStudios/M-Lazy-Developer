@@ -69,6 +69,21 @@ export function validateGameplayIntentModel(
     }
   }
 
+  for (const evidence of model.evidence) {
+    if (evidence.literalTranslationUse !== undefined &&
+        (evidence.origin !== "source-code" ||
+         evidence.scope !== "selected-artifact" ||
+         !evidence.literalTranslationUse.key.trim() ||
+         !evidence.literalTranslationUse.executionRegion.trim() ||
+         evidence.literalTranslationUse.syntax !== "translate-object-literal" ||
+         !/:[1-9][0-9]*:[1-9][0-9]*$/.test(evidence.locator))) {
+      issues.push({
+        path: "evidence." + evidence.id + ".literalTranslationUse",
+        message: "A script translation reference must have an exact selected-artifact literal source site; it is not player-facing gameplay proof.",
+      });
+    }
+  }
+
   const nodeIds = new Set(model.nodes.map((node) => node.id));
   const evidenceIds = new Set(
     model.evidence.map((evidence) => evidence.id),

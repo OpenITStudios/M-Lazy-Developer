@@ -322,6 +322,17 @@ export interface ScriptEntityEventTrigger {
   precedenceGuards?: readonly ScriptLexicalGuard[];
 }
 
+/** A literal key in an authored `{ translate: "key" }` object.
+ * It may be passed to a UI API, stored, or never executed. No rendered
+ * message, game rule or caller reachability is implied by the syntax.
+ */
+export interface ScriptLiteralTranslationReference {
+  readonly key: string;
+  readonly source: SourceRef;
+  readonly executionRegion: string;
+  readonly syntax: "translate-object-literal";
+}
+
 export interface ScriptCommandLiteral {
   command: string;
   mechanism?: "runCommand" | "runCommandAsync" | "embedded-literal";
@@ -699,6 +710,8 @@ export interface ParsedScriptFile {
   propertyWrites: ScriptPropertyWrite[];
   entityEventTriggers: ScriptEntityEventTrigger[];
   commandLiterals: ScriptCommandLiteral[];
+  /** Exact source translation references; not delivered UI or game intent. */
+  literalTranslationReferences?: readonly ScriptLiteralTranslationReference[];
   lifecycleMemberExposures: ScriptLifecycleMemberExposure[];
   moduleMemberAccesses: ScriptModuleMemberAccess[];
   importedSymbols: ScriptImportedSymbol[];

@@ -75,6 +75,15 @@ export interface GameplayIntentEvidence {
     readonly key: string;
     readonly text: string;
   };
+  /** Literal source `translate` property referring to a selected .lang
+   * key. This independent code site does not certify UI delivery or which
+   * resource/behavior pack translation wins when keys collide.
+   */
+  literalTranslationUse?: {
+    readonly key: string;
+    readonly syntax: "translate-object-literal";
+    readonly executionRegion: string;
+  };
 }
 
 export type GameplayIntentScalar =

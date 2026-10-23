@@ -158,10 +158,26 @@ export function formatSelectedMapAuditBrief(input: {
     item.scope === "selected-artifact" &&
     item.origin === "translation" &&
     item.playerFacingText !== undefined);
+  const scriptLocaleRefs = intent.evidence.filter(item =>
+    item.scope === "selected-artifact" &&
+    item.origin === "source-code" &&
+    item.literalTranslationUse !== undefined);
+  const referencesByKey = new Map<string, typeof scriptLocaleRefs>();
+  for (const item of scriptLocaleRefs) {
+    const key = item.literalTranslationUse!.key;
+    referencesByKey.set(key, [...(referencesByKey.get(key) ?? []), item]);
+  }
+  const definitionCounts = new Map<string, number>();
+  for (const item of playerText) {
+    const key = item.playerFacingText!.key;
+    definitionCounts.set(key, (definitionCounts.get(key) ?? 0) + 1);
+  }
   const words = (text: string) =>
     text.replace(/§./g, " ").replace(/[\uE000-\uF8FF]/g, " ")
       .trim().split(/\s+/).filter(Boolean).length;
   const rankedText = [...playerText].sort((a, b) =>
+    Number((referencesByKey.get(b.playerFacingText!.key)?.length ?? 0) > 0) -
+      Number((referencesByKey.get(a.playerFacingText!.key)?.length ?? 0) > 0) ||
     words(b.playerFacingText!.text) - words(a.playerFacingText!.text) ||
     a.locator.localeCompare(b.locator) || a.id.localeCompare(b.id));
   if (rankedText.length > 0) {
@@ -174,8 +190,27 @@ export function formatSelectedMapAuditBrief(input: {
       const readable = cue.playerFacingText!.text
         .replace(/§./g, "").replace(/[\uE000-\uF8FF]/g, " ")
         .replace(/\s+/g, " ").trim();
-      out.push("- " + concise(cue.playerFacingText!.key) + ": " +
-        concise(readable) + " (" + concise(cue.locator) + ").");
+      const key = cue.playerFacingText!.key;
+      const refs = [...(referencesByKey.get(key) ?? [])]
+        .sort((a, b) => a.locator.localeCompare(b.locator));
+      const sameKeyDefinitions = definitionCounts.get(key) ?? 0;
+      out.push("- " + concise(key) + ": " +
+        concise(readable) + " (" + concise(cue.locator) + ").",
+        "  Literal script translate-property references: " +
+          refs.length + (refs.length === 0
+            ? " found (dynamic/indirect usage UNKNOWN; not proof unused)."
+            : " authored source site(s), NOT UI delivery.") +
+          (sameKeyDefinitions > 1
+            ? " Same key appears in " + sameKeyDefinitions +
+              " selected locale sources; rendered choice UNKNOWN." : ""),
+        ...(refs.length === 0 ? [] : [
+          "  Exact literal source: " +
+            refs.slice(0, 3).map(item => concise(item.locator +
+              " [" + item.literalTranslationUse!.executionRegion + "]"))
+              .join("; ") +
+            (refs.length > 3 ? "; additional references omitted." : "."),
+        ]),
+      );
     }
     if (rankedText.length > 6) out.push(
       "Additional selected-source locale cues not shown: " +

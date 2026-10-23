@@ -69,6 +69,28 @@ distinct originals, source-scoped comparison to independent reviewed claims,
 and separation of true source facts from intended design. Do not score the
 historical eight-map inventory as semantic recall on the newer engine.
 
+## Exact script-to-locale source references — 2026-10-23
+
+An **isolated TypeScript AST traversal** of the real archived JavaScript
+identified literal `{ translate: "key" }` properties; it did **not** run the
+M-Lazy-Developer TypeScript pipeline, a Minecraft world, or a complete
+understanding audit. The artifact SHA-256 fingerprints are the same pinned
+ones listed above.
+
+| Selected archive | Exact script source use | Interpretable source fact |
+| --- | --- | --- |
+| BlitzBuild v1.0.2 | `behavior_packs/blitzbuild_bp/scripts/runtime/globalPolicies.js:53:53`, `translate: "welcome.guide"` | One literal reference to the authored welcome instruction, inside a source `player.sendMessage` expression. Does not prove the call ran or was seen by the player |
+| Beach Bedwars v1.1.0 | No direct literal `translate: "daigon.ui.winner.red"` property found in available script source | `resource_packs/Beach_Bedwars_RP/texts/en_US.lang#L47` is literal winner-status copy. Its use may be dynamic/indirect; **NOT FOUND is not UNUSED**, and copy does not define a winning condition |
+| Composite v1.1.17 | `behavior_packs/BP/scripts/chunks/chunk-7WKHHBF4.js:2343:41`, `translate: "daigon.welcome.line2"` | One source key reference; the same localized key is defined in BOTH behavior-pack and resource-pack `en_US.lang` files. Rendered translation selection, party reachability, readiness, countdown and runtime delivery are not proven |
+
+This evidence supports an exact **translation key reference** in the existing
+Script Parser and a typed, evidence-only join in Gameplay Intent. It does not
+authorize a new source graph, lexical UI-to-objective matching, or a
+gameplay-defect verdict. Literal references outside a recognized locale key,
+computed translation keys, and source aliases remain unproven/unknown. The
+parser revision must be updated when adding this evidence so cached results
+from an earlier parser are not mistaken for complete coverage.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.

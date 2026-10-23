@@ -100,6 +100,10 @@ async function syntheticMcworld(kind: Case): Promise<{
         ' {text:"Globe",difficulty:"medium"}',
         '];',
         'const hud = {wave:"Wave", level:"Level"};',
+        'const welcome = { translate: "welcome.guide" };',
+        'const partyIntro = { translate: "daigon.welcome.line2" };',
+        'const caption = "daigon.ui.winner.red";',
+        'const dynamic = { translate: runtimeLocaleKey };',
       ].join("\n"));
     }
     const packs = [{
@@ -553,6 +557,29 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       const textEvidence = audit.inspection.gameplayIntent.model.evidence
         .filter(item => item.playerFacingText !== undefined);
       expect(textEvidence).toHaveLength(3);
+      const literalRefs = audit.inspection.gameplayIntent.model.evidence
+        .filter(item => item.literalTranslationUse !== undefined);
+      expect(literalRefs.map(item => item.literalTranslationUse!.key).sort())
+        .toEqual(["daigon.welcome.line2", "welcome.guide"]);
+      expect(literalRefs.every(item =>
+        item.origin === "source-code" &&
+        item.locator.includes("/scripts/main.js:") &&
+        item.literalTranslationUse?.executionRegion !== undefined)).toBe(true);
+      const guide = copy.find(item => item.key === "welcome.guide");
+      const party = copy.find(item => item.key === "daigon.welcome.line2");
+      const winner = copy.find(item => item.key === "daigon.ui.winner.red");
+      for (const cue of [guide, party]) {
+        expect(cue?.sourceReferenceStatus)
+          .toBe("EXACT_LITERAL_TRANSLATE_SOURCE_REFERENCE");
+        expect(cue?.literalTranslationReferences).toHaveLength(1);
+        expect(cue?.literalTranslationReferences[0]?.sourceLocator)
+          .toContain("/scripts/main.js:");
+        expect(cue?.omittedLiteralTranslationReferences).toBe(0);
+      }
+      expect(winner?.sourceReferenceStatus)
+        .toBe("NO_LITERAL_TRANSLATE_REFERENCE_FOUND");
+      expect(winner?.literalTranslationReferences).toHaveLength(0);
+      expect(winner?.matchingLocaleDefinitionCount).toBe(1);
       expect(audit.inspection.gameplayIntent.model.nodes.some(node =>
         node.label.includes("RED WINS") ||
         node.label.includes("Memorize the build"))).toBe(false);
@@ -566,6 +593,9 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(copyBrief).toContain("Localized player-facing text");
       expect(copyBrief).toContain("welcome.guide");
       expect(copyBrief).toContain("daigon.ui.winner.red");
+      expect(copyBrief).toContain("Literal script translate-property references: 1");
+      expect(copyBrief).toContain("Literal script translate-property references: 0");
+      expect(copyBrief).toContain("not proof unused");
       expect(copyBrief).toContain("NOT GAME DESIGN");
       expect(content.basis).toBe("SOURCE_CONTAINMENT_ONLY_NOT_GAMEPLAY_ORDER");
       expect(handoff.gameUnderstanding.gameplayFlowBasis)
