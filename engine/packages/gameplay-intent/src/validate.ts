@@ -44,6 +44,17 @@ export function validateGameplayIntentModel(
     }
   }
 
+  for (const evidence of model.evidence) {
+    if (evidence.designStatus !== undefined &&
+        (evidence.origin !== "game-design-spec" ||
+         evidence.scope !== "selected-artifact")) {
+      issues.push({
+        path: "evidence." + evidence.id + ".designStatus",
+        message: "Design approval is only valid on selected-artifact game-design-spec evidence.",
+      });
+    }
+  }
+
   const nodeIds = new Set(model.nodes.map((node) => node.id));
   const evidenceIds = new Set(
     model.evidence.map((evidence) => evidence.id),

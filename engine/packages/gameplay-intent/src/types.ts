@@ -62,6 +62,11 @@ export interface GameplayIntentEvidence {
   locator: string;
   summary: string;
   scope?: GameplayIntentEvidenceScope;
+  /**
+   * Only for game-design-spec: carry the validated selected-source document's
+   * draft/approved status. Source node status "authored" is not approval.
+   */
+  designStatus?: "draft" | "approved";
 }
 
 export type GameplayIntentScalar =

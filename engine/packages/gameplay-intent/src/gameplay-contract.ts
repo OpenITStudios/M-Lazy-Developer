@@ -5,6 +5,12 @@ import {
 import {
   selectedArtifactGameplayContractEvidenceIds,
 } from "./authority.js";
+import {
+  challengeDesignIntent,
+  isSelectedArtifactDesignClaimEvidence,
+  isSelectedArtifactPlayerFacingClaimEvidence,
+  type DesignIntentChallengeResult,
+} from "./design-intent-challenge.js";
 import type {
   GameplayIntentModel,
 } from "./types.js";
@@ -22,7 +28,13 @@ export interface GameplayContract {
   readonly evidenceScope: "selected-artifact-only";
   readonly subjectIds: readonly string[];
   readonly invariantIds: readonly string[];
+  /** Only separately located, approved game-design-spec witnesses. */
   readonly authorityEvidenceIds: readonly string[];
+  /** Implementation evidence persists when design readiness is blocked. */
+  readonly implementationEvidenceIds: readonly string[];
+  /** UI promises support mismatch investigation, not approved design. */
+  readonly playerFacingClaimEvidenceIds: readonly string[];
+  readonly designChallenge: DesignIntentChallengeResult;
   readonly readiness: GameplayDesignReadinessResult;
 }
 
@@ -40,11 +52,24 @@ export function buildGameplayContract(
     .map((invariant) => invariant.id)
     .sort();
 
-  const authorityEvidenceIds =
+  const authoredEvidenceIds =
     selectedArtifactGameplayContractEvidenceIds(
       model,
       invariantIds,
     );
+  const byId = new Map(model.evidence.map(item => [item.id, item]));
+  const designChallenge = challengeDesignIntent({
+    evidence: model.evidence,
+    status: "authored",
+    implementationEvidenceIds: authoredEvidenceIds.filter(id =>
+      !isSelectedArtifactDesignClaimEvidence(byId.get(id)) &&
+      !isSelectedArtifactPlayerFacingClaimEvidence(byId.get(id))),
+    independentDesignEvidenceIds: authoredEvidenceIds.filter(id =>
+      isSelectedArtifactDesignClaimEvidence(byId.get(id))),
+    playerFacingEvidenceIds: authoredEvidenceIds.filter(id =>
+      isSelectedArtifactPlayerFacingClaimEvidence(byId.get(id))),
+  });
+  const authorityEvidenceIds = designChallenge.designEvidenceIds;
 
   const readiness = assessGameplayDesignReadiness(
     model,
@@ -52,7 +77,7 @@ export function buildGameplayContract(
       scopeSubjectIds: [...input.subjectIds],
       authoritativeDesignAvailable:
         model.artifactId !== undefined &&
-        authorityEvidenceIds.length > 0,
+        designChallenge.disposition === "grounded-design",
       ...(input.materialUnknownIds === undefined
         ? {}
         : {
@@ -78,6 +103,9 @@ export function buildGameplayContract(
     subjectIds: [...input.subjectIds],
     invariantIds,
     authorityEvidenceIds,
+    implementationEvidenceIds: designChallenge.implementationEvidenceIds,
+    playerFacingClaimEvidenceIds: designChallenge.playerFacingEvidenceIds,
+    designChallenge,
     readiness,
   };
 }

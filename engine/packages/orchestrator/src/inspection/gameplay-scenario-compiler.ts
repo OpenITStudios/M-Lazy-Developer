@@ -1,7 +1,10 @@
-import type {
-  GameplayIntentEdge,
-  GameplayIntentModel,
-  GameplayIntentNode,
+import {
+  hasIndependentApprovedDesignEvidence,
+  isSelectedArtifactPlayerFacingClaimEvidence,
+  type GameplayIntentEvidence,
+  type GameplayIntentEdge,
+  type GameplayIntentModel,
+  type GameplayIntentNode,
 } from "../../../gameplay-intent/src/index.js";
 import type {
   GameplayAuditScenarioPreset,
@@ -46,18 +49,24 @@ const SCENARIO_NODE_KINDS = new Set([
 
 function purposeForNode(
   node: GameplayIntentNode,
+  evidenceById: ReadonlyMap<string, GameplayIntentEvidence>,
 ): string {
   const description = node.description?.trim();
-  // Current inferred source descriptions (for example NPC button wiring)
-  // describe technical surfaces, not their intended player-facing purpose.
-  // Source-observed state descriptions are likewise not authored design.
+  const evidence = node.evidenceIds.map(id => evidenceById.get(id));
+  // "authored" means present in code, NOT necessarily authored game design.
+  // Technical nodes stay navigable without acquiring player-purpose authority.
   if (description && node.status === "authored" &&
+      hasIndependentApprovedDesignEvidence(evidence) &&
       !description.startsWith("Source-observed technical")) {
     return description;
   }
+  const presented = evidence.some(isSelectedArtifactPlayerFacingClaimEvidence);
   return "Gameplay purpose UNKNOWN for " + node.kind +
     ": the selected artifact identifies this subject, but its intended " +
     "player-facing purpose is not independently established." +
+    (presented
+      ? " Player-facing wording is a presentation claim, not verified gameplay."
+      : "") +
     (description ? " Source context: " + description : "");
 }
 
@@ -3051,6 +3060,8 @@ export function compileGameplayScenarioGraph(
   // A classified name-only declaration is not an observed gameplay flow.
   // Do not promote hypothetical source structure into a player-facing
   // scenario until other selected-artifact evidence grounds that subject.
+  const purposeEvidenceById = new Map(input.intent.evidence.map(
+    item => [item.id, item] as const));
   const scenarioNodes = input.intent.nodes.filter(
     (node) => SCENARIO_NODE_KINDS.has(node.kind) &&
       node.status !== "hypothesis" &&
@@ -3269,7 +3280,7 @@ export function compileGameplayScenarioGraph(
       id: scenarioId,
       label: node.label,
       gameplayStage: stageForNode(node),
-      purpose: purposeForNode(node),
+      purpose: purposeForNode(node, purposeEvidenceById),
       sourceSubjectIds: [node.id],
       componentIds,
       causalLinkIds,
@@ -3393,7 +3404,7 @@ export function compileGameplayScenarioGraph(
       label: node.label,
       kind: node.kind,
       technicalRole: technicalRoleForNode(node),
-      gameplayPurpose: purposeForNode(node),
+      gameplayPurpose: purposeForNode(node, purposeEvidenceById),
       evidenceIds: [...node.evidenceIds],
       usedByScenarioIds: usedBy,
       orphan: usedBy.length === 0 && node.kind !== "game",

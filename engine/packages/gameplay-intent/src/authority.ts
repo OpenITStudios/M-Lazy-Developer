@@ -52,6 +52,7 @@ export interface GameplayAuthorityResolution {
 
 export const SELECTED_ARTIFACT_GAMEPLAY_CONTRACT_ORIGINS =
   [
+    "game-design-spec",
     "source-code",
     "manifest",
     "command",

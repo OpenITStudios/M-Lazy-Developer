@@ -1,10 +1,11 @@
 import type {
   GameDesignMapClassification,
 } from "../../game-design-spec/src/index.js";
-import type {
-  GameplayIntentEdge,
-  GameplayIntentModel,
-  GameplayIntentNode,
+import {
+  hasIndependentApprovedDesignEvidence,
+  type GameplayIntentEdge,
+  type GameplayIntentModel,
+  type GameplayIntentNode,
 } from "../../gameplay-intent/src/index.js";
 import type {
   InspectArtifactResult,
@@ -272,11 +273,7 @@ function independentlyAuthoredDesign(
   ids: readonly string[],
 ): boolean {
   const byId = new Map((model.evidence ?? []).map(item => [item.id, item]));
-  return ids.some(id => {
-    const source = byId.get(id);
-    return source?.scope === "selected-artifact" &&
-      source.origin === "game-design-spec";
-  });
+  return hasIndependentApprovedDesignEvidence(ids.map(id => byId.get(id)));
 }
 
 /**

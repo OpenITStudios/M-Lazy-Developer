@@ -12,6 +12,7 @@ describe("Map Audit Output V2 projection", () => {
           evidence: [{
             id: "e:objective", origin: "game-design-spec",
             scope: "selected-artifact", locator: "embedded-design.json",
+            designStatus: "approved",
             summary: "Selected artifact explicitly states the objective.",
           }],
           nodes: [{

@@ -101,6 +101,7 @@ describe("cross-region source handoff tracing", () => {
       nodes: [{
         id: "mechanic:uncalled", kind: "mechanic",
         label: "Uncalled party cleanup", status: "authored",
+        description: "Resets all teams to continue gameplay.",
         evidenceIds: ["op:unrelated"],
       }],
       edges: [], invariants: [], unknowns: [],
@@ -131,6 +132,12 @@ describe("cross-region source handoff tracing", () => {
     });
     const mechanic = graph.mechanicReconstructions?.find(item =>
       item.featureId === "mechanic:uncalled");
+    expect(graph.scenarios.find(item =>
+      item.sourceSubjectIds.includes("mechanic:uncalled"))?.purpose)
+      .toContain("Gameplay purpose UNKNOWN");
+    expect(graph.components.find(item =>
+      item.id === "mechanic:uncalled")?.gameplayPurpose)
+      .toContain("Gameplay purpose UNKNOWN");
     expect(mechanic?.exactSourceFlowIds).toEqual([]);
     expect(mechanic?.disconnectedSourceFlowIds).toEqual([
       "source-flow:unrelated",
