@@ -278,6 +278,10 @@ export interface ScriptLocalFunctionCall {
   argumentParameterBindings?: readonly ScriptArgumentParameterBinding[];
   /** Source-authored actual argument syntax for this.method(...). */
   argumentExpressions?: readonly string[];
+  /** Literal event key on a unique local static emit() site, resolved only
+   * from a source-stable object member/string; not proof of event delivery.
+   */
+  sourceEmittedEventKey?: string;
   controlFlow?: "unconditional" | "conditional" | "deferred";
   lexicalGuards?: readonly ScriptLexicalGuard[];
   /** Necessary branch decisions from preceding single-statement exits. */

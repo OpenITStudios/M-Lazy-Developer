@@ -149,6 +149,11 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
     (region.kind === "mcfunction" && !incoming.has(region.id))
   );
   const eligibleEvents = new Set<string>();
+  // A custom Map-backed bus is not automatically activated because its
+  // on()/emit() source sites match. Both the registration region and the
+  // emitting source region must be reachable from the selected manifest/
+  // eligible event roots. Without a manifest identity this stays UNKNOWN.
+  const eligibleInternalDispatches = new Set<string>();
   if (manifestRoots === undefined) {
     // Unknown pack identity retains legacy source-only candidate coverage,
     // but a lookalike, non-Minecraft event emitter cannot create an event
@@ -181,18 +186,45 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
       reachable.add(id);
       queued.push(id);
     };
-    for (let index = 0; index < queued.length; index += 1) {
-      const id = queued[index]!;
-      for (const eventId of subscriptionsByRegion.get(id) ?? []) {
-        eligibleEvents.add(eventId);
-        visit(eventId);
+    let next = 0;
+    const drainSourceRegions = (): void => {
+      while (next < queued.length) {
+        const id = queued[next++]!;
+        for (const eventId of subscriptionsByRegion.get(id) ?? []) {
+          eligibleEvents.add(eventId);
+          visit(eventId);
+        }
+        for (const edge of outgoing.get(id) ?? []) {
+          if (edge.kind === "internal-event-dispatch" ||
+              edge.resolution !== "resolved" || !edge.to) continue;
+          // Only a verified subscribe() site admits a Minecraft event root.
+          if (regions.get(edge.to)?.kind === "event-source") continue;
+          visit(edge.to);
+        }
       }
-      for (const edge of outgoing.get(id) ?? []) {
-        if (edge.resolution !== "resolved" || !edge.to) continue;
-        // Only a verified subscribe() site admits an event root.
-        if (regions.get(edge.to)?.kind === "event-source") continue;
-        visit(edge.to);
+    };
+    drainSourceRegions();
+    // Source-join the application event bus only after a matched on() site's
+    // registration region and the matching emit() owner are BOTH in a
+    // source-rooted closure. Re-drain callbacks because they may themselves
+    // install Minecraft or nested custom handlers. This fixed point is
+    // source eligibility only, never event delivery or observed game state.
+    const internalRelays = ir.execution.edges.filter(edge =>
+      edge.kind === "internal-event-dispatch" &&
+      edge.resolution === "resolved" && edge.to !== undefined &&
+      edge.internalSubscriptionRegionId !== undefined);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const edge of internalRelays) {
+        if (eligibleInternalDispatches.has(edge.id) ||
+            !reachable.has(edge.from) ||
+            !reachable.has(edge.internalSubscriptionRegionId!)) continue;
+        eligibleInternalDispatches.add(edge.id);
+        visit(edge.to!);
+        changed = true;
       }
+      if (changed) drainSourceRegions();
     }
   }
   const entryRegions = [
@@ -233,6 +265,13 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
       }
       for (const edge of outgoing.get(regionId) ?? []) {
         edges.add(edge.id);
+        if (edge.kind === "internal-event-dispatch" &&
+            !eligibleInternalDispatches.has(edge.id)) {
+          // Preserve the authored emitter witness, not a false downstream
+          // callback/terminal link from an unreachable on() site.
+          unresolved.add(edge.id);
+          continue;
+        }
         if (edge.resolution !== "resolved") unresolved.add(edge.id);
         if (edge.controlFlow === "conditional" || edge.controlFlow === "deferred") {
           conditional.add(edge.id);

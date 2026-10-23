@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:4:typescript:" +
+  "m-bedrock-script-parser:5:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -44,7 +44,7 @@ import {
   inferScriptPropertyAccesses,
   inferScriptPropertyWrites,
 } from "./receiver-inference.js";
-import { inferExactCallArgumentParameterBindings, extractScriptClassWiring, extractScriptClassMapSites } from "./cross-file-call.js";
+import { inferExactCallArgumentParameterBindings, extractScriptClassWiring, extractScriptClassMapSites, stableEventLiteralMember } from "./cross-file-call.js";
 import { findScriptExecutionPrivilegeRule } from "../../../../packages/compatibility/src/index.js";
 import { inferScriptLifecycleMemberExposures } from "../domains/lifecycle/lifecycle-exposure.js";
 import {
@@ -3097,6 +3097,18 @@ export function parseScriptFile(
             targetRegion: target.region,
             targetName: receiver.text + "." + methodName,
             ...(target.source === undefined ? {} : { targetSource: target.source }),
+            ...(methodName !== "emit" || node.arguments.length === 0 ? {} : (() => {
+              const eventArg = node.arguments[0]!;
+              const key = ts.isStringLiteralLike(eventArg)
+                ? eventArg.text
+                : ts.isPropertyAccessExpression(eventArg) &&
+                  ts.isIdentifier(eventArg.expression) &&
+                  !isShadowed(eventArg.expression)
+                    ? stableEventLiteralMember(
+                        file, eventArg.expression.text, eventArg.name.text)
+                    : undefined;
+              return key === undefined ? {} : { sourceEmittedEventKey: key };
+            })()),
             ...(bindings.length ? { argumentParameterBindings: bindings } : {}),
             argumentExpressions: node.arguments.map(arg => arg.getText(file)),
             controlFlow: lexicalGuards.length || precedenceGuards.length

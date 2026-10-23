@@ -25,6 +25,10 @@ export interface ExecutionRegion {
 export type ExecutionEdgeKind =
   /** Resolved static ESM module dependency, not function execution or time. */
   | "static-module-dependency"
+  /** Exact Map-backed on/emit source relay, contingent on a source-reachable
+   * subscription. Never proof of registration, callback delivery or timing.
+   */
+  | "internal-event-dispatch"
   | "synchronous-call"
   | "event-dispatch"
   | "deferred"
@@ -52,6 +56,12 @@ export interface ExecutionEdge {
    * manifest-rooted source reachability; not proof of registration or delivery.
    */
   registrationRegionId?: string;
+  /** An imported Map-backed custom event-bus subscription. Its SOURCE
+   * region must become manifest-reachable before the relay can be included
+   * in a gameplay source trace. Not an observed JS runtime listener.
+   */
+  internalSubscriptionRegionId?: string;
+  internalSubscriptionSource?: SourceRef;
   scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
   /** Parsed local-call branching, not proof that a condition was satisfied. */
   controlFlow?: "unconditional" | "conditional" | "deferred";

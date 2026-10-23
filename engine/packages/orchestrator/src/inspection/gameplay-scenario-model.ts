@@ -157,6 +157,8 @@ export interface GameplaySourceFlowCandidate {
     readonly source: import("../../../project-model/src/index.js").SourceRef;
     /** Exact source region of subscribe(); source eligibility only. */
     readonly registrationRegionId?: string;
+    /** Custom Map-backed event listener source region; NOT runtime delivery. */
+    readonly internalSubscriptionRegionId?: string;
     readonly scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
     readonly generationGuard: "EXPLICIT_SOURCE_CHECK" | "UNRESOLVED" | "NOT_RECORDED";
     readonly directTargetStepIds: readonly string[];

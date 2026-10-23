@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import { parseScriptFile, deriveCrossFileCallEdges } from "../../../../analyzers/scripts/src/index.js";
 import { semanticIrExecutionTraces } from "../../../semantic-ir/src/index.js";
 import { buildInspectionSemanticIr, scriptRegionId } from "../../src/diagnosis/semantic-ir-stage.js";
+import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
 import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
 
 const parsed = (path: string, text: string, artifactId = "selected-map") => {
@@ -87,6 +88,148 @@ describe("manifest-rooted static module dependencies", () => {
       edge.kind === "static-module-dependency")).toEqual([
         expect.objectContaining({ targetLabel: "./module.ts" }),
       ]);
+  });
+});
+
+describe("cross-file Map-backed application event source bridges", () => {
+  const root = "behavior_packs/BP/scripts/";
+  const sharedPath = root + "chunks/shared.js";
+  const partyPath = root + "chunks/party.js";
+  const runtimePath = root + "chunks/runtime.js";
+  const mainPath = root + "main.js";
+  const sharedText = [
+    "var EVENT = { PARTY_CHANGED: 'party:changed' };",
+    "var Bus = class {",
+    "  static listeners = new Map();",
+    "  static on(event, handler) {",
+    "    const list = this.listeners.get(event) ?? [];",
+    "    list.push(handler);",
+    "    this.listeners.set(event, list);",
+    "  }",
+    "  static emit(event, ...args) {",
+    "    const list = this.listeners.get(event) ?? [];",
+    "    for (const handler of list) handler(...args);",
+    "  }",
+    "};",
+    "export { EVENT, Bus };",
+  ].join("\n");
+  const partyText = [
+    'import { world } from "@minecraft/server";',
+    'import { Bus, EVENT } from "./shared.js";',
+    "var Party = class {",
+    "  static ready() { Bus.emit(EVENT.PARTY_CHANGED, 'arena_1'); }",
+    "};",
+    "function initParty() {",
+    "  world.afterEvents.itemUse.subscribe(() => Party.ready());",
+    "}",
+    "export { initParty };",
+  ].join("\n");
+  const runtimeText = [
+    'import { world } from "@minecraft/server";',
+    'import { Bus, EVENT } from "./shared.js";',
+    "function initRuntime() {",
+    "  Bus.on(EVENT.PARTY_CHANGED, () => {",
+    "    world.setDynamicProperty('arena:session', 'countdown');",
+    "  });",
+    "}",
+    "export { initRuntime };",
+  ].join("\n");
+  const make = (withListener: boolean) => {
+    const mainText = [
+      'import { initParty } from "./chunks/party.js";',
+      'import { initRuntime } from "./chunks/runtime.js";',
+      "initParty();",
+      ...(withListener ? ["initRuntime();"] : []),
+    ].join("\n");
+    const selected = [
+      [mainPath, mainText],
+      [sharedPath, sharedText],
+      [partyPath, partyText],
+      [runtimePath, runtimeText],
+    ] as const;
+    const scripts = selected.map(([path, sourceText]) =>
+      parsed(path, sourceText));
+    const crossFileCallEdges = deriveCrossFileCallEdges(
+      selected.map(([path, text]) => ({
+        path, text,
+        source: { artifactId: "selected-map", relativePath: path },
+      })));
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [], parsedScripts: scripts,
+      crossFileCallEdges,
+      manifestScriptRoots: {
+        entryPaths: [mainPath],
+        staticallyReachablePaths: selected.map(([path]) => path).sort(),
+      },
+    });
+    return { ir, crossFileCallEdges };
+  };
+
+  it("joins party changes to session writes only when the listener registration is source-reachable", () => {
+    const { ir, crossFileCallEdges } = make(true);
+    const listener = crossFileCallEdges.find(edge =>
+      edge.localName === "Bus.on");
+    expect(listener?.internalEvent).toMatchObject({
+      role: "on", eventKey: "party:changed",
+      callbackRegion: expect.stringMatching(/^callback@4:/),
+    });
+    const relay = ir.execution.edges.find(edge =>
+      edge.kind === "internal-event-dispatch");
+    expect(relay).toMatchObject({
+      kind: "internal-event-dispatch",
+      controlFlow: "conditional",
+      targetLabel: "internal-event:party:changed",
+      resolution: "resolved",
+      source: expect.objectContaining({
+        relativePath: partyPath,
+        range: expect.objectContaining({ lineStart: 4 }),
+      }),
+    });
+    expect(ir.temporal.relations.some(item =>
+      item.id === "time:" + relay?.id)).toBe(false);
+    const partyEvent = ir.execution.regions.find(region =>
+      region.kind === "event-source" &&
+      region.source?.relativePath === partyPath &&
+      region.label === "world.afterEvents.itemUse");
+    expect(partyEvent).toBeDefined();
+    const trace = semanticIrExecutionTraces(ir).traces.find(item =>
+      item.entryRegionId === partyEvent?.id);
+    expect(trace).toBeDefined();
+    expect(trace?.executionEdgeIds).toContain(relay!.id);
+    expect(trace?.unresolvedExecutionEdgeIds).not.toContain(relay!.id);
+    const writes = ir.state.operations.filter(operation =>
+      operation.operation === "write" &&
+      operation.source.relativePath === runtimePath);
+    expect(writes.length).toBeGreaterThan(0);
+    expect(trace?.stateWriteOperationIds).toEqual(
+      expect.arrayContaining(writes.map(item => item.id)));
+    const sourceFlow = sourceFlowCandidates(ir).find(flow =>
+      flow.entryRegionId === partyEvent!.id);
+    expect(sourceFlow?.sourceHandoffs?.some(handoff =>
+      handoff.kind === "internal-event-dispatch" &&
+      handoff.internalSubscriptionRegionId ===
+        relay!.internalSubscriptionRegionId &&
+      handoff.directTargetStateWriteIds.some(id =>
+        writes.some(write => write.id === id)) &&
+      handoff.proof === "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION")).toBe(true);
+    expect(sourceFlow?.runtimeStatus).toBe("NOT_OBSERVED");
+  });
+
+  it("does not traverse a source event relay when the imported subscriber is not initialized", () => {
+    const { ir } = make(false);
+    const relay = ir.execution.edges.find(edge =>
+      edge.kind === "internal-event-dispatch");
+    expect(relay).toBeDefined();
+    const event = ir.execution.regions.find(region =>
+      region.kind === "event-source" &&
+      region.source?.relativePath === partyPath);
+    const trace = semanticIrExecutionTraces(ir).traces.find(item =>
+      item.entryRegionId === event?.id);
+    expect(trace).toBeDefined();
+    expect(trace?.unresolvedExecutionEdgeIds).toContain(relay!.id);
+    expect(trace?.stateWriteOperationIds.some(writeId =>
+      ir.state.operations.some(operation => operation.id === writeId &&
+        operation.source.relativePath === runtimePath))).toBe(false);
   });
 });
 

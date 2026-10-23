@@ -39,6 +39,123 @@ describe("cross-file call resolution", () => {
       .toMatchObject({ status: "resolved" });
   });
 
+  it("resolves one Map-backed imported custom event listener with a stable alias key", () => {
+    const root = "behavior_packs/demo/scripts/";
+    const shared = {
+      path: root + "shared.js",
+      source: { artifactId: "world", relativePath: root + "shared.js" },
+      text: [
+        "var EVENT = { PARTY_CHANGED: 'party:changed' };",
+        "var AppBus = class {",
+        "  static listeners = new Map();",
+        "  static on(event, handler) {",
+        "    const list = this.listeners.get(event) ?? [];",
+        "    list.push(handler);",
+        "    this.listeners.set(event, list);",
+        "  }",
+        "  static emit(event, ...args) {",
+        "    const list = this.listeners.get(event) ?? [];",
+        "    for (const handler of list) handler(...args);",
+        "  }",
+        "};",
+        "export { EVENT, AppBus };",
+      ].join("\n"),
+    };
+    const subscriber = {
+      path: root + "runtime.js",
+      source: { artifactId: "world", relativePath: root + "runtime.js" },
+      text: [
+        'import { EVENT as Tokens, AppBus as Dispatcher } from "./shared.js";',
+        'export function setup() {',
+        '  Dispatcher.on(Tokens.PARTY_CHANGED, () => { });',
+        '}',
+      ].join("\n"),
+    };
+    const calls = deriveCrossFileCallEdges([shared, subscriber]);
+    const on = calls.find(call => call.localName === "Dispatcher.on");
+    expect(on).toMatchObject({
+      status: "resolved",
+      targetModule: shared.path,
+      targetExport: "AppBus",
+      internalEvent: {
+        role: "on",
+        eventKey: "party:changed",
+        callbackRegion: expect.stringMatching(/^callback@3:/),
+        callbackSource: expect.objectContaining({
+          relativePath: subscriber.path,
+          range: expect.objectContaining({ lineStart: 3 }),
+        }),
+      },
+    });
+  });
+
+  it("rejects lookalike methods, mutable key objects and handler parameter shadowing", () => {
+    const prefix = "behavior_packs/demo/scripts/";
+    const shared = {
+      path: prefix + "shared.js",
+      source: { artifactId: "world", relativePath: prefix + "shared.js" },
+      text: [
+        'var EVENT = { PARTY_CHANGED: "party:changed" };',
+        "var FakeBus = class {",
+        "  static on(event, fn) { this.handlers = [fn]; }",
+        "  static emit(event) { /* no Map-backed handler invocation */ }",
+        "};",
+        "export { EVENT, FakeBus };",
+      ].join("\n"),
+    };
+    const use = {
+      path: prefix + "runtime.js",
+      source: { artifactId: "world", relativePath: prefix + "runtime.js" },
+      text: [
+        'import { EVENT, FakeBus } from "./shared.js";',
+        "FakeBus.on(EVENT.PARTY_CHANGED, () => {});",
+      ].join("\n"),
+    };
+    expect(deriveCrossFileCallEdges([shared, use])[0]?.internalEvent)
+      .toBeUndefined();
+
+    // More important than a fake class: a real Map-backed on/emit pair
+    // must also reject a changed event constant or unrelated saved list.
+    const good = {
+      ...shared,
+      text: shared.text.replace([
+        "  static on(event, fn) { this.handlers = [fn]; }",
+        "  static emit(event) { /* no Map-backed handler invocation */ }",
+      ].join("\n"), [
+        "  static listeners = new Map();",
+        "  static on(event, fn) {",
+        "    const list = this.listeners.get(event) ?? [];",
+        "    list.push(fn);",
+        "    this.listeners.set(event, list);",
+        "  }",
+        "  static emit(event) {",
+        "    const list = this.listeners.get(event) ?? [];",
+        "    for (const fn of list) fn();",
+        "  }",
+      ].join("\n")),
+    };
+    expect(deriveCrossFileCallEdges([good, use])[0]?.internalEvent)
+      .toMatchObject({ role: "on", eventKey: "party:changed" });
+    const changed = {
+      ...good,
+      text: good.text.replace(
+        "export { EVENT, FakeBus };",
+        'EVENT.PARTY_CHANGED = "reassigned"; export { EVENT, FakeBus };',
+      ),
+    };
+    expect(deriveCrossFileCallEdges([changed, use])[0]?.internalEvent)
+      .toBeUndefined();
+    const brokenList = {
+      ...good,
+      text: good.text.replace(
+        "this.listeners.set(event, list);",
+        "this.listeners.set(event, []);",
+      ),
+    };
+    expect(deriveCrossFileCallEdges([brokenList, use])[0]?.internalEvent)
+      .toBeUndefined();
+  });
+
   it("resolves named ESM imports across TypeScript .js specifiers", () => {
     const edges = deriveCrossFileCallEdges([
       {

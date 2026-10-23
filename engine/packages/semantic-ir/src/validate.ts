@@ -199,6 +199,44 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
 
   for (const edge of ir.execution.edges) {
     errors.push(...validateSourceSequence(edge.sourceSequence, edge.source, edge.id));
+    if (edge.kind === "internal-event-dispatch" ||
+        edge.internalSubscriptionRegionId !== undefined ||
+        edge.internalSubscriptionSource !== undefined) {
+      const sender = ir.execution.regions.find(region => region.id === edge.from);
+      const handler = ir.execution.regions.find(region => region.id === edge.to);
+      const registration = ir.execution.regions.find(region =>
+        region.id === edge.internalSubscriptionRegionId);
+      const site = edge.internalSubscriptionSource;
+      const samePack = (a: string, b: string): boolean => {
+        const pack = (path: string) => path.replaceAll("\\", "/")
+          .split("/").slice(0, 2).join("/");
+        return pack(a) === pack(b);
+      };
+      if (edge.kind !== "internal-event-dispatch" ||
+          edge.resolution !== "resolved" || !edge.to ||
+          !edge.targetLabel.startsWith("internal-event:") ||
+          !sender ||
+          !["script-module", "script-function", "script-callback"]
+            .includes(sender.kind) ||
+          sender.source?.artifactId !== edge.source.artifactId ||
+          sender.source?.relativePath !== edge.source.relativePath ||
+          !edge.source.range?.lineStart ||
+          !edge.source.range.columnStart ||
+          !handler || handler.kind !== "script-callback" ||
+          handler.source?.artifactId !== edge.source.artifactId ||
+          !registration ||
+          !["script-module", "script-function", "script-callback"]
+            .includes(registration.kind) ||
+          registration.source?.artifactId !== edge.source.artifactId ||
+          !site || site.artifactId !== registration.source?.artifactId ||
+          site.relativePath !== registration.source?.relativePath ||
+          !site.range?.lineStart || !site.range.columnStart ||
+          !samePack(edge.source.relativePath, site.relativePath) ||
+          edge.scheduler !== undefined ||
+          !!edge.argumentParameterBindings?.length) {
+        errors.push("Invalid internal event source relay: " + edge.id);
+      }
+    }
     if (edge.registrationRegionId !== undefined) {
       const eventRegion = ir.execution.regions.find(region =>
         region.id === edge.from);

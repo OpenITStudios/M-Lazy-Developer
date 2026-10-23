@@ -2319,6 +2319,8 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
           source: edge.source,
           ...(edge.registrationRegionId === undefined ? {} :
             { registrationRegionId: edge.registrationRegionId }),
+          ...(edge.internalSubscriptionRegionId === undefined ? {} :
+            { internalSubscriptionRegionId: edge.internalSubscriptionRegionId }),
           ...(edge.scheduler === undefined ? {} : { scheduler: edge.scheduler }),
           generationGuard: edge.guardEvidence === "explicit-generation-check" &&
               edge.generationGuardSource !== undefined
@@ -2346,9 +2348,15 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
     // remaining slots with repeat calls. A hot getter must not hide a
     // different terminal/cleanup target under the existing 24-edge limit.
     // Exact source edges and proof status remain owned by Semantic IR.
+    // A validated cross-module application-event handoff is a critical
+    // source graph bridge even when its immediate callback only calls an
+    // auto-start checker and has no DIRECT write. Preserve it in the 24-slot
+    // navigation before bulk state/helper edges; execution remains unproven.
+    const handoffPriority = (item: typeof sourceHandoffs[number]): number =>
+      item.kind === "internal-event-dispatch"
+        ? -1 : (priorityByRegion.get(item.toRegionId) ?? 2);
     const rankedHandoffs = [...sourceHandoffs].sort((a, b) =>
-      (priorityByRegion.get(a.toRegionId) ?? 2) -
-        (priorityByRegion.get(b.toRegionId) ?? 2) ||
+      handoffPriority(a) - handoffPriority(b) ||
       a.edgeId.localeCompare(b.edgeId));
     const chosenHandoffIds = new Set<string>();
     const representedTargets = new Set<string>();

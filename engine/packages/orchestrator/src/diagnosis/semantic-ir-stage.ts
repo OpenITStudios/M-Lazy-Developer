@@ -1194,12 +1194,112 @@ export function buildInspectionSemanticIr(
             ...(executionEdgeIds.length ? { executionEdgeIds } : {}),
           } : relation;
     });
+
+  // Restore the first real-world Party -> Composite source transition.
+  // The existing analyzer has already confirmed the imported class owns
+  // unique stable static on()/emit() methods backed by the SAME listener
+  // Map and that the event key came from a source-stable literal binding.
+  // Link only matched same-artifact, same-export source sites. A live
+  // listener and event delivery are NOT asserted here: the canonical
+  // execution trace must separately admit the subscription's own region
+  // from a manifest-rooted source path.
+  const busRegistrations = (input.crossFileCallEdges ?? [])
+    .filter(call => call.status === "resolved" &&
+      call.targetModule !== undefined &&
+      call.internalEvent?.role === "on" &&
+      call.internalEvent.callbackRegion !== undefined &&
+      call.internalEvent.callbackSource !== undefined)
+    .sort((a, b) => a.callerModule.localeCompare(b.callerModule) ||
+      (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+      (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0));
+  type BusEmission = {
+    readonly busModule: string;
+    readonly busClass: string;
+    readonly eventKey: string;
+    readonly callerModule: string;
+    readonly callerRegion: string;
+    readonly source: SourceRef;
+  };
+  const busEmissions: BusEmission[] = [];
+  for (const { parsed } of input.parsedScripts) {
+    for (const call of parsed.localFunctionCalls) {
+      if (call.sourceEmittedEventKey === undefined ||
+          !call.targetName.endsWith(".emit")) continue;
+      const className = call.targetName.slice(0, -".emit".length);
+      // The declaration/source coordinate prevents a similarly named
+      // helper or an opaque receiver from impersonating the bus class.
+      if (!className || !call.targetRegion.startsWith(
+        "function:" + encodeURIComponent(className) + ".emit@")) continue;
+      busEmissions.push({
+        busModule: parsed.source.relativePath,
+        busClass: className,
+        eventKey: call.sourceEmittedEventKey,
+        callerModule: parsed.source.relativePath,
+        callerRegion: call.callerRegion,
+        source: call.source,
+      });
+    }
+  }
+  for (const call of input.crossFileCallEdges ?? []) {
+    if (call.status !== "resolved" ||
+        call.targetModule === undefined ||
+        call.internalEvent?.role !== "emit") continue;
+    busEmissions.push({
+      busModule: call.targetModule,
+      busClass: call.targetExport,
+      eventKey: call.internalEvent.eventKey,
+      callerModule: call.callerModule,
+      callerRegion: call.callerRegion,
+      source: call.source,
+    });
+  }
+  for (const emission of busEmissions) {
+    const senders = scriptsByPath.get(emission.callerModule) ?? [];
+    if (senders.length !== 1 ||
+        senders[0]!.source.artifactId !== emission.source.artifactId) continue;
+    const sourceRegionId = ensureScriptRegion(
+      senders[0]!, emission.callerRegion, emission.source);
+    let occurrence = 0;
+    for (const registration of busRegistrations) {
+      if (registration.targetModule !== emission.busModule ||
+          registration.targetExport !== emission.busClass ||
+          registration.internalEvent?.eventKey !== emission.eventKey ||
+          registration.source.artifactId !== emission.source.artifactId)
+        continue;
+      const targetScripts = scriptsByPath.get(registration.callerModule) ?? [];
+      const callback = registration.internalEvent?.callbackSource;
+      const callbackRegion = registration.internalEvent?.callbackRegion;
+      if (targetScripts.length !== 1 || !callback || !callbackRegion ||
+          callback.artifactId !== emission.source.artifactId ||
+          callback.relativePath !== registration.source.relativePath)
+        continue;
+      const to = ensureScriptRegion(
+        targetScripts[0]!, callbackRegion, callback);
+      const subscriptionRegion = ensureScriptRegion(
+        targetScripts[0]!, registration.callerRegion, registration.source);
+      addEdge({
+        from: sourceRegionId,
+        to,
+        kind: "internal-event-dispatch",
+        targetLabel: "internal-event:" + emission.eventKey,
+        resolution: "resolved",
+        controlFlow: "conditional",
+        source: emission.source,
+        internalSubscriptionRegionId: subscriptionRegion,
+        internalSubscriptionSource: registration.source,
+      }, occurrence);
+      occurrence += 1;
+    }
+  }
+
   // Materialize all authored edges, but static module dependencies express
   // source graph topology rather than same-turn or deferred execution.
   const executionEdges = [...edges.values()]
     .sort((a, b) => a.id.localeCompare(b.id));
   const temporalRelations: TemporalRelation[] =
-    executionEdges.filter(edge => edge.kind !== "static-module-dependency")
+    executionEdges.filter(edge =>
+      edge.kind !== "static-module-dependency" &&
+      edge.kind !== "internal-event-dispatch")
       .map((edge) => ({
       id: "time:" + edge.id,
       from: edge.from,

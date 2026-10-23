@@ -23,6 +23,16 @@ export interface CrossFileCallEdge {
   localName: string;
   controlFlow: "unconditional" | "conditional" | "deferred";
   status: "resolved" | "unresolved";
+  /** Verified source-only Map-backed on/emit call to a unique imported static
+   * class. This is NOT successful registration, callback execution, timing
+   * or proof that a handler survived resets.
+   */
+  internalEvent?: {
+    readonly role: "on" | "emit";
+    readonly eventKey: string;
+    readonly callbackRegion?: string;
+    readonly callbackSource?: SourceRef;
+  };
   /** Direct or bounded immutable-const source forwarding, never instance proof. */
   argumentParameterBindings?: readonly ScriptArgumentParameterBinding[];
   source: SourceRef;
@@ -866,6 +876,203 @@ function resolveExportTarget(
     : undefined;
 }
 
+
+/**
+ * One exact source-authored scalar on a unique, unwritten top-level object.
+ * An imported alias and its local declaration may share this string without
+ * treating their common PROPERTY SPELLING as proof of common ownership.
+ * Return undefined on writes, computed members, duplicates or dynamic data.
+ */
+export function stableEventLiteralMember(
+  file: ts.SourceFile,
+  objectName: string,
+  memberName: string,
+): string | undefined {
+  const candidates: ts.ObjectLiteralExpression[] = [];
+  let bindings = 0;
+  for (const statement of file.statements) {
+    if (ts.isVariableStatement(statement)) {
+      for (const declaration of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) ||
+            declaration.name.text !== objectName) continue;
+        bindings += 1;
+        if (declaration.initializer &&
+            ts.isObjectLiteralExpression(declaration.initializer))
+          candidates.push(declaration.initializer);
+      }
+    } else if (((ts.isClassDeclaration(statement) ||
+                   ts.isFunctionDeclaration(statement)) &&
+                  statement.name?.text === objectName)) {
+      bindings += 1;
+    } else if (ts.isImportDeclaration(statement)) {
+      const names = statement.importClause?.namedBindings;
+      if (names && ts.isNamedImports(names)) {
+        bindings += names.elements.filter(e =>
+          e.name.text === objectName).length;
+      }
+    }
+  }
+  if (bindings !== 1 || candidates.length !== 1) return undefined;
+  const members = candidates[0]!.properties.filter(property =>
+    ts.isPropertyAssignment(property) &&
+    (ts.isIdentifier(property.name) || ts.isStringLiteralLike(property.name)) &&
+    property.name.text === memberName);
+  const property = members[0];
+  if (members.length !== 1 || !property ||
+      !ts.isPropertyAssignment(property)) return undefined;
+  const init = property.initializer;
+  if (!ts.isStringLiteralLike(init)) return undefined;
+
+  let mutation = false;
+  const writesToObject = (node: ts.Node): boolean =>
+    (ts.isIdentifier(node) && node.text === objectName) ||
+    ((ts.isPropertyAccessExpression(node) ||
+      ts.isElementAccessExpression(node)) && writesToObject(node.expression));
+  const scan = (node: ts.Node): void => {
+    if (mutation) return;
+    if (ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+        writesToObject(node.left)) mutation = true;
+    if (ts.isDeleteExpression(node) && writesToObject(node.expression))
+      mutation = true;
+    if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+        writesToObject(node.operand) &&
+        (node.operator === ts.SyntaxKind.PlusPlusToken ||
+         node.operator === ts.SyntaxKind.MinusMinusToken)) mutation = true;
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.arguments[0]?.kind === ts.SyntaxKind.Identifier &&
+        (node.arguments[0] as ts.Identifier).text === objectName &&
+        ((node.expression.expression.text === "Object" &&
+          ["assign", "defineProperty", "defineProperties", "setPrototypeOf"]
+            .includes(node.expression.name.text)) ||
+         (node.expression.expression.text === "Reflect" &&
+          node.expression.name.text === "set"))) mutation = true;
+    if (!mutation) ts.forEachChild(node, scan);
+  };
+  scan(file);
+  return mutation ? undefined : init.text;
+}
+
+/** A class is a SOURCE-observed callback relay, not an arbitrary similarly
+ * named EventEmitter. Both methods must be unique stable static class
+ * members operating on the same Map-backed listener property. The on method
+ * stores its handler and emit invokes a handler from an iteration. No
+ * assumption is made about successful runtime dispatch.
+ */
+function mapBackedStaticEventBus(
+  classes: ReturnType<typeof staticClassCallables>,
+  className: string,
+): boolean {
+  const on = classes.methods.get(JSON.stringify([className, "on"]));
+  const emit = classes.methods.get(JSON.stringify([className, "emit"]));
+  if (!on?.declaration || !emit?.declaration ||
+      !ts.isMethodDeclaration(on.declaration) ||
+      !ts.isMethodDeclaration(emit.declaration)) return false;
+  const cls = on.declaration.parent;
+  const handler = on.declaration.parameters[1]?.name;
+  if (cls !== emit.declaration.parent ||
+      !(ts.isClassExpression(cls) || ts.isClassDeclaration(cls)) ||
+      !handler || !ts.isIdentifier(handler)) return false;
+  const handlerName = handler.text;
+  const mapFields = cls.members.filter(member =>
+    ts.isPropertyDeclaration(member) &&
+    hasModifier(member, ts.SyntaxKind.StaticKeyword) &&
+    ts.isIdentifier(member.name) &&
+    member.initializer !== undefined &&
+    ts.isNewExpression(member.initializer) &&
+    ts.isIdentifier(member.initializer.expression) &&
+    member.initializer.expression.text === "Map")
+    .map(member => (member.name as ts.Identifier).text);
+  if (mapFields.length !== 1) return false;
+  const field = mapFields[0]!;
+  const isMapCall = (node: ts.CallExpression, method: string): boolean =>
+    ts.isPropertyAccessExpression(node.expression) &&
+    node.expression.name.text === method &&
+    ts.isPropertyAccessExpression(node.expression.expression) &&
+    node.expression.expression.name.text === field &&
+    node.expression.expression.expression.kind === ts.SyntaxKind.ThisKeyword;
+  const has = (body: ts.Node, test: (n: ts.Node) => boolean): boolean => {
+    let match = false;
+    const visit = (node: ts.Node): void => {
+      if (match) return;
+      if (test(node)) { match = true; return; }
+      ts.forEachChild(node, visit);
+    };
+    visit(body);
+    return match;
+  };
+  // Follow a single literal listener-list variable all the way through
+  // get(event) -> push(handler) -> set(event, list), then independently
+  // get(event) -> for (handler of list) -> handler(...). Merely finding these
+  // unrelated method names on the class is not evidence of a shared relay.
+  const parameter = (node: ts.MethodDeclaration): string | undefined => {
+    const name = node.parameters[0]?.name;
+    return name && ts.isIdentifier(name) ? name.text : undefined;
+  };
+  const listenerList = (
+    body: ts.Node, eventName: string | undefined,
+  ): string | undefined => {
+    if (!eventName) return undefined;
+    const found: string[] = [];
+    has(body, node => {
+      if (!ts.isVariableDeclaration(node) ||
+          !ts.isIdentifier(node.name) || !node.initializer) return false;
+      const expression = ts.isBinaryExpression(node.initializer) &&
+          node.initializer.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken
+        ? node.initializer.left : node.initializer;
+      const key = ts.isCallExpression(expression)
+        ? expression.arguments[0] : undefined;
+      if (ts.isCallExpression(expression) &&
+          isMapCall(expression, "get") &&
+          expression.arguments.length === 1 &&
+          key !== undefined && ts.isIdentifier(key) &&
+          key.text === eventName) found.push(node.name.text);
+      return false;
+    });
+    return found.length === 1 ? found[0] : undefined;
+  };
+  const onKey = parameter(on.declaration);
+  const emitKey = parameter(emit.declaration);
+  const onList = listenerList(on.body, onKey);
+  const emitList = listenerList(emit.body, emitKey);
+  if (!onKey || !emitKey || !onList || !emitList) return false;
+  const handlerStored = has(on.body, node =>
+    ts.isCallExpression(node) &&
+    ts.isPropertyAccessExpression(node.expression) &&
+    ts.isIdentifier(node.expression.expression) &&
+    node.expression.expression.text === onList &&
+    node.expression.name.text === "push" &&
+    node.arguments.length === 1 &&
+    node.arguments[0] !== undefined &&
+    ts.isIdentifier(node.arguments[0]) &&
+    node.arguments[0].text === handlerName);
+  const listenerSaved = has(on.body, node =>
+    ts.isCallExpression(node) && isMapCall(node, "set") &&
+    node.arguments.length === 2 &&
+    node.arguments[0] !== undefined &&
+    ts.isIdentifier(node.arguments[0]) &&
+    node.arguments[0].text === onKey &&
+    node.arguments[1] !== undefined &&
+    ts.isIdentifier(node.arguments[1]) &&
+    node.arguments[1].text === onList);
+  const handlerInvoked = has(emit.body, node => {
+    if (!ts.isForOfStatement(node) ||
+        !ts.isVariableDeclarationList(node.initializer) ||
+        node.initializer.declarations.length !== 1 ||
+        !ts.isIdentifier(node.expression) ||
+        node.expression.text !== emitList) return false;
+    const binding = node.initializer.declarations[0]?.name;
+    return !!binding && ts.isIdentifier(binding) &&
+      has(node.statement, child =>
+        ts.isCallExpression(child) &&
+        ts.isIdentifier(child.expression) &&
+        child.expression.text === binding.text);
+  });
+  return handlerStored && listenerSaved && handlerInvoked;
+}
+
 export function deriveCrossFileCallEdges(
   modules: readonly ScriptModuleSourceInput[],
 ): CrossFileCallEdge[] {
@@ -1021,6 +1228,57 @@ export function deriveCrossFileCallEdges(
             relativePath: target.modulePath,
           })
         : undefined;
+      const busMethod = staticMethodName === "on" ||
+        staticMethodName === "emit"
+        ? staticMethodName : undefined;
+      const busOwner = target && busMethod && targetRegion
+        ? classCallablesByModule.get(target.modulePath) : undefined;
+      const busVerified = !!(busOwner && target &&
+        mapBackedStaticEventBus(busOwner, target.exportName));
+      // Do not re-resolve arbitrary imported method arguments as potential
+      // event keys. Only an already-proven Map-backed event class qualifies.
+      const eventArgument = busVerified ? node.arguments[0] : undefined;
+      const firstArgEvent = (() => {
+        if (!eventArgument) return undefined;
+        if (ts.isStringLiteralLike(eventArgument)) return eventArgument.text;
+        if (!ts.isPropertyAccessExpression(eventArgument) ||
+            !ts.isIdentifier(eventArgument.expression) ||
+            isShadowed(eventArgument.expression)) return undefined;
+        const binding = directImports.get(eventArgument.expression.text);
+        if (!binding) return undefined;
+        const ownerPath = resolveRelative(
+          modulePath, binding.moduleSpecifier, known);
+        const owner = ownerPath === undefined ? undefined : resolveExportTarget(
+          ownerPath, binding.importedName, exportsByModule, known);
+        const ownerModule = owner === undefined
+          ? undefined : normalizedModules.get(owner.modulePath);
+        const ownerFile = owner === undefined
+          ? undefined : parsedFiles.get(owner.modulePath);
+        if (!owner || !ownerModule || !ownerFile ||
+            ownerModule.source.artifactId !== module.source.artifactId ||
+            packScope(owner.modulePath) !== packScope(modulePath))
+          return undefined;
+        return stableEventLiteralMember(
+          ownerFile, owner.exportName, eventArgument.name.text);
+      })();
+      const callback = node.arguments[1];
+      const subscription = callback &&
+        (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))
+        ? callback : undefined;
+      const internalEvent = busVerified && busMethod &&
+        firstArgEvent !== undefined ? {
+          role: busMethod,
+          eventKey: firstArgEvent,
+          ...(busMethod !== "on" || subscription === undefined ? {} : {
+            callbackRegion: (() => {
+              const loc = file.getLineAndCharacterOfPosition(
+                subscription.getStart(file));
+              return "callback@" + (loc.line + 1) + ":" + (loc.character + 1);
+            })(),
+            callbackSource: nodeSource(file, subscription, {
+              ...module.source, relativePath: modulePath }),
+          }),
+        } : undefined;
       const argumentParameterBindings = targetCallable && targetFile && targetSource
         ? inferExactCallArgumentParameterBindings(
             node, file, { ...module.source, relativePath: modulePath },
@@ -1042,6 +1300,7 @@ export function deriveCrossFileCallEdges(
           imported.importedName,
         ...(targetRegion === undefined ? {} : { targetRegion }),
         ...(exactTargetSource === undefined ? {} : { targetSource: exactTargetSource }),
+        ...(internalEvent === undefined ? {} : { internalEvent }),
         ...(argumentParameterBindings.length ? { argumentParameterBindings } : {}),
         localName: imported.localName,
         controlFlow: controlFlow(node),

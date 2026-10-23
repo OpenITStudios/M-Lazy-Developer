@@ -395,8 +395,14 @@ export function formatSelectedMapAuditBrief(input: {
       }
     }
   }
+  // The report is a bounded navigation preview. Show the exact authored
+  // event-bus bridge before generic calls so the Party→Session handoff does
+  // not vanish from the first eight records in a large modular world.
   const selectedHandoffs = [...sourceHandoffs.values()]
-    .sort((a, b) => a.edge.edgeId.localeCompare(b.edge.edgeId));
+    .sort((a, b) =>
+      Number(b.edge.kind === "internal-event-dispatch") -
+        Number(a.edge.kind === "internal-event-dispatch") ||
+      a.edge.edgeId.localeCompare(b.edge.edgeId));
   if (selectedHandoffs.length > 0) {
     out.push(
       "### Cross-region source handoffs (RESOLVED CODE EDGES; NOT EXECUTION)",
@@ -418,7 +424,11 @@ export function formatSelectedMapAuditBrief(input: {
         "  Source site: " + concise(site) +
           "; generation guard: " + edge.generationGuard +
           (edge.registrationRegionId === undefined ? "" :
-            "; registration region: " + concise(edge.registrationRegionId)),
+            "; registration region: " + concise(edge.registrationRegionId)) +
+          (edge.internalSubscriptionRegionId === undefined ? "" :
+            "; internal bus subscriber: " +
+              concise(edge.internalSubscriptionRegionId) +
+              " (SOURCE-ONLY; event delivery unobserved)"),
         "  Direct target state writes: " +
           edge.directTargetStateWriteIds.slice(0, 4).map(concise).join("; ") +
           "; world effect attempts: " +
