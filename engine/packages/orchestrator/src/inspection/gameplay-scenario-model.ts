@@ -134,6 +134,13 @@ export interface GameplaySourceFlowCandidate {
   readonly id: string;
   readonly entryRegionId: string;
   readonly entryKind: import("../../../semantic-ir/src/index.js").ExecutionRegionKind;
+  /** SOURCE_ROOT_TRACE is a source-derived entry candidate, NEVER observed
+   * gameplay. DISCONNECTED_SOURCE_REGION is preserved investigation evidence
+   * that must not satisfy authored activation, player journey or exact-flow
+   * support. Optional for old graph fixtures; canonical compilation emits it.
+   * A missing value is UNKNOWN and cannot support rooted gameplay flow.
+   */
+  readonly sourceTraceStatus?: "SOURCE_ROOT_TRACE" | "DISCONNECTED_SOURCE_REGION";
   readonly regionIds: readonly string[];
   readonly executionEdgeIds: readonly string[];
   readonly unresolvedExecutionEdgeIds: readonly string[];
@@ -185,7 +192,10 @@ export interface GameplayMechanicReconstruction {
   readonly name: string;
   readonly meaningStatus: "AUTHORED" | "INFERRED";
   readonly declaredEvidenceIds: readonly string[];
+  /** Only source-root-traced flow IDs; not runtime activation proof. */
   readonly exactSourceFlowIds: readonly string[];
+  /** Orphan source sites remain inspectable but are not flow evidence. */
+  readonly disconnectedSourceFlowIds?: readonly string[];
   readonly exactSourceStepIds: readonly string[];
   readonly authoredBehaviorRelationIds: readonly string[];
   /** Candidate write IR ID is directly bound to feature source evidence; this is not proof of gameplay ownership or execution. */

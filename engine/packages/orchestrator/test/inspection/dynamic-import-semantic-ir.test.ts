@@ -158,8 +158,19 @@ describe("manifest-rooted event registration provenance", () => {
       expect(trace.traces.some(item => item.entryRegionId === event?.id)).toBe(false);
       expect(trace.regionsOutsideTraces).toContain(event!.id);
     }
-    const leaveFlow = sourceFlowCandidates(ir).find(flow =>
+    const flows = sourceFlowCandidates(ir);
+    const leaveFlow = flows.find(flow =>
       flow.entryRegionId === leave!.id);
+    expect(leaveFlow?.sourceTraceStatus).toBe("SOURCE_ROOT_TRACE");
+    // This source contains a valid authored dormant callback state write,
+    // but its subscription is not source-reachable from the manifest.
+    // Keep its source site as an orphan, never a successful game phase.
+    expect(flows.some(flow =>
+      flow.sourceTraceStatus === "DISCONNECTED_SOURCE_REGION" &&
+      flow.sourceSteps.some(step =>
+        step.source.relativePath === handlers.parsed.source.relativePath &&
+        step.source.range?.lineStart === 13 &&
+        step.kind === "state" && step.operation === "write"))).toBe(true);
     expect(leaveFlow?.sourceHandoffs?.some(handoff =>
       handoff.kind === "event-dispatch" &&
       handoff.registrationRegionId === leaveRegistration?.registrationRegionId &&

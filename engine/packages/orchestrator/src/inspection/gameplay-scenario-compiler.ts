@@ -2261,6 +2261,7 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
   const build = (input: {
     readonly entryRegionId: string;
     readonly entryKind: GameplaySourceFlowCandidate["entryKind"];
+    readonly sourceTraceStatus: NonNullable<GameplaySourceFlowCandidate["sourceTraceStatus"]>;
     readonly regionIds: readonly string[];
     readonly executionEdgeIds: readonly string[];
     readonly unresolvedExecutionEdgeIds: readonly string[];
@@ -2395,6 +2396,7 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
   const flows: GameplaySourceFlowCandidate[] = execution.traces.map(trace =>
     build({
       entryRegionId: trace.entryRegionId, entryKind: trace.entryKind,
+      sourceTraceStatus: "SOURCE_ROOT_TRACE",
       regionIds: trace.regionIds,
       executionEdgeIds: trace.executionEdgeIds,
       unresolvedExecutionEdgeIds: trace.unresolvedExecutionEdgeIds,
@@ -2406,6 +2408,7 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
     if (!region || !(stepsByRegion.get(id)?.length)) continue;
     flows.push(build({
       entryRegionId: id, entryKind: region.kind, regionIds: [id],
+      sourceTraceStatus: "DISCONNECTED_SOURCE_REGION",
       executionEdgeIds: [], unresolvedExecutionEdgeIds: [],
       temporalRelationIds: [], branchPoints: [],
     }));
@@ -2434,10 +2437,17 @@ function reconstructClassifiedMechanics(
   // One source-flow index for all feature correlations. An IR flow can be
   // broad or include mutually exclusive branches, so shared membership is
   // context only and NEVER proof a feature owns the state transition.
+  // Do not let an orphan script callback or an unregistered event satisfy
+  // the feature's source activation/journey evidence. Its exact operations
+  // remain in the canonical source-flow list for investigation, not proof.
+  // Absence is legacy/unknown provenance and cannot prove a rooted source
+  // entry. Canonical current compilation always emits an explicit tier.
+  const rootedFlows = flows.filter(flow =>
+    flow.sourceTraceStatus === "SOURCE_ROOT_TRACE");
   const flowIdsByStep = new Map<string, Set<string>>();
   const stepsByFlow = new Map<string, Map<string, GameplaySourceFlowCandidate["sourceSteps"][number]>>();
   const evidenceRegionByFlow = new Map<string, Map<string, string>>();
-  for (const flow of flows) {
+  for (const flow of rootedFlows) {
     const steps = new Map<string, GameplaySourceFlowCandidate["sourceSteps"][number]>();
     const regionByEvidence = new Map<string, string>();
     for (const regionId of flow.regionIds) regionByEvidence.set(regionId, regionId);
@@ -2494,11 +2504,19 @@ function reconstructClassifiedMechanics(
         flow.authoredBehaviorRelationIds.some(id => evidenceIds.has(id)) ||
         (flow.regionIds.some(id => evidenceIds.has(id)) &&
           node.evidenceIds.includes(flow.entryRegionId)));
-      const exactSourceFlowIds = [...new Set(witnessed.map(flow => flow.id))].sort();
+      const rootedWitnessed = witnessed.filter(flow =>
+        flow.sourceTraceStatus === "SOURCE_ROOT_TRACE");
+      const disconnectedSourceFlowIds = [...new Set(witnessed.filter(flow =>
+        flow.sourceTraceStatus === "DISCONNECTED_SOURCE_REGION")
+        .map(flow => flow.id))].sort();
+      const exactSourceFlowIds = [...new Set(rootedWitnessed.map(flow =>
+        flow.id))].sort();
+      // Exact authored source locations still exist in disconnected regions.
+      // Keep those steps available without promoting the orphan to a flow.
       const exactSourceStepIds = [...new Set(witnessed.flatMap(flow =>
         flow.sourceSteps.filter(step => evidenceIds.has(step.id))
           .map(step => step.id)))].sort();
-      const authoredBehaviorRelationIds = [...new Set(witnessed.flatMap(flow =>
+      const authoredBehaviorRelationIds = [...new Set(rootedWitnessed.flatMap(flow =>
         flow.authoredBehaviorRelationIds.filter(id => evidenceIds.has(id))))].sort();
       const sourceGuardedTransitionCandidateIds = guardedTransitions
         .filter(candidate => evidenceIds.has(candidate.writeOperationId))
@@ -2510,7 +2528,7 @@ function reconstructClassifiedMechanics(
       // execution region, not mere membership in the broad flow. No source
       // identity is inferred from names, code layout, genre, or map title.
       const featureRegionEvidenceByFlow = new Map<string, Map<string, Set<string>>>();
-      for (const flow of witnessed) {
+      for (const flow of rootedWitnessed) {
         const byRegion = new Map<string, Set<string>>();
         const record = (regionId: string, evidenceId: string): void => {
           const ids = byRegion.get(regionId) ?? new Set<string>();
@@ -2556,7 +2574,7 @@ function reconstructClassifiedMechanics(
         edge.kind === "participates-in").flatMap(edge => edge.evidenceIds));
       const sourceActivationCandidates:
         GameplayMechanicReconstruction["sourceActivationCandidates"] =
-        witnessed.filter(flow => entryKinds.has(flow.entryKind))
+        rootedWitnessed.filter(flow => entryKinds.has(flow.entryKind))
           .map(flow => {
             const unresolved = new Set(flow.unresolvedExecutionEdgeIds);
             const supportingEvidenceIds = [...new Set([
@@ -2590,7 +2608,7 @@ function reconstructClassifiedMechanics(
               runtimeStatus: "NOT_OBSERVED" as const,
             };
           }).sort((a,b) => a.sourceFlowId.localeCompare(b.sourceFlowId));
-      const directlyObservedEffects = new Set(witnessed.flatMap(flow =>
+      const directlyObservedEffects = new Set(rootedWitnessed.flatMap(flow =>
         flow.sourceSteps.filter(step => evidenceIds.has(step.id) &&
           (step.kind === "world-effect" ||
            step.kind === "resource-action" ||
@@ -2625,6 +2643,7 @@ function reconstructClassifiedMechanics(
           ? "AUTHORED" as const : "INFERRED" as const,
         declaredEvidenceIds: [...evidenceIds].sort(),
         exactSourceFlowIds,
+        disconnectedSourceFlowIds,
         exactSourceStepIds,
         authoredBehaviorRelationIds,
         sourceGuardedTransitionCandidateIds,
@@ -2695,7 +2714,8 @@ export function reconstructAuthoredJourneyCandidates(
   );
   const selectedArtifactId = intent.artifactId;
   const usableSourceFlows = sourceFlows
-    .filter(flow => selectedArtifactId !== undefined &&
+    .filter(flow => flow.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
+      selectedArtifactId !== undefined &&
       flow.sourceSteps.length > 0 &&
       flow.executionEdgeIds.some(id =>
         !flow.unresolvedExecutionEdgeIds.includes(id)) &&

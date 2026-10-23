@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
+import { sourceFlowCandidates, compileGameplayScenarioGraph } from "../../src/inspection/gameplay-scenario-compiler.js";
 import { buildInspectionSemanticIr } from "../../src/diagnosis/semantic-ir-stage.js";
 import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
@@ -62,6 +62,13 @@ describe("cross-region source handoff tracing", () => {
     const flows = sourceFlowCandidates(sample());
     const entry = flows.find(flow => flow.entryRegionId === "entry");
     expect(entry).toBeDefined();
+    expect(entry?.sourceTraceStatus).toBe("SOURCE_ROOT_TRACE");
+    const disconnected = flows.find(flow =>
+      flow.entryRegionId === "unrelated");
+    expect(disconnected?.sourceTraceStatus).toBe("DISCONNECTED_SOURCE_REGION");
+    expect(disconnected?.sourceSteps.map(step => step.id)).toEqual([
+      "op:unrelated",
+    ]);
     expect(entry?.sourceHandoffs).toEqual([
       expect.objectContaining({
         edgeId: "edge:deferred",
@@ -78,6 +85,61 @@ describe("cross-region source handoff tracing", () => {
       .not.toContain("op:unrelated");
     expect(entry?.sourceHandoffs?.some(item =>
       item.edgeId === "edge:unknown")).toBe(false);
+  });
+
+  it("keeps an orphan state mutation as source evidence without supporting a mechanic or journey", () => {
+    const ir = sample();
+    const intent = {
+      schemaVersion: 1,
+      id: "intent:orphan",
+      artifactId: "selected",
+      evidence: [{
+        id: "op:unrelated", origin: "source-code",
+        locator: "scripts/round.ts:1", scope: "selected-artifact",
+        summary: "Authored state write in an uncalled script callback",
+      }],
+      nodes: [{
+        id: "mechanic:uncalled", kind: "mechanic",
+        label: "Uncalled party cleanup", status: "authored",
+        evidenceIds: ["op:unrelated"],
+      }],
+      edges: [], invariants: [], unknowns: [],
+    } as import("../../../gameplay-intent/src/index.js").GameplayIntentModel;
+    const world = {
+      arenas: { detected: false, cleanup: { resourceLedger: { resources: 0 } } },
+      chunks: { tickingAreaAcquires: 0, tickingAreaReadinessStates: 0,
+        capacityUncheckedLeases: 0 },
+      entities: { definitions: 0 },
+      combat: { hurtHandlers: 0, deathHandlers: 0, damageApplications: 0 },
+      inventory: { regions: 0, grantRegions: 0 },
+      structures: { loads: 0, runtimeLogicLoads: 0 },
+      economy: { sourceKinds: [] },
+      worldRules: { writes: 0, manualEntitySpawnPaths: 0 },
+      playerCapabilities: { gamemodeWrites: 0, abilityWrites: 0,
+        commandPermissionWrites: 0, privilegedGuardReferences: 0,
+        protectionDefinitions: 0 },
+      capabilityExposure: { exposed: 0, potentiallyExposed: 0, unresolved: 0 },
+      clientReconciliation: { predictedMutationCancellations: 0 },
+      spatial: { resolvedScriptEffects: 0, structurePlacements: 0,
+        authority: { configured: false } },
+    } as unknown as import("../../src/inspection/gameplay-world-model.js").GameplayWorldModel;
+    const graph = compileGameplayScenarioGraph({
+      intent, world,
+      preset: { scenarios: [] } as unknown as
+        import("../../../diagnostic-reasoning/src/index.js").GameplayAuditScenarioPreset,
+      semanticIr: ir,
+    });
+    const mechanic = graph.mechanicReconstructions?.find(item =>
+      item.featureId === "mechanic:uncalled");
+    expect(mechanic?.exactSourceFlowIds).toEqual([]);
+    expect(mechanic?.disconnectedSourceFlowIds).toEqual([
+      "source-flow:unrelated",
+    ]);
+    expect(mechanic?.exactSourceStepIds).toContain("op:unrelated");
+    expect(mechanic?.sourceActivationCandidates).toEqual([]);
+    expect(mechanic?.unresolvedDimensions).toContain("NO_EXACT_IR_LINK");
+    expect(graph.sourceFlowCandidates?.find(flow =>
+      flow.entryRegionId === "unrelated")?.runtimeStatus).toBe("NOT_OBSERVED");
   });
 
   it("abstains on cross-artifact and unresolvable source joins", () => {

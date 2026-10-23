@@ -358,6 +358,26 @@ export function formatSelectedMapAuditBrief(input: {
       "override the game understanding, confirmed findings or next decision above.",
     "",
   );
+  // Orphaned source-region operations must remain visible to investigation
+  // without inflating rooted gameplay-flow or activation counts. A missing
+  // source edge is an evidence gap, NOT proof that Minecraft cannot reach it.
+  const flowCandidates = report.gameplayStructure?.sourceFlowCandidates ?? [];
+  const disconnectedFlows = flowCandidates.filter(flow =>
+    flow.sourceTraceStatus === "DISCONNECTED_SOURCE_REGION");
+  if (disconnectedFlows.length > 0) {
+    out.push(
+      "Disconnected source regions with material operations: " +
+      disconnectedFlows.length +
+      " (not traced from an authored source entry; investigation only, " +
+      "NOT activation, proof of absence or a player journey).",
+    );
+  }
+  const unclassifiedFlows = flowCandidates.filter(flow =>
+    flow.sourceTraceStatus === undefined).length;
+  if (unclassifiedFlows > 0) {
+    out.push("Source root provenance UNKNOWN for " +
+      unclassifiedFlows + " legacy flow records; no rooted-flow support inferred.");
+  }
   // Unlike broad trace co-membership, these are literal resolved IR edges.
   // Their target steps belong directly to the target region, but still
   // require player/session reachability and guard evaluation before any BUG.
