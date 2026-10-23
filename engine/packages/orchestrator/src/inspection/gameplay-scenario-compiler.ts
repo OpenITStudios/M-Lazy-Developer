@@ -2201,6 +2201,24 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
         { authoredTimingSeconds: effect.authoredTimingSeconds }),
     });
   }
+  // Keep the most diagnostic DIRECT sites within a bounded handoff. Reads
+  // alone must not displace a later authored state mutation, world-effect
+  // attempt, resource action or result return in a large bundled callback.
+  // This ranks read-only navigation, NOT reachability or gameplay success.
+  const stepPriority = (
+    step: GameplaySourceFlowCandidate["sourceSteps"][number],
+  ): number =>
+    step.kind === "world-effect" ||
+    step.kind === "resource-action" ||
+    (step.kind === "state" &&
+      (step.operation === "write" ||
+        step.operation === "clear" || step.operation === "delete"))
+      ? 0 : step.kind === "return" ? 1 : 2;
+  // A source region can be the destination of many calls. Compute its
+  // navigational priority once rather than rewalking it for every trace.
+  const priorityByRegion = new Map([...stepsByRegion].map(([regionId, steps]) =>
+    [regionId, Math.min(2, ...steps.map(stepPriority))] as const));
+
   // Sort only within an execution region: cross-region source order cannot
   // establish callback timing, world mutation success or terminal sequence.
   const ordered = (ids: readonly string[]) =>
@@ -2245,7 +2263,14 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
             edge.source.artifactId !== from.source.artifactId ||
             edge.source.artifactId !== to.source.artifactId) return [];
         const steps = ordered([edge.to]);
-        const selected = steps.slice(0, 8);
+        // Preserve source order in the final projection after selecting the
+        // eight most material DIRECT target sites. No transitive effects are
+        // attributed to this edge.
+        const selectedIds = new Set([...steps]
+          .sort((a, b) => stepPriority(a) - stepPriority(b))
+          .slice(0, 8)
+          .map(step => step.id));
+        const selected = steps.filter(step => selectedIds.has(step.id));
         return [{
           edgeId: edge.id,
           fromRegionId: edge.from,
@@ -2279,7 +2304,13 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
       id: "source-flow:" + encodeURIComponent(input.entryRegionId),
       ...input,
       sourceSteps: steps,
-      sourceHandoffs: sourceHandoffs.slice(0, 24),
+      // Material source sites come before read-only/empty targets even when
+      // their call-edge IDs sort later. Keep a deterministic ID tie-break.
+      // The full canonical Semantic IR remains unchanged and authoritative.
+      sourceHandoffs: [...sourceHandoffs].sort((a, b) =>
+        (priorityByRegion.get(a.toRegionId) ?? 2) -
+          (priorityByRegion.get(b.toRegionId) ?? 2) ||
+        a.edgeId.localeCompare(b.edgeId)).slice(0, 24),
       omittedSourceHandoffs: Math.max(0, sourceHandoffs.length - 24),
       // Unknown/possible targets remain in canonical IR but must not
       // become an EXACT source activation via another resolved call in

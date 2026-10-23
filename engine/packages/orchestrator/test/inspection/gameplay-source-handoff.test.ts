@@ -150,4 +150,94 @@ describe("cross-region source handoff tracing", () => {
     expect(flow?.runtimeStatus).toBe("NOT_OBSERVED");
   });
 
+
+  it("prioritizes a late direct state write over earlier reads under the eight-step navigation limit", () => {
+    const ir = sample();
+    const located = (line: number) => ({
+      ...target,
+      range: { lineStart: line, lineEnd: line, columnStart: 1, columnEnd: 12 },
+    });
+    ir.state.operations = [
+      ...ir.state.operations,
+      ...Array.from({ length: 12 }, (_, index) => ({
+        id: "op:read-" + index,
+        executionRegionId: "callback",
+        surfaceId: "state:round",
+        operation: "read" as const,
+        source: located(index + 1),
+      })),
+      {
+        id: "op:late-write",
+        executionRegionId: "callback",
+        surfaceId: "state:round",
+        operation: "write",
+        source: located(90),
+      },
+    ];
+    const entry = sourceFlowCandidates(ir).find(flow => flow.entryRegionId === "entry");
+    const handoff = entry?.sourceHandoffs?.find(x => x.edgeId === "edge:deferred");
+    expect(handoff?.directTargetStepIds).toHaveLength(8);
+    expect(handoff?.directTargetStateWriteIds).toContain("op:late-write");
+    expect(handoff?.directTargetStateWriteIds).toContain("op:round-write");
+    expect(handoff?.directTargetWorldEffectIds).toContain("effect:teleport");
+    expect(handoff?.directTargetReleaseIds).toContain("release:join-pad");
+    expect(handoff?.omittedDirectTargetSteps).toBe(8);
+    expect(handoff?.directTargetStepIds).not.toContain("op:unrelated");
+    expect(entry?.runtimeStatus).toBe("NOT_OBSERVED");
+  });
+
+  it("retains a late material call among thirty exact target handoffs", () => {
+    const ir = sample();
+    const ordinary = Array.from({ length: 28 }, (_, index) => ({
+      id: "target:read-" + index,
+      edgeId: "edge:read-" + String(index).padStart(2, "0"),
+    }));
+    ir.execution.regions = [
+      ...ir.execution.regions,
+      ...ordinary.map(item => ({
+        id: item.id,
+        kind: "script-function" as const,
+        ownerId: "composite",
+        label: item.id,
+        source: target,
+      })),
+      { id: "target:late-result", kind: "script-function",
+        ownerId: "composite", label: "result", source: target },
+    ];
+    ir.execution.edges = [
+      ...ir.execution.edges,
+      ...ordinary.map(item => ({
+        id: item.edgeId, from: "entry", to: item.id,
+        kind: "synchronous-call" as const,
+        targetLabel: "read-only-helper",
+        resolution: "resolved" as const, source: origin,
+      })),
+      { id: "edge:zz-result-write", from: "entry",
+        to: "target:late-result", kind: "synchronous-call",
+        targetLabel: "persist-result", resolution: "resolved", source: origin },
+    ];
+    ir.state.operations = [
+      ...ir.state.operations,
+      ...ordinary.map(item => ({
+        id: "op:" + item.id,
+        executionRegionId: item.id,
+        surfaceId: "state:round",
+        operation: "read" as const, source: target,
+      })),
+      { id: "op:result-write", executionRegionId: "target:late-result",
+        surfaceId: "state:round", operation: "write", source: target },
+    ];
+    const entry = sourceFlowCandidates(ir).find(flow => flow.entryRegionId === "entry");
+    expect(entry?.sourceHandoffs).toHaveLength(24);
+    expect(entry?.omittedSourceHandoffs).toBe(6);
+    const result = entry?.sourceHandoffs?.find(item =>
+      item.edgeId === "edge:zz-result-write");
+    expect(result?.directTargetStateWriteIds).toEqual(["op:result-write"]);
+    expect(entry?.sourceHandoffs?.some(item =>
+      item.edgeId === "edge:unknown")).toBe(false);
+    // A handoff is a static source topology witness only.
+    expect(result?.proof).toBe("RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION");
+    expect(entry?.runtimeStatus).toBe("NOT_OBSERVED");
+  });
+
 });

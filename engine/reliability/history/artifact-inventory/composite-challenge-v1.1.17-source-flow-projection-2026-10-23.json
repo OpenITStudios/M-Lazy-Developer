@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_SELECTED_ARCHIVE_SOURCE_AST_AND_REPOSITORY_SOURCE_REVIEW",
+  "status": "SOURCE_AND_BOUNDED_ALGORITHM_PREFLIGHT_ONLY",
+  "recordedDate": "2026-10-23",
+  "parentRepositoryCommit": "9f12a52d2307c3dba5c0e8f7bab533bee8e2be92",
+  "selectedArtifact": {
+    "googleDriveId": "16nx1VFP_4q7OSpUNy93iTOtmfoJKFhYH",
+    "name": "Daigon Composite v1.1.17.mcworld",
+    "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+    "packageBytes": 20424962
+  },
+  "independentDirectInspection": {
+    "method": "Node 22.16.0 + TypeScript AST 5.8.3; ZIP CRC and exact archive identity checked in ChatGPT container",
+    "packagedJavaScriptFiles": 9,
+    "gameplayChunkFiles": 5,
+    "parseDiagnosticCount": 0,
+    "uniqueStaticMethodDeclarationCandidates": 1752,
+    "sameChunkStaticCallSiteCandidates": 951,
+    "distinctStaticClassOwnersWithCalls": 76,
+    "largestChunk": {
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "classOwnerCount": 65,
+      "callSiteCandidates": 878
+    }
+  },
+  "projectionFailureRisk": {
+    "canonicalSource": "engine/packages/orchestrator/src/inspection/gameplay-scenario-compiler.ts",
+    "originalHandoffBudget": 24,
+    "originalDirectTargetStepBudget": 8,
+    "originalSelection": "ID/source ordering before budgets, capable of truncating material evidence behind read-only sites",
+    "revisedSelection": "prioritize direct state mutations, world effects, resource actions and returns before reads or empty targets, preserving target source order and omission counts",
+    "proof": "Standalone Node assertions on representative bounded input passed; authoring source and tests changed but repository integration not yet executed"
+  },
+  "forbiddenInference": [
+    "Syntactic class-call candidate counts are not automatically resolved Semantic IR edges",
+    "Selected content is not proof of the Minecraft event dispatch, player-visible action, live multiplayer, or successful save",
+    "Publisher-provided simulated API tests are not independent full-map engine acceptance",
+    "Runtime findings and precision/recall metrics remain unscored"
+  ],
+  "next": "Run exact-head sourceFlowCandidates integration on exact selected archive; compare canonical output for the player journey and repair first mismatched source relation."
+}
