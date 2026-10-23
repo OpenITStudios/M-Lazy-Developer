@@ -51,7 +51,27 @@ describe("script source recovery", () => {
     expect(bundledSourceSectionsFromScript("function f() {}", 4)).toEqual({
       hints: [], omitted: 0,
     });
-    expect(() => bundledSourceSectionsFromScript(text, 129)).toThrow();
+    expect(() => bundledSourceSectionsFromScript(text, 257)).toThrow();
+  });
+
+  it("retains late module and recovery boundaries from a complete 147-section bundle", () => {
+    const source = Array.from({ length: 147 }, (_, index) => [
+      "// packs/BP/scripts/modules/generated/module_" + index + ".ts",
+      "var generated_" + index + " = " + index + ";",
+    ].join("\n")).join("\n");
+    const result = bundledSourceSectionsFromScript(source);
+    expect(result.hints).toHaveLength(147);
+    expect(result.omitted).toBe(0);
+    expect(result.hints[139]).toMatchObject({
+      generatedLine: 279,
+      claimedOriginalPath: "packs/BP/scripts/modules/generated/module_139.ts",
+    });
+    const overflow = bundledSourceSectionsFromScript(source, 20);
+    expect(overflow.hints).toHaveLength(20);
+    expect(overflow.omitted).toBe(127);
+    expect(overflow.hints.at(-1)?.claimedOriginalPath).toBe(
+      "packs/BP/scripts/modules/generated/module_19.ts",
+    );
   });
 
 });

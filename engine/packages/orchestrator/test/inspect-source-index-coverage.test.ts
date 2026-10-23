@@ -95,9 +95,9 @@ describe("inspection source index coverage", () => {
           mapPath: undefined,
           sites: [],
           claimedSourceSections: [
-            { generatedLocator: path + ":2",
+            { generatedLocator: path + ":2", generatedLine: 2,
               claimedOriginalPath: "packs/BP/scripts/modules/party/PartyService.ts" },
-            { generatedLocator: path + ":5",
+            { generatedLocator: path + ":5", generatedLine: 5,
               claimedOriginalPath: "packs/BP/scripts/modules/ctf_composite/GameManager.ts" },
           ],
           omittedSourceSections: 0,
@@ -105,6 +105,37 @@ describe("inspection source index coverage", () => {
       ]);
       expect(result.coverage.parseFailures).toHaveLength(0);
       expect(result.coverage.indexedFiles).toBe(1);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves 147 claimed sections of a modular world in indexed source navigation", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-large-bundle-hints-"));
+    try {
+      const path = "behavior_packs/BP/scripts/chunks/chunk-heavy.js";
+      await mkdir(join(root, "behavior_packs/BP/scripts/chunks"), { recursive: true });
+      const content = Array.from({ length: 147 }, (_, index) => [
+        "// packs/BP/scripts/modules/generated/module_" + index + ".ts",
+        "var module_" + index + " = " + index + ";",
+      ].join("\n")).join("\n");
+      await writeFile(join(root, path), content);
+      const result = await indexInspectionSources(root, "artifact:bundle", [
+        { relativePath: path, size: Buffer.byteLength(content) },
+      ]);
+      expect(result.coverage.parseFailures).toHaveLength(0);
+      expect(result.scriptSourceMapNavigation).toEqual([
+        expect.objectContaining({
+          generatedPath: path,
+          status: "unavailable",
+          claimedSourceSections: expect.arrayContaining([
+            { generatedLocator: path + ":279", generatedLine: 279,
+              claimedOriginalPath: "packs/BP/scripts/modules/generated/module_139.ts" },
+          ]),
+          omittedSourceSections: 0,
+        }),
+      ]);
+      expect(result.scriptSourceMapNavigation[0]?.claimedSourceSections).toHaveLength(147);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

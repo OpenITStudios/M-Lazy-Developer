@@ -253,14 +253,41 @@ export function formatSelectedMapAuditBrief(input: {
       // claim that the raw source was supplied, or close an audit checkpoint.
       const sections = mapping.claimedSourceSections ?? [];
       if (sections.length > 0) {
+        // A source path without a generated line cannot localize the relevant
+        // section of a big bundle; do not silently use the first module.
+        // Only exact selected-generated-file locators may steer the view.
+        const requestedLines = relevantLocators.flatMap((locator) => {
+          if (!locator.startsWith(mapping.generatedPath)) return [];
+          const suffix = locator.slice(mapping.generatedPath.length);
+          const match = /^(?::|#L)([1-9][0-9]*)(?::[0-9]+|#.*|$)/.exec(suffix);
+          if (!match) return [];
+          const line = Number(match[1]);
+          return Number.isSafeInteger(line) ? [line] : [];
+        });
+        const lastIndexedLine = sections[sections.length - 1]!.generatedLine;
+        const relevantSections = [...new Map(requestedLines.flatMap(line => {
+          // Beyond a truncated section index the nearest retained header may
+          // be wrong; abstain rather than claim false module ownership.
+          if ((mapping.omittedSourceSections ?? 0) > 0 &&
+              line > lastIndexedLine) return [];
+          const candidate = [...sections].reverse().find(section =>
+            section.generatedLine <= line);
+          return candidate === undefined ? [] : [[candidate.generatedLocator, candidate] as const];
+        })).values()];
+        const chosen = relevantSections.length > 0
+          ? relevantSections.slice(0, 3) : sections.slice(0, 3);
         out.push("  Compiler source-section hints (UNVERIFIED filenames; original line unknown):");
-        for (const section of sections.slice(0, 3)) {
+        for (const section of chosen) {
           out.push("  " + concise(section.generatedLocator) +
             " → claimed source file " + concise(section.claimedOriginalPath));
         }
-        const hidden = Math.max(0, sections.length - 3) +
+        const hidden = Math.max(0, sections.length - chosen.length) +
           (mapping.omittedSourceSections ?? 0);
         if (hidden > 0) out.push("  Other source-section hints not shown: " + hidden + ".");
+        if ((mapping.omittedSourceSections ?? 0) > 0 &&
+            requestedLines.some(line => line > lastIndexedLine)) {
+          out.push("  Limit: target generated line exceeds retained section index; source filename unresolved.");
+        }
       }
       if (mapping.omittedSites) out.push("  Other typed sites omitted: " +
         mapping.omittedSites);

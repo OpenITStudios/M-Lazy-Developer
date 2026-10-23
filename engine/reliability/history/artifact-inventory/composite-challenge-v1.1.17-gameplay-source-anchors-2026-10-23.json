@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_SELECTED_ARTIFACT_SOURCE_ANCHORS",
+  "map": {
+    "name": "Daigon Composite",
+    "version": "1.1.17",
+    "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+    "driveFileId": "16nx1VFP_4q7OSpUNy93iTOtmfoJKFhYH"
+  },
+  "sourceKind": "packaged-generated-javascript-only",
+  "sourceAnchors": [
+    {
+      "stage": "BOOTSTRAP",
+      "path": "behavior_packs/BP/scripts/main.js",
+      "lines": [
+        17,
+        20
+      ],
+      "observation": "Selected source calls TickScheduler.init and core/composite/lobby bootstrap functions",
+      "proof": "authored requests, not successful runtime initialization"
+    },
+    {
+      "stage": "ENTRY_PARTY",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js",
+      "lines": [
+        1275,
+        1275
+      ],
+      "observation": "An authored party:join script event dispatch branch exists",
+      "proof": "source dispatch, not player join success"
+    },
+    {
+      "stage": "READY",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js",
+      "lines": [
+        1281,
+        1284
+      ],
+      "observation": "Authored party:ready and party:unready script-event branches exist",
+      "proof": "source dispatch, not countdown activation"
+    },
+    {
+      "stage": "ARENA_MEMBERSHIP",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js",
+      "lines": [
+        1080,
+        1084
+      ],
+      "observation": "Party configuration derives enabled arenas with 1..5 members",
+      "proof": "configuration, not observed capacity"
+    },
+    {
+      "stage": "GAME_MODE_START",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        29676,
+        29685
+      ],
+      "observation": "ScriptEventReceive dispatches defense_test, attack_test, and composite starts",
+      "proof": "source dispatch, not selected active gameplay mode"
+    },
+    {
+      "stage": "SESSION_STATE",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7WKHHBF4.js",
+      "lines": [
+        1340,
+        1391
+      ],
+      "observation": "CompositeSessionService provides session reads, persistence and state transition entrypoint",
+      "proof": "source API definitions; session lifecycle completeness unproven"
+    },
+    {
+      "stage": "START_TRANSITION",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        29805,
+        29805
+      ],
+      "observation": "startComposite(arenaId, sourceEntity, options) is authored",
+      "proof": "source method only"
+    },
+    {
+      "stage": "OFFLINE_RECOVERY",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        29669,
+        29716
+      ],
+      "observation": "Periodic offline checks, playerLeave/playerSpawn subscriptions and recovery function references are authored",
+      "proof": "source scheduling, not verified reconnect safety"
+    },
+    {
+      "stage": "RELOAD_RECOVERY",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        29712,
+        29712
+      ],
+      "observation": "Code schedules CompositeRecoveryService.recoverAll via a delayed system callback",
+      "proof": "callback request only"
+    },
+    {
+      "stage": "SCORE_RECORD",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        29388,
+        29458
+      ],
+      "observation": "Result persistence and terminal emission paths are authored",
+      "proof": "source only; records not demonstrated accepted by transport"
+    },
+    {
+      "stage": "TERMINAL",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        30925,
+        30942
+      ],
+      "observation": "endCompositeGame and persistCompositeRunResult paths are authored",
+      "proof": "source only; victory/defeat behavior unproven"
+    },
+    {
+      "stage": "BOOTSTRAP_COMPOSITE",
+      "path": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "lines": [
+        32756,
+        32762
+      ],
+      "observation": "Selected generated chunk initializes export and composite services",
+      "proof": "source function body only"
+    }
+  ],
+  "auxiliaryExternalReference": {
+    "rawSourceFileId": "10P00opUK99gM5dGTEwjedrTCUcpCObL4",
+    "sourceCommentHeadersObserved": 147,
+    "sourceCommentCapBeforeThisChange": 64,
+    "sourceCommentCapAfterThisChange": 256,
+    "verifiedGeneratedChunk": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+    "limitation": "All claimed TypeScript module filenames are untrusted generated-script comments, never original-source line evidence."
+  },
+  "unknowns": [
+    "No actual runSelectedMapAudit() was executed on this exact source.",
+    "Player journey transitions are authored candidates, not validated flow reachability.",
+    "Arena isolation, multiplayer session success, saved result transport, replay/cleanup, and versioned game-runtime behavior remain unproven."
+  ],
+  "verdict": "SOURCE_NAVIGATION_CALIBRATION_ONLY_NOT_ENGINE_ACCEPTANCE"
+}

@@ -117,6 +117,8 @@ export interface InspectionScriptSourceMapNavigation {
    */
   readonly claimedSourceSections?: readonly {
     readonly generatedLocator: string;
+    /** 1-based position in the selected generated bundle, not original TS. */
+    readonly generatedLine: number;
     readonly claimedOriginalPath: string;
   }[];
   readonly omittedSourceSections?: number;
@@ -399,6 +401,7 @@ export async function indexInspectionSources(
           ...(claimedSections.hints.length === 0 ? {} : {
             claimedSourceSections: claimedSections.hints.map(hint => ({
               generatedLocator: file.relativePath + ":" + hint.generatedLine,
+              generatedLine: hint.generatedLine,
               claimedOriginalPath: hint.claimedOriginalPath,
             })),
             omittedSourceSections: claimedSections.omitted,

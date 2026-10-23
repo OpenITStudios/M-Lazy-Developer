@@ -48,10 +48,10 @@ export interface BundledSourceSectionIndex {
  */
 export function bundledSourceSectionsFromScript(
   text: string,
-  maxHints = 64,
+  maxHints = 256,
 ): BundledSourceSectionIndex {
-  if (!Number.isSafeInteger(maxHints) || maxHints < 1 || maxHints > 128) {
-    throw new Error("Bundled source section limit must be an integer from 1 to 128.");
+  if (!Number.isSafeInteger(maxHints) || maxHints < 1 || maxHints > 256) {
+    throw new Error("Bundled source section limit must be an integer from 1 to 256.");
   }
   const hints: BundledSourceSectionHint[] = [];
   let omitted = 0;
