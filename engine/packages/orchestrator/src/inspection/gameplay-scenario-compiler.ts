@@ -2238,17 +2238,24 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
     [regionId, steps.reduce((priority, step) =>
       Math.min(priority, stepPriority(step)), 2)] as const));
 
-  // Sort only within an execution region: cross-region source order cannot
-  // establish callback timing, world mutation success or terminal sequence.
+  // Reuse immutable selected-source order for all callers of a region:
+  // a bundled game can reference one SessionService dozens of times.
+  // Source order within a region does NOT prove cross-region runtime order.
+  const sourceStepOrder = (
+    a: GameplaySourceFlowCandidate["sourceSteps"][number],
+    b: GameplaySourceFlowCandidate["sourceSteps"][number],
+  ): number =>
+    a.source.relativePath.localeCompare(b.source.relativePath) ||
+    (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+    (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
+    (a.authoredTimingSeconds ?? 0) - (b.authoredTimingSeconds ?? 0) ||
+    (a.source.jsonPointer ?? "").localeCompare(b.source.jsonPointer ?? "") ||
+    a.id.localeCompare(b.id);
+  const orderedStepsByRegion = new Map([...stepsByRegion].map(
+    ([id, steps]) => [id, [...steps].sort(sourceStepOrder)] as const,
+  ));
   const ordered = (ids: readonly string[]) =>
-    ids.flatMap(regionId =>
-      [...(stepsByRegion.get(regionId) ?? [])].sort((a,b) =>
-        a.source.relativePath.localeCompare(b.source.relativePath) ||
-        (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
-        (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
-        (a.authoredTimingSeconds ?? 0) - (b.authoredTimingSeconds ?? 0) ||
-        (a.source.jsonPointer ?? "").localeCompare(b.source.jsonPointer ?? "") ||
-        a.id.localeCompare(b.id)));
+    ids.flatMap(id => orderedStepsByRegion.get(id) ?? []);
   const relations = ir.execution.authoredBehaviorRelations ?? [];
   const edgesById = new Map(ir.execution.edges.map(edge => [edge.id, edge]));
   const build = (input: {
@@ -2332,18 +2339,38 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
           proof: "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION" as const,
         }];
       });
+    // Reserve one witness for each DISTINCT target region before filling
+    // remaining slots with repeat calls. A hot getter must not hide a
+    // different terminal/cleanup target under the existing 24-edge limit.
+    // Exact source edges and proof status remain owned by Semantic IR.
+    const rankedHandoffs = [...sourceHandoffs].sort((a, b) =>
+      (priorityByRegion.get(a.toRegionId) ?? 2) -
+        (priorityByRegion.get(b.toRegionId) ?? 2) ||
+      a.edgeId.localeCompare(b.edgeId));
+    const chosenHandoffIds = new Set<string>();
+    const representedTargets = new Set<string>();
+    for (const handoff of rankedHandoffs) {
+      if (representedTargets.has(handoff.toRegionId)) continue;
+      representedTargets.add(handoff.toRegionId);
+      chosenHandoffIds.add(handoff.edgeId);
+      if (chosenHandoffIds.size === 24) break;
+    }
+    if (chosenHandoffIds.size < 24) {
+      for (const handoff of rankedHandoffs) {
+        if (chosenHandoffIds.size === 24) break;
+        chosenHandoffIds.add(handoff.edgeId);
+      }
+    }
+    const visibleHandoffs = rankedHandoffs.filter(handoff =>
+      chosenHandoffIds.has(handoff.edgeId));
     return {
       id: "source-flow:" + encodeURIComponent(input.entryRegionId),
       ...input,
       sourceSteps: steps,
-      // Material source sites come before read-only/empty targets even when
-      // their call-edge IDs sort later. Keep a deterministic ID tie-break.
-      // The full canonical Semantic IR remains unchanged and authoritative.
-      sourceHandoffs: [...sourceHandoffs].sort((a, b) =>
-        (priorityByRegion.get(a.toRegionId) ?? 2) -
-          (priorityByRegion.get(b.toRegionId) ?? 2) ||
-        a.edgeId.localeCompare(b.edgeId)).slice(0, 24),
-      omittedSourceHandoffs: Math.max(0, sourceHandoffs.length - 24),
+      // Preserve source edge identities, materiality order and truthful
+      // omission counts; navigational selection is NOT causal proof.
+      sourceHandoffs: visibleHandoffs,
+      omittedSourceHandoffs: Math.max(0, sourceHandoffs.length - visibleHandoffs.length),
       // Unknown/possible targets remain in canonical IR but must not
       // become an EXACT source activation via another resolved call in
       // the same broad source trace. A relation with its own /function

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_SELECTED_ARTIFACT_AST_INSPECTION",
+  "observedDate": "2026-10-23",
+  "selectedArtifact": {
+    "title": "Daigon Composite v1.1.17.mcworld",
+    "googleDriveFileId": "16nx1VFP_4q7OSpUNy93iTOtmfoJKFhYH",
+    "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+    "bytes": 20424962
+  },
+  "exactArtifactObservations": {
+    "behaviorPackManifest": "behavior_packs/BP/manifest.json",
+    "worldPackList": "world_behavior_packs.json",
+    "attachedPackUuid": "1961fda7-7d2e-4af9-a1df-ff549f52981b",
+    "attachedPackVersion": [
+      1,
+      1,
+      17
+    ],
+    "soleDeclaredScriptEntrypoint": "behavior_packs/BP/scripts/main.js",
+    "nineGeneratedJavaScriptFilesParsed": 9,
+    "syntaxDiagnostics": 0,
+    "mainCalls": [
+      {
+        "call": "TickScheduler.init",
+        "source": "behavior_packs/BP/scripts/main.js:17:1",
+        "importTarget": "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js",
+        "declarationHint": "behavior_packs/BP/scripts/chunks/chunk-Q6BZV7BR.js:525",
+        "evidenceTier": "authored source only"
+      },
+      {
+        "call": "initBootstrapCore",
+        "source": "behavior_packs/BP/scripts/main.js:18:1",
+        "exactTarget": "behavior_packs/BP/scripts/chunks/chunk-BGJLLFU7.js:508:1"
+      },
+      {
+        "call": "initBootstrapComposite",
+        "source": "behavior_packs/BP/scripts/main.js:19:1",
+        "exactTarget": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:32757:1"
+      },
+      {
+        "call": "initBootstrapLobby",
+        "source": "behavior_packs/BP/scripts/main.js:20:1",
+        "exactTarget": "behavior_packs/BP/scripts/chunks/chunk-OPI5IBZW.js:739:1"
+      }
+    ],
+    "bootstrapContinuation": [
+      {
+        "source": "behavior_packs/BP/scripts/chunks/chunk-BGJLLFU7.js:508-513",
+        "authoredRequests": [
+          "DatabaseService.init",
+          "PartyService.init",
+          "CompositeLeaderboardService.init",
+          "new HologramManager"
+        ]
+      },
+      {
+        "source": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js:32757-32762",
+        "authoredRequests": [
+          "initCompositeGameResultsExport",
+          "initCtfComposite",
+          "PillagerShieldService.init",
+          "PillagerGoldenAppleService.init"
+        ]
+      },
+      {
+        "source": "behavior_packs/BP/scripts/chunks/chunk-OPI5IBZW.js:739-746",
+        "authoredRequests": [
+          "EnchantmentManager.init",
+          "ShopManager.init",
+          "WelcomeService.init",
+          "new SetupManager",
+          "SetupEntityManager.init",
+          "ParticleLineService.init"
+        ]
+      }
+    ],
+    "observedTypedEventSubscriptionCount": 78,
+    "syntacticRepeatSite": {
+      "method": "CompositeSessionService.get",
+      "count": 94,
+      "generatedSource": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+      "qualifier": "syntactic count across the chunk, NOT 94 resolved runtime/IR edges"
+    }
+  },
+  "productionProjectionChange": {
+    "owningModule": "engine/packages/orchestrator/src/inspection/gameplay-scenario-compiler.ts",
+    "previousRisk": "24 ranked source handoffs can be saturated by many edges to one destination, hiding distinct terminal/cleanup targets",
+    "boundedResult": "First include one handoff per distinct exact destination, then fill to 24 using ranked repeated edges; preserve omitted and proof labels.",
+    "efficiency": "Cache sorted direct target source steps by region and reuse for all repeated call edges.",
+    "executedPreflight": "ChatGPT Node 22.16.0 standalone selection assertions: 30 calls to one target plus one distinct terminal; old 24-slot view omitted terminal, balanced view retained it; no runtime proof.",
+    "repoVitest": "NOT_EXECUTED",
+    "canonicalEngine": "NOT_EXECUTED",
+    "minecraftRuntime": "NOT_OBSERVED"
+  },
+  "baselineCommit": "4d4ad9479edf1e6f96d99ed2f45aede8ba298f6d",
+  "proofCeiling": "Selected world bytes/manifest source facts and AST parser only; no end-to-end engine or runtime success.",
+  "next": "Compare canonical selected-map output from same exact SHA against frozen 15-claim calibration when executable; audit false player entry candidates and each distinct target flow."
+}

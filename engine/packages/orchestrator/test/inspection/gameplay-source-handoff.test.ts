@@ -222,6 +222,52 @@ describe("cross-region source handoff tracing", () => {
     expect(flow?.runtimeStatus).toBe("NOT_OBSERVED");
   });
 
+  it("does not hide a distinct terminal target behind thirty calls to one session getter", () => {
+    const ir = sample();
+    ir.execution.regions = [...ir.execution.regions, {
+      id: "terminal", kind: "script-function",
+      ownerId: "composite", label: "end", source: target,
+    }];
+    const repeated = Array.from({ length: 30 }, (_, index) => ({
+      id: "edge:hot-" + String(index).padStart(2, "0"),
+      from: "entry", to: "callback",
+      kind: "synchronous-call" as const,
+      targetLabel: "CompositeSessionService.get",
+      resolution: "resolved" as const, source: origin,
+    }));
+    ir.execution.edges = [
+      ...ir.execution.edges,
+      ...repeated,
+      { id: "edge:zz-terminal", from: "entry", to: "terminal",
+        kind: "synchronous-call", targetLabel: "endCompositeGame",
+        resolution: "resolved", source: origin },
+    ];
+    ir.state.operations = [...ir.state.operations, {
+      id: "op:terminal",
+      executionRegionId: "terminal",
+      surfaceId: "state:round", operation: "write", source: target,
+    }];
+    const flow = sourceFlowCandidates(ir)
+      .find(candidate => candidate.entryRegionId === "entry");
+    expect(flow?.sourceHandoffs).toHaveLength(24);
+    expect(flow?.omittedSourceHandoffs).toBe(8);
+    expect(flow?.sourceHandoffs?.find(handoff =>
+      handoff.edgeId === "edge:zz-terminal")?.directTargetStateWriteIds)
+      .toEqual(["op:terminal"]);
+    expect(flow?.sourceHandoffs?.some(handoff =>
+      handoff.edgeId === "edge:unknown")).toBe(false);
+    expect(flow?.sourceHandoffs?.every(handoff =>
+      handoff.proof === "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION"))
+      .toBe(true);
+    expect(flow?.runtimeStatus).toBe("NOT_OBSERVED");
+    // Source enumeration order must not change the bounded view.
+    ir.execution.edges = [...ir.execution.edges].reverse();
+    expect(sourceFlowCandidates(ir)
+      .find(candidate => candidate.entryRegionId === "entry")
+      ?.sourceHandoffs?.map(handoff => handoff.edgeId))
+      .toEqual(flow?.sourceHandoffs?.map(handoff => handoff.edgeId));
+  });
+
   it("retains a late material call among thirty exact target handoffs", () => {
     const ir = sample();
     const ordinary = Array.from({ length: 28 }, (_, index) => ({
