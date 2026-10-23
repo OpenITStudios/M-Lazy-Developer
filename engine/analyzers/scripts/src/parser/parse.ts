@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:5:typescript:" +
+  "m-bedrock-script-parser:6:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -236,6 +236,102 @@ function propertyAccessChain(node: ts.Expression): string[] {
 
   if (ts.isIdentifier(current)) names.unshift(current.text);
   return names;
+}
+
+/**
+ * Source-only arena-associated command guard, extracted from the current AST.
+ * Admit only an immutable for-of arena binding, one const session bound to
+ * getSession(theSameArena.id), and a prior direct "not active -> continue"
+ * statement in that loop. Never infer player membership or successful runtime
+ * execution from this pattern. This does not add a gameplay execution root.
+ */
+function authoredActiveSessionLoopCommand(
+  node: ts.Node,
+  file: ts.SourceFile,
+  source: SourceRef,
+): ScriptCommandLiteral["arenaActiveSessionLoop"] | undefined {
+  let current: ts.Node = node;
+  let loop: ts.ForOfStatement | undefined;
+  let body: ts.Block | undefined;
+  while (current.parent) {
+    const parent = current.parent;
+    if (ts.isForOfStatement(parent) &&
+        parent.statement === current && ts.isBlock(current)) {
+      loop = parent;
+      body = current;
+      break;
+    }
+    // Commands inside nested closures cannot borrow the outer loop guard.
+    if (ts.isFunctionLike(parent)) return undefined;
+    current = parent;
+  }
+  if (!loop || !body ||
+      !ts.isVariableDeclarationList(loop.initializer) ||
+      (loop.initializer.flags & ts.NodeFlags.Const) === 0 ||
+      loop.initializer.declarations.length !== 1 ||
+      !ts.isIdentifier(loop.initializer.declarations[0]!.name)) return undefined;
+  const arenaBinding = loop.initializer.declarations[0]!.name.text;
+  let statement: ts.Node = node;
+  while (statement.parent && statement.parent !== body) {
+    statement = statement.parent;
+  }
+  const commandIndex = body.statements.indexOf(statement as ts.Statement);
+  if (commandIndex < 0) return undefined;
+  const earlier = body.statements.slice(0, commandIndex);
+  const sessions: { name: string; index: number }[] = [];
+  for (let index = 0; index < earlier.length; index += 1) {
+    const item = earlier[index]!;
+    if (!ts.isVariableStatement(item) ||
+        (item.declarationList.flags & ts.NodeFlags.Const) === 0) continue;
+    for (const declaration of item.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name) ||
+          !declaration.initializer ||
+          !ts.isCallExpression(declaration.initializer)) continue;
+      const call = declaration.initializer;
+      const arg = call.arguments[0];
+      if (!ts.isPropertyAccessExpression(call.expression) ||
+          call.expression.name.text !== "getSession" ||
+          call.arguments.length !== 1 ||
+          !arg || !ts.isPropertyAccessExpression(arg) ||
+          arg.name.text !== "id" ||
+          !ts.isIdentifier(arg.expression) ||
+          arg.expression.text !== arenaBinding) continue;
+      sessions.push({ name: declaration.name.text, index });
+    }
+  }
+  if (sessions.length !== 1) return undefined;
+  const session = sessions[0]!;
+  const statusOfSession = (expression: ts.Expression): boolean =>
+    ts.isPropertyAccessExpression(expression) &&
+    expression.name.text === "status" &&
+    ts.isIdentifier(expression.expression) &&
+    expression.expression.text === session.name;
+  const guard = earlier.slice(session.index + 1).find(item => {
+    if (!ts.isIfStatement(item) || item.elseStatement) return false;
+    const thenStatement = ts.isBlock(item.thenStatement) &&
+      item.thenStatement.statements.length === 1
+      ? item.thenStatement.statements[0] : item.thenStatement;
+    if (!thenStatement || !ts.isContinueStatement(thenStatement) ||
+        thenStatement.label) return false;
+    const comparison = item.expression;
+    if (!ts.isBinaryExpression(comparison) ||
+        (comparison.operatorToken.kind !== ts.SyntaxKind.ExclamationEqualsToken &&
+         comparison.operatorToken.kind !== ts.SyntaxKind.ExclamationEqualsEqualsToken))
+      return false;
+    return (statusOfSession(comparison.left) &&
+            ts.isStringLiteralLike(comparison.right) &&
+            comparison.right.text === "active") ||
+           (statusOfSession(comparison.right) &&
+            ts.isStringLiteralLike(comparison.left) &&
+            comparison.left.text === "active");
+  });
+  if (!guard || !ts.isIfStatement(guard)) return undefined;
+  return {
+    basis: "for-of-active-session-continue",
+    arenaBinding,
+    sessionBinding: session.name,
+    guardSource: lineSource(file, guard.expression, source),
+  };
 }
 
 function runCommandStringContext(
@@ -3132,6 +3228,11 @@ export function parseScriptFile(
             ts.isNoSubstitutionTemplateLiteral(argument)
           )
         ) {
+          // Only retain extra loop evidence for selector commands. It is a
+          // bounded source candidate, never an implicit arena ownership proof.
+          const activeLoop = /(?:^|\s)@a(?:\[|\b)/i.test(argument.text)
+            ? authoredActiveSessionLoopCommand(node, file, source)
+            : undefined;
           commandLiterals.push({
             command: argument.text.trim(),
             mechanism: methodName,
@@ -3140,6 +3241,9 @@ export function parseScriptFile(
             source: lineSource(file, argument, source),
             lexicalGuards: lexicalBranchGuards(node, file, source),
             precedenceGuards: precedingEarlyExitGuards(node, file, source),
+            ...(activeLoop === undefined ? {} : {
+              arenaActiveSessionLoop: activeLoop,
+            }),
           });
         }
       }

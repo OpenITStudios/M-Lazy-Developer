@@ -330,6 +330,15 @@ export interface ScriptCommandLiteral {
   source: SourceRef;
   lexicalGuards?: readonly ScriptLexicalGuard[];
   precedenceGuards?: readonly ScriptLexicalGuard[];
+  /** Source-only loop/session guard enclosing this literal command, not
+   * evidence of player or arena ownership or of actual command execution.
+   */
+  arenaActiveSessionLoop?: {
+    readonly basis: "for-of-active-session-continue";
+    readonly arenaBinding: string;
+    readonly sessionBinding: string;
+    readonly guardSource: SourceRef;
+  };
 }
 
 export interface ScriptLifecycleMemberExposure {

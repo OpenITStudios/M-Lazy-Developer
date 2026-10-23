@@ -834,14 +834,34 @@ function analyzeScript(
 
   for (const command of script.commandLiterals) {
     const region = command.executionRegion ?? "module";
-    if (!regions.has(region)) continue;
-    const observation =
-      commandObservation(
-        script,
-        command,
-        authoritiesForRegion(region),
-      );
-    if (observation) observations.push({ ...observation, source: command.source });
+    const alreadyRooted = regions.has(region);
+    const authoredLoop = command.arenaActiveSessionLoop;
+    // A source-observed session/arena loop may contain a global command even
+    // if it has no membership/start-authority path. Keep that observation
+    // explicitly unproven rather than silently dropping a material mutation.
+    if (!alreadyRooted && authoredLoop === undefined) continue;
+    const observation = commandObservation(
+      script,
+      command,
+      authoritiesForRegion(region),
+    );
+    if (!observation) continue;
+    const guard = authoredLoop?.guardSource;
+    const guardLocator = guard?.range?.lineStart === undefined
+      ? "source site unresolved"
+      : guard.relativePath + ":" + guard.range.lineStart;
+    observations.push({
+      ...observation,
+      source: command.source,
+      reason: observation.reason + (
+        !alreadyRooted && authoredLoop !== undefined
+          ? " Authored source loop requests a session for its for-of arena " +
+            "binding and continues when not active (" + guardLocator +
+            "). This is an arena-associated SOURCE CANDIDATE only; " +
+            "live arena/player ownership and command execution are unverified."
+          : ""
+      ),
+    });
   }
 
   for (const mutation of script.stateMutations ?? []) {
