@@ -13,6 +13,7 @@ import type {
   ParsedFunction,
 } from "../../../../analyzers/functions/src/index.js";
 import type { SourceRef } from "../../../project-model/src/index.js";
+import type { GameplayResourceTextEntry } from "./gameplay-intent-resource-text.js";
 import { semanticIrExecutionTraces, type SemanticIr } from "../../../semantic-ir/src/index.js";
 import { eventRegionId, scriptRegionId } from "../diagnosis/semantic-ir-stage.js";
 import { sourceClassMethodRegion } from "../../../../analyzers/scripts/src/index.js";
@@ -40,6 +41,8 @@ export interface GameplayIntentStageInput {
     parsed: ParsedScriptFile;
   }[];
   supplementalSignals?: readonly GameplayIntentSignal[];
+  /** Literal current-world .lang text: source cue, never keyword-inferred intent. */
+  playerFacingTextCues?: readonly GameplayResourceTextEntry[];
   /**
    * Authoritative physical file inventory from the SAME selected artifact,
    * supplied by inspectDirectory. Supplemental signals are candidates and
@@ -152,6 +155,27 @@ export function buildGameplayIntentModel(
   const invariants = new Map<string, GameplayIntentInvariant>();
   const intentUnknowns: GameplayIntentModel["unknowns"][number][] = [];
 
+  // Reuse the canonical Gameplay Intent evidence owner. A literal player
+  // instruction is useful discovery evidence, but does not create a
+  // mechanic/objective or approve a game rule. The source location is only
+  // authorized by the physical current-artifact file inventory.
+  if (input.artifactId !== undefined) {
+    for (const cue of input.playerFacingTextCues ?? []) {
+      if (!selectedArtifactSourcePaths.has(cue.relativePath) ||
+          !Number.isSafeInteger(cue.line) || cue.line < 1 ||
+          !cue.key.trim() || !cue.text.trim()) continue;
+      const locator = cue.relativePath + "#L" + cue.line;
+      const id = "player-facing-copy:" + encodeURIComponent(
+        input.artifactId + ":" + locator + ":" + cue.key);
+      evidence.set(id, {
+        id, origin: "translation", scope: "selected-artifact",
+        locator,
+        summary: "Literal .lang presentation (" + cue.key +
+          "); visibility, player objective and intended gameplay NOT PROVEN.",
+        playerFacingText: { key: cue.key, text: cue.text },
+      });
+    }
+  }
 
   // Only an exact authored assignment (target, value, region, location and
   // artifact) may inherit its Semantic IR identity. Same-named state labels,

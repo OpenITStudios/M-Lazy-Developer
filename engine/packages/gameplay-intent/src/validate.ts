@@ -55,6 +55,20 @@ export function validateGameplayIntentModel(
     }
   }
 
+  for (const evidence of model.evidence) {
+    if (evidence.playerFacingText !== undefined &&
+        (evidence.origin !== "translation" ||
+         evidence.scope !== "selected-artifact" ||
+         !evidence.playerFacingText.key.trim() ||
+         !evidence.playerFacingText.text.trim() ||
+         !/^.+#L[1-9][0-9]*$/.test(evidence.locator))) {
+      issues.push({
+        path: "evidence." + evidence.id + ".playerFacingText",
+        message: "Literal player-facing copy must be a line-located selected-artifact translation, never approved design.",
+      });
+    }
+  }
+
   const nodeIds = new Set(model.nodes.map((node) => node.id));
   const evidenceIds = new Set(
     model.evidence.map((evidence) => evidence.id),

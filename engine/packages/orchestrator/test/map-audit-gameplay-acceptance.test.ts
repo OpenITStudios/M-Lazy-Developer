@@ -73,6 +73,17 @@ async function syntheticMcworld(kind: Case): Promise<{
         : "scoreboard players set @p session 1\ntp @p 5 70 5\n",
     );
     if (kind === "authored-content") {
+      // Generic .lang copy is NOT an automatic objective. These three
+      // syntaxes mirror real, contrasting selected worlds: a building guide,
+      // a team-victory announcement and a multi-mode party explanation.
+      await mkdir(join(first, "texts"), { recursive: true });
+      await writeFile(join(first, "texts", "en_US.lang"), [
+        "pack.name=BlitzBuild synthetic BP",
+        "item.demo:bed.name=Red Bed",
+        "welcome.guide=Memorize the build, rebuild them as accurately and quickly as possible!",
+        "daigon.ui.winner.red=§c§lRED WINS§r",
+        "daigon.welcome.line2=Enter the podium to join a party. When everyone is ready, the countdown will start.",
+      ].join("\n"));
       await mkdir(join(first, "scripts"), { recursive: true });
       await writeFile(join(first, "scripts", "main.js"), [
         'const game = { stages: [{ id: "stage_1", name: "Outpost", mobs: [',
@@ -530,6 +541,32 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expectReconstructionContract(audit);
       const handoff = projectSelectedMapAuditModelHandoff(audit);
       const content = handoff.gameUnderstanding.authoredContent;
+      const copy = handoff.gameUnderstanding.playerFacingTextCues;
+      expect(copy.map(item => item.key)).toEqual(expect.arrayContaining([
+        "welcome.guide", "daigon.ui.winner.red", "daigon.welcome.line2",
+      ]));
+      expect(handoff.gameUnderstanding.omittedPlayerFacingTextCues).toBe(0);
+      expect(copy.every(item =>
+        item.proof === "LITERAL_SELECTED_SOURCE_COPY_NOT_GAME_DESIGN" &&
+        item.sourceLocator.includes("en_US.lang#L"))).toBe(true);
+      expect(copy.some(item => item.key === "pack.name")).toBe(false);
+      const textEvidence = audit.inspection.gameplayIntent.model.evidence
+        .filter(item => item.playerFacingText !== undefined);
+      expect(textEvidence).toHaveLength(3);
+      expect(audit.inspection.gameplayIntent.model.nodes.some(node =>
+        node.label.includes("RED WINS") ||
+        node.label.includes("Memorize the build"))).toBe(false);
+      expect(audit.mapAuditReport.gameDesign.objective)
+        .not.toContain("RED WINS");
+      const copyBrief = formatSelectedMapAuditBrief({
+        report: audit.mapAuditReport,
+        intent: audit.inspection.gameplayIntent.model,
+        modelTaskPackets: audit.modelTaskPackets,
+      });
+      expect(copyBrief).toContain("Localized player-facing text");
+      expect(copyBrief).toContain("welcome.guide");
+      expect(copyBrief).toContain("daigon.ui.winner.red");
+      expect(copyBrief).toContain("NOT GAME DESIGN");
       expect(content.basis).toBe("SOURCE_CONTAINMENT_ONLY_NOT_GAMEPLAY_ORDER");
       expect(handoff.gameUnderstanding.gameplayFlowBasis)
         .toBe("AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY");

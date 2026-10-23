@@ -67,6 +67,14 @@ export interface GameplayIntentEvidence {
    * draft/approved status. Source node status "authored" is not approval.
    */
   designStatus?: "draft" | "approved";
+  /**
+   * Literal current-artifact .lang copy. A player-facing SOURCE CUE, not an
+   * approved game rule, delivered UI, or proven victory/defeat condition.
+   */
+  playerFacingText?: {
+    readonly key: string;
+    readonly text: string;
+  };
 }
 
 export type GameplayIntentScalar =

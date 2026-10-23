@@ -1,8 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import {
-  extractGameplayIntentSurfaceSignal,
-  type GameplayIntentSignal,
+import type {
+  GameplayIntentSignal,
 } from "../../../../analyzers/gameplay-intent/src/index.js";
 import type {
   FileInventoryEntry,
@@ -120,12 +119,31 @@ function sourceStageContentSignal(
   };
 }
 
+/**
+ * Technical names and pack metadata do not become gameplay instructions.
+ * Literal presentation copy remains a cue even when its words are not
+ * recognized by the existing gameplay name classifier.
+ */
+function isPlayerFacingCopy(entry: GameplayResourceTextEntry): boolean {
+  if (/^(?:pack|entity|item|tile|block|biome|enchantment|potion)\./i.test(entry.key)) {
+    return false;
+  }
+  const visible = entry.text
+    .replace(/§./g, "")
+    .replace(/[\uE000-\uF8FF]/g, "")
+    .replace(/%[0-9]*(?:\$[0-9]+)?[sdf]/gi, " ")
+    .trim();
+  return /[\p{L}\p{N}]/u.test(visible);
+}
+
 export async function deriveGameplayResourceTextSignals(
   root: string,
   files: readonly FileInventoryEntry[],
 ): Promise<{
   readonly entries:
     readonly GameplayResourceTextEntry[];
+  /** Exact locale wording, never mechanically classified by its words. */
+  readonly playerFacingCues: readonly GameplayResourceTextEntry[];
   readonly signals:
     readonly GameplayIntentSignal[];
 }> {
@@ -160,28 +178,17 @@ export async function deriveGameplayResourceTextSignals(
     );
   }
 
-  const signals = entries.flatMap(
-    (entry) => {
-      const content = sourceStageContentSignal(entry);
-      if (content) return [content];
-      const signal =
-        extractGameplayIntentSurfaceSignal({
-          label: entry.text,
-          locator:
-            entry.relativePath +
-            "#L" +
-            String(entry.line),
-          evidenceOrigin: "translation",
-          status: "inferred",
-          summary:
-            "Player-facing localized text exposes a gameplay expectation candidate from the selected artifact.",
-        });
-      return signal ? [signal] : [];
-    },
-  );
+  // Structured stage/task keys retain source-content navigation.
+  // Generic copy must NOT become an objective because it says "WINS".
+  // A unique instruction also must not vanish because its words are novel.
+  const signals = entries.flatMap(entry => {
+    const content = sourceStageContentSignal(entry);
+    return content === undefined ? [] : [content];
+  });
 
   return {
     entries,
+    playerFacingCues: entries.filter(isPlayerFacingCopy),
     signals,
   };
 }

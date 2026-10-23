@@ -29,6 +29,17 @@ export interface SelectedMapAuditModelHandoff {
         NonNullable<MapAuditOutputV2["gameplayStructure"]>["mechanicReconstructions"][number]["sourceActivationCandidates"];
     }[];
     readonly omittedFeatures: number;
+    /** Literal locale wording from the SAME selected artifact. These are
+     * presentation cues, NOT inferred mechanics or approved game rules.
+     */
+    readonly playerFacingTextCues: readonly {
+      readonly evidenceId: string;
+      readonly key: string;
+      readonly text: string;
+      readonly sourceLocator: string;
+      readonly proof: "LITERAL_SELECTED_SOURCE_COPY_NOT_GAME_DESIGN";
+    }[];
+    readonly omittedPlayerFacingTextCues: number;
     /** Exact NPC button text and its OWN authored command, never design or execution proof. */
     readonly playerFacingCommandBindings: readonly {
       readonly featureId: string;
@@ -293,6 +304,31 @@ export function projectSelectedMapAuditModelHandoff(
       .includes(link.status))
     .map((link) => link.id));
   const features = audit.mapAuditReport.gameplayStructure?.features ?? [];
+  const allCopy = audit.inspection.gameplayIntent.model.evidence
+    .filter(item =>
+      item.scope === "selected-artifact" &&
+      item.origin === "translation" &&
+      item.playerFacingText !== undefined);
+  // Prefer explanatory sentences over short status tokens for navigation,
+  // never for design authority. Preserve all omitted source cues in Intent.
+  const copyWords = (item: typeof allCopy[number]): number =>
+    item.playerFacingText!.text
+      .replace(/§./g, " ")
+      .replace(/[\uE000-\uF8FF]/g, " ")
+      .trim().split(/\s+/).filter(Boolean).length;
+  const rankedCopy = [...allCopy].sort((a, b) =>
+    copyWords(b) - copyWords(a) ||
+    a.locator.localeCompare(b.locator) ||
+    a.id.localeCompare(b.id));
+  const playerFacingTextCues: SelectedMapAuditModelHandoff[
+    "gameUnderstanding"]["playerFacingTextCues"] =
+    rankedCopy.slice(0, 12).map(item => ({
+      evidenceId: item.id,
+      key: item.playerFacingText!.key,
+      text: item.playerFacingText!.text,
+      sourceLocator: item.locator,
+      proof: "LITERAL_SELECTED_SOURCE_COPY_NOT_GAME_DESIGN",
+    }));
   const sourceRelations = audit.mapAuditReport.gameplayStructure
     ?.authoredBehaviorRelationships ?? [];
   const allSourceFlows = audit.mapAuditReport.gameplayStructure?.sourceFlowCandidates ?? [];
@@ -500,6 +536,9 @@ export function projectSelectedMapAuditModelHandoff(
           (activationByFeature.get(feature.id) ?? []).slice(0, 3),
       })),
       omittedFeatures: Math.max(0, features.length - 16),
+      playerFacingTextCues,
+      omittedPlayerFacingTextCues:
+        Math.max(0, rankedCopy.length - playerFacingTextCues.length),
       playerFacingCommandBindings,
       omittedPlayerFacingCommandBindings:
         Math.max(0, authoredButtons.length - playerFacingCommandBindings.length),

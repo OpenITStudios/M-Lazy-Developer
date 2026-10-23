@@ -341,6 +341,7 @@ export async function inspectDirectory(
     contractScripts: contractSources,
     supplementalSignals:
       gameplaySurfaceSignals,
+    playerFacingTextCues: gameplayResourceText.playerFacingCues,
     // This inventory is generated from selected archive bytes before source
     // interpretation. Supplemental hints may NOT authorize their own path.
     selectedSourceInventoryPaths: files.map(file => file.relativePath),

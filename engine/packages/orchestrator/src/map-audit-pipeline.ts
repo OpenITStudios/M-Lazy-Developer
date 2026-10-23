@@ -789,7 +789,12 @@ function assembleSelectedMapAuditRun(
         intentUnknowns: inspection.gameplayIntent.model.unknowns,
         selectedArtifactEvidenceIds:
           inspection.gameplayIntent.model.evidence
-            .filter((item) => item.scope === "selected-artifact")
+            // Literal UI copy has no classified gameplay owner by design.
+            // It is still canonical Intent evidence for investigation, but
+            // must NOT inflate "unlinked semantic evidence" or claim a
+            // missing Scenario Graph node for every translation sentence.
+            .filter((item) => item.scope === "selected-artifact" &&
+              item.playerFacingText === undefined)
             .map((item) => item.id),
         ...(inspection.gameplayWorld.arenas.count === undefined
           ? {}

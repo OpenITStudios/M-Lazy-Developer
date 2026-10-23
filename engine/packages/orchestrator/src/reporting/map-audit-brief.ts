@@ -151,6 +151,38 @@ export function formatSelectedMapAuditBrief(input: {
         : "See independently grounded win/lose conditions; runtime NOT proven."),
     "",
   ];
+  // Preserve non-generic, authored locale wording as a source cue BEFORE
+  // listing inferred mechanics. The original text and file/line are owned
+  // by the canonical Gameplay Intent evidence, not a report-side classifier.
+  const playerText = intent.evidence.filter(item =>
+    item.scope === "selected-artifact" &&
+    item.origin === "translation" &&
+    item.playerFacingText !== undefined);
+  const words = (text: string) =>
+    text.replace(/§./g, " ").replace(/[\uE000-\uF8FF]/g, " ")
+      .trim().split(/\s+/).filter(Boolean).length;
+  const rankedText = [...playerText].sort((a, b) =>
+    words(b.playerFacingText!.text) - words(a.playerFacingText!.text) ||
+    a.locator.localeCompare(b.locator) || a.id.localeCompare(b.id));
+  if (rankedText.length > 0) {
+    out.push(
+      "### Localized player-facing text (SOURCE COPY; NOT GAME DESIGN)",
+      "These are authored messages, instructions or status labels, not " +
+        "confirmed UI visibility, approved objectives, win rules or game execution.",
+    );
+    for (const cue of rankedText.slice(0, 6)) {
+      const readable = cue.playerFacingText!.text
+        .replace(/§./g, "").replace(/[\uE000-\uF8FF]/g, " ")
+        .replace(/\s+/g, " ").trim();
+      out.push("- " + concise(cue.playerFacingText!.key) + ": " +
+        concise(readable) + " (" + concise(cue.locator) + ").");
+    }
+    if (rankedText.length > 6) out.push(
+      "Additional selected-source locale cues not shown: " +
+        (rankedText.length - 6) + ".",
+    );
+    out.push("");
+  }
   // A compact decision appears BEFORE the potentially large authored
   // source inventory. It projects existing report and task data only:
   // no new verdict, proof receipt, gameplay route or second state owner.

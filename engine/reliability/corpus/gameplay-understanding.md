@@ -37,6 +37,38 @@ A map may teach the engine that a semantic pattern exists, but the engine must r
 | Orb of the Illusioner L1 | bundled/minified | party state, hologram status, puzzle/stage flow, waves, player session lifecycle |
 | Five Nights Defense L2 | bundled/minified | multi-arena defense, shop/upgrade, revive, route/spawn, score/economy, reset |
 
+## Source-grounded cross-game locale calibration — 2026-10-23
+
+These are **direct archive/source inspections**, not executed TypeScript audits,
+Minecraft observations, frozen expectation edits, or semantic accuracy scores.
+Each sample is an immutable selected map analyzed **separately**. The examples
+demonstrate one generalized false-interpretation family: a language-pack
+message must be retained as a player-facing source cue, never promoted to
+an objective or winning rule solely by lexical keywords.
+
+| Selected artifact / SHA-256 | Exact authored source | Semantic distinction |
+| --- | --- | --- |
+| BlitzBuild v1.0.2 / `d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504` | `resource_packs/blitzbuild_rp/texts/en_US.lang#L5`, `welcome.guide=...Memorize the build, rebuild...` | Player instructions are useful evidence even without a recognized mechanic name; they are not by themselves proof the builder/scoring loop functions |
+| Beach Bedwars v1.1.0 / `97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8` | `resource_packs/Beach_Bedwars_RP/texts/en_US.lang#L47`, `daigon.ui.winner.red=...RED WINS`; `#L52`, `...GREEN WINS` | Result announcements are displayed-text candidates, **not** independent winning-condition definitions or gameplay objective nodes |
+| Daigon Composite v1.1.17 / `aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4` | `behavior_packs/BP/texts/en_US.lang#L24–L25`, flag instruction and podium/party ready/countdown text | One instruction may span multiple gameplay systems. Keep exact wording and current-map source; do not invent a proven Party → Session → Victory chain from the sentence |
+
+The generic correction belongs to `inspection/gameplay-intent-resource-text.ts`
+and the existing canonical Gameplay Intent evidence/handoff consumers: retain
+the actual selected-artifact `.lang` wording with `playerFacingText`,
+without keyword-classifying generic locale lines as `objective`,
+`mechanic`, `phase` or other player-journey graph nodes. Explicit
+stage/task localization structures continue as **source-content navigation**.
+Pack/entity/item metadata and private-use glyph-only values do not become
+gameplay text cues. The canonical Scenario Graph semantic coverage excludes
+evidence-only copy from the requirement to have a mechanic owner. Existing
+PROVE, counterproof, BUG/DESIGN_MISMATCH admission and runtime boundaries
+remain unchanged.
+
+For acceptance, demand an actual same-HEAD programmatic audit on these
+distinct originals, source-scoped comparison to independent reviewed claims,
+and separation of true source facts from intended design. Do not score the
+historical eight-map inventory as semantic recall on the newer engine.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.
