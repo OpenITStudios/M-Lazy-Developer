@@ -575,6 +575,65 @@ export function formatSelectedMapAuditBrief(input: {
     if (truncated > 0) out.push("Other handoffs truncated at source flow: " +
       truncated + " (not proof of absence).");
   }
+  // Exact button text is a player-facing ACTION CUE, not automatically
+  // the objective or result of a game. The command belongs to a different
+  // authored JSON pointer, and even uniquely resolved source targets do
+  // not imply NPC presentation, player access or command success.
+  const sourceButtons = (report.gameplayStructure?.authoredBehaviorRelationships ?? [])
+    .filter(relation => {
+      if (relation.kind !== "dialogue-button-command" ||
+          relation.resolution !== "EXACT_REFERENCE" ||
+          !relation.interactionLabel?.trim() ||
+          !relation.targetSource?.jsonPointer ||
+          !relation.source.jsonPointer ||
+          relation.source.artifactId !== relation.targetSource.artifactId ||
+          relation.source.relativePath !== relation.targetSource.relativePath) {
+        return false;
+      }
+      const labelPath = relation.targetSource.jsonPointer;
+      const base = labelPath.replace(/\/(?:name|text)$/, "");
+      return base !== labelPath &&
+        relation.source.jsonPointer.startsWith(base + "/commands/");
+    })
+    .sort((a, b) =>
+      a.source.relativePath.localeCompare(b.source.relativePath) ||
+      (a.source.jsonPointer ?? "").localeCompare(b.source.jsonPointer ?? "") ||
+      a.id.localeCompare(b.id));
+  if (sourceButtons.length > 0) {
+    out.push("", "### NPC button text → source command (NOT PLAYER EXECUTION)",
+      "A displayed-looking label is a player-facing ACTION CUE, not a proven " +
+      "game-design goal. Same-button JSON sites are bound exactly; downstream " +
+      "effects remain source candidates.");
+    for (const relation of sourceButtons.slice(0, 6)) {
+      const directHandoffs = (relation.executionEdgeIds ?? [])
+        .flatMap(id => {
+          const entry = sourceHandoffs.get(id);
+          return entry === undefined ? [] : [entry.edge];
+        });
+      out.push(
+        "- **" + concise(relation.interactionLabel!) + "** — command " +
+          concise(relation.to) + " [source only].",
+        "  Text: " + concise(relation.targetSource!.relativePath + "#" +
+          relation.targetSource!.jsonPointer) +
+          "; command: " + concise(relation.source.relativePath + "#" +
+            relation.source.jsonPointer) + ".",
+        "  Source target calls: " + (relation.executionEdgeIds?.length ?? 0) +
+          "; direct resolved handoffs shown: " + directHandoffs.length +
+          "; command-local effect/state sites: " +
+          (relation.worldEffectIds?.length ?? 0) + "/" +
+          (relation.stateOperationIds?.length ?? 0) + ".",
+        "  Direct callee write/effect/release candidates: " +
+          directHandoffs.reduce((count, handoff) =>
+            count + handoff.directTargetStateWriteIds.length +
+              handoff.directTargetWorldEffectIds.length +
+              handoff.directTargetReleaseIds.length, 0) +
+          "; player activation, final objective and effect success: UNKNOWN.",
+      );
+    }
+    if (sourceButtons.length > 6) out.push(
+      "Additional NPC source button commands omitted: " +
+        (sourceButtons.length - 6) + ".");
+  }
   // Navigation over the EXISTING canonical Intent owns edges. This is
   // source-structure containment, never a chronological player journey.
   // Show the discovered shape first, before technical evidence inventories.

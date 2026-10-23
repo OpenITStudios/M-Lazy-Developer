@@ -62,22 +62,36 @@ export function deriveGameplayIntentSurfaceSignals(
   for (const document of source.dialogues) {
     if (!document) continue;
     for (const scene of document.scenes) {
+      // A scene_tag is a technical lookup key, not NPC text presented to
+      // players. Preserve its navigational identity without issuing a
+      // player-facing promise from a source identifier.
       add(signals, {
         label: scene.sceneTag,
-        locator: document.source.relativePath,
-        evidenceOrigin: "dialogue",
+        locator: scene.source?.jsonPointer &&
+          scene.source.artifactId === document.source.artifactId &&
+          scene.source.relativePath === document.source.relativePath
+          ? scene.source.relativePath + "#" + scene.source.jsonPointer
+          : document.source.relativePath,
+        evidenceOrigin: "source-code",
         status: "inferred",
         summary:
-          "A dialogue scene tag exposes a player-facing gameplay-surface candidate from the selected artifact.",
+          "An NPC scene identifier is an authored source key; it does not prove that dialogue is displayed or that any objective is intended.",
       });
       for (const item of scene.displayText ?? []) {
+        // The exact JSON pointer distinguishes identical button/body text
+        // appearing in separate scenes and distinguishes a button label
+        // from its executable command in the very same JSON file.
+        const site = item.source;
+        if (!site?.jsonPointer ||
+            site.artifactId !== document.source.artifactId ||
+            site.relativePath !== document.source.relativePath) continue;
         add(signals, {
           label: item.text,
-          locator: document.source.relativePath,
+          locator: site.relativePath + "#" + site.jsonPointer,
           evidenceOrigin: "dialogue",
           status: "inferred",
           summary:
-            "Player-facing dialogue copy exposes a gameplay expectation or interaction surface from the selected artifact.",
+            "Literal NPC display text; source presence does not establish visibility, design approval or successful button-command execution.",
         });
       }
     }

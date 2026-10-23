@@ -29,6 +29,26 @@ export interface SelectedMapAuditModelHandoff {
         NonNullable<MapAuditOutputV2["gameplayStructure"]>["mechanicReconstructions"][number]["sourceActivationCandidates"];
     }[];
     readonly omittedFeatures: number;
+    /** Exact NPC button text and its OWN authored command, never design or execution proof. */
+    readonly playerFacingCommandBindings: readonly {
+      readonly featureId: string;
+      readonly label: string;
+      readonly sourceRelationId: string;
+      readonly labelSource: import("../../../project-model/src/index.js").SourceRef;
+      readonly commandSource: import("../../../project-model/src/index.js").SourceRef;
+      readonly commandText: string;
+      readonly authoredCondition: string | null;
+      readonly sourceCallEdgeIds: readonly string[];
+      readonly resolvedDirectTargetRegionIds: readonly string[];
+      readonly directCommandWorldEffectIds: readonly string[];
+      readonly directCommandStateOperationIds: readonly string[];
+      readonly directTargetStateWriteIds: readonly string[];
+      readonly directTargetWorldEffectIds: readonly string[];
+      readonly directTargetReleaseIds: readonly string[];
+      readonly omittedDirectTargetHandoffs: number;
+      readonly proof: "EXACT_UI_BUTTON_COMMAND_SOURCE_NOT_EXECUTION";
+    }[];
+    readonly omittedPlayerFacingCommandBindings: number;
     /**
      * Unnamed source behavior with material effects, from the EXISTING
      * canonical Intent unknowns and Scenario/IR navigation. Never a new
@@ -273,6 +293,66 @@ export function projectSelectedMapAuditModelHandoff(
       .includes(link.status))
     .map((link) => link.id));
   const features = audit.mapAuditReport.gameplayStructure?.features ?? [];
+  const sourceRelations = audit.mapAuditReport.gameplayStructure
+    ?.authoredBehaviorRelationships ?? [];
+  const allSourceFlows = audit.mapAuditReport.gameplayStructure?.sourceFlowCandidates ?? [];
+  const featureById = new Map(features.map(item => [item.id, item] as const));
+  const availableHandoffs = new Map(allSourceFlows.flatMap(flow =>
+    (flow.sourceHandoffs ?? []).map(handoff => [handoff.edgeId, handoff] as const)));
+  // Only literal text and command positions from the SAME authored button.
+  // The source target must also be owned by the exact selected feature.
+  const authoredButtons = sourceRelations.filter(relation => {
+    if (relation.kind !== "dialogue-button-command" ||
+        relation.resolution !== "EXACT_REFERENCE" ||
+        !relation.targetSource?.jsonPointer ||
+        !relation.source.jsonPointer ||
+        !relation.interactionLabel?.trim() ||
+        relation.source.artifactId !== audit.identity.artifactId ||
+        relation.targetSource.artifactId !== audit.identity.artifactId ||
+        relation.source.relativePath !== relation.targetSource.relativePath) return false;
+    const label = relation.targetSource.jsonPointer;
+    const command = relation.source.jsonPointer;
+    const parent = label.replace(/\/(?:name|text)$/, "");
+    if (parent === label || !command.startsWith(parent + "/commands/")) return false;
+    const featureId = "mechanic:dialogue-interaction:" +
+      encodeURIComponent(relation.ownerId);
+    return featureById.get(featureId)?.sourceEvidenceIds.includes(relation.id) === true;
+  }).sort((a,b) =>
+    a.source.relativePath.localeCompare(b.source.relativePath) ||
+    (a.source.jsonPointer ?? "").localeCompare(b.source.jsonPointer ?? "") ||
+    a.id.localeCompare(b.id));
+  const playerFacingCommandBindings: SelectedMapAuditModelHandoff[
+    "gameUnderstanding"]["playerFacingCommandBindings"] =
+    authoredButtons.slice(0, 8).map(relation => {
+      const relevantHandoffs = (relation.executionEdgeIds ?? []).flatMap(id => {
+        const item = availableHandoffs.get(id);
+        return item === undefined ? [] : [item];
+      });
+      const material = (key: "directTargetStateWriteIds" |
+        "directTargetWorldEffectIds" | "directTargetReleaseIds"): string[] =>
+        [...new Set(relevantHandoffs.flatMap(item => item[key]))].sort();
+      return {
+        featureId: "mechanic:dialogue-interaction:" +
+          encodeURIComponent(relation.ownerId),
+        label: relation.interactionLabel!.trim(),
+        sourceRelationId: relation.id,
+        labelSource: relation.targetSource!,
+        commandSource: relation.source,
+        commandText: relation.to,
+        authoredCondition: relation.condition ?? null,
+        sourceCallEdgeIds: [...(relation.executionEdgeIds ?? [])].sort(),
+        resolvedDirectTargetRegionIds: [...new Set(relevantHandoffs
+          .map(item => item.toRegionId))].sort(),
+        directCommandWorldEffectIds: [...(relation.worldEffectIds ?? [])].sort(),
+        directCommandStateOperationIds: [...(relation.stateOperationIds ?? [])].sort(),
+        directTargetStateWriteIds: material("directTargetStateWriteIds").slice(0, 8),
+        directTargetWorldEffectIds: material("directTargetWorldEffectIds").slice(0, 8),
+        directTargetReleaseIds: material("directTargetReleaseIds").slice(0, 8),
+        omittedDirectTargetHandoffs: Math.max(0,
+          (relation.executionEdgeIds?.length ?? 0) - relevantHandoffs.length),
+        proof: "EXACT_UI_BUTTON_COMMAND_SOURCE_NOT_EXECUTION",
+      };
+    });
   const authoredContent = projectSelectedAuthoredContent(
     audit.inspection.gameplayIntent.model,
   );
@@ -420,6 +500,9 @@ export function projectSelectedMapAuditModelHandoff(
           (activationByFeature.get(feature.id) ?? []).slice(0, 3),
       })),
       omittedFeatures: Math.max(0, features.length - 16),
+      playerFacingCommandBindings,
+      omittedPlayerFacingCommandBindings:
+        Math.max(0, authoredButtons.length - playerFacingCommandBindings.length),
       authoredContent,
       uninterpretedSourceFlows,
       omittedUninterpretedSourceFlows:

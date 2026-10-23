@@ -1,5 +1,6 @@
 import {
   hasIndependentApprovedDesignEvidence,
+  isSelectedArtifactApprovedDesignEvidence,
   isSelectedArtifactPlayerFacingClaimEvidence,
   type GameplayIntentEvidence,
   type GameplayIntentEdge,
@@ -2867,16 +2868,17 @@ export function reconstructAuthoredJourneyCandidates(
       walk.ids.map(subjectId => {
         const node = nodes.get(subjectId)!;
         const scopedEvidence = sorted(node.evidenceIds.filter(id => source.has(id)));
-        const origins = scopedEvidence.map(id => source.get(id)!.origin);
+        const witnesses = scopedEvidence.map(id => source.get(id)!);
         return {
           subjectId,
           label: node.label,
           kind: node.kind,
+          // An embedded draft is still a DRAFT. The word "authored" on a
+          // source node cannot turn it into an approved gameplay contract.
           meaningBasis: node.status === "authored" &&
-              origins.includes("game-design-spec")
+              witnesses.some(isSelectedArtifactApprovedDesignEvidence)
             ? "EMBEDDED_DESIGN_TEXT" as const
-            : origins.some(origin => origin === "dialogue" ||
-                origin === "translation")
+            : witnesses.some(isSelectedArtifactPlayerFacingClaimEvidence)
               ? "PLAYER_FACING_SOURCE_CUE" as const
               : "TECHNICAL_SOURCE_ONLY" as const,
           intentStatus: node.status === "authored" ? "authored" : "inferred",

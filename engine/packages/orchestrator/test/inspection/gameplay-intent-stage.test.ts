@@ -4,6 +4,12 @@ import {
   buildGameplayIntentModel,
 } from "../../src/inspection/gameplay-intent-stage.js";
 import { buildInspectionSemanticIr } from "../../src/diagnosis/semantic-ir-stage.js";
+import { challengeDesignIntent } from "../../../gameplay-intent/src/index.js";
+import { parseDialogueDocument } from "../../../../analyzers/dialogue/src/index.js";
+import {
+  deriveAuthoredDialogueBehaviorRelations,
+  deriveGameplayIntentSurfaceSignals,
+} from "../../src/inspection/gameplay-intent-surface-signals.js";
 
 const source = {
   artifactId: "art_test",
@@ -115,6 +121,82 @@ function parsed(): ParsedScriptFile {
 }
 
 describe("gameplay intent stage", () => {
+  it("does not merge identical button labels across separate gameplay scene/command owners", () => {
+    const origin = {
+      artifactId: "artifact:novel-modes",
+      relativePath: "behavior_packs/demo/dialogue/npc.json",
+    };
+    const document = parseDialogueDocument({
+      "minecraft:npc_dialogue": {
+        scenes: [{
+          scene_tag: "demo:quiz",
+          buttons: [{
+            name: "Start Challenge",
+            commands: ["scoreboard players set @p quiz 1"],
+          }],
+        }, {
+          scene_tag: "demo:combat",
+          buttons: [{
+            name: "Start Challenge",
+            commands: ["scoreboard players set @p combat 1"],
+          }],
+        }],
+      },
+    }, origin);
+    expect(document).toBeDefined();
+    const relations = deriveAuthoredDialogueBehaviorRelations([document]);
+    expect(relations).toHaveLength(2);
+    const semanticIr = buildInspectionSemanticIr({
+      parsedScripts: [], parsedFunctions: [],
+      authoredBehaviorRelations: relations,
+    });
+    const intent = buildGameplayIntentModel({
+      id: "intent:multi-mode-buttons",
+      artifactId: origin.artifactId,
+      parsedScripts: [], semanticIr,
+      supplementalSignals: deriveGameplayIntentSurfaceSignals({
+        functions: [], dialogues: [document], structures: [], entities: [],
+      }),
+      selectedSourceInventoryPaths: [origin.relativePath],
+    });
+    const buttons = intent.nodes.filter(item =>
+      item.id.startsWith("mechanic:dialogue-interaction:"));
+    expect(buttons).toHaveLength(2);
+    expect(buttons.map(item => item.label))
+      .toEqual(["NPC interaction: Start Challenge", "NPC interaction: Start Challenge"]);
+    const labelLocations = new Set<string>();
+    for (const relation of relations) {
+      const technical = intent.evidence.find(item => item.id === relation.id);
+      const presented = intent.evidence.find(item =>
+        item.id === relation.id + ":display-text");
+      expect(technical?.origin).toBe("source-code");
+      expect(presented?.origin).toBe("dialogue");
+      expect(technical?.locator).toContain("/commands/0");
+      expect(presented?.locator).toContain("/name");
+      const challenge = challengeDesignIntent({
+        evidence: intent.evidence,
+        implementationEvidenceIds: [relation.id],
+        independentDesignEvidenceIds: [],
+        playerFacingEvidenceIds: [relation.id + ":display-text"],
+      });
+      expect(challenge.disposition).toBe("player-facing-claim");
+      expect(challenge.designEvidenceIds).toEqual([]);
+      labelLocations.add(presented!.locator);
+      const node = buttons.find(item =>
+        item.evidenceIds.includes(relation.id));
+      expect(node?.evidenceIds).toContain(presented!.id);
+      expect(intent.unknowns.some(item =>
+        item.blockedSubjectIds.includes(node!.id))).toBe(true);
+    }
+    expect(labelLocations.size).toBe(2);
+    expect(intent.evidence.some(item => item.origin === "dialogue" &&
+      item.locator.endsWith("/scene_tag"))).toBe(false);
+    // Source-defined buttons are neither game objectives nor victories.
+    expect(intent.edges.some(item =>
+      item.kind === "wins-by" || item.kind === "loses-by")).toBe(false);
+  });
+
+
   it("keeps unnamed source clear/delete effects as located unknowns, not invented mechanics", () => {
     const selected = "artifact:unknown";
     const source = {

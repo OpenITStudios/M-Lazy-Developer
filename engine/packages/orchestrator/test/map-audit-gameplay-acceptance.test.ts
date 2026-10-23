@@ -252,6 +252,29 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       const relation = ir.execution.authoredBehaviorRelations?.find(item =>
         item.kind === "dialogue-button-command");
       expect(relation?.interactionLabel).toBe("Start Challenge");
+      expect(relation?.targetSource?.jsonPointer)
+        .toBe("/minecraft:npc_dialogue/scenes/0/buttons/0/name");
+      expect(relation?.source.jsonPointer)
+        .toBe("/minecraft:npc_dialogue/scenes/0/buttons/0/commands/0");
+      // Text and command are independently located on the exact SAME
+      // button. A command is technical evidence, never a displayed claim.
+      const intentEvidence = result.inspection.gameplayIntent.model.evidence;
+      const buttonText = intentEvidence.find(item =>
+        item.id === relation!.id + ":display-text");
+      const authoredCommand = intentEvidence.find(item =>
+        item.id === relation!.id);
+      expect(buttonText).toMatchObject({
+        origin: "dialogue", scope: "selected-artifact",
+      });
+      expect(buttonText?.locator)
+        .toContain("#/minecraft:npc_dialogue/scenes/0/buttons/0/name");
+      expect(authoredCommand?.origin).toBe("source-code");
+      expect(authoredCommand?.locator)
+        .toContain("#/minecraft:npc_dialogue/scenes/0/buttons/0/commands/0");
+      expect(result.inspection.gameplayIntent.model.nodes.some(node =>
+        node.label === "NPC interaction: Start Challenge" &&
+        node.evidenceIds.includes(buttonText!.id) &&
+        node.evidenceIds.includes(authoredCommand!.id))).toBe(true);
       expect(relation?.executionEdgeIds).toHaveLength(1);
       const edge = ir.execution.edges.find(item =>
         item.id === relation!.executionEdgeIds![0]);
@@ -292,7 +315,23 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(brief).toContain("Source-derived relations: activation");
       expect(brief).toContain("Cross-region source handoffs");
       expect(brief).toContain("RESOLVED CODE EDGES; NOT EXECUTION");
+      expect(brief).toContain("NPC button text → source command");
+      expect(brief).toContain("buttons/0/name");
+      expect(brief).toContain("buttons/0/commands/0");
       const handoff = projectSelectedMapAuditModelHandoff(result);
+      const buttonBinding = handoff.gameUnderstanding.playerFacingCommandBindings
+        .find(item => item.sourceRelationId === relation!.id);
+      expect(buttonBinding).toMatchObject({
+        label: "Start Challenge",
+        commandText: "function arena/start",
+        proof: "EXACT_UI_BUTTON_COMMAND_SOURCE_NOT_EXECUTION",
+      });
+      expect(buttonBinding?.resolvedDirectTargetRegionIds).toContain(edge!.to);
+      expect(buttonBinding?.directTargetWorldEffectIds).toContain(teleport!.id);
+      expect(buttonBinding?.directTargetStateWriteIds.length)
+        .toBeGreaterThan(0);
+      expect(buttonBinding?.labelSource.jsonPointer)
+        .toBe("/minecraft:npc_dialogue/scenes/0/buttons/0/name");
       expect(handoff.gameUnderstanding.sourceHandoffs.some(item =>
         item.edgeId === edge!.id && item.toRegionId === edge!.to &&
         item.directTargetWorldEffectIds.includes(teleport!.id))).toBe(true);
@@ -444,6 +483,18 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
         item.id === relation?.executionEdgeIds?.[0]);
       expect(edge?.resolution).toBe("unresolved");
       expect(edge?.to).toBeUndefined();
+      // The button/command source relation stays valid even when the named
+      // target function cannot be resolved. Never borrow either target's
+      // write, effect or reported successful gameplay.
+      const handoff = projectSelectedMapAuditModelHandoff(result);
+      const binding = handoff.gameUnderstanding.playerFacingCommandBindings
+        .find(item => item.sourceRelationId === relation?.id);
+      expect(binding?.label).toBe("Start Challenge");
+      expect(binding?.sourceCallEdgeIds).toContain(edge!.id);
+      expect(binding?.resolvedDirectTargetRegionIds).toEqual([]);
+      expect(binding?.directTargetStateWriteIds).toEqual([]);
+      expect(binding?.directTargetWorldEffectIds).toEqual([]);
+      expect(binding?.omittedDirectTargetHandoffs).toBeGreaterThan(0);
       const flow = result.mapAuditReport.gameplayStructure?.sourceFlowCandidates
         .find(item => item.entryKind === "dialogue-command" &&
           item.executionEdgeIds.includes(edge!.id));
@@ -871,6 +922,44 @@ describe("source-linked Game Design path bridges (bounded source-only)", () => {
       "SOURCE_RELATION_DIRECTION_NOT_PLAY_ORDER");
     expect(path.interpretation?.missingUnderstanding).toContain(
       "RUNTIME_NOT_OBSERVED");
+    // A source-authored draft cannot masquerade as an approved Game Design
+    // rule simply because the node is marked authored. The same source
+    // chain retains its evidence and uncertainty until approval is proven.
+    const withDraft: GameplayIntentModel = {
+      ...joined,
+      evidence: [...joined.evidence, {
+        id: "e:design-draft", origin: "game-design-spec",
+        scope: "selected-artifact", locator: "behavior_packs/a/design/rules.json#win",
+        designStatus: "draft", summary: "Unapproved objective draft.",
+      }],
+      nodes: joined.nodes.map(node => node.id === "objective:goal"
+        ? { ...node, status: "authored" as const,
+            evidenceIds: [...node.evidenceIds, "e:design-draft"] }
+        : node),
+    };
+    const draftPath = reconstructAuthoredJourneyCandidates(
+      withDraft, reconstructions,
+    ).candidates[0];
+    expect(draftPath?.interpretation?.steps.find(step =>
+      step.subjectId === "objective:goal")?.meaningBasis)
+      .toBe("TECHNICAL_SOURCE_ONLY");
+    expect(draftPath?.interpretation?.missingUnderstanding)
+      .toContain("PLAYER_GOAL_NOT_INDEPENDENTLY_GROUNDED");
+    const withApproved: GameplayIntentModel = {
+      ...withDraft,
+      evidence: withDraft.evidence.map(item =>
+        item.id === "e:design-draft"
+          ? { ...item, designStatus: "approved" as const }
+          : item),
+    };
+    const approvedPath = reconstructAuthoredJourneyCandidates(
+      withApproved, reconstructions,
+    ).candidates[0];
+    expect(approvedPath?.interpretation?.steps.find(step =>
+      step.subjectId === "objective:goal")?.meaningBasis)
+      .toBe("EMBEDDED_DESIGN_TEXT");
+    expect(approvedPath?.interpretation?.missingUnderstanding)
+      .not.toContain("PLAYER_GOAL_NOT_INDEPENDENTLY_GROUNDED");
     // External text cannot bridge two current-artifact subjects. The partial
     // local source segment can remain visible; the win link cannot be invented.
     const foreign: GameplayIntentModel = {

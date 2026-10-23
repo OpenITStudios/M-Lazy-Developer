@@ -126,13 +126,25 @@ export function buildGameplayIntentModel(
       (source.range?.lineStart === undefined ? "" :
         ":" + source.range.lineStart + ":" +
         (source.range.columnStart ?? 1));
-  const selectedSourceLocator = (locator: string): boolean =>
-    selectedArtifactSourcePaths.has(locator) ||
+  const selectedSourceLocator = (locator: string): boolean => {
+    if (selectedArtifactSourcePaths.has(locator)) return true;
+    // Each exact dialogue JSON pointer must point into an independently
+    // inventoried selected-artifact file, never authorize its own path.
+    const jsonPointerStart = locator.indexOf("#/");
+    if (jsonPointerStart > 0 &&
+        selectedArtifactSourcePaths.has(locator.slice(0, jsonPointerStart))) {
+      return true;
+    }
     // Localized strings retain their original file#Lline locator.
-    (/#L[1-9][0-9]*$/.test(locator) &&
+    return /#L[1-9][0-9]*$/.test(locator) &&
       selectedArtifactSourcePaths.has(
         locator.replace(/#L[1-9][0-9]*$/, ""),
-      ));
+      );
+  };
+  const authoredSiteLocator = (site: SourceRef): string =>
+    site.jsonPointer === undefined
+      ? sourceLocator(site)
+      : site.relativePath + "#" + site.jsonPointer;
 
   const evidence = new Map<string, GameplayIntentEvidence>();
   const nodes = new Map<string, GameplayIntentNode>();
@@ -992,8 +1004,10 @@ export function buildGameplayIntentModel(
         relation.source.artifactId !== input.artifactId) continue;
     evidence.set(relation.id, {
       id: relation.id,
-      origin: relation.kind.startsWith("dialogue-") ? "dialogue" : "source-code",
-      locator: relation.source.relativePath,
+      // The relation identifies COMMAND/source behavior. A dialogue
+      // origin would misrepresent a command as displayed NPC wording.
+      origin: "source-code",
+      locator: authoredSiteLocator(relation.source),
       scope: "selected-artifact",
       summary: relation.kind + ": " + relation.reason +
         (relation.condition ? " Authored condition: " + relation.condition : ""),
@@ -1009,7 +1023,7 @@ export function buildGameplayIntentModel(
       evidenceIds.push(effect.id);
       evidence.set(effect.id, {
         id: effect.id, origin: "source-code",
-        locator: effect.source.relativePath, scope: "selected-artifact",
+        locator: authoredSiteLocator(effect.source), scope: "selected-artifact",
         summary: "Parsed authored command world-effect attempt; UI activation and runtime success remain unverified.",
       });
     }
@@ -1023,7 +1037,7 @@ export function buildGameplayIntentModel(
       evidenceIds.push(operation.id);
       evidence.set(operation.id, {
         id: operation.id, origin: "source-code",
-        locator: operation.source.relativePath, scope: "selected-artifact",
+        locator: authoredSiteLocator(operation.source), scope: "selected-artifact",
         summary: "Parsed authored command scoreboard/tag " + operation.operation +
           " operation; gameplay phase, score meaning and runtime value remain unproven.",
       });
@@ -1039,7 +1053,7 @@ export function buildGameplayIntentModel(
       evidenceIds.push(edge.id);
       evidence.set(edge.id, {
         id: edge.id, origin: "source-code",
-        locator: edge.source.relativePath, scope: "selected-artifact",
+        locator: authoredSiteLocator(edge.source), scope: "selected-artifact",
         summary: "Exact authored command-to-function reference (" +
           edge.resolution +
           "); activation, conditions and downstream gameplay outcomes are unproven.",
@@ -1050,13 +1064,28 @@ export function buildGameplayIntentModel(
     authoredByOwner.set(relation.ownerId, owned);
     if (relation.kind === "dialogue-button-command" &&
         relation.resolution === "EXACT_REFERENCE" &&
-        relation.interactionLabel?.trim()) {
+        relation.interactionLabel?.trim() &&
+        relation.targetSource?.jsonPointer &&
+        relation.targetSource.artifactId === relation.source.artifactId &&
+        relation.targetSource.relativePath === relation.source.relativePath &&
+        relation.targetSource.jsonPointer !== relation.source.jsonPointer) {
+      // This is the ONLY UI evidence in the exact label -> command relation.
+      // Both sites belong to the same button, but the source relation does
+      // not establish that the UI was opened or the command succeeded.
+      const displayId = relation.id + ":display-text";
+      evidence.set(displayId, {
+        id: displayId, origin: "dialogue",
+        locator: authoredSiteLocator(relation.targetSource),
+        scope: "selected-artifact",
+        summary: "Literal NPC button label: " + relation.interactionLabel.trim() +
+          ". Same authored button contains a separate command, but UI presentation, design intent and player outcome remain unobserved.",
+      });
       const existing = uiByOwner.get(relation.ownerId);
       if (existing && existing.label !== relation.interactionLabel.trim()) continue;
       const value = existing ?? {
         label: relation.interactionLabel.trim(), evidenceIds: new Set<string>(),
       };
-      evidenceIds.forEach(id => value.evidenceIds.add(id));
+      [...evidenceIds, displayId].forEach(id => value.evidenceIds.add(id));
       uiByOwner.set(relation.ownerId, value);
     }
   }
