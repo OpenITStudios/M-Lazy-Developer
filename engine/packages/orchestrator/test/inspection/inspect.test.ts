@@ -3,13 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { inspectDirectory } from "../../src/inspection/inspect.js";
-import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import { parseScriptFile, resolveScriptImports } from "../../../../analyzers/scripts/src/index.js";
+import { semanticIrExecutionTraces } from "../../../semantic-ir/src/index.js";
+import { scriptRegionId } from "../../src/diagnosis/semantic-ir-stage.js";
 import { SemanticGraph } from "../../../graph/src/index.js";
 import { parseEntityDefinition } from "../../../../analyzers/entities/src/index.js";
 import { populateEntityLootTableEdges } from "../../../../analyzers/references/src/index.js";
 import type { SemanticNode } from "../../../graph/src/index.js";
 import { populateInspectionScriptImportGraph } from "../../src/inspection/inspect-script-import-graph.js";
-import { discoverInspectionPacks } from "../../src/inspection/inspect-packs.js";
+import { discoverInspectionPacks, resolveSelectedScriptRoots } from "../../src/inspection/inspect-packs.js";
 import { buildFilesystemInventory } from "../../../project-model/src/index.js";
 import { deriveGameplayResourceTextSignals } from "../../src/inspection/gameplay-intent-resource-text.js";
 import { buildGameplayIntentModel } from "../../src/inspection/gameplay-intent-stage.js";
@@ -161,6 +163,115 @@ describe("inspectDirectory", () => {
       const unknown = await discoverInspectionPacks(root, "artifact", entries);
       expect(unknown.packs.every(pack => pack.worldAttachment === "unknown")).toBe(true);
     } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
+  it("grounds a mixed data/script pack and traces only manifest-attached script roots", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-mixed-script-roots-"));
+    const pack = "behavior_packs/demo";
+    const scriptRoot = pack + "/scripts/";
+    const mainPath = scriptRoot + "main.js";
+    const gamePath = scriptRoot + "chunks/game.js";
+    const orphanPath = scriptRoot + "entries/unreferenced.js";
+    const files = [
+      [mainPath, [
+        'import { world } from "@minecraft/server";',
+        'import "./chunks/game.js";',
+        'world.afterEvents.playerSpawn.subscribe(() => {});',
+      ].join("\n")],
+      [gamePath, [
+        'import { world } from "@minecraft/server";',
+        'world.afterEvents.playerLeave.subscribe(() => {});',
+      ].join("\n")],
+      [orphanPath, [
+        'import { world } from "@minecraft/server";',
+        'world.afterEvents.entityDie.subscribe(() => {});',
+      ].join("\n")],
+    ] as const;
+    try {
+      for (const [name, content] of files) {
+        await mkdir(join(root, name.slice(0, name.lastIndexOf("/"))), {
+          recursive: true,
+        });
+        await writeFile(join(root, name), content);
+      }
+      await writeFile(join(root, pack, "manifest.json"), JSON.stringify({
+        format_version: 2,
+        header: {
+          name: "Mixed authored source",
+          uuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          version: [1, 1, 17],
+          min_engine_version: [1, 21, 130],
+        },
+        modules: [
+          { type: "data", uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            version: [1, 1, 17] },
+          { type: "script", language: "javascript", entry: "scripts/main.js",
+            uuid: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            version: [1, 1, 17] },
+        ],
+      }));
+      await writeFile(join(root, "world_behavior_packs.json"), JSON.stringify([
+        { pack_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          version: [1, 1, 17] },
+      ]));
+      const inventory = await buildFilesystemInventory(root);
+      const discovery = await discoverInspectionPacks(root, "selected", inventory);
+      expect(discovery.packs).toEqual([
+        expect.objectContaining({
+          root: pack, type: "mixed_pack", worldAttachment: "listed",
+        }),
+      ]);
+
+      const scripts = files.map(([path, code]) =>
+        parseScriptFile(path, code, {
+          artifactId: "selected", relativePath: path,
+        }));
+      const resolved = resolveScriptImports(scripts);
+      const roots = resolveSelectedScriptRoots(discovery, scripts, resolved);
+      expect(roots).toEqual({
+        entryPaths: [mainPath],
+        staticallyReachablePaths: [gamePath, mainPath],
+      });
+
+      // This exercises the actual inspection producer, not an alternate
+      // manifest model or independent hand-written source trace.
+      const inspection = await inspectDirectory(root, "selected");
+      expect(inspection.semanticIrModel.execution.manifestScriptRoots).toEqual(roots);
+      const traced = semanticIrExecutionTraces(inspection.semanticIrModel);
+      const moduleEntries = traced.traces
+        .filter(trace => trace.entryKind === "script-module")
+        .map(trace => trace.entryRegionId);
+      expect(moduleEntries).toEqual([
+        scriptRegionId(scripts[0]!.source, "module"),
+      ]);
+      const orphanEvent = inspection.semanticIrModel.execution.regions.find(
+        region => region.kind === "event-source" &&
+          region.source?.relativePath === orphanPath);
+      expect(orphanEvent).toBeDefined();
+      expect(traced.traces.some(trace =>
+        trace.entryRegionId === orphanEvent!.id)).toBe(false);
+      expect(traced.regionsOutsideTraces).toContain(orphanEvent!.id);
+      expect(traced.traces.some(trace =>
+        trace.entryKind === "event-source" &&
+        trace.regionIds.some(id => id.includes("playerLeave")))).toBe(true);
+
+      // An unlisted pack or missing imported file does not authorize a
+      // manifest-root filter. Those cases must remain UNKNOWN.
+      await writeFile(join(root, "world_behavior_packs.json"), "[]");
+      const notListed = await discoverInspectionPacks(root, "selected", inventory);
+      expect(notListed.packs[0]?.worldAttachment).toBe("not-listed");
+      expect(resolveSelectedScriptRoots(notListed, scripts, resolved))
+        .toBeUndefined();
+      const brokenMain = parseScriptFile(mainPath,
+        'import "./chunks/missing.js";', {
+          artifactId: "selected", relativePath: mainPath,
+        });
+      const mixedScripts = [brokenMain, ...scripts.slice(1)];
+      expect(resolveSelectedScriptRoots(discovery, mixedScripts,
+        resolveScriptImports(mixedScripts))).toBeUndefined();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("keeps literal import() as a resolved source dependency, not a proven execution", () => {

@@ -95,4 +95,39 @@ describe("semantic IR", () => {
       "Resolved execution edge target does not exist: edge:1",
     ]);
   });
+  it("rejects manufactured or non-unique manifest script entry roots", () => {
+    const good = {
+      ...ir,
+      execution: {
+        ...ir.execution,
+        manifestScriptRoots: {
+          entryPaths: [source.relativePath],
+          staticallyReachablePaths: [source.relativePath],
+        },
+      },
+    } satisfies SemanticIr;
+    expect(validateSemanticIr(good)).toEqual([]);
+    expect(validateSemanticIr({
+      ...good,
+      execution: {
+        ...good.execution,
+        manifestScriptRoots: {
+          entryPaths: ["scripts/missing.js"],
+          staticallyReachablePaths: [source.relativePath],
+        },
+      },
+    }).some(error => error.includes("not uniquely owned") ||
+      error.includes("outside its static module closure"))).toBe(true);
+    expect(validateSemanticIr({
+      ...good,
+      execution: {
+        ...good.execution,
+        manifestScriptRoots: {
+          entryPaths: [source.relativePath, source.relativePath],
+          staticallyReachablePaths: [source.relativePath],
+        },
+      },
+    }).some(error => error.includes("nonempty and unique"))).toBe(true);
+  });
+
 });

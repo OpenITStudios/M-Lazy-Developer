@@ -43,6 +43,37 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
   const regions = new Set(ir.execution.regions.map((item) => item.id));
   const surfaces = new Set(ir.state.surfaces.map((item) => item.id));
 
+  const manifestRoots = ir.execution.manifestScriptRoots;
+  if (manifestRoots !== undefined) {
+    const moduleSources = new Map<string, Set<string>>();
+    for (const region of ir.execution.regions) {
+      if (region.kind !== "script-module" || !region.source) continue;
+      const owners = moduleSources.get(region.source.relativePath) ?? new Set<string>();
+      owners.add(region.source.artifactId);
+      moduleSources.set(region.source.relativePath, owners);
+    }
+    for (const [name, paths] of [
+      ["entry", manifestRoots.entryPaths],
+      ["reachable", manifestRoots.staticallyReachablePaths],
+    ] as const) {
+      if (paths.length === 0 || new Set(paths).size !== paths.length) {
+        errors.push("Manifest script " + name + " paths must be nonempty and unique.");
+      }
+      for (const path of paths) {
+        if (moduleSources.get(path)?.size !== 1) {
+          errors.push("Manifest script " + name +
+            " path is not uniquely owned in Semantic IR: " + path);
+        }
+      }
+    }
+    const reachable = new Set(manifestRoots.staticallyReachablePaths);
+    for (const path of manifestRoots.entryPaths) {
+      if (!reachable.has(path)) {
+        errors.push("Manifest entrypoint is outside its static module closure: " + path);
+      }
+    }
+  }
+
   for (const duplicate of duplicateIds(ir.execution.regions)) {
     errors.push("Duplicate execution region id: " + duplicate);
   }

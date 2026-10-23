@@ -1,6 +1,6 @@
 export { structureIdentifier } from "./inspect-identifiers.js";
 import { performance } from "node:perf_hooks";
-import { discoverInspectionPacks } from "./inspect-packs.js";
+import { discoverInspectionPacks, resolveSelectedScriptRoots } from "./inspect-packs.js";
 import {
   indexInspectionSources,
   type InspectionSourceIndex,
@@ -43,6 +43,7 @@ import {
 import { buildInspectionSemanticIr } from "../diagnosis/semantic-ir-stage.js";
 import {
   deriveCrossFileCallEdges,
+  resolveScriptImports,
   type CrossFileCallEdge,
 } from "../../../../analyzers/scripts/src/index.js";
 import { semanticIrDiagnostics } from "../diagnosis/semantic-ir-diagnostics.js";
@@ -217,6 +218,17 @@ export async function inspectDirectory(
   } = sourceIndex;
   diagnostics.push(...sourceDiagnostics);
 
+  // One exact selected-source import resolution feeds graph, manifest root
+  // closure and Semantic IR; RIG passes rebuild this from the same SHA.
+  const resolvedScriptImports = resolveScriptImports(
+    parsedScripts.map(item => item.parsed),
+  );
+  const manifestScriptRoots = resolveSelectedScriptRoots(
+    { packs, manifests },
+    parsedScripts.map(item => item.parsed),
+    resolvedScriptImports,
+  );
+
   const contractSources =
     await indexSelectedArtifactContractSources(
       root,
@@ -278,6 +290,8 @@ export async function inspectDirectory(
   });
   const semanticIr = buildInspectionSemanticIr({
     parsedFunctions,
+    resolvedScriptImports,
+    ...(manifestScriptRoots === undefined ? {} : { manifestScriptRoots }),
     authoredBehaviorRelations: [
       ...authoredBehaviorRelations,
       ...deriveAuthoredDialogueBehaviorRelations(parsedDialogueDocuments),
@@ -393,6 +407,7 @@ export async function inspectDirectory(
   populateInspectionScriptImportGraph(
     graph,
     parsedScripts,
+    resolvedScriptImports,
   );
 
   diagnostics.push(

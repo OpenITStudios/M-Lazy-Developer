@@ -297,6 +297,14 @@ export interface AuthoredScriptApiPropertyRead {
 export interface SemanticIr {
   schemaVersion: 1;
   execution: {
+    /** Exact selected-world attached-pack script roots and static closure.
+     * Missing = manifest/attachment/import proof unavailable, NEVER empty.
+     * This is authored activation eligibility, not actual load/execution.
+     */
+    manifestScriptRoots?: {
+      readonly entryPaths: readonly string[];
+      readonly staticallyReachablePaths: readonly string[];
+    };
     regions: readonly ExecutionRegion[];
     edges: readonly ExecutionEdge[];
     /** Typed lifecycle API witnesses; not source-name/lexical matches. */

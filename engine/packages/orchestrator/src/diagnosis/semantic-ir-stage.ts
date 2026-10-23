@@ -9,6 +9,7 @@ import { resolveScriptImports } from "../../../../analyzers/scripts/src/index.js
 import type {
   ParsedScriptFile,
   CrossFileCallEdge,
+  ScriptImportResolution,
 } from "../../../../analyzers/scripts/src/index.js";
 import {
   stateSurfaceKey,
@@ -48,6 +49,10 @@ export interface InspectionSemanticIrInput {
   authoredBehaviorRelations?: readonly AuthoredBehaviorRelation[];
   /** Bound by the existing cross-file call analyzer from the same selected source. */
   crossFileCallEdges?: readonly CrossFileCallEdge[];
+  /** Source-only manifest-root scope; absence means entry identity unknown. */
+  manifestScriptRoots?: SemanticIr["execution"]["manifestScriptRoots"];
+  /** Same resolver result already consumed by the source import graph. */
+  resolvedScriptImports?: readonly ScriptImportResolution[];
   tickFunctionRegistrations?: readonly {
     source: SourceRef;
     functions: readonly string[];
@@ -920,7 +925,7 @@ export function buildInspectionSemanticIr(
   // Reuse the existing source import resolver (pack/artifact and ambiguity
   // checks) rather than choosing a matching file by label. A nonliteral
   // request, missing target or ambiguous target remains an unresolved edge.
-  for (const resolution of resolveScriptImports(
+  for (const resolution of input.resolvedScriptImports ?? resolveScriptImports(
     input.parsedScripts.map(item => item.parsed),
   )) {
     if (!resolution.importSyntax) continue;
@@ -1174,6 +1179,9 @@ export function buildInspectionSemanticIr(
   const ir: SemanticIr = {
     schemaVersion: 1,
     execution: {
+      ...(input.manifestScriptRoots === undefined ? {} : {
+        manifestScriptRoots: input.manifestScriptRoots,
+      }),
       regions: [...regions.values()].sort(
         (a, b) => a.id.localeCompare(b.id),
       ),

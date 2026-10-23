@@ -124,9 +124,28 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
       edge.resolution === "resolved" && edge.to !== undefined &&
       regions.get(edge.to)?.kind === "script-module")
     .map(edge => edge.to!));
+  // Restrict ONLY when a selected attached manifest and its static imports
+  // were fully resolved. A module merely present in the archive is not an
+  // independently declared gameplay entrypoint. An unrooted event source
+  // remains in regionsOutsideTraces rather than being promoted by its name.
+  const manifestRoots = ir.execution.manifestScriptRoots;
+  const declaredEntryPaths = new Set(manifestRoots?.entryPaths ?? []);
+  const reachableScriptPaths = new Set(
+    manifestRoots?.staticallyReachablePaths ?? []);
+  const inventoriedScriptPaths = new Set([...regions.values()]
+    .filter(region => region.kind === "script-module")
+    .flatMap(region => region.source ? [region.source.relativePath] : []));
   const entryRegions = [...regions.values()].filter(region =>
-    region.kind === "event-source" ||
-    (region.kind === "script-module" && !importedModules.has(region.id)) ||
+    (region.kind === "event-source" &&
+      (manifestRoots === undefined ||
+        !region.source ||
+        !inventoriedScriptPaths.has(region.source.relativePath) ||
+        reachableScriptPaths.has(region.source.relativePath))) ||
+    (region.kind === "script-module" && (
+      manifestRoots === undefined
+        ? !importedModules.has(region.id)
+        : region.source !== undefined &&
+          declaredEntryPaths.has(region.source.relativePath))) ||
     region.kind === "dialogue-command" ||
     region.kind === "behavior-animation" ||
     (region.kind === "mcfunction" && !incoming.has(region.id))

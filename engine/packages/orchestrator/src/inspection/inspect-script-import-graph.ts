@@ -1,5 +1,5 @@
 import { resolveScriptImports } from "../../../../analyzers/scripts/src/index.js";
-import type { ParsedScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import type { ParsedScriptFile, ScriptImportResolution } from "../../../../analyzers/scripts/src/index.js";
 import type { SemanticGraph } from "../../../graph/src/index.js";
 import type { SemanticNode } from "../../../graph/src/index.js";
 
@@ -9,8 +9,9 @@ export function populateInspectionScriptImportGraph(
     node: SemanticNode;
     parsed: ParsedScriptFile;
   }[],
+  resolvedImports?: readonly ScriptImportResolution[],
 ): void {
-  const resolutions = resolveScriptImports(
+  const resolutions = resolvedImports ?? resolveScriptImports(
     parsedScripts.map((item) => item.parsed),
   );
   // Import owners are selected source artifacts, not script display IDs.
