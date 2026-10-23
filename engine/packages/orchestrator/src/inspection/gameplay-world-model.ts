@@ -258,6 +258,8 @@ export interface GameplayWorldModel {
           | "unknown";
         reason: string;
         sourcePath: string | null;
+        /** Exact operation site when the parser supplied a source range. */
+        sourceLocator?: string | null;
       }[];
     };
     globalState: {
@@ -2034,6 +2036,11 @@ export function deriveGameplayWorldModel(
             status: item.status,
             reason: item.reason,
             sourcePath: item.source?.relativePath ?? null,
+            sourceLocator: item.source?.range?.lineStart === undefined
+              ? null
+              : item.source.relativePath + ":" + item.source.range.lineStart +
+                (item.source.range.columnStart === undefined
+                  ? "" : ":" + item.source.range.columnStart),
           })) ?? [],
       },
       globalState: {

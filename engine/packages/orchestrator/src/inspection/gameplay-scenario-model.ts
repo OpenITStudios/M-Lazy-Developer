@@ -844,6 +844,8 @@ export interface GameplayArchitectureNavigation {
         "entity-tag" | "module-state";
       readonly reason?: string;
       readonly sourcePath?: string | null;
+      /** Exact operation site; do not infer coordinates from script names. */
+      readonly sourceLocator?: string | null;
       }[];
       readonly chunkLeases: readonly {
         readonly scriptId: string;
@@ -1077,6 +1079,8 @@ export function deriveGameplayArchitectureNavigation(
         "entity-tag" | "module-state";
       readonly reason?: string;
       readonly sourcePath?: string | null;
+      /** Exact operation site; do not infer coordinates from script names. */
+      readonly sourceLocator?: string | null;
     }[];
     readonly chunkLeases?: readonly {
       readonly scriptId: string;

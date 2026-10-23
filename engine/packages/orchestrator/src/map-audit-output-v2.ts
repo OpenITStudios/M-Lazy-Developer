@@ -731,7 +731,7 @@ export function projectMapAuditOutputV2(input: {
           .map(item =>
             item.key + "=" + item.status +
             " [source-scope:" + item.scope + "]" +
-            " [source:" + (item.sourcePath ?? "UNRESOLVED") + "]" +
+            " [source:" + (item.sourceLocator ?? item.sourcePath ?? "UNRESOLVED") + "]" +
             " " + item.reason
           )
           .sort(),

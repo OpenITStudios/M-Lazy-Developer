@@ -761,6 +761,7 @@ function analyzeScript(
           "*"
         ),
       scope,
+      source: access.source,
       status: authorityPartitioned
         ? "isolated" : "partition-proof-required",
       reason: authorityPartitioned
@@ -786,7 +787,7 @@ function analyzeScript(
       region,
       authoritiesForRegion(region),
     );
-    if (scoreboard) observations.push(scoreboard);
+    if (scoreboard) observations.push({ ...scoreboard, source: call.source });
 
     const playerEnumeration =
       worldPlayerEnumerationObservation(
@@ -796,7 +797,7 @@ function analyzeScript(
         authoritiesForRegion(region),
       );
     if (playerEnumeration) {
-      observations.push(playerEnumeration);
+      observations.push({ ...playerEnumeration, source: call.source });
     }
 
     const tagMutation =
@@ -807,7 +808,7 @@ function analyzeScript(
         authoritiesForRegion(region),
       );
     if (tagMutation) {
-      observations.push(tagMutation);
+      observations.push({ ...tagMutation, source: call.source });
     }
   }
 
@@ -823,6 +824,7 @@ function analyzeScript(
       region: "module",
       surface: "world-property",
       key: write.symbol,
+      source: write.source,
       scope: "world-global",
       status: "shared-global",
       reason:
@@ -839,7 +841,7 @@ function analyzeScript(
         command,
         authoritiesForRegion(region),
       );
-    if (observation) observations.push(observation);
+    if (observation) observations.push({ ...observation, source: command.source });
   }
 
   for (const mutation of script.stateMutations ?? []) {
@@ -860,6 +862,7 @@ function analyzeScript(
       region: mutation.executionRegion,
       surface: "module-state",
       key: target,
+      source: mutation.source,
       scope,
       status: authorityOwned ? "isolated" : "partition-proof-required",
       reason: authorityOwned
@@ -872,7 +875,10 @@ function analyzeScript(
     regions,
     observations: observations.map(item => ({
       ...item,
-      ...(script.source === undefined ? {} : { source: script.source }),
+      // Preserve exact operation coordinates; use module attribution only
+      // as a fallback for partial/legacy observations lacking SourceRef.
+      ...(item.source !== undefined || script.source === undefined
+        ? {} : { source: script.source }),
       ...(importedOnly.has(item.region) || forwarded.has(item.region) ? {
         reason: item.reason +
           (importedOnly.has(item.region)

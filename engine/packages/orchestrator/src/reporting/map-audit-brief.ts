@@ -306,6 +306,26 @@ export function formatSelectedMapAuditBrief(input: {
           : "No pending model task is present in this view."),
     );
   }
+  // Existing analyzer observations are investigative leads, not BUG proof.
+  // Keep material selector risks visible before verbose source navigation.
+  const globalSelectorLeads = report.multiArena.isolationRules.filter(rule =>
+    rule.includes("=partition-proof-required") &&
+    /(?:^|\s)@a(?:\[|\b)/i.test(rule)
+  );
+  if (globalSelectorLeads.length > 0) {
+    out.push(
+      "**Cross-arena command leads (SOURCE ONLY; NOT BUG VERDICTS):** " +
+        globalSelectorLeads.length + " unresolved global-selector operation(s).",
+      ...globalSelectorLeads.slice(0, 3).map(rule => "- " + concise(rule)),
+      ...(globalSelectorLeads.length > 3 ? [
+        "Additional selector leads in full source view: " +
+          (globalSelectorLeads.length - 3) + ".",
+      ] : []),
+      "**Deciding check:** Prove whether each target set is restricted to " +
+        "the active arena's players and bounds; source reachability is " +
+        "not evidence of a live cross-arena mutation.",
+    );
+  }
   out.push(
     "",
     "## Detailed Source Navigation (NOT A PLAYER PLAYTHROUGH)",
