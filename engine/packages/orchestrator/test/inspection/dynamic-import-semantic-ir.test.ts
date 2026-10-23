@@ -10,6 +10,85 @@ const parsed = (path: string, text: string, artifactId = "selected-map") => {
 const build = (...scripts: ReturnType<typeof parsed>[]) =>
   buildInspectionSemanticIr({ parsedFunctions: [], parsedScripts: scripts });
 
+describe("manifest-rooted static module dependencies", () => {
+  it("tracks side-effect-only static imports and direct state writes without timing claims", () => {
+    const main = parsed("behavior_packs/BP/scripts/main.js",
+      'import "./chunks/session.js";');
+    const session = parsed("behavior_packs/BP/scripts/chunks/session.js", [
+      'import { world } from "@minecraft/server";',
+      'world.setDynamicProperty("session:started", true);',
+    ].join("\n"));
+    const orphan = parsed("behavior_packs/BP/scripts/entries/unreferenced.js", [
+      'import { world } from "@minecraft/server";',
+      'world.setDynamicProperty("session:unused", true);',
+    ].join("\n"));
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [main, session, orphan],
+      manifestScriptRoots: {
+        entryPaths: [main.parsed.source.relativePath],
+        staticallyReachablePaths: [
+          main.parsed.source.relativePath, session.parsed.source.relativePath,
+        ],
+      },
+    });
+    const dependency = ir.execution.edges.filter(edge =>
+      edge.kind === "static-module-dependency");
+    expect(dependency).toEqual([
+      expect.objectContaining({
+        from: scriptRegionId(main.parsed.source, "module"),
+        to: scriptRegionId(session.parsed.source, "module"),
+        targetLabel: "./chunks/session.js",
+        resolution: "resolved",
+        source: expect.objectContaining({
+          relativePath: main.parsed.source.relativePath,
+          range: expect.objectContaining({ lineStart: 1, columnStart: 1 }),
+        }),
+      }),
+    ]);
+    expect(ir.temporal.relations.some(rel =>
+      rel.id === "time:" + dependency[0]!.id)).toBe(false);
+    const selectedRoot = semanticIrExecutionTraces(ir).traces.find(trace =>
+      trace.entryRegionId === scriptRegionId(main.parsed.source, "module"));
+    const target = scriptRegionId(session.parsed.source, "module");
+    const orphanId = scriptRegionId(orphan.parsed.source, "module");
+    expect(selectedRoot?.regionIds).toContain(target);
+    expect(selectedRoot?.regionIds).not.toContain(orphanId);
+    const writes = ir.state.operations.filter(op =>
+      op.executionRegionId === target && op.operation === "write");
+    expect(writes.length).toBeGreaterThan(0);
+    expect(selectedRoot?.stateWriteOperationIds).toEqual(
+      expect.arrayContaining(writes.map(op => op.id)));
+    expect(semanticIrExecutionTraces(ir).regionsOutsideTraces).toContain(orphanId);
+  });
+
+  it("excludes type imports and never invents unscoped static activation", () => {
+    const root = "behavior_packs/BP/scripts/";
+    const main = parsed(root + "main.ts", [
+      'import type { Shape } from "./types.ts";',
+      'import "./module.ts";',
+    ].join("\n"));
+    const types = parsed(root + "types.ts", "export type Shape = string;");
+    const module = parsed(root + "module.ts", "export const state = true;");
+    expect(build(main, types, module).execution.edges.some(edge =>
+      edge.kind === "static-module-dependency")).toBe(false);
+    const rooted = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [main, types, module],
+      manifestScriptRoots: {
+        entryPaths: [main.parsed.source.relativePath],
+        staticallyReachablePaths: [
+          main.parsed.source.relativePath, module.parsed.source.relativePath,
+        ],
+      },
+    });
+    expect(rooted.execution.edges.filter(edge =>
+      edge.kind === "static-module-dependency")).toEqual([
+        expect.objectContaining({ targetLabel: "./module.ts" }),
+      ]);
+  });
+});
+
 describe("selected-map dynamic import source handoffs", () => {
   it("joins a literal import() to the exact same-pack module as a deferred candidate", () => {
     const main = parsed("behavior_packs/BP/scripts/main.js", [

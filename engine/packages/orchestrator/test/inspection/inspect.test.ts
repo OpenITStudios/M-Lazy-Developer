@@ -237,7 +237,25 @@ describe("inspectDirectory", () => {
       // manifest model or independent hand-written source trace.
       const inspection = await inspectDirectory(root, "selected");
       expect(inspection.semanticIrModel.execution.manifestScriptRoots).toEqual(roots);
+      const dependencies = inspection.semanticIrModel.execution.edges.filter(edge =>
+        edge.kind === "static-module-dependency");
+      expect(dependencies).toEqual([
+        expect.objectContaining({
+          from: scriptRegionId(scripts[0]!.source, "module"),
+          to: scriptRegionId(scripts[1]!.source, "module"),
+          source: expect.objectContaining({
+            relativePath: mainPath,
+            range: expect.objectContaining({ lineStart: 2 }),
+          }),
+        }),
+      ]);
+      expect(inspection.semanticIrModel.temporal.relations
+        .some(relation => relation.id === "time:" + dependencies[0]!.id)).toBe(false);
       const traced = semanticIrExecutionTraces(inspection.semanticIrModel);
+      const selectedRoot = traced.traces.find(trace =>
+        trace.entryRegionId === scriptRegionId(scripts[0]!.source, "module"));
+      expect(selectedRoot?.regionIds).toContain(
+        scriptRegionId(scripts[1]!.source, "module"));
       const moduleEntries = traced.traces
         .filter(trace => trace.entryKind === "script-module")
         .map(trace => trace.entryRegionId);

@@ -23,6 +23,8 @@ export interface ExecutionRegion {
 }
 
 export type ExecutionEdgeKind =
+  /** Resolved static ESM module dependency, not function execution or time. */
+  | "static-module-dependency"
   | "synchronous-call"
   | "event-dispatch"
   | "deferred"

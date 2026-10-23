@@ -199,6 +199,32 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
 
   for (const edge of ir.execution.edges) {
     errors.push(...validateSourceSequence(edge.sourceSequence, edge.source, edge.id));
+    // Do not admit forged or cross-artifact module-load evidence. Only
+    // uniquely known selected script modules in the authored static closure.
+    if (edge.kind === "static-module-dependency") {
+      const origin = ir.execution.regions.find(region => region.id === edge.from);
+      const destination = ir.execution.regions.find(region => region.id === edge.to);
+      const closure = new Set(
+        ir.execution.manifestScriptRoots?.staticallyReachablePaths ?? []);
+      const range = edge.source.range;
+      if (!ir.execution.manifestScriptRoots ||
+          edge.resolution !== "resolved" ||
+          origin?.kind !== "script-module" ||
+          destination?.kind !== "script-module" ||
+          origin.source?.artifactId !== edge.source.artifactId ||
+          origin.source?.relativePath !== edge.source.relativePath ||
+          destination.source?.artifactId !== edge.source.artifactId ||
+          !origin.source?.relativePath ||
+          !destination.source?.relativePath ||
+          !closure.has(origin.source.relativePath) ||
+          !closure.has(destination.source.relativePath) ||
+          !range?.lineStart || !range.lineEnd ||
+          !range.columnStart || !range.columnEnd ||
+          edge.scheduler !== undefined ||
+          edge.argumentParameterBindings?.length) {
+        errors.push("Invalid static module source dependency: " + edge.id);
+      }
+    }
     if (!regions.has(edge.from)) {
       errors.push("Execution edge source does not exist: " + edge.id);
     }

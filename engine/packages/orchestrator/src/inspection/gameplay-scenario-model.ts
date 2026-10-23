@@ -146,7 +146,7 @@ export interface GameplaySourceFlowCandidate {
     readonly edgeId: string;
     readonly fromRegionId: string;
     readonly toRegionId: string;
-    readonly kind: "synchronous-call" | "event-dispatch" | "deferred" | "periodic";
+    readonly kind: import("../../../semantic-ir/src/index.js").ExecutionEdgeKind;
     readonly source: import("../../../project-model/src/index.js").SourceRef;
     readonly scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
     readonly generationGuard: "EXPLICIT_SOURCE_CHECK" | "UNRESOLVED" | "NOT_RECORDED";

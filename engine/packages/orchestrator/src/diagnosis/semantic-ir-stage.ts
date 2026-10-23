@@ -918,6 +918,38 @@ export function buildInspectionSemanticIr(
     const path = parsed.source.relativePath.replaceAll("\\", "/");
     scriptsByPath.set(path, [...(scriptsByPath.get(path) ?? []), parsed]);
   }
+  const resolvedImports = input.resolvedScriptImports ?? resolveScriptImports(
+    input.parsedScripts.map(item => item.parsed),
+  );
+  // Only an exact, manifest-rooted static import authorizes source module
+  // dependency topology. It does NOT prove runtime evaluation or callback
+  // execution, and must never become a synchronous function call.
+  const rootedPaths = input.manifestScriptRoots === undefined
+    ? undefined : new Set(input.manifestScriptRoots.staticallyReachablePaths);
+  for (const resolution of resolvedImports) {
+    if (resolution.typeOnly || resolution.importSyntax !== undefined ||
+        resolution.status !== "resolved" ||
+        resolution.source === undefined ||
+        resolution.targetSourcePath === undefined) continue;
+    const fromPath = resolution.fromSourcePath.replaceAll("\\", "/");
+    const toPath = resolution.targetSourcePath.replaceAll("\\", "/");
+    if (!rootedPaths?.has(fromPath) || !rootedPaths.has(toPath)) continue;
+    const callers = scriptsByPath.get(fromPath) ?? [];
+    const targets = scriptsByPath.get(toPath) ?? [];
+    if (callers.length !== 1 || targets.length !== 1 ||
+        callers[0]!.source.artifactId !== resolution.source.artifactId ||
+        callers[0]!.source.relativePath !== resolution.source.relativePath ||
+        targets[0]!.source.artifactId !== resolution.source.artifactId) continue;
+    addEdge({
+      from: ensureScriptRegion(callers[0]!, "module", callers[0]!.source),
+      to: ensureScriptRegion(targets[0]!, "module", targets[0]!.source),
+      kind: "static-module-dependency",
+      targetLabel: resolution.module,
+      resolution: "resolved",
+      source: resolution.source,
+    });
+  }
+
   // import("./chunk.js") is a possible asynchronous module handoff, not a
   // synchronous function call, a Minecraft runtime observation or evidence
   // that the imported module initialized successfully.
@@ -925,9 +957,7 @@ export function buildInspectionSemanticIr(
   // Reuse the existing source import resolver (pack/artifact and ambiguity
   // checks) rather than choosing a matching file by label. A nonliteral
   // request, missing target or ambiguous target remains an unresolved edge.
-  for (const resolution of input.resolvedScriptImports ?? resolveScriptImports(
-    input.parsedScripts.map(item => item.parsed),
-  )) {
+  for (const resolution of resolvedImports) {
     if (!resolution.importSyntax) continue;
     const candidates = scriptsByPath.get(
       resolution.fromSourcePath.replaceAll("\\", "/")) ?? [];
@@ -1154,13 +1184,13 @@ export function buildInspectionSemanticIr(
             ...(executionEdgeIds.length ? { executionEdgeIds } : {}),
           } : relation;
     });
-  // Materialize all edges only AFTER authored UI and animation commands
-  // contribute their uniquely resolved or explicitly unresolved /function
-  // call sites. Temporal evidence must use the same complete edge set.
+  // Materialize all authored edges, but static module dependencies express
+  // source graph topology rather than same-turn or deferred execution.
   const executionEdges = [...edges.values()]
     .sort((a, b) => a.id.localeCompare(b.id));
   const temporalRelations: TemporalRelation[] =
-    executionEdges.map((edge) => ({
+    executionEdges.filter(edge => edge.kind !== "static-module-dependency")
+      .map((edge) => ({
       id: "time:" + edge.id,
       from: edge.from,
       targetLabel: edge.targetLabel,

@@ -71,11 +71,13 @@ export function resolveScriptImports(
         fromIdentifier: file.identifier,
         fromSourcePath: file.source.relativePath,
         module: imported.module,
+        // Preserve an exact source import site for both static and dynamic
+        // requests. Import identity alone never proves successful loading.
+        source: imported.source,
         ...(imported.typeOnly ? { typeOnly: true } : {}),
         ...(imported.importSyntax === undefined ? {} : {
           importSyntax: imported.importSyntax,
           executionRegion: imported.executionRegion,
-          source: imported.source,
           lexicalGuards: imported.lexicalGuards,
           precedenceGuards: imported.precedenceGuards,
           sourceSequence: imported.sourceSequence,
