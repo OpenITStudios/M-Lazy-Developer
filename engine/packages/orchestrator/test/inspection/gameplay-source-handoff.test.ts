@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
+import { buildInspectionSemanticIr } from "../../src/diagnosis/semantic-ir-stage.js";
+import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
 
 const origin = { artifactId: "selected", relativePath: "scripts/start.ts" };
@@ -89,4 +91,63 @@ describe("cross-region source handoff tracing", () => {
       .find(flow => flow.entryRegionId === "entry");
     expect(selected?.sourceHandoffs ?? []).toHaveLength(0);
   });
+
+  it("preserves exact caller/target locations through event, delayed callback, same-bundle static call and state write", () => {
+    const source = {
+      artifactId: "composite:selected-sha",
+      relativePath: "behavior_packs/BP/scripts/chunks/composite.js",
+    };
+    const code = [
+      'import { world, system } from "@minecraft/server";',
+      "var CompositeSessionService = class {",
+      '  static persist(arenaId) { world.setDynamicProperty("arena:phase", "active"); }',
+      "};",
+      "world.afterEvents.playerSpawn.subscribe(() => {",
+      "  system.runTimeout(() => {",
+      '    if (!world.getDynamicProperty("arena:ready")) return;',
+      '    CompositeSessionService.persist("arena_1");',
+      "  }, 5);",
+      "});",
+    ].join("\n");
+    const parsed = parseScriptFile("composite", code, source);
+    const localCall = parsed.localFunctionCalls.find(call =>
+      call.targetName === "CompositeSessionService.persist");
+    expect(localCall?.source.range?.lineStart).toBe(8);
+    expect(localCall?.targetSource?.range?.lineStart).toBe(3);
+
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [{ parsed }],
+    });
+    const callEdge = ir.execution.edges.find(edge =>
+      edge.targetLabel === "CompositeSessionService.persist");
+    expect(callEdge).toMatchObject({
+      kind: "synchronous-call",
+      resolution: "resolved",
+      source: { artifactId: source.artifactId, range: { lineStart: 8 } },
+    });
+    const region = ir.execution.regions.find(item => item.id === callEdge?.to);
+    expect(region?.source).toMatchObject({
+      artifactId: source.artifactId,
+      relativePath: source.relativePath,
+      range: { lineStart: 3 },
+    });
+    const stateWrite = ir.state.operations.find(op =>
+      op.executionRegionId === callEdge?.to &&
+      op.operation === "write" &&
+      op.source.relativePath === source.relativePath);
+    expect(stateWrite?.source.range?.lineStart).toBe(3);
+    expect(ir.execution.edges.some(edge =>
+      edge.kind === "event-dispatch" && edge.resolution === "resolved")).toBe(true);
+    expect(ir.execution.edges.some(edge =>
+      edge.kind === "deferred" && edge.resolution === "resolved")).toBe(true);
+    const flow = sourceFlowCandidates(ir).find(candidate =>
+      candidate.sourceHandoffs?.some(handoff =>
+        handoff.edgeId === callEdge?.id &&
+        handoff.directTargetStateWriteIds.includes(stateWrite!.id) &&
+        handoff.proof === "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION"));
+    expect(flow).toBeDefined();
+    expect(flow?.runtimeStatus).toBe("NOT_OBSERVED");
+  });
+
 });

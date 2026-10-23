@@ -346,6 +346,8 @@ interface CallableSource {
   region: string;
   parameters: ts.NodeArray<ts.ParameterDeclaration>;
   body: ts.Node;
+  /** Set for authoritatively unique local callable declarations. */
+  source?: SourceRef;
 }
 
 /** Only unambiguous executable top-level exports own cross-file parameters. */
@@ -1171,6 +1173,7 @@ export function extractScriptClassWiring(
           region: sourceMethodRegion(method, file),
           parameters: method.parameters,
           body: method.body!,
+          source: nodeSource(file, method, owner),
         });
       }
       const params = method.parameters.map(p =>

@@ -400,7 +400,12 @@ export function buildInspectionSemanticIr(
     const regionSources = new Map<string, SourceRef>();
     for (const call of parsed.localFunctionCalls) {
       regionSources.set(call.callerRegion, call.source);
-      regionSources.set(call.targetRegion, call.source);
+      // An invocation does not define the target method's location.
+      // Exact target sites, if available, are reconciled after all region
+      // evidence so ordinary method/API records cannot override them.
+      if (!regionSources.has(call.targetRegion)) {
+        regionSources.set(call.targetRegion, call.source);
+      }
     }
     for (const access of parsed.dynamicProperties) {
       if (access.executionRegion) {
@@ -439,6 +444,14 @@ export function buildInspectionSemanticIr(
       }
     }
 
+    for (const call of parsed.localFunctionCalls) {
+      if (call.targetSource !== undefined &&
+          call.targetSource.artifactId === parsed.source.artifactId &&
+          call.targetSource.relativePath === parsed.source.relativePath) {
+        regionSources.set(call.targetRegion, call.targetSource);
+      }
+    }
+
     for (const [region, source] of regionSources) {
       ensureScriptRegion(parsed, region, source);
     }
@@ -452,7 +465,7 @@ export function buildInspectionSemanticIr(
       const to = ensureScriptRegion(
         parsed,
         call.targetRegion,
-        call.source,
+        call.targetSource ?? call.source,
       );
       addEdge({
         from,

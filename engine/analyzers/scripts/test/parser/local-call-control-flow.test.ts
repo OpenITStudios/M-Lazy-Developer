@@ -238,8 +238,20 @@ describe("source-unique bundled static class call recovery", () => {
       edge.targetRegion.startsWith("function:CompositeSessionService.") &&
       edge.targetRegion.includes("@") &&
       edge.source.relativePath === source.relativePath)).toBe(true);
-    expect(edges.find(edge => edge.targetName === "CompositeSessionService.get")
-      ?.controlFlow).toBe("conditional");
+    const getCall = edges.find(edge =>
+      edge.targetName === "CompositeSessionService.get");
+    expect(getCall?.controlFlow).toBe("conditional");
+    expect(getCall?.targetSource).toMatchObject({
+      artifactId: source.artifactId,
+      relativePath: source.relativePath,
+      range: { lineStart: 3 },
+    });
+    expect(getCall?.source.range?.lineStart).toBeGreaterThan(
+      getCall!.targetSource!.range!.lineStart!,
+    );
+    expect(edges.every(edge =>
+      edge.targetSource?.artifactId === source.artifactId &&
+      edge.targetSource.relativePath === source.relativePath)).toBe(true);
     expect(edges.find(edge => edge.targetName === "CompositeSessionService.save")
       ?.lexicalGuards.length).toBeGreaterThan(0);
   });

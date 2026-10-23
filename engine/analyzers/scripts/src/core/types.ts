@@ -269,6 +269,11 @@ export interface ScriptLocalFunctionCall {
   callerRegion: string;
   targetRegion: string;
   targetName: string;
+  /** Exact declaration site of the statically resolved target, distinct
+   * from source (which is always the invocation site). Optional for legacy
+   * calls whose declaration source cannot be resolved without guessing.
+   */
+  targetSource?: SourceRef;
   /** Unique AST source parameter binding at this local call, when proven. */
   argumentParameterBindings?: readonly ScriptArgumentParameterBinding[];
   /** Source-authored actual argument syntax for this.method(...). */

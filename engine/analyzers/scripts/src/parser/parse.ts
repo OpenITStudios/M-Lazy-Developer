@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:3:typescript:" +
+  "m-bedrock-script-parser:4:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -3025,6 +3025,7 @@ export function parseScriptFile(
         callerRegion: localExecutionRegionId(node, file),
         targetRegion: "function:" + node.expression.text,
         targetName: node.expression.text,
+        targetSource: lineSource(file, target, source),
         ...(bindings.length ? { argumentParameterBindings: bindings } : {}),
         controlFlow: lexicalGuards.length || precedenceGuards.length
           ? "conditional" : localCallControlFlow(node),
@@ -3060,6 +3061,7 @@ export function parseScriptFile(
           callerRegion: localExecutionRegionId(node, file),
           targetRegion: sourceMethodRegion(target, file),
           targetName: localMethodTarget,
+          targetSource: lineSource(file, target, source),
           ...(bindings.length ? {argumentParameterBindings:bindings} : {}),
           argumentExpressions:node.arguments.map(arg => arg.getText(file)),
           controlFlow: lexicalGuards.length || precedenceGuards.length
@@ -3094,6 +3096,7 @@ export function parseScriptFile(
             callerRegion: localExecutionRegionId(node, file),
             targetRegion: target.region,
             targetName: receiver.text + "." + methodName,
+            ...(target.source === undefined ? {} : { targetSource: target.source }),
             ...(bindings.length ? { argumentParameterBindings: bindings } : {}),
             argumentExpressions: node.arguments.map(arg => arg.getText(file)),
             controlFlow: lexicalGuards.length || precedenceGuards.length
