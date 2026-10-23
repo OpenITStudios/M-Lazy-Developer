@@ -11,6 +11,66 @@ import {
 import { developerPracticeSignalsFromSemanticIr } from "../../src/workflow/resource-context.js";
 
 describe("inspection semantic IR", () => {
+  it("keeps source-qualified authored boolean writes outside named state/status fields", () => {
+    const source = {artifactId:"artifact:novel-game",
+      relativePath:"behavior_packs/demo/scripts/party.js"};
+    const parsed = parseScriptFile("party", [
+      "class PartyService {",
+      "  static handleReady(member) {",
+      "    if (!member) return;",
+      "    member.ready = !member.ready;",
+      "    this.saveParty(member);",
+      "  }",
+      "  static saveParty(member) { member.ready = false; }",
+      "  static anotherOwner(member) { member.ready = true; }",
+      "  static minified(member) { member.ready = !1; }",
+      "  static unrelated(member) { member.ready = resolveReady(member); }",
+      "  static register(member) { subscribe(() => { member.ready = true; }); }",
+      "}",
+    ].join("\n"), source);
+    expect((parsed.authoredPropertyMutations ?? [])
+      .filter(item => item.booleanAssignment !== undefined)
+      .map(item => item.booleanAssignment))
+      .toEqual([
+        "self-negation","literal-false","literal-true","literal-false",
+        "literal-true",
+      ]);
+    const ir = buildInspectionSemanticIr({
+      parsedScripts: [{parsed}], parsedFunctions: [],
+    });
+    const writes = ir.state.operations.filter(operation =>
+      operation.authoredBooleanPropertyWrite !== undefined);
+    expect(writes).toHaveLength(5);
+    expect(new Set(writes.map(item => item.surfaceId)).size).toBe(5);
+    expect(writes.some(item => item.executionRegionId.includes(
+      "callback%40"))).toBe(true);
+    const toggle = writes.find(item =>
+      item.authoredBooleanPropertyWrite?.form === "self-negation");
+    expect(toggle?.source.range?.lineStart).toBe(4);
+    expect(toggle?.authoredBooleanPropertyWrite).toMatchObject({
+      targetExpression:"member.ready",valueExpression:"!member.ready",
+      form:"self-negation",
+      proof:"SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE",
+    });
+    expect(toggle?.writtenValue).toBeUndefined();
+    expect(toggle?.precedenceGuards?.some(guard =>
+      guard.expression === "!member" && guard.branch === "false"))
+      .toBe(true);
+    const saveCall = ir.execution.edges.find(edge =>
+      edge.kind === "synchronous-call" &&
+      edge.targetLabel === "saveParty");
+    expect(saveCall?.from).toBe(toggle?.executionRegionId);
+    expect(saveCall?.source.range?.lineStart).toBe(5);
+    const literalFalse = writes.filter(item =>
+      item.authoredBooleanPropertyWrite?.form === "literal-false");
+    expect(literalFalse.every(item =>
+      item.writtenValue?.kind === "literal" &&
+      item.writtenValue.value === "false" &&
+      item.writtenValue.scalarKind === "boolean")).toBe(true);
+    // No inferred party identity or proven event delivery.
+  });
+
+
   it("links event, deferred callback, state operations and mcfunction calls without guessing unresolved targets", () => {
     const script = parseScriptFile(
       "main",

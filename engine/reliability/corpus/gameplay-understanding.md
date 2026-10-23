@@ -160,6 +160,57 @@ region adjacency. Invalid or truncated source candidates must not be
 promoted to execution, gameplay order or defect proof. This observation
 has not been scored against a current-HEAD full `runSelectedMapAudit()`.
 
+## Generic boolean state-source recovery — read-only samples, 2026-10-24
+
+This work corrects a *general authoring-shape blind spot*, not a bug in
+any production target map. The canonical JS parser formerly recorded
+`member.ready = !member.ready` as a loose property mutation, but
+`ScriptStateMutation` and Semantic IR's `script-memory` write projection
+were focused on source names such as `state/status/phase/stage/mode`.
+Consequently `member.ready` could lack an exact IR operation even while
+the following `saveParty()` call and an internal-event bus handoff were
+separately represented. This made the party-ready source path incomplete
+in the model handoff.
+
+Direct, isolated TypeScript AST inspection of the pinned originals:
+
+- **Composite v1.1.17**, `chunk-Q6BZV7BR.js`: exact
+  `member.ready = !member.ready` at **1498**,
+  `member.ready = false` at **1532**, `member.ready = true` at **2157**,
+  and `member.ready = false` at **2167**. All four are inside unique
+  authored class methods. The following `this.saveParty()` at **1499**
+  belongs to the same `handleReady` method as the source toggle.
+- **Beach Bedwars v1.1.0**, minified `main.js:175`: exact
+  `n.ready = !1` in method `step`. This is literal false encoded as
+  JavaScript `!1`. Nearby `t.ready = !!n && this.loading.sweep(...)`
+  is *computed*, not an exact boolean literal or self-negation of the
+  same property, and MUST NOT be guessed as one.
+- **Composite v1.1.17**, `chunk-7YEVMDUW.js`: distinct
+  `session.status = "countdown"` writes at **17607**, **25610**,
+  **29851** remain separate from the computed party `member.ready` toggle.
+
+Generic correction: the **existing** JS authored-property mutation
+evidence adds a narrowly scoped syntax tag only for `true`, `false`,
+minified scalar `!0` / `!1`, or exact `x.flag = !x.flag`.
+Semantic IR stores each as a separately source-site-qualified
+`script-memory` state-write attempt, with no runtime receiver identity,
+party/arena ownership, confirmed readiness, same-instance merging or
+proved player progress. A read-only model handoff exposes bounded
+backward root candidates and exact later call sites, but does not
+convert co-location into event delivery, session transition, or BUG proof.
+
+Additionally, the existing `SourceEffectSlice` temporal metadata now
+retains the already-resolved `internal-event-dispatch` edge as an
+**event boundary**. This is not the same as an unconditional synchronous
+call; source-time registration and runtime event delivery are still
+unverified. Both positive directed chains and deliberately mismatched
+source edges remain distinguished in the canonical read-only projection.
+
+The source facts above were observed directly on original bytes, NOT
+produced by executing the latest repository TypeScript, Vitest,
+`runSelectedMapAudit()` or Minecraft multiplayer. Treat scores as
+UNKNOWN until one actual same-HEAD audit with independent review.
+
 ## Baseline proof limit (do not convert counts to comprehension)
 
 The numbers below belong to the **historical source revision explicitly cited above**, not automatically to current `Local`. In particular, **0 recorded unknown intent across eight maps does not imply that all game mechanics, player objectives or temporal relationships were understood**. Unknowns are affected by what the old model could recognize and whether gaps were tracked. Node/invariant counts, source-style labels and the number of inferred nodes are inventory statistics; they are neither semantic precision/recall nor a player-reachability result.

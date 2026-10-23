@@ -808,7 +808,8 @@ export interface SourceEffectSlice {
      */
     readonly temporalBoundaryEvidence: readonly {
       readonly executionEdgeId: string;
-      readonly kind: "event-dispatch" | "deferred" | "periodic";
+      readonly kind: "event-dispatch" | "internal-event-dispatch" |
+        "deferred" | "periodic";
       readonly scheduler: "run" | "runTimeout" | "runInterval" | "runJob" | null;
       readonly guardEvidence: "explicit-generation-check" | "unresolved" | null;
       readonly guardIdentifiers: readonly string[];
@@ -1057,17 +1058,20 @@ export function deriveSourceEffectSlices(
             }),
             temporalBoundaryEdgeIds: entryToEffectEdges.filter(id => {
               const kind = edgeById.get(id)?.kind;
-              return kind === "event-dispatch" || kind === "deferred" ||
-                kind === "periodic";
+              return kind === "event-dispatch" ||
+                kind === "internal-event-dispatch" ||
+                kind === "deferred" || kind === "periodic";
             }),
             temporalBoundaryEvidence: entryToEffectEdges.flatMap((id, pathIndex) => {
               const edge = edgeById.get(id);
               if (!edge || (edge.kind !== "event-dispatch" &&
+                  edge.kind !== "internal-event-dispatch" &&
                   edge.kind !== "deferred" && edge.kind !== "periodic")) {
                 return [];
               }
               // Source-ref identity, not a string match on callback name.
-              const acquired = edge.kind === "event-dispatch" ? [] :
+              const acquired = edge.kind === "event-dispatch" ||
+                edge.kind === "internal-event-dispatch" ? [] :
                 scheduleAcquires.filter(action =>
                   action.executionRegionId === edge.from &&
                   sameExactSourceSite(action.source, edge.source));
@@ -1078,6 +1082,7 @@ export function deriveSourceEffectSlices(
               const after = entryToEffectEdges.slice(pathIndex + 1)
                 .map(nextId => edgeById.get(nextId));
               const guardSource = edge.kind === "event-dispatch" ||
+                edge.kind === "internal-event-dispatch" ||
                 edge.guardEvidence !== "explicit-generation-check"
                 ? undefined : edge.generationGuardSource;
               const guardedBy = (
@@ -1102,8 +1107,9 @@ export function deriveSourceEffectSlices(
                 : syncCallSite
                   ? "SYNCHRONOUS_CALL_SITE_GATED" as const
                   : "UNRESOLVED" as const;
-              const matchingInvalidations = edge.kind === "event-dispatch"
-                ? []
+              const matchingInvalidations =
+                edge.kind === "event-dispatch" ||
+                edge.kind === "internal-event-dispatch" ? []
                 : generationInvalidations.filter(item =>
                   edge.generationGuardOperands?.includes(
                     item.generationExpression) === true &&
@@ -1126,7 +1132,8 @@ export function deriveSourceEffectSlices(
                 executionEdgeId: id,
                 kind: edge.kind,
                 scheduler: edge.scheduler ?? null,
-                guardEvidence: edge.kind === "event-dispatch"
+                guardEvidence: edge.kind === "event-dispatch" ||
+                  edge.kind === "internal-event-dispatch"
                   ? null : edge.guardEvidence ?? "unresolved",
                 guardIdentifiers: [...(edge.guardIdentifiers ?? [])].sort(),
                 generationGuardSource: guardSource ?? null,

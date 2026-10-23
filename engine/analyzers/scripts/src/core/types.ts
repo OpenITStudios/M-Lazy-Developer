@@ -205,6 +205,10 @@ export interface ScriptAuthoredPropertyMutation {
   readonly targetExpression: string;
   readonly valueExpression: string;
   readonly operator: "=" | "+=" | "-=";
+  /** Exact AST syntax only: no player-ready/phase semantics or runtime
+   * receiver identity inferred from arbitrary property names.
+   */
+  readonly booleanAssignment?: "literal-true" | "literal-false" | "self-negation";
   readonly source: SourceRef;
   readonly lexicalGuards?: readonly ScriptLexicalGuard[];
   readonly precedenceGuards?: readonly ScriptLexicalGuard[];

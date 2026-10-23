@@ -167,6 +167,54 @@ export interface SelectedMapAuditModelHandoff {
       readonly omittedSites: number;
     }[];
     readonly omittedSourceStateAssignments: number;
+    /**
+     * Exact per-source-property boolean writes from canonical Semantic IR.
+     * Deliberately NOT collapsed into a runtime party/player/arena state.
+     * Both source-root ingress and calls authored after the write are
+     * conditional navigation, never proven event delivery or countdown.
+     */
+    readonly sourceBooleanPropertyWrites: readonly {
+      readonly operationId: string;
+      readonly surfaceId: string;
+      readonly targetExpression: string;
+      readonly valueExpression: string;
+      readonly form: "literal-true" | "literal-false" | "self-negation";
+      readonly sourceLocator: string;
+      readonly executionRegionId: string;
+      readonly sourceIngressStatus:
+        "CANDIDATE_INGRESS" | "NO_KNOWN_INGRESS" | "TRUNCATED" | "NOT_INDEXED";
+      readonly guards: readonly {
+        readonly kind: "lexical" | "precedence";
+        readonly expression: string;
+        readonly branch: "true" | "false";
+        readonly sourceLocator: string;
+      }[];
+      readonly omittedGuards: number;
+      readonly candidateIngress: readonly {
+        readonly entryRegionId: string;
+        readonly sourceTraceStatus:
+          "SOURCE_ROOT_TRACE" | "DISCONNECTED_SOURCE_REGION" | "UNKNOWN";
+        readonly linkage: "EXACT_RESOLVED_IR_CHAIN" | "IR_CHAIN_UNRESOLVED";
+        readonly executionEdgeIds: readonly string[];
+        readonly temporalBoundaryCount: number;
+      }[];
+      readonly omittedIngress: number;
+      /** Direct IR call edges with a source site authored AFTER the
+       * boolean write in that same function. Even exact source ordering
+       * and a resolved target do not prove runtime causation. */
+      readonly subsequentSourceEdges: readonly {
+        readonly edgeId: string;
+        readonly kind: string;
+        readonly toRegionId: string;
+        readonly targetLabel: string;
+        readonly sourceLocator: string;
+        readonly guarded: boolean;
+        readonly temporalBoundary: boolean;
+      }[];
+      readonly omittedSubsequentEdges: number;
+      readonly proof: "SOURCE_BOOLEAN_PROPERTY_WRITE_NOT_RUNTIME_STATE";
+    }[];
+    readonly omittedSourceBooleanPropertyWrites: number;
     /** Exact NPC button text and its OWN authored command, never design or execution proof. */
     readonly playerFacingCommandBindings: readonly {
       readonly featureId: string;
@@ -283,7 +331,7 @@ export interface SelectedMapAuditModelHandoff {
       readonly edgeId: string;
       readonly fromRegionId: string;
       readonly toRegionId: string;
-      readonly kind: "synchronous-call" | "event-dispatch" | "deferred" | "periodic";
+      readonly kind: SemanticIr["execution"]["edges"][number]["kind"];
       readonly source: import("../../../project-model/src/index.js").SourceRef;
       readonly scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
       readonly generationGuard: "EXPLICIT_SOURCE_CHECK" | "UNRESOLVED" | "NOT_RECORDED";
@@ -668,6 +716,10 @@ export function projectSelectedMapAuditModelHandoff(
     operation.operation === "write" &&
     operation.source.artifactId === audit.identity.artifactId &&
     operation.writtenValue?.kind === "literal" &&
+    // Authored boolean site writes have their own more precise projection.
+    // Avoid counting false/true twice, or promoting a site-qualified
+    // membership flag into the ordinary lexical status grouping.
+    operation.authoredBooleanPropertyWrite === undefined &&
     sourceSurfacesById.get(operation.surfaceId)?.ref.kind === "script-memory");
   const writesByLexicalValue = new Map<string, ScriptLiteralOperation[]>();
   for (const operation of literalWrites) {
@@ -687,6 +739,23 @@ export function projectSelectedMapAuditModelHandoff(
         sourceFlowByRoot.get(path.entryRegionId)?.sourceTraceStatus ===
           "SOURCE_ROOT_TRACE").length;
     }, 0);
+  const exactResolvedPath = (path: {
+    readonly entryRegionId: string;
+    readonly regionIds: readonly string[];
+    readonly executionEdgeIds: readonly string[];
+  }, targetRegionId: string): boolean => {
+    if (path.regionIds.length !== path.executionEdgeIds.length + 1 ||
+        path.regionIds[0] !== path.entryRegionId ||
+        path.regionIds.at(-1) !== targetRegionId) return false;
+    return path.executionEdgeIds.every((id, index) => {
+      const edge = sourceEdgesById.get(id);
+      return edge?.resolution === "resolved" &&
+        edge.to !== undefined &&
+        edge.source.artifactId === audit.identity.artifactId &&
+        edge.from === path.regionIds[index] &&
+        edge.to === path.regionIds[index + 1];
+    });
+  };
   const sortedWrites = [...writesByLexicalValue.values()]
     .sort((a, b) =>
       Number(rootedPathCount(b) > 0) - Number(rootedPathCount(a) > 0) ||
@@ -742,19 +811,11 @@ export function projectSelectedMapAuditModelHandoff(
             sourcePaths: paths.slice(0, 4).map(path => {
               const edges = path.executionEdgeIds.map(id =>
                 sourceEdgesById.get(id));
-              // A path is a directed chain only if every exact edge connects
-              // the NEXT path region in order. A broad IR trace alone cannot
-              // assert continuity, and a missing call edge fails closed.
-              const exact = path.regionIds.length ===
-                path.executionEdgeIds.length + 1 &&
-                path.regionIds[0] === path.entryRegionId &&
-                path.regionIds.at(-1) === operation.executionRegionId &&
-                edges.every((edge, index) =>
-                  edge !== undefined && edge.resolution === "resolved" &&
-                  edge.to !== undefined &&
-                  edge.source.artifactId === audit.identity.artifactId &&
-                  edge.from === path.regionIds[index] &&
-                  edge.to === path.regionIds[index + 1]);
+              // The same source-only chain gate serves ordinary literal
+              // status writes and lexical boolean-property writes. A broad
+              // trace co-membership is never a verified directed chain.
+              const exact = exactResolvedPath(
+                path, operation.executionRegionId);
               const flow = sourceFlowByRoot.get(path.entryRegionId);
               return {
                 entryRegionId: path.entryRegionId,
@@ -777,11 +838,13 @@ export function projectSelectedMapAuditModelHandoff(
                       guard.expression + " [" + guard.branch + "] @ " +
                         location(guard.source)),
                     temporalBoundary: edge.kind === "event-dispatch" ||
+                      edge.kind === "internal-event-dispatch" ||
                       edge.kind === "deferred" || edge.kind === "periodic",
                   }]) : [],
                 omittedEdgeSites: exact ? Math.max(0, edges.length - 8) : 0,
                 temporalBoundaryCount: exact ? edges.filter(edge =>
                   edge?.kind === "event-dispatch" ||
+                  edge?.kind === "internal-event-dispatch" ||
                   edge?.kind === "deferred" ||
                   edge?.kind === "periodic").length : 0,
               };
@@ -791,6 +854,120 @@ export function projectSelectedMapAuditModelHandoff(
           };
         }),
         omittedSites: Math.max(0, sortedSites.length - 6),
+      };
+    });
+  // Source-authored booleans (member.ready = !member.ready) are first-class
+  // material writes, without pretending they are the SAME instance as any
+  // other member.ready expression. Each surface is site-qualified upstream.
+  const booleanCandidates = (sourceIr?.state.operations ?? [])
+    .filter(operation =>
+      operation.source.artifactId === audit.identity.artifactId &&
+      operation.operation === "write" &&
+      operation.authoredBooleanPropertyWrite !== undefined &&
+      sourceSurfacesById.get(operation.surfaceId)?.ref.kind === "script-memory");
+  const hasRootIngress = (operation: typeof booleanCandidates[number]): boolean =>
+    (sourceEffectById.get(operation.id)?.candidateIngress ?? []).some(path =>
+      exactResolvedPath(path, operation.executionRegionId) &&
+      sourceFlowByRoot.get(path.entryRegionId)?.sourceTraceStatus ===
+        "SOURCE_ROOT_TRACE");
+  // Prioritize unambiguous self-negation and rooted source evidence.
+  // The bounded view may omit other properties; the canonical IR retains
+  // every observed site and the handoff reports the omitted count.
+  const rankedBooleanCandidates = [...booleanCandidates].sort((a, b) =>
+    Number(b.authoredBooleanPropertyWrite!.form === "self-negation") -
+      Number(a.authoredBooleanPropertyWrite!.form === "self-negation") ||
+    Number(hasRootIngress(b)) - Number(hasRootIngress(a)) ||
+    Number((b.lexicalGuards?.length ?? 0) +
+      (b.precedenceGuards?.length ?? 0) > 0) -
+      Number((a.lexicalGuards?.length ?? 0) +
+        (a.precedenceGuards?.length ?? 0) > 0) ||
+    a.source.relativePath.localeCompare(b.source.relativePath) ||
+    (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+    a.id.localeCompare(b.id));
+  const sourceBooleanPropertyWrites: SelectedMapAuditModelHandoff[
+    "gameUnderstanding"]["sourceBooleanPropertyWrites"] =
+    rankedBooleanCandidates.slice(0, 20).map(operation => {
+      const authored = operation.authoredBooleanPropertyWrite!;
+      const effect = sourceEffectById.get(operation.id);
+      const paths = effect?.candidateIngress ?? [];
+      const guards = [
+        ...(operation.lexicalGuards ?? []).map(guard => ({
+          kind: "lexical" as const, guard,
+        })),
+        ...(operation.precedenceGuards ?? []).map(guard => ({
+          kind: "precedence" as const, guard,
+        })),
+      ];
+      const afterSite = (source: { relativePath: string; range?: {
+        lineStart?: number; columnStart?: number;
+      } }): boolean =>
+        source.relativePath === operation.source.relativePath &&
+        source.range?.lineStart !== undefined &&
+        operation.source.range?.lineStart !== undefined &&
+        (source.range.lineStart > operation.source.range.lineStart ||
+          (source.range.lineStart === operation.source.range.lineStart &&
+            (source.range.columnStart ?? 0) >
+              (operation.source.range.columnStart ?? 0)));
+      const followingEdges = (sourceIr?.execution.edges ?? [])
+        .filter(edge =>
+          edge.resolution === "resolved" && edge.to !== undefined &&
+          edge.from === operation.executionRegionId &&
+          edge.source.artifactId === audit.identity.artifactId &&
+          edge.kind !== "static-module-dependency" &&
+          afterSite(edge.source))
+        .sort((a,b) =>
+          (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+          (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
+          a.id.localeCompare(b.id));
+      return {
+        operationId: operation.id,
+        surfaceId: operation.surfaceId,
+        targetExpression: authored.targetExpression,
+        valueExpression: authored.valueExpression,
+        form: authored.form,
+        sourceLocator: location(operation.source),
+        executionRegionId: operation.executionRegionId,
+        sourceIngressStatus: effect?.status ?? "NOT_INDEXED",
+        guards: guards.slice(0, 4).map(({kind,guard}) => ({
+          kind, expression: guard.expression, branch: guard.branch,
+          sourceLocator: location(guard.source),
+        })),
+        omittedGuards: Math.max(0, guards.length - 4),
+        candidateIngress: paths.slice(0, 4).map(path => {
+          const exact = exactResolvedPath(path, operation.executionRegionId);
+          const edges = exact ? path.executionEdgeIds.map(id =>
+            sourceEdgesById.get(id)) : [];
+          return {
+            entryRegionId: path.entryRegionId,
+            sourceTraceStatus: sourceFlowByRoot.get(path.entryRegionId)
+              ?.sourceTraceStatus ?? "UNKNOWN",
+            linkage: exact
+              ? "EXACT_RESOLVED_IR_CHAIN"
+              : "IR_CHAIN_UNRESOLVED",
+            executionEdgeIds: path.executionEdgeIds.slice(0, 12),
+            temporalBoundaryCount: edges.filter(edge =>
+              edge?.kind === "event-dispatch" ||
+              edge?.kind === "internal-event-dispatch" ||
+              edge?.kind === "deferred" ||
+              edge?.kind === "periodic").length,
+          };
+        }),
+        omittedIngress: Math.max(0, paths.length - 4),
+        subsequentSourceEdges: followingEdges.slice(0, 5).map(edge => ({
+          edgeId: edge.id,
+          kind: edge.kind,
+          toRegionId: edge.to!,
+          targetLabel: edge.targetLabel,
+          sourceLocator: location(edge.source),
+          guarded: edge.controlFlow === "conditional" ||
+            (edge.lexicalGuards?.length ?? 0) > 0 ||
+            (edge.precedenceGuards?.length ?? 0) > 0,
+          temporalBoundary: edge.kind === "event-dispatch" ||
+            edge.kind === "internal-event-dispatch" ||
+            edge.kind === "deferred" || edge.kind === "periodic",
+        })),
+        omittedSubsequentEdges: Math.max(0, followingEdges.length - 5),
+        proof: "SOURCE_BOOLEAN_PROPERTY_WRITE_NOT_RUNTIME_STATE",
       };
     });
   const sourceRelations = audit.mapAuditReport.gameplayStructure
@@ -1006,6 +1183,9 @@ export function projectSelectedMapAuditModelHandoff(
       sourceStateAssignments,
       omittedSourceStateAssignments:
         Math.max(0, sortedWrites.length - sourceStateAssignments.length),
+      sourceBooleanPropertyWrites,
+      omittedSourceBooleanPropertyWrites: Math.max(0,
+        rankedBooleanCandidates.length - sourceBooleanPropertyWrites.length),
       playerFacingCommandBindings,
       omittedPlayerFacingCommandBindings:
         Math.max(0, authoredButtons.length - playerFacingCommandBindings.length),

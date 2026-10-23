@@ -261,6 +261,7 @@ export function buildInspectionSemanticIr(
     precedenceGuards?: readonly AuthoredBranchGuard[],
     readComparison?: StateOperation["readComparison"],
     sourceSequence?: StateOperation["sourceSequence"],
+    authoredBooleanPropertyWrite?: StateOperation["authoredBooleanPropertyWrite"],
   ): void => {
     const surfaceId = ensureSurface(ref);
     const id = [
@@ -280,6 +281,8 @@ export function buildInspectionSemanticIr(
       ...(writtenValue === undefined ? {} : { writtenValue }),
       ...(readComparison === undefined ? {} : { readComparison }),
       ...(sourceSequence === undefined ? {} : { sourceSequence }),
+      ...(authoredBooleanPropertyWrite === undefined ? {} :
+        { authoredBooleanPropertyWrite }),
       ...(lexicalGuards === undefined ? {} : { lexicalGuards }),
       ...(precedenceGuards === undefined ? {} : { precedenceGuards }),
     });
@@ -872,6 +875,48 @@ export function buildInspectionSemanticIr(
           : { kind: "member", symbol: mutation.value.symbol },
         irGuards(mutation.lexicalGuards),
         irGuards(mutation.precedenceGuards),
+      );
+    }
+
+    // Authoring-neutral boolean property mutations are material source
+    // writes even when the member is NOT spelled state/status/phase. Reuse
+    // the existing authoredPropertyMutations AST evidence, never lexical
+    // rescanning. A SITE-QUALIFIED script-memory surface intentionally
+    // refuses to merge member.ready in two different functions or receivers.
+    // All effects/callers remain candidates; dynamic flags are not literal
+    // winners, accepted party readiness or a runtime state-machine contract.
+    for (const mutation of parsed.authoredPropertyMutations ?? []) {
+      const form = mutation.booleanAssignment;
+      if (mutation.operator !== "=" || form === undefined ||
+          mutation.source.artifactId !== parsed.source.artifactId ||
+          mutation.source.relativePath !== parsed.source.relativePath ||
+          mutation.source.range?.lineStart === undefined ||
+          mutation.source.range.columnStart === undefined) continue;
+      const region = ensureScriptRegion(
+        parsed, mutation.executionRegion, mutation.source);
+      addStateOperation(
+        region,
+        { kind: "script-memory",
+          key: parsed.source.relativePath + "::" + mutation.executionRegion +
+            "::" + mutation.targetExpression + "@" +
+            sourceToken(mutation.source) },
+        "write",
+        mutation.source,
+        undefined,
+        form === "literal-true"
+          ? { kind: "literal", value: "true", scalarKind: "boolean" }
+          : form === "literal-false"
+            ? { kind: "literal", value: "false", scalarKind: "boolean" }
+            : undefined,
+        irGuards(mutation.lexicalGuards),
+        irGuards(mutation.precedenceGuards),
+        undefined,
+        undefined,
+        {
+          targetExpression: mutation.targetExpression,
+          valueExpression: mutation.valueExpression,
+          form, proof: "SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE",
+        },
       );
     }
 

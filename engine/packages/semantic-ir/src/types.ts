@@ -198,6 +198,18 @@ export interface StateOperation {
   lexicalGuards?: readonly AuthoredBranchGuard[];
   precedenceGuards?: readonly AuthoredBranchGuard[];
   sourceSequence?: SourceSequentialSite;
+  /**
+   * Site-qualified source fact from an authored JS property assignment.
+   * Names like `member.ready` and `session.ready` cannot establish a
+   * common runtime object or gameplay status. A lexical self-negation is
+   * NOT a proven successful boolean toggle in the presence of accessors.
+   */
+  authoredBooleanPropertyWrite?: {
+    readonly targetExpression: string;
+    readonly valueExpression: string;
+    readonly form: "literal-true" | "literal-false" | "self-negation";
+    readonly proof: "SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE";
+  };
 }
 
 export interface StateAuthorityBinding {

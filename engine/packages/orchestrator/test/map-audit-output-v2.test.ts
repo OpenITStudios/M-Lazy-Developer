@@ -1327,6 +1327,31 @@ describe("Map Audit Output V2 projection", () => {
         ? [{expression: "partyReady", branch: "true", source: at(9)}]
         : [],
     }));
+    // Syntactically equal-looking ready flags at distinct source sites
+    // remain separate IR operations. The first is a logical self-negation,
+    // the second is an exact false literal in a DIFFERENT region.
+    const booleanOperations = [{
+      id: "boolean:ready", executionRegionId: from,
+      surfaceId: "surface:member.ready", operation: "write",
+      source: at(2),
+      authoredBooleanPropertyWrite: {
+        targetExpression: "member.ready",
+        valueExpression: "!member.ready",
+        form: "self-negation",
+        proof: "SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE",
+      },
+    }, {
+      id: "boolean:other", executionRegionId: other,
+      surfaceId: "surface:other.ready", operation: "write",
+      source: at(19),
+      writtenValue: {kind: "literal", value: "false", scalarKind: "boolean"},
+      authoredBooleanPropertyWrite: {
+        targetExpression: "member.ready",
+        valueExpression: "false",
+        form: "literal-false",
+        proof: "SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE",
+      },
+    }];
     const ir = {
       schemaVersion: 1,
       execution: {
@@ -1340,8 +1365,17 @@ describe("Map Audit Output V2 projection", () => {
         surfaces: [{
           id: "surface:session.status",
           ref: {kind: "script-memory", key: sourcePath + "::session.status"},
+        }, {
+          id: "surface:member.ready",
+          ref: {kind: "script-memory", key: sourcePath + "::" + from +
+            "::member.ready@2"},
+        }, {
+          id: "surface:other.ready",
+          ref: {kind: "script-memory", key: sourcePath + "::" + other +
+            "::member.ready@19"},
         }],
-        operations, resourceActions: [], authorityBindings: [],
+        operations: [...operations, ...booleanOperations],
+        resourceActions: [], authorityBindings: [],
       },
       temporal: {relations: []},
     };
@@ -1355,6 +1389,17 @@ describe("Map Audit Output V2 projection", () => {
         executionEdgeIds: [edge.id],
       }],
     }));
+    effectSlices.push(...booleanOperations.map(op => ({
+      effectId: op.id, effectKind: "state-mutation",
+      executionRegionId: op.executionRegionId, sourcePath,
+      status: "CANDIDATE_INGRESS",
+      candidateIngress: [{
+        entryRegionId: from,
+        regionIds: op.id === "boolean:ready"
+          ? [from] : [from, other],
+        executionEdgeIds: op.id === "boolean:ready" ? [] : [edge.id],
+      }],
+    })));
     const report: any = {
       gameDesign: {
         objective:"UNKNOWN", objectiveGrounding:"unresolved",
@@ -1416,6 +1461,29 @@ describe("Map Audit Output V2 projection", () => {
       site.proof === "SCRIPT_LITERAL_WRITE_WITH_SOURCE_PATH_NOT_EXECUTED"))
       .toBe(true);
     expect(handoff.gameUnderstanding.omittedSourceStateAssignments).toBe(0);
+    const booleanWrites = handoff.gameUnderstanding.sourceBooleanPropertyWrites;
+    expect(booleanWrites).toHaveLength(2);
+    const ready = booleanWrites.find(item => item.operationId === "boolean:ready");
+    const falseSite = booleanWrites.find(item =>
+      item.operationId === "boolean:other");
+    expect(ready).toMatchObject({
+      targetExpression: "member.ready",
+      valueExpression: "!member.ready",
+      form: "self-negation",
+      proof: "SOURCE_BOOLEAN_PROPERTY_WRITE_NOT_RUNTIME_STATE",
+    });
+    expect(ready?.candidateIngress[0]?.linkage).toBe("EXACT_RESOLVED_IR_CHAIN");
+    expect(ready?.candidateIngress[0]?.sourceTraceStatus).toBe("SOURCE_ROOT_TRACE");
+    expect(ready?.subsequentSourceEdges[0]).toMatchObject({
+      edgeId: "edge:real", toRegionId: to,
+      temporalBoundary: false,
+    });
+    expect(falseSite?.form).toBe("literal-false");
+    expect(falseSite?.candidateIngress[0]?.linkage).toBe("IR_CHAIN_UNRESOLVED");
+    expect(falseSite?.subsequentSourceEdges).toEqual([]);
+    expect(ready?.surfaceId).not.toBe(falseSite?.surfaceId);
+    expect(handoff.gameUnderstanding.omittedSourceBooleanPropertyWrites)
+      .toBe(0);
     expect(report.bugs).toEqual([]);
   });
 

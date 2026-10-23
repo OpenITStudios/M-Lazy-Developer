@@ -4,6 +4,7 @@ import type { SourceRef } from "../../project-model/src/index.js";
 import {
   reconcileSourceStateOutcomes,
   reconcileSourceResourceOutcomes,
+  deriveSourceEffectSlices,
 } from "../src/index.js";
 
 const src = (line: number, columnStart = 1, columnEnd = 10,
@@ -69,6 +70,50 @@ const ir = (): SemanticIr => ({
 });
 
 describe("source-observed state/outcome reconciliation", () => {
+  it("marks exact internal event-bus dispatch as a source boundary, not live delivery", () => {
+    const root="exec:script:entry", save="exec:script:save",
+      cb="exec:script:callback";
+    const eventIr: SemanticIr = {
+      schemaVersion:1,
+      execution: {
+        regions: [
+          {id:root,kind:"script-module",ownerId:"entry",label:"module",source:src(1)},
+          {id:save,kind:"script-function",ownerId:"entry",label:"save",source:src(2)},
+          {id:cb,kind:"script-callback",ownerId:"entry",label:"callback",source:src(6)},
+        ],
+        edges: [{
+          id:"call:save",kind:"synchronous-call",from:root,to:save,
+          resolution:"resolved",targetLabel:"save",source:src(2),
+        },{
+          id:"bus:changed",kind:"internal-event-dispatch",from:save,to:cb,
+          resolution:"resolved",targetLabel:"party:changed",source:src(4),
+          internalSubscriptionRegionId:root,
+          internalSubscriptionSource:src(1),
+        }],
+      },
+      state:{
+        surfaces:[{id:"flag",ref:{kind:"script-memory",key:"member.ready"}}],
+        operations:[{
+          id:"write:ready",surfaceId:"flag",operation:"write",
+          executionRegionId:cb,source:src(7),
+        }],
+        authorityBindings:[],
+      },
+      temporal:{relations:[]},
+    };
+    const effect=deriveSourceEffectSlices(eventIr)
+      .find(item=>item.effectId==="write:ready");
+    const chain=effect?.candidateIngress.find(item=>item.entryRegionId===root);
+    expect(chain?.regionIds).toEqual([root,save,cb]);
+    expect(chain?.executionEdgeIds).toEqual(["call:save","bus:changed"]);
+    expect(chain?.temporalBoundaryEdgeIds).toEqual(["bus:changed"]);
+    expect(chain?.temporalBoundaryEvidence.map(item=>item.kind))
+      .toEqual(["internal-event-dispatch"]);
+    expect(chain?.temporalBoundaryEvidence[0]?.sourceGateStatus)
+      .toBe("UNRESOLVED");
+  });
+
+
   it("selects only earlier exact-document and same-branch writes", () => {
     const candidate = reconcileSourceStateOutcomes(ir());
     expect(candidate.map(item => item.outcomeId))

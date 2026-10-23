@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:8:typescript:" +
+  "m-bedrock-script-parser:9:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -3033,12 +3033,56 @@ export function parseScriptFile(
       if (op && (ts.isPropertyAccessExpression(node.left) ||
           ts.isElementAccessExpression(node.left))) {
         const executionRegion = localExecutionRegionId(node, file);
-        if (executionRegion.startsWith("function:")) {
+        // Preserve the already-supported ordinary method record set.
+        // For nested event/scheduler callbacks, only collect plausible
+        // Boolean syntax; arbitrary callback property assignment is
+        // intentionally outside this narrowly grounded source extension.
+        const callbackBooleanCandidate = op === "=" &&
+          (node.right.kind === ts.SyntaxKind.TrueKeyword ||
+           node.right.kind === ts.SyntaxKind.FalseKeyword ||
+           (ts.isPrefixUnaryExpression(node.right) &&
+            node.right.operator === ts.SyntaxKind.ExclamationToken));
+        if (executionRegion.startsWith("function:") ||
+            (executionRegion.startsWith("callback@") &&
+             callbackBooleanCandidate)) {
           authoredPropertyMutations.push({
             executionRegion,
             targetExpression: node.left.getText(file).slice(0, 180),
             valueExpression: node.right.getText(file).slice(0, 180),
             operator: op,
+            // Only exact boolean syntax. A computed read, a similarly
+            // spelled property, or source-name 'ready' is never an implicit
+            // boolean value or gameplay rule. The self-negation is lexical
+            // syntax; getter/setter side effects and runtime type are UNKNOWN.
+            ...(op !== "=" ? {} : (() => {
+              const rhs = node.right;
+              // Minified Bedrock JavaScript commonly writes !0 / !1
+              // for literal true / false; these exact scalar expressions
+              // are equivalent without executing arbitrary game code.
+              const minifiedBoolean = ts.isPrefixUnaryExpression(rhs) &&
+                rhs.operator === ts.SyntaxKind.ExclamationToken &&
+                ts.isNumericLiteral(rhs.operand)
+                  ? rhs.operand.text === "0"
+                    ? "literal-true" as const
+                    : rhs.operand.text === "1"
+                      ? "literal-false" as const : undefined
+                  : undefined;
+              const booleanAssignment =
+                rhs.kind === ts.SyntaxKind.TrueKeyword
+                  ? "literal-true" as const
+                  : rhs.kind === ts.SyntaxKind.FalseKeyword
+                    ? "literal-false" as const
+                    : minifiedBoolean !== undefined
+                      ? minifiedBoolean
+                    : ts.isPrefixUnaryExpression(rhs) &&
+                      rhs.operator === ts.SyntaxKind.ExclamationToken &&
+                      (ts.isPropertyAccessExpression(rhs.operand) ||
+                       ts.isElementAccessExpression(rhs.operand)) &&
+                      rhs.operand.getText(file) === node.left.getText(file)
+                      ? "self-negation" as const : undefined;
+              return booleanAssignment === undefined
+                ? {} : { booleanAssignment };
+            })()),
             source: lineSource(file, node, source),
             lexicalGuards: lexicalBranchGuards(node, file, source),
             precedenceGuards: precedingEarlyExitGuards(node, file, source),
