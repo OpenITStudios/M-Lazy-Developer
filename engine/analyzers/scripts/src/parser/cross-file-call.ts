@@ -16,6 +16,10 @@ export interface CrossFileCallEdge {
   targetExport: string;
   /** Exact declared executable region; omitted for non-callable/ambiguous exports. */
   targetRegion?: string;
+  /** Exact source of the resolved target declaration; not the invocation,
+   * import barrel, or module root. Unresolved calls must omit this field.
+   */
+  targetSource?: SourceRef;
   localName: string;
   controlFlow: "unconditional" | "conditional" | "deferred";
   status: "resolved" | "unresolved";
@@ -348,6 +352,8 @@ interface CallableSource {
   body: ts.Node;
   /** Set for authoritatively unique local callable declarations. */
   source?: SourceRef;
+  /** Exact declared executable node, independent of the invoking module. */
+  declaration?: ts.Node;
 }
 
 /** Only unambiguous executable top-level exports own cross-file parameters. */
@@ -361,6 +367,7 @@ function callableSource(file: ts.SourceFile): ReadonlyMap<string, CallableSource
       add(statement.name.text, {
         region: "function:" + statement.name.text,
         parameters: statement.parameters, body: statement.body,
+        declaration: statement,
       });
     }
     if (ts.isVariableStatement(statement) &&
@@ -373,6 +380,7 @@ function callableSource(file: ts.SourceFile): ReadonlyMap<string, CallableSource
         add(declaration.name.text, {
           region: "callback@" + (pos.line + 1) + ":" + (pos.character + 1),
           parameters: fn.parameters, body: fn.body,
+          declaration: fn,
         });
       }
     }
@@ -560,6 +568,7 @@ function staticClassCallables(file: ts.SourceFile): {
         region: sourceMethodRegion(member, file),
         parameters: member.parameters,
         body: member.body,
+        declaration: member,
       });
     }
   }
@@ -1005,6 +1014,13 @@ export function deriveCrossFileCallEdges(
       const targetRegion = targetCallable?.region;
       const targetFile = target === undefined
         ? undefined : parsedFiles.get(target.modulePath);
+      const exactTargetSource = targetCallable?.declaration &&
+          targetFile && targetSource && target
+        ? nodeSource(targetFile, targetCallable.declaration, {
+            ...targetSource,
+            relativePath: target.modulePath,
+          })
+        : undefined;
       const argumentParameterBindings = targetCallable && targetFile && targetSource
         ? inferExactCallArgumentParameterBindings(
             node, file, { ...module.source, relativePath: modulePath },
@@ -1025,6 +1041,7 @@ export function deriveCrossFileCallEdges(
           target?.exportName ??
           imported.importedName,
         ...(targetRegion === undefined ? {} : { targetRegion }),
+        ...(exactTargetSource === undefined ? {} : { targetSource: exactTargetSource }),
         ...(argumentParameterBindings.length ? { argumentParameterBindings } : {}),
         localName: imported.localName,
         controlFlow: controlFlow(node),

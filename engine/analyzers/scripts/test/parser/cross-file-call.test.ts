@@ -64,6 +64,11 @@ describe("cross-file call resolution", () => {
         callerRegion: "function:finishGame",
         targetModule: "scripts/cleanup.ts",
         targetExport: "releaseArena",
+        targetSource: {
+          artifactId: "map",
+          relativePath: "scripts/cleanup.ts",
+          range: { lineStart: 1 },
+        },
         controlFlow: "unconditional",
         status: "resolved",
       }),
@@ -96,6 +101,7 @@ describe("cross-file call resolution", () => {
         status: "unresolved",
       }),
     );
+    expect(edges[0]?.targetSource).toBeUndefined();
   });
 
   it("resolves namespace imports to the implementation module", () => {

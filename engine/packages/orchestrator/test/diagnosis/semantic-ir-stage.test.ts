@@ -294,6 +294,16 @@ describe("inspection semantic IR", () => {
       e.kind === "synchronous-call" && e.targetLabel === "close" &&
       e.source.range?.lineStart === 5);
     expect(edge?.resolution).toBe("resolved");
+    expect(edge?.source.range?.lineStart).toBe(5);
+    expect(calls.filter(call => call.status === "resolved")
+      .every(call => call.targetSource?.relativePath === b.relativePath &&
+        call.targetSource.range?.lineStart === 1)).toBe(true);
+    expect(ir.execution.regions.find(region =>
+      region.id === edge?.to)?.source).toMatchObject({
+        artifactId: b.artifactId,
+        relativePath: b.relativePath,
+        range: { lineStart: 1 },
+      });
     expect(edge?.argumentParameterBindings).toEqual([
       expect.objectContaining({
         index: 0, argumentName: "arena", parameterName: "ctx",

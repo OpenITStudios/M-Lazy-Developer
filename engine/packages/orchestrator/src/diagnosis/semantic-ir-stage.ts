@@ -990,8 +990,22 @@ export function buildInspectionSemanticIr(
       targets.length === 1 &&
       targets[0]!.source.artifactId === call.source.artifactId
       ? targets[0] : undefined;
+    const validTargetSource = target !== undefined &&
+      call.targetSource?.artifactId === target.source.artifactId &&
+      call.targetSource?.relativePath === target.source.relativePath
+      ? call.targetSource : undefined;
     const to = target === undefined ? undefined :
-      ensureScriptRegion(target, call.targetRegion!, target.source);
+      ensureScriptRegion(target, call.targetRegion!,
+        validTargetSource ?? target.source);
+    if (to !== undefined && validTargetSource !== undefined) {
+      // A target may already have been indexed from a less specific API
+      // site earlier in this inspection. Re-anchor to the unique declaration,
+      // not to an arbitrary prior call site or a broad module path.
+      const existing = regions.get(to);
+      if (existing !== undefined) {
+        regions.set(to, { ...existing, source: validTargetSource });
+      }
+    }
     addEdge({
       from,
       ...(to === undefined ? {} : { to }),
