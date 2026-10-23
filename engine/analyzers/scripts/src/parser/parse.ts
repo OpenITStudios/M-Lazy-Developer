@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:2:typescript:" +
+  "m-bedrock-script-parser:3:typescript:" +
   ts.version;
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
@@ -3071,6 +3071,41 @@ export function parseScriptFile(
             sourceSequence: methodCallSequence,
           }),
         });
+      }
+
+      // A published esbuild bundle can declare and invoke Service.method()
+      // inside ONE generated JavaScript file, with no remaining ESM import.
+      // Join only immutable, unambiguous local static class declarations.
+      // This is a source call edge, NOT a claim of a live Service instance or
+      // successful Minecraft callback execution.
+      const receiver = node.expression.expression;
+      if (ts.isIdentifier(receiver) && !isShadowed(receiver)) {
+        const target = classWiring.localStaticCallables.get(
+          JSON.stringify([receiver.text, methodName]),
+        );
+        if (target !== undefined) {
+          const lexicalGuards = lexicalBranchGuards(node, file, source);
+          const precedenceGuards = precedingEarlyExitGuards(node, file, source);
+          const bindings = inferExactCallArgumentParameterBindings(
+            node, file, source, target, file, source,
+          );
+          const sourceSequence = sourceSequentialSite(node, file, source);
+          localFunctionCalls.push({
+            callerRegion: localExecutionRegionId(node, file),
+            targetRegion: target.region,
+            targetName: receiver.text + "." + methodName,
+            ...(bindings.length ? { argumentParameterBindings: bindings } : {}),
+            argumentExpressions: node.arguments.map(arg => arg.getText(file)),
+            controlFlow: lexicalGuards.length || precedenceGuards.length
+              ? "conditional" : localCallControlFlow(node),
+            lexicalGuards,
+            precedenceGuards,
+            source: lineSource(file, node, source),
+            ...(sourceSequence === undefined ? {} : {
+              sourceSequence,
+            }),
+          });
+        }
       }
 
       if (methodName === "runCommand" || methodName === "runCommandAsync") {

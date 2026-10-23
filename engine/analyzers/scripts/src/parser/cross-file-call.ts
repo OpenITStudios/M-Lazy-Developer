@@ -1114,7 +1114,12 @@ export function extractScriptClassWiring(
   readonly constructorFieldBindings: readonly ScriptConstructorFieldBinding[];
   readonly thisInstanceDispatches: readonly ScriptThisInstanceDispatch[];
   readonly sourceClassMethods: readonly ScriptSourceClassMethod[];
+  /** Immutable source-unique local static targets, keyed by [class, method].
+   * Derived in the existing class inventory pass, never a second graph.
+   */
+  readonly localStaticCallables: ReadonlyMap<string, CallableSource>;
 } {
+  const localStaticCallables = new Map<string, CallableSource>();
   const constructors: ScriptImportedThisConstruction[] = [];
   const fields: ScriptConstructorFieldBinding[] = [];
   const forwards: ScriptThisInstanceDispatch[] = [];
@@ -1136,8 +1141,8 @@ export function extractScriptClassWiring(
       }]);
     }
   }
-  for (const { name: className, declaration: cls, exported,
-               overwrittenMembers } of topLevelSourceClasses(file)) {
+  for (const { name: className, declaration: cls, exported, bindingStable,
+               overwrittenMembers, unknownMemberWrite } of topLevelSourceClasses(file)) {
     const methodList = cls.members.filter(
       (member): member is ts.MethodDeclaration =>
         ts.isMethodDeclaration(member) &&
@@ -1151,6 +1156,23 @@ export function extractScriptClassWiring(
     for (const method of methodList) {
       const methodName = (method.name as ts.Identifier | ts.StringLiteral).text;
       if (methodCount.get(methodName) !== 1) continue;
+      // Bundled esbuild chunks declare same-file helpers as
+      // "var Service = class { static read() {} }". Reuse the uniquely bound
+      // class inventory rather than treating Service.read() as an opaque API.
+      // A changed class binding or replaced method must not create an edge.
+      if (bindingStable && !unknownMemberWrite &&
+          !overwrittenMembers.has(methodName) &&
+          hasModifier(method, ts.SyntaxKind.StaticKeyword) &&
+          cls.members.filter(member =>
+            ts.isMethodDeclaration(member) &&
+            (ts.isIdentifier(member.name) || ts.isStringLiteralLike(member.name)) &&
+            member.name.text === methodName).length === 1) {
+        localStaticCallables.set(JSON.stringify([className, methodName]), {
+          region: sourceMethodRegion(method, file),
+          parameters: method.parameters,
+          body: method.body!,
+        });
+      }
       const params = method.parameters.map(p =>
         ts.isIdentifier(p.name) ? p.name.text : null);
       const stable = params.flatMap((name,index) => {
@@ -1358,6 +1380,7 @@ export function extractScriptClassWiring(
     constructorFieldBindings:fields,
     thisInstanceDispatches:forwards,
     sourceClassMethods:methods,
+    localStaticCallables,
   };
 }
 

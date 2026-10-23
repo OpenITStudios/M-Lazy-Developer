@@ -204,3 +204,80 @@ describe("source-only local helper argument/formal forwarding", () => {
       item.targetName === "cleanup")).toHaveLength(0);
   });
 });
+
+
+describe("source-unique bundled static class call recovery", () => {
+  const source = { artifactId: "selected-world", relativePath: "behavior_packs/BP/scripts/chunks/game.js" };
+
+  it("joins packaged Service.method() to its exact method region across guarded delayed gameplay", () => {
+    const parsed = parseScriptFile("game", [
+      "var CompositeSessionService = class {",
+      "  static isCurrentRun(arenaId, runId) { return true; }",
+      "  static get(arenaId) { return { status: 'active' }; }",
+      "  static save(arenaId, session) { return session; }",
+      "};",
+      "var CompositeGameRuntime = class {",
+      "  static advance(arenaId, runId) {",
+      "    system.runTimeout(() => {",
+      "      if (!CompositeSessionService.isCurrentRun(arenaId, runId)) return;",
+      "      const session = CompositeSessionService.get(arenaId);",
+      "      if (session.status === 'active') CompositeSessionService.save(arenaId, session);",
+      "    }, 5);",
+      "  }",
+      "};",
+    ].join("\n"), source);
+    const edges = parsed.localFunctionCalls.filter(call =>
+      call.targetName.startsWith("CompositeSessionService."));
+    expect(edges.map(edge => edge.targetName).sort()).toEqual([
+      "CompositeSessionService.get",
+      "CompositeSessionService.isCurrentRun",
+      "CompositeSessionService.save",
+    ]);
+    expect(edges.every(edge =>
+      edge.callerRegion.startsWith("callback@") &&
+      edge.targetRegion.startsWith("function:CompositeSessionService.") &&
+      edge.targetRegion.includes("@") &&
+      edge.source.relativePath === source.relativePath)).toBe(true);
+    expect(edges.find(edge => edge.targetName === "CompositeSessionService.get")
+      ?.controlFlow).toBe("conditional");
+    expect(edges.find(edge => edge.targetName === "CompositeSessionService.save")
+      ?.lexicalGuards.length).toBeGreaterThan(0);
+  });
+
+  it("retains exact argument/formal forwarding through a stable local static method", () => {
+    const parsed = parseScriptFile("state", [
+      "class SessionStore { static save(arenaId, value) { return value; } }",
+      "function commit(arena, state) { SessionStore.save(arena, state); }",
+    ].join("\n"), source);
+    const edge = parsed.localFunctionCalls.find(x =>
+      x.targetName === "SessionStore.save");
+    expect(edge?.argumentParameterBindings?.map(x => [
+      x.argumentName, x.parameterName,
+    ])).toEqual([["arena", "arenaId"], ["state", "value"]]);
+  });
+
+  it("rejects mutable class bindings, overwritten methods, duplicate methods, shadows, and instance methods", () => {
+    const parsed = parseScriptFile("unsafe", [
+      "var Rebound = class { static get() {} };",
+      "Rebound = class { static get() {} };",
+      "Rebound.get();",
+      "var Overwritten = class { static get() {} };",
+      "Overwritten.get = () => 2;",
+      "Overwritten.get();",
+      "var Duplicated = class { static get() {} static get() {} };",
+      "Duplicated.get();",
+      "var Store = class { static get() {} };",
+      "function read(Store) { Store.get(); }",
+      "Store.get();",
+      "class InstanceOnly { get() {} }",
+      "InstanceOnly.get();",
+    ].join("\n"), source);
+    expect(parsed.localFunctionCalls.filter(x =>
+      /^(Rebound|Overwritten|Duplicated|InstanceOnly)\.get$/.test(x.targetName)))
+      .toHaveLength(0);
+    const safe = parsed.localFunctionCalls.filter(x =>
+      x.targetName === "Store.get");
+    expect(safe).toHaveLength(1);
+    expect(safe[0]?.callerRegion).toBe("module");
+  });
+});
