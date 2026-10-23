@@ -3,6 +3,10 @@ import {
   projectMapAuditOutputV2,
   formatSelectedMapAuditBrief,
 } from "../src/map-audit-output-v2.js";
+import {
+  projectSelectedMapAuditModelHandoff,
+} from "../src/reporting/map-audit-model-handoff.js";
+import type { SelectedMapAuditRun } from "../src/map-audit-pipeline.js";
 
 describe("Map Audit Output V2 projection", () => {
   it("preserves PROVEN and NEED_VALIDATION from the same audit finding lanes", () => {
@@ -1198,6 +1202,103 @@ describe("Map Audit Output V2 projection", () => {
     expect(brief).toContain("Do not infer a form bug from an unguarded helper alone.");
     expect(brief).toContain("External probe (NOT selected map proof)");
     expect(brief).not.toContain("UPSTREAM_REPORTED_FAIL is a proven map bug");
+  });
+
+  it("exposes unnamed source effect chains to the operator without inventing a game rule", () => {
+    const artifactId = "artifact:unknown";
+    const entry = "source-entry:unknown";
+    const unknownId = "unknown:uninterpreted-execution:" + entry;
+    const source = {
+      artifactId, relativePath: "behavior_packs/demo/scripts/bundle.js",
+      range: { lineStart: 152, lineEnd: 152,
+        columnStart: 8, columnEnd: 34 },
+    };
+    const intent: any = {
+      schemaVersion: 1, artifactId, id: "intent:unknown",
+      evidence: [{
+        id: "state:clear", origin: "source-code",
+        scope: "selected-artifact", locator: source.relativePath + ":152:8",
+        summary: "Unknown authored state clear.",
+      }],
+      nodes: [], edges: [], invariants: [],
+      unknowns: [{
+        id: unknownId, sourceEntryRegionId: entry,
+        blockedSubjectIds: [], evidenceIds: ["state:clear"],
+        question: "What source trigger and player-facing objective owns this clear?",
+      }],
+    };
+    const structure: any = {
+      features: [], mechanicReconstructions: [],
+      gameplayJourneyCandidates: [], sourceFlowCandidates: [{
+        id: "source-flow:unknown", entryRegionId: entry,
+        sourceTraceStatus: "SOURCE_ROOT_TRACE",
+        sourceSteps: [{
+          id: "state:clear", kind: "state", operation: "clear",
+          executionRegionId: entry, source,
+        }],
+        sourceHandoffs: [], omittedSourceHandoffs: 0,
+      }],
+      uninterpretedSourceFlows: [{
+        unknownId, entryRegionId: entry,
+        materialEvidenceIds: ["state:clear"],
+        effectPaths: [{
+          effectId: "state:clear", effectKind: "state-mutation",
+          worldEffectKind: null, targetLabel: "gameState",
+          evidenceStatus: "CANDIDATE_INGRESS",
+          effectGuards: [{kind:"lexical",branch:"true",
+            expression:"roundEnded",sourcePath:source.relativePath,
+            lineStart:152,columnStart:3}],
+          guardStateReadIds: ["state:guard-read"],
+          candidateOutcomeIds: ["code-return:done"],
+          matchingIngress: [], sourceLocalStateValueHandoffs: [],
+        }],
+      }],
+    };
+    const report: any = {
+      gameDesign: {
+        objective: "UNKNOWN", objectiveGrounding: "unresolved",
+        winCondition: "UNKNOWN", winConditionGrounding: "unresolved",
+        loseCondition: "UNKNOWN", loseConditionGrounding: "unresolved",
+      },
+      gameplayStructure: structure,
+      gameplayFlowBasis: "AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY",
+      gameplayClosure: {surfaceInventory:[],status:"PARTIAL",stateModelComplete:false},
+      multiArena: {isolationRules:[]},
+      stateTransitions:[],bugs:[],designMismatches:[],
+      unresolved: {total:1},mapVersion:"1.0",
+      evidenceScope: {selectedArtifact:"custom.mcworld"},
+      control: {status:"BLOCKED",currentStage:"UNDERSTAND",
+        allowedNextAction:"RESOLVE_BLOCKING_STAGE"},
+    };
+    const audit = {
+      identity: {artifactId,artifactFingerprint:"a".repeat(64)},
+      auditRevision: "revision:1",
+      currentStage: "UNDERSTAND",
+      allowedNextAction: "RESOLVE_BLOCKING_STAGE",
+      inspection: {
+        gameplayIntent: {model:intent},
+        hiddenGameplayDefects: {scenarioAudit:{graph:{causalLinks:[]}}},
+      },
+      mapAuditReport: report, modelTaskPackets: [],
+      candidateGroups:[], validationTests:[],
+    } as unknown as SelectedMapAuditRun;
+    const handoff = projectSelectedMapAuditModelHandoff(audit);
+    const missing = handoff.gameUnderstanding.uninterpretedSourceFlows[0];
+    expect(missing?.sourceTraceStatus).toBe("SOURCE_ROOT_TRACE");
+    expect(missing?.sourceLocators).toEqual([
+      source.relativePath + ":152:8",
+    ]);
+    expect(missing?.effects[0]?.guards[0]?.expression).toBe("roundEnded");
+    expect(missing?.effects[0]?.candidateOutcomeIds).toContain("code-return:done");
+    expect(handoff.gameUnderstanding.omittedUninterpretedSourceFlows).toBe(0);
+    const brief = formatSelectedMapAuditBrief({
+      report, intent, modelTaskPackets: [],
+    });
+    expect(brief).toContain("Unclassified material source entries");
+    expect(brief).toContain("behavior_packs/demo/scripts/bundle.js:152:8");
+    expect(brief).toContain("NOT GAMEPLAY OR BUG PROOF");
+    expect(brief).toContain("No published finding");
+    expect(brief).not.toContain("PROVEN] BUG");
   });
 
 });

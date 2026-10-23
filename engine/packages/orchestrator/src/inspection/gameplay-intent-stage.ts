@@ -1101,7 +1101,9 @@ export function buildGameplayIntentModel(
     const observedExecution = semanticIrExecutionTraces(input.semanticIr);
     const byRegion = new Map<string, string[]>();
     for (const operation of input.semanticIr.state.operations) {
-      if (operation.operation !== "write") continue;
+      // A clear/delete is just as material as a write for an unknown
+      // mechanic. Reads alone never establish an authored state change.
+      if (!["write", "clear", "delete"].includes(operation.operation)) continue;
       const ids = byRegion.get(operation.executionRegionId) ?? [];
       ids.push(operation.id);
       byRegion.set(operation.executionRegionId, ids);
@@ -1127,7 +1129,8 @@ export function buildGameplayIntentModel(
         ids: [
           ...trace.stateOperationIds.filter(id =>
             input.semanticIr!.state.operations.some(operation =>
-              operation.id === id && operation.operation === "write")),
+              operation.id === id &&
+              ["write", "clear", "delete"].includes(operation.operation))),
           ...trace.resourceActionIds,
           ...trace.returnOutcomeIds,
           ...(trace.worldEffectIds ?? []),
@@ -1155,7 +1158,7 @@ export function buildGameplayIntentModel(
         const source = material.get(id)!;
         evidence.set(id, {
           id, origin: "source-code",
-          locator: source.relativePath,
+          locator: sourceLocator(source),
           scope: "selected-artifact",
           summary: "Authored state, resource, return or Minecraft world-effect attempt has no interpreted gameplay owner; its player-facing meaning remains unknown.",
         });

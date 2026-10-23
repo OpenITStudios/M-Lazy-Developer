@@ -29,6 +29,45 @@ export interface SelectedMapAuditModelHandoff {
         NonNullable<MapAuditOutputV2["gameplayStructure"]>["mechanicReconstructions"][number]["sourceActivationCandidates"];
     }[];
     readonly omittedFeatures: number;
+    /**
+     * Unnamed source behavior with material effects, from the EXISTING
+     * canonical Intent unknowns and Scenario/IR navigation. Never a new
+     * mechanic, game rule, executable player journey or defect verdict.
+     * Limited witnesses are previews; omission is not absence of evidence.
+     */
+    readonly uninterpretedSourceFlows: readonly {
+      readonly unknownId: string;
+      readonly question: string;
+      readonly entryRegionId: string;
+      readonly sourceTraceStatus:
+        "SOURCE_ROOT_TRACE" | "DISCONNECTED_SOURCE_REGION" | "UNKNOWN";
+      readonly materialEvidenceIds: readonly string[];
+      readonly omittedMaterialEvidenceIds: number;
+      readonly sourceLocators: readonly string[];
+      readonly omittedSourceLocators: number;
+      readonly effects: readonly {
+        readonly effectId: string;
+        readonly effectKind: NonNullable<MapAuditOutputV2["gameplayStructure"]>[
+          "uninterpretedSourceFlows"][number]["effectPaths"][number]["effectKind"];
+        readonly targetLabel: string | null;
+        readonly evidenceStatus: NonNullable<MapAuditOutputV2["gameplayStructure"]>[
+          "uninterpretedSourceFlows"][number]["effectPaths"][number]["evidenceStatus"];
+        readonly guards: NonNullable<MapAuditOutputV2["gameplayStructure"]>[
+          "uninterpretedSourceFlows"][number]["effectPaths"][number]["effectGuards"];
+        readonly omittedGuards: number;
+        readonly guardStateReadIds: readonly string[];
+        readonly candidateOutcomeIds: readonly string[];
+        readonly ingressEdgeIds: readonly string[];
+        readonly candidateCallerStateWriteIds: readonly string[];
+        readonly sourceLocalStateValueHandoffs: NonNullable<MapAuditOutputV2[
+          "gameplayStructure"]>["uninterpretedSourceFlows"][number][
+          "effectPaths"][number]["sourceLocalStateValueHandoffs"];
+        readonly omittedValueHandoffs: number;
+        readonly temporalBoundaryCount: number;
+      }[];
+      readonly omittedEffects: number;
+    }[];
+    readonly omittedUninterpretedSourceFlows: number;
     /** Literal source containment from the SAME canonical Gameplay Intent
      * model. Resources here are content, not activated phases or gameplay
      * scenarios; absence from a bounded preview never proves absence.
@@ -237,6 +276,90 @@ export function projectSelectedMapAuditModelHandoff(
   const authoredContent = projectSelectedAuthoredContent(
     audit.inspection.gameplayIntent.model,
   );
+  const unclassified = audit.mapAuditReport.gameplayStructure
+    ?.uninterpretedSourceFlows ?? [];
+  const allFlows = audit.mapAuditReport.gameplayStructure?.sourceFlowCandidates ?? [];
+  const flowByEntry = new Map<string, typeof allFlows[number]>();
+  for (const flow of allFlows) {
+    const previous = flowByEntry.get(flow.entryRegionId);
+    if (!previous ||
+        (previous.sourceTraceStatus !== "SOURCE_ROOT_TRACE" &&
+          flow.sourceTraceStatus === "SOURCE_ROOT_TRACE")) {
+      flowByEntry.set(flow.entryRegionId, flow);
+    }
+  }
+  const unknownById = new Map(audit.inspection.gameplayIntent.model.unknowns
+    .map(item => [item.id, item] as const));
+  const evidenceById = new Map(audit.inspection.gameplayIntent.model.evidence
+    .map(item => [item.id, item] as const));
+  const selectedUnclassified = [...unclassified].sort((a, b) => {
+    const ranked = (item: typeof unclassified[number]) =>
+      flowByEntry.get(item.entryRegionId)?.sourceTraceStatus === "SOURCE_ROOT_TRACE"
+        ? 0 : 1;
+    return ranked(a) - ranked(b) ||
+      Number(b.effectPaths.length > 0) - Number(a.effectPaths.length > 0) ||
+      b.materialEvidenceIds.length - a.materialEvidenceIds.length ||
+      a.unknownId.localeCompare(b.unknownId);
+  });
+  const uninterpretedSourceFlows: SelectedMapAuditModelHandoff[
+    "gameUnderstanding"]["uninterpretedSourceFlows"] =
+    selectedUnclassified.slice(0, 8).map(item => {
+      const flow = flowByEntry.get(item.entryRegionId);
+      const ids = new Set(item.materialEvidenceIds);
+      const sources = [...new Set((flow?.sourceSteps ?? [])
+        .filter(step => ids.has(step.id) &&
+          step.source.artifactId === audit.identity.artifactId)
+        .map(step => step.source.relativePath +
+          (step.source.range?.lineStart === undefined ? "" :
+            ":" + step.source.range.lineStart + ":" +
+              (step.source.range.columnStart ?? 1))))];
+      // Preserve a coarse current-artifact locator when the IR lacks spans.
+      if (sources.length === 0) {
+        for (const id of item.materialEvidenceIds) {
+          const evidence = evidenceById.get(id);
+          if (evidence?.scope === "selected-artifact" && evidence.locator) {
+            sources.push(evidence.locator);
+          }
+        }
+      }
+      const sourceLocators = [...new Set(sources)].sort();
+      return {
+        unknownId: item.unknownId,
+        question: unknownById.get(item.unknownId)?.question ??
+          "Determine the selected-source trigger, state, effect and player-facing purpose without inventing a game rule.",
+        entryRegionId: item.entryRegionId,
+        sourceTraceStatus: flow?.sourceTraceStatus ?? "UNKNOWN",
+        materialEvidenceIds: item.materialEvidenceIds.slice(0, 16),
+        omittedMaterialEvidenceIds: Math.max(0, item.materialEvidenceIds.length - 16),
+        sourceLocators: sourceLocators.slice(0, 4),
+        omittedSourceLocators: Math.max(0, sourceLocators.length - 4),
+        effects: item.effectPaths.slice(0, 4).map(effect => {
+          const edgeIds = [...new Set(effect.matchingIngress.flatMap(path =>
+            path.executionEdgeIds))].sort();
+          const callerWrites = [...new Set(effect.matchingIngress.flatMap(path =>
+            path.candidateCallerStateWriteIds))].sort();
+          return {
+            effectId: effect.effectId,
+            effectKind: effect.effectKind,
+            targetLabel: effect.targetLabel,
+            evidenceStatus: effect.evidenceStatus,
+            guards: effect.effectGuards.slice(0, 4),
+            omittedGuards: Math.max(0, effect.effectGuards.length - 4),
+            guardStateReadIds: effect.guardStateReadIds.slice(0, 6),
+            candidateOutcomeIds: effect.candidateOutcomeIds.slice(0, 6),
+            ingressEdgeIds: edgeIds.slice(0, 6),
+            candidateCallerStateWriteIds: callerWrites.slice(0, 6),
+            sourceLocalStateValueHandoffs:
+              effect.sourceLocalStateValueHandoffs.slice(0, 3),
+            omittedValueHandoffs: Math.max(0,
+              effect.sourceLocalStateValueHandoffs.length - 3),
+            temporalBoundaryCount: effect.matchingIngress.reduce(
+              (n, path) => n + path.temporalBoundaryEvidence.length, 0),
+          };
+        }),
+        omittedEffects: Math.max(0, item.effectPaths.length - 4),
+      };
+    });
   const activationByFeature = new Map(
     (audit.mapAuditReport.gameplayStructure?.mechanicReconstructions ?? [])
       .map(item => [item.featureId, item.sourceActivationCandidates] as const),
@@ -298,6 +421,9 @@ export function projectSelectedMapAuditModelHandoff(
       })),
       omittedFeatures: Math.max(0, features.length - 16),
       authoredContent,
+      uninterpretedSourceFlows,
+      omittedUninterpretedSourceFlows:
+        Math.max(0, selectedUnclassified.length - 8),
       sourceStateIdentityQuestions: sourceStateIdentityQuestions.slice(0, 8)
         .map(item => ({
           id: item.id,

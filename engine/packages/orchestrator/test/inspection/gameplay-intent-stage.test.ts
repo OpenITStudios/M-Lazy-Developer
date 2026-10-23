@@ -115,6 +115,56 @@ function parsed(): ParsedScriptFile {
 }
 
 describe("gameplay intent stage", () => {
+  it("keeps unnamed source clear/delete effects as located unknowns, not invented mechanics", () => {
+    const selected = "artifact:unknown";
+    const source = {
+      artifactId: selected,
+      relativePath: "behavior_packs/custom/scripts/minified.js",
+      range: { lineStart: 41, lineEnd: 41,
+        columnStart: 7, columnEnd: 36 },
+    };
+    const semanticIr: any = {
+      schemaVersion: 1,
+      execution: {
+        regions: [{
+          id: "region:unknown", ownerId: "script:custom",
+          label: "unknown", kind: "script-module", source,
+        }], edges: [], outcomes: [], worldEffects: [],
+      },
+      state: {
+        surfaces: [{ id: "state:custom",
+          ref: { kind: "dynamic-property", key: "custom" } }],
+        operations: ["read", "clear", "delete"].map((operation, index) => ({
+          id: "op:" + operation, executionRegionId: "region:unknown",
+          surfaceId: "state:custom", operation,
+          source: { ...source, range: {
+            ...source.range,
+            columnStart: source.range.columnStart + index,
+            columnEnd: source.range.columnEnd + index,
+          } },
+        })),
+        resourceActions: [], authorityBindings: [],
+      },
+      temporal: { relations: [] },
+    };
+    const model = buildGameplayIntentModel({
+      id: "intent:unknown", artifactId: selected,
+      parsedScripts: [], semanticIr,
+    });
+    const unknowns = model.unknowns.filter(item =>
+      item.id.startsWith("unknown:uninterpreted-execution:"));
+    expect(unknowns).not.toHaveLength(0);
+    const material = new Set(unknowns.flatMap(item => item.evidenceIds ?? []));
+    expect(material.has("op:clear")).toBe(true);
+    expect(material.has("op:delete")).toBe(true);
+    expect(material.has("op:read")).toBe(false);
+    expect(model.evidence.find(item => item.id === "op:clear")?.locator)
+      .toBe(source.relativePath + ":41:8");
+    expect(model.nodes.some(node => node.kind === "objective" ||
+      node.kind === "outcome")).toBe(false);
+  });
+
+
 
 
   it("retains both exact return sites for one inferred producer relation", () => {

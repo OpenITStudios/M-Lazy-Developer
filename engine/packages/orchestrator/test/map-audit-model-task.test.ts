@@ -213,6 +213,57 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
 });
 
 
+describe("unfamiliar source gameplay evidence handoff", () => {
+  it("attaches only exact selected-world operations to an existing UNDERSTAND unknown obligation", () => {
+    const intent: GameplayIntentModel = {
+      schemaVersion: 1, id: "unknown-operator", artifactId: "selected",
+      evidence: [{
+        id: "op:clear", origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/minified.js:152:8", summary: "Unknown state clear.",
+      }, {
+        id: "op:other", origin: "source-code", scope: "external-reference",
+        locator: "old/scripts/minified.js:152", summary: "Foreign version.",
+      }],
+      nodes: [], edges: [], invariants: [],
+      unknowns: [{
+        id: "unknown:uninterpreted-execution:entry",
+        question: "Which source state and player outcome does this affect?",
+        blockedSubjectIds: [], sourceEntryRegionId: "entry",
+        evidenceIds: ["op:clear", "op:other"],
+      }],
+    };
+    const tasks = deriveAuditModelTaskPackets({
+      admission: {
+        policy: "selected-map-audit-ordered-admission",
+        status: "BLOCKED", firstBlockingStage: "UNDERSTAND", issues: [],
+      } as any,
+      procedure: { checkpoints: [] } as any,
+      graph: { causalLinks: [] } as any,
+      defectResolution: {} as any,
+      intent, auditRevision: "revision:1", world: {} as any,
+      auditObligations: [{
+        id: "uninterpreted-gameplay-intent", source: "gameplay-closure",
+        stage: "UNDERSTAND", title: "Investigate unnamed source behavior",
+        reason: "Unknown mechanic", missingProof: "Exact source trigger and effect.",
+        validationTest: "Trace selected source.", validationGroupKey: "source:unknown",
+        subjectIds: ["unknown:uninterpreted-execution:entry"],
+        componentIds: [], evidenceIds: [],
+      }],
+    });
+    const task = tasks.find(item =>
+      item.id === "task:audit-obligation:uninterpreted-gameplay-intent");
+    expect(task?.kind).toBe("AUDIT_OBLIGATION");
+    expect(task?.evidenceIds).toEqual(["op:clear"]);
+    expect(task?.evidenceContext).toContainEqual({
+      id: "op:clear", kind: "selected-artifact-evidence",
+      origin: "source-code", locator: "scripts/minified.js:152:8",
+      summary: "Unknown state clear.",
+    });
+    expect(task?.evidenceIds).not.toContain("op:other");
+    expect(task?.allowedOutputs).not.toContain("confirmed gameplay bug");
+  });
+});
+
 describe("PROVE model evidence handoff", () => {
   it("preserves exact analyzer witnesses while rejecting a neighboring source and duplicate identity", () => {
     const artifactId = "artifact:selected";

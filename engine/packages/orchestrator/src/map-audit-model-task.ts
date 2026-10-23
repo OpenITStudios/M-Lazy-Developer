@@ -676,12 +676,26 @@ function obligationPackets(
   auditRevision: string,
   intent: GameplayIntentModel,
 ): readonly AuditModelTaskPacket[] {
+  const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
+  const evidenceById = new Map(intent.evidence.map(item => [item.id, item]));
   return obligations.map((obligation) => {
-    const evidence =
-      evidenceContext(
-        obligation.evidenceIds,
-        intent,
-      );
+    // UNDERSTAND obligations may reference exact unknown IDs rather than
+    // ordinary model nodes. Preserve those identities while supplying their
+    // actual selected-source operations to the same canonical model task.
+    // The linked source is INVESTIGATION CONTEXT, never a design rule,
+    // checkpoint closure, or authorization to confirm a gameplay defect.
+    const unknownEvidenceIds = obligation.stage === "UNDERSTAND"
+      ? unique(obligation.subjectIds.flatMap(id =>
+          unknownById.get(id)?.evidenceIds ?? []))
+        .filter(id => isCurrentArtifactSourceEvidence(evidenceById.get(id)))
+      : [];
+    const selectedUnknownEvidenceIds = unknownEvidenceIds.slice(0, 24);
+    const omittedUnknownEvidenceCount =
+      unknownEvidenceIds.length - selectedUnknownEvidenceIds.length;
+    const evidenceIds = unique([
+      ...obligation.evidenceIds, ...selectedUnknownEvidenceIds,
+    ]);
+    const evidence = evidenceContext(evidenceIds, intent);
 
     return {
       schemaVersion: 1 as const,
@@ -693,11 +707,14 @@ function obligationPackets(
       kind: "AUDIT_OBLIGATION" as const,
       stage: obligation.stage,
       goal: obligation.title,
-      decisionNeeded: obligation.reason,
+      decisionNeeded: obligation.reason +
+        (omittedUnknownEvidenceCount === 0 ? "" :
+          " The bounded source view omits " + omittedUnknownEvidenceCount +
+          " additional selected-artifact operations; the canonical Intent unknowns retain them."),
       subjectIds: [...obligation.subjectIds],
       componentIds: [...obligation.componentIds],
       requiredKnowledgeIds: [],
-      evidenceIds: [...obligation.evidenceIds],
+      evidenceIds,
       evidenceContext: evidence.context,
       unresolvedEvidenceIds:
         evidence.unresolved,

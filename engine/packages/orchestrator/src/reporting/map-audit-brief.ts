@@ -326,6 +326,73 @@ export function formatSelectedMapAuditBrief(input: {
         "not evidence of a live cross-arena mutation.",
     );
   }
+  // A map with novel mechanics may have no recognized feature label at all.
+  // The canonical Intent unknown + IR/source-effect projection already knows
+  // the material source sites. Surface a BOUNDED, source-first decision
+  // without inventing a mechanic, a game purpose or a defect verdict.
+  const unidentified = report.gameplayStructure?.uninterpretedSourceFlows ?? [];
+  const sourceByEntry = new Map((report.gameplayStructure?.sourceFlowCandidates ?? [])
+    .map(flow => [flow.entryRegionId, flow] as const));
+  const rankedUnidentified = [...unidentified].sort((a, b) => {
+    const isRoot = (entry: string) =>
+      sourceByEntry.get(entry)?.sourceTraceStatus === "SOURCE_ROOT_TRACE" ? 0 : 1;
+    return isRoot(a.entryRegionId) - isRoot(b.entryRegionId) ||
+      b.effectPaths.length - a.effectPaths.length ||
+      b.materialEvidenceIds.length - a.materialEvidenceIds.length ||
+      a.unknownId.localeCompare(b.unknownId);
+  });
+  if (rankedUnidentified.length > 0) {
+    out.push(
+      "**Unclassified material source entries (NOT GAMEPLAY OR BUG PROOF):** " +
+        rankedUnidentified.length + " unresolved source path(s).",
+    );
+    for (const unknown of rankedUnidentified.slice(0, 4)) {
+      const flow = sourceByEntry.get(unknown.entryRegionId);
+      const ids = new Set(unknown.materialEvidenceIds);
+      const located = [...new Set((flow?.sourceSteps ?? [])
+        .filter(step => ids.has(step.id))
+        .map(step => step.source.relativePath +
+          (step.source.range?.lineStart === undefined ? "" :
+            ":" + step.source.range.lineStart + ":" +
+              (step.source.range.columnStart ?? 1))))];
+      const evidenceLocators = [...new Set(unknown.materialEvidenceIds
+        .map(id => evidenceById.get(id))
+        .filter(item => item?.scope === "selected-artifact")
+        .map(item => item!.locator))];
+      const locators = located.length > 0 ? located : evidenceLocators;
+      const effect = unknown.effectPaths[0];
+      out.push(
+        "- Source entry " + concise(unknown.entryRegionId) +
+          " [" + (flow?.sourceTraceStatus ?? "UNKNOWN_ROOT") +
+          "; " + unknown.materialEvidenceIds.length +
+          " material operation(s); " + unknown.effectPaths.length +
+          " traced effect(s)].",
+        "  Selected source: " + (locators.length === 0 ? "UNRESOLVED" :
+          locators.slice(0, 3).map(concise).join("; ")) + ".",
+        ...(effect === undefined ? [
+          "  Effect chain: unresolved; source state/resource/return sites remain candidates.",
+        ] : [
+          "  Example " + effect.effectKind + " effect: " +
+            concise(effect.targetLabel ?? effect.effectId) +
+            " [" + effect.evidenceStatus + "]; direct guard reads " +
+            effect.guardStateReadIds.length + ", lexical guards " +
+            effect.effectGuards.length + ", candidate code returns " +
+            effect.candidateOutcomeIds.length + ", candidate source ingresses " +
+            effect.matchingIngress.length + ".",
+        ]),
+      );
+    }
+    if (rankedUnidentified.length > 4) out.push(
+      "Additional unclassified source paths omitted from this brief: " +
+        (rankedUnidentified.length - 4) + ".",
+    );
+    out.push(
+      "**Next understanding check:** Trace each selected-source entry, guard, " +
+        "state mutation, effect and return; establish its exact player/mode/" +
+        "session scope and independent intended outcome before naming a mechanic. " +
+        "A source call or code return does not prove game execution or victory.",
+    );
+  }
   out.push(
     "",
     "## Detailed Source Navigation (NOT A PLAYER PLAYTHROUGH)",
