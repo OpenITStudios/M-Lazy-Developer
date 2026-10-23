@@ -456,6 +456,236 @@ export function semanticIrExecutionTraces(ir: SemanticIr): {
 }
 
 
+
+/** A directed source-only call chain from one exact authored write site.
+ * Its terminal evidence is located IN the last callee region, not proof that
+ * the write caused that call, that guards held, or that the callee ran.
+ */
+export interface SourceWriteContinuationPath {
+  readonly regionIds: readonly string[];
+  readonly executionEdgeIds: readonly string[];
+  readonly temporalBoundaryEdgeIds: readonly string[];
+  readonly directTargetEvidenceIds: readonly string[];
+  readonly omittedDirectTargetEvidenceCount: number;
+}
+
+export interface SourceWriteContinuationResult {
+  readonly paths: readonly SourceWriteContinuationPath[];
+  readonly omittedPaths: number;
+  readonly searchTruncated: boolean;
+  /** Distinct authored event edges not eligible from a source-rooted
+   * registration/emit trace; NEVER treated as delivered callbacks.
+   */
+  readonly blockedUnrootedEventEdges: number;
+}
+
+/**
+ * Follow existing resolved Semantic IR edges AFTER an exact write site,
+ * without searching by member/function names or constructing another graph.
+ * Eligible event edges come from the already-computed source-root traces:
+ * source similarity or an unregistered custom bus cannot open a callback.
+ *
+ * Every hop remains navigation only. In particular, a later lexical call
+ * can belong to another branch, and a direct callee effect is not a runtime
+ * reaching definition, gameplay transition or actual result.
+ */
+export function semanticIrSourceWriteContinuations(
+  ir: SemanticIr,
+  writeOperationIds: readonly string[],
+  eligibleEventEdgeIds: ReadonlySet<string>,
+): ReadonlyMap<string, SourceWriteContinuationResult> {
+  const maxDepth = 6;
+  const maxStates = 96;
+  const maxPaths = 5;
+  type Edge = SemanticIr["execution"]["edges"][number];
+  type Site = {
+    readonly id: string;
+    readonly category: string;
+    readonly source: Edge["source"];
+  };
+  const regions = new Map(ir.execution.regions.map(item => [item.id, item]));
+  const writes = new Map(ir.state.operations.map(item => [item.id, item]));
+  const edgesById = new Map(ir.execution.edges.map(item => [item.id, item]));
+  const outgoing = new Map<string, Edge[]>();
+  for (const edge of ir.execution.edges) {
+    if (edge.resolution !== "resolved" || !edge.to ||
+        edge.kind === "static-module-dependency" ||
+        !regions.has(edge.from) || !regions.has(edge.to)) continue;
+    const items = outgoing.get(edge.from) ?? [];
+    items.push(edge);
+    outgoing.set(edge.from, items);
+  }
+  for (const items of outgoing.values()) {
+    items.sort((a, b) =>
+      a.source.relativePath.localeCompare(b.source.relativePath) ||
+      (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+      (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
+      a.id.localeCompare(b.id));
+  }
+  const sitesByRegion = new Map<string, Site[]>();
+  const add = (regionId: string, site: Site): void => {
+    const items = sitesByRegion.get(regionId) ?? [];
+    items.push(site);
+    sitesByRegion.set(regionId, items);
+  };
+  for (const item of ir.state.operations) {
+    if (item.operation === "read") continue;
+    add(item.executionRegionId, {
+      id: item.id, category: "state:" + item.operation, source: item.source,
+    });
+  }
+  for (const item of ir.state.resourceActions ?? []) {
+    add(item.executionRegionId, {
+      id: item.id, category: "resource:" + item.action, source: item.source,
+    });
+  }
+  for (const item of ir.execution.worldEffects ?? []) {
+    add(item.executionRegionId, {
+      id: item.id, category: "world-effect", source: item.source,
+    });
+  }
+  for (const item of ir.execution.outcomes ?? []) {
+    add(item.executionRegionId, {
+      id: item.id, category: "code-return", source: item.source,
+    });
+  }
+  for (const items of sitesByRegion.values()) {
+    items.sort((a, b) =>
+      a.source.relativePath.localeCompare(b.source.relativePath) ||
+      (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+      (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
+      a.id.localeCompare(b.id));
+  }
+  const afterWrite = (write: Edge["source"], call: Edge["source"]): boolean => {
+    if (write.artifactId !== call.artifactId ||
+        write.relativePath !== call.relativePath ||
+        write.range?.lineStart === undefined ||
+        call.range?.lineStart === undefined) return false;
+    if (call.range.lineStart !== write.range.lineStart) {
+      return call.range.lineStart > write.range.lineStart;
+    }
+    return write.range.columnStart !== undefined &&
+      call.range.columnStart !== undefined &&
+      call.range.columnStart > write.range.columnStart;
+  };
+  const temporal = (edge: Edge): boolean =>
+    edge.kind === "event-dispatch" ||
+    edge.kind === "internal-event-dispatch" ||
+    edge.kind === "deferred" || edge.kind === "periodic";
+  const results = new Map<string, SourceWriteContinuationResult>();
+  for (const operationId of [...new Set(writeOperationIds)]) {
+    const write = writes.get(operationId);
+    const empty: SourceWriteContinuationResult = {
+      paths: [], omittedPaths: 0,
+      searchTruncated: false, blockedUnrootedEventEdges: 0,
+    };
+    if (!write || write.operation !== "write" ||
+        !regions.has(write.executionRegionId)) {
+      results.set(operationId, empty);
+      continue;
+    }
+    type Pending = {
+      readonly regionIds: readonly string[];
+      readonly executionEdgeIds: readonly string[];
+      readonly temporalBoundaryEdgeIds: readonly string[];
+    };
+    const queued: Pending[] = [{
+      regionIds: [write.executionRegionId],
+      executionEdgeIds: [],
+      temporalBoundaryEdgeIds: [],
+    }];
+    const paths: SourceWriteContinuationPath[] = [];
+    const blockedEvents = new Set<string>();
+    let searchTruncated = false;
+    for (let index = 0; index < queued.length; index += 1) {
+      if (index >= maxStates) {
+        searchTruncated = true;
+        break;
+      }
+      const current = queued[index]!;
+      const from = current.regionIds[current.regionIds.length - 1]!;
+      const edges = outgoing.get(from) ?? [];
+      if (current.executionEdgeIds.length >= maxDepth) {
+        if (edges.length > 0) searchTruncated = true;
+        continue;
+      }
+      for (const edge of edges) {
+        if (queued.length >= maxStates) {
+          searchTruncated = true;
+          break;
+        }
+        if (edge.source.artifactId !== write.source.artifactId ||
+            (regions.get(edge.to!)?.source?.artifactId !== undefined &&
+              regions.get(edge.to!)!.source!.artifactId !== write.source.artifactId) ||
+            (current.executionEdgeIds.length === 0 &&
+              !afterWrite(write.source, edge.source))) continue;
+        const isEvent = edge.kind === "event-dispatch" ||
+          edge.kind === "internal-event-dispatch";
+        if (isEvent && !eligibleEventEdgeIds.has(edge.id)) {
+          blockedEvents.add(edge.id);
+          continue;
+        }
+        if (current.regionIds.includes(edge.to!)) {
+          searchTruncated = true;
+          continue;
+        }
+        const next: Pending = {
+          regionIds: [...current.regionIds, edge.to!],
+          executionEdgeIds: [...current.executionEdgeIds, edge.id],
+          temporalBoundaryEdgeIds: temporal(edge)
+            ? [...current.temporalBoundaryEdgeIds, edge.id]
+            : current.temporalBoundaryEdgeIds,
+        };
+        const material = (sitesByRegion.get(edge.to!) ?? []).filter(site =>
+          site.source.artifactId === write.source.artifactId);
+        if (material.length > 0) {
+          // Preserve categories before filling the bounded direct-target
+          // evidence preview; eight state writes cannot hide a world effect.
+          const selected = new Set<string>();
+          const categories = new Set<string>();
+          for (const site of material) {
+            if (categories.has(site.category)) continue;
+            categories.add(site.category);
+            selected.add(site.id);
+            if (selected.size >= 8) break;
+          }
+          for (const site of material) {
+            if (selected.size >= 8) break;
+            selected.add(site.id);
+          }
+          paths.push({
+            ...next,
+            directTargetEvidenceIds: material.filter(site =>
+              selected.has(site.id)).map(site => site.id),
+            omittedDirectTargetEvidenceCount:
+              material.length - selected.size,
+          });
+        }
+        queued.push(next);
+      }
+    }
+    // Make an independently resolved event-bus bridge visible before
+    // abundant synchronous helper branches; no names/genre assumptions.
+    const hasInternalBus = (path: SourceWriteContinuationPath): boolean =>
+      path.temporalBoundaryEdgeIds.some(id =>
+        edgesById.get(id)?.kind === "internal-event-dispatch");
+    paths.sort((a, b) =>
+      Number(hasInternalBus(b)) - Number(hasInternalBus(a)) ||
+      Number(b.temporalBoundaryEdgeIds.length > 0) -
+        Number(a.temporalBoundaryEdgeIds.length > 0) ||
+      b.directTargetEvidenceIds.length - a.directTargetEvidenceIds.length ||
+      a.executionEdgeIds.length - b.executionEdgeIds.length ||
+      a.executionEdgeIds.join("|").localeCompare(b.executionEdgeIds.join("|")));
+    results.set(operationId, {
+      paths: paths.slice(0, maxPaths),
+      omittedPaths: Math.max(0, paths.length - maxPaths),
+      searchTruncated,
+      blockedUnrootedEventEdges: blockedEvents.size,
+    });
+  }
+  return results;
+}
+
 export function semanticIrSummary(ir: SemanticIr) {
   const byOperation = (operation: StateOperationKind) =>
     ir.state.operations.filter((item) => item.operation === operation).length;

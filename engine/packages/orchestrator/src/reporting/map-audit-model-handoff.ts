@@ -5,6 +5,7 @@
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
 import type { GameplayIntentEvidence } from "../../../gameplay-intent/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
+import { semanticIrSourceWriteContinuations } from "../../../semantic-ir/src/index.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import { MODEL_RESOLVABLE_KINDS } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
@@ -212,6 +213,34 @@ export interface SelectedMapAuditModelHandoff {
         readonly temporalBoundary: boolean;
       }[];
       readonly omittedSubsequentEdges: number;
+      /** Bounded, exact IR-edge continuations starting only at calls after
+       * THIS write site. A direct target operation may be in another branch;
+       * source-rooting/registration is NOT event delivery or state identity.
+       */
+      readonly sourceContinuationPaths: readonly {
+        readonly sourceTraceStatus: "SOURCE_ROOT_TRACE" | "ROOT_NOT_ESTABLISHED";
+        readonly regionIds: readonly string[];
+        readonly executionEdgeIds: readonly string[];
+        readonly edgeSites: readonly {
+          readonly edgeId: string;
+          readonly kind: SemanticIr["execution"]["edges"][number]["kind"];
+          readonly sourceLocator: string;
+          readonly guardExpressions: readonly string[];
+          readonly omittedGuards: number;
+          readonly temporalBoundary: boolean;
+        }[];
+        readonly temporalBoundaryEdgeIds: readonly string[];
+        readonly directTargetSites: readonly {
+          readonly evidenceId: string;
+          readonly kind: "state" | "resource" | "world-effect" | "code-return";
+          readonly sourceLocator: string;
+        }[];
+        readonly omittedDirectTargetSites: number;
+        readonly proof: "DIRECTED_SOURCE_PATH_NOT_CAUSAL_OR_RUNTIME_PROOF";
+      }[];
+      readonly omittedSourceContinuationPaths: number;
+      readonly sourceContinuationSearchTruncated: boolean;
+      readonly blockedUnrootedEventEdges: number;
       readonly proof: "SOURCE_BOOLEAN_PROPERTY_WRITE_NOT_RUNTIME_STATE";
     }[];
     readonly omittedSourceBooleanPropertyWrites: number;
@@ -884,6 +913,36 @@ export function projectSelectedMapAuditModelHandoff(
     a.source.relativePath.localeCompare(b.source.relativePath) ||
     (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
     a.id.localeCompare(b.id));
+  // Use the existing source-root graph to admit event-bus edges. A merely
+  // matching .on/.emit name never makes an event callback eligible.
+  const rootedSourceFlows = (audit.mapAuditReport.gameplayStructure
+    ?.sourceFlowCandidates ?? []).filter(flow =>
+      flow.sourceTraceStatus === "SOURCE_ROOT_TRACE");
+  const eligibleEventEdges = new Set(rootedSourceFlows.flatMap(flow =>
+    (flow.executionEdgeIds ?? []).filter(id =>
+      !(flow.unresolvedExecutionEdgeIds ?? []).includes(id))));
+  const continuations = sourceIr && booleanCandidates.length > 0
+    ? semanticIrSourceWriteContinuations(
+        sourceIr, booleanCandidates.map(item => item.id), eligibleEventEdges)
+    : undefined;
+  const continuationSiteById = new Map<string, {
+    kind: "state" | "resource" | "world-effect" | "code-return";
+    source: SemanticIr["state"]["operations"][number]["source"];
+  }>();
+  for (const site of sourceIr?.state.operations ?? []) {
+    if (site.operation !== "read") {
+      continuationSiteById.set(site.id, { kind: "state", source: site.source });
+    }
+  }
+  for (const site of sourceIr?.state.resourceActions ?? []) {
+    continuationSiteById.set(site.id, { kind: "resource", source: site.source });
+  }
+  for (const site of sourceIr?.execution.worldEffects ?? []) {
+    continuationSiteById.set(site.id, { kind: "world-effect", source: site.source });
+  }
+  for (const site of sourceIr?.execution.outcomes ?? []) {
+    continuationSiteById.set(site.id, { kind: "code-return", source: site.source });
+  }
   const sourceBooleanPropertyWrites: SelectedMapAuditModelHandoff[
     "gameUnderstanding"]["sourceBooleanPropertyWrites"] =
     rankedBooleanCandidates.slice(0, 20).map(operation => {
@@ -967,6 +1026,51 @@ export function projectSelectedMapAuditModelHandoff(
             edge.kind === "deferred" || edge.kind === "periodic",
         })),
         omittedSubsequentEdges: Math.max(0, followingEdges.length - 5),
+        sourceContinuationPaths: (continuations?.get(operation.id)?.paths ?? [])
+          .map(path => ({
+            sourceTraceStatus: rootedSourceFlows.some(flow =>
+              (flow.sourceSteps ?? []).some(step => step.id === operation.id) &&
+              path.executionEdgeIds.every(id =>
+                (flow.executionEdgeIds ?? []).includes(id) &&
+                !(flow.unresolvedExecutionEdgeIds ?? []).includes(id)))
+              ? "SOURCE_ROOT_TRACE" as const
+              : "ROOT_NOT_ESTABLISHED" as const,
+            regionIds: path.regionIds,
+            executionEdgeIds: path.executionEdgeIds,
+            edgeSites: path.executionEdgeIds.flatMap(id => {
+              const edge = sourceEdgesById.get(id);
+              if (!edge) return [];
+              const guards = [
+                ...(edge.lexicalGuards ?? []),
+                ...(edge.precedenceGuards ?? []),
+              ];
+              return [{
+                edgeId: id, kind: edge.kind,
+                sourceLocator: location(edge.source),
+                guardExpressions: guards.slice(0, 4).map(guard =>
+                  guard.expression + " [" + guard.branch + "] @ " +
+                  location(guard.source)),
+                omittedGuards: Math.max(0, guards.length - 4),
+                temporalBoundary: path.temporalBoundaryEdgeIds.includes(id),
+              }];
+            }),
+            temporalBoundaryEdgeIds: path.temporalBoundaryEdgeIds,
+            directTargetSites: path.directTargetEvidenceIds.flatMap(id => {
+              const site = continuationSiteById.get(id);
+              return site ? [{
+                evidenceId: id, kind: site.kind,
+                sourceLocator: location(site.source),
+              }] : [];
+            }),
+            omittedDirectTargetSites: path.omittedDirectTargetEvidenceCount,
+            proof: "DIRECTED_SOURCE_PATH_NOT_CAUSAL_OR_RUNTIME_PROOF" as const,
+          })),
+        omittedSourceContinuationPaths:
+          continuations?.get(operation.id)?.omittedPaths ?? 0,
+        sourceContinuationSearchTruncated:
+          continuations?.get(operation.id)?.searchTruncated ?? false,
+        blockedUnrootedEventEdges:
+          continuations?.get(operation.id)?.blockedUnrootedEventEdges ?? 0,
         proof: "SOURCE_BOOLEAN_PROPERTY_WRITE_NOT_RUNTIME_STATE",
       };
     });
