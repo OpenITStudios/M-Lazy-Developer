@@ -359,7 +359,8 @@ export function developerPracticeSignalsFromSemanticIr(
   // not from an arbitrary string or a guessed gameplay event.
   for (const region of ir.execution.regions) {
     if (region.kind !== "event-source" ||
-        region.ownerId !== "world") continue;
+        region.ownerId !== "world" ||
+        region.source === undefined) continue;
     if (region.label === "world.beforeEvents.entityHurt") {
       add(region.id, region.source, "world.beforeEvents.entityHurt");
     } else if (region.label === "world.afterEvents.entityDie") {

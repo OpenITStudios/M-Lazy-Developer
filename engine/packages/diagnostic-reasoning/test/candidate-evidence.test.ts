@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { GameplayContract } from "../../gameplay-intent/src/index.js";
 import {
   evaluateGameplayBugCandidateEvidence,
   type GameplayBugCandidateRule,
@@ -12,6 +13,17 @@ const readyContract = {
   subjectIds: ["objective:test"],
   invariantIds: ["inv:test"],
   authorityEvidenceIds: ["artifact:test:contract"],
+  implementationEvidenceIds: [],
+  playerFacingClaimEvidenceIds: [],
+  designChallenge: {
+    disposition: "grounded-design" as const,
+    reasons: ["synthetic approved-design fixture"],
+    evidenceIds: ["artifact:test:contract"],
+    implementationEvidenceIds: [],
+    designEvidenceIds: ["artifact:test:contract"],
+    designClaimEvidenceIds: [],
+    playerFacingEvidenceIds: [],
+  },
   readiness: {
     disposition: "ready" as const,
     scopeSubjectIds: ["objective:test"],
@@ -19,7 +31,7 @@ const readyContract = {
     toleratedUnknownIds: [],
     reasons: ["ready"],
   },
-};
+} satisfies GameplayContract;
 
 const rule: GameplayBugCandidateRule = {
   id: "reset-leak",
@@ -35,6 +47,14 @@ const rule: GameplayBugCandidateRule = {
   counterEvidencePredicates: [
     "contract-allows-persistence",
   ],
+};
+
+// A plausible design alternative is explanatory only; suppressing a bug
+// candidate requires separately declared counterproof that makes the bad
+// postcondition unreachable.
+const ruleWithBlockingProof: GameplayBugCandidateRule = {
+  ...rule,
+  blockingCounterEvidencePredicates: ["stale-state-provably-unreachable"],
 };
 
 describe("gameplay bug candidate evidence gate", () => {
@@ -77,27 +97,35 @@ describe("gameplay bug candidate evidence gate", () => {
   });
 
 
-  it("suppresses a candidate when current contract counter-evidence permits it", () => {
+  it("suppresses only explicit blocking proof, not explanatory alternatives", () => {
+    const evidence = [
+      { predicate: "retry-occurs", state: "present" as const, evidenceId: "e:retry" },
+      { predicate: "old-state-survives", state: "present" as const, evidenceId: "e:state" },
+      { predicate: "next-attempt-gameplay-changed", state: "present" as const, evidenceId: "e:impact" },
+      { predicate: "contract-allows-persistence", state: "present" as const, evidenceId: "e:design" },
+    ];
+    const explanationOnly = evaluateGameplayBugCandidateEvidence(
+      rule, evidence, readyContract,
+    );
+    expect(explanationOnly.disposition).toBe("candidate");
+    expect(explanationOnly.counterEvidenceIds).toEqual([]);
+
     const result = evaluateGameplayBugCandidateEvidence(
-      rule,
-      [
-        { predicate: "retry-occurs", state: "present", evidenceId: "e:retry" },
-        { predicate: "old-state-survives", state: "present", evidenceId: "e:state" },
-        { predicate: "next-attempt-gameplay-changed", state: "present", evidenceId: "e:impact" },
-        { predicate: "contract-allows-persistence", state: "present", evidenceId: "e:design" },
-      ],
+      ruleWithBlockingProof,
+      [...evidence, {
+        predicate: "stale-state-provably-unreachable",
+        state: "present",
+        evidenceId: "e:blocking",
+      }],
       readyContract,
     );
-
-    expect(result.disposition).toBe(
-      "suppressed-by-counter-evidence",
-    );
-    expect(result.counterEvidenceIds).toEqual(["e:design"]);
+    expect(result.disposition).toBe("suppressed-by-counter-evidence");
+    expect(result.counterEvidenceIds).toEqual(["e:blocking"]);
   });
 
-  it("retains a material candidate while a counter-evidence check is unresolved", () => {
+  it("retains a material candidate while a blocking proof check is unresolved", () => {
     const result = evaluateGameplayBugCandidateEvidence(
-      rule,
+      ruleWithBlockingProof,
       [
         { predicate: "retry-occurs", state: "present" },
         { predicate: "old-state-survives", state: "present" },
@@ -108,7 +136,7 @@ describe("gameplay bug candidate evidence gate", () => {
 
     expect(result.disposition).toBe("candidate");
     expect(result.unresolvedCounterPredicates).toEqual([
-      "contract-allows-persistence",
+      "stale-state-provably-unreachable",
     ]);
   });
 

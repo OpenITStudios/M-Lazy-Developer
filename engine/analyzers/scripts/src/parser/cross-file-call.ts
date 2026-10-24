@@ -1228,7 +1228,7 @@ export function deriveCrossFileCallEdges(
             relativePath: target.modulePath,
           })
         : undefined;
-      const busMethod = staticMethodName === "on" ||
+      const busMethod: "on" | "emit" | undefined = staticMethodName === "on" ||
         staticMethodName === "emit"
         ? staticMethodName : undefined;
       const busOwner = target && busMethod && targetRegion

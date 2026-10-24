@@ -252,8 +252,8 @@ describe("source-unique bundled static class call recovery", () => {
     expect(edges.every(edge =>
       edge.targetSource?.artifactId === source.artifactId &&
       edge.targetSource.relativePath === source.relativePath)).toBe(true);
-    expect(edges.find(edge => edge.targetName === "CompositeSessionService.save")
-      ?.lexicalGuards.length).toBeGreaterThan(0);
+    expect((edges.find(edge => edge.targetName === "CompositeSessionService.save")
+      ?.lexicalGuards ?? []).length).toBeGreaterThan(0);
   });
 
   it("retains exact argument/formal forwarding through a stable local static method", () => {

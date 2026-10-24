@@ -203,6 +203,7 @@ export function buildGameplayIntentModel(
         const regionId = scriptRegionId(script.source, use.executionRegion);
         const region = irRegions.get(regionId);
         const exactRegion = region !== undefined &&
+          region.source !== undefined &&
           region.ownerId === script.identifier &&
           region.source.artifactId === input.artifactId &&
           region.source.relativePath === use.source.relativePath;

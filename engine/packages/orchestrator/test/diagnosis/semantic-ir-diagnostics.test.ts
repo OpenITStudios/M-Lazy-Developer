@@ -158,9 +158,13 @@ describe("semantic IR diagnostics", () => {
     expect(semanticIrDiagnostics(guarded).some(item =>
       item.code === "SEMANTIC_IR_DEFERRED_STATE_GUARD_UNKNOWN")).toBe(false);
     const unresolved = { ...ir, execution: { ...ir.execution,
-      edges: ir.execution.edges.map(edge => edge.id === "call-cleanup"
-        ? { ...edge, to: undefined, resolution: "unresolved" as const }
-        : edge),
+      edges: ir.execution.edges.map(edge => {
+        if (edge.id !== "call-cleanup") return edge;
+        // Omit the optional resolved target rather than asserting a
+        // literal undefined target into a strict execution-edge contract.
+        const { to: _resolvedTarget, ...unresolvedEdge } = edge;
+        return { ...unresolvedEdge, resolution: "unresolved" as const };
+      }),
     } };
     expect(semanticIrDiagnostics(unresolved).some(item =>
       item.code === "SEMANTIC_IR_DEFERRED_STATE_GUARD_UNKNOWN")).toBe(false);

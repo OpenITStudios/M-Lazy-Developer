@@ -673,6 +673,7 @@ export function projectSelectedMapAuditModelHandoff(
             const region = regionId === undefined ? undefined :
               regionsById.get(regionId);
             const exactRegion = region !== undefined &&
+              region.source !== undefined &&
               region.source.artifactId === audit.identity.artifactId &&
               region.source.relativePath ===
                 ref.locator.replace(/:[1-9][0-9]*:[1-9][0-9]*$/, "");

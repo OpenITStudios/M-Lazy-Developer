@@ -178,7 +178,7 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
       data, selectedArtifactId: "selected",
       semanticIr: ir,
       domains: ["state", "persistence"],
-      sourceLocators: lookup?.sourceLocators,
+      ...(lookup?.sourceLocators === undefined ? {} : { sourceLocators: lookup.sourceLocators }),
     });
     expect(guidance?.items.map(item => item.patternId)).toEqual([
       "developer.hint.persistence.state-ownership",
@@ -202,7 +202,7 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
     expect(compileDeveloperPracticeReferenceContext({
       data, selectedArtifactId: "another-artifact",
       semanticIr: ir, domains: ["state"],
-      sourceLocators: lookup?.sourceLocators,
+      ...(lookup?.sourceLocators === undefined ? {} : { sourceLocators: lookup.sourceLocators }),
     })?.items ?? []).toHaveLength(0);
     expect(compileDeveloperPracticeReferenceContext({
       data, selectedArtifactId: "selected",

@@ -173,9 +173,11 @@ describe("map audit candidate grouping", () => {
         id: "requirement:reused",
         scenarioId: "scenario:foreign",
         domain: "combat-lifecycle" as const,
+        reason: "A foreign scenario owns this requirement, not the wave.",
+        capabilityIds: [], dependsOnRequirementIds: [],
         subjectIds: [], componentIds: [],
       }],
-    } as GameplayScenarioGraph;
+    } satisfies GameplayScenarioGraph;
     const [group] = groupReadyAuditIssuesForCandidateCoverage(enriched, [issue]);
     expect(group?.knowledgeDomain).toBeUndefined();
     expect(group?.dependencyTargetId).toBe("objective:wave");

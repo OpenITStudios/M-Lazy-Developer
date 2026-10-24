@@ -91,14 +91,21 @@ describe("inspectArtifact", () => {
     expect(result.sourceIndexWork?.parseFailures).toBeGreaterThan(0);
     expect(result.packs[0]?.type).toBe("behavior_pack");
     expect(result.functions).toBe(1);
-    expect(result.structures).toBe(1);
-    expect(result.unresolvedReferences).toBe(1);
+    // The fixture contains a malformed physical .mcstructure. Inventory it,
+    // but never count it as a successfully parsed source structure.
+    expect(result.fileInventory.some(file =>
+      file.relativePath.endsWith("structures/demo/test.mcstructure"),
+    )).toBe(true);
+    expect(result.structures).toBe(0);
+    // Neither the missing function nor the opaque structure reference may
+    // disappear from the unresolved graph merely because parsing failed.
+    expect(result.unresolvedReferences).toBe(2);
     expect(
       result.mandatoryAuditProcedure.checkpoints.find(
         (checkpoint) => checkpoint.id === "A1",
       )?.status,
     ).toBe("CLOSED");
-    expect(result.gameplayDiscoveryClosure.unresolvedReferences).toBe(1);
+    expect(result.gameplayDiscoveryClosure.unresolvedReferences).toBe(2);
     expect(result.gameplayDiscoveryClosure.status).not.toBe("COMPLETE");
     expect(result.gameplayDiscoveryClosure.semanticUnderstandingGapPaths)
       .toEqual([...result.gameplayDiscoveryClosure.semanticUnderstandingGapPaths].sort());
@@ -138,7 +145,7 @@ describe("inspectArtifact", () => {
         expect(initial.gameplayWorld.analysisDemand)
           .not.toContain("temporal-ownership");
         expect(expanded.gameplayWorld.analysisDemand)
-          .toEqual(expect.arrayContaining(expandedTarget.requiredKnowledgeDomains));
+          .toEqual(expect.arrayContaining([...expandedTarget.requiredKnowledgeDomains]));
         // Source meaning is independent of downstream demand expansion.
         expect(initial.gameplayIntent.model)
           .toEqual(expanded.gameplayIntent.model);

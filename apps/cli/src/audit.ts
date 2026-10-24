@@ -156,7 +156,8 @@ async function main(): Promise<void> {
           waveStages: resolvedAudit.inspection.authoredWaveStages,
           gameplayCatalog: resolvedAudit.inspection.authoredGameplayCatalog,
           contentCollections: resolvedAudit.inspection.authoredContentCollections,
-          scriptSourceMapNavigation: resolvedAudit.inspection.scriptSourceMapNavigation,
+          ...(resolvedAudit.inspection.scriptSourceMapNavigation === undefined
+            ? {} : { scriptSourceMapNavigation: resolvedAudit.inspection.scriptSourceMapNavigation }),
           modelTaskPackets: resolvedAudit.modelTaskPackets,
           candidateGroups: resolvedAudit.candidateGroups,
           validationTests: resolvedAudit.validationTests,

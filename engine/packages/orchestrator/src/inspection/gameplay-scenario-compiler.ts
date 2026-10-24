@@ -2296,7 +2296,7 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
         }
         const from = regions.get(edge.from);
         const to = regions.get(edge.to);
-        if (!from || !to ||
+        if (!from || !to || !from.source || !to.source ||
             edge.source.artifactId !== from.source.artifactId ||
             edge.source.artifactId !== to.source.artifactId) return [];
         const steps = ordered([edge.to]);

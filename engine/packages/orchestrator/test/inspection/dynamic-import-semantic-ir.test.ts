@@ -3,7 +3,6 @@ import { parseScriptFile, deriveCrossFileCallEdges } from "../../../../analyzers
 import { semanticIrExecutionTraces } from "../../../semantic-ir/src/index.js";
 import { buildInspectionSemanticIr, scriptRegionId } from "../../src/diagnosis/semantic-ir-stage.js";
 import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
-import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
 
 const parsed = (path: string, text: string, artifactId = "selected-map") => {
   const source = { artifactId, relativePath: path };

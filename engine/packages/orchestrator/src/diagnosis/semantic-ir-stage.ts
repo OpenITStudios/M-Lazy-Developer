@@ -133,6 +133,18 @@ function temporalKind(
   return "deferred";
 }
 
+// The parser covers a broader Script API vocabulary; this IR admits only
+// the narrow typed subset whose authored source sites can be evidenced.
+const authoredApiReceivers = [
+  "Entity", "Player", "World", "Dimension", "ScreenDisplay",
+  "Camera", "ActionFormData", "ModalFormData", "MessageFormData", "UIManager",
+] as const satisfies readonly AuthoredScriptApiCall["receiverType"][];
+const authoredApiMethods = [
+  "kill", "remove", "teleport", "sendMessage", "setActionBar",
+  "setTitle", "setHudVisibility", "setCamera", "clear", "show",
+  "closeAllForms", "getAllPlayers", "getEntities",
+] as const satisfies readonly AuthoredScriptApiCall["method"][];
+
 export function buildInspectionSemanticIr(
   input: InspectionSemanticIrInput,
 ): SemanticIr {
@@ -607,6 +619,16 @@ export function buildInspectionSemanticIr(
       if (!entityLifecycle && !playerFeedback &&
           !displayFeedback && !cameraPresentation &&
           !profilingQuery && !formClosing && !formPresentation) continue;
+      // The parser can recognize more APIs than this evidence-limited IR
+      // surface. Narrow both fields to the exact authored API contract;
+      // neither name-only inference nor a type assertion can admit a call.
+      const receiverType = authoredApiReceivers.find(
+        receiver => receiver === call.receiverType,
+      );
+      const method = authoredApiMethods.find(
+        name => name === call.method,
+      );
+      if (receiverType === undefined || method === undefined) continue;
       const regionId = ensureScriptRegion(
         parsed, call.executionRegion ?? "module", call.source,
       );
@@ -618,8 +640,8 @@ export function buildInspectionSemanticIr(
       // repeated by the extractor must not multiply reference evidence.
       apiCalls.set(key, {
         id: key,
-        receiverType: call.receiverType,
-        method: call.method,
+        receiverType,
+        method,
         symbol: call.symbol,
         inference: call.inference,
         source: call.source,

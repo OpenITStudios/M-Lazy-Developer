@@ -111,8 +111,8 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
     }
     const region = ir.execution.regions.find(item =>
       item.id === call.executionRegionId);
-    if (region?.source.artifactId !== call.source.artifactId ||
-        region?.source.relativePath !== call.source.relativePath) {
+    if (region?.source?.artifactId !== call.source.artifactId ||
+        region.source?.relativePath !== call.source.relativePath) {
       errors.push("Authored API call crosses source ownership: " + call.id);
     }
   }
