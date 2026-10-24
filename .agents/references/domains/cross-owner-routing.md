@@ -21,6 +21,6 @@ Acceptance
 STOP condition
 ```
 
-Resolve only enough ambiguity to select one primary owner, then STOP this routing skill and hand off to the selected work lane / specialist.
+Resolve only enough ambiguity to identify the first canonical source/evidence owner, then return a bounded finding to the already selected **IMPROVE SYSTEM** or **TEST MAP** skill. This reference does not make a new skill decision.
 
-Do not use this skill as a development lane, audit lane, or generic planning layer merely because a task is large, quality-sensitive, or involves several files.
+Do not turn this reference into a third lane, independent router, or generic planning layer merely because a task is large or touches several files. It grants no additional permission.

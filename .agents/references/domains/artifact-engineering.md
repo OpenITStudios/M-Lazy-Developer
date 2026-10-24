@@ -27,6 +27,6 @@ Use when the decision concerns artifact identity, archive safety, extraction, wo
 
 ## Lane boundary
 
-During Map Bug Audit this skill inspects/normalizes artifacts only. Missing format support becomes a `detection-gap`.
+During **TEST MAP**, this reference guides read-only artifact inspection. Missing archive or format support is a source-identified `capability-gap`, not permission to change the selected map or engine.
 
-Engine adapter/archive development belongs to `m-bedrock-system-improvement`; do not cross into it implicitly.
+Adapter/archive implementation changes belong to **IMPROVE SYSTEM** (`m-bedrock-system-improvement`) only after a separately authorized system-development request.

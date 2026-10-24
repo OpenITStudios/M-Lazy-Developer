@@ -20,6 +20,6 @@ Compatibility analysis does not itself prove runtime behavior.
 
 ## Lane boundary
 
-During Map Bug Audit, consume current compatibility/Platform Knowledge and report missing/stale capability as `detection-gap`; do not silently edit rules or knowledge.
+During **TEST MAP**, consult version-scoped compatibility/Platform Knowledge read-only. Missing or stale platform evidence becomes a `capability-gap` or UNKNOWN, never a fabricated gameplay failure.
 
-During Detection Development, compatibility data/rules may be changed only with version-scoped evidence and generalized acceptance.
+During **IMPROVE SYSTEM**, change the existing canonical compatibility owner only with version-scoped source evidence and bounded acceptance. No separate Detection Development lane exists.

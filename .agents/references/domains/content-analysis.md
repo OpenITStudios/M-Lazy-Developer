@@ -3,7 +3,7 @@
 > **REFERENCE ONLY — not an active SKILL.md or work lane.** content-analysis supplies bounded source/knowledge reasoning to the selected IMPROVE SYSTEM or TEST MAP skill; it never changes permissions or proof.
 # Lazy-Developer Content Analysis
 
-**Role:** DOMAIN SPECIALIST — read-only semantic analysis
+**Role:** SOURCE REFERENCE — read-only semantic analysis inside the selected active skill
 
 Use for manifests, functions, commands, references, semantic graph, diagnostics, and derived topology facts.
 
@@ -89,7 +89,7 @@ For developer skill/module source and Skills Probe fixture/report coverage,
 consult the single machine snapshot:
 `experiments/developer-practice-signals.json`.
 `sourceFiles`, `patterns`, `codeInventory` and `probeEvidence` own
-the exact counts, paths, hashes and upstream statuses. This skill must not
+the exact counts, paths, hashes and upstream statuses. This reference must not
 maintain a competing count or assert all ZIP content was semantically
 integrated, installed or executed. The probe's skill lock differs from
 the supplied developer ZIP release; do not silently treat them as
@@ -110,9 +110,9 @@ Prefer content hashes, selective parsing, and change-scoped invalidation over fu
 
 ## Lane boundary
 
-This skill does not decide whether the current job is Map Audit or Detection Development.
+This reference never selects or switches the active skill.
 
-- In **Map Bug Audit**, use existing analysis capability only. If required semantics are unsupported, emit `detection-gap` and return to the audit lane.
-- During **IMPROVE SYSTEM**, this domain reference informs analyzer semantics/ownership; development acceptance belongs to the active system improvement skill.
+- In **TEST MAP**, use existing analysis capability and the selected map's exact source witness. Unsupported semantics are reported as a `capability-gap` with explicit proof limits; no engine edits occur.
+- In **IMPROVE SYSTEM**, this reference informs analyzer/knowledge ownership; any code or methodology change is made through the existing canonical source owner and reviewed development contract.
 
 Never modify analyzer implementation merely because an operational audit encounters unsupported evidence.
