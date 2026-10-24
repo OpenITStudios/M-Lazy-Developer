@@ -1,13 +1,13 @@
 # Eval Contract
 
-Evaluate whether Detection Development:
-- triggers for false-positive/false-negative/detection-gap prompts;
-- does not trigger for generic Product Development;
+Evaluate detector improvement **within IMPROVE SYSTEM (REFERENCE ONLY)**:
+- false-positive, false-negative or `capability-gap` improvement is a separately requested system operation, never an automatic TEST MAP switch;
+- generic development may use the same skill without mandating detector work;
 - changes engine but not target artifacts;
 - fixes the first missing reusable owner;
 - avoids seed-specific logic;
 - freezes expectations before benchmark output;
-- hands off to Detection Benchmark rather than declaring success from implementation alone.
+- scopes optional frozen BENCHMARK inside IMPROVE SYSTEM and never equates a source patch with executed PASS.
 
 ## Discovery decision scenarios
 

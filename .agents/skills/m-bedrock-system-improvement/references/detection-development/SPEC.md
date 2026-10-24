@@ -1,7 +1,7 @@
-# Detection Development Specification
+# Detector Improvement Specification — supporting IMPROVE SYSTEM reference
 
 ## Intent
-Improve reusable detector correctness, semantic coverage, or proof strength from a bounded detection gap/regression.
+Improve reusable detector correctness, semantic coverage or proof strength from a source-identified `capability-gap` or regression. This is a supporting reference, not an active third skill.
 
 ## In scope
 - adapters/parsers/analyzers;
@@ -19,9 +19,9 @@ Improve reusable detector correctness, semantic coverage, or proof strength from
 ## Acceptance
 - first missing owner is identified;
 - generalized acceptance is stated before implementation;
-- reduced fixture or stable expectation exists;
+- source-positive and negative/ambiguous acceptance is defined; executable fixtures are deferred until the authorized integration boundary when tests are postponed;
 - false-positive boundary is represented where material;
-- benchmark handoff is explicit.
+- optional frozen BENCHMARK is separately scoped inside IMPROVE SYSTEM, not another work lane.
 
 ## Discovery-specific acceptance
 

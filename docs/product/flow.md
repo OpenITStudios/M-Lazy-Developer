@@ -170,6 +170,21 @@ original-map identity → Must Change and Must Preserve → guarded
 working-copy mutation → preservation/targeted proof. IMPROVE SYSTEM
 owns code/source improvements and its restricted benchmark operation.
 
+### Native developer ZIP methods inside the two Lazy-Dev flows
+
+Adopt the **source-reviewed developer's method and its negative controls**, not the publisher's separate execution environment. `skills/bedrock/source-lock.json` holds skill/module source identities and `experiments/developer-practice-signals.json` holds reviewed methods and **independent** Skills Probe reports/installed lock.
+
+| ZIP method family | Existing flow | Boundary |
+|---|---|---|
+| `bedrock-agent-team`, `bedrock-project-setup` | **IMPROVE SYSTEM: DEFINE / INVESTIGATE / DESIGN** | Identify one owner, target edition, source/proof contract; no new agent-team hierarchy or scaffold. |
+| `bedrock-git-workflow` | **IMPROVE SYSTEM: IMPLEMENT / COMMIT & STOP** | Pinned GitHub source, cohesive patch, confirmed SHA; no upstream branch/release permission imported. |
+| `bedrock-testing-policy` + Skills Probe | **IMPROVE SYSTEM: VERIFY** and **TEST MAP: TEST** | Focused positive/negative/runtime-boundary reasoning; Probe PASS/FAIL/BLOCKED/PARTIAL and original client/lock are not current-map gameplay proof, and broad CI is not assumed. |
+| `bedrock-release-export`, `bedrock-game-results` | Existing report/export owners, **TEST MAP: REPORT** when relevant | Keep exact source result/edition/release authority; no Daigon-specific scoring or automatic release/export. |
+| 16 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + precise current-map source/typed Semantic IR → at most relevant Resource Context hints; no imported Expected Behavior or automatic detector. |
+| Un-routed `bedrock-player-attached-particles` | **REFERENCE ONLY** | Preserve scoped Probe negatives; abstain until a precise supported typed source witness exists. |
+
+The existing selected-map pipeline remains: immutable artifact → source inventory → Semantic IR / Gameplay Intent → authored game systems and player journey → cross-system negative-path test/counterproof → one evidence-grounded REPORT. These map onto **LOAD → UNDERSTAND → TEST → REPORT** while retaining internal admission and runtime-proof checkpoints. Any unsupported behavior becomes a source-identified `capability-gap`, never an automatic third work lane.
+
 ### UNDERSTAND checkpoint → selected-source subjects (Batch A)
 
 A3–A7 checkpoints are currently emitted by the canonical

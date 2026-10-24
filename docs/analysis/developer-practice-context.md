@@ -97,8 +97,8 @@ as `PROVISIONAL` until reviewed, keep negative controls and independent
 Minecraft version applicability, and update only affected canonical
 consumers. Re-check the probe's pinned skills tag/commit separately from
 the newer developer release. Promote facts to `engine/knowledge/` only on
-independently verified platform provenance; send genuine detector gaps to
-the existing Detection Development lane. Do not add a new pattern simply
+independently verified platform provenance; retain source-identified `capability-gap` evidence for an explicitly authorized
+IMPROVE SYSTEM task. Do not add a new pattern simply
 because the number of upstream reports grew.
 
 **Archive custody:** the original ZIPs are external, untrusted inputs

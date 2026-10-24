@@ -59,5 +59,27 @@ const dos=readFileSync("docs/system/development-discipline.md","utf8");
 for(const p of ["## Development Operating Standard","**Development preflight:**","**Development completion review:**"])if(!dos.includes(p))failures.push("Missing development discipline: "+p);
 const product=readFileSync("docs/product/flow.md","utf8");
 for(const word of ["LOAD","UNDERSTAND","TEST","REPORT","TARGET","DISCOVERY","FORMALIZE","EVALUATE","PROVE"])if(!product.includes(word))failures.push("Missing outer flow/internal proof mapping "+word);
+
+// Active SPEC/EVAL and native developer-method crosswalk must follow the two skills.
+// This is a static source-contract guard, not Minecraft/TypeScript/Probe execution.
+const alignedDocuments={
+ ".agents/skills/m-bedrock-system-improvement/SPEC.md":["IMPROVE SYSTEM","Detection improvement","BENCHMARK","source-lock.json","Skills Probe"],
+ ".agents/skills/m-bedrock-system-improvement/EVAL.md":["IMPROVE SYSTEM","Detector improvement","TEST MAP","Skills Probe"],
+ ".agents/skills/m-bedrock-map-testing/SPEC.md":["TEST MAP","LOAD","UNDERSTAND","REPORT","capability-gap","Skills Probe","Must Change","Must Preserve"],
+ ".agents/skills/m-bedrock-map-testing/EVAL.md":["TEST MAP","LOAD","UNDERSTAND","REPORT","capability-gap","Skills Probe"],
+ "docs/product/flow.md":["Native developer ZIP methods inside the two Lazy-Dev flows","bedrock-testing-policy","Skills Probe"]
+};
+for(const [path,words] of Object.entries(alignedDocuments)){
+ const file=readFileSync(path,"utf8");
+ for(const word of words)if(!file.includes(word))failures.push(path+": missing two-skill developer-method contract "+word);
+}
+for(const [path,pattern] of [
+ [".agents/skills/m-bedrock-system-improvement/EVAL.md",/routes? instead to Detection Development/i],
+ [".agents/skills/m-bedrock-map-testing/EVAL.md",/emits detection-gap/i],
+ ["docs/analysis/developer-practice-context.md",/existing Detection Development lane/i],
+ [".agents/skills/m-bedrock-system-improvement/references/detection-development/EVAL.md",/hands off to Detection Benchmark/i]
+]){
+ if(pattern.test(readFileSync(path,"utf8")))failures.push(path+": retired lane reference");
+}
 if(failures.length){for(const issue of failures)console.error(issue);process.exit(1);}
 console.log("Two-skill and four operator-stage ownership verified.");
