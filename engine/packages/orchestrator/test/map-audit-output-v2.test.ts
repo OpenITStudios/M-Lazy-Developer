@@ -233,6 +233,35 @@ describe("Map Audit Output V2 projection", () => {
       .toEqual(["link:unresolved"]);
     expect(report.unresolved.staticProofPendingIds)
       .toEqual([]);
+    // Source discovery must remain visible even when no gameplay finding
+    // exists. Repeated A2 edge IDs count once and cannot become a BUG.
+    const unresolvedSourceOnly = projectMapAuditOutputV2({
+      ...projectionInput,
+      inspection: {
+        ...inspection,
+        gameplayDiscoveryClosure: {
+          unresolvedSourceLinkIds: [
+            "edge:missing-target:2",
+            "edge:missing-target:1",
+            "edge:missing-target:2",
+          ],
+        },
+      },
+      issueLanes: { BUG: [], DESIGN_MISMATCH: [] },
+      auditObligations: [],
+      validationTests: [],
+    });
+    expect(unresolvedSourceOnly.unresolved).toMatchObject({
+      status: "HAS_UNRESOLVED",
+      total: 2,
+      unresolvedSourceLinkIds: [
+        "edge:missing-target:1",
+        "edge:missing-target:2",
+      ],
+    });
+    expect(unresolvedSourceOnly.bugs).toEqual([]);
+    expect(unresolvedSourceOnly.designMismatches).toEqual([]);
+    expect(report.unresolved.unresolvedSourceLinkIds).toBeUndefined();
     expect(report.control.allowedNextAction)
       .toBe("PREPARE_REVIEW");
     expect(report.coverage.disposition)

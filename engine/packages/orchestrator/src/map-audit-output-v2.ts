@@ -242,6 +242,10 @@ export interface MapAuditOutputV2 {
     readonly runtimeRequiredIds: readonly string[];
     readonly auditObligationIds: readonly string[];
     readonly unknownSurfaceIds: readonly string[];
+    /** Exact unresolved source-call/scheduler IDs from selected-map
+     * Discovery A2. Optional for existing V2 readers; never game or bug proof.
+     */
+    readonly unresolvedSourceLinkIds?: readonly string[];
   };
   readonly honesty: AuditHonestyAssessment;
   readonly qualityGates: MapAuditQualityGates;
@@ -615,10 +619,18 @@ export function projectMapAuditOutputV2(input: {
       )
       .map((surface) => surface.id)
       .sort();
+  // A2 already knows which exact selected-map function/scheduler targets
+  // could not be resolved. Do not lose those uncertainties just because
+  // later Gameplay Intent or report findings are unavailable. A source-link
+  // gap is a DISCOVERY obligation, never an inferred player-facing BUG.
+  const unresolvedSourceLinkIds = [...new Set(
+    input.inspection.gameplayDiscoveryClosure?.unresolvedSourceLinkIds ?? [],
+  )].filter((id) => id.trim().length > 0).sort();
   const unresolvedIds = new Set([
     ...needValidationIds,
     ...auditObligationIds,
     ...unknownSurfaceIds,
+    ...unresolvedSourceLinkIds,
   ]);
   const unresolved = {
     status:
@@ -631,6 +643,8 @@ export function projectMapAuditOutputV2(input: {
     runtimeRequiredIds,
     auditObligationIds,
     unknownSurfaceIds,
+    ...(unresolvedSourceLinkIds.length === 0
+      ? {} : { unresolvedSourceLinkIds }),
   };
 
   const qualityGates = deriveMapAuditQualityGates({

@@ -267,10 +267,11 @@ export function formatSelectedMapAuditBrief(input: {
   // Show a bounded, stable identity for unresolved source edges near the next
   // decision, not only in the long technical trace. This does not establish
   // that a call executed, that either target was used, or that gameplay failed.
-  const unresolvedCallEdges = [...new Set(
-    (report.gameplayStructure?.sourceFlowCandidates ?? [])
+  const unresolvedCallEdges = [...new Set([
+    ...(report.unresolved.unresolvedSourceLinkIds ?? []),
+    ...(report.gameplayStructure?.sourceFlowCandidates ?? [])
       .flatMap((flow) => flow.unresolvedExecutionEdgeIds),
-  )].sort();
+  ])].sort();
   if (unresolvedCallEdges.length > 0) {
     out.push(
       "**Unresolved selected-source call edges:** " +

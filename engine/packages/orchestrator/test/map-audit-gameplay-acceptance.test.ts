@@ -576,6 +576,10 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(result.inspection.gameplayDiscoveryClosure.status).toBe("PARTIAL");
       expect(result.inspection.gameplayDiscoveryClosure.unresolvedSourceLinkIds)
         .toContain(edge!.id);
+      expect(result.mapAuditReport.unresolved.unresolvedSourceLinkIds)
+        .toContain(edge!.id);
+      expect(result.mapAuditReport.unresolved.status).toBe("HAS_UNRESOLVED");
+      expect(result.mapAuditReport.unresolved.total).toBeGreaterThan(0);
       expect(flow?.regionIds).toHaveLength(1);
       expect(flow?.sourceSteps.some(step =>
         step.executionRegionId !== flow.entryRegionId)).toBe(false);

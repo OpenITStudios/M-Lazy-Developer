@@ -89,6 +89,13 @@ describe("Map Audit Output V2 naming contract", () => {
         "unknownSurfaceIds",
       ]),
     );
+    // New A2 source-link visibility must not break older V2 report readers.
+    expect(unresolved.required).not.toContain("unresolvedSourceLinkIds");
+    expect(unresolved.properties.unresolvedSourceLinkIds).toMatchObject({
+      type: "array",
+      uniqueItems: true,
+      items: { type: "string", minLength: 1 },
+    });
     expect(
       schema.properties.bugs.items.properties.status.enum,
     ).toEqual([

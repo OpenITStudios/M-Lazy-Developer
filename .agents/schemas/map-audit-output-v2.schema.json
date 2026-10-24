@@ -2347,10 +2347,19 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "unresolvedSourceLinkIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Selected-artifact Discovery A2 unresolved executable/scheduler targets; not observed gameplay, proof or a BUG.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "additionalProperties": false,
-      "description": "Derived visibility index for all unresolved/gray-zone audit state. Canonical detail remains in findings, auditObligations, gameplayClosure, and validationTests."
+      "description": "Derived visibility index for unresolved/gray-zone audit state. Canonical detail remains in selected-map Discovery, findings, auditObligations, gameplayClosure, and validationTests."
     },
     "gameplayStructure": {
       "type": "object",
