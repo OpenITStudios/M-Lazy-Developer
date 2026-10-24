@@ -136,14 +136,18 @@ export function projectionContext(
   capabilityDelivery:
     readonly GameplayCapabilityDeliveryAssessment[],
 ) {
-  const link = graph.causalLinks.find(
+  // Report projection must use the same unique causal-link and scenario
+  // identity as PROVE. A first-match would borrow unrelated source scope.
+  const owned = graph.causalLinks.filter(
     (item) => item.id === causalLinkId,
   );
-  if (link === undefined) return undefined;
-  const scenario = graph.scenarios.find(
+  if (owned.length !== 1) return undefined;
+  const link = owned[0]!;
+  const scenarios = graph.scenarios.filter(
     (item) => item.id === link.scenarioId,
   );
-  if (scenario === undefined) return undefined;
+  if (scenarios.length !== 1) return undefined;
+  const scenario = scenarios[0]!;
 
   const subjectIds = [...new Set(link.subjectIds)].sort();
   const componentIds = [...new Set(link.componentIds)].sort();

@@ -31,9 +31,16 @@ export function projectNeedValidationAuditIssues(
 
   return sortIssues(
     gate.resolutions.flatMap((resolution) => {
-      const causalLink = graph.causalLinks.find((item) =>
+      const matchingLinks = graph.causalLinks.filter((item) =>
         item.id === resolution.causalLinkId
       );
+      // An ambiguous link or scenario is not a NEED_VALIDATION gameplay
+      // finding. The canonical resolution gate owns the graph-identity
+      // blocker; do not project an arbitrary first match as a player issue.
+      if (matchingLinks.length !== 1) return [];
+      const causalLink = matchingLinks[0]!;
+      if (graph.scenarios.filter(item =>
+        item.id === causalLink.scenarioId).length !== 1) return [];
       // Even a stale confirmation index cannot promote a safe counter-proof,
       // unresolved runtime observation or foreign scenario into a defect.
       if (!confirmed.has(resolution.causalLinkId) ||

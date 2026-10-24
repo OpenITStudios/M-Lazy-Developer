@@ -609,6 +609,39 @@ describe("map audit issue projection", () => {
       ...unfinished,
       resolutions: [{ ...incomplete, scenarioId: "scenario:progression" }],
     })).toEqual([]);
+
+    // The same generated ID may refer to distinct authoring sites/modes.
+    // The proof gate must explain ambiguity; report projection must never
+    // choose the first causal link or scenario and invent a scoped finding.
+    const duplicateLink: GameplayScenarioGraph = {
+      ...graph,
+      causalLinks: [...graph.causalLinks, {
+        ...graph.causalLinks[0]!,
+        reason: "A second authored mode owns the same identifier.",
+      }],
+    };
+    expect(projectionContext(duplicateLink, "link:capacity", []))
+      .toBeUndefined();
+    expect(assessGameplayDefectResolutionGate(duplicateLink).status)
+      .toBe("BLOCKED");
+    expect(projectReadyAuditIssues(duplicateLink, gate)).toEqual([]);
+    expect(projectAllNeedValidationAuditIssues(duplicateLink, unfinished))
+      .toEqual([]);
+
+    const duplicateScenario: GameplayScenarioGraph = {
+      ...graph,
+      scenarios: [...graph.scenarios, {
+        ...graph.scenarios[0]!,
+        label: "another arena mode",
+      }],
+    };
+    expect(projectionContext(duplicateScenario, "link:capacity", []))
+      .toBeUndefined();
+    expect(assessGameplayDefectResolutionGate(duplicateScenario).status)
+      .toBe("BLOCKED");
+    expect(projectReadyAuditIssues(duplicateScenario, gate)).toEqual([]);
+    expect(projectAllNeedValidationAuditIssues(duplicateScenario, unfinished))
+      .toEqual([]);
   });
 
 

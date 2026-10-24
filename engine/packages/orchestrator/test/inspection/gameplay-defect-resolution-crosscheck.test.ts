@@ -354,6 +354,41 @@ describe("gameplay defect resolution crosscheck depth", () => {
     expect(supported.blockingCounterProofIds).toEqual(["link:arena-capacity"]);
     expect(supported.confirmedDefectReadyIds).toEqual([]);
 
+    // Different authored causal links (or scenarios) may share a generated
+    // ID. A valid exclusion cannot make that ambiguous source graph READY.
+    const sameIdLink: GameplayScenarioGraph = {
+      ...withExactGuard,
+      causalLinks: [
+        ...withExactGuard.causalLinks,
+        { ...withExactGuard.causalLinks[0]!,
+          purpose: "A different mode has a conflicting capacity rule." },
+      ],
+    };
+    const ambiguousLink = assessGameplayDefectResolutionGate(sameIdLink, [{
+      causalLinkId: "link:arena-capacity",
+      disposition: "BLOCKING_COUNTERPROOF",
+      counterProofEvidenceIds: ["source:exact-guard"],
+    }]);
+    expect(ambiguousLink.status).toBe("BLOCKED");
+    expect(ambiguousLink.issues.join(" ")).toMatch(/Ambiguous causal-link ID/);
+    const sameIdScenario: GameplayScenarioGraph = {
+      ...withExactGuard,
+      scenarios: [
+        ...withExactGuard.scenarios,
+        { ...withExactGuard.scenarios[0]!,
+          label: "unrelated second mode" },
+      ],
+    };
+    const ambiguousScenario = assessGameplayDefectResolutionGate(
+      sameIdScenario, [{
+        causalLinkId: "link:arena-capacity",
+        disposition: "BLOCKING_COUNTERPROOF",
+        counterProofEvidenceIds: ["source:exact-guard"],
+      }],
+    );
+    expect(ambiguousScenario.status).toBe("BLOCKED");
+    expect(ambiguousScenario.issues.join(" ")).toMatch(/Ambiguous scenario ID/);
+
     const forged = assessGameplayDefectResolutionGate(withExactGuard, [{
       causalLinkId: "link:arena-capacity",
       disposition: "BLOCKING_COUNTERPROOF",

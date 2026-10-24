@@ -1035,6 +1035,39 @@ export function assessGameplayDefectResolutionGate(
   const byId = new Map<string, GameplayDefectResolution>();
   const issues: string[] = [];
 
+  // One causal-link ID must name one source dependency and one scenario.
+  // Other proof owners already reject duplicate graph identities. The
+  // resolution gate must fail closed as well, otherwise a first-match
+  // lookup could mark an ambiguous graph READY or discard the other owner.
+  const causalIdCounts = new Map<string, number>();
+  const scenarioIdCounts = new Map<string, number>();
+  for (const link of graph.causalLinks) {
+    causalIdCounts.set(link.id, (causalIdCounts.get(link.id) ?? 0) + 1);
+  }
+  for (const scenario of graph.scenarios) {
+    scenarioIdCounts.set(
+      scenario.id, (scenarioIdCounts.get(scenario.id) ?? 0) + 1,
+    );
+  }
+  for (const [id, count] of causalIdCounts) {
+    if (count > 1) issues.push(
+      "Ambiguous causal-link ID " + id + " has " + count +
+      " source owners; resolve graph identity before proof or report.",
+    );
+  }
+  for (const [id, count] of scenarioIdCounts) {
+    if (count > 1) issues.push(
+      "Ambiguous scenario ID " + id + " has " + count +
+      " owners; resolve graph identity before proof or report.",
+    );
+  }
+  const uniquelyOwnedCausalLink = (id: string): boolean => {
+    if (causalIdCounts.get(id) !== 1) return false;
+    const owner = graph.causalLinks.find((link) => link.id === id);
+    return owner !== undefined &&
+      scenarioIdCounts.get(owner.scenarioId) === 1;
+  };
+
   for (const resolution of suppliedResolutions) {
     if (!resolvableIds.has(resolution.causalLinkId)) {
       issues.push(
@@ -1049,6 +1082,13 @@ export function assessGameplayDefectResolutionGate(
         "Duplicate defect resolution for causal link: " +
           resolution.causalLinkId +
           ".",
+      );
+      continue;
+    }
+    if (!uniquelyOwnedCausalLink(resolution.causalLinkId)) {
+      issues.push(
+        resolution.causalLinkId +
+          ": supplied resolution cannot select an ambiguous causal/scenario owner.",
       );
       continue;
     }
@@ -1336,6 +1376,11 @@ export function assessGameplayDefectResolutionGate(
   ): readonly string[] =>
     resolutions
       .filter((item) => item.disposition === disposition)
+      // Keep ambiguous graph identities visible as BLOCKED issues, but
+      // never index their proposed confirmation as defect-ready.
+      .filter((item) =>
+        disposition !== "CONFIRMED_DEFECT_READY" ||
+        uniquelyOwnedCausalLink(item.causalLinkId))
       .map((item) => item.causalLinkId)
       .sort();
 

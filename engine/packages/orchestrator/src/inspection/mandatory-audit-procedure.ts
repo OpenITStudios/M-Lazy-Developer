@@ -1900,26 +1900,32 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     "D3",
     "PROVE",
     "Counter-Proof Search",
-    defectResolution.counterProofSearchRequiredIds.length > 0 ||
+    // A graph-owner collision or an invalid resolution can block the
+    // canonical gate without appearing in the counter-proof task counts.
+    // Do not report D3 CLOSED while proof ownership remains ambiguous.
+    defectResolution.status === "BLOCKED" ||
+      defectResolution.counterProofSearchRequiredIds.length > 0 ||
       defectResolution.gameplayTranslationRequiredIds.length > 0
       ? "OPEN"
       : defectResolution.runtimeProofRequiredIds.length > 0
         ? "PARTIAL"
         : "CLOSED",
-    "Every contradiction is routed through Gameplay Defect Resolution.",
+    defectResolution.status === "BLOCKED"
+      ? "Gameplay Defect Resolution is blocked; resolve the exact source/proof owner before claiming counter-proof complete. " +
+        defectResolution.issues.slice(0, 2).join(" ")
+      : "Every contradiction is routed through Gameplay Defect Resolution.",
     defectResolution.resolutions.flatMap(
       (item) => item.counterProofEvidenceIds ?? [],
     ),
     ["GameplayDefectResolution"],
     {
       reasonCode:
-        defectResolution.runtimeProofRequiredIds.length > 0 &&
-        defectResolution.counterProofSearchRequiredIds.length === 0 &&
-        defectResolution.gameplayTranslationRequiredIds.length === 0
-          ? "RUNTIME_PROOF_REQUIRED"
-          : defectResolution.counterProofSearchRequiredIds.length > 0 ||
-              defectResolution.gameplayTranslationRequiredIds.length > 0
-            ? "PROCEDURE_BLOCKED"
+        defectResolution.status === "BLOCKED" ||
+        defectResolution.counterProofSearchRequiredIds.length > 0 ||
+        defectResolution.gameplayTranslationRequiredIds.length > 0
+          ? "PROCEDURE_BLOCKED"
+          : defectResolution.runtimeProofRequiredIds.length > 0
+            ? "RUNTIME_PROOF_REQUIRED"
             : "COMPLETE",
     },
   ));
@@ -1934,7 +1940,9 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
       : "CLOSED",
     scenarioClosure.status === "OPEN"
       ? "Root-cause consolidation cannot close while material scenario residue remains unresolved."
-      : "Resolved defects are ready for semantic root-cause consolidation; report coverage enforces one-time causal-link coverage.",
+      : defectResolution.status === "BLOCKED"
+        ? "Root-cause consolidation cannot close while canonical causal/proof ownership is blocked."
+        : "Resolved defects are ready for semantic root-cause consolidation; report coverage enforces one-time causal-link coverage.",
     defectResolution.confirmedDefectReadyIds,
     ["RootCauseConsolidation"],
   ));
@@ -1951,9 +1959,12 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
         : "CLOSED",
     scenarioClosure.status === "OPEN"
       ? "Material scenario residue remains unresolved; report readiness is blocked until it becomes PROVEN, targeted NEED_VALIDATION, or explicit counter-proof."
-      : scenarioClosure.status === "PARTIAL"
-        ? "Only irreducible runtime-proof residue remains; every item must stay visible with its targeted validation test."
-        : "Map Audit Report may preserve every material PROVEN and NEED_VALIDATION finding; approved Bug Report V2 promotion remains downstream.",
+      : defectResolution.status === "BLOCKED"
+        ? "Map Audit Report cannot close while causal/proof identity is ambiguous or Gameplay Defect Resolution remains blocked. " +
+          defectResolution.issues.slice(0, 2).join(" ")
+        : scenarioClosure.status === "PARTIAL"
+          ? "Only irreducible runtime-proof residue remains; every item must stay visible with its targeted validation test."
+          : "Map Audit Report may preserve every material PROVEN and NEED_VALIDATION finding; approved Bug Report V2 promotion remains downstream.",
     [
       ...defectResolution.confirmedDefectReadyIds,
       ...defectResolution.runtimeProofRequiredIds,
@@ -1962,11 +1973,11 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     ["MapAuditReport"],
     {
       reasonCode:
-        scenarioClosure.status === "PARTIAL"
-          ? "RUNTIME_PROOF_REQUIRED"
-          : scenarioClosure.status === "OPEN" ||
-              defectResolution.status === "BLOCKED"
-            ? "PROCEDURE_BLOCKED"
+        scenarioClosure.status === "OPEN" ||
+        defectResolution.status === "BLOCKED"
+          ? "PROCEDURE_BLOCKED"
+          : scenarioClosure.status === "PARTIAL"
+            ? "RUNTIME_PROOF_REQUIRED"
             : "COMPLETE",
     },
   ));
