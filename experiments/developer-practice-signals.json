@@ -2455,5 +2455,30 @@
       }
     ],
     "untrackedSourcePolicy": "This is an exact, typed-script/tool-source subset from both uploaded ZIPs; it is a developer reference and is not executed, installed, licensed for redistribution, or a claim all assets have been semantically analyzed."
+  },
+  "pendingIntake": {
+    "status": "PENDING_SEMANTIC_REVIEW",
+    "usagePolicy": "CANDIDATE_ONLY_NOT_ACTIVE_IN_MAP_AUDIT",
+    "observedDate": "2026-10-24",
+    "inputs": {
+      "developerSkills": {
+        "sourceRepository": "https://github.com/achmadawdi/minecraft-bedrock-agent-skills",
+        "origin": "USER_SUPPLIED_ZIP",
+        "archiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
+        "releaseClaim": "v0.27.0",
+        "fileCount": 213,
+        "activeSkillDocuments": 23
+      },
+      "skillsProbe": {
+        "sourceRepository": "https://github.com/achmadawdi/skills-probe",
+        "origin": "USER_SUPPLIED_ZIP",
+        "archiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+        "fileCount": 829,
+        "reportsFound": 49,
+        "observedSkillsLockTag": "v0.23.0",
+        "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55"
+      }
+    },
+    "reviewBoundary": "Whole-archive and per-file deltas require source/consumer review; no updated ZIP text, scripts, upstream PASS or version claims are admitted automatically."
   }
 }

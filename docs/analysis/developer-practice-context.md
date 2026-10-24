@@ -20,6 +20,76 @@ finding, installed agent skill, or new analyzer.
 **Original source inventory/provenance:** [ZIP reference](../examples/bedrock-developer-agent-skills-reference.md).
 Stable document identity is this frontmatter `id`; update in place.
 
+## Upstream ZIP intake in ChatGPT Chat — candidate before promotion
+
+Two independent upstream sources feed **one existing REFERENCE owner**; they do
+not create another agent lane, new map-audit stage, or automatically installed
+skills. This is the development-side source refresh path:
+
+```text
+User-supplied skills ZIP + Skills Probe ZIP (or verifiable GitHub source)
+→ bounded, read-only ZIP inventory and per-file SHA-256 comparison
+→ experiments/developer-practice-signals.json#pendingIntake
+→ review changed source, version/lock mismatch, method, probe outcomes
+→ trace stable pattern ID and real Resource Context consumer
+→ update the SAME sourceSnapshot/sourceFiles/patterns/probeEvidence in place
+→ existing governance verifier and bounded consumer acceptance
+→ optional source-grounded REFERENCE hint at UNDERSTAND, never bug proof
+```
+
+The inspection entrypoint is
+[`tooling/repository/inspect-developer-upstream.mjs`](../../tooling/repository/inspect-developer-upstream.mjs).
+When both original ZIPs are accessible **inside ChatGPT**, it can run
+`node tooling/repository/inspect-developer-upstream.mjs --skills-zip "<skills.zip>" --probe-zip "<probe.zip>"`
+and review the JSON it prints. This is an operator capability, **not** a
+command the user must run on their computer. The script does not fetch or
+execute upstream code, unpack files to disk, write source JSON, or modify Git.
+It rejects unsupported ZIP structures, dangerous entry paths, excess
+expansion and invalid CRC for the source entries it inspects. It compares active `SKILL.md`, TypeScript module
+source/test, probe report, and selected probe/tool source fingerprints to
+the currently admitted metadata. Any other file is still covered by the
+whole-archive digest but does not thereby become semantically reviewed.
+
+`pendingIntake` keeps only the newly supplied archive identities, version
+claims, contents counts and lock boundary **inside the same canonical JSON**.
+`sourceSnapshot`, `sourceFiles`, `patterns` and `probeEvidence` remain
+the active, reviewed reference until a later source-and-consumer review
+replaces their affected records. The read-only context selector never reads
+`pendingIntake`. A pending record is not a new registry, second active source
+or platform fact. Each future replacement ZIP is compared against **current
+active and pending** identities before a coherent, gated update.
+When the candidate is accepted, update the reviewed source records and remove
+`pendingIntake` in the same atomic commit; a SHA cannot be pending and active
+simultaneously. Partial review does not grant automatic promotion.
+
+**2026-10-24 candidate:** supplied developer archive claims `v0.27.0`,
+contains 23 `skills/*/SKILL.md` documents; Skills Probe archive contains
+49 `docs/test-runs/*.md` files but still locks skills to `v0.23.0`.
+The active reference remains the 2026-10-21 `v0.24.0` / probe
+`v0.23.0` inventory until its review is reconciled. GitHub upstream HEADs,
+license/redistribution rights, and runtime outcomes are **not established**
+from these ZIP filenames or their self-reported test documents. Do not
+describe reported tests as executed by M-Lazy-Developer.
+
+A later refresh must inspect added/removed/changed skills, acknowledge
+renames and changed meanings, invalidate stale `SOURCE_REVIEWED` decisions
+as `PROVISIONAL` until reviewed, keep negative controls and independent
+Minecraft version applicability, and update only affected canonical
+consumers. Re-check the probe's pinned skills tag/commit separately from
+the newer developer release. Promote facts to `engine/knowledge/` only on
+independently verified platform provenance; send genuine detector gaps to
+the existing Detection Development lane. Do not add a new pattern simply
+because the number of upstream reports grew.
+
+**Archive custody:** the original ZIPs are external, untrusted inputs
+retained by the owner/provider rather than vendored into this repository.
+GitHub `Local` persists their identities and reviewed, attributable
+derived records. A SHA does **not** allow reconstructing a missing ZIP;
+a later source comparison still needs the actual accessible archive or a
+verifiably identical upstream snapshot. Avoid copying unlicensed code,
+pack content, agent instructions, installers, or test binaries into the
+engine.
+
 ## 21 October 2026: two-archive selective intake
 
 The user supplied `minecraft-bedrock-agent-skills-main (1).zip` (v0.24.0,

@@ -115,6 +115,7 @@ Load only when the canonical audit flow activates the concern:
 ## Optional developer-origin interpretation
 
 - [Developer-Practice Knowledge for Gameplay Interpretation](./developer-practice-context.md) — **REFERENCE only**: curated, source-fingerprinted hints from evolving developer material, retrieved selectively after current-map evidence raises a question. Its linked JSON is machine-readable and updateable; it never creates a gameplay requirement, a finding, or a separate audit stage. Source inventory remains in [Examples](../examples/bedrock-developer-agent-skills-reference.md).
+  New ZIPs enter through its [read-only upstream intake](./developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion) before any skill/reference promotion; the selected-map audit flow is unchanged.
 
 ## Analysis domains
 

@@ -17,6 +17,23 @@ For gameplay audit, one exact selected `.mcworld` is the only current gameplay a
 
 Historical QA, old map versions, Development/Source, changelogs, and external documents may support comparison/calibration only. They never silently define current Expected Behavior.
 
+## Optional developer reference refresh — outside the selected-map run
+
+```text
+Developer skills ZIP + Skills Probe ZIP / verifiable upstream snapshots
+→ read-only bounded delta inspection
+→ existing REFERENCE metadata (unreviewed candidate, then reviewed source)
+→ optional selected-source context at UNDERSTAND
+```
+
+The operator-side refresh is routed through
+[Developer-Practice Knowledge](../analysis/developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion);
+its one metadata owner is `experiments/developer-practice-signals.json`.
+Candidate ZIP information never changes `.agents/skill-registry.json`,
+the selected map's source/Expected Behavior, or any mandatory audit checkpoint.
+Only reviewed, source-matched references may inform investigation; they
+cannot independently produce a finding or change gameplay.
+
 ## Primary outcome — understand the map and report deviations
 
 The product succeeds when a reviewer can explain **what the selected map is designed to do**, identify **where its implementation conflicts with that design**, and give the developer **actionable, source-grounded findings**. The number of checkers, passed validation gates, graph edges, diagnostic candidates, or tests is not a measure of that success.

@@ -9,6 +9,23 @@ lifecycle: ACTIVE
 
 # Bedrock Developer Agent Skills — Provisional Reference
 
+## Latest user-supplied candidate — 24 October 2026 (not yet promoted)
+
+New uploaded ZIPs are registered as **PENDING_SEMANTIC_REVIEW** at
+`experiments/developer-practice-signals.json#pendingIntake`. The skills
+archive claims `v0.27.0` (23 active SKILL.md), and the paired Skills Probe
+archive contains 49 Markdown test-run documents while its embedded skills
+lock still targets `v0.23.0`. Exact SHA-256 and the distinct repository
+URLs are held in that one metadata owner, not duplicated here. The release
+claims are archive-local, not independently verified live GitHub refs.
+The v0.24.0 record below remains the **active, reviewed** source snapshot.
+
+For every subsequent ZIP, use the
+[read-only intake and promotion boundary](../analysis/developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion).
+Neither archive contents nor self-reported probe results are installed,
+vendored or elevated into map correctness. This document remains a
+human-readable reference, not a second manifest.
+
 ## Current supplied archives — 21 October 2026
 
 The following is a **reviewed, non-executable reference intake**. It supersedes the

@@ -189,6 +189,7 @@ const developerMetadataPath = "experiments/developer-practice-signals.json";
 const developerMetadata = JSON.parse(
   readFileSync(developerMetadataPath, "utf8"),
 );
+
 const skillSources = developerMetadata.sourceFiles ?? [];
 const patterns = developerMetadata.patterns ?? [];
 const codeInventory = developerMetadata.codeInventory ?? {};
@@ -199,6 +200,38 @@ const reports = developerMetadata.probeEvidence ?? [];
 const sourceById = new Set(skillSources.map(item => item.id));
 const validSha = value => typeof value === "string" &&
   /^[a-f0-9]{64}$/.test(value);
+
+// Pending ZIP intake is only a read-only candidate. It must not rewrite the
+// currently reviewed sourceSnapshot/probeSnapshot or become map-audit authority.
+const pendingIntake = developerMetadata.pendingIntake;
+if (pendingIntake !== undefined) {
+  const candidateInputs = pendingIntake.inputs ?? {};
+  const skillsCandidate = candidateInputs.developerSkills ?? {};
+  const probeCandidate = candidateInputs.skillsProbe ?? {};
+  if (pendingIntake.status !== "PENDING_SEMANTIC_REVIEW" ||
+      pendingIntake.usagePolicy !== "CANDIDATE_ONLY_NOT_ACTIVE_IN_MAP_AUDIT" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(pendingIntake.observedDate ?? "") ||
+      !validSha(skillsCandidate.archiveSha256) ||
+      !validSha(probeCandidate.archiveSha256) ||
+      skillsCandidate.archiveSha256 === developerMetadata.sourceSnapshot?.archiveSha256 ||
+      probeCandidate.archiveSha256 === developerMetadata.probeSnapshot?.archiveSha256 ||
+      !/^v\d+\.\d+\.\d+$/.test(skillsCandidate.releaseClaim ?? "") ||
+      !/^v\d+\.\d+\.\d+$/.test(probeCandidate.observedSkillsLockTag ?? "") ||
+      !/^[a-f0-9]{40}$/.test(probeCandidate.observedSkillsLockCommit ?? "") ||
+      !["developerSkills", "skillsProbe"].every(key =>
+        candidateInputs[key]?.origin === "USER_SUPPLIED_ZIP" &&
+        /^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(candidateInputs[key]?.sourceRepository ?? "") &&
+        Number.isSafeInteger(candidateInputs[key]?.fileCount) &&
+        candidateInputs[key].fileCount > 0) ||
+      !Number.isSafeInteger(skillsCandidate.activeSkillDocuments) ||
+      skillsCandidate.activeSkillDocuments < 1 ||
+      !Number.isSafeInteger(probeCandidate.reportsFound) ||
+      probeCandidate.reportsFound < 0) {
+    failures.push(developerMetadataPath +
+      ": pending ZIP intake must retain valid candidate-only provenance, separate from active reference authority.");
+  }
+}
+
 const expectedCounts = [
   ["activeSkillDocuments", developerMetadata.sourceSnapshot?.activeSkillDocuments, skillSources.length],
   ["normalizedPatternCount", developerMetadata.sourceSnapshot?.normalizedPatternCount, patterns.length],

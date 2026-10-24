@@ -1,0 +1,278 @@
+import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { crc32, inflateRawSync } from "node:zlib";
+
+// Read-only, bounded ZIP inspection: never extract, import or execute archive code.
+// No extra runtime dependency or external network access is required.
+const LIMIT = {
+  archiveBytes: 64 * 1024 * 1024,
+  entries: 2500,
+  expandedBytes: 96 * 1024 * 1024,
+  singleFileBytes: 20 * 1024 * 1024,
+  compressionRatio: 400,
+};
+const decoder = new TextDecoder("utf-8", { fatal: true });
+const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const safeNumber = (number, max) => Number.isSafeInteger(number) && number >= 0 && number <= max;
+
+function parseArguments(args) {
+  const options = {};
+  for (let i = 0; i < args.length; i += 2) {
+    const option = args[i];
+    if (!["--skills-zip", "--probe-zip", "--metadata"].includes(option) ||
+        !args[i + 1] || options[option]) {
+      throw new Error("Usage: node tooling/repository/inspect-developer-upstream.mjs --skills-zip <zip> --probe-zip <zip> [--metadata <file>]");
+    }
+    options[option] = args[i + 1];
+  }
+  if (!options["--skills-zip"] || !options["--probe-zip"]) {
+    throw new Error("Both developer skills and Skills Probe ZIPs are required for a paired provenance comparison.");
+  }
+  return options;
+}
+
+function validEntryName(value) {
+  if (!value || value.includes("\\") || value.includes("\0") ||
+      value.startsWith("/") || /^[A-Za-z]:/.test(value)) return false;
+  const normalized = value.endsWith("/") ? value.slice(0, -1) : value;
+  const parts = normalized.split("/");
+  return parts.length <= 18 && parts.every(part =>
+    part.length > 0 && part !== "." && part !== ".." &&
+    !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i.test(part));
+}
+
+async function openArchive(path) {
+  const bytes = await readFile(path);
+  if (bytes.length > LIMIT.archiveBytes) throw new Error("Archive exceeds input size budget.");
+  // The supplied upstream ZIPs use ordinary single-disk ZIP central directories.
+  // Unsupported ZIP64/encryption/multidisk formats fail closed; no fallback extractor.
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); --i) {
+    if (bytes.readUInt32LE(i) === 0x06054b50 &&
+        i + 22 + bytes.readUInt16LE(i + 20) === bytes.length) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) throw new Error("Unsupported or malformed ZIP end record.");
+  const count = bytes.readUInt16LE(eocd + 10);
+  const total = bytes.readUInt16LE(eocd + 8);
+  const centralSize = bytes.readUInt32LE(eocd + 12);
+  const centralOffset = bytes.readUInt32LE(eocd + 16);
+  if (bytes.readUInt16LE(eocd + 4) !== 0 || bytes.readUInt16LE(eocd + 6) !== 0 ||
+      count !== total || count === 0xffff || count > LIMIT.entries ||
+      centralSize === 0xffffffff || centralOffset === 0xffffffff ||
+      centralOffset + centralSize > eocd) {
+    throw new Error("Unsupported ZIP layout or archive entry budget exceeded.");
+  }
+  let at = centralOffset;
+  let expanded = 0;
+  const entries = new Map();
+  const caseNames = new Set();
+  for (let i = 0; i < count; ++i) {
+    if (at + 46 > eocd || bytes.readUInt32LE(at) !== 0x02014b50) {
+      throw new Error("Malformed ZIP central directory.");
+    }
+    const flags = bytes.readUInt16LE(at + 8);
+    const method = bytes.readUInt16LE(at + 10);
+    const expectedCrc = bytes.readUInt32LE(at + 16);
+    const compressed = bytes.readUInt32LE(at + 20);
+    const unpacked = bytes.readUInt32LE(at + 24);
+    const nameLength = bytes.readUInt16LE(at + 28);
+    const extraLength = bytes.readUInt16LE(at + 30);
+    const commentLength = bytes.readUInt16LE(at + 32);
+    const localOffset = bytes.readUInt32LE(at + 42);
+    const externalAttributes = bytes.readUInt32LE(at + 38);
+    const end = at + 46 + nameLength + extraLength + commentLength;
+    if (end > eocd || !safeNumber(unpacked, LIMIT.singleFileBytes) ||
+        !safeNumber(compressed, LIMIT.archiveBytes) || localOffset === 0xffffffff ||
+        (flags & 1) !== 0 || ![0, 8].includes(method)) {
+      throw new Error("Unsupported encrypted, ZIP64, oversized or compressed entry.");
+    }
+    const name = decoder.decode(bytes.subarray(at + 46, at + 46 + nameLength));
+    const isDirectory = name.endsWith("/");
+    const unixFileType = (externalAttributes >>> 16) & 0xf000;
+    if (!validEntryName(name) || unixFileType === 0xa000 ||
+        entries.has(name) || caseNames.has(name.toLowerCase())) {
+      throw new Error("Unsafe, duplicate or symbolic-link ZIP entry: " + name);
+    }
+    caseNames.add(name.toLowerCase());
+    expanded += unpacked;
+    if (!safeNumber(expanded, LIMIT.expandedBytes) ||
+        (compressed === 0 && unpacked > 0) ||
+        (compressed > 0 && unpacked / compressed > LIMIT.compressionRatio) ||
+        (isDirectory && unpacked !== 0)) {
+      throw new Error("Archive expansion budget exceeded.");
+    }
+    entries.set(name, { name, isDirectory, method, compressed, unpacked,
+      expectedCrc, localOffset, flags });
+    at = end;
+  }
+  if (at !== centralOffset + centralSize) throw new Error("ZIP directory length mismatch.");
+  const files = [...entries.values()].filter(entry => !entry.isDirectory);
+  const roots = new Set(files.map(entry => entry.name.split("/")[0]));
+  if (roots.size !== 1 || files.some(entry => !entry.name.includes("/"))) {
+    throw new Error("Archive must contain one enclosing source directory.");
+  }
+  const root = [...roots][0];
+  const available = new Map(files.map(entry => [entry.name.slice(root.length + 1), entry]));
+  function readEntry(relativePath) {
+    const entry = available.get(relativePath);
+    if (!entry) throw new Error("Expected upstream source missing: " + relativePath);
+    const pos = entry.localOffset;
+    if (pos + 30 > centralOffset || bytes.readUInt32LE(pos) !== 0x04034b50) {
+      throw new Error("Malformed ZIP local record: " + relativePath);
+    }
+    const localFlags = bytes.readUInt16LE(pos + 6);
+    const localMethod = bytes.readUInt16LE(pos + 8);
+    const localNameLength = bytes.readUInt16LE(pos + 26);
+    const localExtraLength = bytes.readUInt16LE(pos + 28);
+    const localName = decoder.decode(bytes.subarray(pos + 30, pos + 30 + localNameLength));
+    const dataOffset = pos + 30 + localNameLength + localExtraLength;
+    if (localName !== entry.name || localFlags !== entry.flags ||
+        localMethod !== entry.method || dataOffset + entry.compressed > centralOffset) {
+      throw new Error("ZIP local/central inconsistency: " + relativePath);
+    }
+    const encoded = bytes.subarray(dataOffset, dataOffset + entry.compressed);
+    const decoded = entry.method === 0 ? encoded :
+      inflateRawSync(encoded, { maxOutputLength: entry.unpacked + 1 });
+    if (decoded.length !== entry.unpacked ||
+        crc32(decoded) !== entry.expectedCrc) {
+      throw new Error("ZIP content digest/length mismatch: " + relativePath);
+    }
+    return decoded;
+  }
+  return {
+    archiveSha256: sha(bytes),
+    fileCount: files.length,
+    paths: [...available.keys()].sort(),
+    readEntry,
+    readJson(path) { return JSON.parse(decoder.decode(readEntry(path))); },
+  };
+}
+
+function inventory(archive, paths) {
+  return new Map(paths.map(path => [path, sha(archive.readEntry(path))]));
+}
+
+function compare(previous, current, pathKey = "path", hashKey = "sha256") {
+  const before = new Map(previous.map(item => [item[pathKey], item[hashKey]]));
+  const added = [];
+  const changed = [];
+  const removed = [];
+  let unchanged = 0;
+  for (const [path, digest] of current) {
+    if (!before.has(path)) added.push(path);
+    else if (before.get(path) !== digest) changed.push(path);
+    else ++unchanged;
+  }
+  for (const path of before.keys()) if (!current.has(path)) removed.push(path);
+  return { added: added.sort(), changed: changed.sort(), removed: removed.sort(), unchanged };
+}
+
+const classify = {
+  skills: /^skills\/[^/]+\/SKILL\.md$/,
+  modules: /^modules\/[^/]+\/[^/]+\.ts$/,
+  probeReports: /^docs\/test-runs\/[^/]+\.md$/,
+  probePack: /^packs\/BP\/scripts\/.*\.ts$/,
+  probeTools: /^tools\/.*\.(?:ts|js|mjs)$/,
+};
+
+async function main() {
+  const args = parseArguments(process.argv.slice(2));
+  const metadata = JSON.parse(await readFile(
+    args["--metadata"] ?? "experiments/developer-practice-signals.json", "utf8"));
+  if (metadata.authority !== "REFERENCE" ||
+      metadata.usagePolicy !== "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF") {
+    throw new Error("Refusing comparison against a non-reference metadata owner.");
+  }
+  const [skills, probe] = await Promise.all([
+    openArchive(args["--skills-zip"]), openArchive(args["--probe-zip"]),
+  ]);
+  const skillsManifest = skills.readJson("skills.json");
+  const lock = probe.readJson("skills-lock.json");
+  const declared = new Set((skillsManifest.skills ?? []).map(name =>
+    "skills/" + name + "/SKILL.md"));
+  const active = skills.paths.filter(path => classify.skills.test(path));
+  if (declared.size !== active.length ||
+      active.some(path => !declared.has(path)) ||
+      typeof skillsManifest.version !== "string") {
+    throw new Error("skills.json does not match the ZIP's active SKILL.md files.");
+  }
+  const select = (archive, match) => inventory(
+    archive, archive.paths.filter(path => match.test(path)));
+  const before = metadata.codeInventory ?? {};
+  const skillDelta = compare(metadata.sourceFiles ?? [], select(skills, classify.skills));
+  const moduleAll = select(skills, classify.modules);
+  const moduleDelta = compare(before.codeModules ?? [], new Map(
+    [...moduleAll].filter(([path]) => !/\.(?:test|spec)\.ts$/.test(path))));
+  const moduleTestDelta = compare(before.unitTests ?? [], new Map(
+    [...moduleAll].filter(([path]) => /\.(?:test|spec)\.ts$/.test(path))));
+  const probeReports = compare(metadata.probeEvidence ?? [],
+    select(probe, classify.probeReports), "sourcePath", "sourceSha256");
+  const probePack = compare(before.probePackSources ?? [],
+    select(probe, classify.probePack));
+  const probeTools = compare(before.probeToolSources ?? [],
+    select(probe, classify.probeTools));
+  const candidates = {
+    developerSkills: {
+      origin: "USER_SUPPLIED_ZIP", archiveSha256: skills.archiveSha256,
+      releaseClaim: "v" + skillsManifest.version, fileCount: skills.fileCount,
+      activeSkillDocuments: active.length,
+      declaredRepository: skillsManifest.repo ?? null,
+    },
+    skillsProbe: {
+      origin: "USER_SUPPLIED_ZIP", archiveSha256: probe.archiveSha256,
+      fileCount: probe.fileCount,
+      observedSkillsLockTag: lock.tag ?? null,
+      observedSkillsLockCommit: lock.commit ?? null,
+      declaredRepository: lock.repo ?? null,
+      reportsFound: probe.paths.filter(path => classify.probeReports.test(path)).length,
+    },
+  };
+  const impactedSkills = new Set([...skillDelta.changed, ...skillDelta.removed].map(path =>
+    path.slice("skills/".length, -"/SKILL.md".length)));
+  const affectedPatterns = (metadata.patterns ?? [])
+    .filter(pattern => impactedSkills.has(pattern.sourceId?.replace(/^src\./, "")))
+    .map(pattern => ({ id: pattern.id, sourceId: pattern.sourceId,
+      action: "REVIEW_BEFORE_RETAINING_SOURCE_REVIEWED" }));
+  const pending = metadata.pendingIntake;
+  const recordedPendingMatches = pending?.status === "PENDING_SEMANTIC_REVIEW" &&
+    pending?.inputs?.developerSkills?.archiveSha256 === skills.archiveSha256 &&
+    pending?.inputs?.skillsProbe?.archiveSha256 === probe.archiveSha256;
+  const result = {
+    schemaVersion: 1,
+    authority: "REFERENCE",
+    status: "PENDING_SEMANTIC_REVIEW",
+    executableBehavior: "READ_ONLY_NO_UPSTREAM_CODE_EXECUTION",
+    activeBaseline: {
+      skillsSha256: metadata.sourceSnapshot?.archiveSha256,
+      skillsRelease: metadata.sourceSnapshot?.release,
+      probeSha256: metadata.probeSnapshot?.archiveSha256,
+      probeSkillsLock: metadata.probeSnapshot?.observedSkillsLockTag,
+    },
+    candidate: candidates,
+    recordedPendingMatches,
+    versionBoundary: {
+      skillsReleaseMatchesProbeLock:
+        candidates.developerSkills.releaseClaim === candidates.skillsProbe.observedSkillsLockTag,
+      proof: "UPSTREAM_PROBE_REPORTS_NOT_LOCAL_MINECRAFT_OR_SELECTED_MAP_PROOF",
+    },
+    delta: {
+      skills: skillDelta,
+      moduleImplementations: moduleDelta,
+      moduleTests: moduleTestDelta,
+      probeReports,
+      probePackSources: probePack,
+      probeTools,
+    },
+    affectedPatterns,
+    decision: "REVIEW_PER_SOURCE_AND_CONSUMER_NO_AUTOMATIC_PROMOTION",
+  };
+  process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+}
+
+main().catch(error => {
+  console.error("Developer upstream intake blocked: " + error.message);
+  process.exitCode = 1;
+});

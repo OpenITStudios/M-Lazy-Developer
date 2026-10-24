@@ -191,6 +191,17 @@ These responsibilities may compose each other but must not become independent pr
 - Upstream developer ZIP signals: `experiments/developer-practice-signals.json`.
   Its source SHA and report provenance are comparison records, not authority
   for map gameplay.
+- External skill/probe refresh (development-side, **not** a map-audit
+  stage): `tooling/repository/inspect-developer-upstream.mjs` compares bounded
+  user-provided ZIPs read-only; the only durable metadata owner is
+  `experiments/developer-practice-signals.json` (`pendingIntake` for
+  unreviewed candidates, existing `sourceSnapshot` / `probeSnapshot` /
+  `sourceFiles` / `patterns` / `probeEvidence` for active references).
+  The operator reviews source/consumers under
+  [Developer-Practice Knowledge](../analysis/developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion);
+  `workflow/resource-context.ts` remains the one conditional selector.
+  Neither the ZIP nor pending metadata defines an internal agent skill,
+  current-map contract, or Minecraft runtime proof.
 
 ### Existing governance verifiers — enforcement, not semantic ownership
 
