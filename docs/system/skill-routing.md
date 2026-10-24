@@ -16,6 +16,35 @@ Skills are routed on **two dimensions**:
 
 Do not use a domain skill to infer the work lane.
 
+## External Bedrock skills are not internal work lanes
+
+The original developer `bedrock-*` skills are a **source-owned technical
+methodology domain**, keyed by their native `skills.json`, whole-folder hashes,
+`SKILL.md` and module manifests. Their names must not be added to the internal
+`.agents/skill-registry.json` as new work lanes or silently activated as
+ChatGPT instructions. Existing lane permissions and one-domain-specialist
+routing remain intact.
+
+Skills Probe is an **independently versioned evidence source**, not another
+work lane or automatically executed verification service. Its native clean
+examples distinguish `status`, `nodeStatus`, `engineStatus`, and the
+test-target/skills-lock revision. Probes and test-pack examples may be
+deliberately broken; upstream PASS only applies to its original claim.
+
+For source-only map interpretation, continue through the existing
+`m-bedrock-content-analysis` domain specialist. Only after selected-map
+Semantic IR/source evidence and an actual question match a reviewed pattern
+may the existing `compileDeveloperPracticeReferenceContext()` supply a
+bounded developer-method reference and associated clean-example status.
+Missing source/unknown version must remain UNKNOWN. Updating these references
+uses SYSTEM DEVELOPMENT; an operational Map Audit never edits them.
+
+The **single product flow** is defined at
+[Product Flow](../product/flow.md#publisher-aligned-bedrock-skills-and-skills-probe-evidence).
+Native source identity and update details are routed through
+[Native Bedrock Skills](../../skills/bedrock/README.md). These are
+source-selection rules, not a parallel map-audit coordinator.
+
 ## User-facing modes
 
 Two **ChatGPT Chat** operator modes select the appropriate source/evidence route. M-Lazy-Developer checks accessible selected Minecraft maps provided through Google Drive, using GitHub `Local` for source/knowledge. Names such as `engine`, `pipeline`, `production`, `UI` and `CLI` in repository files describe code/contracts until actual execution is verified:

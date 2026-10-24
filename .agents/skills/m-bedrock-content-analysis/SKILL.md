@@ -35,6 +35,20 @@ single reviewed reference-pattern owner. The v0.27.0 native package is a
 candidate; the v0.24.0 curated patterns are still the active map-audit
 context until reviewed and promoted.
 
+## Separately locked Skills Probe examples
+
+The source-pinned `docs/examples/index.json` from Skills Probe is indexed
+in the existing `experiments/developer-practice-signals.json#probeExamples`.
+It preserves the probe ZIP target/lock, example ID, statuses and original
+source/report path. `nodeStatus=PASS` is not `engineStatus=PASS`, and
+`status=PASS` alone need not claim new engine behavior. A probe's intentionally
+broken experimental test is never a recommended developer method.
+The source selector can attach at most two example pointers to an already
+selected, reviewed skill. To inspect its actual source, use the read-only
+`--probe-zip --mode probe` or `--read-probe-example` / `--read-probe-report`
+operator route when the ZIP is accessible. Do not reroute a selected map
+to this external test project or claim that its tests were executed here.
+
 ## External developer-practice reference boundary
 
 When selected-artifact evidence raises a specific semantic question,

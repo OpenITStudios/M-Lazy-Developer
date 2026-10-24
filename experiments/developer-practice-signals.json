@@ -2480,5 +2480,225 @@
       }
     },
     "reviewBoundary": "Whole-archive and per-file deltas require source/consumer review; no updated ZIP text, scripts, upstream PASS or version claims are admitted automatically."
+  },
+  "probeExamples": {
+    "schemaVersion": 1,
+    "authority": "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF",
+    "sourceArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+    "indexPath": "docs/examples/index.json",
+    "indexSha256": "5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630",
+    "sourceSkillLockTag": "v0.23.0",
+    "sourceSkillLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
+    "target": {
+      "client": "education 26.32",
+      "engine": "1.26.30"
+    },
+    "entries": [
+      {
+        "id": "E1",
+        "skill": "bedrock-script-optimization",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P52"
+        ],
+        "report": "docs/test-runs/2026-10-17-t17-agent.md",
+        "sourcePath": "packs/BP/scripts/probe/examples/optimization/state.test.ts"
+      },
+      {
+        "id": "E2",
+        "skill": "bedrock-entity-lifecycle",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P53",
+          "P53END"
+        ],
+        "report": "docs/test-runs/2026-10-17-t19-agent.md",
+        "sourcePath": "packs/BP/scripts/probe/examples/lifecycle/player-state.test.ts"
+      },
+      {
+        "id": "E3",
+        "skill": "bedrock-entity-creation",
+        "status": "PASS",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P38",
+          "P54",
+          "P54R",
+          "P54END"
+        ],
+        "report": "docs/test-runs/2026-10-17-t15-agent.md",
+        "sourcePath": "packs/BP/scripts/probe/examples/optimization/placements.test.ts"
+      },
+      {
+        "id": "E4",
+        "skill": "bedrock-debug-profiling",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P41",
+          "P46",
+          "P50"
+        ],
+        "report": "docs/test-runs/2026-10-17-t18-agent.md",
+        "sourcePath": "docs/examples/diagnostics/README.md"
+      },
+      {
+        "id": "E5",
+        "skill": "bedrock-forms",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P55",
+          "P05"
+        ],
+        "report": "docs/examples/README.md",
+        "sourcePath": "packs/BP/scripts/probe/examples/forms/forms.test.ts"
+      },
+      {
+        "id": "E6",
+        "skill": "bedrock-onscreen-display",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P56",
+          "P56S",
+          "P56P",
+          "P56C",
+          "P56I",
+          "P56L",
+          "P56X"
+        ],
+        "report": "docs/examples/README.md",
+        "sourcePath": "packs/BP/scripts/probe/examples/display/quest-card.test.ts"
+      },
+      {
+        "id": "E7",
+        "skill": "bedrock-game-results",
+        "status": "PASS",
+        "nodeStatus": "PASS",
+        "engineStatus": "PASS",
+        "probeIds": [
+          "P51",
+          "P35"
+        ],
+        "report": "docs/test-runs/2026-10-22-p51-results-agent.md",
+        "sourcePath": "packs/BP/scripts/probe/examples/game-results/adapter.test.ts"
+      },
+      {
+        "id": "E8",
+        "skill": "bedrock-text-glyphs",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P57",
+          "P57F",
+          "P57A0",
+          "P57A1",
+          "P57A2",
+          "P57A3",
+          "P57A4",
+          "P57A5",
+          "P57A6",
+          "P57A7",
+          "P57T0",
+          "P57T1",
+          "P57T2",
+          "P57T3",
+          "P57T4",
+          "P57T5",
+          "P57T6",
+          "P57T7",
+          "P57N0",
+          "P57N1",
+          "P57N2",
+          "P57N3",
+          "P57N4",
+          "P57N5",
+          "P57N6",
+          "P57N7"
+        ],
+        "report": "docs/test-runs/2026-10-22-p50-glyphs-run2.md",
+        "sourcePath": "docs/examples/glyphs/README.md"
+      },
+      {
+        "id": "E9",
+        "skill": "bedrock-release-export",
+        "status": "PASS",
+        "nodeStatus": null,
+        "engineStatus": null,
+        "probeIds": [],
+        "report": "docs/examples/release/README.md",
+        "sourcePath": "bedrock-target.json"
+      },
+      {
+        "id": "G1",
+        "skill": "bedrock-content",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P58"
+        ],
+        "report": null,
+        "sourcePath": "packs/BP/scripts/probe/examples/gaps/content.ts"
+      },
+      {
+        "id": "G2",
+        "skill": "bedrock-forms",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P59"
+        ],
+        "report": null,
+        "sourcePath": "packs/BP/scripts/probe/examples/gaps/forms.ts"
+      },
+      {
+        "id": "G3",
+        "skill": "bedrock-sound",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P60"
+        ],
+        "report": null,
+        "sourcePath": "packs/BP/scripts/probe/examples/gaps/sound.ts"
+      },
+      {
+        "id": "G4",
+        "skill": "bedrock-teleport",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P61"
+        ],
+        "report": null,
+        "sourcePath": "packs/BP/scripts/probe/examples/gaps/teleport.ts"
+      },
+      {
+        "id": "G5",
+        "skill": "bedrock-game-time",
+        "status": "pending",
+        "nodeStatus": "PASS",
+        "engineStatus": "pending",
+        "probeIds": [
+          "P62"
+        ],
+        "report": null,
+        "sourcePath": "packs/BP/scripts/probe/examples/gaps/countdown.ts"
+      }
+    ]
   }
 }

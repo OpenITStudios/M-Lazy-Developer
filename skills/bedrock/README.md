@@ -53,6 +53,29 @@ imports upstream code, runs scripts, mutates the source ZIP or fetches private
 GitHub. Targeted source reads are labelled `UNTRUSTED_UPSTREAM_REFERENCE`.
 These are ChatGPT-owned inspection operations, not required user-PC commands.
 
+### Independent Skills Probe intake and evidence
+
+Skills Probe has a separate `skills-lock.json`, `modules-lock.json`,
+`bedrock-target.json`, experimental probe sources/reports and
+`docs/examples/index.json`. **The probe ZIP can update without any new
+developer-skills ZIP.** Invoke the existing read-only inspector with:
+
+```text
+--probe-zip <probe.zip> --mode probe
+--probe-zip <probe.zip> --read-probe-example E3
+--probe-zip <probe.zip> --read-probe-report docs/test-runs/<name>.md
+```
+
+The source-index metadata for 14 example rows (three upstream-index
+PASS, eleven pending) is held by
+`experiments/developer-practice-signals.json#probeExamples`, not in an
+additional evidence registry. Its independent lock is v0.23.0; the
+developer native skill ZIP claims v0.27.0. Preserve the two versions.
+`nodeStatus`, `engineStatus` and overall example `status` must remain
+separate; experimental probes can be deliberately broken.
+The original probe code and reports remain untrusted source, never
+automatically executed or installed into this repo.
+
 ### Routing into the existing product
 
 ```text

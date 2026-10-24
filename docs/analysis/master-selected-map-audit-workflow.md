@@ -33,6 +33,33 @@ The Pre-Audit Plan is a communication gate only. It is not an audit stage, gamep
 
 Use this document to know what happens next, what must exist before moving on, and where specialist evidence feeds the same canonical flow.
 
+## Source-linked Bedrock skill and probe context
+
+At UNDERSTAND (never as another checkpoint), the existing model task may
+select a source-reviewed developer method only after the **selected map**
+provides a matching source locator, typed Semantic IR witness and relevant
+question. The bounded context may include an original upstream skill/module
+locator, its negative control, earlier scoped probe reports, and entries
+from the separately locked Skills Probe `docs/examples/index.json`.
+All references are `REFERENCE`; no upstream script, test pack, agent
+instruction or world fixture is executed by retrieval.
+
+Keep Skills Probe example `status`, `nodeStatus` and `engineStatus`
+distinct. An upstream example PASS, Node PASS, or in-game report about
+Education 26.32 cannot certify current-map operation or define its intended
+design. Every report remains scoped to the original source, client/edition,
+probe fixture, commit/lock and unresolved cases. If the developer skill
+release differs from the probe's lock, never treat them as the same tested
+source revision.
+
+The source-selection owner remains
+`engine/packages/orchestrator/src/workflow/resource-context.ts`; the
+input metadata owner remains `experiments/developer-practice-signals.json`.
+An unmatched skill, absent ZIP, unknown compatibility or missing real map
+witness causes an **abstention**, not a fabricated mechanic or a second audit
+stage. The full decision/owner matrix lives only in
+[Product Flow](../product/flow.md#publisher-aligned-bedrock-skills-and-skills-probe-evidence).
+
 ## Operational decision order
 
 The short source-grounded decision cycle, including stage inputs and

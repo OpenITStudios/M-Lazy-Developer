@@ -17,28 +17,86 @@ For gameplay audit, one exact selected `.mcworld` is the only current gameplay a
 
 Historical QA, old map versions, Development/Source, changelogs, and external documents may support comparison/calibration only. They never silently define current Expected Behavior.
 
-## Optional developer reference refresh — outside the selected-map run
+## Publisher-aligned Bedrock skills and Skills Probe evidence
+
+**One product workflow, two independent upstream sources.** The native developer
+skills repository defines individual `bedrock-*` methodologies, complete
+`skills/<name>/` folder identities, module manifests/`requires` and
+release/hash locks. The Skills Probe repository separately defines the target,
+its installed skills/modules lock, experimental fixtures, clean examples in
+`docs/examples/index.json`, and source-scoped reports. These are developer
+method and test-evidence authorities **for their own source projects**; they
+are not the expected design or executed gameplay of an arbitrary map.
+
+There are two entry routes with **one shared canonical source/reference owner**:
 
 ```text
-Developer skills ZIP + Skills Probe ZIP / verifiable upstream snapshots
-→ read-only bounded delta inspection
-→ existing REFERENCE metadata (unreviewed candidate, then reviewed source)
-→ optional selected-source context at UNDERSTAND
+SYSTEM DEVELOPMENT / source refresh
+  skills ZIP or verified immutable upstream ref
+    → skills.json → whole-folder skill hashes → module.json/requires → source lock
+  Skills Probe ZIP or verified immutable upstream ref (may update separately)
+    → bedrock-target.json + skills/modules locks
+    → clean-examples index + individually scoped reports
+  → read-only comparison and source/consumer review
+  → experiments/developer-practice-signals.json (curated REFERENCE metadata)
+  → approved bounded engine/knowledge improvement, if demonstrated
+
+MAP BUG AUDIT / selected world
+  exact .mcworld + selected-map source IDs
+  → DISCOVERY → typed Semantic IR/Gameplay Intent
+  → UNDERSTAND: up to two relevant *reviewed* developer reference patterns
+     plus separately versioned clean-example/report pointers when applicable
+  → FORMALIZE → EVALUATE → PROVE → REPORT
 ```
 
-The developer ZIP uses a separate native skills domain at
-`skills/bedrock/README.md` and its source lock. Individual upstream skills and
-module dependencies retain native names/identities; this is a non-executable
-source reference, **not** a replacement for `.agents/skills/` or a new
-map-audit stage. The selected map is always gameplay authority.
+The first route is development intake, **not** a new gameplay-audit stage.
+The second route never installs or executes external `SKILL.md`, developer
+modules, test-pack code, or agent commands. The selected map remains the only
+authority on its authored gameplay; an upstream coding preference is not a
+map defect. Source-level references can clarify *what to investigate* but
+cannot close a checkpoint or turn a candidate into a proven finding.
 
-The operator-side refresh is routed through
-[Developer-Practice Knowledge](../analysis/developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion);
-its one metadata owner is `experiments/developer-practice-signals.json`.
-Candidate ZIP information never changes `.agents/skill-registry.json`,
-the selected map's source/Expected Behavior, or any mandatory audit checkpoint.
-Only reviewed, source-matched references may inform investigation; they
-cannot independently produce a finding or change gameplay.
+### Repository ownership and operating boundaries
+
+| Responsibility | One authoritative owner |
+|---|---|
+| Native skill/module release identity and lock | `skills/bedrock/source-lock.json` |
+| Read-only ZIP/lock/index inspection | `tooling/repository/inspect-developer-upstream.mjs` |
+| Reviewed interpretations, external probe reports and clean-example index | `experiments/developer-practice-signals.json` |
+| Source-evidence-matched context selection | `engine/packages/orchestrator/src/workflow/resource-context.ts` |
+| Facts about Minecraft editions/Script API | `engine/knowledge/`, only after independent version-scoped validation |
+| Selected-map flow and evidence admission | Existing `runSelectedMapAudit()` / source review, no second entrypoint |
+| Agent task permissions and skill lanes | `.agents/skill-registry.json` and `docs/system/skill-routing.md` |
+
+Only hashes, identities, status dimensions and safe source references are
+persisted for the private upstream ZIPs. Exact ZIP bytes must be accessible
+again for full reinspection; a SHA alone cannot reconstruct the source.
+The original scripts/modules are **not** installed into our public repository.
+
+### Evidence statuses must never be conflated
+
+An example's `status`, `nodeStatus`, and `engineStatus` are independent,
+upstream-reported fields. An index `PASS` can describe a narrow pattern;
+a Node `PASS` never implies Minecraft rendering or gameplay `PASS`.
+For example, the source index labels E3 `PASS` while its additional engine
+cases remain `pending`; E9 `PASS` only checks a naming convention.
+An experimental probe can deliberately contain broken fixtures. All test
+claims keep their original client version, commit/lock, source path, report
+and unresolved conditions. Matching the current map's actual Edition,
+target and implementation remains a separate step.
+
+**Current snapshot separation:** reviewed developer methods are still pinned
+to v0.24.0; native developer v0.27.0 is a source candidate; Skills Probe is
+independently locked to v0.23.0. The original 14 example-index entries were
+inspected as *upstream source metadata*, not replayed in Minecraft. They may
+be displayed only as scoped reference questions attached to an already
+selected, reviewed pattern. The source/consumer review must explicitly
+promote any newly changed method; there is no automatic update of all
+23 developer skills.
+
+See [Developer-Practice Context](../analysis/developer-practice-context.md)
+for review rules and [Native Bedrock Skills](../../skills/bedrock/README.md)
+for the independent source/lock contract.
 
 ## Primary outcome — understand the map and report deviations
 
@@ -223,8 +281,8 @@ canonical proof gate always decide the map finding.
 
 ### External developer source: comparison, never replacement
 
-The supplied `minecraft-bedrock-agent-skills` v0.24.0 and
-`skills-probe` references are optional, versioned **REFERENCE** input
+The reviewed `minecraft-bedrock-agent-skills` v0.24.0 methods and
+separately versioned `skills-probe` metadata are optional **REFERENCE** input
 to a source-grounded model task. The path is:
 
 ```text

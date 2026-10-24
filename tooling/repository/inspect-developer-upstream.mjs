@@ -1,4 +1,4 @@
-import { nativeSourceLayout, verifyProbeLock, readNativeSkill, readNativeModule } from "./developer-native-contract.mjs";
+import { nativeSourceLayout, verifyProbeLock, readNativeSkill, readNativeModule, readProbeExampleIndex, readProbeReport } from "./developer-native-contract.mjs";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { crc32, inflateRawSync } from "node:zlib";
@@ -20,16 +20,21 @@ function parseArguments(args) {
   const options = {};
   for (let i = 0; i < args.length; i += 2) {
     const option = args[i];
-    if (!["--skills-zip", "--probe-zip", "--metadata", "--read-skill", "--read-module", "--mode"].includes(option) ||
+    if (!["--skills-zip", "--probe-zip", "--metadata", "--read-skill", "--read-module", "--read-probe-example", "--read-probe-report", "--mode"].includes(option) ||
         !args[i + 1] || options[option]) {
       throw new Error("Usage: node tooling/repository/inspect-developer-upstream.mjs --skills-zip <zip> --probe-zip <zip> [--metadata <file>]");
     }
     options[option] = args[i + 1];
   }
-  if (!options["--skills-zip"] ||
-      options["--mode"] && !["diff", "native", "lock"].includes(options["--mode"]) ||
-      options["--read-skill"] && options["--read-module"]) {
-    throw new Error("Provide --skills-zip <zip>, optional --probe-zip <zip>, --mode diff|native|lock, or one --read-skill/--read-module <name>.");
+  const readers = ["--read-skill", "--read-module", "--read-probe-example", "--read-probe-report"];
+  if ((!options["--skills-zip"] && !options["--probe-zip"]) ||
+      (options["--mode"] && !["diff", "native", "lock", "probe"].includes(options["--mode"])) ||
+      readers.filter(name => options[name]).length > 1 ||
+      ((options["--read-probe-example"] || options["--read-probe-report"] ||
+        options["--mode"] === "probe") && !options["--probe-zip"]) ||
+      ((options["--read-skill"] || options["--read-module"] ||
+        ["diff", "native", "lock"].includes(options["--mode"])) && !options["--skills-zip"])) {
+    throw new Error("Provide either or both --skills-zip and --probe-zip; use --mode diff|native|lock for skills or --mode probe for independent Skills Probe, and at most one --read-* selector.");
   }
   return options;
 }
@@ -190,9 +195,40 @@ async function main() {
     throw new Error("Refusing comparison against a non-reference metadata owner.");
   }
   const [skills, probe] = await Promise.all([
-    openArchive(args["--skills-zip"]),
+    args["--skills-zip"] ? openArchive(args["--skills-zip"]) : Promise.resolve(null),
     args["--probe-zip"] ? openArchive(args["--probe-zip"]) : Promise.resolve(null),
   ]);
+  // Skills Probe evolves independently of the developer skills release.
+  // A probe-only input can be reviewed without pretending it matches v0.27.0.
+  if (probe && (args["--mode"] === "probe" ||
+      args["--read-probe-example"] || args["--read-probe-report"])) {
+    const index = readProbeExampleIndex(probe);
+    if (args["--read-probe-report"]) {
+      process.stdout.write(JSON.stringify(
+        readProbeReport(probe, args["--read-probe-report"]), null, 2) + "\n");
+      return;
+    }
+    if (args["--read-probe-example"]) {
+      const item = index.entries.find(entry => entry.id === args["--read-probe-example"]);
+      if (!item) throw new Error("Unknown clean example: " + args["--read-probe-example"]);
+      process.stdout.write(JSON.stringify({
+        authority: "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF",
+        sourceArchiveSha256: probe.archiveSha256,
+        indexSha256: index.indexSha256,
+        target: index.target, sourceSkillLockTag: index.sourceSkillLockTag,
+        example: item,
+      }, null, 2) + "\n");
+      return;
+    }
+    process.stdout.write(JSON.stringify({
+      ...index,
+      reportFiles: probe.paths.filter(path => classify.probeReports.test(path))
+        .map(path => ({ path, sha256: sha(probe.readEntry(path)) })),
+      policy: "A clean example PASS may be narrow or non-runtime; an experimental probe may be deliberately broken. Never treat the index or report as current-map gameplay proof.",
+    }, null, 2) + "\n");
+    return;
+  }
+  if (!skills) throw new Error("Skills ZIP required unless --mode probe or a probe read is selected.");
   const skillsManifest = skills.readJson("skills.json");
   const native = nativeSourceLayout(skills, skillsManifest);
   if (args["--read-skill"] || args["--read-module"]) {

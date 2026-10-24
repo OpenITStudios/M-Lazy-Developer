@@ -223,6 +223,32 @@ export interface DeveloperPracticeReferenceData {
       readonly kind: string;
     }[];
   };
+  /** Immutable Skills Probe clean-example index from the supplied, separately
+   * locked probe ZIP. These metadata rows are NOT observed selected-map proof.
+   */
+  readonly probeExamples?: {
+    readonly schemaVersion: 1;
+    readonly authority: "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF";
+    readonly sourceArchiveSha256: string;
+    readonly indexPath: "docs/examples/index.json";
+    readonly indexSha256: string;
+    readonly sourceSkillLockTag: string;
+    readonly sourceSkillLockCommit: string;
+    readonly target: { readonly client: string; readonly engine: string };
+    readonly entries: readonly {
+      readonly id: string;
+      readonly skill: string;
+      readonly status: "PASS" | "pending";
+      readonly nodeStatus: string | null;
+      readonly engineStatus: string | null;
+      readonly probeIds: readonly string[];
+      readonly report: string | null;
+      readonly sourcePath: string;
+    }[];
+  };
+  readonly probeSnapshot?: {
+    readonly observedSkillsLockTag: string;
+  };
   /** Scope-limited, historical upstream test reports (not map evidence). */
   readonly probeEvidence?: readonly {
     readonly id: string;
@@ -538,6 +564,24 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly sha256: string;
       readonly kind: "SKILL_TOOL_SOURCE_REFERENCE";
     }[];
+    /** Independently versioned, externally reported clean examples. An index
+     * PASS never implies observed gameplay for the selected map; even E3 has
+     * an upstream index PASS with engineStatus still pending.
+     */
+    readonly cleanExamples?: readonly {
+      readonly id: string;
+      readonly status: "PASS" | "pending";
+      readonly nodeStatus: string | null;
+      readonly engineStatus: string | null;
+      readonly sourcePath: string;
+      readonly probeIds: readonly string[];
+      readonly report: string | null;
+      readonly indexSha256: string;
+      readonly sourceArchiveSha256: string;
+      readonly sourceSkillLockTag: string;
+      readonly target: { readonly client: string; readonly engine: string };
+      readonly proof: "UPSTREAM_SOURCE_INDEX_ONLY_NOT_SELECTED_MAP_PROOF";
+    }[];
     /** Upstream probes are investigation clues only, not bug proof. */
     readonly upstreamProbes?: readonly {
       readonly id: string;
@@ -627,6 +671,14 @@ export function compileDeveloperPracticeReferenceContext(input: {
   if (queryDomains.size === 0 || candidatesObserved.length === 0) return undefined;
   const sourceById = new Map(data.sourceFiles.map(file => [file.id, file]));
   const sorted = (items: readonly string[]) => [...new Set(items)].sort();
+  const cleanIndex = data.probeExamples;
+  const cleanIndexEligible = cleanIndex?.schemaVersion === 1 &&
+    cleanIndex.authority === "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF" &&
+    cleanIndex.indexPath === "docs/examples/index.json" &&
+    /^[a-f0-9]{64}$/.test(cleanIndex.indexSha256) &&
+    /^[a-f0-9]{64}$/.test(cleanIndex.sourceArchiveSha256) &&
+    cleanIndex.sourceSkillLockTag === data.probeSnapshot?.observedSkillsLockTag &&
+    /^v\d+\.\d+\.\d+$/.test(cleanIndex.sourceSkillLockTag);
   const candidates = data.patterns.flatMap(pattern => {
     if (pattern.status !== "SOURCE_REVIEWED" &&
         pattern.status !== "CORROBORATED") return [];
@@ -755,6 +807,31 @@ export function compileDeveloperPracticeReferenceContext(input: {
             item.ownerSkill === source.id)
           .slice(0, 4)
           .map((item) => ({ path: item.path, sha256: item.sha256 })),
+      }),
+      ...(!cleanIndexEligible || cleanIndex === undefined ? {} : {
+        cleanExamples: cleanIndex.entries
+          .filter(entry => entry.skill === source.id.replace(/^src\./, "") &&
+            /^[A-Z]\d{1,3}$/.test(entry.id) &&
+            ["PASS", "pending"].includes(entry.status) &&
+            typeof entry.sourcePath === "string" &&
+            entry.sourcePath.length > 0 &&
+            Array.isArray(entry.probeIds))
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .slice(0, 2)
+          .map(entry => ({
+            id: entry.id,
+            status: entry.status,
+            nodeStatus: entry.nodeStatus,
+            engineStatus: entry.engineStatus,
+            sourcePath: entry.sourcePath,
+            probeIds: [...entry.probeIds],
+            report: entry.report,
+            indexSha256: cleanIndex.indexSha256,
+            sourceArchiveSha256: cleanIndex.sourceArchiveSha256,
+            sourceSkillLockTag: cleanIndex.sourceSkillLockTag,
+            target: { ...cleanIndex.target },
+            proof: "UPSTREAM_SOURCE_INDEX_ONLY_NOT_SELECTED_MAP_PROOF" as const,
+          })),
       }),
       ...(data.probeEvidence === undefined ? {} : {
         upstreamProbes: data.probeEvidence

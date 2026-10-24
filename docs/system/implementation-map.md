@@ -181,6 +181,31 @@ The following root `map-audit-*.ts` files own the canonical audit contract and d
 
 These responsibilities may compose each other but must not become independent production entrypoints or separate sources of gameplay truth. Their ownership is backed by current exports/source; this table is navigation guidance, not a new machine registry. Rename, merge or move only if overlapping *behavior* (not similar words or file size) is proven and all consumers can be migrated.
 
+### External publisher skill and probe evidence ownership
+
+The authoritative pipeline is described in
+[Product Flow](../product/flow.md#publisher-aligned-bedrock-skills-and-skills-probe-evidence).
+The source publisher retains the original skill/module layout and has
+**separate revisions** from the probe's test pack and clean examples.
+Within Lazy-Developer:
+
+- `skills/bedrock/source-lock.json` pins individual developer skill folder
+  hashes, module manifest identities and dependency edges; it is not
+  installed agent policy.
+- `tooling/repository/developer-native-contract.mjs` and
+  `inspect-developer-upstream.mjs` provide bounded source-only reads
+  and clean-example/report inventory for either ZIP independently.
+- `experiments/developer-practice-signals.json` remains the single curated
+  analysis-reference owner, including `probeExamples` from the separately
+  pinned native index and `probeEvidence` report provenance.
+- `engine/packages/orchestrator/src/workflow/resource-context.ts` remains
+  the **one consumer** for selected-source-matched developer methods and
+  scoped clean examples; `map-audit-model-task.ts` is its existing
+  model-facing handoff. No new audit entrypoint or checkpoint exists.
+- `engine/knowledge/` remains the independent authority for
+  version-scoped Minecraft facts; publisher examples alone are insufficient
+  for promotion.
+
 ### Selected-source reference and continuation boundaries
 
 - Source locator grammar: `engine/packages/project-model/src/project/source-ref.ts`.

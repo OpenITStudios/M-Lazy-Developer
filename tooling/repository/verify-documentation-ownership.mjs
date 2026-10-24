@@ -202,34 +202,42 @@ const sourceById = new Set(skillSources.map(item => item.id));
 const validSha = value => typeof value === "string" &&
   /^[a-f0-9]{64}$/.test(value);
 
-// Pending ZIP intake is only a read-only candidate. It must not rewrite the
-// currently reviewed sourceSnapshot/probeSnapshot or become map-audit authority.
+// Skills and Skills Probe can advance separately; at least one independent
+// source may be pending, and the other may already be the reviewed version.
+// A pending source must never be promoted merely because its companion moved.
 const pendingIntake = developerMetadata.pendingIntake;
 if (pendingIntake !== undefined) {
-  const candidateInputs = pendingIntake.inputs ?? {};
-  const skillsCandidate = candidateInputs.developerSkills ?? {};
-  const probeCandidate = candidateInputs.skillsProbe ?? {};
+  const inputs = pendingIntake.inputs ?? {};
+  const pendingNames = Object.keys(inputs);
+  const hasSkills = Object.hasOwn(inputs, "developerSkills");
+  const hasProbe = Object.hasOwn(inputs, "skillsProbe");
+  const generic = item =>
+    item?.origin === "USER_SUPPLIED_ZIP" &&
+    typeof item?.sourceRepository === "string" &&
+    /^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(item.sourceRepository) &&
+    validSha(item?.archiveSha256) &&
+    Number.isSafeInteger(item?.fileCount) &&
+    item.fileCount > 0;
   if (pendingIntake.status !== "PENDING_SEMANTIC_REVIEW" ||
       pendingIntake.usagePolicy !== "CANDIDATE_ONLY_NOT_ACTIVE_IN_MAP_AUDIT" ||
       !/^\d{4}-\d{2}-\d{2}$/.test(pendingIntake.observedDate ?? "") ||
-      !validSha(skillsCandidate.archiveSha256) ||
-      !validSha(probeCandidate.archiveSha256) ||
-      skillsCandidate.archiveSha256 === developerMetadata.sourceSnapshot?.archiveSha256 ||
-      probeCandidate.archiveSha256 === developerMetadata.probeSnapshot?.archiveSha256 ||
-      !/^v\d+\.\d+\.\d+$/.test(skillsCandidate.releaseClaim ?? "") ||
-      !/^v\d+\.\d+\.\d+$/.test(probeCandidate.observedSkillsLockTag ?? "") ||
-      !/^[a-f0-9]{40}$/.test(probeCandidate.observedSkillsLockCommit ?? "") ||
-      !["developerSkills", "skillsProbe"].every(key =>
-        candidateInputs[key]?.origin === "USER_SUPPLIED_ZIP" &&
-        /^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(candidateInputs[key]?.sourceRepository ?? "") &&
-        Number.isSafeInteger(candidateInputs[key]?.fileCount) &&
-        candidateInputs[key].fileCount > 0) ||
-      !Number.isSafeInteger(skillsCandidate.activeSkillDocuments) ||
-      skillsCandidate.activeSkillDocuments < 1 ||
-      !Number.isSafeInteger(probeCandidate.reportsFound) ||
-      probeCandidate.reportsFound < 0) {
+      pendingNames.length < 1 ||
+      pendingNames.some(name => !["developerSkills", "skillsProbe"].includes(name)) ||
+      (hasSkills && (
+        !generic(inputs.developerSkills) ||
+        inputs.developerSkills.archiveSha256 === developerMetadata.sourceSnapshot?.archiveSha256 ||
+        !/^v\d+\.\d+\.\d+$/.test(inputs.developerSkills.releaseClaim ?? "") ||
+        !Number.isSafeInteger(inputs.developerSkills.activeSkillDocuments) ||
+        inputs.developerSkills.activeSkillDocuments < 1)) ||
+      (hasProbe && (
+        !generic(inputs.skillsProbe) ||
+        inputs.skillsProbe.archiveSha256 === developerMetadata.probeSnapshot?.archiveSha256 ||
+        !/^v\d+\.\d+\.\d+$/.test(inputs.skillsProbe.observedSkillsLockTag ?? "") ||
+        !/^[a-f0-9]{40}$/.test(inputs.skillsProbe.observedSkillsLockCommit ?? "") ||
+        !Number.isSafeInteger(inputs.skillsProbe.reportsFound) ||
+        inputs.skillsProbe.reportsFound < 0))) {
     failures.push(developerMetadataPath +
-      ": pending ZIP intake must retain valid candidate-only provenance, separate from active reference authority.");
+      ": each independently pending ZIP must carry valid provenance without active reference authority.");
   }
 }
 
@@ -245,24 +253,38 @@ if (!existsSync(nativeLockPath)) {
   const external = lock.modulesLock?.externalModules ?? {};
   const pendingSkills = pendingIntake?.inputs?.developerSkills;
   const pendingProbe = pendingIntake?.inputs?.skillsProbe;
+  const acceptedSkills = developerMetadata.sourceSnapshot;
+  const acceptedProbe = developerMetadata.probeSnapshot;
   const skillNames = Object.keys(skills);
+  const skillsMatchPending = lock.skillsArchiveSha256 === pendingSkills?.archiveSha256 &&
+    lock.skillsLock?.tag === pendingSkills?.releaseClaim &&
+    skillNames.length === pendingSkills?.activeSkillDocuments;
+  const skillsMatchAccepted = lock.skillsArchiveSha256 === acceptedSkills?.archiveSha256 &&
+    lock.skillsLock?.tag === acceptedSkills?.release &&
+    skillNames.length === acceptedSkills?.activeSkillDocuments;
+  const probeMatchesPending = lock.probe?.archiveSha256 === pendingProbe?.archiveSha256 &&
+    lock.probe?.skillsLockTag === pendingProbe?.observedSkillsLockTag &&
+    lock.probe?.skillsLockCommit === pendingProbe?.observedSkillsLockCommit &&
+    lock.probe?.reportedTestRuns === pendingProbe?.reportsFound;
+  const probeMatchesAccepted = lock.probe?.archiveSha256 === acceptedProbe?.archiveSha256 &&
+    lock.probe?.skillsLockTag === acceptedProbe?.observedSkillsLockTag &&
+    lock.probe?.skillsLockCommit === acceptedProbe?.observedSkillsLockCommit &&
+    lock.probe?.reportedTestRuns === acceptedProbe?.reportsIndexed;
   if (lock.schemaVersion !== 1 ||
       lock.authority !== "REFERENCE_NOT_EXECUTABLE" ||
-      lock.status !== "PENDING_SEMANTIC_REVIEW" ||
+      !["PENDING_SEMANTIC_REVIEW", "SOURCE_REVIEWED"].includes(lock.status) ||
+      (lock.status === "SOURCE_REVIEWED" &&
+        (!skillsMatchAccepted || !probeMatchesAccepted)) ||
       lock.skillsLock?.source !== "zip" ||
       lock.skillsLock?.commit !== null ||
       lock.skillsLock?.hashAlgorithm !== "UPSTREAM_HASH_SKILL_V1" ||
-      lock.skillsArchiveSha256 !== pendingSkills?.archiveSha256 ||
-      lock.skillsLock?.tag !== pendingSkills?.releaseClaim ||
-      lock.skillsLock?.repo?.replace(/\.git$/, "") !== pendingSkills?.sourceRepository ||
-      skillNames.length !== pendingSkills?.activeSkillDocuments ||
-      !skillNames.every(name => /^bedrock-[a-z0-9-]+$/.test(name) && validSha(skills[name])) ||
-      lock.probe?.archiveSha256 !== pendingProbe?.archiveSha256 ||
-      lock.probe?.skillsLockTag !== pendingProbe?.observedSkillsLockTag ||
-      lock.probe?.skillsLockCommit !== pendingProbe?.observedSkillsLockCommit ||
-      lock.probe?.reportedTestRuns !== pendingProbe?.reportsFound) {
+      !(skillsMatchPending || skillsMatchAccepted) ||
+      !(probeMatchesPending || probeMatchesAccepted) ||
+      (skillsMatchPending &&
+        lock.skillsLock?.repo?.replace(/\.git$/, "") !== pendingSkills?.sourceRepository) ||
+      !skillNames.every(name => /^bedrock-[a-z0-9-]+$/.test(name) && validSha(skills[name]))) {
     failures.push(nativeLockPath +
-      ": native skills/probe package lock must match pending ZIP provenance without executable authority.");
+      ": native skills/probe lock must match their independently pinned candidate or reviewed ZIP sources.");
   }
   const moduleNames = Object.keys(modules);
   if (moduleNames.length < 1 || moduleNames.some(name => {
@@ -283,6 +305,58 @@ if (!existsSync(nativeLockPath)) {
         item?.source !== "EXTERNAL_REPO_NOT_IN_SKILLS_ZIP") {
       failures.push(nativeLockPath + ": invalid external module reference: " + name);
     }
+  }
+}
+
+// The source-author's clean examples are independent of native experiments.
+// Their status is the upstream index's *claim*, not local test verification.
+// Source-only rows may be attached to an already reviewed skill by the one
+// selected-source Context owner, without supplying bug/gameplay authority.
+const probeExamples = developerMetadata.probeExamples;
+if (probeExamples !== undefined) {
+  const rows = probeExamples.entries ?? [];
+  const candidateProbe = developerMetadata.pendingIntake?.inputs?.skillsProbe;
+  const acceptedProbe = developerMetadata.probeSnapshot;
+  const sameVersionedProbe =
+    (probeExamples.sourceArchiveSha256 === candidateProbe?.archiveSha256 &&
+     probeExamples.sourceSkillLockTag === candidateProbe?.observedSkillsLockTag &&
+     probeExamples.sourceSkillLockCommit === candidateProbe?.observedSkillsLockCommit) ||
+    (probeExamples.sourceArchiveSha256 === acceptedProbe?.archiveSha256 &&
+     probeExamples.sourceSkillLockTag === acceptedProbe?.observedSkillsLockTag &&
+     probeExamples.sourceSkillLockCommit === acceptedProbe?.observedSkillsLockCommit);
+  const names = new Set();
+  const validPath = value => typeof value === "string" &&
+    value.length > 0 && !value.startsWith("/") &&
+    !value.includes("\\") && !value.split("/").includes("..");
+  if (probeExamples.schemaVersion !== 1 ||
+      probeExamples.authority !== "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF" ||
+      !sameVersionedProbe ||
+      probeExamples.indexPath !== "docs/examples/index.json" ||
+      !validSha(probeExamples.indexSha256) ||
+      typeof probeExamples.target?.client !== "string" ||
+      typeof probeExamples.target?.engine !== "string" ||
+      !Array.isArray(rows) || rows.length === 0) {
+    failures.push(developerMetadataPath +
+      ": the Skills Probe clean-example index is unpinned or would imply current-map authority.");
+  }
+  for (const row of rows) {
+    if (!/^[A-Z]\d{1,3}$/.test(row.id ?? "") ||
+        names.has(row.id) ||
+        !sourceById.has("src." + row.skill) ||
+        !["PASS", "pending"].includes(row.status) ||
+        ![null, "PASS", "FAIL", "pending", "BLOCKED", "PARTIAL"].includes(row.nodeStatus) ||
+        ![null, "PASS", "FAIL", "pending", "BLOCKED", "PARTIAL"].includes(row.engineStatus) ||
+        !Array.isArray(row.probeIds) ||
+        row.probeIds.some(code => !/^[A-Za-z0-9-]+$/.test(code)) ||
+        !validPath(row.sourcePath) ||
+        !(row.report === null ||
+          validPath(row.report) &&
+          (row.report.startsWith("docs/test-runs/") ||
+           row.report.startsWith("docs/examples/")))) {
+      failures.push(developerMetadataPath +
+        ": invalid or conflated upstream clean example: " + String(row.id));
+    }
+    names.add(row.id);
   }
 }
 

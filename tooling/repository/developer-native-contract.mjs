@@ -189,3 +189,84 @@ export function readNativeModule(archive, layout, name) {
   };
 }
 
+// Skills Probe is a separate source/version. Its clean-example index is
+// provenance for a claim, NOT permission to copy a fixture or assert gameplay.
+export function readProbeExampleIndex(probe) {
+  const indexPath = "docs/examples/index.json";
+  const raw = probe.readEntry(indexPath);
+  const document = JSON.parse(decoder.decode(raw));
+  assert(document?.version === 1 && Array.isArray(document.examples) &&
+    document.examples.length > 0 && document.examples.length <= 100 &&
+    document.target?.project === "Skills Probe", "Invalid probe example index.");
+  const lock = probe.readJson("skills-lock.json");
+  assert(typeof lock.tag === "string" && /^v\d+\.\d+\.\d+$/.test(lock.tag) &&
+    typeof lock.commit === "string" && /^[a-f0-9]{40}$/.test(lock.commit),
+    "Probe source lock must name an exact skill release and commit.");
+  const names = new Set();
+  const entries = document.examples.map(example => {
+    assert(typeof example.id === "string" && /^[A-Z]\d{1,3}$/.test(example.id) &&
+      !names.has(example.id) &&
+      validName(example.skill) && Object.hasOwn(lock.skills ?? {}, example.skill) &&
+      ["PASS", "pending"].includes(example.status) &&
+      Array.isArray(example.probeIds) &&
+      example.probeIds.every(id => typeof id === "string" && /^[A-Za-z0-9-]+$/.test(id)) &&
+      Array.isArray(example.sourcePaths) &&
+      example.sourcePaths.length > 0, "Invalid probe example row.");
+    names.add(example.id);
+    const sourcePaths = [...example.sourcePaths];
+    const report = example.report ?? null;
+    for (const name of [...sourcePaths, ...(report === null ? [] : [report])]) {
+      assert(typeof name === "string" &&
+        !name.startsWith("/") && !name.includes("\\") && !name.split("/").includes("..") &&
+        probe.paths.includes(name), "Probe example reference not present in ZIP: " + name);
+    }
+    // These are independent status dimensions. A Node PASS or index PASS
+    // does not imply a Minecraft-engine PASS (e.g. upstream E3).
+    const status = value => value === undefined || value === null ||
+      ["PASS", "FAIL", "pending", "BLOCKED", "PARTIAL"].includes(value);
+    assert(status(example.nodeStatus) && status(example.engineStatus),
+      "Invalid per-surface probe status: " + example.id);
+    return {
+      id: example.id, skill: example.skill,
+      status: example.status,
+      nodeStatus: example.nodeStatus ?? null,
+      engineStatus: example.engineStatus ?? null,
+      probeIds: [...example.probeIds],
+      sourcePaths,
+      report,
+      ...(typeof example.reportSection === "string" ? {
+        reportSection: example.reportSection,
+      } : {}),
+    };
+  });
+  return {
+    schemaVersion: 1,
+    authority: "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF",
+    sourceArchiveSha256: probe.archiveSha256,
+    indexPath,
+    indexSha256: sha(raw),
+    sourceSkillLockTag: lock.tag,
+    sourceSkillLockCommit: lock.commit,
+    target: {
+      client: String(document.target.client ?? ""),
+      engine: String(document.target.engine ?? ""),
+    },
+    entries,
+  };
+}
+
+export function readProbeReport(probe, name) {
+  assert(typeof name === "string" &&
+    /^docs\/test-runs\/[a-z0-9-]+\.md$/.test(name) &&
+    probe.paths.includes(name), "Report must be an exact indexed ZIP path.");
+  const bytes = probe.readEntry(name);
+  assert(bytes.length <= 128 * 1024, "Probe report exceeds reference budget.");
+  return {
+    authority: "UNTRUSTED_UPSTREAM_PROBE_REPORT",
+    status: "ORIGINAL_UPSTREAM_TEXT_NOT_REPLAYED",
+    sourceArchiveSha256: probe.archiveSha256,
+    path: name, sha256: sha(bytes),
+    content: decoder.decode(bytes),
+    proof: "No M-Lazy-Developer or Minecraft runtime execution implied.",
+  };
+}

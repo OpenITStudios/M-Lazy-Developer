@@ -381,4 +381,63 @@ describe("developer practice manifest-scoped version hints", () => {
     });
     expect(result?.items ?? []).toHaveLength(0);
   });
+
+  it("retains upstream clean-example status boundaries after an exact source match", () => {
+    // Synthetic upstream-index fixture: the source/lock and selected-map
+    // witness gates, NOT a claim that this example exists in Skills Probe.
+    const exampleIndex = {
+      schemaVersion: 1 as const,
+      authority: "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF" as const,
+      sourceArchiveSha256: "c".repeat(64),
+      indexPath: "docs/examples/index.json" as const,
+      indexSha256: "d".repeat(64),
+      sourceSkillLockTag: "v0.23.0",
+      sourceSkillLockCommit: "e".repeat(40),
+      target: { client: "education 26.32", engine: "1.26.30" },
+      entries: [{
+        id: "X1",
+        skill: "bedrock-version-targeting",
+        status: "PASS" as const,
+        nodeStatus: "PASS",
+        engineStatus: "pending",
+        probeIds: ["PX"],
+        report: null,
+        sourcePath: "docs/examples/version/README.md",
+      }],
+    };
+    const full = {
+      ...baseline,
+      data: {
+        ...data,
+        probeSnapshot: { observedSkillsLockTag: "v0.23.0" },
+        probeExamples: exampleIndex,
+      },
+      sourceLocators: ["behavior_packs/demo/scripts/main.ts:17"],
+      manifestWitnesses: [witness],
+    };
+    const result = compileDeveloperPracticeReferenceContext(full);
+    expect(result?.items).toHaveLength(1);
+    expect(result?.items[0]?.cleanExamples).toMatchObject([{
+      id: "X1",
+      status: "PASS",
+      nodeStatus: "PASS",
+      engineStatus: "pending",
+      sourceSkillLockTag: "v0.23.0",
+      proof: "UPSTREAM_SOURCE_INDEX_ONLY_NOT_SELECTED_MAP_PROOF",
+    }]);
+
+    const noWitness = compileDeveloperPracticeReferenceContext({
+      ...full, sourceLocators: ["behavior_packs/other/scripts/main.ts"],
+    });
+    expect(noWitness?.items ?? []).toHaveLength(0);
+
+    const wrongRelease = compileDeveloperPracticeReferenceContext({
+      ...full,
+      data: {
+        ...full.data,
+        probeSnapshot: { observedSkillsLockTag: "v0.27.0" },
+      },
+    });
+    expect(wrongRelease?.items[0]?.cleanExamples).toBeUndefined();
+  });
 });

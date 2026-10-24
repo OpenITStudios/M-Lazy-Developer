@@ -101,6 +101,21 @@ STOP condition
 
 Do not add fallback owners, registries, caches, retries, state machines, or compatibility layers merely to compensate for an unproven diagnosis.
 
+## Upstream developer skill / Skills Probe source boundary
+
+External Bedrock skills and Skills Probe are two independently versioned
+source repositories. Route their **source acquisition, native skill-folder
+hashes, module `requires` and source/probe lock** to
+`skills/bedrock/README.md` and the existing repository intake tooling.
+The current interpretation and clean-example source metadata live only in
+`experiments/developer-practice-signals.json`, consumed by the existing
+`workflow/resource-context.ts`. Do not install external `SKILL.md` into
+internal `.agents/skills`, execute supplied code, or allow upstream PASS
+to close selected-map proof. The canonical end-to-end division between
+source refresh and map audit is in `docs/product/flow.md`.
+Existing work lanes, map-source authority, review permissions, and
+source/package/runtime proof boundaries take precedence.
+
 ## Knowledge access
 
 Repository information is not consumed as a flat file tree.

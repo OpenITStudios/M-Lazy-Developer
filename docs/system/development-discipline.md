@@ -29,6 +29,27 @@ GitHub rules, user instructions and canonical semantics prevail.
 **If the user defers tests, do not run or claim tests**; still record
 source-only verification and the independent proof that remains.
 
+## Publisher-aligned updates without changing the product identity
+
+When Bedrock skills or Skills Probe change, treat them as **independent
+upstream revisions**. Follow native `skills.json` / folder hashes,
+`module.json` / `requires`, source/lock identity, and the Skills Probe
+target/example/report protocol. Pin exact original source/ZIP identities,
+review only changed source/consumer meaning, and preserve negative cases,
+unknown engine statuses and client/version scope. A new skill or an upstream
+PASS is not permission to manufacture a new detector, new work lane or
+Minecraft fact. Never copy upstream scripts or team-specific instructions
+as global policy.
+
+The sole intake/review owners are
+`skills/bedrock/README.md` (native release identities) and
+`experiments/developer-practice-signals.json` (curated reference and
+probe-example/report metadata). The one selected-map consumer is
+`engine/packages/orchestrator/src/workflow/resource-context.ts`.
+A source refresh is **SYSTEM DEVELOPMENT**, not a separate map-audit
+checkpoint. Build/verify the smallest complete changed source-to-consumer
+path before starting test proliferation; preserve the suspended CI policy.
+
 ## Development Operating Standard
 
 This is the mandatory behavior contract for every `SYSTEM DEVELOPMENT` task, including Product Development and Detection Development. Before material edits, the selected development skill must apply DOS; citing this document without following its decisions is not compliance. Do not create a second workflow or status owner.

@@ -98,6 +98,42 @@ verifiably identical upstream snapshot. Avoid copying unlicensed code,
 pack content, agent instructions, installers, or test binaries into the
 engine.
 
+## Skills Probe clean examples — independent source-evidence path
+
+The supplied Skills Probe ZIP has a separate `skills-lock.json`
+(`v0.23.0`) and `docs/examples/index.json` listing 14 clean examples:
+three index `PASS` and eleven `pending` as published by that archive.
+The SHA-pinned **source-index metadata**, not raw third-party code, lives
+in the *existing* `experiments/developer-practice-signals.json#probeExamples`
+alongside the older `probeEvidence[]` report attributions. The index
+is tied to the separately observed probe ZIP SHA and original target
+`education 26.32` / engine `1.26.30`. A PASS in the index does not
+mean the engineStatus is PASS or that another world was observed.
+
+The existing `compileDeveloperPracticeReferenceContext()` can attach
+up to two clean-example pointers per selected, **reviewed** matching skill.
+Matching still requires the current map's typed Semantic IR/source witness,
+question domain and source locator, and is constrained by the existing
+maximum-two reference-pattern budget. It never admits a new pattern solely
+because the example list grows; workflow-only skills remain unavailable to
+an operational map audit. The original source index is consulted when its
+ZIP is actually accessible, not stored as executable examples.
+
+Read an independently supplied probe ZIP using
+`tooling/repository/inspect-developer-upstream.mjs --probe-zip <file> --mode probe`;
+inspect one original index row with `--read-probe-example E3` or one
+actual report with `--read-probe-report docs/test-runs/<name>.md`.
+No second developer-skills ZIP is required for these read-only operations.
+The command output is external reference text/data, never an observed
+Minecraft client execution. Do not run the upstream native-test pack,
+installer or experimental fixture through reference retrieval.
+
+The developer ZIP's `v0.27.0` skill set and the probe's `v0.23.0` lock
+remain different revisions. Skills Probe index/probe evidence may ask a
+useful question about the selected map; application to a different target
+needs independent compatibility checks. The active developer-method
+snapshot remains v0.24.0 until changed methods are reviewed and promoted.
+
 ## 21 October 2026: two-archive selective intake
 
 The user supplied `minecraft-bedrock-agent-skills-main (1).zip` (v0.24.0,
