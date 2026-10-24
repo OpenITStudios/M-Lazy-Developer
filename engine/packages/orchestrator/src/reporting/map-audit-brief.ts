@@ -596,8 +596,7 @@ export function formatSelectedMapAuditBrief(input: {
   const sourceHandoffs = new Map<string, {
     readonly flowId: string;
     readonly edge: NonNullable<
-      NonNullable<MapAuditOutputV2["gameplayStructure"]>
-        ["sourceFlowCandidates"][number]["sourceHandoffs"]
+      NonNullable<MapAuditOutputV2["gameplayStructure"]>["sourceFlowCandidates"][number]["sourceHandoffs"]
     >[number];
   }>();
   for (const flow of report.gameplayStructure?.sourceFlowCandidates ?? []) {
