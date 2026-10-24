@@ -53,8 +53,10 @@ describe("arena identity evidence propagation", () => {
       schemaVersion: 1,
       execution: {
         regions: [
+          // A Minecraft event is an eligible source root only with an exact
+          // API event identity. A generic event-like name is not enough.
           { id: "event:start", kind: "event-source",
-            ownerId: "game", label: "start", source },
+            ownerId: "world", label: "world.afterEvents.playerSpawn", source },
           { id: "callback:join", kind: "script-callback",
             ownerId: "game", label: "join", source },
           { id: "function:apply", kind: "mcfunction",
@@ -215,7 +217,7 @@ describe("arena identity evidence propagation", () => {
       schemaVersion: 1,
       execution: {
         regions: [{ id: "region:event", kind: "event-source",
-          ownerId: "game", label: "playerSpawn", source }],
+          ownerId: "world", label: "world.afterEvents.playerSpawn", source }],
         edges: [],
       },
       state: { surfaces: [], operations: [], authorityBindings: [] },

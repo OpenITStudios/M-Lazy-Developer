@@ -668,6 +668,7 @@ describe("gameplay scenario closure", () => {
         spatialArenaIdsWithoutReplicaProof: [],
         arenaEvidenceComponentLinks: [],
         spatialArenaIdsWithoutComponentLinks: [],
+        duplicateReplicaProofArenaIds: [],
         replicaProofEntries: [],
         entityPopulationProofEntries: [],
         actorPopulationProofEntries: [],
@@ -776,10 +777,13 @@ describe("gameplay scenario closure", () => {
       layoutStatus: "resolved",
       spatialLayoutEntries: [],
       spatialLayoutConfidence: null,
+      arenaRegionCandidates: [],
+      spatialArenaIdsWithoutRegionCandidates: [],
       arenasWithoutSpatialLayoutCount: 3,
       spatialArenaIdsWithoutReplicaProof: [],
       arenaEvidenceComponentLinks: [],
       spatialArenaIdsWithoutComponentLinks: [],
+      duplicateReplicaProofArenaIds: [],
       replicaProofEntries: [
         { arenaId: "arena:1", evidenceIds: ["native:a1"], proofStatus: "complete-proof" },
         { arenaId: "arena:2", evidenceIds: ["native:a2"], proofStatus: "incomplete-proof" },
@@ -808,6 +812,7 @@ describe("gameplay scenario closure", () => {
         orderingViolations: [],
       }],
       arenaSessionMapping: "NOT_YET_ESTABLISHED",
+      spatialArenaIdsWithoutSessionOwnershipProof: [],
     });
     expect(architecture.knowledgeCoverage.wholeGameUnderstandingPercent).toBeNull();
   });
@@ -1068,7 +1073,13 @@ describe("gameplay scenario closure", () => {
       arenaCount: 6,
       selectedArtifactEvidenceIds: ["evidence:known", "evidence:unlinked"],
       semanticIr: {
-        state: { operations: [{ id: "operation:unlinked" }] },
+        // Keep the required Semantic IR state registry present even for a
+        // synthetic evidence-accounting-only fixture.
+        state: { surfaces: [], authorityBindings: [], operations: [
+          { id: "operation:unlinked", operation: "read",
+            executionRegionId: "region:unlinked", surfaceId: "surface:unlinked",
+            source: { artifactId: "synthetic:coverage", relativePath: "scripts/source.js" } },
+        ] },
         execution: { regions: [], edges: [] },
         temporal: { relations: [] },
       } as unknown as import("../../../semantic-ir/src/index.js").SemanticIr,
@@ -1088,6 +1099,14 @@ describe("gameplay scenario closure", () => {
       graphReferencesMissingCount: 0,
       arenaMappingUnresolved: true,
       observedSystemsUnreconciledCount: 1,
+      // Preserve the current exact source-relationship and rooted-flow
+      // coverage counts, even when this synthetic fixture observes none.
+      behaviorFlowsUnmodeledCount: 0,
+      behaviorFlowsPartiallyModeledCount: 0,
+      behaviorFlowsPlacedUnprovenCount: 0,
+      observedOutcomesWithoutEntryCount: 0,
+      observedSourceRelationshipCount: 0,
+      sourceRelationshipsWithoutProofCount: 0,
     });
     expect(navigation.knowledgeCoverage.wholeGameUnderstandingPercent).toBeNull();
 
@@ -1128,9 +1147,14 @@ describe("gameplay scenario closure", () => {
     const semanticIr = {
       schemaVersion: 1,
       state: {
+        surfaces: [], authorityBindings: [],
         operations: [
-          { id: "op:objective" },
-          { id: "op:unmapped" },
+          { id: "op:objective", operation: "read",
+            executionRegionId: "region:main", surfaceId: "surface:objective",
+            source: { artifactId: "synthetic:coverage", relativePath: "scripts/source.js" } },
+          { id: "op:unmapped", operation: "read",
+            executionRegionId: "region:main", surfaceId: "surface:unknown",
+            source: { artifactId: "synthetic:coverage", relativePath: "scripts/source.js" } },
         ],
       },
       execution: {
@@ -1148,6 +1172,15 @@ describe("gameplay scenario closure", () => {
       semanticIr,
     });
     expect(navigation.semanticIrCoverage).toEqual({
+      observedSourceRelationships: [],
+      untracedReturnOutcomeIds: [],
+      stateOutcomeCandidates: [],
+      resourceOutcomeCandidates: [],
+      executionTraces: [],
+      regionsOutsideTraces: ["region:main"],
+      resourceActions: { observedCount: 0, linkedIds: [], unlinkedIds: [] },
+      returnOutcomes: { observedCount: 0, linkedIds: [], unlinkedIds: [] },
+      worldEffects: { observedCount: 0, linkedIds: [], unlinkedIds: [] },
       stateOperations: {
         observedCount: 2,
         linkedIds: ["op:objective"],
