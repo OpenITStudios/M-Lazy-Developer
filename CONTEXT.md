@@ -6,7 +6,7 @@ This file contains only stable repository/product facts. It does not own current
 
 ## Product
 
-**Lazy-Developer is a ChatGPT-native checker, not an existing executable application.** ChatGPT currently performs Minecraft Bedrock/Education source checking with genuinely available tools. GitHub `Local` is the authority for reusable code/knowledge/contracts, not proof those TypeScript modules have executed. No application build, installation, deployment or localtest has been established.
+**M-Lazy-Developer is a Minecraft Bedrock/Education map-checking system operated through ChatGPT Chat.** Users provide an accessible `.mcworld` link from Google Drive; ChatGPT retrieves and examines the selected artifact read-only with available tools, using GitHub `Local` for the canonical source, knowledge, policy and development continuity. Source modules and authored tests are not evidence of executed code or observed gameplay.
 
 Primary lifecycle:
 
@@ -20,7 +20,7 @@ Inspect
 → Report
 ```
 
-The repository specifies a proposed shared deterministic core for optional programmatic CLI/CI/future integration; these are source-design targets, not established runtime products.
+The repository owns reusable parsers, semantic reasoning, canonical audit coordination, knowledge and report contracts. Executable-source capabilities are reported as executed only when actually invoked in ChatGPT; future interface speculation is not a product requirement.
 
 ## Branch authority
 
@@ -32,7 +32,7 @@ main  → stable / release authority
 ## Repository domains
 
 ```text
-apps/          optional interface source, no built/running UI proven
+apps/          optional CLI/report-interface source; not the ChatGPT operator
 engine/        semantic/analysis source and intended executable contracts
 docs/          durable human-facing documentation
 planning/      development / operations / project work intent
@@ -63,7 +63,7 @@ Repository task planning is a separate control-plane concern. It may select affe
 
 ## Execution model
 
-**ChatGPT is the checker. GitHub is the source/knowledge authority.** ChatGPT repository work is remote-GitHub-first; selected-world inspection can happen directly in ChatGPT. No user PC, local app, Node 24, checkout, npm, CI or VM is required as a prerequisite. Historical developer toolchain metadata does not establish application execution.
+**ChatGPT Chat is the checker interface; GitHub `Local` is the source/knowledge authority; Google Drive supplies accessible selected maps.** Neither user-PC actions nor repository toolchain installation, CI or a VM is a prerequisite for source-verifiable checking. Distinguish source examination, actual repository execution and live Minecraft evidence.
 
 ```text
 REMOTE_GITHUB
@@ -119,7 +119,7 @@ Unresolved work remains explicit as Audit Obligations or bounded runtime proof r
 
 ## Toolchain metadata (not the ChatGPT checker)
 
-Optional developer/build configuration lives in `toolchain.json` and `DEV.cmd`. These source files are not an installed application, not a verification gate for ChatGPT, and not evidence of a user-facing product.
+Optional developer/build compatibility is described by `toolchain.json` and `DEV.cmd`. These declarations do not change the ChatGPT Chat workflow and are not prerequisites or proof of executed audit capabilities.
 
 ## Canonical routing
 

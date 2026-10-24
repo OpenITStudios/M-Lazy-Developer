@@ -11,7 +11,7 @@ lifecycle: ACTIVE
 
 Human-readable routing map for implementation ownership.
 
-**ChatGPT-native checker operating reality:** these paths identify canonical GitHub **source/knowledge owners**, not deployed services or an existing application. ChatGPT is the actual checker of accessible selected Minecraft artifacts. `apps/`, `engine/`, `runSelectedMapAudit()` and output schemas specify intended TypeScript behavior and may be cited as source contracts, but may be described as **executed** only if actually invoked. Direct ChatGPT source interpretation is independent evidence, not a synthesized `SelectedMapAuditRun` or runtime/gameplay observation.
+**ChatGPT Chat operating reality:** this file identifies canonical GitHub `Local` source/knowledge owners for M-Lazy-Developer map checking. Selected `.mcworld` artifacts may come from accessible Google Drive links. Source paths such as `apps/`, `engine/`, `runSelectedMapAudit()` and output schemas describe implementation contracts; they establish execution evidence only when the exact code is invoked. Direct ChatGPT source interpretation is independently valid evidence, not a synthesized `SelectedMapAuditRun` or Minecraft gameplay observation.
 
 This file is intentionally high-level. It is **not** a manually maintained database of every source file or symbol.
 

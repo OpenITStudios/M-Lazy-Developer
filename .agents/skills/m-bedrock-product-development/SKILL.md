@@ -10,11 +10,11 @@ description: >
 
 ## Purpose
 
-Implement bounded **GitHub source/knowledge/contract** changes to Lazy-Developer itself. **This is a ChatGPT-native checker; no application has been built or operated.** The canonical development process belongs to `docs/system/development-discipline.md`, not this skill. An `apps/` source path or optional Node CLI does not create an app or justify a localtest/Node24 prerequisite for ChatGPT analysis.
+Implement bounded **GitHub source/knowledge/contract** changes to M-Lazy-Developer, the Minecraft map-checking system operated through **ChatGPT Chat**. The user supplies accessible `.mcworld` inputs from Google Drive, and GitHub `Local` owns canonical code/knowledge. The development process belongs to `docs/system/development-discipline.md`; CLI/report source and Node metadata do not alter the operator workflow or constitute execution proof.
 
 ## Entry criteria
 
-Use for product, architecture, application, tooling, or general engine work. For improvements specifically to reusable detection, use `m-bedrock-detection-development`.
+Use for system behavior, architecture, ChatGPT workflows, tooling, interfaces and general engine source work. For improvements specifically to reusable detection, use `m-bedrock-detection-development`.
 
 ## Allowed actions
 
@@ -28,7 +28,7 @@ Use for product, architecture, application, tooling, or general engine work. For
 - run a selected-map bug audit or modify an original/working target map;
 - treat an unsupported hypothesis as confirmed defect;
 - create parallel owners, registries, or state stores without evidence;
-- claim that a user-facing app exists, a localtest is needed, a programmatic audit ran, or Minecraft runtime proof was obtained without actual corresponding execution.
+- require a different user interface, a localtest, or claim a programmatic audit or Minecraft runtime proof without actual corresponding execution.
 
 ## Mandatory operating style
 

@@ -10,7 +10,7 @@ description: >
 
 ## Purpose
 
-Measure detector correctness and proof coverage against frozen expectations without changing production capability. **ChatGPT-native checker reality:** no M-Lazy-Developer app has been built or run. A ChatGPT-performed map source review is not, by itself, a `runSelectedMapAudit()` observation, a validated programmatic result, or a whole-map precision/recall denominator. A repository scorer module is source code until executed.
+Measure detector correctness and proof coverage against frozen expectations without changing production capability. **Operating context: ChatGPT Chat map checking backed by GitHub `Local` and accessible selected `.mcworld` inputs.** A direct ChatGPT source review is not, by itself, a `runSelectedMapAudit()` observation, validated programmatic result, or whole-map precision/recall denominator. A repository scorer module is source code until genuinely executed.
 
 ## Entry criteria
 

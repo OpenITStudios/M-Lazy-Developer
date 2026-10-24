@@ -41,7 +41,7 @@ Chromium executed a minimal native DOM-clone and serialization scenario validati
 
 ## Proof and limitations
 
-The source commits demonstrate implementation is stored in GitHub, not that a running application was packaged or that Minecraft testing occurred. A JS-only browser mock or source-level test does **not** establish cross-browser interaction, filesystem download persistence, accessibility conformance, or real map report accuracy. The locked reference image/HTML is a static visual guide; final pixel-level acceptance still requires rendered visual comparison.
+Source commits establish the renderer code stored in GitHub, not that a report was generated from a current map audit or that Minecraft gameplay was observed. A JS-only browser mock or source-level test does **not** establish cross-browser interaction, filesystem download persistence, accessibility conformance, or real map report accuracy. The locked reference image/HTML is a static visual guide; final pixel-level acceptance still requires rendered visual comparison.
 
 **Recorded source-level acceptance (commit following 50754e7):** the original embedded client JavaScript was run in an isolated V8 DOM mock. Four interaction scenarios passed: portable snapshot Save/reopen/Reset, different-report JSON rejection, browser-storage quota fallback, and NEEDS_VALIDATION exclusion from Passed/Failed. The executable acceptance harness is now source-controlled for reproducibility. This does not establish browser-native download, cross-browser storage, accessibility, or real Minecraft behavior.
 

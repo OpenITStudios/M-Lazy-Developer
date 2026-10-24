@@ -45,7 +45,7 @@ A future production connection must first trace exact Map Audit/approved-report 
 | Persisted schema | `engine/schemas/bug-report/v2.schema.json` |
 | Current canonical bug-report state | project/level `report/bug-report.json` |
 | Human-facing published report | derived self-contained HTML snapshot |
-| Optional application viewer | `apps/bug-report-ui/` projection only |
+| Optional report viewer source | `apps/bug-report-ui/` projection only |
 | Revision history | Git history |
 | Approved historical issue incidents | `engine/reliability/catalogs/regressions.json` (derived/search knowledge, not current bug authority) |
 | Map binary/source artifacts | Google Drive |
@@ -117,9 +117,9 @@ Only explicitly approved, current-version defects enter canonical report state.
 - current state authority;
 - writable only through the canonical bug-report workflow.
 
-### Bug Report App
+### Bug Report Viewer Source
 
-The app is a client/projection of canonical Bug Report V2.
+The optional report viewer is a read-only client/projection of canonical Bug Report V2, not the M-Lazy-Developer map-checking workflow.
 
 It may:
 - load canonical reports;

@@ -1,6 +1,6 @@
 # Engine
 
-Source contracts for the intended deterministic Minecraft Bedrock / Education analysis and repair engine. The current checker operates through ChatGPT with GitHub-owned source; this directory is not proof of a built or running application.
+Source contracts for deterministic Minecraft Bedrock/Education analysis and repair. M-Lazy-Developer operates through **ChatGPT Chat**, with selected `.mcworld` inputs from accessible Google Drive links and canonical knowledge/code on GitHub `Local`. This directory establishes source ownership, not executed audit or Minecraft-runtime proof.
 
 ## Physical directory responsibilities
 

@@ -11,15 +11,15 @@ lifecycle: ACTIVE
 
 Lazy-Developer uses semantic ownership and one-way dependency direction.
 
-## Actual delivery: ChatGPT-native checking, GitHub-owned knowledge/source
+## Operating architecture: ChatGPT Chat, GitHub source, Google Drive selected maps
 
-**There is currently no built, shipped, installed, or running M-Lazy-Developer application.** The user's working system is ChatGPT itself: it can inspect a selected Minecraft artifact using actually available ChatGPT tools; the `Local` GitHub branch maintains source, semantic contracts, evidence provenance, knowledge and reusable analysis logic. A TypeScript module, CLI source file, tests, UI folder or Node version configuration is not proof that any application was executed or deployed. No local-PC/Node24/VM/CI/app run may be demanded as a prerequisite for completing source-only ChatGPT checking.
+**M-Lazy-Developer is operated through ChatGPT Chat to inspect Minecraft Bedrock/Education maps.** An accessible selected `.mcworld` is supplied through Google Drive; GitHub `Local` owns source, semantic contracts, provenance, knowledge and reusable analysis logic. Source files, typed modules, declared CLI paths, test definitions and Node configuration are not proof of execution. Do not require ChatGPT Work, the user's PC, a VM, CI or a separate operator surface for source-only checking.
 
-The source modules below document one canonical **intended** reasoning architecture. Their actual behavior at any commit can be called executed only if that exact source code was genuinely invoked and observed; ChatGPT's independent archive/script/NBT analysis is useful and valid but **must not be described as `runSelectedMapAudit()` or a completed app run**. Record the exact source, reasoning, confidence and missing proof for each fact, while leaving Minecraft gameplay and execution-dependent claims UNKNOWN unless independently observed. This note corrects product-language drift; it neither rewrites past commits nor removes valid reusable source models.
+The source modules below document one canonical reasoning architecture. Their behavior at a commit is executable evidence only if that exact source was genuinely invoked; direct ChatGPT archive/script/NBT inspection is valid source evidence but must not be misidentified as `runSelectedMapAudit()` execution. Record exact source, interpretation, confidence and missing proof, leaving runtime-dependent claims UNKNOWN unless observed.
 
 ## Semantic reasoning and production ownership
 
-There are **two separate routes**, not one mandatory audit-then-repair chain. Both are source-defined architecture; neither is evidence that an application or Minecraft world was executed.
+There are **two separate task routes**, not one mandatory audit-then-repair chain. Their source contracts never substitute for evidence of executed repository code or observed Minecraft gameplay.
 
 **Selected-map audit (read-only):**
 
@@ -717,7 +717,7 @@ artifact / source representation
 → gameplay understanding / diagnosis
 → repair / validation owners
 → orchestrator composition
-→ app / report projection
+→ CLI / report-source projection
 ```
 
 Low-level owners remain authoritative for their domain semantics. Orchestration owns sequencing, composition, continuation, and cross-owner coordination only.

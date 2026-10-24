@@ -11,9 +11,9 @@ lifecycle: ACTIVE
 
 ## Remote GitHub operating mode
 
-The primary ChatGPT development mode is **REMOTE_GITHUB**. **This is a ChatGPT-native checker, not an installed, built, or running application.** ChatGPT itself inspects available selected Minecraft artifact files; GitHub is code/knowledge and continuity storage, not an execution environment by default.
+The primary source-development context is **REMOTE_GITHUB**, operated from **ChatGPT Chat**. The user provides an accessible Google Drive `.mcworld` map for inspection; GitHub `Local` stores canonical code, knowledge, commits and continuity. ChatGPT source examination is available independently of repository TypeScript execution.
 
-For M-Lazy-Developer, **`Local` is the GitHub branch**, not a user-PC directory. **ChatGPT does not route its unfinished verification to a user-local PC**: this workflow uses **ChatGPT + GitHub only**, with **no external cloud services and no local-PC path**. Current ChatGPT tools perform work, and GitHub `Local` owns source/commits/continuity. Do not require a cloud runner, hosted service, external compute, deployment, or optional GitHub Actions run. If executable or Minecraft runtime evidence is unavailable, record only the exact `UNKNOWN / NOT EXECUTED` proof ceiling and finish independently source-verifiable work under `GITHUB_RULES.md#41-chatgpt-no-local-pc-invariant`.
+For M-Lazy-Developer, **`Local` is the remote GitHub branch**, never a user-PC directory. The user's interface is **ChatGPT Chat**; connected Google Drive supplies the selected map, and GitHub `Local` holds source/commits. Never route verification to ChatGPT Work, the user's PC, an external compute service or a required manual pipeline. If executable or Minecraft-runtime evidence is unavailable, state only the exact `UNKNOWN / NOT EXECUTED` residue and finish independently source-verifiable work under `GITHUB_RULES.md#41-chatgpt-no-local-pc-invariant`.
 
 ```text
 GitHub ref / exact source
@@ -48,7 +48,7 @@ These commands are not ChatGPT workflow authority and never gate remote GitHub c
 
 ## Toolchain authority
 
-`toolchain.json` describes optional developer/build compatibility. It pins Node `22.16.0` and npm `10.9.2` as the **ChatGPT-container-compatible baseline**, not for ChatGPT's built-in checking capabilities; no running application is presently established. `package.json#engines` supports Node 22.12+ and Node 24, while the source minimum for TypeScript is 5.8.3. The exact lockfile now pins TypeScript 5.8.3 and Node 22 typings (`@types/node@22.15.30`); version compatibility does not imply that package installation, TypeScript compilation, native addons or Minecraft gameplay has executed. If source-declared build tasks are genuinely executed, use the installed dependency versions and disclose the actual Node/toolchain proof.
+`toolchain.json` describes optional developer/build compatibility. It pins Node `22.16.0` and npm `10.9.2` as the **ChatGPT-container-compatible baseline**, not a requirement for ChatGPT Chat's direct source checking. `package.json#engines` supports Node 22.12+ and Node 24, while the source minimum for TypeScript is 5.8.3. The exact lockfile now pins TypeScript 5.8.3 and Node 22 typings (`@types/node@22.15.30`); version compatibility does not imply that package installation, TypeScript compilation, native addons or Minecraft gameplay has executed. If source-declared build tasks are genuinely executed, use the installed dependency versions and disclose the actual Node/toolchain proof.
 
 Do not require global TypeScript/Vitest/build tools when package-managed versions are sufficient.
 

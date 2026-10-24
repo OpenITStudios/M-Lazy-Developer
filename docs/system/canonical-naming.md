@@ -44,7 +44,7 @@ Use these names consistently:
 
 | Domain | Canonical meaning |
 |---|---|
-| `apps/` | user-facing executable surfaces |
+| `apps/` | optional CLI and report-interface source consumers; ChatGPT Chat remains the operator |
 | `engine/` | product implementation and executable semantics |
 | `docs/` | durable human-facing guides, architecture, reference, and specifications |
 | `planning/` | development, operations, and project work intent |

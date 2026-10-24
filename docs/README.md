@@ -11,7 +11,7 @@ lifecycle: ACTIVE
 
 Single entry point for human and AI documentation discovery.
 
-**Current product boundary:** this is documentation for a **ChatGPT-native checker with GitHub-owned source/knowledge**, not for a built or running application. When documentation describes `runSelectedMapAudit()`, npm scripts, CLI, UI, a `production` stage or `engine` code, it is describing source/contract design; none proves executable results. ChatGPT may directly inspect the selected `.mcworld` using available tools, label evidence with precise provenance, and state unresolved runtime claims without installing Node or requiring a local test.
+**Product identity:** M-Lazy-Developer is operated through **ChatGPT Chat** to inspect Minecraft Bedrock/Education `.mcworld` maps provided by accessible Google Drive links. GitHub `Local` owns source, knowledge and policy. Names such as `runSelectedMapAudit()`, CLI, UI, `engine` and `production` refer to repository contracts; none proves execution unless actually invoked. ChatGPT can independently examine source evidence read-only and report precise proof ceilings.
 
 > Repository work planning is intentionally separate from documentation. Use `../planning/` for development, operations, and project continuation intent. Use `workspace/` for working artifacts and execution data.
 

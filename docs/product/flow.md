@@ -9,7 +9,7 @@ lifecycle: ACTIVE
 
 # Product Flow
 
-**Current operator: ChatGPT-native checker; no M-Lazy-Developer app has been built or verified.** The workflow below defines a reusable evidence-first analysis contract, not proof that TypeScript, a CLI, a UI, or Minecraft itself was run. ChatGPT can inspect selected artifact sources directly without executing repository software. Reserve `SelectedMapAuditRun` and engine-owned checkpoint/quality receipts for actual programmatic runs.
+**Current operator: ChatGPT Chat.** The user provides an accessible selected `.mcworld` map (normally by Google Drive link), and ChatGPT examines source evidence using GitHub `Local` knowledge/policies. The workflow below defines an evidence-first analysis contract, not proof that repository TypeScript or Minecraft executed. Reserve `SelectedMapAuditRun` and engine-owned checkpoint/quality receipts for genuine programmatic execution.
 
 ## Single source of truth
 
@@ -276,7 +276,7 @@ Selected .mcworld
 → REPORT
 ```
 
-There is no parallel **implementation** of this TypeScript pipeline. ChatGPT's direct artifact analysis is the current operator workflow, not a second installed app or counterfeit programmatic audit; it must retain exact source evidence and report its actual proof ceiling.
+There is one canonical TypeScript selected-map pipeline. Direct ChatGPT Chat analysis uses the same evidence/uncertainty discipline but cannot fabricate an engine-produced audit receipt; it must retain exact source evidence and report its actual proof ceiling.
 
 The engine authority chain is:
 

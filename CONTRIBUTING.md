@@ -11,7 +11,7 @@ Normal work targets `Local`. Promotion to `main` is deliberate.
 
 ## Execution routes
 
-**This is a ChatGPT-native checker, not a built application.** ChatGPT checks selected Minecraft artifacts using available tools and maintains source/knowledge via GitHub `Local`. It does **not** require a local checkout, Node/npm, `DEV.cmd`, CI, a runnable engine, or a UI for source-verifiable work. Only actually executed code may be reported as executable evidence.
+**M-Lazy-Developer runs as a map-checking workflow in ChatGPT Chat.** Selected `.mcworld` inputs may come from accessible Google Drive links; GitHub `Local` owns source, knowledge, policies and commits. The user does not need a local checkout, Node/npm, `DEV.cmd`, CI, or user-run commands for source-verifiable work. Report executable code evidence only when that code actually ran.
 
 - **SYSTEM DEVELOPMENT:** improve the repository in its canonical owner and deliver one bounded logical commit; follow `AGENTS.md` and `docs/system/development-discipline.md`.
 - **MAP BUG AUDIT:** inspect one selected map directly through ChatGPT and canonical source/evidence contracts; do not modify the source engine in that mode or claim `runSelectedMapAudit()` ran unless it actually did.

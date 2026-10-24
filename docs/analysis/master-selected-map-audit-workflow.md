@@ -13,7 +13,7 @@ lifecycle: ACTIVE
 
 This is the operator-facing master sequence for one complete selected-map audit.
 
-**ChatGPT-native checker is the actual current operator, not a built application.** ChatGPT can directly inspect an accessible selected world and apply this evidence-first reasoning order. A code-defined `runSelectedMapAudit()`, audit checkpoint status, `SelectedMapAuditRun` or report output is a **programmatic source contract only until genuinely executed**. Never claim a result was produced by an application; direct ChatGPT artifact/source analysis and programmatic TypeScript execution are different evidence classes. Neither is Minecraft gameplay/runtime proof.
+**ChatGPT Chat is the operator for M-Lazy-Developer map checking.** Users can provide an accessible selected `.mcworld` through Google Drive; GitHub `Local` supplies the canonical code/knowledge and ChatGPT inspects the map with available tools. The evidence-first sequence below applies whether source evidence is reviewed directly or repository TypeScript genuinely executes. `runSelectedMapAudit()`, `SelectedMapAuditRun`, checkpoints and generated JSON receipts require actual execution before they may be claimed as observed. Neither source-only route is Minecraft live gameplay proof.
 
 It does not replace executable source owners. The following is the **optional TypeScript implementation flow if actually executed**; otherwise ChatGPT follows the same reasoning sequence directly without constructing fictional code receipts. Communication preflight is still required as defined by the skill:
 

@@ -1,10 +1,10 @@
-# Apps Agent Rules
+# Interface Source Agent Rules
 
-Applies to user-facing interfaces under `apps/`.
+Applies to optional CLI and report-view source under `apps/`; M-Lazy-Developer is operated from ChatGPT Chat.
 
 ## Boundary
 
-Apps are thin interaction surfaces over the deterministic core.
+These optional source consumers present results or commands over the canonical engine contracts; they do not define another map-checking operator.
 
 ## Rules
 
@@ -12,7 +12,7 @@ Apps are thin interaction surfaces over the deterministic core.
 - Call orchestrator/core owners through typed APIs.
 - Presentation-specific formatting stays here.
 - Stable semantic truth remains in engine/packages, engine/analyzers, and engine/rules.
-- A future MCP server, desktop app, or additional CLI must consume the same engine.
+- Any explicitly requested future interface integration must reuse the same canonical engine owners and proof policy.
 - Interface convenience must not weaken source immutability, patch preconditions, or proof vocabulary.
 
-Current app owner: `apps/cli/`.
+Current command-source owner: `apps/cli/`.

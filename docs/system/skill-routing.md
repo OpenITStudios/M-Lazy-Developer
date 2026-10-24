@@ -18,14 +18,14 @@ Do not use a domain skill to infer the work lane.
 
 ## User-facing modes
 
-Two clear ChatGPT operator modes select the appropriate **source and evidence route**, not application execution. M-Lazy-Developer has no built/operated app; the names `engine`, `pipeline`, `production`, `UI` and `CLI` elsewhere describe repository code contracts until verified otherwise:
+Two **ChatGPT Chat** operator modes select the appropriate source/evidence route. M-Lazy-Developer checks accessible selected Minecraft maps provided through Google Drive, using GitHub `Local` for source/knowledge. Names such as `engine`, `pipeline`, `production`, `UI` and `CLI` in repository files describe code/contracts until actual execution is verified:
 
 | Mode | Purpose | Internal route | Not allowed |
 |---|---|---|---|
 | `SYSTEM DEVELOPMENT` | Design/build/improve Lazy-Developer | `m-bedrock-product-development` with `product-development` permission profile, or `m-bedrock-detection-development` for reusable bug detection improvements | Treating a map-specific finding as proof that an engine change is correct |
 | `MAP BUG AUDIT` | Find/classify bugs in a selected map using current capabilities | `m-bedrock-map-bug-audit` | Editing engine, detectors, or platform knowledge while auditing |
 
-**ChatGPT-native checker boundary:** In MAP BUG AUDIT, ChatGPT directly examines the selected artifact and checks canonical GitHub knowledge/contract sources. It may construct an evidence-grounded audit response but must not claim a programmatic `runSelectedMapAudit()`, canonical `SelectedMapAuditRun` or generated `MapAuditOutputV2` without actual execution. In SYSTEM DEVELOPMENT, changes to source contracts/TypeScript modules are implementation work saved to GitHub, never proof a user-facing app is built, tested or ready for localtest. No Node version, local app, CI or emulator is a prerequisite for ChatGPT source analysis.
+**ChatGPT Chat checker boundary:** In MAP BUG AUDIT, ChatGPT directly examines the selected artifact and canonical GitHub knowledge/contract sources. It may give an evidence-grounded audit response but must not claim programmatic `runSelectedMapAudit()`, canonical `SelectedMapAuditRun` or generated `MapAuditOutputV2` without actual execution. In SYSTEM DEVELOPMENT, source-contract/TypeScript changes saved to GitHub are verified only at the proof tier actually reached. The user's PC, CI, a separate interface and an emulator are not prerequisites for source-verifiable analysis.
 
 The operator mode is not an additional machine skill/lane or artifact authority. Detection Benchmark and Target Repair remain separate specialized routes when requested. Domain specialists never change the selected mode. An audit detection gap is a handoff, not automatic development permission; a development improvement never automatically resumes or reclassifies a map audit.
 

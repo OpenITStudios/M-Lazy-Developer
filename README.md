@@ -1,6 +1,6 @@
 # Lazy-Developer
 
-**Lazy-Developer is a ChatGPT-native Minecraft checker; no M-Lazy-Developer application has been built or verified.** ChatGPT is the present inspection/reasoning interface for Minecraft Bedrock and Education worlds. GitHub branch `Local` stores its evolving source modules, analysis contracts, knowledge, regression material, and documentation. Existing TypeScript engine/CLI/UI files describe potential reusable implementation, **not** an app that ChatGPT has installed, deployed, or operated.
+**M-Lazy-Developer is a Minecraft Bedrock/Education map-checking system operated through ChatGPT Chat.** The user provides a Google Drive link to a selected `.mcworld`; ChatGPT reads that accessible map with available tools, analyzes game mechanics and possible bugs, and reports supported findings and precise unknowns. GitHub `Local` stores the canonical source, knowledge, policies and development history. Exact repository TypeScript execution is a separate proof tier and is never inferred from source files.
 
 The working goal is to inspect `.mcworld` evidence (scripts, functions, manifests, NBT/LevelDB, structures and spatial data when accessible), reconstruct authored game design, distinguish intended behavior from credible defects, and preserve precisely scoped proof limits. ChatGPT can perform supported analysis without running a repository program. Source commits do not prove TypeScript execution or live Minecraft gameplay.
 
@@ -32,7 +32,7 @@ Documentation starts at [docs/README.md](docs/README.md).
 
 ## Choose one operator flow
 
-These are two **ChatGPT task modes**, not two running applications or evidence that a TypeScript engine has executed. Both reuse the same canonical knowledge/source ownership in GitHub.
+These are two **ChatGPT Chat task modes**. Both reuse the same canonical GitHub knowledge/source authority; neither mode implies that repository TypeScript code has executed.
 
 | User request | Mode | Route | Result |
 |---|---|---|---|
@@ -66,7 +66,7 @@ The root is a small entry and tooling-contract boundary, **not** another locatio
 | `.gitattributes` | Git path/attribute behavior | No engine semantics |
 | `.gitignore` | Untracked-file exclusion rules | No artifact source authority |
 
-The root folders have distinct responsibilities: `apps/` stores possible interface source (not a built app); `engine/` stores analysis/semantic implementation source (not automatically executed); `docs/` durable descriptions; `planning/` future intent; `workspace/` active project artifacts; `tooling/` developer operations; `experiments/` bounded research; `.agents/` agent procedures; and `.github/` GitHub service configuration.
+The root folders have distinct responsibilities: `apps/` stores optional CLI/report-interface source; `engine/` stores analysis/semantic implementation source; `docs/` durable descriptions; `planning/` future intent; `workspace/` active project artifacts; `tooling/` developer operations; `experiments/` bounded research; `.agents/` agent procedures; and `.github/` GitHub service configuration. None replaces ChatGPT Chat as the operator.
 
 ### Find work by flow, edit only its owner
 
@@ -84,7 +84,7 @@ The root folders have distinct responsibilities: `apps/` stores possible interfa
 ## Repository map
 
 ```text
-apps/          proposed/implemented interface source only; no running app
+apps/          optional CLI/report-interface source; ChatGPT Chat remains the operator
 engine/        Bedrock analysis, reasoning, validation, repair, and machine knowledge source
 docs/          durable human-facing documentation
 planning/      development, operations, and project work intent
@@ -118,7 +118,7 @@ Architecture and ownership:
 
 ## Selected-map gameplay audit
 
-**Current actual operator:** ChatGPT directly examines the exact selected `.mcworld` with available tools, reads relevant canonical source/knowledge from GitHub, and reports evidence and uncertainty. There is no application to open or to test locally. The audit reasoning order remains:
+**Current operator:** ChatGPT Chat retrieves an accessible selected `.mcworld` (including from a Google Drive link), examines it read-only with available tools, consults canonical GitHub source/knowledge, and reports evidence and uncertainty. The audit reasoning order remains:
 
 ```text
 Selected Minecraft artifact
@@ -170,6 +170,6 @@ See [workspace/README.md](workspace/README.md) and [planning/README.md](planning
 
 Canonical toolchain policy is [toolchain.json](toolchain.json).
 
-Optional developer/build **source configuration** is owned by `tooling/windows-toolchain/`. Its baseline is Node 22.16.0 / npm 10.9.2 to match the ChatGPT execution environment, while package engines also support Node 24. This pin is not a ChatGPT source-checking prerequisite; it is not proof of a runnable application, installed dependencies or successful repository tests.
+Optional developer/build **source configuration** is owned by `tooling/windows-toolchain/`. Its baseline is Node 22.16.0 / npm 10.9.2 to match the ChatGPT execution environment, while package engines also support Node 24. This pin is not a ChatGPT source-checking prerequisite or proof of installed dependencies, executed repository checks, or gameplay testing.
 
 Historical audit/run evidence belongs in `engine/reliability/history/`; reusable evaluation material belongs in `engine/reliability/corpus/`; superseded implementation detail remains in Git history.
