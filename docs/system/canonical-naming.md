@@ -49,7 +49,8 @@ Use these names consistently:
 | `docs/` | durable human-facing guides, architecture, reference, and specifications |
 | `planning/` | development, operations, and project work intent |
 | `workspace/` | working artifacts, project execution data, continuity, and canonical current report handoff |
-| `experiments/` | bounded non-authoritative research |
+| `experiments/` | bounded non-authoritative research and curated developer-practice reference |
+| `skills/bedrock/` | read-only native developer skill/module release identities; no internal agent activation |
 | `tooling/` | repository/build/developer verification tooling |
 | `.agents/` | bounded agent procedures, routing, permissions, and evals |
 

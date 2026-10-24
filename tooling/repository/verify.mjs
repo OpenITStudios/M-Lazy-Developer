@@ -116,6 +116,7 @@ const allowedRootEntries = new Set([
   "package-lock.json",
   "package.json",
   "planning",
+  "skills",
   "toolchain.json",
   "tooling",
   "tsconfig.json",

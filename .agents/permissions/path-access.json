@@ -74,6 +74,14 @@
       "productDevelopment": "read-write"
     },
     {
+      "path": "skills/bedrock/**",
+      "audit": "read",
+      "detectionDevelopment": "read",
+      "benchmark": "read",
+      "targetRepair": "read",
+      "productDevelopment": "read-write"
+    },
+    {
       "path": ".github/**",
       "productDevelopment": "read-write"
     },

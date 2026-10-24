@@ -182,9 +182,10 @@ if (!analysisReadme.includes("bug-finding-coverage.md")) {
   failures.push("docs/analysis/README.md must route to canonical bug-finding coverage.");
 }
 
-// Developer ZIP metadata is the ONE machine-readable snapshot/evidence
-// owner. Documentation and skill descriptions are human routes, never
-// alternative counts or native-test status registries.
+// Curated developer-practice analysis references have ONE machine-readable
+// owner below. The separate skills/bedrock/source-lock.json is a derived,
+// non-executable upstream package fingerprint/dependency view, not a second
+// map-audit reference registry or native runtime-test status authority.
 const developerMetadataPath = "experiments/developer-practice-signals.json";
 const developerMetadata = JSON.parse(
   readFileSync(developerMetadataPath, "utf8"),
@@ -229,6 +230,59 @@ if (pendingIntake !== undefined) {
       probeCandidate.reportsFound < 0) {
     failures.push(developerMetadataPath +
       ": pending ZIP intake must retain valid candidate-only provenance, separate from active reference authority.");
+  }
+}
+
+// Native upstream package semantics remain distinct from curated analysis
+// references, but their exact ZIP snapshot identity must agree.
+const nativeLockPath = "skills/bedrock/source-lock.json";
+if (!existsSync(nativeLockPath)) {
+  failures.push("Missing native Bedrock source lock: " + nativeLockPath);
+} else {
+  const lock = JSON.parse(readFileSync(nativeLockPath, "utf8"));
+  const skills = lock.skillsLock?.skills ?? {};
+  const modules = lock.modulesLock?.modules ?? {};
+  const external = lock.modulesLock?.externalModules ?? {};
+  const pendingSkills = pendingIntake?.inputs?.developerSkills;
+  const pendingProbe = pendingIntake?.inputs?.skillsProbe;
+  const skillNames = Object.keys(skills);
+  if (lock.schemaVersion !== 1 ||
+      lock.authority !== "REFERENCE_NOT_EXECUTABLE" ||
+      lock.status !== "PENDING_SEMANTIC_REVIEW" ||
+      lock.skillsLock?.source !== "zip" ||
+      lock.skillsLock?.commit !== null ||
+      lock.skillsLock?.hashAlgorithm !== "UPSTREAM_HASH_SKILL_V1" ||
+      lock.skillsArchiveSha256 !== pendingSkills?.archiveSha256 ||
+      lock.skillsLock?.tag !== pendingSkills?.releaseClaim ||
+      lock.skillsLock?.repo?.replace(/\.git$/, "") !== pendingSkills?.sourceRepository ||
+      skillNames.length !== pendingSkills?.activeSkillDocuments ||
+      !skillNames.every(name => /^bedrock-[a-z0-9-]+$/.test(name) && validSha(skills[name])) ||
+      lock.probe?.archiveSha256 !== pendingProbe?.archiveSha256 ||
+      lock.probe?.skillsLockTag !== pendingProbe?.observedSkillsLockTag ||
+      lock.probe?.skillsLockCommit !== pendingProbe?.observedSkillsLockCommit ||
+      lock.probe?.reportedTestRuns !== pendingProbe?.reportsFound) {
+    failures.push(nativeLockPath +
+      ": native skills/probe package lock must match pending ZIP provenance without executable authority.");
+  }
+  const moduleNames = Object.keys(modules);
+  if (moduleNames.length < 1 || moduleNames.some(name => {
+    const item = modules[name];
+    return !/^[a-z0-9-]+$/.test(name) ||
+      !validSha(item?.sha256) || !validSha(item?.folderSha256) ||
+      !Array.isArray(item?.skill) || !item.skill.length ||
+      item.skill.some(owner => !Object.hasOwn(skills, owner)) ||
+      !Array.isArray(item?.requires) ||
+      item.requires.some(dep => !Object.hasOwn(modules, dep) && !Object.hasOwn(external, dep));
+  })) {
+    failures.push(nativeLockPath + ": native module manifests/skill owners/requires are inconsistent.");
+  }
+  for (const [name, item] of Object.entries(external)) {
+    if (!/^[a-z0-9-]+$/.test(name) ||
+        typeof item?.repo !== "string" ||
+        !item.repo.startsWith("https://github.com/") ||
+        item?.source !== "EXTERNAL_REPO_NOT_IN_SKILLS_ZIP") {
+      failures.push(nativeLockPath + ": invalid external module reference: " + name);
+    }
   }
 }
 

@@ -191,6 +191,15 @@ These responsibilities may compose each other but must not become independent pr
 - Upstream developer ZIP signals: `experiments/developer-practice-signals.json`.
   Its source SHA and report provenance are comparison records, not authority
   for map gameplay.
+- Native developer skill domain: `skills/bedrock/README.md` and
+  `skills/bedrock/source-lock.json` preserve the upstream `skills/<name>`
+  identity, per-skill whole-folder hashes, `modules/<name>/module.json`
+  ownership/dependencies, and independent Skills Probe lock. This is a
+  ZIP-derived non-executable provenance view, distinct from the curated
+  analysis-reference owner in `experiments/` and from `.agents/skills/`.
+  `tooling/repository/developer-native-contract.mjs` owns the native
+  manifest/hash/lock comparison. The external ZIP contents remain outside
+  this public repository until explicitly authorized for redistribution.
 - External skill/probe refresh (development-side, **not** a map-audit
   stage): `tooling/repository/inspect-developer-upstream.mjs` compares bounded
   user-provided ZIPs read-only; the only durable metadata owner is

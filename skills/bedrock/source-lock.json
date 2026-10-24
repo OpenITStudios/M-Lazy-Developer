@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "status": "PENDING_SEMANTIC_REVIEW",
+  "authority": "REFERENCE_NOT_EXECUTABLE",
+  "skillsArchiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
+  "skillsLock": {
+    "repo": "https://github.com/achmadawdi/minecraft-bedrock-agent-skills.git",
+    "tag": "v0.27.0",
+    "commit": null,
+    "source": "zip",
+    "hashAlgorithm": "UPSTREAM_HASH_SKILL_V1",
+    "skills": {
+      "bedrock-agent-team": "b7550dda948c3d1c8d6d7d2ea79899e2cc2efa1d0067de31fae5fa7385b9ec2e",
+      "bedrock-camera": "4a0d0fa310438c7b112920ef155a2d98995998e1137e20671f4247682bca119d",
+      "bedrock-content": "b09b4194dc61aa5c5576b8c43bf7f7cc8c9e559421dc80b376802c31959ab165",
+      "bedrock-coordinates": "93e974d6fa209736ffc5852232ee8f35a9f6c11e3a3dc7af6306028533f1e808",
+      "bedrock-data-persistence": "98ce2fa4bff110b630dd8fc10397eccfa4694702f943c6dd09ac0352fef5da5b",
+      "bedrock-debug-logging": "b569c9373a33d6a196aab12ade8bda6027647ad3bac5c2e36c45063184db207e",
+      "bedrock-debug-profiling": "9c5f7984b7dc9e787c56ab056e4e5877f5164dbe88b1b64677150be308b7d0c7",
+      "bedrock-entity-creation": "6dd35918a57e4c2ef8051a50fe6237e142efb2732effac33b4934f5ff1c94c1a",
+      "bedrock-entity-lifecycle": "911f45642ecc30b61f510b939ef9c039060d7ffaaf8668d805d96f7f3d01ab14",
+      "bedrock-forms": "afdf43a7f89da44a1872a5c9fcba47dc071547a021710aa606bee806eca2f150",
+      "bedrock-game-results": "ddfe8aa73e73da787d52ff87c1d4ed6df8ffd854c7275a7f87312a924c053490",
+      "bedrock-game-time": "66e88eef6172d3fc5f7a2693306b693bdc8e984fdd721c952aaf72ce4bcc35c7",
+      "bedrock-git-workflow": "50b81b8dfaae74d74a9e950249ffb07d6dc04c301b652e86879d0e2daebbf88f",
+      "bedrock-onscreen-display": "b03eef9594403d1ca13bf0d1a198b839681bf52da6e67bc7fe8ea490cfd28f50",
+      "bedrock-player-attached-particles": "546038dbb4d6b592da20238b96762c718717eda2faf0b930b93bb808cdc9ab2b",
+      "bedrock-project-setup": "5f215bb642fde22843269faa112c267a5b2d446ccd2e12366dc285ce614a0919",
+      "bedrock-release-export": "7c224b7dcb0afda94d963be0b6dcbc456d6bd2bd32d2a10b52bad6a356574e14",
+      "bedrock-script-optimization": "7a205d7df2f369cd8da3f9b531db44d24dc7706eb24bedac0df7922765ea43f5",
+      "bedrock-sound": "f950d555580bc43167f75de7bd4da44d976530885a9feb7b034ac0a0751a4776",
+      "bedrock-teleport": "d5bfc9c2df425f240843724a7ea7070876bcf52d3cade4f8fcc109daba168141",
+      "bedrock-testing-policy": "4dce1a05405e550cfad363b6fa0f785a0b2ec8467ef3a125b3fc5e8c719ce0c7",
+      "bedrock-text-glyphs": "dcffc6512d3da8b0d65318988491b320ca8b9a41c0368f304cd70ece877e144f",
+      "bedrock-version-targeting": "421786a89dff76c84f1eb9c5d41664a08940355677095cdcb4314304bdf02ee4"
+    }
+  },
+  "modulesLock": {
+    "modules": {
+      "coords": {
+        "sha256": "2fda69e5991c6d395194e6a88b3b01a3048509282923f58d1a8687f3d8635354",
+        "folderSha256": "28bcb33393db8ce028c9297c09d660bfade9cb15469f2d824aca0f348beefc6a",
+        "skill": [
+          "bedrock-coordinates"
+        ],
+        "requires": []
+      },
+      "display": {
+        "sha256": "19e1886eb64b4c484e7b0ee6977a4c7e5929b3570e304d14aeb4a8700d61d2cd",
+        "folderSha256": "f951f1adb2b5e0493407dbc703e49e55d29180e9fc8f4b4673f1bed17b2dc87b",
+        "skill": [
+          "bedrock-onscreen-display"
+        ],
+        "requires": [
+          "logging"
+        ]
+      },
+      "entities": {
+        "sha256": "1802aef21a516fc2393b3f8d260b6c0606662fb8f4e43cec5363df9eac466068",
+        "folderSha256": "3a0a42e0470cfeeeec448e222c29492e2b00d92ad313e2406a0206d864c2e278",
+        "skill": [
+          "bedrock-entity-lifecycle",
+          "bedrock-entity-creation"
+        ],
+        "requires": [
+          "logging"
+        ]
+      },
+      "forms": {
+        "sha256": "efa2f72c79184db6f562efd441c63d74c9cf63ec66b6cd3600d2bdd4c331252b",
+        "folderSha256": "08d89ba6e2bf40711540087f901ca97cb42c3e85c246ff3b3a5df95e4c29187c",
+        "skill": [
+          "bedrock-forms"
+        ],
+        "requires": [
+          "logging"
+        ]
+      },
+      "game-results": {
+        "sha256": "a4c54f6a83aa8e0286e96d73c650bd451f007808880dafb48f098454da2d864f",
+        "folderSha256": "cd7e4ed4a5dc261454ffaae93d137c380b29a0901988d87731fb934ad84c9097",
+        "skill": [
+          "bedrock-game-results"
+        ],
+        "requires": []
+      },
+      "items": {
+        "sha256": "1460bd8d3348fc7765d425ec7f2f0a475733b43ee654d4b0250871e0a3e91e2b",
+        "folderSha256": "7d6a685eac5fb210c5e7cd76485dc0af91291cd26767ab583051f54b79d038b6",
+        "skill": [
+          "bedrock-data-persistence"
+        ],
+        "requires": [
+          "logging"
+        ]
+      },
+      "logging": {
+        "sha256": "2c95f42a877884216c75409c7183c7ba515ecad2985cf0344392b040284d9823",
+        "folderSha256": "884422be54bec6cd9568aaf4ba856bb1d9f7a156548c3adb811a29e5bc081e3c",
+        "skill": [
+          "bedrock-debug-logging"
+        ],
+        "requires": []
+      },
+      "profiling": {
+        "sha256": "0fe7e4579ee564f68a4382ea035c4572095009289856162fb24fa913b7709b21",
+        "folderSha256": "e45e73a9b93dc29de356bef8127d3637766801cf25f874b2aa00c79a3b5e8a91",
+        "skill": [
+          "bedrock-debug-profiling"
+        ],
+        "requires": []
+      },
+      "sound": {
+        "sha256": "a05a0e863e5664c723edc57024c276dadbf4178e28f0d54aeb61dd49adffc4db",
+        "folderSha256": "baffc2cc0f29dd77f5b6aed0829d4072c7ebd8dd971165fddbe61b7f5191bf8d",
+        "skill": [
+          "bedrock-sound"
+        ],
+        "requires": [
+          "logging"
+        ]
+      },
+      "teleport": {
+        "sha256": "31345763f5cee2b9a7489d1b4e44cc793ec588f79ee257482a4a63f29d115144",
+        "folderSha256": "529cb238ec402b7adc3215fc79ed5aa39a16053d1dcfc4b0d24de369c7ac584e",
+        "skill": [
+          "bedrock-teleport"
+        ],
+        "requires": [
+          "logging",
+          "forms"
+        ]
+      },
+      "testing": {
+        "sha256": "7a00df1402ccf5b18ba3a746766803bf54d1b235f0558e43136ebc8002d63666",
+        "folderSha256": "59cea5d07edf686cbda48c5ee5a462e7cb70de474b4fe63ef9999517f729b4da",
+        "skill": [
+          "bedrock-script-optimization"
+        ],
+        "requires": []
+      },
+      "time": {
+        "sha256": "80b8462902f5cde67f40735088eb4fb82fff55d80ec8d172f492a77e57d0a5d9",
+        "folderSha256": "b4a9335ef56463a7b230515dae068e7ac4262d459222718e3b752a354dc83ebe",
+        "skill": [
+          "bedrock-game-time"
+        ],
+        "requires": [
+          "logging",
+          "database"
+        ]
+      }
+    },
+    "externalModules": {
+      "database": {
+        "repo": "https://github.com/achmadawdi/minecraft-bedrock-store.git",
+        "source": "EXTERNAL_REPO_NOT_IN_SKILLS_ZIP"
+      }
+    }
+  },
+  "probe": {
+    "archiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+    "skillsLockTag": "v0.23.0",
+    "skillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
+    "reportedTestRuns": 49,
+    "installedSkills": 22,
+    "installedModules": 9,
+    "lockDrift": "LOCKS_MATCH_PACKAGED_FILES"
+  },
+  "note": "Reference candidate only. Per-skill folder hashes and per-module manifest/folder hashes are native upstream-derived. Full per-file lock is generated by the read-only ZIP inspector; neither its contents nor upstream test reports are gameplay proof."
+}

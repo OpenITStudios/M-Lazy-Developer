@@ -15,6 +15,14 @@ for evolving map-developer experience from the user-supplied
 during UNDERSTAND without creating a gameplay contract, runtime fact, defect
 finding, installed agent skill, or new analyzer.
 
+**Native upstream skill/module layout:** [Bedrock native skill domain](../../skills/bedrock/README.md)
+with the ZIP-derived `skills/bedrock/source-lock.json`. It preserves original
+upstream `skills/<name>/SKILL.md` identities, folder hashes, module
+`requires` edges and independent probe locks without installing upstream
+agent instructions. The curated interpretation authority remains the existing
+`experiments/developer-practice-signals.json`; pending native candidates are
+not implicitly selected for map audits.
+
 **Machine-readable candidate data:** [Developer practice signals](../../experiments/developer-practice-signals.json)
 (`experiments/developer-practice-signals.json`).
 **Original source inventory/provenance:** [ZIP reference](../examples/bedrock-developer-agent-skills-reference.md).

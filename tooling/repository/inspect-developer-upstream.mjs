@@ -1,3 +1,4 @@
+import { nativeSourceLayout, verifyProbeLock, readNativeSkill, readNativeModule } from "./developer-native-contract.mjs";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { crc32, inflateRawSync } from "node:zlib";
@@ -19,14 +20,16 @@ function parseArguments(args) {
   const options = {};
   for (let i = 0; i < args.length; i += 2) {
     const option = args[i];
-    if (!["--skills-zip", "--probe-zip", "--metadata"].includes(option) ||
+    if (!["--skills-zip", "--probe-zip", "--metadata", "--read-skill", "--read-module", "--mode"].includes(option) ||
         !args[i + 1] || options[option]) {
       throw new Error("Usage: node tooling/repository/inspect-developer-upstream.mjs --skills-zip <zip> --probe-zip <zip> [--metadata <file>]");
     }
     options[option] = args[i + 1];
   }
-  if (!options["--skills-zip"] || !options["--probe-zip"]) {
-    throw new Error("Both developer skills and Skills Probe ZIPs are required for a paired provenance comparison.");
+  if (!options["--skills-zip"] ||
+      options["--mode"] && !["diff", "native", "lock"].includes(options["--mode"]) ||
+      options["--read-skill"] && options["--read-module"]) {
+    throw new Error("Provide --skills-zip <zip>, optional --probe-zip <zip>, --mode diff|native|lock, or one --read-skill/--read-module <name>.");
   }
   return options;
 }
@@ -187,10 +190,56 @@ async function main() {
     throw new Error("Refusing comparison against a non-reference metadata owner.");
   }
   const [skills, probe] = await Promise.all([
-    openArchive(args["--skills-zip"]), openArchive(args["--probe-zip"]),
+    openArchive(args["--skills-zip"]),
+    args["--probe-zip"] ? openArchive(args["--probe-zip"]) : Promise.resolve(null),
   ]);
   const skillsManifest = skills.readJson("skills.json");
-  const lock = probe.readJson("skills-lock.json");
+  const native = nativeSourceLayout(skills, skillsManifest);
+  if (args["--read-skill"] || args["--read-module"]) {
+    const selected = args["--read-skill"]
+      ? readNativeSkill(skills, native, args["--read-skill"])
+      : readNativeModule(skills, native, args["--read-module"]);
+    process.stdout.write(JSON.stringify(selected, null, 2) + "\n");
+    return;
+  }
+  const lock = probe ? probe.readJson("skills-lock.json") : {skills:{}};
+  const probeModules = probe ? probe.readJson("modules-lock.json") : { modules:{} };
+  const probeIntegrity = verifyProbeLock(probe, lock, probeModules);
+  if (args["--mode"] === "native" || args["--mode"] === "lock") {
+    const candidateLock = {
+      schemaVersion: 1, status: "PENDING_SEMANTIC_REVIEW",
+      authority: "REFERENCE_NOT_EXECUTABLE", skillsArchiveSha256: skills.archiveSha256,
+      skillsLock: native.skillsLock,
+      modulesLock: {
+        modules: Object.fromEntries(Object.entries(native.modulesLock.modules).map(
+          ([name, item]) => [name, {
+            sha256: item.sha256, folderSha256: item.folderSha256,
+            skill: item.skill, requires: item.requires, files: item.files,
+          }])),
+        externalModules: native.modulesLock.externalModules,
+      },
+      probe: probe ? {
+        archiveSha256: probe.archiveSha256,
+        skillsLockTag: probeIntegrity.skillsLockTag,
+        skillsLockCommit: probeIntegrity.skillsLockCommit,
+        reportedTestRuns: probe.paths.filter(path => classify.probeReports.test(path)).length,
+        installedSkills: probeIntegrity.installedSkills,
+        installedModules: probeIntegrity.installedModules,
+        lockDrift: probeIntegrity.status,
+      } : { status: "NOT_PROVIDED" },
+      note: "Reference candidate only. Release tag and probe reports derive from ZIP; no verified upstream release commit or Minecraft runtime proof.",
+    };
+    const result = args["--mode"] === "lock" ? candidateLock : {
+      schemaVersion: 1, authority: "REFERENCE", status: "PENDING_SEMANTIC_REVIEW",
+      source: { archiveSha256: skills.archiveSha256, releaseClaim: native.skillsLock.tag,
+        repoClaim: native.skillsLock.repo, origin: "USER_SUPPLIED_ZIP" },
+      native, probe: { archiveSha256: probe?.archiveSha256 ?? null,
+        integrity: probeIntegrity,
+        reportCount: probe?.paths.filter(path => classify.probeReports.test(path)).length ?? null },
+    };
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    return;
+  }
   const declared = new Set((skillsManifest.skills ?? []).map(name =>
     "skills/" + name + "/SKILL.md"));
   const active = skills.paths.filter(path => classify.skills.test(path));
@@ -208,12 +257,34 @@ async function main() {
     [...moduleAll].filter(([path]) => !/\.(?:test|spec)\.ts$/.test(path))));
   const moduleTestDelta = compare(before.unitTests ?? [], new Map(
     [...moduleAll].filter(([path]) => /\.(?:test|spec)\.ts$/.test(path))));
-  const probeReports = compare(metadata.probeEvidence ?? [],
-    select(probe, classify.probeReports), "sourcePath", "sourceSha256");
-  const probePack = compare(before.probePackSources ?? [],
-    select(probe, classify.probePack));
-  const probeTools = compare(before.probeToolSources ?? [],
-    select(probe, classify.probeTools));
+  const probeReports = probe ? compare(metadata.probeEvidence ?? [],
+    select(probe, classify.probeReports), "sourcePath", "sourceSha256") : null;
+  const probePack = probe ? compare(before.probePackSources ?? [],
+    select(probe, classify.probePack)) : null;
+  const probeTools = probe ? compare(before.probeToolSources ?? [],
+    select(probe, classify.probeTools)) : null;
+  // The native source lock lives inside the separate Bedrock skill domain.
+  // It is provenance only, not the internal .agents skill registry.
+  let priorNative;
+  try {
+    priorNative = JSON.parse(await readFile("skills/bedrock/source-lock.json", "utf8"));
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  if (priorNative && (priorNative.schemaVersion !== 1 ||
+      priorNative.authority !== "REFERENCE_NOT_EXECUTABLE")) {
+    throw new Error("Invalid native Bedrock reference lock.");
+  }
+  const nativeSkillChanges = priorNative?.skillsLock?.skills
+    ? compare(Object.entries(priorNative.skillsLock.skills).map(([path, sha256]) => ({path, sha256})),
+        new Map(Object.entries(native.skillsLock.skills)))
+    : {status: "NO_PRIOR_NATIVE_FOLDER_HASH_BASELINE"};
+  const nativeModuleChanges = priorNative?.modulesLock?.modules
+    ? compare(Object.entries(priorNative.modulesLock.modules).map(([path, item]) =>
+        ({path, sha256: item.folderSha256})),
+        new Map(Object.entries(native.modulesLock.modules).map(([path, item]) =>
+          [path, item.folderSha256])))
+    : {status: "NO_PRIOR_NATIVE_MODULE_HASH_BASELINE"};
   const candidates = {
     developerSkills: {
       origin: "USER_SUPPLIED_ZIP", archiveSha256: skills.archiveSha256,
@@ -221,14 +292,14 @@ async function main() {
       activeSkillDocuments: active.length,
       declaredRepository: skillsManifest.repo ?? null,
     },
-    skillsProbe: {
+    skillsProbe: probe ? {
       origin: "USER_SUPPLIED_ZIP", archiveSha256: probe.archiveSha256,
       fileCount: probe.fileCount,
       observedSkillsLockTag: lock.tag ?? null,
       observedSkillsLockCommit: lock.commit ?? null,
       declaredRepository: lock.repo ?? null,
       reportsFound: probe.paths.filter(path => classify.probeReports.test(path)).length,
-    },
+    } : null,
   };
   const impactedSkills = new Set([...skillDelta.changed, ...skillDelta.removed].map(path =>
     path.slice("skills/".length, -"/SKILL.md".length)));
@@ -239,7 +310,7 @@ async function main() {
   const pending = metadata.pendingIntake;
   const recordedPendingMatches = pending?.status === "PENDING_SEMANTIC_REVIEW" &&
     pending?.inputs?.developerSkills?.archiveSha256 === skills.archiveSha256 &&
-    pending?.inputs?.skillsProbe?.archiveSha256 === probe.archiveSha256;
+    (!probe || pending?.inputs?.skillsProbe?.archiveSha256 === probe.archiveSha256);
   const result = {
     schemaVersion: 1,
     authority: "REFERENCE",
@@ -255,7 +326,7 @@ async function main() {
     recordedPendingMatches,
     versionBoundary: {
       skillsReleaseMatchesProbeLock:
-        candidates.developerSkills.releaseClaim === candidates.skillsProbe.observedSkillsLockTag,
+        probe ? candidates.developerSkills.releaseClaim === candidates.skillsProbe.observedSkillsLockTag : null,
       proof: "UPSTREAM_PROBE_REPORTS_NOT_LOCAL_MINECRAFT_OR_SELECTED_MAP_PROOF",
     },
     delta: {
@@ -265,6 +336,18 @@ async function main() {
       probeReports,
       probePackSources: probePack,
       probeTools,
+    },
+    native: {
+      sourceLayout: "skills/<name>/SKILL.md + references + scripts + assets; modules/<name>/module.json",
+      skillsLock: native.skillsLock,
+      modulesLock: native.modulesLock,
+      skillFolderChanges: nativeSkillChanges,
+      moduleFolderChanges: nativeModuleChanges,
+      probeIntegrity,
+      recordedLockMatches: !!priorNative &&
+        priorNative.skillsArchiveSha256 === skills.archiveSha256 &&
+        (!probe || priorNative.probe?.archiveSha256 === probe.archiveSha256),
+      note: "Native structure is addressed from original ZIP; no byte-for-byte vendoring or implicit runtime execution.",
     },
     affectedPatterns,
     decision: "REVIEW_PER_SOURCE_AND_CONSUMER_NO_AUTOMATIC_PROMOTION",

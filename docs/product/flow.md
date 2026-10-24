@@ -26,6 +26,12 @@ Developer skills ZIP + Skills Probe ZIP / verifiable upstream snapshots
 → optional selected-source context at UNDERSTAND
 ```
 
+The developer ZIP uses a separate native skills domain at
+`skills/bedrock/README.md` and its source lock. Individual upstream skills and
+module dependencies retain native names/identities; this is a non-executable
+source reference, **not** a replacement for `.agents/skills/` or a new
+map-audit stage. The selected map is always gameplay authority.
+
 The operator-side refresh is routed through
 [Developer-Practice Knowledge](../analysis/developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion);
 its one metadata owner is `experiments/developer-practice-signals.json`.
