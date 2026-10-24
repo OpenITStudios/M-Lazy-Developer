@@ -6,8 +6,11 @@ import { createLevelDbSnapshot } from "../../../../adapters/leveldb/src/index.js
 import { openBedrockLevelDbSnapshot } from "../../../../adapters/leveldb/src/index.js";
 import { scanLevelDbMetadata } from "../../../../adapters/leveldb/src/index.js";
 
+// Bound native scanning to prevent excessive memory use, but preserve every
+// observed chunk within the budget. A separate preview slice would falsely
+// make Discovery incomplete even when the DB itself was fully inventoried.
 const INSPECTION_LEVELDB_BUDGET = {
-  maxEntries: 50_000,
+  maxEntries: 100_000,
   maxValueBytes: 8 * 1024 * 1024,
   maxTotalValueBytes: 256 * 1024 * 1024,
 };
@@ -134,6 +137,8 @@ export async function analyzeWorldDbNative(
               )
               .digest("hex");
 
+      // Downstream arena comparisons need all scanned value hashes; do not
+      // discard hashes before interpreting this exact bounded scan.
       const chunkContentObservations = scan.metadata
         .filter((entry) =>
           entry.keyFamily === "chunk-data" &&
@@ -142,7 +147,6 @@ export async function analyzeWorldDbNative(
           entry.chunkDataKind !== undefined &&
           entry.valueHash !== undefined
         )
-        .slice(0, 8192)
         .map((entry) => ({
           chunkX: entry.chunkX!,
           chunkZ: entry.chunkZ!,
@@ -154,8 +158,9 @@ export async function analyzeWorldDbNative(
             : { subChunkIndex: entry.subChunkIndex }),
         }));
 
+      // Keep one summary per observed chunk. The scanner budget, not a
+      // display-only slice, is the authority for completeness/truncation.
       const chunkSignals = [...chunkKinds.entries()]
-        .slice(0, 1024)
         .map(([key, kinds]) => {
           const [dimensionText, xText, zText] = key.split(":");
           return {
