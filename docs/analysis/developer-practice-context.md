@@ -146,6 +146,16 @@ probe's experiment outcomes remain version-scoped and must not be presented
 as direct tests of v0.27.0. A newer technical skill without exact typed
 map-source witnesses remains unrouted.
 
+The current Resource Context retains the declared developer source release and
+the independently pinned Probe installed-skills tag **and commit**. Clean
+examples require matching Probe archive, tag and exact commit; a tag alone is
+not enough. For each eligible method, at most two SHA-pinned historical
+reports are included: the newest available report plus a contrasting
+PASS/non-PASS outcome when present. Omitted eligible reports are counted,
+not silently interpreted as PASS. Original report-source fingerprints and
+reported target/revision are preserved even when the current Probe source
+inventory has changed; these are historical references, never replay proof.
+
 ## Historical intake — 21 October 2026 (superseded source baseline)
 
 The material below describes the prior v0.24.0 source inventory and v0.23.0

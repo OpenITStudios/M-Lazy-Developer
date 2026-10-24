@@ -409,7 +409,7 @@ describe("developer practice manifest-scoped version hints", () => {
       ...baseline,
       data: {
         ...data,
-        probeSnapshot: { observedSkillsLockTag: "v0.23.0", archiveSha256: "c".repeat(64), archiveHistorySha256: [] },
+        probeSnapshot: { observedSkillsLockTag: "v0.23.0", observedSkillsLockCommit: "e".repeat(40), archiveSha256: "c".repeat(64), archiveHistorySha256: [] },
         probeExamples: exampleIndex,
       },
       sourceLocators: ["behavior_packs/demo/scripts/main.ts:17"],

@@ -171,7 +171,11 @@ export function compileResourceContext(
 export interface DeveloperPracticeReferenceData {
   readonly authority: "REFERENCE";
   readonly usagePolicy: "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF";
-  readonly sourceSnapshot: { readonly archiveSha256: string };
+  readonly sourceSnapshot: {
+    readonly archiveSha256: string;
+    /** Publisher ZIP release claim, not independently verified GitHub HEAD. */
+    readonly release?: string;
+  };
   readonly sourceFiles: readonly {
     readonly id: string;
     readonly path: string;
@@ -253,6 +257,8 @@ export interface DeveloperPracticeReferenceData {
   };
   readonly probeSnapshot?: {
     readonly observedSkillsLockTag: string;
+    /** Exact skills-lock commit IN the Probe ZIP, distinct from developer ZIP. */
+    readonly observedSkillsLockCommit?: string;
     /** Independently verified source-archive identities, NOT runtime proof. */
     readonly archiveSha256?: string;
     readonly archiveHistorySha256?: readonly string[];
@@ -519,6 +525,11 @@ export interface CompiledDeveloperPracticeReferenceContext {
   readonly status: "INVESTIGATION_HINTS_ONLY";
   readonly selectedArtifactId: string;
   readonly archiveSha256: string;
+  /** Publisher-declared ZIP release, never a live GitHub verification. */
+  readonly developerSourceRelease?: string;
+  /** The independent installed skills revision in the Probe source ZIP. */
+  readonly probeInstalledSkillsLockTag?: string;
+  readonly probeInstalledSkillsLockCommit?: string;
   readonly items: readonly {
     readonly patternId: string;
     readonly sourceId: string;
@@ -597,6 +608,7 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly proof: "UPSTREAM_SOURCE_INDEX_ONLY_NOT_SELECTED_MAP_PROOF";
     }[];
     /** Upstream probes are investigation clues only, not bug proof. */
+    readonly omittedUpstreamProbes?: number;
     readonly upstreamProbes?: readonly {
       readonly id: string;
       readonly sourcePath: string;
@@ -606,6 +618,7 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly family?: string;
       readonly series?: string;
       readonly reportedRevisionPin?: string;
+      readonly targetBasis?: string;
       /** Historical record, not independently observed map/client proof. */
       readonly proof: "UPSTREAM_REPORTED_NOT_SELECTED_MAP_BEHAVIOR_PROOF";
       readonly fixtureSources?: readonly { readonly path: string; readonly sha256: string }[];
@@ -704,6 +717,9 @@ export function compileDeveloperPracticeReferenceContext(input: {
     /^[a-f0-9]{64}$/.test(cleanIndex.indexSha256) &&
     /^[a-f0-9]{64}$/.test(cleanIndex.sourceArchiveSha256) &&
     cleanIndex.sourceSkillLockTag === data.probeSnapshot?.observedSkillsLockTag &&
+    /^[a-f0-9]{40}$/.test(cleanIndex.sourceSkillLockCommit) &&
+    cleanIndex.sourceSkillLockCommit ===
+      data.probeSnapshot?.observedSkillsLockCommit &&
     cleanIndex.sourceArchiveSha256 === data.probeSnapshot?.archiveSha256 &&
     /^v\d+\.\d+\.\d+$/.test(cleanIndex.sourceSkillLockTag);
   const candidates = data.patterns.flatMap(pattern => {
@@ -746,6 +762,29 @@ export function compileDeveloperPracticeReferenceContext(input: {
         ownedModuleDirectories.has(test.path.split("/").slice(0, 2).join("/")))
       .sort((a, b) => a.path.localeCompare(b.path))
       .slice(0, 4);
+    // Probe reports may describe different revisions and opposite outcomes.
+    // Keep the newest eligible report, then one contrasting PASS vs non-PASS
+    // report when available. Never hide known FAIL/BLOCKED/PARTIAL/MIXED
+    // history by selecting two newer PASS reports or treat either as map proof.
+    const eligibleUpstreamProbes = (data.probeEvidence ?? [])
+      .filter(item =>
+        item.relatedSkillIds.includes(source.id) &&
+        item.status.startsWith("UPSTREAM_REPORTED_") &&
+        /^[a-f0-9]{64}$/.test(item.sourceSha256) &&
+        item.reportArchiveSha256 !== undefined &&
+        reportArchives.has(item.reportArchiveSha256))
+      .sort((a, b) => b.sourcePath.localeCompare(a.sourcePath));
+    const newestProbe = eligibleUpstreamProbes[0];
+    const contrastingProbe = newestProbe === undefined ? undefined :
+      eligibleUpstreamProbes.slice(1).find(item =>
+        (item.status === "UPSTREAM_REPORTED_PASS") !==
+        (newestProbe.status === "UPSTREAM_REPORTED_PASS"));
+    const selectedUpstreamProbes = [
+      ...(newestProbe === undefined ? [] : [newestProbe]),
+      ...(contrastingProbe === undefined
+        ? eligibleUpstreamProbes.slice(1, 2)
+        : [contrastingProbe]),
+    ];
     return [{
       patternId: pattern.id,
       sourceId: source.id,
@@ -861,41 +900,36 @@ export function compileDeveloperPracticeReferenceContext(input: {
           })),
       }),
       ...(data.probeEvidence === undefined ? {} : {
-        upstreamProbes: data.probeEvidence
-          .filter((item) =>
-            item.relatedSkillIds.includes(source.id) &&
-            item.status.startsWith("UPSTREAM_REPORTED_") &&
-            /^[a-f0-9]{64}$/.test(item.sourceSha256) &&
-            item.reportArchiveSha256 !== undefined &&
-            reportArchives.has(item.reportArchiveSha256))
-          // Favor newer, explicitly scoped developer observations over stale
-          // generic early probes; even newer PASS remains only a question.
-          .sort((a, b) => b.sourcePath.localeCompare(a.sourcePath))
-          .slice(0, 2)
-          .map((item) => ({
-            id: item.id,
-            sourcePath: item.sourcePath,
-            status: item.status,
-            summary: item.summary,
-            ...(item.reportArchiveSha256 === undefined ? {} :
-              { reportArchiveSha256: item.reportArchiveSha256 }),
-            ...(item.family === undefined ? {} : { family: item.family }),
-            ...(item.series === undefined ? {} : { series: item.series }),
-            ...(item.reportedRevisionPin === undefined ? {} :
-              { reportedRevisionPin: item.reportedRevisionPin }),
-            proof: "UPSTREAM_REPORTED_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
-            ...(item.fixtureSources === undefined ? {} : {
-              fixtureSources: item.fixtureSources
-                .filter((fixture) => (
-                  /^packs\/BP\/scripts\/probe\/probes\/[a-z0-9-]+\.ts$/.test(fixture.path) &&
-                  /^[a-f0-9]{64}$/.test(fixture.sha256) &&
-                  data.codeInventory?.probePackSources?.some((known) =>
-                    known.path === fixture.path && known.sha256 === fixture.sha256)
-                ))
-                .slice(0, 3)
-                .map((fixture) => ({ path: fixture.path, sha256: fixture.sha256 })),
-            }),
-          })),
+        ...(eligibleUpstreamProbes.length <= selectedUpstreamProbes.length
+          ? {} : { omittedUpstreamProbes:
+            eligibleUpstreamProbes.length - selectedUpstreamProbes.length }),
+        upstreamProbes: selectedUpstreamProbes.map(item => ({
+          id: item.id,
+          sourcePath: item.sourcePath,
+          status: item.status,
+          summary: item.summary,
+          ...(item.reportArchiveSha256 === undefined ? {} :
+            { reportArchiveSha256: item.reportArchiveSha256 }),
+          ...(item.family === undefined ? {} : { family: item.family }),
+          ...(item.series === undefined ? {} : { series: item.series }),
+          ...(item.reportedRevisionPin === undefined ? {} :
+            { reportedRevisionPin: item.reportedRevisionPin }),
+          ...(item.targetBasis === undefined ? {} :
+            { targetBasis: item.targetBasis }),
+          proof: "UPSTREAM_REPORTED_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
+          ...(item.fixtureSources === undefined ? {} : {
+            // An original report may reference an earlier source revision.
+            // A different current ZIP source SHA must not erase its history.
+            fixtureSources: item.fixtureSources
+              .filter(fixture =>
+                /^packs\/BP\/scripts\/probe\/probes\/[a-z0-9-]+\.ts$/.test(fixture.path) &&
+                /^[a-f0-9]{64}$/.test(fixture.sha256))
+              .slice(0, 3)
+              .map(fixture => ({
+                path: fixture.path, sha256: fixture.sha256,
+              })),
+          }),
+        })),
       }),
       ...(pattern.referenceCode !== undefined &&
           /^modules\/[a-z0-9-]+\/[a-z0-9-]+\.ts$/.test(pattern.referenceCode.path) &&
@@ -917,6 +951,18 @@ export function compileDeveloperPracticeReferenceContext(input: {
     status: "INVESTIGATION_HINTS_ONLY",
     selectedArtifactId,
     archiveSha256: data.sourceSnapshot.archiveSha256,
+    ...(!data.sourceSnapshot.release ||
+        !/^v\d+\.\d+\.\d+$/.test(data.sourceSnapshot.release)
+      ? {} : { developerSourceRelease: data.sourceSnapshot.release }),
+    ...(data.probeSnapshot === undefined ||
+        !/^v\d+\.\d+\.\d+$/.test(data.probeSnapshot.observedSkillsLockTag) ||
+        !/^[a-f0-9]{64}$/.test(data.probeSnapshot.archiveSha256 ?? "") ||
+        !/^[a-f0-9]{40}$/.test(data.probeSnapshot.observedSkillsLockCommit ?? "")
+      ? {} : {
+        probeInstalledSkillsLockTag: data.probeSnapshot.observedSkillsLockTag,
+        probeInstalledSkillsLockCommit:
+          data.probeSnapshot.observedSkillsLockCommit!,
+      }),
     items: candidates.slice(0, limit),
     omitted: Math.max(0, candidates.length - limit),
   };

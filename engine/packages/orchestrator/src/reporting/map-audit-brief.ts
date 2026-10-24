@@ -1902,7 +1902,20 @@ export function formatSelectedMapAuditBrief(input: {
       ...(task.knowledgeLookup === undefined ? [] :
         ["  Search hint (not proof): " +
           concise(task.knowledgeLookup.query)]),
+      ...(task.developerPractice?.items.length ? [
+        "  Developer ZIP release claim: " +
+          concise(task.developerPractice.developerSourceRelease ?? "UNKNOWN") +
+          "; independent Probe installed-skills lock: " +
+          concise(task.developerPractice.probeInstalledSkillsLockTag ?? "UNKNOWN") +
+          (task.developerPractice.probeInstalledSkillsLockCommit === undefined
+            ? "" : " @ " +
+              task.developerPractice.probeInstalledSkillsLockCommit) +
+          " (source references only; NOT selected-map gameplay proof).",
+      ] : []),
       ...(task.developerPractice?.items ?? []).slice(0, 2).flatMap(guide => [
+        "  Developer method version applicability: " +
+          concise(guide.versionApplicability) +
+          " (independent current-map runtime applicability NOT verified).",
         "  Developer source guide (REFERENCE; NOT map proof): " +
           concise(guide.question),
         "  Counterexample: " + concise(guide.negativeControl),
@@ -1942,7 +1955,18 @@ export function formatSelectedMapAuditBrief(input: {
               .slice(0, 3).join(", ")),
         ...(guide.upstreamProbes ?? []).slice(0, 2).map(item =>
           "  External probe (NOT selected map proof): " +
-            concise(item.sourcePath) + " [" + item.status + "]"),
+            concise(item.sourcePath) + " [" + item.status + "]" +
+            (item.reportArchiveSha256 === undefined ? "" :
+              "; report ZIP sha256: " + item.reportArchiveSha256) +
+            (item.reportedRevisionPin === undefined ? "" :
+              "; reported revision: " + concise(item.reportedRevisionPin)) +
+            (item.targetBasis === undefined ? "" :
+              "; reported target: " + concise(item.targetBasis))),
+        ...(guide.omittedUpstreamProbes === undefined ? [] : [
+          "  Additional eligible historical Probe reports omitted from this" +
+            " bounded context: " + guide.omittedUpstreamProbes +
+            "; omission is NOT a PASS or absence of failures.",
+        ]),
       ]),
       ...(task.retrievedKnowledge?.references ?? []).flatMap((reference) => [
         "  Knowledge reference (NOT bug or detector proof): " +
