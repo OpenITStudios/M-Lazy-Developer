@@ -9,16 +9,23 @@ lifecycle: ACTIVE
 
 # Bedrock Developer Agent Skills — Provisional Reference
 
-## Latest user-supplied candidate — 24 October 2026 (not yet promoted)
+## Latest selective source intake — 24 October 2026
 
-New uploaded ZIPs are registered as **PENDING_SEMANTIC_REVIEW** at
-`experiments/developer-practice-signals.json#pendingIntake`. The skills
-archive claims `v0.27.0` (23 active SKILL.md), and the paired Skills Probe
-archive contains 49 Markdown test-run documents while its embedded skills
-lock still targets `v0.23.0`. Exact SHA-256 and the distinct repository
-URLs are held in that one metadata owner, not duplicated here. The release
-claims are archive-local, not independently verified live GitHub refs.
-The v0.24.0 record below remains the **active, reviewed** source snapshot.
+The developer skills ZIP `v0.27.0` (23 active `SKILL.md`, 20
+implementation module files, eight module unit tests) has been
+**source-reviewed and promoted** within the existing
+`experiments/developer-practice-signals.json`. The 16 original
+investigation patterns remain read-only, source-grounded REFERENCE
+questions. The new `bedrock-player-attached-particles` is explicitly
+unrouted because the engine does not yet have a precise typed witness.
+Six other publisher workflow/project methods remain outside Map Audit.
+
+The independent Skills Probe ZIP has 49 external test-run documents and
+v0.23.0 installed skills; its broader report inventory stays pending.
+Its 14 clean-example index rows are separately SHA-pinned external
+reference source, **not** executed tests by M-Lazy-Developer. Current
+archive hashes are in the one machine owner, not duplicated here.
+The previous v0.24.0 and v0.23.0 review below remains historical.
 
 For every subsequent ZIP, use the
 [read-only intake and promotion boundary](../analysis/developer-practice-context.md#upstream-zip-intake-in-chatgpt-chat--candidate-before-promotion).
@@ -26,7 +33,7 @@ Neither archive contents nor self-reported probe results are installed,
 vendored or elevated into map correctness. This document remains a
 human-readable reference, not a second manifest.
 
-## Current supplied archives — 21 October 2026
+## Historical supplied archives — 21 October 2026
 
 The following is a **reviewed, non-executable reference intake**. It supersedes the
 older archive inventory *for provenance and discovery only*, not Minecraft
@@ -49,7 +56,7 @@ release at `f5b8275dd690ecb3d14efb001865c9b178143b55`; all 22 installed
 skill documents in that probe differ byte-for-byte from the v0.24.0 ZIP.
 Consequently these sources are **not** one identical tested build.
 
-### Current skill responsibility inventory
+### Historical skill responsibility inventory (v0.24.0)
 
 | `bedrock-agent-team` | Workflow/project-specific; not map authority |
 | `bedrock-camera` | REFERENCE candidate; not a detector |

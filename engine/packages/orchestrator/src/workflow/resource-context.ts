@@ -180,7 +180,12 @@ export interface DeveloperPracticeReferenceData {
     /** Curated from exact headings of this SHA-pinned developer SKILL.md. */
     readonly methodology?: {
       readonly applicability:
-        "MAP_SOURCE_INTERPRETATION" | "DEVELOPMENT_WORKFLOW_PROVENANCE";
+        | "MAP_SOURCE_INTERPRETATION"
+        | "DEVELOPMENT_WORKFLOW_PROVENANCE"
+        /** Source reviewed but no exact canonical typed Semantic IR cue.
+         * Never select this as a map-audit hint by source name alone.
+         */
+        | "UNROUTED_TECHNICAL_REFERENCE";
       readonly sourceSections: readonly string[];
       readonly objective: string;
       readonly investigationSteps: readonly string[];

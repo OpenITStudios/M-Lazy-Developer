@@ -85,14 +85,20 @@ claims keep their original client version, commit/lock, source path, report
 and unresolved conditions. Matching the current map's actual Edition,
 target and implementation remains a separate step.
 
-**Current snapshot separation:** reviewed developer methods are still pinned
-to v0.24.0; native developer v0.27.0 is a source candidate; Skills Probe is
-independently locked to v0.23.0. The original 14 example-index entries were
-inspected as *upstream source metadata*, not replayed in Minecraft. They may
-be displayed only as scoped reference questions attached to an already
-selected, reviewed pattern. The source/consumer review must explicitly
-promote any newly changed method; there is no automatic update of all
-23 developer skills.
+**Current snapshot separation:** all 23 developer skill documents are
+source-reviewed against the v0.27.0 ZIP. Sixteen original interpretation
+patterns retain their exact selected-source Semantic IR admission; six
+upstream workflow/project skills remain non-audit methods. The new
+`bedrock-player-attached-particles` method is **technical REFERENCE only,
+not routed to Map Audit**, because no precise supported particle-attachment
+witness exists yet. Its P63 source reports include scoped failures and
+blocked cases, not universal verified gameplay.
+
+Skills Probe remains independently locked to v0.23.0. The 14 clean examples
+are original source-index metadata, not replayed Minecraft tests; their
+per-surface PASS/pending boundaries remain visible only on already
+selected reviewed patterns. A subsequent new ZIP is reviewed by changed
+source and consumer, never wholesale installed as policy.
 
 See [Developer-Practice Context](../analysis/developer-practice-context.md)
 for review rules and [Native Bedrock Skills](../../skills/bedrock/README.md)

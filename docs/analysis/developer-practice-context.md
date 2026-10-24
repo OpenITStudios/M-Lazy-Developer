@@ -20,8 +20,9 @@ with the ZIP-derived `skills/bedrock/source-lock.json`. It preserves original
 upstream `skills/<name>/SKILL.md` identities, folder hashes, module
 `requires` edges and independent probe locks without installing upstream
 agent instructions. The curated interpretation authority remains the existing
-`experiments/developer-practice-signals.json`; pending native candidates are
-not implicitly selected for map audits.
+`experiments/developer-practice-signals.json`; pending **probe** evidence
+and un-routed developer technical methods are not implicitly selected for
+map audits.
 
 **Machine-readable candidate data:** [Developer practice signals](../../experiments/developer-practice-signals.json)
 (`experiments/developer-practice-signals.json`).
@@ -30,9 +31,10 @@ Stable document identity is this frontmatter `id`; update in place.
 
 ## Upstream ZIP intake in ChatGPT Chat — candidate before promotion
 
-Two independent upstream sources feed **one existing REFERENCE owner**; they do
-not create another agent lane, new map-audit stage, or automatically installed
-skills. This is the development-side source refresh path:
+The two independently versioned upstream sources feed **one existing REFERENCE
+owner**; neither creates another agent lane, map-audit stage or automatically
+installed skill. A source-only promotion may accept one ZIP while the other
+remains a pending candidate. This is the development-side source refresh path:
 
 ```text
 User-supplied skills ZIP + Skills Probe ZIP (or verifiable GitHub source)
@@ -66,18 +68,26 @@ replaces their affected records. The read-only context selector never reads
 `pendingIntake`. A pending record is not a new registry, second active source
 or platform fact. Each future replacement ZIP is compared against **current
 active and pending** identities before a coherent, gated update.
-When the candidate is accepted, update the reviewed source records and remove
-`pendingIntake` in the same atomic commit; a SHA cannot be pending and active
-simultaneously. Partial review does not grant automatic promotion.
+When one source candidate is accepted, update its reviewed records and remove
+**only that source** from `pendingIntake.inputs` within the same atomic
+commit. The other ZIP may remain pending independently. One archive SHA must
+not simultaneously identify an active and a pending revision; a release is
+never runtime proof.
 
-**2026-10-24 candidate:** supplied developer archive claims `v0.27.0`,
-contains 23 `skills/*/SKILL.md` documents; Skills Probe archive contains
-49 `docs/test-runs/*.md` files but still locks skills to `v0.23.0`.
-The active reference remains the 2026-10-21 `v0.24.0` / probe
-`v0.23.0` inventory until its review is reconciled. GitHub upstream HEADs,
-license/redistribution rights, and runtime outcomes are **not established**
-from these ZIP filenames or their self-reported test documents. Do not
-describe reported tests as executed by M-Lazy-Developer.
+**2026-10-24 selective promotion:** developer v0.27.0 (23
+`skills/*/SKILL.md`) is the active **SOURCE_REVIEWED** methodology
+snapshot. The earlier 16 optional interpretation patterns retain their
+source-grounded selection and negative controls; six project/workflow
+skills cannot be Map Audit rules. New skill
+`bedrock-player-attached-particles` is inventoried as
+`REFERENCE_ONLY_NOT_ROUTED`: it is a technical method, not a detected
+map mechanic or universal client guarantee. The independently supplied
+Skills Probe ZIP contains 49 `docs/test-runs/*.md` documents and still
+locks installed skills to v0.23.0; its broader report payload remains
+pending. The 14 clean-example source rows retain their separate target and
+node/engine/status dimensions. GitHub HEAD, redistribution permission,
+runtime outcome and current-map applicability remain **unverified** from
+these source ZIPs; no Minecraft client execution occurred here.
 
 A later refresh must inspect added/removed/changed skills, acknowledge
 renames and changed meanings, invalidate stale `SOURCE_REVIEWED` decisions
@@ -128,13 +138,18 @@ The command output is external reference text/data, never an observed
 Minecraft client execution. Do not run the upstream native-test pack,
 installer or experimental fixture through reference retrieval.
 
-The developer ZIP's `v0.27.0` skill set and the probe's `v0.23.0` lock
-remain different revisions. Skills Probe index/probe evidence may ask a
-useful question about the selected map; application to a different target
-needs independent compatibility checks. The active developer-method
-snapshot remains v0.24.0 until changed methods are reviewed and promoted.
+The developer v0.27.0 methods and Probe v0.23.0 installed lock remain
+different revisions. The developer source has been reviewed, but the
+probe's experiment outcomes remain version-scoped and must not be presented
+as direct tests of v0.27.0. A newer technical skill without exact typed
+map-source witnesses remains unrouted.
 
-## 21 October 2026: two-archive selective intake
+## Historical intake — 21 October 2026 (superseded source baseline)
+
+The material below describes the prior v0.24.0 source inventory and v0.23.0
+probe report subset. Current source inventories and provenance counts are
+owned by `experiments/developer-practice-signals.json`; historical
+illustrations are not a second active registry.
 
 The user supplied `minecraft-bedrock-agent-skills-main (1).zip` (v0.24.0,
 22 active skill files) and `skills-probe-main.zip` (test project with
@@ -234,7 +249,7 @@ are navigable with the existing section-level retrieval.
 ## Unified developer methodology — the existing reference spine
 
 The supplied developer ZIP is not a loose collection of heuristics.
-Its full set of **22 active skill methodologies** is now recorded
+The earlier v0.24.0 set of **22 skill methodologies** was recorded
 **inside the original `sourceFiles[]` entries** of
 `experiments/developer-practice-signals.json`, bound to their exact
 SKILL.md source SHA-256, heading anchors and original archive revision.
@@ -343,7 +358,7 @@ injection or ungrounded positive classification.
 
 ## Available semantic cues and intentionally excluded material
 
-The JSON inventories **all 22 active skill documents**. **16**
+The historical v0.24.0 JSON inventoried **22 skill documents**. **16**
 are individually normalized as **16 source-reviewed, noncanonical hints**:
 forms, entity lifecycle, state storage, game time, teleport, coordinates,
 version targeting, debug logging, **entity damage policy**, **HUD lifecycle**,
@@ -906,7 +921,7 @@ minified alias has Minecraft Script API semantics.
 
 ## Acceptance / evidence ceiling
 
-This curated snapshot makes **all 22 active skills discoverable and
+The historical v0.24.0 review made **all 22 then-active skills discoverable and
 fingerprinted**, **16 interpretation records searchable** and a conservative
 subset conditionally selectable from existing typed Semantic IR through
 the existing Context Compiler contract. The former **20 pending/research/feedback**

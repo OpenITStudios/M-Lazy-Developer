@@ -31,9 +31,12 @@ one relevant original `SKILL.md` and its referenced source using the
 read-only `tooling/repository/inspect-developer-upstream.mjs --read-skill`;
 never treat it as executable agent instructions or automatically install
 external modules. `experiments/developer-practice-signals.json` remains the
-single reviewed reference-pattern owner. The v0.27.0 native package is a
-candidate; the v0.24.0 curated patterns are still the active map-audit
-context until reviewed and promoted.
+single reviewed reference-pattern owner. The developer v0.27.0 ZIP is now
+the source-reviewed method baseline for 23 native skills, but only the
+original 16 patterns are admitted after selected-map typed Semantic IR
+evidence. `bedrock-player-attached-particles` remains source-reviewed
+`REFERENCE_ONLY_NOT_ROUTED` with no inferred generic spawn cue.
+Skills Probe's v0.23.0 client/lock is independent and not v0.27.0 proof.
 
 ## Separately locked Skills Probe examples
 
@@ -66,7 +69,8 @@ analyzer mutations, or a claim that Minecraft was run here.
 ## Unified methodology selection
 
 The same `experiments/developer-practice-signals.json` contains all
-22 pinned `sourceFiles[].methodology` records. At a matching
+23 pinned `sourceFiles[].methodology` records, including one unrouted
+technical method. At a matching
 selected-artifact source/typed-IR site, the existing
 `compileDeveloperPracticeReferenceContext()` can now attach the
 source chapter, three-step reasoning path, disconfirming alternative

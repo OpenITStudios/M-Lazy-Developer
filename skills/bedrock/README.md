@@ -30,8 +30,15 @@ The existing `experiments/developer-practice-signals.json` remains the sole
 *curated analysis-reference* authority: reviewed method, pattern, source,
 probe report attribution and current `pendingIntake`. This directory only
 owns **native upstream package identity/dependency relationships**.
-Its source archive SHA must equal that metadata's pending candidate.
-The active v0.24.0 interpretation data is unchanged until accepted review.
+Its source archive SHA must equal the matching, independently pinned
+reviewed developer source or pending candidate. As of the 24 October 2026
+review, v0.27.0 is the **reviewed developer source** for 23 skills; the
+native source lock keeps an independent pending Skills Probe revision.
+Only 16 interpretation patterns have source-grounded Map Audit consumers,
+six methods are workflow/project reference, and
+`bedrock-player-attached-particles` is reviewed but **not yet routable**
+without a precise canonical Semantic IR witness. No 23-skill auto-install
+or P63 gameplay verification is implied.
 
 ## Read-only operator operations
 

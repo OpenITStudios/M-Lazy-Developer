@@ -270,6 +270,10 @@ if (!existsSync(nativeLockPath)) {
     lock.probe?.skillsLockTag === acceptedProbe?.observedSkillsLockTag &&
     lock.probe?.skillsLockCommit === acceptedProbe?.observedSkillsLockCommit &&
     lock.probe?.reportedTestRuns === acceptedProbe?.reportsIndexed;
+  const expectedSkillsReview = skillsMatchAccepted
+    ? "SOURCE_REVIEWED" : "PENDING_SEMANTIC_REVIEW";
+  const expectedProbeReview = probeMatchesAccepted
+    ? "SOURCE_REVIEWED" : "PENDING_SEMANTIC_REVIEW";
   if (lock.schemaVersion !== 1 ||
       lock.authority !== "REFERENCE_NOT_EXECUTABLE" ||
       !["PENDING_SEMANTIC_REVIEW", "SOURCE_REVIEWED"].includes(lock.status) ||
@@ -280,6 +284,8 @@ if (!existsSync(nativeLockPath)) {
       lock.skillsLock?.hashAlgorithm !== "UPSTREAM_HASH_SKILL_V1" ||
       !(skillsMatchPending || skillsMatchAccepted) ||
       !(probeMatchesPending || probeMatchesAccepted) ||
+      lock.componentReview?.developerSkills !== expectedSkillsReview ||
+      lock.componentReview?.skillsProbe !== expectedProbeReview ||
       (skillsMatchPending &&
         lock.skillsLock?.repo?.replace(/\.git$/, "") !== pendingSkills?.sourceRepository) ||
       !skillNames.every(name => /^bedrock-[a-z0-9-]+$/.test(name) && validSha(skills[name]))) {
@@ -367,6 +373,8 @@ const expectedCounts = [
     skillSources.filter(item => item.auditUsage === "INTERPRETATION_CANDIDATE").length],
   ["workflowOnlySkillCount", developerMetadata.sourceSnapshot?.workflowOnlySkillCount,
     skillSources.filter(item => item.auditUsage === "DEVELOPMENT_WORKFLOW_ONLY").length],
+  ["unroutedTechnicalSkillCount", developerMetadata.sourceSnapshot?.unroutedTechnicalSkillCount,
+    skillSources.filter(item => item.auditUsage === "REFERENCE_ONLY_NOT_ROUTED").length],
   ["codeImplementationFiles", developerMetadata.sourceSnapshot?.codeImplementationFiles, (codeInventory.codeModules ?? []).length],
   ["codeUnitTestFiles", developerMetadata.sourceSnapshot?.codeUnitTestFiles, (codeInventory.unitTests ?? []).length],
   ["reportsIndexed", developerMetadata.probeSnapshot?.reportsIndexed, reports.length],
@@ -421,7 +429,9 @@ for (const item of [
 }
 const skillPathById = new Map(skillSources.map(item => [item.id, item.path]));
 const methodKinds = new Set([
-  "MAP_SOURCE_INTERPRETATION", "DEVELOPMENT_WORKFLOW_PROVENANCE",
+  "MAP_SOURCE_INTERPRETATION",
+  "DEVELOPMENT_WORKFLOW_PROVENANCE",
+  "UNROUTED_TECHNICAL_REFERENCE",
 ]);
 for (const skill of skillSources) {
   const method = skill.methodology;
@@ -429,10 +439,11 @@ for (const skill of skillSources) {
       !methodKinds.has(method.applicability) ||
       method.proofBoundary !==
         "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" ||
-      method.applicability !==
-        (skill.auditUsage === "INTERPRETATION_CANDIDATE"
-          ? "MAP_SOURCE_INTERPRETATION"
-          : "DEVELOPMENT_WORKFLOW_PROVENANCE") ||
+      method.applicability !== ({
+        INTERPRETATION_CANDIDATE: "MAP_SOURCE_INTERPRETATION",
+        DEVELOPMENT_WORKFLOW_ONLY: "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        REFERENCE_ONLY_NOT_ROUTED: "UNROUTED_TECHNICAL_REFERENCE",
+      })[skill.auditUsage] ||
       !Array.isArray(method.sourceSections) ||
       method.sourceSections.length < 2 ||
       new Set(method.sourceSections).size !== method.sourceSections.length ||
@@ -456,8 +467,13 @@ for (const skill of skillSources) {
     failures.push(developerMetadataPath +
       ": interpretation skill has no source-reviewed pattern: " + skill.id);
   }
-  if (!["INTERPRETATION_CANDIDATE", "DEVELOPMENT_WORKFLOW_ONLY"]
-      .includes(skill.auditUsage)) {
+  if (skill.auditUsage === "REFERENCE_ONLY_NOT_ROUTED" &&
+      routedSkillIds.has(skill.id)) {
+    failures.push(developerMetadataPath +
+      ": un-routed technical source cannot be selected by active Map Audit patterns: " + skill.id);
+  }
+  if (!["INTERPRETATION_CANDIDATE", "DEVELOPMENT_WORKFLOW_ONLY",
+        "REFERENCE_ONLY_NOT_ROUTED"].includes(skill.auditUsage)) {
     failures.push(developerMetadataPath +
       ": unclassified developer skill: " + skill.id);
   }

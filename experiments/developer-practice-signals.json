@@ -5,46 +5,48 @@
   "usagePolicy": "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF",
   "lifecycle": "PROVISIONAL_UPDATABLE",
   "sourceSnapshot": {
-    "sourceName": "minecraft-bedrock-agent-skills-main (1).zip",
-    "release": "v0.24.0",
-    "archiveSha256": "c516d1e7a16c6ae4aa6906083a1914e035015713b0c48dae2d864e5106af5f5b",
-    "zipEntries": 311,
-    "files": 210,
-    "uncompressedBytes": 1056006,
-    "activeSkillDocuments": 22,
+    "sourceName": "minecraft-bedrock-agent-skills-main (2).zip",
+    "release": "v0.27.0",
+    "archiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
+    "zipEntries": 315,
+    "files": 213,
+    "uncompressedBytes": 1078982,
+    "activeSkillDocuments": 23,
     "pendingDocuments": 0,
-    "sourceAttribution": "README identifies maintainer MIVUBI Zein; archive ownership and redistribution license were not independently authenticated; no LICENSE file was present",
+    "sourceAttribution": "ZIP source declares v0.27.0 and publisher origin achmadawdi/minecraft-bedrock-agent-skills; live GitHub HEAD and redistribution license are not independently verified. No root LICENSE found.",
     "binaryIncludedInRepo": false,
     "normalizedPatternCount": 16,
     "interpretationEligibleSkillCount": 16,
     "workflowOnlySkillCount": 6,
     "deferredSourceFilesTracked": 0,
-    "intakeEvidence": "Both supplied archives were re-opened as untrusted data. All 22 active developer SKILL.md method headings were inspected and curated into sourceFiles[].methodology; exact SHA-pinned code/tool/probe source inventories are attributed without executing, vendoring or independently proving the ZIP claims.",
+    "intakeEvidence": "All 23 upstream SKILL.md files inspected as untrusted source; 22 previously reviewed method-to-source relationships were reconciled against current headings, and the newly added particle skill was retained as un-routed technical reference pending a specific typed Semantic IR witness. Platform truth and runtime proof are not asserted.",
     "codeReferencesTracked": 10,
     "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map.",
     "codeImplementationFiles": 20,
     "codeUnitTestFiles": 8,
     "otherCodeSurfaces": {
-      "skillScripts": 44,
-      "developerTools": 18,
+      "skillScripts": 28,
+      "developerTools": 20,
       "projectConfiguration": 2,
       "developerTestUtilities": 1,
-      "note": "Security-filtered source reference, not vendored runtime code. This inventory is not a claim that every script has been semantically consumed."
+      "note": "Counts reflect v0.27.0 ZIP: 28 skill-local scripts and 20 files under tools/, including release/checker sources. All scripts remain external source-only references, not executed or vendored."
     },
-    "methodologyRecordsTracked": 22,
-    "developerWorkflowScriptSourcesTracked": 48
+    "methodologyRecordsTracked": 23,
+    "developerWorkflowScriptSourcesTracked": 52,
+    "unroutedTechnicalSkillCount": 1
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
     "SOURCE_REVIEWED": "Statement and context inspected in developer source; external truth/applicability unverified",
     "CORROBORATED": "Independently corroborated for stated version/scope, still not a selected-map contract",
-    "SUPERSEDED": "Underlying source replaced; older record retained via Git history"
+    "SUPERSEDED": "Underlying source replaced; older record retained via Git history",
+    "UNROUTED_TECHNICAL_REFERENCE": "Technical method source-reviewed but not eligible for automatic Map Audit selection until a precise supported Semantic IR signal and consumer are demonstrated."
   },
   "sourceFiles": [
     {
       "id": "src.bedrock-agent-team",
       "path": "skills/bedrock-agent-team/SKILL.md",
-      "sha256": "fad3abde7cb836e8882b68260e2649c34568848062dece5945beff922a7ed63a",
+      "sha256": "778b61c2a6136ef68bb1fd7e06313575c7854a8a967e1524d543115d9f6cf8f0",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -53,7 +55,8 @@
         "sourceSections": [
           "1. Roles",
           "3. Flow per task",
-          "4. Briefs and replies"
+          "6. When an agent stops",
+          "7. Tester notes (computer use)"
         ],
         "objective": "Preserve one accountable implementation owner with separate read-only review and explicit approval boundaries.",
         "investigationSteps": [
@@ -61,14 +64,14 @@
           "Keep a self-contained source/proof handoff; separate reviewer/tester observations from implementation authority.",
           "State what was changed, what evidence is available, and what remains unresolved."
         ],
-        "disconfirmingCase": "This ZIP's specific multi-agent provider, watchdog and STATE.md arrangement is not automatically available or approved in this ChatGPT/GitHub environment.",
+        "disconfirmingCase": "The publisher's multi-agent STATE.md, watchdog, CUA locking and test cadence are not prerequisites or approved agent instructions for ChatGPT-only M-Lazy-Developer.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
     {
       "id": "src.bedrock-camera",
       "path": "skills/bedrock-camera/SKILL.md",
-      "sha256": "f2b0fef74ead98d32ab22212c14355ba724553ca93a6c6c8918cfe8238181223",
+      "sha256": "a7d3f78f9a792e15e032e54854fde97ba0bce2c9d5063973ac5a873ec85878b1",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -92,7 +95,7 @@
     {
       "id": "src.bedrock-content",
       "path": "skills/bedrock-content/SKILL.md",
-      "sha256": "86d6cd3d34af566cc1fd085cc0609661776c2a593c1c03ae6cfd992c9db9ec4c",
+      "sha256": "261c6efd4a4ef2c9cb407e037960582c1e938efbbfc03781b2108cf1f9fb0815",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -117,7 +120,7 @@
     {
       "id": "src.bedrock-coordinates",
       "path": "skills/bedrock-coordinates/SKILL.md",
-      "sha256": "5dc41ba318340c9cb2e09eaa427a6600cff9a1c9da33f202751a3aa4db241e33",
+      "sha256": "5b681ed5906107eb44019184fc0cb64f914ca81c978ae81bf4a93f5d9cfdef13",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -142,7 +145,7 @@
     {
       "id": "src.bedrock-data-persistence",
       "path": "skills/bedrock-data-persistence/SKILL.md",
-      "sha256": "5058058f53eba5bce2e551ec3ad0663b21e1015ba9b00b3a1bc37d2c3592290d",
+      "sha256": "16d97cdfdb62dd7980709a2156d9fe0ee516bc540339c6edf6a62c53c73b14a2",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -167,7 +170,7 @@
     {
       "id": "src.bedrock-debug-logging",
       "path": "skills/bedrock-debug-logging/SKILL.md",
-      "sha256": "7afcfdcab48994a73e4799b2dcdbf04accb58101e899831a81eb9001b6ced383",
+      "sha256": "1fda2b59d41bb7ee46d4907ff514c68340e92d249d78cb0cf8a15e72380f0e24",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -191,7 +194,7 @@
     {
       "id": "src.bedrock-debug-profiling",
       "path": "skills/bedrock-debug-profiling/SKILL.md",
-      "sha256": "c88fd3f3aa1ce8060103dadb3c3a75fa9caad89d5040739cc4504f3d4c68f167",
+      "sha256": "52bcd481a1b6098575c626d3e5611eb8235d2ca9104bb52a6de9bd6683c5adf8",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -215,7 +218,7 @@
     {
       "id": "src.bedrock-entity-creation",
       "path": "skills/bedrock-entity-creation/SKILL.md",
-      "sha256": "fdabc04bde600ee213ab9c4f00cf62c420c5dbcf11644cfd94bc9353a06d2f16",
+      "sha256": "f5d814ea3a2b32a423ee219d1124af1dcf90170bd50cc27138cb3653329fb96a",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -240,7 +243,7 @@
     {
       "id": "src.bedrock-entity-lifecycle",
       "path": "skills/bedrock-entity-lifecycle/SKILL.md",
-      "sha256": "66bc1c375b69a4f77581ecaa7e444a75a72985d9deba7ecb923e7d2c0a374887",
+      "sha256": "e66041c5117902fd1334183be066860d4ba05fc5a86f4b606e2a7cc093309730",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -265,7 +268,7 @@
     {
       "id": "src.bedrock-forms",
       "path": "skills/bedrock-forms/SKILL.md",
-      "sha256": "b53a714df982f5a82ffa5bab99e96667b7a814fd9b43d34ee49857084dc8b00d",
+      "sha256": "e1cfe2adfac79cbd6d64c186f00ce717b72bcf42c41bdef39279e0d161448d9a",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -273,9 +276,9 @@
         "applicability": "MAP_SOURCE_INTERPRETATION",
         "sourceSections": [
           "1. Form types (server-ui 2.x)",
-          "2. One form service",
           "3. Force-close rules",
-          "4. Logic vs adapter"
+          "4. Logic vs adapter",
+          "6. UX rules for classrooms"
         ],
         "objective": "Trace form lifecycle, async response generation ownership and state-machine authority.",
         "investigationSteps": [
@@ -283,14 +286,14 @@
           "Identify which player/session generation owns the response and its subsequent mutation.",
           "Check caller-side stale-response guards, navigation mappings and legitimate dismissal outcomes."
         ],
-        "disconfirmingCase": "A helper lacking a local guard is not proof of a bug when its caller already validates session state.",
+        "disconfirmingCase": "A caller can already guard stale responses, and a skinned form may legitimately fall back to plain UI; the upstream E5 project convention does not prove a map bug.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
     {
       "id": "src.bedrock-game-results",
       "path": "skills/bedrock-game-results/SKILL.md",
-      "sha256": "df7016e73f666ae8cdc4ee85aaca3a0df7ea591598367c9409333c1e5153cfc9",
+      "sha256": "a9dc42310a2c9c1467177465aa667f0fa74dba0d9d64c55157a2cdbc1e75a5da",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -315,7 +318,7 @@
     {
       "id": "src.bedrock-game-time",
       "path": "skills/bedrock-game-time/SKILL.md",
-      "sha256": "19020cd79144d97bf2d90532dd381769565e33b89db8baa3a6ba33acf9e7345b",
+      "sha256": "2b473cab9f14b5330dc667eba315fc5b9331f38c864ddded8daf6488329b51ce",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -340,7 +343,7 @@
     {
       "id": "src.bedrock-git-workflow",
       "path": "skills/bedrock-git-workflow/SKILL.md",
-      "sha256": "f16339ca3540762239a54911029f2d2a9bfd5fb00ba62caeabfdf5c6d1003551",
+      "sha256": "7a949520b7272da5ea87074b0b28077e62ec0278b76aaeeb53a1a745b6d52231",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -364,17 +367,17 @@
     {
       "id": "src.bedrock-onscreen-display",
       "path": "skills/bedrock-onscreen-display/SKILL.md",
-      "sha256": "7d46ad4ab1c1db89005caa581e64934a26589fe40d4ed5dccd92d6b0c621744b",
+      "sha256": "06be73e531c0184701ac0cbdc41ab306d4c14d5656347d7415ae3c00a1784ae0",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
       "methodology": {
         "applicability": "MAP_SOURCE_INTERPRETATION",
         "sourceSections": [
-          "1. The rule",
           "3. Implementation pattern",
           "4. Action bar ownership",
-          "5. The `hud:` channel (titles as a json_ui data channel)"
+          "5. The `hud:` channel (titles as a json_ui data channel)",
+          "7. Dynamic entity labels"
         ],
         "objective": "Trace display content ownership, HUD priority and transient player-facing state.",
         "investigationSteps": [
@@ -382,14 +385,38 @@
           "Identify message owner, prioritization, clear/restore branches and client/session context.",
           "Distinguish display attempts from player-visible success and gameplay terminal state."
         ],
-        "disconfirmingCase": "A setTitle or setActionBar source call does not prove display overlap, delivery or victory.",
+        "disconfirmingCase": "A title/action-bar source call proves neither client visibility nor message conflict. E6 is a scoped upstream example with separate pending engine checks.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
+    },
+    {
+      "id": "src.bedrock-player-attached-particles",
+      "path": "skills/bedrock-player-attached-particles/SKILL.md",
+      "sha256": "efb6cdd5e5dc7f4d7ecd3e98439155a1b5c9d44768103ebcf5efe9cfa4465edd",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "REFERENCE_ONLY_NOT_ROUTED",
+      "methodology": {
+        "applicability": "UNROUTED_TECHNICAL_REFERENCE",
+        "sourceSections": [
+          "Player and client definitions",
+          "Finite effects and publication",
+          "Dimension travel and cleanup"
+        ],
+        "objective": "Trace exact player-bound emitter and rider ownership, finite effect emission, and lifecycle cleanup as version-scoped technical source evidence.",
+        "investigationSteps": [
+          "Locate the authored emitter definition, player seat owner and client-side animation/controller configuration before interpreting attachment.",
+          "Trace rider generation and readiness, finite-effect state transitions and actual cleanup callbacks separately from gameplay buff intent.",
+          "Keep cross-dimension, respawn, reload and client rendering claims scoped to their corresponding Skills Probe source revision and incomplete test criteria."
+        ],
+        "disconfirmingCase": "Generic entity spawning does not prove player-attached particles; P63 contains failing, blocked and intermittent-reload observations. No automatic map-audit routing or universal runtime claim is established.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
     {
       "id": "src.bedrock-project-setup",
       "path": "skills/bedrock-project-setup/SKILL.md",
-      "sha256": "4847c359066a5e1a6c1f883d8b0ed9d1ea77031fa87abb7ac7a1988784abf8e0",
+      "sha256": "e091e8762d5aefe0df4243831d8bfe827c5f56249596bb2eee57c7bcd6843744",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -414,7 +441,7 @@
     {
       "id": "src.bedrock-release-export",
       "path": "skills/bedrock-release-export/SKILL.md",
-      "sha256": "a098711c23f9c465e42c4e476087a103b6e98202d8fe086cbc4a03a037d1cc7e",
+      "sha256": "a0537cce4d2c5e2076e9deeebfc20b9afe71ceca178a651572d95881d10cb48a",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -439,7 +466,7 @@
     {
       "id": "src.bedrock-script-optimization",
       "path": "skills/bedrock-script-optimization/SKILL.md",
-      "sha256": "2ec6fc08349443404b6355eef6d64ce61e030399bd4a5b3a3e19c5f467e55d82",
+      "sha256": "155b467f7037e0e15d4b7a99a0f899c9d3de9f40eac4012a99b6702229f8469d",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -464,7 +491,7 @@
     {
       "id": "src.bedrock-sound",
       "path": "skills/bedrock-sound/SKILL.md",
-      "sha256": "43ffd47a805a106bc795fd00bc993f006e137799350e4134cc15312c820ae722",
+      "sha256": "fd2628fd005904412eda1042d45e0b4c2de0f91ceaf29529ad1ec4003a1ca941",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -489,7 +516,7 @@
     {
       "id": "src.bedrock-teleport",
       "path": "skills/bedrock-teleport/SKILL.md",
-      "sha256": "9649019396eb379e3894d6f388b2ca77267bb76c3bdd5be49fc056af7da52eb9",
+      "sha256": "42de88cc232c50b711ddbbfbaf5d9f58ce33fecd8e4bffae1016705099970e50",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -514,7 +541,7 @@
     {
       "id": "src.bedrock-testing-policy",
       "path": "skills/bedrock-testing-policy/SKILL.md",
-      "sha256": "31dc114e0d2e5d95eb35b4bc900825e219b9bc708a32ab7d66da195e5907d407",
+      "sha256": "7d6796a3beb6a38f32774e223cfc1a8c385c9aec0557ad27793e23de70c52c7a",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -539,7 +566,7 @@
     {
       "id": "src.bedrock-text-glyphs",
       "path": "skills/bedrock-text-glyphs/SKILL.md",
-      "sha256": "ee501c6f84b58281b7478cf5f3e58a6994648ca25967c541daea0d7e43576b8d",
+      "sha256": "c0f64a31475d6e7d7ea84c29f5e1a75ba3ef6634ebd88b3c198a8e9335c54ec3",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -548,7 +575,7 @@
         "sourceSections": [
           "1. ASCII only",
           "2. Glyphs and emoji: registered or not allowed",
-          "3. Sending text: Script API first",
+          "Making glyph icons",
           "4. The name tag exception"
         ],
         "objective": "Trace localization, glyph registration and actual message channel without assuming visual delivery.",
@@ -557,14 +584,14 @@
           "Identify UI channel, fallback text and participant-specific rendering intent.",
           "Review upstream partial glyph/overlap outcomes within their original tested client scope only."
         ],
-        "disconfirmingCase": "An unregistered glyph in one locale is not evidence every client fails; a PASS in another fixture is not universal.",
+        "disconfirmingCase": "The P49/P50 reports include layout failures and incomplete cases, so an observed glyph in one Education fixture does not guarantee another client's rendering.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
     {
       "id": "src.bedrock-version-targeting",
       "path": "skills/bedrock-version-targeting/SKILL.md",
-      "sha256": "dc86b63fced03ff861096f0591b73723b5d5eb0cb92719ed3ab2cfd5b4543e99",
+      "sha256": "815d823fc4710092b0a1a579e99cc86a66cfc5aa5dfcf96b09379b78aa5029a1",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -1116,8 +1143,8 @@
     "uncompressedBytes": 14999905,
     "observedSkillsLockTag": "v0.23.0",
     "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
-    "companionSkillArchiveRelease": "v0.24.0",
-    "identityWarning": "Probe's installed v0.23.0 skill tree is not byte-identical to the supplied v0.24.0 skill archive; observations retain their original scoped source identities.",
+    "companionSkillArchiveRelease": "v0.27.0",
+    "identityWarning": "Skills Probe installed skills lock v0.23.0 is distinct from reviewed v0.27.0 developer SKILL.md source identities and may not validate newly added or revised developer guidance.",
     "licenseWarning": "No root LICENSE found; scripts, Minecraft packs, media and user-specific test harness are not vendored.",
     "executionBoundary": "Third-party self-reported native reports inspected as text; no Minecraft client, test harness, dependencies, installers or scripts were executed here.",
     "reportsIndexed": 22,
@@ -1812,7 +1839,7 @@
         "path": "packs/BP/scripts/modules/database/module.json"
       }
     ],
-    "securityBoundary": "DO_NOT_EXECUTE_OR_AUTO_IMPORT_EXTERNAL_CODE",
+    "securityBoundary": "Read-only source provenance: no upstream skill tool, installer, gameplay module, sandbox runner, ZIP script or test-pack code is installed or executed by M-Lazy-Developer.",
     "runtimeApplicability": "Versioned @minecraft/server 2.8.0 and @minecraft/server-ui 2.1.0 examples, not universal runtime facts",
     "probePackSources": [
       {
@@ -2123,6 +2150,12 @@
         "ownerSkill": "src.bedrock-agent-team"
       },
       {
+        "path": "skills/bedrock-agent-team/scripts/education-lock.mjs",
+        "sha256": "c94833e95c6b69368f6b3c90fc14f6298527da2f075acd283535af517db6ce10",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-agent-team"
+      },
+      {
         "path": "skills/bedrock-coordinates/scripts/check-coords.mjs",
         "sha256": "44db782e13f07434aca7a3c5fd122844e1ba9b10ffb64832392b40756007016a",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
@@ -2172,13 +2205,13 @@
       },
       {
         "path": "skills/bedrock-entity-creation/scripts/check-models.mjs",
-        "sha256": "fa13be45077d6daecafa3213e427069c4bd33aea8c103d8d126b43e31d589e9d",
+        "sha256": "958d39d80c6f0ca3ac65f1cd6ccea84c6e1e5e60be6fbe488be8e482eb4dd0f3",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-entity-creation"
       },
       {
         "path": "skills/bedrock-entity-lifecycle/scripts/check-entities.mjs",
-        "sha256": "468632196e5b67727cff314542c74a50232bc01880a63d4db390e8dc7b4e15d3",
+        "sha256": "37da5e9c95269fde420c71d7da4f7a86cb4b83712e79ddf3e601bb67818f5dd5",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-entity-lifecycle"
       },
@@ -2190,7 +2223,7 @@
       },
       {
         "path": "skills/bedrock-game-results/scripts/check-results-log.mjs",
-        "sha256": "b48f4af76cbd22b06fff177b624115fb8c281a4b9a7c3ed7844b7e7f9278d6e2",
+        "sha256": "45a425575fde99c226f8300a5e49e50174c544d90c2e6e980c71be8e911c5d17",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-game-results"
       },
@@ -2241,6 +2274,12 @@
         "sha256": "eebd9a6e92fcc54c4d808924e8c49d6e8bfb1c9fe71270bc3ffd949db1f89c80",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-project-setup"
+      },
+      {
+        "path": "skills/bedrock-sound/scripts/audio-watch.swift",
+        "sha256": "c50567d5e5f0336be3e2a4f84c3edd0c3e114b9c9c25e817c1d7b85d15d8b595",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-sound"
       },
       {
         "path": "skills/bedrock-sound/scripts/check-sounds.mjs",
@@ -2313,7 +2352,7 @@
       },
       {
         "path": "tools/release.mjs",
-        "sha256": "587d9207692dbf891926d975079a5c6b5d86e22bd51faadad8cb5be07385060b",
+        "sha256": "013906444b84f74ad1b013d900de97e65edb01aea2b63e17b452c313b595e220",
         "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
       },
       {
@@ -2357,6 +2396,11 @@
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
+        "path": "tools/tests/education-lock.test.mjs",
+        "sha256": "fc8653d295cf45e67ebedb73f35cc7dc99568bf26efab85ef6206837697df346",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
         "path": "tools/tests/make-glyph-sheet.test.mjs",
         "sha256": "991e58596a230dfd13b4082e046c6eb0e07ccb47c416297e90567e5b15717ff3",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
@@ -2364,6 +2408,11 @@
       {
         "path": "tools/tests/perf-summary.test.mjs",
         "sha256": "2c2c619045c4483922afb2257a37db930fa3355e41c98fefa2e6e728d833a7d9",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/release.test.mjs",
+        "sha256": "b54a20f3d454b0f5724e075feda2609a55d189bed267b2bfa418d20d5e4c13fd",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
@@ -2454,21 +2503,13 @@
         "kind": "PROBE_TOOL_TEST_SOURCE"
       }
     ],
-    "untrackedSourcePolicy": "This is an exact, typed-script/tool-source subset from both uploaded ZIPs; it is a developer reference and is not executed, installed, licensed for redistribution, or a claim all assets have been semantically analyzed."
+    "untrackedSourcePolicy": "ZIP SHA-256 covers every original byte; source paths listed here have per-file hash identities. Developer modules and test files are read-only reference code, never executable requirements for map checking."
   },
   "pendingIntake": {
     "status": "PENDING_SEMANTIC_REVIEW",
     "usagePolicy": "CANDIDATE_ONLY_NOT_ACTIVE_IN_MAP_AUDIT",
     "observedDate": "2026-10-24",
     "inputs": {
-      "developerSkills": {
-        "sourceRepository": "https://github.com/achmadawdi/minecraft-bedrock-agent-skills",
-        "origin": "USER_SUPPLIED_ZIP",
-        "archiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
-        "releaseClaim": "v0.27.0",
-        "fileCount": 213,
-        "activeSkillDocuments": 23
-      },
       "skillsProbe": {
         "sourceRepository": "https://github.com/achmadawdi/skills-probe",
         "origin": "USER_SUPPLIED_ZIP",
@@ -2479,7 +2520,7 @@
         "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55"
       }
     },
-    "reviewBoundary": "Whole-archive and per-file deltas require source/consumer review; no updated ZIP text, scripts, upstream PASS or version claims are admitted automatically."
+    "reviewBoundary": "Developer methods v0.27.0 are source-reviewed, with one un-routed technical skill; newer Skills Probe report payloads remain separately pending. Upstream test claims and method text never prove current-map gameplay."
   },
   "probeExamples": {
     "schemaVersion": 1,

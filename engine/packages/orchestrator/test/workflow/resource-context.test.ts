@@ -440,4 +440,31 @@ describe("developer practice manifest-scoped version hints", () => {
     });
     expect(wrongRelease?.items[0]?.cleanExamples).toBeUndefined();
   });
+  it("never selects a source-reviewed but un-routed upstream technical skill", () => {
+    const unroutedData = {
+      ...data,
+      sourceFiles: data.sourceFiles.map(file => ({
+        ...file,
+        id: "src.bedrock-player-attached-particles",
+        path: "skills/bedrock-player-attached-particles/SKILL.md",
+        auditUsage: "REFERENCE_ONLY_NOT_ROUTED",
+        methodology: {
+          ...file.methodology,
+          applicability: "UNROUTED_TECHNICAL_REFERENCE" as const,
+        },
+      })),
+      patterns: data.patterns.map(pattern => ({
+        ...pattern,
+        sourceId: "src.bedrock-player-attached-particles",
+      })),
+    };
+    const result = compileDeveloperPracticeReferenceContext({
+      ...baseline,
+      data: unroutedData,
+      sourceLocators: ["behavior_packs/demo/scripts/main.ts:17"],
+      manifestWitnesses: [witness],
+    });
+    expect(result?.items).toEqual([]);
+  });
+
 });
