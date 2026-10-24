@@ -2479,6 +2479,49 @@ function reconstructClassifiedMechanics(
     stepsByFlow.set(flow.id, steps);
     evidenceRegionByFlow.set(flow.id, regionByEvidence);
   }
+  // The same source ID can appear in multiple rooted or disconnected
+  // traces. Index EVERY flow once by its exact observed IDs. A feature may
+  // witness a flow only through an owned step/edge/relation, or through one
+  // of its evidence regions when the feature ALSO names the flow's entry.
+  // This is a navigation index, never evidence of source reachability.
+  const flowIndicesByEvidenceId = new Map<string, number[]>();
+  const flowIndicesByRegionId = new Map<string, number[]>();
+  const addFlowIndex = (
+    index: Map<string, number[]>, id: string, flowIndex: number,
+  ): void => {
+    const owners = index.get(id) ?? [];
+    owners.push(flowIndex);
+    index.set(id, owners);
+  };
+  flows.forEach((flow, flowIndex) => {
+    const directIds = new Set<string>([
+      ...flow.sourceSteps.map(step => step.id),
+      ...flow.executionEdgeIds,
+      ...flow.authoredBehaviorRelationIds,
+    ]);
+    for (const id of directIds) addFlowIndex(flowIndicesByEvidenceId, id, flowIndex);
+    for (const id of new Set(flow.regionIds)) {
+      addFlowIndex(flowIndicesByRegionId, id, flowIndex);
+    }
+  });
+  // Edges and guarded-write candidates are likewise selected by exact IDs;
+  // avoid scanning the complete model again for every gameplay feature.
+  const intentEdgesBySubject = new Map<string, GameplayIntentEdge[]>();
+  for (const edge of intent.edges) {
+    if (edge.status === "hypothesis" ||
+        !edge.evidenceIds.some(id => scopedEvidence.has(id))) continue;
+    for (const subjectId of new Set([edge.from, edge.to])) {
+      const list = intentEdgesBySubject.get(subjectId) ?? [];
+      list.push(edge);
+      intentEdgesBySubject.set(subjectId, list);
+    }
+  }
+  const guardedIndicesByWriteId = new Map<string, number[]>();
+  guardedTransitions.forEach((candidate, index) => {
+    const list = guardedIndicesByWriteId.get(candidate.writeOperationId) ?? [];
+    list.push(index);
+    guardedIndicesByWriteId.set(candidate.writeOperationId, list);
+  });
   const guardedFlowContexts = guardedTransitions
     .filter(candidate => intent.artifactId === undefined ||
       candidate.guardComparisonSource.artifactId === intent.artifactId)
@@ -2505,10 +2548,7 @@ function reconstructClassifiedMechanics(
     .map(node => {
       const evidenceIds = new Set(node.evidenceIds.filter(id =>
         scopedEvidence.has(id)));
-      const relations = intent.edges.filter(edge =>
-        edge.status !== "hypothesis" &&
-        (edge.from === node.id || edge.to === node.id) &&
-        edge.evidenceIds.some(id => scopedEvidence.has(id)))
+      const relations = (intentEdgesBySubject.get(node.id) ?? [])
         .map(edge => ({
           id: edge.id, from: edge.from, to: edge.to,
           kind: edge.kind,
@@ -2516,12 +2556,22 @@ function reconstructClassifiedMechanics(
           status: edge.status === "authored"
             ? "AUTHORED_RELATION" as const : "INFERRED_RELATION" as const,
         })).sort((a,b) => a.id.localeCompare(b.id));
-      const witnessed = flows.filter(flow =>
-        flow.sourceSteps.some(step => evidenceIds.has(step.id)) ||
-        flow.executionEdgeIds.some(id => evidenceIds.has(id)) ||
-        flow.authoredBehaviorRelationIds.some(id => evidenceIds.has(id)) ||
-        (flow.regionIds.some(id => evidenceIds.has(id)) &&
-          node.evidenceIds.includes(flow.entryRegionId)));
+      const matchedFlowIndices = new Set<number>();
+      const declaredIds = new Set(node.evidenceIds);
+      for (const id of evidenceIds) {
+        for (const index of flowIndicesByEvidenceId.get(id) ?? []) {
+          matchedFlowIndices.add(index);
+        }
+        for (const index of flowIndicesByRegionId.get(id) ?? []) {
+          if (declaredIds.has(flows[index]!.entryRegionId)) {
+            matchedFlowIndices.add(index);
+          }
+        }
+      }
+      // Preserve the original trace order; root/disconnected tier and any
+      // subsequent exact-step selections must remain byte-for-byte stable.
+      const witnessed = [...matchedFlowIndices].sort((a, b) => a - b)
+        .map(index => flows[index]!);
       const rootedWitnessed = witnessed.filter(flow =>
         flow.sourceTraceStatus === "SOURCE_ROOT_TRACE");
       const disconnectedSourceFlowIds = [...new Set(witnessed.filter(flow =>
@@ -2536,8 +2586,15 @@ function reconstructClassifiedMechanics(
           .map(step => step.id)))].sort();
       const authoredBehaviorRelationIds = [...new Set(rootedWitnessed.flatMap(flow =>
         flow.authoredBehaviorRelationIds.filter(id => evidenceIds.has(id))))].sort();
-      const sourceGuardedTransitionCandidateIds = guardedTransitions
-        .filter(candidate => evidenceIds.has(candidate.writeOperationId))
+      const matchedGuardIndices = new Set<number>();
+      for (const id of evidenceIds) {
+        for (const index of guardedIndicesByWriteId.get(id) ?? []) {
+          matchedGuardIndices.add(index);
+        }
+      }
+      const sourceGuardedTransitionCandidateIds = [...matchedGuardIndices]
+        .sort((a, b) => a - b)
+        .map(index => guardedTransitions[index]!)
         .map(candidate => candidate.readOperationId + ":" +
           candidate.writeOperationId).sort();
       // A source-flow spans multiple execution regions and may include both
