@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "id": "cal-blitzbuild-source-v1-0-2-file",
+  "lane": "calibration",
+  "artifact": {
+    "label": "BlitzBuild-v1.0.2 archive (internal behavior-pack version 1.0.3, levelname 1.0.3)",
+    "file": "BlitzBuild-v1.0.2.mcworld",
+    "sha256": "d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504",
+    "mapVersion": "1.0.3"
+  },
+  "target": {
+    "edition": "bedrock",
+    "minecraftVersion": "1.26.30"
+  },
+  "expected": {
+    "claims": [
+      {
+        "id": "BB-ENTRY",
+        "subject": "Selected behavior pack declares a JavaScript module entry scripts/main.js",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/manifest.json:39-43"
+        ],
+        "proofCeiling": "DECLARED_SCRIPT_ENTRY_NOT_IMPORT_SUCCESS"
+      },
+      {
+        "id": "BB-PACK-VERSION",
+        "subject": "The archive file has v1.0.2 in its filename while packaged BP declares [1,0,3] and levelname names v1.0.3",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/manifest.json:22-26",
+          "levelname.txt:1"
+        ],
+        "proofCeiling": "SELECTED_ARTIFACT_VERSION_SIGNAL_CONFLICT_NOT_A_BUG"
+      },
+      {
+        "id": "BB-WELCOME-SOURCE",
+        "subject": "A deferred source expression invokes player.sendMessage with literal translate key welcome.guide",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/runtime/globalPolicies.js:47-56"
+        ],
+        "proofCeiling": "SOURCE_TRANSLATION_USE_NOT_LIVE_PLAYER_MESSAGE"
+      },
+      {
+        "id": "BB-MEMBER-READY",
+        "subject": "MembershipRegistry.setReady authors membership.ready = ready && membership.teamId !== undefined under an existence check",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/domain/membership.js:125-130"
+        ],
+        "proofCeiling": "SOURCE_LOGICAL_ASSIGNMENT_NOT_CONFIRMED_BOOLEAN_STATE"
+      },
+      {
+        "id": "BB-TEAM-RESET",
+        "subject": "Selecting a team explicitly writes membership.ready = false after the team/plot assignment",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/domain/membership.js:118-123"
+        ],
+        "proofCeiling": "AUTHORED_SOURCE_ORDER_NOT_LIVE_TEAM_READY"
+      },
+      {
+        "id": "BB-RECONNECT-STATE",
+        "subject": "One reconnect-resume branch writes membership.ready = true; a later reserving/countdown branch writes it false",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/runtime/matchEngine.js:449-465"
+        ],
+        "proofCeiling": "AUTHORED_SEPARATE_GUARDED_WRITES_NOT_ONE_RUNTIME_VALUE"
+      },
+      {
+        "id": "BB-OFFLINE-RESET",
+        "subject": "MembershipRegistry.markOffline has authored online=false and ready=false assignments after membership lookup",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/domain/membership.js:143-151"
+        ],
+        "proofCeiling": "AUTHORED_SOURCE_NOT_OBSERVED_RECONNECT"
+      },
+      {
+        "id": "BB-NEG-VERSION",
+        "subject": "The selected behavior-pack manifest declares v1.0.2, matching the archive filename",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/manifest.json:22-26"
+        ],
+        "proofCeiling": "DIRECT_VERSION_COUNTEREXAMPLE"
+      },
+      {
+        "id": "BB-NEG-READY-ON-TEAM",
+        "subject": "A team selection always preserves the player's previous ready flag",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/domain/membership.js:118-123"
+        ],
+        "proofCeiling": "DIRECT_FALSE_LITERAL_COUNTEREXAMPLE"
+      },
+      {
+        "id": "BB-NEG-LOCALE-WIN",
+        "subject": "The welcome.guide localization alone establishes a functioning game scoring and winning condition",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "resource_packs/blitzbuild_rp/texts/en_US.lang:5",
+          "behavior_packs/blitzbuild_bp/scripts/runtime/globalPolicies.js:53"
+        ],
+        "proofCeiling": "COPY_IS_NOT_GAME_RULE_OR_DELIVERY_PROOF"
+      },
+      {
+        "id": "BB-UNK-SESSION-OWNERSHIP",
+        "subject": "Reconnect and countdown writes were demonstrated to act on the same live player membership object under all session generations",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/runtime/matchEngine.js:452-465"
+        ],
+        "proofCeiling": "RUNTIME_INSTANCE_AND_SESSION_GENERATION_PROOF_REQUIRED"
+      },
+      {
+        "id": "BB-UNK-WELCOME",
+        "subject": "The deferred welcome.guide message was observed by players in Minecraft",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/blitzbuild_bp/scripts/runtime/globalPolicies.js:47-56"
+        ],
+        "proofCeiling": "LIVE_SCHEDULER_PLAYER_UI_PROOF_NOT_OBSERVED"
+      }
+    ],
+    "proofCeiling": "READ_ONLY_SELECTED_ARCHIVE_STATIC_SOURCE; 1.26.30 is behavior-pack declared minimum engine, not observed host version or confirmed edition",
+    "sourceAuditScope": "Exact packaged ZIP and 44 original JS files; authored membership/source use and pack metadata only; no observed gameplay"
+  },
+  "provenance": {
+    "frozenBeforeRun": true,
+    "source": "2026-10-24 independent ChatGPT direct .mcworld SHA-256, ZIP metadata, source-line and isolated TypeScript AST review BEFORE executing canonical runSelectedMapAudit; calibration (not blind acceptance)",
+    "engineOutputUsed": false,
+    "runtimeObserved": false,
+    "comparisonRule": "No score before genuinely executed exact-GitHub-HEAD runSelectedMapAudit on this exact SHA and independent source-claim/admissible proof tier review.",
+    "versionConflict": "Archive filename states v1.0.2; levelname and BP manifest state v1.0.3. Target engine version is declared minimum only, not an observed host."
+  }
+}

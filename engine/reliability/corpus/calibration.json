@@ -19,9 +19,16 @@
       "sourceRef": "engine/fixtures/calibration/gameplay-understanding-samples.json#blitzbuild",
       "artifactFile": "BlitzBuild-v1.0.2.mcworld",
       "readiness": {
-        "artifactFingerprint": "missing",
-        "frozenExpectation": "missing"
-      }
+        "artifactFingerprint": "d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504",
+        "frozenExpectation": "engine/reliability/corpus/expectations/cal-blitzbuild-source-v1-0-2-file.json"
+      },
+      "externalArtifact": {
+        "provider": "google-drive",
+        "fileId": "1Z8HrS3UhVRj4r-WAi1wtpqs900xYy7QE",
+        "sha256": "d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504"
+      },
+      "scope": "source-only explicit-modular game-understanding calibration; filename v1.0.2 but BP manifest and levelname v1.0.3; metadata conflict is not a BUG",
+      "note": "Frozen independently of engine output. Remains candidate/UNSCORABLE until genuine exact-SHA selected-map audit, edition/version reconciliation and independent source-claim adjudication."
     },
     {
       "id": "the-circuit",
@@ -187,6 +194,22 @@
       },
       "scope": "mixed supported/rejected/UNKNOWN source-flow calibration on exact published .mcworld; no runtime outcome",
       "note": "15 independent source claims with 20 exact generated-JS locators were frozen by ChatGPT direct archive inspection before canonical engine execution; candidate UNSCORABLE until genuine exact-SHA output, target edition/version applicability, and independent reviewer decisions. Published developer 613 simulated tests are NOT runtime gameplay proof. Composite project.json remains v1.1.1."
+    },
+    {
+      "id": "cal-beach-bedwars-1-1-0",
+      "status": "candidate",
+      "artifactFile": "Beach Bedwars v1.1.0.mcworld",
+      "externalArtifact": {
+        "provider": "google-drive",
+        "fileId": "1JNNZpRPj6IYE3nMgOC01p-9P-Ct8pSWC",
+        "sha256": "97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8"
+      },
+      "readiness": {
+        "artifactFingerprint": "97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8",
+        "frozenExpectation": "engine/reliability/corpus/expectations/cal-beach-bedwars-1-1-0.json"
+      },
+      "scope": "source-only bundled/minified Education game-understanding calibration; no runtime delivery or victory proof",
+      "note": "Keep original beach-bedwars v1.0.4 candidate separate. v1.1.0 is a different selected artifact. Frozen independently and UNSCORABLE pending actual canonical audit."
     }
   ],
   "policy": {

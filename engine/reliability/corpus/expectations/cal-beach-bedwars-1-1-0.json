@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "id": "cal-beach-bedwars-1-1-0",
+  "lane": "calibration",
+  "artifact": {
+    "label": "Beach Bedwars v1.1.0 SHA-bound packaged Minecraft Education world",
+    "file": "Beach Bedwars v1.1.0.mcworld",
+    "sha256": "97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8",
+    "mapVersion": "1.1.0"
+  },
+  "target": {
+    "edition": "education",
+    "minecraftVersion": "1.21.130"
+  },
+  "expected": {
+    "claims": [
+      {
+        "id": "BE110-ENTRY",
+        "subject": "Selected behavior pack declares a JavaScript module entry scripts/main.js",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/manifest.json:29-33"
+        ],
+        "proofCeiling": "DECLARED_SCRIPT_ENTRY_NOT_RUNTIME_INITIALIZATION"
+      },
+      {
+        "id": "BE110-EDITION",
+        "subject": "Both packaged pack manifest descriptions explicitly label the content Minecraft Education and minimum engine 1.21.130",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/manifest.json:4-16",
+          "resource_packs/Beach_Bedwars_RP/manifest.json:4-15"
+        ],
+        "proofCeiling": "AUTHORED_PACK_DESCRIPTION_NOT_VERIFIED_RUNTIME_HOST"
+      },
+      {
+        "id": "BE110-LOGICAL-READY",
+        "subject": "Minified source authors t.ready = !!n && this.loading.sweep(e,n) as a logical RHS with unproven runtime value",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:17079-175:17115"
+        ],
+        "proofCeiling": "SOURCE_LOGICAL_WRITE_NOT_RUNTIME_BOOLEAN_OR_READINESS"
+      },
+      {
+        "id": "BE110-RHS-CALL",
+        "subject": "The source call this.loading.sweep(e,n) lies INSIDE the ready assignment RHS span, not after that write",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:17079-175:17115"
+        ],
+        "proofCeiling": "AST_SOURCE_NESTING_NOT_COMPLETED_WORLD_PREPARATION"
+      },
+      {
+        "id": "BE110-FALSE-READY",
+        "subject": "A separate minified source site writes n.ready = !1, syntactically literal false",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:18000-175:18010"
+        ],
+        "proofCeiling": "SOURCE_FALSE_LITERAL_NOT_SHARED_RUNTIME_RECEIVER"
+      },
+      {
+        "id": "BE110-WINNER-COPY",
+        "subject": "Resource-pack en_US.lang contains red and green winner announcement literal text",
+        "expectedClass": "supported",
+        "sourceRefs": [
+          "resource_packs/Beach_Bedwars_RP/texts/en_US.lang:47",
+          "resource_packs/Beach_Bedwars_RP/texts/en_US.lang:52"
+        ],
+        "proofCeiling": "PLAYER_FACING_COPY_NOT_WIN_TRIGGER_OR_DELIVERY"
+      },
+      {
+        "id": "BE110-NEG-CALL-ORDER",
+        "subject": "this.loading.sweep inside the t.ready RHS is a post-write source call after the ready assignment completes",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:17079-175:17115"
+        ],
+        "proofCeiling": "DIRECT_AST_NESTING_COUNTEREXAMPLE"
+      },
+      {
+        "id": "BE110-NEG-FALSE-VALUE",
+        "subject": "The authored n.ready = !1 assignment sets a literal true Boolean",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:18000-175:18010"
+        ],
+        "proofCeiling": "JS_LITERAL_NEGATION_COUNTEREXAMPLE"
+      },
+      {
+        "id": "BE110-NEG-WIN-RULE",
+        "subject": "RED WINS and GREEN WINS locale definitions alone prove the actual match-winning condition",
+        "expectedClass": "rejected",
+        "sourceRefs": [
+          "resource_packs/Beach_Bedwars_RP/texts/en_US.lang:47",
+          "resource_packs/Beach_Bedwars_RP/texts/en_US.lang:52"
+        ],
+        "proofCeiling": "LANGUAGE_COPY_ALONE_NOT_EXECUTABLE_GAME_DESIGN_PROOF"
+      },
+      {
+        "id": "BE110-UNK-RECEIVER",
+        "subject": "Minified t.ready and n.ready expressions were proven to reference the same runtime object or game session",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:17079-175:17115",
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:18000-175:18010"
+        ],
+        "proofCeiling": "RUNTIME_INSTANCE_ALIAS_AND_SESSION_IDENTITY_UNPROVEN"
+      },
+      {
+        "id": "BE110-UNK-SWEEP",
+        "subject": "The sweep operation returned true and successfully prepared the arena in Minecraft",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:17092-175:17115"
+        ],
+        "proofCeiling": "RUNTIME_BRANCH_RESULT_AND_WORLD_EFFECT_UNOBSERVED"
+      },
+      {
+        "id": "BE110-UNK-MULTIARENA",
+        "subject": "Two independent Beach Bedwars arenas completed gameplay concurrently",
+        "expectedClass": "unknown",
+        "sourceRefs": [
+          "behavior_packs/Beach_Bedwars_BP/manifest.json:5",
+          "behavior_packs/Beach_Bedwars_BP/scripts/main.js:175:17079-175:17115"
+        ],
+        "proofCeiling": "LIVE_MULTIPLAYER_RUNTIME_REQUIRED_NOT_OBSERVED"
+      }
+    ],
+    "proofCeiling": "READ_ONLY_SELECTED_ARCHIVE_STATIC_SOURCE; 1.21.130 is declared minimum, not observed Minecraft Education host version",
+    "sourceAuditScope": "Exact packaged minified JS and selected manifest/locale sites; no inferred win mechanics from language keys"
+  },
+  "provenance": {
+    "frozenBeforeRun": true,
+    "source": "2026-10-24 independent ChatGPT direct .mcworld SHA-256, ZIP metadata and TypeScript AST range check BEFORE canonical engine output; calibration, not blind acceptance",
+    "engineOutputUsed": false,
+    "runtimeObserved": false,
+    "comparisonRule": "No score before exact SHA canonical runSelectedMapAudit result, declared edition/version applicability and independent source-claim adjudication."
+  }
+}
