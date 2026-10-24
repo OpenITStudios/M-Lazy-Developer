@@ -1,194 +1,84 @@
 {
   "schemaVersion": 2,
   "terminology": {
-    "mapAudit": "Use stable detection capability on a target map.",
-    "detectionDevelopment": "Improve reusable bug-detection/diagnosis/proof capability.",
-    "detectionBenchmark": "Measure detection capability against frozen expectations.",
-    "targetRepair": "Mutate target working copy after grounded diagnosis.",
-    "productDevelopment": "General repository/product development outside bug-detection improvement; uses normal development contract, not a detection lane.",
-    "detectionGap": "Explicit handoff when current stable bug-detection capability cannot support a claim; not a map defect."
+    "improveSystem": "Improve M-Lazy-Developer architecture, source intelligence, reusable detection, developer Skills/Probe reference and controlled capability measurement.",
+    "testMap": "Examine one selected Minecraft map with LOAD -> UNDERSTAND -> TEST -> REPORT; no implicit engine write or original-map mutation.",
+    "capabilityGap": "A map source mechanism unsupported by current analyzers, handed to Improve System only on explicit direction.",
+    "approvedRepair": "Optional, separately approved working-copy target operation inside Test Map; never a third work lane."
   },
   "workLanes": {
-    "m-bedrock-map-bug-audit": {
-      "label": "Map Bug Audit",
+    "m-bedrock-system-improvement": {
+      "label": "IMPROVE SYSTEM",
       "taskClasses": [
-        "INSPECT",
-        "DIAGNOSE",
+        "DEVELOP",
+        "RESEARCH",
         "VALIDATE"
       ],
-      "selection": "Goal is map-specific bug finding/classification/retest.",
-      "mutatesEngine": false,
-      "mutatesTarget": false,
-      "outputs": [
-        "audit-candidate-dispositions",
-        "bug-findings",
-        "detection-gap",
-        "runtime-proof-residue"
-      ],
-      "handoffs": [
-        "m-bedrock-detection-development",
-        "m-bedrock-target-repair"
-      ],
-      "revision": 1,
-      "outputSchema": ".agents/schemas/map-audit-output.schema.json",
-      "deterministicEntrypoint": ".agents/skills/m-bedrock-map-bug-audit/scripts/validate-output.mjs",
-      "evidenceTiers": [
-        "E0",
-        "E1",
-        "E2",
-        "E3",
-        "E4",
-        "E5"
-      ],
-      "spec": ".agents/skills/m-bedrock-map-bug-audit/SPEC.md",
-      "sources": ".agents/skills/m-bedrock-map-bug-audit/SOURCES.md",
-      "eval": ".agents/skills/m-bedrock-map-bug-audit/EVAL.md",
-      "runtimeInstrumentation": ".agents/skills/m-bedrock-map-bug-audit/references/runtime-instrumentation.md"
-    },
-    "m-bedrock-detection-development": {
-      "label": "Detection Development",
-      "taskClasses": [
-        "DEVELOP"
-      ],
-      "selection": "Goal explicitly improves reusable bug-detection, diagnosis, platform semantics, or proof capability.",
-      "mutatesEngine": true,
-      "mutatesTarget": false,
-      "outputs": [
-        "detection-capability-delta",
-        "reduced-fixture",
-        "benchmark-expectation"
-      ],
-      "handoffs": [
-        "m-bedrock-detection-benchmark"
-      ],
-      "revision": 1,
-      "outputSchema": ".agents/schemas/detection-delta.schema.json",
-      "deterministicEntrypoint": ".agents/skills/m-bedrock-detection-development/scripts/validate-delta.mjs",
-      "evidenceTiers": [
-        "E0",
-        "E1",
-        "E2",
-        "E3",
-        "E4",
-        "E5"
-      ],
-      "spec": ".agents/skills/m-bedrock-detection-development/SPEC.md",
-      "sources": ".agents/skills/m-bedrock-detection-development/SOURCES.md",
-      "eval": ".agents/skills/m-bedrock-detection-development/EVAL.md"
-    },
-    "m-bedrock-detection-benchmark": {
-      "label": "Detection Benchmark",
-      "taskClasses": [
-        "VALIDATE"
-      ],
-      "selection": "Goal measures detector correctness/coverage/regression against frozen expectations.",
-      "mutatesEngine": false,
-      "mutatesTarget": false,
-      "outputs": [
-        "benchmark-result",
-        "detection-development-handoff"
-      ],
-      "handoffs": [
-        "m-bedrock-detection-development"
-      ],
-      "revision": 1,
-      "outputSchema": ".agents/schemas/benchmark-result.schema.json",
-      "deterministicEntrypoint": ".agents/skills/m-bedrock-detection-benchmark/scripts/score-benchmark.mjs",
-      "evidenceTiers": [
-        "E0",
-        "E1",
-        "E2",
-        "E3",
-        "E4",
-        "E5"
-      ],
-      "spec": ".agents/skills/m-bedrock-detection-benchmark/SPEC.md",
-      "sources": ".agents/skills/m-bedrock-detection-benchmark/SOURCES.md",
-      "eval": ".agents/skills/m-bedrock-detection-benchmark/EVAL.md",
-      "benchmarkTools": [
-        ".agents/skills/m-bedrock-detection-benchmark/scripts/score-benchmark.mjs",
-        ".agents/skills/m-bedrock-detection-benchmark/scripts/blind-compare.mjs",
-        ".agents/skills/m-bedrock-detection-benchmark/scripts/aggregate-runs.mjs"
-      ]
-    },
-    "m-bedrock-target-repair": {
-      "label": "Target Repair",
-      "taskClasses": [
-        "REPAIR",
-        "MODIFY"
-      ],
-      "selection": "Goal mutates a target map/source working copy after a grounded defect or explicit modification request.",
-      "mutatesEngine": false,
-      "mutatesTarget": true,
-      "outputs": [
-        "patch-transaction",
-        "repair-verification",
-        "runtime-residue"
-      ],
-      "handoffs": [
-        "m-bedrock-detection-development"
-      ],
-      "revision": 1,
-      "outputSchema": ".agents/schemas/target-repair-output.schema.json",
-      "deterministicEntrypoint": ".agents/skills/m-bedrock-target-repair/scripts/validate-output.mjs",
-      "evidenceTiers": [
-        "E1",
-        "E2",
-        "E3",
-        "E4",
-        "E5"
-      ],
-      "spec": ".agents/skills/m-bedrock-target-repair/SPEC.md",
-      "sources": ".agents/skills/m-bedrock-target-repair/SOURCES.md",
-      "eval": ".agents/skills/m-bedrock-target-repair/EVAL.md"
-    },
-    "m-bedrock-product-development": {
-      "label": "Product Development",
-      "taskClasses": [
-        "DEVELOP"
-      ],
-      "selection": "General M-Bedrock-Dev product, UI, engine or tooling development not specific to reusable bug detection.",
+      "selection": "Intent is improving system source, Skills/Probe reference, detectors, architecture, benchmarks or reliability. Never mutate a user target map.",
       "mutatesEngine": true,
       "mutatesTarget": false,
       "outputs": [
         "bounded-source-change",
-        "verification-boundary",
-        "confirmed-commit"
+        "source-grounded-capability-delta",
+        "optional-frozen-benchmark",
+        "confirmed-git-commit"
       ],
       "handoffs": [
-        "m-bedrock-detection-development"
+        "m-bedrock-map-testing"
       ],
       "revision": 1,
-      "spec": ".agents/skills/m-bedrock-product-development/SPEC.md",
-      "sources": ".agents/skills/m-bedrock-product-development/SOURCES.md",
-      "eval": ".agents/skills/m-bedrock-product-development/EVAL.md"
-    }
-  },
-  "domainSpecialists": {
-    "m-bedrock-artifact-engineering": {
-      "role": "artifact/container/workspace/package semantics",
-      "mutatesEngine": false,
-      "mutatesTarget": false
+      "spec": ".agents/skills/m-bedrock-system-improvement/SPEC.md",
+      "sources": ".agents/skills/m-bedrock-system-improvement/SOURCES.md",
+      "eval": ".agents/skills/m-bedrock-system-improvement/EVAL.md",
+      "benchmarkTools": [
+        ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.mjs",
+        ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/blind-compare.mjs",
+        ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/aggregate-runs.mjs"
+      ]
     },
-    "m-bedrock-content-analysis": {
-      "role": "read-only source/semantic analysis",
+    "m-bedrock-map-testing": {
+      "label": "TEST MAP",
+      "taskClasses": [
+        "INSPECT",
+        "DIAGNOSE",
+        "VALIDATE",
+        "REPAIR",
+        "MODIFY"
+      ],
+      "selection": "Intent is inspecting/retesting one selected Bedrock/Education map. Approved working-copy repair is a separate explicit suboperation, not an automatic test action.",
       "mutatesEngine": false,
-      "mutatesTarget": false
-    },
-    "m-bedrock-compatibility": {
-      "role": "version/edition/API/platform capability semantics",
-      "mutatesEngine": false,
-      "mutatesTarget": false
+      "mutatesTarget": false,
+      "outputs": [
+        "gameplay-understanding",
+        "bounded-map-findings",
+        "capability-gap",
+        "runtime-proof-residue",
+        "map-audit-report"
+      ],
+      "handoffs": [
+        "m-bedrock-system-improvement"
+      ],
+      "revision": 1,
+      "outputSchema": ".agents/schemas/map-audit-output.schema.json",
+      "deterministicEntrypoint": ".agents/skills/m-bedrock-map-testing/scripts/validate-output.mjs",
+      "runtimeInstrumentation": ".agents/skills/m-bedrock-map-testing/references/runtime-instrumentation.md",
+      "repairValidationTool": ".agents/skills/m-bedrock-map-testing/references/repair/scripts/validate-output.mjs",
+      "evidenceTiers": [
+        "E0",
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "spec": ".agents/skills/m-bedrock-map-testing/SPEC.md",
+      "sources": ".agents/skills/m-bedrock-map-testing/SOURCES.md",
+      "eval": ".agents/skills/m-bedrock-map-testing/EVAL.md"
     }
   },
-  "routingOnly": {
-    "m-bedrock-cross-owner-routing": {
-      "role": "resolve owner/lane ambiguity only",
-      "mutatesEngine": false,
-      "mutatesTarget": false
-    }
-  },
-  "registryRevision": 7,
+  "domainSpecialists": {},
+  "routingOnly": {},
+  "registryRevision": 8,
   "evalManifest": ".agents/evals/manifest.json",
   "permissionProfiles": ".agents/permissions/lane-permissions.json",
   "pathAccess": ".agents/permissions/path-access.json",

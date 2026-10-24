@@ -11,6 +11,16 @@ lifecycle: ACTIVE
 
 Human-readable routing map for implementation ownership.
 
+**Exactly two active skills:** `IMPROVE SYSTEM`
+(`.agents/skills/m-bedrock-system-improvement/SKILL.md`) owns
+development and bounded benchmark evaluation; `TEST MAP`
+(`.agents/skills/m-bedrock-map-testing/SKILL.md`) owns selected-map
+**LOAD → UNDERSTAND → TEST → REPORT**. The seven checkpoint names
+listed below are internal canonical pipeline/proof owners, not
+operator-facing work lanes. Approval-guarded working-copy repair is
+an optional suboperation, not an additional skill.
+
+
 **ChatGPT Chat operating reality:** this file identifies canonical GitHub `Local` source/knowledge owners for M-Lazy-Developer map checking. Selected `.mcworld` artifacts may come from accessible Google Drive links. Source paths such as `apps/`, `engine/`, `runSelectedMapAudit()` and output schemas describe implementation contracts; they establish execution evidence only when the exact code is invoked. Direct ChatGPT source interpretation is independently valid evidence, not a synthesized `SelectedMapAuditRun` or Minecraft gameplay observation.
 
 This file is intentionally high-level. It is **not** a manually maintained database of every source file or symbol.
@@ -123,7 +133,7 @@ A workflow stage is a navigation label, not a second implementation owner. Start
 
 The table routes investigation; it does not claim that each stage is completely implemented, equate stage output with persisted truth, or override the precise contracts in the Master Selected-Map Audit Workflow and the current source.
 
-For SYSTEM DEVELOPMENT, start from `AGENTS.md` and the owning development skill, locate the first incorrect implementation owner here, fix it in place, and verify the affected consumers. Development is not another Map Audit stage.
+For IMPROVE SYSTEM, start from `AGENTS.md` and the owning development skill, locate the first incorrect implementation owner here, fix it in place, and verify the affected consumers. Development is not another Map Audit stage.
 
 ### One source, one meaning, one authoritative output
 

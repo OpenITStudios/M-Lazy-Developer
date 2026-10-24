@@ -36,10 +36,10 @@ These are two **ChatGPT Chat task modes**. Both reuse the same canonical GitHub 
 
 | User request | Mode | Route | Result |
 |---|---|---|---|
-| Improve architecture, detectors, knowledge, UI or repository | **SYSTEM DEVELOPMENT** | `AGENTS.md` → `docs/system/skill-routing.md` → owning development skill → exact canonical source | One bounded, verified source change and logical commit |
-| Find or classify defects in one supplied map | **MAP BUG AUDIT** | `AGENTS.md` → `.agents/skills/m-bedrock-map-bug-audit/SKILL.md` → direct ChatGPT evidence review | One clearly scoped ChatGPT audit with supported findings and proof gaps; never impersonate an unexecuted programmatic MapAuditOutputV2 |
+| Improve system, detectors, knowledge, Skills/Probe, UI or repository | **IMPROVE SYSTEM** | `AGENTS.md` → `.agents/skills/m-bedrock-system-improvement/SKILL.md` → owning code/source | One bounded verified source change and Local commit |
+| Understand and test one supplied map | **TEST MAP** | `AGENTS.md` → `.agents/skills/m-bedrock-map-testing/SKILL.md` → selected-map evidence | LOAD → UNDERSTAND → TEST → REPORT with supported findings and explicit proof limits |
 
-The audit path does not change engine source. A detected engine gap requires a separate, explicitly authorized development request. Repair and benchmark have dedicated work lanes; they are **not** hidden steps of either mode.
+TEST MAP never edits engine source. A capability gap requires an explicitly authorized IMPROVE SYSTEM task. Benchmark is a restricted validation operation within IMPROVE SYSTEM; working-copy repair is a separate approved TEST MAP suboperation, not a third lane.
 
 **For ChatGPT:** supply the `Local` repository URL and describe the intended outcome. Repository inspection alone is read-only. Normal repository development uses GitHub directly without `DEV.cmd`, a local checkout, or automatic CI.
 
@@ -73,8 +73,8 @@ The root folders have distinct responsibilities: `apps/` stores optional CLI/rep
 | Intended task | First route | Authoritative destination |
 |---|---|---|
 | Improve the system | `AGENTS.md` → development skill | `docs/system/implementation-map.md` → owning source |
-| Audit a selected map | `AGENTS.md` → map audit skill | `runSelectedMapAudit()`; TARGET → DISCOVERY → UNDERSTAND → FORMALIZE → EVALUATE → PROVE → REPORT |
-| Repair an approved defect | Target Repair skill | Authorized repair owner and preservation contract |
+| Audit a selected map | `AGENTS.md` → TEST MAP skill | `runSelectedMapAudit()`; LOAD → UNDERSTAND → TEST → REPORT (internal checkpoint/proof owners retained) |
+| Repair an approved defect | Approved TEST MAP repair suboperation | Authorized repair owner and preservation contract |
 | Change a report or presentation | Report contract and projection owner | One current report authority; HTML/JSON are derived |
 | Learn a Minecraft behavior | Knowledge router and `engine/knowledge/ownership.json` | One canonical catalog claim or executable domain owner |
 | Resume an unfinished task | Relevant work commits and `planning/` | Current source plus explicitly verified unresolved work |

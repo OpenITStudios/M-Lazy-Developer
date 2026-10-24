@@ -51,7 +51,13 @@ export function scoreAgentEvalRuns(payload) {
         routeCase.expectedTaskClass === undefined ||
         routeCase.expectedTaskClass === run.selectedTaskClass;
 
-      if (laneMatch && skillMatch && taskClassMatch) routingCorrect += 1;
+      const operationMatch =
+        routeCase.expectedOperation === undefined ||
+        routeCase.expectedOperation === run.selectedOperation;
+      const knowledgeMatch =
+        routeCase.expectedKnowledgeDomain === undefined ||
+        routeCase.expectedKnowledgeDomain === run.selectedKnowledgeDomain;
+      if (laneMatch && skillMatch && taskClassMatch && operationMatch && knowledgeMatch) routingCorrect += 1;
 
       const selected = [run.selectedLane, run.selectedSkill].filter(Boolean);
       if ((routeCase.forbidden ?? []).some((item) => selected.includes(item))) {
@@ -61,7 +67,6 @@ export function scoreAgentEvalRuns(payload) {
       const bucket = caseBuckets.get(run.caseId) ?? [];
       bucket.push(
         run.selectedLane ??
-        run.selectedSkill ??
         run.selectedTaskClass ??
         "<none>",
       );

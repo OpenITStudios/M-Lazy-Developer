@@ -594,7 +594,7 @@ for (const report of reports) {
 const developerDocs = [
   "docs/analysis/developer-practice-context.md",
   "docs/examples/bedrock-developer-agent-skills-reference.md",
-  ".agents/skills/m-bedrock-content-analysis/SKILL.md",
+  ".agents/skills/m-bedrock-map-testing/SKILL.md",
 ];
 for (const path of developerDocs) {
   const contents = readFileSync(path, "utf8");

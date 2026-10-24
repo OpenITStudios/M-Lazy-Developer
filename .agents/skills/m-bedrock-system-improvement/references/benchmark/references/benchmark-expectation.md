@@ -5,7 +5,7 @@ A Detection Benchmark expectation must be frozen before evaluating the detector 
 Canonical machine contract:
 
 ```text
-../../schemas/benchmark-expectation.schema.json
+.agents/schemas/benchmark-expectation.schema.json
 ```
 
 Minimum identity:

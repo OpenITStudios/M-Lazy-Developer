@@ -11,6 +11,21 @@ export type SelectedMapAuditStage =
   | "PROVE"
   | "REPORT";
 
+
+/** Four operator stages group existing ordered internal evidence checkpoints.
+ * This is a read-only presentation projection, not a replacement stage
+ * machine, changed checkpoint ID, alternate workflow or proof promotion.
+ */
+export type OperatorMapTestStage = "LOAD" | "UNDERSTAND" | "TEST" | "REPORT";
+export function operatorMapTestStageFor(
+  stage: SelectedMapAuditStage | "COMPLETE",
+): OperatorMapTestStage {
+  if (stage === "TARGET" || stage === "DISCOVERY") return "LOAD";
+  if (stage === "UNDERSTAND" || stage === "FORMALIZE") return "UNDERSTAND";
+  if (stage === "EVALUATE" || stage === "PROVE") return "TEST";
+  return "REPORT";
+}
+
 export interface SelectedMapAuditAdmissionInput {
   readonly mandatoryAuditProcedure:
     MandatoryAuditProcedureReceipt | undefined;

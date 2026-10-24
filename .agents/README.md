@@ -1,57 +1,14 @@
-# Agent Skills
+# M-Lazy-Developer — two internal skills
 
-Lazy-Developer separates **work lanes** from **domain specialists**.
+Exactly **two** active `SKILL.md` files are registered and selected:
 
-## Work lanes
+- **IMPROVE SYSTEM:** `.agents/skills/m-bedrock-system-improvement/SKILL.md` — architecture, engine, references, detector work, constrained benchmark and development.
+- **TEST MAP:** `.agents/skills/m-bedrock-map-testing/SKILL.md` — one selected map using **LOAD → UNDERSTAND → TEST → REPORT**, with an explicit optional approved working-copy repair action, never an automatic audit stage.
 
-```text
-m-bedrock-product-development
-m-bedrock-map-bug-audit
-m-bedrock-detection-development
-m-bedrock-detection-benchmark
-m-bedrock-target-repair
-```
+`.agents/skill-registry.json` owns this two-skill routing. Neither independent Bedrock developer ZIP skills nor Skills Probe are installed in this agent registry. They form a reviewed reference/evidence domain at `skills/bedrock/` and `experiments/developer-practice-signals.json`, delivered through existing Resource Context only with exact selected-map source witnesses. Their reported outcomes do not prove current-map gameplay.
 
-## Domain specialists
+Old detection, benchmark, map-audit, repair and domain-specialist procedures have been **consolidated into these two skills**. Reusable supporting references and deterministic scripts remain within the relevant new skill tree. They are **not** third work lanes.
 
-```text
-m-bedrock-artifact-engineering
-m-bedrock-content-analysis
-m-bedrock-compatibility
-```
+Permission preflight: `.agents/permissions/evaluate-lane-permission.mjs`. IMPROVE SYSTEM may write the approved engine/source but not targets; TEST MAP is read-only unless a separate, exact, explicit **approved-target-repair** operation satisfies its narrowed working-copy gate. Frozen benchmark operations cannot mutate code/expectations to pass. `docs/system/skill-routing.md` is the canonical selection rule.
 
-## Routing only
-
-```text
-m-bedrock-cross-owner-routing
-```
-
-Select exactly one active work lane. Consult the smallest domain specialist only when the lane reaches that semantic owner.
-
-A `detection-gap` is a handoff boundary, not permission to start Detection Development inside an operational audit. Generic Product Development is a separate execution class.
-
-Canonical routing is owned by `../docs/system/skill-routing.md`.
-
-
-## Machine-readable registry
-
-`.agents/skill-registry.json` is the routing index and classification authority.
-
-- registry decides whether a skill is a work lane, domain specialist, or routing-only;
-- `SKILL.md` owns the detailed procedure;
-- every skill folder must appear exactly once in the registry;
-- adding a skill without registry ownership is forbidden.
-
-
-## Permission preflight
-
-Before a work lane performs a write, network action, package/dependency action, or local/live runtime interaction, evaluate the planned action with:
-
-`.agents/permissions/evaluate-lane-permission.mjs`
-
-Decisions:
-- `allow` — action is inside the lane contract;
-- `ask` — explicit approval/runtime escalation is required;
-- `deny` — action violates the active lane and must not proceed.
-
-Domain-specialist consultation never expands the active lane's permission boundary.
+ChatGPT Chat remains the sole operator; GitHub `Local` is the working source. Read `AGENTS.md` and `GITHUB_RULES.md` before material repository work.

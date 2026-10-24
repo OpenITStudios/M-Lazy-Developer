@@ -11,7 +11,7 @@
   },
   "tests": [
     {
-      "path": ".agents/skills/m-bedrock-detection-benchmark/scripts/score-benchmark.test.mjs",
+      "path": ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.test.mjs",
       "lane": "regression",
       "owner": ".agents/skills",
       "review": "pending-semantic-review",

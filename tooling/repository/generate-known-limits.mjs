@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const inputPath = process.argv[2] ?? "engine/reliability/catalogs/capability-truth/current.json";
-const outputPath = process.argv[3] ?? ".agents/skills/m-bedrock-map-bug-audit/references/generated-known-limits.md";
+const outputPath = process.argv[3] ?? ".agents/skills/m-bedrock-map-testing/references/generated-known-limits.md";
 const truth = JSON.parse(readFileSync(inputPath, "utf8"));
 const limits = [];
 

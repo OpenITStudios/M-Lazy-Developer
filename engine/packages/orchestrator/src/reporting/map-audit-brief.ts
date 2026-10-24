@@ -3,6 +3,7 @@
  * Keep report assembly and source-state decisions in map-audit-output-v2.ts.
  */
 import { parseLocalizedStageKey } from "../inspection/gameplay-intent-resource-text.js";
+import { operatorMapTestStageFor } from "../map-audit-admission.js";
 import type {
   ScriptWaveStage,
   ScriptAuthoredGameplayEntry,
@@ -129,7 +130,9 @@ export function formatSelectedMapAuditBrief(input: {
     "**Map:** " + concise(report.evidenceScope.selectedArtifact),
     "**Version:** " + concise(report.mapVersion),
     "**Status:** " + report.control.status + " / " +
-      report.control.currentStage,
+      (report.control.operatorStage ?? operatorMapTestStageFor(report.control.currentStage)),
+    "**Internal checkpoint:** " + report.control.currentStage +
+      " (source/proof detail; no extra operator stage)",
     "**Next action:** " + report.control.allowedNextAction,
     "",
     "## Game Understanding",

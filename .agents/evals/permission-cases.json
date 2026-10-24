@@ -4,7 +4,7 @@
     {
       "id": "audit-read-engine",
       "request": {
-        "lane": "m-bedrock-map-bug-audit",
+        "lane": "m-bedrock-map-testing",
         "action": "inspect",
         "path": "engine/packages/knowledge/src/types.ts",
         "resource": "engine",
@@ -15,7 +15,7 @@
     {
       "id": "audit-write-engine",
       "request": {
-        "lane": "m-bedrock-map-bug-audit",
+        "lane": "m-bedrock-map-testing",
         "action": "engine-write",
         "path": "engine/packages/knowledge/src/types.ts",
         "resource": "engine",
@@ -26,7 +26,7 @@
     {
       "id": "dev-write-engine",
       "request": {
-        "lane": "m-bedrock-detection-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "modify-detector",
         "path": "engine/analyzers/scripts/src/dataflow.ts",
         "resource": "engine",
@@ -37,7 +37,7 @@
     {
       "id": "dev-write-target",
       "request": {
-        "lane": "m-bedrock-detection-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "target-write",
         "path": "workspace/projects/demo/working/scripts/main.js",
         "resource": "target",
@@ -48,29 +48,42 @@
     {
       "id": "repair-write-working",
       "request": {
-        "lane": "m-bedrock-target-repair",
-        "action": "repair",
+        "lane": "m-bedrock-map-testing",
+        "action": "approved-target-repair",
         "path": "workspace/projects/demo/working/scripts/main.js",
         "resource": "target",
-        "mode": "write"
+        "mode": "write",
+        "operation": "APPROVED_TARGET_REPAIR",
+        "approval": {
+          "kind": "EXPLICIT_USER_MESSAGE",
+          "userMessageRef": "confirmed-user-request:repair-working-demo",
+          "selectedArtifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "mustChange": [
+            "Fix supported teleport defect"
+          ],
+          "mustPreserve": [
+            "Preserve all other arena behavior"
+          ]
+        }
       },
       "expected": "allow"
     },
     {
       "id": "repair-write-engine",
       "request": {
-        "lane": "m-bedrock-target-repair",
-        "action": "engine-write",
+        "lane": "m-bedrock-map-testing",
+        "action": "approved-target-repair",
         "path": "engine/packages/repair/src/index.ts",
         "resource": "engine",
-        "mode": "write"
+        "mode": "write",
+        "operation": "APPROVED_TARGET_REPAIR"
       },
       "expected": "deny"
     },
     {
       "id": "audit-live",
       "request": {
-        "lane": "m-bedrock-map-bug-audit",
+        "lane": "m-bedrock-map-testing",
         "action": "live-minecraft-interaction"
       },
       "expected": "ask"
@@ -78,28 +91,41 @@
     {
       "id": "benchmark-network",
       "request": {
-        "lane": "m-bedrock-detection-benchmark",
+        "lane": "m-bedrock-system-improvement",
         "action": "network",
         "resource": "network",
-        "mode": "read"
+        "mode": "read",
+        "operation": "BENCHMARK"
       },
       "expected": "ask"
     },
     {
       "id": "stale-active-workspace-path-denied",
       "request": {
-        "lane": "m-bedrock-target-repair",
-        "action": "repair",
+        "lane": "m-bedrock-map-testing",
+        "action": "approved-target-repair",
         "path": "workspace/active/demo/working/scripts/main.js",
         "resource": "target",
-        "mode": "write"
+        "mode": "write",
+        "operation": "APPROVED_TARGET_REPAIR",
+        "approval": {
+          "kind": "EXPLICIT_USER_MESSAGE",
+          "userMessageRef": "confirmed-user-request:repair-working-demo",
+          "selectedArtifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "mustChange": [
+            "fix"
+          ],
+          "mustPreserve": [
+            "all other behavior"
+          ]
+        }
       },
       "expected": "deny"
     },
     {
       "id": "audit-read-project-source",
       "request": {
-        "lane": "m-bedrock-map-bug-audit",
+        "lane": "m-bedrock-map-testing",
         "action": "inspect",
         "path": "workspace/projects/demo/source/behavior_packs/example/manifest.json",
         "resource": "workspace",
@@ -110,7 +136,7 @@
     {
       "id": "product-development-engine",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "modify",
         "path": "engine/packages/project-model/src/index.ts",
         "mode": "write",
@@ -121,7 +147,7 @@
     {
       "id": "product-development-root-policy",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "modify",
         "path": "GITHUB_RULES.md",
         "mode": "write"
@@ -131,7 +157,7 @@
     {
       "id": "product-development-workspace-read",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "modify",
         "path": "workspace/projects/demo/source/map.json",
         "mode": "read",
@@ -142,7 +168,7 @@
     {
       "id": "product-development-target-denied",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "target-write",
         "path": "workspace/projects/demo/working/map.json",
         "mode": "write",
@@ -153,7 +179,7 @@
     {
       "id": "product-development-unknown-path-denied",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "modify",
         "path": "secrets/private.txt",
         "mode": "write"
@@ -163,7 +189,7 @@
     {
       "id": "product-development-dependency-review",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "new-dependency",
         "path": "package.json",
         "mode": "write"
@@ -173,7 +199,7 @@
     {
       "id": "approval-cannot-bypass-denied-path",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "new-dependency",
         "path": "workspace/projects/demo/working/main.js",
         "resource": "target",
@@ -184,7 +210,7 @@
     {
       "id": "approval-cannot-bypass-denied-resource",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "new-dependency",
         "resource": "target",
         "mode": "write"
@@ -194,12 +220,114 @@
     {
       "id": "approval-still-required-for-authorized-path",
       "request": {
-        "lane": "product-development",
+        "lane": "m-bedrock-system-improvement",
         "action": "new-dependency",
         "path": "package.json",
         "mode": "write"
       },
       "expected": "ask"
+    },
+    {
+      "id": "test-no-approval-no-repair",
+      "request": {
+        "lane": "m-bedrock-map-testing",
+        "action": "target-write",
+        "path": "workspace/projects/demo/working/main.js",
+        "resource": "target",
+        "mode": "write"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "test-unapproved-repair-denied",
+      "request": {
+        "lane": "m-bedrock-map-testing",
+        "action": "approved-target-repair",
+        "operation": "APPROVED_TARGET_REPAIR",
+        "path": "workspace/projects/demo/working/main.js",
+        "resource": "target",
+        "mode": "write"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "test-repair-original-source-denied",
+      "request": {
+        "lane": "m-bedrock-map-testing",
+        "action": "approved-target-repair",
+        "operation": "APPROVED_TARGET_REPAIR",
+        "path": "workspace/projects/demo/source/main.js",
+        "resource": "target",
+        "mode": "write",
+        "approval": {
+          "kind": "EXPLICIT_USER_MESSAGE",
+          "userMessageRef": "user:approved",
+          "selectedArtifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "mustChange": [
+            "change"
+          ],
+          "mustPreserve": [
+            "preserve"
+          ]
+        }
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "test-repair-missing-preservation",
+      "request": {
+        "lane": "m-bedrock-map-testing",
+        "action": "approved-target-repair",
+        "operation": "APPROVED_TARGET_REPAIR",
+        "path": "workspace/projects/demo/working/main.js",
+        "resource": "target",
+        "mode": "write",
+        "approval": {
+          "kind": "EXPLICIT_USER_MESSAGE",
+          "userMessageRef": "user:approved",
+          "selectedArtifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "mustChange": [
+            "change"
+          ],
+          "mustPreserve": []
+        }
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "improve-benchmark-frozen-engine",
+      "request": {
+        "lane": "m-bedrock-system-improvement",
+        "operation": "BENCHMARK",
+        "action": "modify-detector",
+        "resource": "engine",
+        "mode": "write",
+        "path": "engine/analyzers/scripts/src/dataflow.ts"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "improve-benchmark-frozen-expectation",
+      "request": {
+        "lane": "m-bedrock-system-improvement",
+        "operation": "BENCHMARK",
+        "action": "modify",
+        "mode": "write",
+        "path": "engine/reliability/corpus/acceptance.json"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "improve-benchmark-read",
+      "request": {
+        "lane": "m-bedrock-system-improvement",
+        "operation": "BENCHMARK",
+        "action": "inspect",
+        "resource": "engine",
+        "mode": "read",
+        "path": "engine/analyzers/scripts/src/dataflow.ts"
+      },
+      "expected": "allow"
     }
   ]
 }

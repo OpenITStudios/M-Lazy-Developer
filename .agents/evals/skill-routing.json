@@ -1,210 +1,235 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "cases": [
     {
       "id": "audit-id-01",
       "prompt": "cek map ini full untuk bug blocker major minor",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "audit-id-02",
       "prompt": "tolong retest map ini, bug kemarin masih ada nggak?",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-target-repair"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "audit-id-03",
       "prompt": "cari potensi issue gameplay yang bikin player stuck",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "audit-en-01",
       "prompt": "audit this bedrock world for gameplay bugs and classify severity",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "audit-typo-01",
       "prompt": "cek bug map ini jgn perbaiki engine dulu",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "audit-amb-01",
       "prompt": "kenapa player kadang ga bisa lanjut level? cek mapnya dulu",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-target-repair"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "audit-runtime-01",
       "prompt": "cek apakah masalah reconnect ini benar bug atau memang design",
-      "expectedLane": "m-bedrock-map-bug-audit",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
+        "m-bedrock-system-improvement"
       ]
     },
     {
       "id": "dev-id-01",
       "prompt": "kenapa analyzer kita gagal menemukan self revive ini? perkuat detectornya secara reusable",
-      "expectedLane": "m-bedrock-detection-development",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-map-bug-audit"
+        "m-bedrock-map-testing"
       ]
     },
     {
       "id": "dev-id-02",
       "prompt": "kurangi false positive selector @p pada multi arena",
-      "expectedLane": "m-bedrock-detection-development",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-target-repair"
+        "m-bedrock-map-testing"
       ]
     },
     {
       "id": "dev-id-03",
       "prompt": "buat engine kita paham stale projectile generation supaya diagnosis lebih akurat",
-      "expectedLane": "m-bedrock-detection-development",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-map-bug-audit"
+        "m-bedrock-map-testing"
       ]
     },
     {
       "id": "dev-en-01",
       "prompt": "improve the detector so it can distinguish designed cleanup from missing cleanup",
-      "expectedLane": "m-bedrock-detection-development",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-map-bug-audit"
+        "m-bedrock-map-testing"
       ]
     },
     {
       "id": "dev-typo-01",
       "prompt": "detector kita miss bug ini, tolong bikin lebih pinter tapi jgn hardcode map",
-      "expectedLane": "m-bedrock-detection-development",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-target-repair"
+        "m-bedrock-map-testing"
       ]
     },
     {
       "id": "dev-proof-01",
       "prompt": "static analysis sekarang terlalu lemah, tambahkan proof layer agar finding tidak false positive",
-      "expectedLane": "m-bedrock-detection-development",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-map-bug-audit"
+        "m-bedrock-map-testing"
       ]
     },
     {
       "id": "bench-id-01",
       "prompt": "ukur apakah detector baru menangkap fixture yang dulu miss dan cek false positive",
-      "expectedLane": "m-bedrock-detection-benchmark",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-detection-development"
-      ]
+        "m-bedrock-map-testing"
+      ],
+      "expectedOperation": "BENCHMARK"
     },
     {
       "id": "bench-id-02",
       "prompt": "bandingkan precision recall sebelum dan sesudah perubahan analyzer",
-      "expectedLane": "m-bedrock-detection-benchmark",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-map-bug-audit"
-      ]
+        "m-bedrock-map-testing"
+      ],
+      "expectedOperation": "BENCHMARK"
     },
     {
       "id": "bench-en-01",
       "prompt": "run a blind A/B evaluation of the old and new detection skill",
-      "expectedLane": "m-bedrock-detection-benchmark",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-detection-development"
-      ]
+        "m-bedrock-map-testing"
+      ],
+      "expectedOperation": "BENCHMARK"
     },
     {
       "id": "bench-var-01",
       "prompt": "jalankan beberapa kali dan lihat variance supaya jangan nilai dari satu run",
-      "expectedLane": "m-bedrock-detection-benchmark",
+      "expectedLane": "m-bedrock-system-improvement",
       "forbidden": [
-        "m-bedrock-target-repair"
-      ]
+        "m-bedrock-map-testing"
+      ],
+      "expectedOperation": "BENCHMARK"
     },
     {
       "id": "repair-id-01",
       "prompt": "bug self revive ini sudah terbukti, sekarang perbaiki mapnya",
-      "expectedLane": "m-bedrock-target-repair",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
-      ]
+        "m-bedrock-system-improvement"
+      ],
+      "expectedOperation": "APPROVED_TARGET_REPAIR"
     },
     {
       "id": "repair-id-02",
       "prompt": "patch working copy map ini untuk fix cross arena teleport",
-      "expectedLane": "m-bedrock-target-repair",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-map-bug-audit"
-      ]
+        "m-bedrock-system-improvement"
+      ],
+      "expectedOperation": "APPROVED_TARGET_REPAIR"
     },
     {
       "id": "repair-en-01",
       "prompt": "apply the proven fix to the target map but do not change the detector",
-      "expectedLane": "m-bedrock-target-repair",
+      "expectedLane": "m-bedrock-map-testing",
       "forbidden": [
-        "m-bedrock-detection-development"
-      ]
+        "m-bedrock-system-improvement"
+      ],
+      "expectedOperation": "APPROVED_TARGET_REPAIR"
     },
     {
       "id": "product-id-01",
       "prompt": "buat UI report lebih rapi",
-      "expectedLane": null,
+      "expectedLane": "m-bedrock-system-improvement",
       "expectedTaskClass": "DEVELOP",
-      "note": "Product Development, not Detection Development"
+      "forbidden": [
+        "m-bedrock-map-testing"
+      ]
     },
     {
       "id": "product-id-02",
       "prompt": "rapikan struktur repo supaya lebih modular",
-      "expectedLane": null,
+      "expectedLane": "m-bedrock-system-improvement",
       "expectedTaskClass": "DEVELOP",
-      "note": "Product Development, not Detection Development"
+      "forbidden": [
+        "m-bedrock-map-testing"
+      ]
     },
     {
       "id": "product-en-01",
       "prompt": "add a new CLI command for exporting reports",
-      "expectedLane": null,
+      "expectedLane": "m-bedrock-system-improvement",
       "expectedTaskClass": "DEVELOP",
-      "note": "Product Development, not Detection Development"
+      "forbidden": [
+        "m-bedrock-map-testing"
+      ]
     },
     {
       "id": "route-01",
       "prompt": "saya belum tahu ini masalah parser, knowledge, atau diagnostic. tentukan owner dulu",
-      "expectedLane": null,
-      "expectedSkill": "m-bedrock-cross-owner-routing"
+      "expectedLane": "m-bedrock-system-improvement",
+      "expectedOperation": "identify-canonical-owner",
+      "forbidden": [
+        "m-bedrock-map-testing"
+      ]
     },
     {
       "id": "domain-compat-01",
       "prompt": "apakah script api ini tersedia di education version target?",
-      "expectedLane": null,
-      "expectedSkill": "m-bedrock-compatibility"
+      "expectedLane": "m-bedrock-map-testing",
+      "expectedKnowledgeDomain": "compatibility",
+      "forbidden": [
+        "m-bedrock-system-improvement"
+      ]
     },
     {
       "id": "domain-artifact-01",
       "prompt": "cek apakah zip map ini aman diekstrak dan identifikasi artifact type",
-      "expectedLane": null,
-      "expectedSkill": "m-bedrock-artifact-engineering"
+      "expectedLane": "m-bedrock-map-testing",
+      "expectedKnowledgeDomain": "artifact-engineering",
+      "forbidden": [
+        "m-bedrock-system-improvement"
+      ]
     },
     {
       "id": "domain-content-01",
       "prompt": "jelaskan semantic command/function ini tanpa mengubah source",
-      "expectedLane": null,
-      "expectedSkill": "m-bedrock-content-analysis"
+      "expectedLane": "m-bedrock-map-testing",
+      "expectedKnowledgeDomain": "content-analysis",
+      "forbidden": [
+        "m-bedrock-system-improvement"
+      ]
     }
   ]
 }

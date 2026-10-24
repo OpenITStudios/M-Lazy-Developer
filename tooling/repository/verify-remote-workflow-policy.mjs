@@ -115,24 +115,24 @@ const requiredPolicy = [
     ]
   ],
   [
-    ".agents/skills/m-bedrock-map-bug-audit/SKILL.md",
+    ".agents/skills/m-bedrock-map-testing/SKILL.md",
     [
-      "Actual operating environment — ChatGPT Chat map checking",
-      "Google Drive",
-      "directly, without pretending this call occurred"
+      "Lane: TEST MAP",
+      "LOAD = internal TARGET + DISCOVERY",
+      "UNDERSTAND = internal UNDERSTAND + FORMALIZE",
+      "TEST = internal EVALUATE + PROVE",
+      "REPORT = internal REPORT",
+      "runSelectedMapAudit()",
+      "Google Drive"
     ]
   ],
   [
-    ".agents/skills/m-bedrock-product-development/SKILL.md",
+    ".agents/skills/m-bedrock-system-improvement/SKILL.md",
     [
-      "Minecraft map-checking system operated through **ChatGPT Chat**"
-    ]
-  ],
-  [
-    ".agents/skills/m-bedrock-detection-benchmark/SKILL.md",
-    [
-      "Operating context: ChatGPT Chat map checking",
-      "only a genuinely executed `runSelectedMapAudit()`"
+      "Lane: IMPROVE SYSTEM",
+      "ChatGPT Chat",
+      "BENCHMARK",
+      "source/proof"
     ]
   ]
 ];

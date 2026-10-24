@@ -31,7 +31,7 @@ are not the expected design or executed gameplay of an arbitrary map.
 There are two entry routes with **one shared canonical source/reference owner**:
 
 ```text
-SYSTEM DEVELOPMENT / source refresh
+IMPROVE SYSTEM / source refresh
   skills ZIP or verified immutable upstream ref
     → skills.json → whole-folder skill hashes → module.json/requires → source lock
   Skills Probe ZIP or verified immutable upstream ref (may update separately)
@@ -41,7 +41,7 @@ SYSTEM DEVELOPMENT / source refresh
   → experiments/developer-practice-signals.json (curated REFERENCE metadata)
   → approved bounded engine/knowledge improvement, if demonstrated
 
-MAP BUG AUDIT / selected world
+TEST MAP / selected world
   exact .mcworld + selected-map source IDs
   → DISCOVERY → typed Semantic IR/Gameplay Intent
   → UNDERSTAND: up to two relevant *reviewed* developer reference patterns
@@ -131,27 +131,44 @@ Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inv
 
 ## Concrete operating loop — from map to decision
 
-A useful audit is **not** a generic checklist of every Minecraft feature.
-One selected map/version supplies the content; the operator reconstructs
-its actual player-facing mechanics and resolves the **first material**
-uncertainty or contradiction. The same canonical owners work as follows:
+Exactly **two internal skills** are registered. IMPROVE SYSTEM builds and
+validates Lazy-Developer; TEST MAP uses it on one exact selected map.
+Developer Skills and Skills Probe form one linked technical source and
+evidence context but are **not** installed internal work lanes or native
+test execution receipts.
 
-| Step | Actual input | One decision/output | Existing owner |
-|---|---|---|---|
-| 1. Select | One `.mcworld` and its fingerprint; approved user focus | Exact map/version/scope, never mixed archives | Artifact + `map-audit-user-intent.ts` |
-| 2. Discover | Manifest, packs, scripts, entity/structure/world source | Inventory and source IDs; list unsupported content rather than assume absence | `inspection/inspect-artifact.ts` and format analyzers |
-| 3. Understand | Source call paths, event triggers, owner/state relationships, authored content and selected evidence | Objective, start/join, active mechanics, progression, terminal/cleanup/replay; mark inferred and UNKNOWN | `gameplay-intent/` and selected-source analyzers |
-| 4. Formalize | Typed Semantic IR + source-grounded Intent | Explicit state/actor/arena ownership, trigger → guard → effect → continuation, and scenario/contract alternatives | `semantic-ir/`, Scenario Graph, Gameplay World Model |
-| 5. Evaluate | One scenario, normal path, edge case, disconfirming conditions | Expected-versus-actual **candidate**, or intentional design/UNKNOWN; no issue promoted yet | Existing scenario, diagnostic and platform owners |
-| 6. Prove | Source evidence, counterproof, applicable platform facts, narrowly needed runtime residue | PROVEN or NEED_VALIDATION; one root cause, one issue lane; no generic runtime requirement | Defect Resolution Gate and admission |
-| 7. Report | Closed admission plus supported findings | Human-readable gameplay blueprint, separate BUG/DESIGN_MISMATCH, and exact remaining decisions | Map Audit Output V2 and approved Bug Report V2 |
+After one Pre-Audit communication confirmation, TEST MAP has **four main
+operator-facing stages**:
 
-The next cycle always starts with the **earliest unresolved stage**, not
-with the first convenient checker. Read one relevant owner and follow the
-smallest deciding source path. If a source-only question can be answered,
-answer it before proposing a Minecraft runtime test. A bounded source
-review may communicate independently supported mechanics/defects
-without claiming the full production audit closed.
+| Operator stage | Existing internal checkpoints (preserved) | Evidence-grounded responsibility |
+|---|---|---|
+| **LOAD** | TARGET + DISCOVERY | Identity/fingerprint of one immutable map, manifest/pack/source inventory and unsupported source |
+| **UNDERSTAND** | UNDERSTAND + FORMALIZE | Reconstruct player journey, typed Semantic IR, gameplay intent, state, ownership, actors, arena and progression |
+| **TEST** | EVALUATE + PROVE | Evaluate normal/edge/multiplayer/recovery scenarios, counterproof, applicable Minecraft version and actual proof ceiling; Probe reports remain separately versioned references |
+| **REPORT** | REPORT | One design understanding, supported BUG/DESIGN_MISMATCH findings, NEED_VALIDATION and exact Audit Obligations |
+
+This is **one** audit, not a new stage engine. The actual
+`runSelectedMapAudit()`, `Mandatory Audit Procedure`,
+`SelectedMapAuditAdmission`, `Defect Resolution Gate` and honesty/
+proof rules remain the source of truth for internal checkpoint closure.
+`operatorMapTestStageFor()` makes the grouping available in the
+`MapAuditOutputV2.control.operatorStage` read-only projection and
+the human-facing brief; `currentStage` remains the internal proof
+and continuation detail.
+
+Skills/Probe input is source-witness-bound through the current
+`resource-context.ts` owner. Never treat upstream implementation
+preferences, reported clean-example PASS, or historically failed P63
+trials as a current-map gameplay contract or runtime proof. An
+unsupported map mechanism is a source-identified capability gap for
+an explicitly separate IMPROVE SYSTEM task; it is not automatically
+resolved by spawning more skills, detectors or microtests.
+
+Approved target repair is an **optional explicit TEST MAP suboperation**,
+not a fifth operator stage or third internal skill: approval and
+original-map identity → Must Change and Must Preserve → guarded
+working-copy mutation → preservation/targeted proof. IMPROVE SYSTEM
+owns code/source improvements and its restricted benchmark operation.
 
 ### UNDERSTAND checkpoint → selected-source subjects (Batch A)
 
@@ -364,14 +381,11 @@ with chronological player gameplay.
 
 ```text
 Selected .mcworld
-→ runSelectedMapAudit()
-→ TARGET
-→ DISCOVERY
-→ UNDERSTAND
-→ FORMALIZE
-→ EVALUATE
-→ PROVE
-→ REPORT
+→ runSelectedMapAudit() [only when genuinely executed]
+→ LOAD        [TARGET + DISCOVERY internal checkpoints]
+→ UNDERSTAND  [UNDERSTAND + FORMALIZE]
+→ TEST        [EVALUATE + PROVE]
+→ REPORT      [REPORT]
 ```
 
 There is one canonical TypeScript selected-map pipeline. Direct ChatGPT Chat analysis uses the same evidence/uncertainty discipline but cannot fabricate an engine-produced audit receipt; it must retain exact source evidence and report its actual proof ceiling.
@@ -389,7 +403,7 @@ map-audit-pipeline
 → report/review
 ```
 
-### Stage meaning
+### Internal checkpoint meanings (not operator stages)
 
 | Stage | Must answer before continuing |
 |---|---|

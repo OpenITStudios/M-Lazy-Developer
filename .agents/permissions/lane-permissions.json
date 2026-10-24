@@ -1,34 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "profiles": {
-    "m-bedrock-map-bug-audit": {
-      "default": "read",
-      "engine": {
-        "read": true,
-        "write": false
-      },
-      "target": {
-        "read": true,
-        "write": false
-      },
-      "workspace": {
-        "read": true,
-        "write": false
-      },
-      "network": "evidence-only",
-      "processExecution": "deterministic-readonly",
-      "askBefore": [
-        "live-minecraft-interaction",
-        "external-network-source-not-already-authorized"
-      ],
-      "never": [
-        "engine-write",
-        "target-write",
-        "original-artifact-write",
-        "package-install"
-      ]
-    },
-    "m-bedrock-detection-development": {
+    "m-bedrock-system-improvement": {
       "default": "read",
       "engine": {
         "read": true,
@@ -54,62 +27,11 @@
         "rewrite-frozen-expectation-to-pass"
       ]
     },
-    "m-bedrock-detection-benchmark": {
+    "m-bedrock-map-testing": {
       "default": "read",
       "engine": {
         "read": true,
         "write": false
-      },
-      "target": {
-        "read": true,
-        "write": false
-      },
-      "workspace": {
-        "read": true,
-        "write": true
-      },
-      "network": "off-by-default",
-      "processExecution": "benchmark-only",
-      "askBefore": [
-        "live-runtime-benchmark"
-      ],
-      "never": [
-        "engine-write",
-        "target-write",
-        "expectation-rewrite-during-run",
-        "package-install"
-      ]
-    },
-    "m-bedrock-target-repair": {
-      "default": "read",
-      "engine": {
-        "read": true,
-        "write": false
-      },
-      "target": {
-        "read": true,
-        "write": true
-      },
-      "workspace": {
-        "read": true,
-        "write": true
-      },
-      "network": "off-by-default",
-      "processExecution": "repair-only",
-      "askBefore": [
-        "live-minecraft-interaction"
-      ],
-      "never": [
-        "engine-write",
-        "original-artifact-write",
-        "package-install"
-      ]
-    },
-    "product-development": {
-      "default": "read",
-      "engine": {
-        "read": true,
-        "write": true
       },
       "target": {
         "read": true,
@@ -120,14 +42,16 @@
         "write": false
       },
       "network": "evidence-only",
-      "processExecution": "development",
+      "processExecution": "deterministic-readonly",
       "askBefore": [
-        "new-dependency",
+        "live-minecraft-interaction",
         "external-network-source-not-already-authorized"
       ],
       "never": [
+        "engine-write",
         "target-write",
         "original-artifact-write",
+        "package-install",
         "rewrite-frozen-expectation-to-pass"
       ]
     }

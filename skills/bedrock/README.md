@@ -111,7 +111,7 @@ map correctness contracts; upstream `game-results` is Daigon-specific.
 A Skills Probe PASS is a claim about its original fixture/client/lock, not
 current-world gameplay proof. A genuinely new platform fact requires
 version-specific independent verification before entering `engine/knowledge/`;
-a demonstrated detector gap goes to the existing Detection Development lane.
+a demonstrated detector gap goes to the existing IMPROVE SYSTEM lane.
 
 ### Upgrades
 

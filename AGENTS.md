@@ -50,40 +50,41 @@ VALIDATE
 RESEARCH
 ```
 
-Use one active work lane until STOP or explicit handoff. Domain specialist calls do not switch lanes automatically.
+Choose exactly one of **two active skills** until STOP or explicit
+user-directed handoff. Domain and upstream methods are references, never
+additional agent work lanes or an override of mutation permissions.
 
-## Operator modes
-
-Choose exactly one user-facing mode from the requested outcome before selecting an existing work lane.
-
-- `SYSTEM DEVELOPMENT`: change Lazy-Developer itself (architecture, engine, detectors, knowledge, tooling, UI, contracts). Route general changes through `m-bedrock-product-development` with its `product-development` permission profile; changes that specifically improve reusable bug detection use the existing `m-bedrock-detection-development` lane.
-- `MAP BUG AUDIT`: use available ChatGPT tools and canonical source/knowledge to find/classify defects in one selected map. Route to `m-bedrock-map-bug-audit`. Do not mutate engine source or improve detection capability inside this mode. Treat `runSelectedMapAudit()` as source-declared programmatic contract only unless directly executed; never impersonate its output.
-
-Detection Benchmark and Target Repair retain their dedicated existing lanes when explicitly requested. They are not implicit steps within either mode. When an audit finds a detection gap, record the bounded handoff and stop that claim; switch to SYSTEM DEVELOPMENT only upon explicit user direction. A user saying "continue" keeps the selected mode and current scope. Mode names are operator vocabulary, not new skills, registries, or persisted state owners.
-
-## Work-lane routing
+## Operator modes — two internal skills
 
 ```text
-find/classify map bugs
-→ .agents/skills/m-bedrock-map-bug-audit/
+IMPROVE SYSTEM
+→ .agents/skills/m-bedrock-system-improvement/SKILL.md
+→ source architecture, engine/analyzer improvement, external Skills/Probe
+  updates, bounded frozen benchmark and GitHub Local source commit
 
-improve reusable bug detection/diagnosis/proof
-→ .agents/skills/m-bedrock-detection-development/
-
-measure detector/regression quality
-→ .agents/skills/m-bedrock-detection-benchmark/
-
-repair an Approved Bug or approved design change
-→ .agents/skills/m-bedrock-target-repair/
+TEST MAP
+→ .agents/skills/m-bedrock-map-testing/SKILL.md
+→ selected immutable map
+→ LOAD → UNDERSTAND → TEST → REPORT
 ```
 
-Generic Product Development is not Detection Development. Use `.agents/skills/m-bedrock-product-development/SKILL.md`, the normal development contract, and the canonical implementation owner.
+These are the **only two work lanes** in the internal skill registry.
+Benchmark is a constrained read-only measurement operation inside
+IMPROVE SYSTEM, not another skill. A target working-copy repair can happen
+only within TEST MAP after a **separate explicit user approval**, pinned
+selected source and Must Change / Must Preserve contract. Neither a map
+finding nor a reported upstream Probe PASS authorizes repair.
 
-Domain specialist routing is defined by `docs/system/skill-routing.md`.
+TEST MAP must not edit the engine; unsupported mechanisms become a
+source-identified capability gap for an explicitly requested IMPROVE
+SYSTEM task. Preserve test/map context and proof ceiling, never auto-switch
+lanes. Treat `runSelectedMapAudit()` as source-declared programmatic contract only unless directly executed. Reference source evidence is not
+a generated engine receipt. Skill routing is owned by
+`docs/system/skill-routing.md`.
 
 ## Mandatory development style
 
-For every `SYSTEM DEVELOPMENT` task, apply `docs/system/development-discipline.md#development-operating-standard` before material changes and its completion review before STOP. Product and Detection Development skills must explicitly route to that owner. When the user prioritizes unfinished architecture over testing, follow that document's **Architecture-first construction before acceptance** rule: deliver a coherent production path in macro batches, review source continuity, and defer routine tests/fixtures until integration readiness. This does not authorize a new manager, state store, local execution, CI, or unsupported PASS claim.
+For every `IMPROVE SYSTEM` task, apply `docs/system/development-discipline.md#development-operating-standard` before material changes and its completion review before STOP. The IMPROVE SYSTEM skill routes all source development through that owner. When the user prioritizes unfinished architecture over testing, follow that document's **Architecture-first construction before acceptance** rule: deliver a coherent production path in macro batches, review source continuity, and defer routine tests/fixtures until integration readiness. This does not authorize a new manager, state store, local execution, CI, or unsupported PASS claim.
 
 ## Development contract
 
@@ -172,26 +173,28 @@ Uncommitted chat discussion is not persisted automatically. Do not invent recove
 
 ## Selected-map audit invariant
 
-Production map audit has one selected artifact and one operator flow:
+TEST MAP uses one selected artifact and exactly **four user-facing
+stages**, after one Pre-Audit scope confirmation:
 
 ```text
-audit <selected.mcworld>
-→ runSelectedMapAudit()
-→ TARGET
-→ DISCOVERY
-→ UNDERSTAND
-→ FORMALIZE
-→ EVALUATE
-→ PROVE
-→ REPORT
+selected.mcworld
+→ LOAD       (internal TARGET + DISCOVERY)
+→ UNDERSTAND (internal UNDERSTAND + FORMALIZE)
+→ TEST       (internal EVALUATE + PROVE)
+→ REPORT     (internal REPORT)
 ```
+
+The optional `runSelectedMapAudit()` remains the sole programmatic
+entrypoint. All seven existing internal proof checkpoints and admission
+gates remain, grouped only for operator communication. Source review
+never fabricates Minecraft execution or programmatic output.
 
 The selected current map artifact is the sole current gameplay authority.
 
 Detailed audit procedure, prompt confirmation, coverage, proof admission, issue taxonomy, report projection, model-packet discipline, and STOP rules are owned by:
 
 ```text
-.agents/skills/m-bedrock-map-bug-audit/SKILL.md
+.agents/skills/m-bedrock-map-testing/SKILL.md
 docs/analysis/master-selected-map-audit-workflow.md
 docs/analysis/mandatory-audit-procedure.md
 docs/analysis/bug-finding-coverage.md

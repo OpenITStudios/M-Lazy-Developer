@@ -7,11 +7,11 @@ const findings=[];
 // or `git rev-parse HEAD`. No shell, user-supplied executable, or network
 // command is allowed. New process execution remains blocked by default.
 const vettedCommandSources = new Map([
-  [".agents/skills/m-bedrock-detection-benchmark/scripts/check-case-ready.mjs",
+  [".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/check-case-ready.mjs",
    ["spawnSync(", "process.execPath", "validate-expectation.mjs"]],
-  [".agents/skills/m-bedrock-detection-benchmark/scripts/freeze-observed-map-audit.mjs",
+  [".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/freeze-observed-map-audit.mjs",
    ["execFileSync(", '"git"', '"rev-parse"', '"HEAD"']],
-  [".agents/skills/m-bedrock-detection-benchmark/scripts/score-benchmark.test.mjs",
+  [".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.test.mjs",
    ["spawnSync(", "process.execPath", "expectationValidator"]],
 ]);
 function approvedDeterministicCommand(path, source) {

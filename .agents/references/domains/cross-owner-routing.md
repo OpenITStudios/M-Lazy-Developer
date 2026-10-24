@@ -1,9 +1,6 @@
----
-name: m-bedrock-cross-owner-routing
-description: >
-  Resolve genuine ambiguity between work lanes or semantic owners, then hand off and stop. Do not use as an audit, development, benchmark, or repair lane.
----
 
+
+> **REFERENCE ONLY — not an active SKILL.md or work lane.** cross-owner-routing supplies bounded source/knowledge reasoning to the selected IMPROVE SYSTEM or TEST MAP skill; it never changes permissions or proof.
 # Lazy-Developer Cross-Owner Routing
 
 Use only when ownership is genuinely ambiguous across lanes or semantic domains and a normal bounded contract cannot yet be trusted.

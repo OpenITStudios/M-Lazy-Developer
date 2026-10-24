@@ -33,6 +33,37 @@ The Pre-Audit Plan is a communication gate only. It is not an audit stage, gamep
 
 Use this document to know what happens next, what must exist before moving on, and where specialist evidence feeds the same canonical flow.
 
+## Four canonical TEST MAP operator stages
+
+The public/user-facing audit flow is **LOAD → UNDERSTAND → TEST →
+REPORT**, following one Pre-Audit scope confirmation. This document
+retains its existing seven detailed **internal** checkpoint sections
+and stable anchors for source/API compatibility; they do not create
+additional top-level agent work lanes.
+
+```text
+LOAD       = TARGET + DISCOVERY
+UNDERSTAND = UNDERSTAND + FORMALIZE
+TEST       = EVALUATE + PROVE
+REPORT     = REPORT
+```
+
+Every internal checkpoint still enforces the same source identity,
+scenario coverage, negative-space challenge, counter-evidence,
+proof saturation, runtime residue and honesty admission. The one
+`runSelectedMapAudit()` source entrypoint and its existing
+`map-audit-admission.ts` remain owners. The four-stage read-only
+presentation mapping is `operatorMapTestStageFor()`. Source-only
+ChatGPT results must not fabricate code execution.
+
+Two internal skills are
+`.agents/skills/m-bedrock-system-improvement/SKILL.md` and
+`.agents/skills/m-bedrock-map-testing/SKILL.md`. The 23 developer
+Skills and independently locked Skills Probe are a **source/reference**
+domain. They supply selected-map source-matched methodological
+questions and external experiment limitations, not new expected-gameplay
+truth or automatic bug verdicts.
+
 ## Source-linked Bedrock skill and probe context
 
 At UNDERSTAND (never as another checkpoint), the existing model task may

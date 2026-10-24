@@ -47,7 +47,7 @@ for (const path of [
 for (const path of [
   "docs/analysis/README.md",
   "docs/analysis/master-selected-map-audit-workflow.md",
-  ".agents/skills/m-bedrock-map-bug-audit/SKILL.md",
+  ".agents/skills/m-bedrock-map-testing/SKILL.md",
 ]) {
   if (!existsSync(path)) {
     failures.push("Missing canonical routing file: " + path);

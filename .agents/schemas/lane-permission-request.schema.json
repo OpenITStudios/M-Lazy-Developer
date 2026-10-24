@@ -9,10 +9,8 @@
   "properties": {
     "lane": {
       "enum": [
-        "m-bedrock-map-bug-audit",
-        "m-bedrock-detection-development",
-        "m-bedrock-detection-benchmark",
-        "m-bedrock-target-repair"
+        "m-bedrock-system-improvement",
+        "m-bedrock-map-testing"
       ]
     },
     "action": {
@@ -37,7 +35,55 @@
         "read",
         "write"
       ]
+    },
+    "operation": {
+      "enum": [
+        "STANDARD",
+        "BENCHMARK",
+        "APPROVED_TARGET_REPAIR"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "kind",
+        "userMessageRef",
+        "selectedArtifactSha256",
+        "mustChange",
+        "mustPreserve"
+      ],
+      "properties": {
+        "kind": {
+          "const": "EXPLICIT_USER_MESSAGE"
+        },
+        "userMessageRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selectedArtifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "mustChange": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "mustPreserve": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "description": "Two public lanes; BENCHMARK is an immutable Improve System operation; approved working-copy repair requires explicit human approval within Test Map."
 }

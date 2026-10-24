@@ -46,13 +46,13 @@ The sole intake/review owners are
 `experiments/developer-practice-signals.json` (curated reference and
 probe-example/report metadata). The one selected-map consumer is
 `engine/packages/orchestrator/src/workflow/resource-context.ts`.
-A source refresh is **SYSTEM DEVELOPMENT**, not a separate map-audit
+A source refresh is **IMPROVE SYSTEM**, not a separate map-audit
 checkpoint. Build/verify the smallest complete changed source-to-consumer
 path before starting test proliferation; preserve the suspended CI policy.
 
 ## Development Operating Standard
 
-This is the mandatory behavior contract for every `SYSTEM DEVELOPMENT` task, including Product Development and Detection Development. Before material edits, the selected development skill must apply DOS; citing this document without following its decisions is not compliance. Do not create a second workflow or status owner.
+This is the mandatory behavior contract for every `IMPROVE SYSTEM` task, including Product Development and Detection Development. Before material edits, the selected development skill must apply DOS; citing this document without following its decisions is not compliance. Do not create a second workflow or status owner.
 
 **Current product workflow: Minecraft map checking inside ChatGPT Chat, using selected Google Drive `.mcworld` evidence and canonical GitHub `Local` source/knowledge.** TypeScript modules, CLI/report-interface sources, Node metadata, commits and authored tests are source artifacts, not completed engine-audit or Minecraft-runtime evidence. During development preserve the actual proof tier; do not add infrastructure just to suggest an unobserved capability. Direct ChatGPT inspection of a selected world remains valid source analysis with explicit provenance.
 
@@ -72,7 +72,7 @@ This is the mandatory behavior contract for every `SYSTEM DEVELOPMENT` task, inc
 
 ## Architecture-first construction before acceptance
 
-When the user requests architecture completion or explicitly defers testing, use **BUILD** as a working emphasis inside the existing SYSTEM DEVELOPMENT lane, not a new stage, skill, authority, or persisted status machine.
+When the user requests architecture completion or explicitly defers testing, use **BUILD** as a working emphasis inside the existing IMPROVE SYSTEM lane, not a new stage, skill, authority, or persisted status machine.
 
 - **Define the macro outcome.** Name the production input, authoritative output, data contracts, canonical owners, consumers and what constitutes a useful end-to-end result. Resolve contradictions at the owner boundary before changing files.
 - **Implement a complete vertical path.** Prefer one coherent multi-owner integration that connects ingestion → evidence → semantics → model → operator output. Complete missing wiring and source behavior before expanding edge cases. Do not confuse a large diff with a complete flow.
@@ -93,9 +93,17 @@ These are sequencing decisions, not permission to claim the system is reliable w
 - **Batch by responsibility, not file count.** A complete change may touch multiple necessary files in one logical commit. Do not merge unrelated root causes into a single unreviewable change or demand a separate commit for every small edit.
 - **Stop before adding a workaround.** If the next patch cannot be explained by the same proven root cause and a concrete acceptance criterion, reassess the model rather than stacking another workaround.
 
-## SYSTEM DEVELOPMENT execution contract
+## IMPROVE SYSTEM execution contract
 
-SYSTEM DEVELOPMENT changes Lazy-Developer itself. It uses the existing Product Development contract, or the existing Detection Development lane when the explicit goal is reusable bug-detection improvement. It never silently becomes MAP BUG AUDIT, Detection Benchmark, or Target Repair.
+IMPROVE SYSTEM is the only development skill
+(`.agents/skills/m-bedrock-system-improvement/SKILL.md`) for architecture,
+source, engine, detection, native Skills/Probe updates, benchmark and
+maintenance. Product and detection development are **concerns**, not
+separate work lanes. A bounded frozen benchmark is a read-only measuring
+operation inside IMPROVE SYSTEM. TEST MAP is the other skill and may
+not edit engine source during an audit. Approved target repair is an
+optional explicit working-copy operation in TEST MAP, not a separate
+automatic lane. These scopes never silently switch.
 
 For a material change follow one bounded sequence:
 
@@ -110,7 +118,7 @@ Do not make each step a separate persisted workflow stage or commit. If work exc
 
 **Completion means** the requested bounded outcome exists at the canonical owner, the strongest available applicable proof is identified without overclaiming, and the commit is confirmed on the intended ref. If the result depends on unavailable runtime evidence, finish the source-valid portion and state the exact unresolved runtime claim; do not automatically expand scope, claim full runtime success, or require user-local tooling for source decisions.
 
-A map-specific bug encountered during development can supply a regression example, not authority to modify that map or to promote it into a production Bug Report. Conversely, a detection gap discovered during MAP BUG AUDIT requires explicit handoff before any system development.
+A map-specific bug encountered during development can supply a regression example, not authority to modify that map or to promote it into a production Bug Report. Conversely, a capability gap discovered during TEST MAP requires explicit user handoff before IMPROVE SYSTEM changes source.
 
 ## Development decision quality
 
@@ -202,7 +210,7 @@ Do not sacrifice validation, recoverability, security, data-loss prevention, or 
 
 The decisive M-Lazy-Developer outcome is **correctly reconstructing the selected map's authored gameplay** and **reporting material discrepancies/bugs with appropriate proof**, as defined in `docs/product/flow.md`. More rules, validation gates, candidate families, dashboards, schemas, or infrastructure are not progress unless they improve that outcome.
 
-For future SYSTEM DEVELOPMENT decisions:
+For future IMPROVE SYSTEM decisions:
 
 - **Start with real-map output, not a wished-for detector.** Inspect a pinned selected artifact and its game-design interpretation: player objective, phase transitions, actors, progression, ownership, failure/retry, and player-facing capability. State the concrete mechanic or contradiction the current approach missed or falsely asserted.
 - **Find the first wrong existing owner.** Is evidence missing from DISCOVERY, incorrectly joined in UNDERSTAND, misinterpreted in FORMALIZE, prematurely promoted by PROVE, or concealed by REPORT? Reuse and correct that owner and its actual consumer. If the existing ChatGPT source review already answers the question with honest uncertainty, no code change is required.

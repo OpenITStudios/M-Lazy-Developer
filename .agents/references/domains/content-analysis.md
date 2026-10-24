@@ -1,9 +1,6 @@
----
-name: m-bedrock-content-analysis
-description: >
-  Analyze manifests, functions, commands, references, semantic graphs, diagnostics, and topology as a read-only domain specialist. Does not choose the active work lane.
----
 
+
+> **REFERENCE ONLY — not an active SKILL.md or work lane.** content-analysis supplies bounded source/knowledge reasoning to the selected IMPROVE SYSTEM or TEST MAP skill; it never changes permissions or proof.
 # Lazy-Developer Content Analysis
 
 **Role:** DOMAIN SPECIALIST — read-only semantic analysis
@@ -116,6 +113,6 @@ Prefer content hashes, selective parsing, and change-scoped invalidation over fu
 This skill does not decide whether the current job is Map Audit or Detection Development.
 
 - In **Map Bug Audit**, use existing analysis capability only. If required semantics are unsupported, emit `detection-gap` and return to the audit lane.
-- In **Detection Development**, this skill defines analyzer semantics/ownership, but development acceptance is owned by `m-bedrock-detection-development`.
+- During **IMPROVE SYSTEM**, this domain reference informs analyzer semantics/ownership; development acceptance belongs to the active system improvement skill.
 
 Never modify analyzer implementation merely because an operational audit encounters unsupported evidence.

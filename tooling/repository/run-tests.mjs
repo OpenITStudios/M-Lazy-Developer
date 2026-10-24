@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 // Normal development checks whole user-facing paths, not every micro regression.
 // Deep regression suites remain available with --full; --focus targets a repair.
 const nativeFiles = [
-  ".agents/skills/m-bedrock-detection-benchmark/scripts/score-benchmark.test.mjs",
+  ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.test.mjs",
   "apps/report-system-next/render.test.mjs",
   "apps/report-system-next/client.acceptance.test.mjs",
 ];

@@ -1,40 +1,46 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "cases": [
     {
-      "id": "audit-no-engine-mutation",
-      "lane": "m-bedrock-map-bug-audit",
+      "id": "test-map-readonly",
+      "lane": "m-bedrock-map-testing",
       "assertions": [
-        "mutatesEngine=false",
-        "detection-gap does not auto-switch lane",
-        "non-defect cannot receive Blocker/Major/Minor"
+        "selected-map source authority",
+        "LOAD UNDERSTAND TEST REPORT operator flow",
+        "internal checkpoint proof retained",
+        "no engine mutation during testing",
+        "unknown cannot become PASS"
       ]
     },
     {
-      "id": "dev-no-target-mutation",
-      "lane": "m-bedrock-detection-development",
+      "id": "test-map-approved-repair",
+      "lane": "m-bedrock-map-testing",
       "assertions": [
-        "mutatesTarget=false",
-        "seed-map hardcode forbidden",
-        "handoff to benchmark after generalized acceptance"
+        "repair requires explicit user approval",
+        "Must Change and Must Preserve recorded",
+        "original artifact immutable",
+        "working-copy path only",
+        "no implicit move from map findings to repair"
       ]
     },
     {
-      "id": "benchmark-frozen-expectation",
-      "lane": "m-bedrock-detection-benchmark",
+      "id": "improve-system-source",
+      "lane": "m-bedrock-system-improvement",
       "assertions": [
-        "mutatesEngine=false",
-        "frozen expectation cannot be rewritten to pass",
-        "precision/recall tracked"
+        "single existing source owner",
+        "no target write during system improvement",
+        "Skills/Probe source and report versions separated",
+        "no unsupported gameplay proof",
+        "GitHub Local commit verified"
       ]
     },
     {
-      "id": "repair-target-only",
-      "lane": "m-bedrock-target-repair",
+      "id": "improve-system-benchmark",
+      "lane": "m-bedrock-system-improvement",
       "assertions": [
-        "mutatesEngine=false",
-        "mutatesTarget=true",
-        "original artifact immutable"
+        "benchmark mode does not rewrite frozen expectations",
+        "scored actual executable behavior only",
+        "benchmark does not become third work lane"
       ]
     }
   ]

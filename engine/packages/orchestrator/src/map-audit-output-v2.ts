@@ -1,3 +1,4 @@
+import { operatorMapTestStageFor, type OperatorMapTestStage } from "./map-audit-admission.js";
 import type {
   GameDesignMapClassification,
 } from "../../game-design-spec/src/index.js";
@@ -96,6 +97,10 @@ export interface MapAuditOutputV2Finding {
 
 export interface MapAuditOutputControl {
   readonly status: "READY_FOR_REVIEW" | "BLOCKED";
+  /** Public LOAD/UNDERSTAND/TEST/REPORT stage. The seven legacy internal
+   * currentStage states remain source-proof/admission detail.
+   */
+  readonly operatorStage?: OperatorMapTestStage;
   readonly currentStage:
     | "TARGET"
     | "DISCOVERY"
@@ -664,7 +669,10 @@ export function projectMapAuditOutputV2(input: {
         : { minecraftVersion: input.inspection.targetCompatibility.version }),
       source: "selected-audit-runtime-target-not-live-observation",
     },
-    control: input.control,
+    control: {
+      ...input.control,
+      operatorStage: operatorMapTestStageFor(input.control.currentStage),
+    },
     ...(input.userIntent === undefined
       ? {}
       : { userIntent: input.userIntent }),

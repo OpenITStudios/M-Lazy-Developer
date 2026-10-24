@@ -3,6 +3,7 @@ import {
   assessSelectedMapAuditAdmission,
   canProjectIndependentAuditEvidence,
   canAdmitAuditIssueLanes,
+  operatorMapTestStageFor,
 } from "../src/map-audit-admission.js";
 import type {
   MandatoryAuditProcedureReceipt,
@@ -408,5 +409,17 @@ describe("selected-map audit admission", () => {
         : item),
     };
     expect(canProjectIndependentAuditEvidence(partialWithInvalidTarget)).toBe(false);
+  });
+
+  it("groups the seven internal proof stages into exactly four operator stages", () => {
+    const pairs = [
+      ["TARGET", "LOAD"], ["DISCOVERY", "LOAD"],
+      ["UNDERSTAND", "UNDERSTAND"], ["FORMALIZE", "UNDERSTAND"],
+      ["EVALUATE", "TEST"], ["PROVE", "TEST"],
+      ["REPORT", "REPORT"], ["COMPLETE", "REPORT"],
+    ] as const;
+    for (const [internal, operator] of pairs) {
+      expect(operatorMapTestStageFor(internal)).toBe(operator);
+    }
   });
 });

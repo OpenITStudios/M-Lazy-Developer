@@ -68,6 +68,33 @@
           },
           "skillRevision": {
             "type": "string"
+          },
+          "selectedOperation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "BENCHMARK",
+              "APPROVED_TARGET_REPAIR",
+              "identify-canonical-owner",
+              null
+            ],
+            "description": "Suboperation within one of the two active skills, never an independently routable skill."
+          },
+          "selectedKnowledgeDomain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "artifact-engineering",
+              "content-analysis",
+              "compatibility",
+              "cross-owner-routing",
+              null
+            ],
+            "description": "Non-agent knowledge reference, never a third work lane."
           }
         },
         "additionalProperties": false

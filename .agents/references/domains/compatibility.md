@@ -1,9 +1,6 @@
----
-name: m-bedrock-compatibility
-description: >
-  Resolve Minecraft Bedrock/Education version, manifest, Script API, experiment, and capability semantics as a domain specialist. Does not itself prove runtime behavior.
----
 
+
+> **REFERENCE ONLY — not an active SKILL.md or work lane.** compatibility supplies bounded source/knowledge reasoning to the selected IMPROVE SYSTEM or TEST MAP skill; it never changes permissions or proof.
 # Lazy-Developer Compatibility
 
 Use when behavior depends on Minecraft Bedrock version, Minecraft Education, manifest format, Script API version, experiments, or capability availability.

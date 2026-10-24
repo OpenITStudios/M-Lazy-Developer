@@ -1,169 +1,165 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "rules": [
     {
       "path": "engine/**",
-      "audit": "read",
-      "detectionDevelopment": "read-write",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "workspace/projects/**/source/**",
-      "audit": "read",
-      "detectionDevelopment": "read",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read"
+      "improveSystem": "read",
+      "testMap": "read"
     },
     {
       "path": "workspace/projects/**/working/**",
-      "audit": "read",
-      "detectionDevelopment": "read",
-      "benchmark": "read",
-      "targetRepair": "read-write",
-      "productDevelopment": "read"
+      "improveSystem": "read",
+      "testMap": "read"
     },
     {
       "path": "workspace/projects/**/design/**",
-      "audit": "read",
-      "detectionDevelopment": "read",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read"
+      "improveSystem": "read",
+      "testMap": "read"
     },
     {
       "path": "engine/fixtures/**",
-      "audit": "read",
-      "detectionDevelopment": "read-write",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".agents/evals/**",
-      "audit": "read",
-      "detectionDevelopment": "read-write",
-      "benchmark": "read-write",
-      "targetRepair": "read",
-      "productDevelopment": "read"
+      "improveSystem": "read",
+      "testMap": "read"
     },
     {
       "path": ".agents/skills/**",
-      "audit": "read",
-      "detectionDevelopment": "read-write",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "apps/**",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "docs/**",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "planning/**",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "tooling/**",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "skills/bedrock/**",
-      "audit": "read",
-      "detectionDevelopment": "read",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".github/**",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "AGENTS.md",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "GITHUB_RULES.md",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "CONTEXT.md",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "CONTRIBUTING.md",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "SECURITY.md",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "README.md",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "package.json",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "package-lock.json",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "toolchain.json",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "tsconfig.json",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".node-version",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".editorconfig",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".gitattributes",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".gitignore",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "DEV.cmd",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "VERSION",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".agents/permissions/**",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": ".agents/skill-registry.json",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     },
     {
       "path": "experiments/developer-practice-signals.json",
-      "audit": "read",
-      "detectionDevelopment": "read",
-      "benchmark": "read",
-      "targetRepair": "read",
-      "productDevelopment": "read-write"
+      "improveSystem": "read-write",
+      "testMap": "read"
     }
   ]
 }
