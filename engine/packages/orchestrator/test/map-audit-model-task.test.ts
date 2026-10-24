@@ -21,6 +21,7 @@ import type {
 } from "../src/inspection/gameplay-defect-resolution.js";
 import {
   compileDeveloperPracticeReferenceContext,
+  type DeveloperPracticeReferenceData,
 } from "../src/workflow/resource-context.js";
 
 describe("source-scoped UNDERSTAND checkpoint navigation", () => {
@@ -284,7 +285,10 @@ describe("PROVE model evidence handoff", () => {
       evidence: [ownId, guardId, neighborId].map((evidenceId, i) => ({
         id: evidenceId, origin: "source-code" as const,
         scope: "selected-artifact" as const,
-        locator: "behavior_packs/demo/scripts/admission.js:" + (i + 10) + ":2",
+        // The Intent subject can name a whole file, while the contradicted
+        // causal link retains the exact authored guard operation.
+        locator: i === 0 ? "behavior_packs/demo/scripts/admission.js" :
+          "behavior_packs/demo/scripts/admission.js:" + (i + 10) + ":2",
         summary: "Selected source witness",
       })),
       nodes: [{
@@ -358,7 +362,7 @@ describe("PROVE model evidence handoff", () => {
       issues: [],
     };
     const revision = "revision:selected";
-    const tasks = deriveAuditModelTaskPackets({
+    const input: Parameters<typeof deriveAuditModelTaskPackets>[0] = {
       admission: {
         policy: "selected-map-audit-ordered-admission",
         status: "BLOCKED", firstBlockingStage: "PROVE", issues: [],
@@ -366,7 +370,8 @@ describe("PROVE model evidence handoff", () => {
       procedure: {} as any,
       graph, defectResolution: gate, intent, auditRevision: revision,
       world: {} as any,
-    });
+    };
+    const tasks = deriveAuditModelTaskPackets(input);
     const task = tasks.find((item) =>
       item.causalLinkId === id && item.kind === "COUNTERPROOF_SEARCH"
     );
@@ -376,6 +381,102 @@ describe("PROVE model evidence handoff", () => {
       item.kind === "selected-artifact-evidence")).toBe(true);
     expect(task?.evidenceIds).not.toContain(neighborId);
     expect(task?.evidenceIds).not.toContain(fakeId);
+
+    // Publisher methodology must follow the exact causal link's authored
+    // guard, not another operation in the same (possibly bundled) script.
+    // This is an authored source-contract fixture, NOT gameplay execution.
+    const methodSourceId = "src.bedrock-data-persistence";
+    const methodSourcePath = "behavior_packs/demo/scripts/admission.js";
+    const developerPractice: DeveloperPracticeReferenceData = {
+      authority: "REFERENCE",
+      usagePolicy: "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF",
+      sourceSnapshot: { archiveSha256: "a".repeat(64) },
+      sourceFiles: [{
+        id: methodSourceId,
+        path: "skills/bedrock-data-persistence/SKILL.md",
+        sha256: "b".repeat(64),
+        auditUsage: "INTERPRETATION_CANDIDATE",
+        methodology: {
+          applicability: "MAP_SOURCE_INTERPRETATION",
+          sourceSections: ["1. State ownership", "2. Disconfirming state"],
+          objective: "Trace the current map's dynamic-property owner.",
+          investigationSteps: [
+            "Inspect the actual authored write and read.",
+            "Check a separate valid state owner.",
+          ],
+          disconfirmingCase: "The write may belong to another game session.",
+          proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF",
+        },
+      }],
+      patterns: [{
+        id: "developer.hint.persistence.read",
+        sourceId: methodSourceId,
+        kind: "IMPLEMENTATION_PATTERN",
+        status: "SOURCE_REVIEWED",
+        domains: ["state"],
+        sourceSignals: ["getDynamicProperty"],
+        question: "Which state reader owns the contradiction?",
+        candidateRelations: [],
+        negativeControl: "The read may be expected under a guard.",
+        versionApplicability: "NOT_INDEPENDENTLY_VERIFIED",
+        prohibits: "A read attempt is not a gameplay defect.",
+      }, {
+        id: "developer.hint.persistence.unrelated-write",
+        sourceId: methodSourceId,
+        kind: "IMPLEMENTATION_PATTERN",
+        status: "SOURCE_REVIEWED",
+        domains: ["state"],
+        sourceSignals: ["setDynamicProperty"],
+        question: "Which state writer caused the contradiction?",
+        candidateRelations: [],
+        negativeControl: "The neighboring write belongs to another link.",
+        versionApplicability: "NOT_INDEPENDENTLY_VERIFIED",
+        prohibits: "A same-file write is not this link's proof.",
+      }],
+    };
+    const semanticIr = {
+      schemaVersion: 1 as const,
+      execution: { regions: [], edges: [] },
+      state: {
+        surfaces: [{
+          id: "surface:round",
+          ref: { kind: "dynamic-property" as const, key: "round" },
+        }],
+        operations: [{
+          id: "state-op:guard",
+          executionRegionId: "exec:guard",
+          surfaceId: "surface:round",
+          operation: "read" as const,
+          source: {
+            artifactId, relativePath: methodSourcePath,
+            range: { lineStart: 11, lineEnd: 11,
+              columnStart: 2, columnEnd: 21 },
+          },
+        }, {
+          id: "state-op:neighbor",
+          executionRegionId: "exec:neighbor",
+          surfaceId: "surface:round",
+          operation: "write" as const,
+          source: {
+            artifactId, relativePath: methodSourcePath,
+            range: { lineStart: 12, lineEnd: 12,
+              columnStart: 2, columnEnd: 21 },
+          },
+        }],
+        authorityBindings: [],
+      },
+      temporal: { relations: [] },
+    } as any;
+    const scoped = deriveAuditModelTaskPackets({
+      ...input, developerPractice, semanticIr,
+    }).find(item => item.causalLinkId === id &&
+      item.kind === "COUNTERPROOF_SEARCH");
+    expect(scoped?.developerPractice?.items.map(item => item.patternId))
+      .toEqual(["developer.hint.persistence.read"]);
+    expect(scoped?.developerPractice?.items[0]?.matchingEvidenceIds)
+      .toEqual(["state-op:guard"]);
+    expect(scoped?.developerPractice?.items[0]?.matchingSignals)
+      .toEqual(["getDynamicProperty"]);
 
     // A genuine source mention in a model prompt does not authorize that
     // source as proof for a different causal-link target.

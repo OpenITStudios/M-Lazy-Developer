@@ -312,7 +312,12 @@ previously opened Minecraft map behaved in a particular way.
 
 The CLI now loads the vetted `developerPractice` snapshot by default;
 the API keeps explicit injection. Selection requires exact selected-map
-source evidence and matching typed Semantic IR/question context. The same
+source evidence and matching typed Semantic IR/question context. For a
+causal-link investigation, operation-level selected-artifact source locators
+already authorized by that link take precedence over a broad Gameplay Intent
+file locator; a nearby write/call in the same bundled file must not select an
+unrelated developer method. If no precise source site exists, current scoped
+source evidence remains a limited navigation hint, never causal proof. The same
 bounded context can deliver the relevant SHA-pinned developer methodology **within the same bounded
 model task**: actual SKILL.md chapter references, a three-step source
 investigation, a concrete design counterexample, and linked example
@@ -330,8 +335,9 @@ canonical proof gate always decide the map finding.
 
 ### External developer source: comparison, never replacement
 
-The reviewed `minecraft-bedrock-agent-skills` v0.24.0 methods and
-separately versioned `skills-probe` metadata are optional **REFERENCE** input
+The currently source-reviewed `minecraft-bedrock-agent-skills` v0.27.0
+methods and separately locked Skills Probe v0.23.0 installed skills are
+optional **REFERENCE** input
 to a source-grounded model task. The path is:
 
 ```text

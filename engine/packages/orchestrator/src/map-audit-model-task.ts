@@ -1120,11 +1120,31 @@ export function deriveAuditModelTaskPackets(input: {
       "manifest", "version", "versions", "edition", "compatibility",
       "compatible", "experiments", "experiment", "api",
     ].includes(term));
+    // A causal investigation can carry an exact guard/effect source site
+    // even when its broad Gameplay Intent subject only names the source file.
+    // Use ONLY current-artifact evidence already authorized for this packet,
+    // and favor operation-level locators over same-file matches. This changes
+    // developer REFERENCE questions, never the causal proof/admission gate.
+    const scopedSourceLocators = unique(packet.evidenceContext.flatMap(item =>
+      item.kind === "selected-artifact-evidence" && item.locator
+        ? [item.locator] : []));
+    const candidateSourceLocators = unique([
+      ...(knowledgeLookup?.sourceLocators ?? []),
+      ...scopedSourceLocators,
+    ]);
+    const preciseSourceSite = (locator: string): boolean =>
+      /(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator);
+    const scopedSites = scopedSourceLocators.filter(preciseSourceSite);
+    const allSites = candidateSourceLocators.filter(preciseSourceSite);
+    const referenceSourceLocators =
+      packet.causalLinkId !== undefined && scopedSites.length > 0
+        ? scopedSites
+        : allSites.length > 0 ? allSites : candidateSourceLocators;
     const reference = input.developerPractice === undefined ||
       input.semanticIr === undefined ||
       !input.intent.artifactId ||
       knowledgeLookup?.grounding !== "SELECTED_ARTIFACT" ||
-      knowledgeLookup.sourceLocators.length === 0 ||
+      referenceSourceLocators.length === 0 ||
       domains.length === 0
         ? undefined
         : compileDeveloperPracticeReferenceContext({
@@ -1135,7 +1155,7 @@ export function deriveAuditModelTaskPackets(input: {
               ...domains,
               ...(versionQuestion ? ["manifest", "edition", "script-api"] : []),
             ])],
-            sourceLocators: knowledgeLookup.sourceLocators,
+            sourceLocators: referenceSourceLocators,
             manifestWitnesses: (input.selectedPacks ?? [])
               .filter(pack => pack.manifestSource !== undefined)
               .map(pack => ({
