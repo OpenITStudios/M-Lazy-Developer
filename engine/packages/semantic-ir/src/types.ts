@@ -49,6 +49,10 @@ export interface ExecutionEdge {
   kind: ExecutionEdgeKind;
   targetLabel: string;
   resolution: IrResolution;
+  /** Authored dynamic import of a runtime-provided Minecraft API module.
+   * No selected-map source target exists; module loading is NOT observed.
+   */
+  externalRuntimeModule?: "@minecraft/server" | "@minecraft/server-ui";
   to?: string;
   source: SourceRef;
   /** For event-dispatch only: exact execution region containing the authored
@@ -232,6 +236,10 @@ export interface TemporalRelation {
   from: string;
   targetLabel: string;
   resolution: IrResolution;
+  /** Authored dynamic import of a runtime-provided Minecraft API module.
+   * No selected-map source target exists; module loading is NOT observed.
+   */
+  externalRuntimeModule?: "@minecraft/server" | "@minecraft/server-ui";
   to?: string;
   kind: TemporalRelationKind;
   source: SourceRef;

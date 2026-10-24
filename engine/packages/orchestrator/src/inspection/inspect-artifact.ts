@@ -1064,8 +1064,15 @@ async function inspectPreparedArtifact(
         discoveryChallengeIds:
           finalHiddenGameplayDefects.discoveryChallenges.map((item) => item.id),
          unresolvedSourceLinkIds: [
-           ...result.semanticIrModel.execution.edges.filter((item) => item.resolution === "unresolved").map((item) => item.id),
-           ...result.semanticIrModel.temporal.relations.filter((item) => item.resolution === "unresolved").map((item) => item.id),
+          // A known Minecraft platform module is runtime-provided, not a
+          // missing file in the selected map. Preserve its unresolved IR
+          // temporal evidence, but do not block source discovery for it.
+          ...result.semanticIrModel.execution.edges.filter((item) =>
+            item.resolution === "unresolved" &&
+            item.externalRuntimeModule === undefined).map((item) => item.id),
+          ...result.semanticIrModel.temporal.relations.filter((item) =>
+            item.resolution === "unresolved" &&
+            item.externalRuntimeModule === undefined).map((item) => item.id),
          ],
         gameplayIntentUnknownIds: result.gameplayIntent.model.unknowns.map(item => item.id),
       });

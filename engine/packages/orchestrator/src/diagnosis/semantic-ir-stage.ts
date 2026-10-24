@@ -1040,9 +1040,18 @@ export function buildInspectionSemanticIr(
       ? targets[0] : undefined;
     const to = target === undefined ? undefined :
       ensureScriptRegion(target, "module", target.source);
+    // An exact dynamic import of a known Minecraft runtime API does not
+    // have a selected-map module body. Preserve the unresolved temporal
+    // event, but distinguish it from an unmatched local script import.
+    const externalRuntimeModule = resolution.status === "external" &&
+      resolution.importSyntax === "dynamic-literal" &&
+      (resolution.module === "@minecraft/server" ||
+       resolution.module === "@minecraft/server-ui")
+        ? resolution.module : undefined;
     addEdge({
       from,
       ...(to === undefined ? {} : { to }),
+      ...(externalRuntimeModule === undefined ? {} : { externalRuntimeModule }),
       kind: "deferred",
       targetLabel: "import(" + resolution.module + ")",
       resolution: to === undefined ? "unresolved" : "resolved",
@@ -1358,6 +1367,9 @@ export function buildInspectionSemanticIr(
       targetLabel: edge.targetLabel,
       resolution: edge.resolution,
       ...(edge.to === undefined ? {} : { to: edge.to }),
+      ...(edge.externalRuntimeModule === undefined ? {} : {
+        externalRuntimeModule: edge.externalRuntimeModule,
+      }),
       kind: temporalKind(edge),
       source: edge.source,
       ...(edge.guardEvidence === undefined
