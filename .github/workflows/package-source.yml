@@ -37,6 +37,26 @@ jobs:
       - name: Check script transpiler is loadable
         run: node --input-type=module -e "import('esbuild').then(m => { if (!m.transformSync('const n = 1').code.includes('const n')) process.exitCode = 1; })"
 
+      # Transport must remain possible even if a future source change breaks
+      # the canonical TypeScript import. Record that failure instead of
+      # mislabeling a successfully uploaded archive as audit-ready.
+      # This only imports the source owner; it never runs the audit or tests.
+      - name: Probe canonical audit source import
+        id: audit-entrypoint
+        continue-on-error: true
+        shell: bash
+        run: |
+          node --import tsx --input-type=module <<'NODE'
+          const {
+            runSelectedMapAudit,
+            projectSelectedMapAuditModelHandoff,
+          } = await import('./engine/packages/orchestrator/src/map-audit-pipeline.ts');
+          if (typeof runSelectedMapAudit !== 'function' ||
+              typeof projectSelectedMapAuditModelHandoff !== 'function') {
+            throw new Error('Canonical audit entrypoint exports are unavailable');
+          }
+          NODE
+
       # The pinned LevelDB binding is the ONLY lifecycle script explicitly
       # restored. An optional native failure must not masquerade as a full
       # Bedrock world-DB scan, nor block transport of the rest of the source.
@@ -77,6 +97,7 @@ jobs:
         env:
           LEVELDB_BUILD_OUTCOME: ${{ steps.leveldb-build.outcome }}
           LEVELDB_SMOKE_OUTCOME: ${{ steps.leveldb-smoke.outcome }}
+          AUDIT_ENTRYPOINT_OUTCOME: ${{ steps.audit-entrypoint.outcome }}
         run: |
           set -euo pipefail
           git diff --exit-code -- package.json package-lock.json
@@ -101,6 +122,12 @@ jobs:
             architecture: process.arch,
             packageLockSha256: lockSha256,
             dependencyInstall: 'npm ci --ignore-scripts --include=optional',
+            canonicalAuditEntrypoint: {
+              module: 'engine/packages/orchestrator/src/map-audit-pipeline.ts',
+              importOutcome: process.env.AUDIT_ENTRYPOINT_OUTCOME,
+              loadable: process.env.AUDIT_ENTRYPOINT_OUTCOME === 'success',
+              proof: 'MODULE_IMPORT_ONLY_NOT_A_MAP_AUDIT',
+            },
             nativeLevelDb: {
               package: '@8crafter/leveldb-zlib',
               buildOutcome: process.env.LEVELDB_BUILD_OUTCOME,
