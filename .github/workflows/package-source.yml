@@ -1,63 +1,138 @@
-# source-refresh: 64e00aaf
+# ChatGPT Chat source/dependency transfer only. Never run the map audit or test suite here.
 name: Package Source Snapshot
 
 on:
+  push:
+    branches:
+      - Local
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: lazy-developer-portable-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   package:
+    if: github.ref == 'refs/heads/Local'
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Checkout exact Local source
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - name: Setup Node 22.16.0
+      - name: Use ChatGPT-compatible Node
         uses: actions/setup-node@v7
         with:
           node-version: 22.16.0
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install locked dependencies without arbitrary lifecycle scripts
+        run: npm ci --ignore-scripts --include=optional --no-audit --no-fund
 
-      - name: Assert portable build helper works without lifecycle scripts
-        run: node --input-type=module -e "import('esbuild').then((m) => { if (!m.transformSync('const x = 1').code.includes('const x')) process.exit(1); })"
+      - name: Check script transpiler is loadable
+        run: node --input-type=module -e "import('esbuild').then(m => { if (!m.transformSync('const n = 1').code.includes('const n')) process.exitCode = 1; })"
 
-      - name: Capture portable Node runtime
+      # The pinned LevelDB binding is the ONLY lifecycle script explicitly
+      # restored. An optional native failure must not masquerade as a full
+      # Bedrock world-DB scan, nor block transport of the rest of the source.
+      - name: Restore pinned optional LevelDB native binding
+        id: leveldb-build
+        continue-on-error: true
+        run: npm rebuild @8crafter/leveldb-zlib --foreground-scripts --no-audit --no-fund
+
+      - name: Verify LevelDB loads and reads disposable synthetic data
+        id: leveldb-smoke
+        continue-on-error: true
         shell: bash
         run: |
-          mkdir -p .portable-node
-          cp "$(command -v node)" .portable-node/node
-          .portable-node/node --version
-
-      - name: Write exact-source provenance
-        shell: bash
-        run: |
-          lock_sha="$(sha256sum package-lock.json | awk '{print $1}')"
-          cat > .portable-provenance.json <<EOF
-          {
-            "schemaVersion": 1,
-            "repository": "${GITHUB_REPOSITORY}",
-            "branch": "${GITHUB_REF_NAME}",
-            "commit": "${GITHUB_SHA}",
-            "node": "$(node --version)",
-            "npm": "$(npm --version)",
-            "installMode": "npm ci --ignore-scripts --no-audit --no-fund",
-            "proofLevel": "PACKAGED_SOURCE_ONLY_NOT_INTEGRATED_RUNTIME_ACCEPTANCE",
-            "packageLockSha256": "${lock_sha}"
+          node --input-type=module <<'NODE'
+          import { LevelDB } from '@8crafter/leveldb-zlib';
+          import { mkdtemp, rm } from 'node:fs/promises';
+          import { tmpdir } from 'node:os';
+          import { join } from 'node:path';
+          const root = await mkdtemp(join(tmpdir(), 'm-lazy-leveldb-'));
+          try {
+            const db = new LevelDB(join(root, 'db'), { createIfMissing: true });
+            await db.open();
+            try {
+              await db.put('portable-reader-check', 'ok');
+              if (await db.getAsString('portable-reader-check') !== 'ok') {
+                throw new Error('Native LevelDB scratch readback disagrees');
+              }
+            } finally {
+              await db.close();
+            }
+          } finally {
+            await rm(root, { recursive: true, force: true });
           }
-          EOF
-          cat .portable-provenance.json
+          NODE
 
-      - name: Upload portable workspace
+      - name: Build portable archive with exact commit and capability provenance
+        shell: bash
+        env:
+          LEVELDB_BUILD_OUTCOME: ${{ steps.leveldb-build.outcome }}
+          LEVELDB_SMOKE_OUTCOME: ${{ steps.leveldb-smoke.outcome }}
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- package.json package-lock.json
+          mkdir -p .portable-node "$RUNNER_TEMP/portable-source"
+          cp "$(command -v node)" .portable-node/node
+          chmod 755 .portable-node/node
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const lockSha256 = createHash('sha256')
+            .update(readFileSync('package-lock.json')).digest('hex');
+          const ready = process.env.LEVELDB_SMOKE_OUTCOME === 'success';
+          const provenance = {
+            schemaVersion: 2,
+            repository: process.env.GITHUB_REPOSITORY,
+            branch: process.env.GITHUB_REF_NAME,
+            commit: process.env.GITHUB_SHA,
+            archiveFormat: 'tar.gz',
+            nodeVersion: process.version,
+            platform: process.platform,
+            architecture: process.arch,
+            packageLockSha256: lockSha256,
+            dependencyInstall: 'npm ci --ignore-scripts --include=optional',
+            nativeLevelDb: {
+              package: '@8crafter/leveldb-zlib',
+              buildOutcome: process.env.LEVELDB_BUILD_OUTCOME,
+              scratchReadOutcome: process.env.LEVELDB_SMOKE_OUTCOME,
+              available: ready,
+              proof: 'NATIVE_SCRATCH_READ_NOT_MINECRAFT_WORLD_SCAN',
+            },
+            selectedMapIncluded: false,
+            proofLevel: 'PORTABLE_SOURCE_AND_DEPENDENCIES_NOT_A_MAP_AUDIT',
+          };
+          const bytes = JSON.stringify(provenance, null, 2) + '\n';
+          writeFileSync('.portable-provenance.json', bytes);
+          writeFileSync(join(process.env.RUNNER_TEMP, 'portable-source', 'provenance.json'), bytes);
+          NODE
+          # A TAR retains executable mode, symlinks and native .node binaries;
+          # the GitHub artifact ZIP otherwise discards Unix file permissions.
+          tar -czf "$RUNNER_TEMP/portable-source/repository.tar.gz" \
+            --exclude='./.git' \
+            --exclude='./workspace/projects' \
+            --exclude='*.mcworld' \
+            --exclude='*.mcpack' \
+            --exclude='*.mcaddon' \
+            -C "$GITHUB_WORKSPACE" .
+          cd "$RUNNER_TEMP/portable-source"
+          sha256sum repository.tar.gz > repository.sha256
+          sha256sum --check repository.sha256
+          echo 'Portable package created. This job does not execute runSelectedMapAudit, Vitest or Minecraft.'
+
+      - name: Upload ChatGPT-portable source and dependencies
         uses: actions/upload-artifact@v7
         with:
           name: lazy-developer-portable
-          path: |
-            .
-            !.git
-          include-hidden-files: true
-          retention-days: 7
+          path: ${{ runner.temp }}/portable-source/
+          retention-days: 30
+          if-no-files-found: error
