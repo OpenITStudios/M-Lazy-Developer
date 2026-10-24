@@ -17,6 +17,7 @@ import {
   runSelectedMapAudit,
   applySelectedMapAuditModelResponses,
   projectSelectedMapAuditModelHandoff,
+  type SelectedMapAuditInput,
 } from "../src/map-audit-pipeline.js";
 import {
   deriveAuditModelKnowledgeLookup,
@@ -175,6 +176,33 @@ async function syntheticMcworld(kind: Case): Promise<{
   }
 }
 
+// The CLI provides reviewed upstream methodology by default; production
+// callers can explicitly inject that same immutable source-reviewed snapshot.
+// Native ZIP identities and independently locked Probe evidence must agree
+// before the real synthetic selected-map audit consumes these REFERENCE cues.
+function reviewedDeveloperPractice():
+  NonNullable<SelectedMapAuditInput["developerPractice"]> {
+  const practice = JSON.parse(readFileSync(
+    "experiments/developer-practice-signals.json", "utf8",
+  )) as NonNullable<SelectedMapAuditInput["developerPractice"]>;
+  const native = JSON.parse(readFileSync(
+    "skills/bedrock/source-lock.json", "utf8",
+  )) as {
+    skillsArchiveSha256: string;
+    probe: { archiveSha256: string; skillsLockTag: string;
+      skillsLockCommit: string };
+  };
+  expect(practice.sourceSnapshot.archiveSha256)
+    .toBe(native.skillsArchiveSha256);
+  expect(practice.probeSnapshot?.archiveSha256)
+    .toBe(native.probe.archiveSha256);
+  expect(practice.probeSnapshot?.observedSkillsLockTag)
+    .toBe(native.probe.skillsLockTag);
+  expect(practice.probeSnapshot?.observedSkillsLockCommit)
+    .toBe(native.probe.skillsLockCommit);
+  return practice;
+}
+
 // One acceptance boundary checks the real operator output, rather than
 // treating individual source/Intent/Scenario helpers as product proof.
 function expectReconstructionContract(
@@ -236,13 +264,34 @@ function expectReconstructionContract(
   )).toBe(true);
   expect(result.mapAuditReport.gameplayFlowBasis)
     .toBe("AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY");
+  expect(result.mapAuditReport.evidenceScope.archiveSourcesUsed).toBe(false);
+  // Even when upstream ZIP methods are available, only exact current-map
+  // Semantic IR evidence can select an INVESTIGATION hint. Hints never close
+  // the canonical gameplay/proof gates or become selected-map design.
+  for (const task of result.modelTaskPackets) {
+    const reference = task.developerPractice;
+    if (reference === undefined) continue;
+    expect(reference.authority).toBe("REFERENCE");
+    expect(reference.status).toBe("INVESTIGATION_HINTS_ONLY");
+    expect(reference.selectedArtifactId).toBe(result.identity.artifactId);
+    expect(reference.items.length).toBeLessThanOrEqual(2);
+    for (const item of reference.items) {
+      expect(item.methodology?.applicability)
+        .toBe("MAP_SOURCE_INTERPRETATION");
+      expect(item.matchingEvidenceIds.length).toBeGreaterThan(0);
+      expect(item.sourceSha256).toMatch(/^[a-f0-9]{64}$/);
+    }
+  }
 }
 
 describe("Game Reconstruction selected-map production acceptance (synthetic)", () => {
   it("follows NPC button -> unique function -> sourced score and teleport effects", async () => {
     const fixture = await syntheticMcworld("dialogue");
     try {
-      const result = await runSelectedMapAudit({ artifactPath: fixture.archive });
+      const result = await runSelectedMapAudit({
+        artifactPath: fixture.archive,
+        developerPractice: reviewedDeveloperPractice(),
+      });
       expectReconstructionContract(result);
       // A source report with the wrong selected archive SHA cannot become
       // frozen benchmark evidence, even when all V2 fields otherwise match.
@@ -255,7 +304,7 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
           artifactFingerprint: "0".repeat(64),
         }));
         const attempt = spawnSync(process.execPath, [
-          ".agents/skills/m-bedrock-detection-benchmark/scripts/freeze-observed-map-audit.mjs",
+          ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/freeze-observed-map-audit.mjs",
           fixture.archive, wrongReport, output,
         ], { encoding: "utf8" });
         expect(attempt.status).not.toBe(0);
@@ -489,7 +538,10 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
   it("does not traverse either target when a command resolves to duplicate pack functions", async () => {
     const fixture = await syntheticMcworld("ambiguous-target");
     try {
-      const result = await runSelectedMapAudit({ artifactPath: fixture.archive });
+      const result = await runSelectedMapAudit({
+        artifactPath: fixture.archive,
+        developerPractice: reviewedDeveloperPractice(),
+      });
       expectReconstructionContract(result);
       const ir = result.inspection.semanticIrModel;
       const relation = ir.execution.authoredBehaviorRelations?.find(item =>
@@ -532,6 +584,23 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(result.mapAuditReport.gameplayStructure?.features
         .filter(item => item.label === "NPC interaction: Start Challenge")
         .flatMap(item => item.sourceBehaviorPaths)).toEqual([]);
+      expect(result.mapAuditReport.control.status).toBe("BLOCKED");
+      // A real unresolved function target must survive IR -> Intent ->
+      // report/brief without becoming an effect, a guessed BUG or PASS.
+      const ambiguousBrief = formatSelectedMapAuditBrief({
+        report: result.mapAuditReport,
+        intent: result.inspection.gameplayIntent.model,
+        modelTaskPackets: result.modelTaskPackets,
+      });
+      expect(ambiguousBrief).toContain(
+        "**Unresolved selected-source call edges:**");
+      // The brief bounds each displayed source identifier to 300 chars.
+      expect(ambiguousBrief).toContain(edge!.id.slice(0, 300));
+      expect(ambiguousBrief.indexOf(
+        "**Unresolved selected-source call edges:**"))
+        .toBeLessThan(ambiguousBrief.indexOf("## Findings"));
+      expect(ambiguousBrief).toContain(
+        "this is NOT a gameplay defect or runtime proof");
       expect(result.mapAuditReport.gameplayFlowBasis)
         .toBe("AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY");
     } finally {

@@ -263,6 +263,26 @@ export function formatSelectedMapAuditBrief(input: {
       "; remaining evidence questions: " + report.unresolved.total +
       ". Neither is a bug verdict.",
   );
+  // One selected-source call can have several candidates in attached packs.
+  // Show a bounded, stable identity for unresolved source edges near the next
+  // decision, not only in the long technical trace. This does not establish
+  // that a call executed, that either target was used, or that gameplay failed.
+  const unresolvedCallEdges = [...new Set(
+    (report.gameplayStructure?.sourceFlowCandidates ?? [])
+      .flatMap((flow) => flow.unresolvedExecutionEdgeIds),
+  )].sort();
+  if (unresolvedCallEdges.length > 0) {
+    out.push(
+      "**Unresolved selected-source call edges:** " +
+        unresolvedCallEdges.length + " distinct source target(s); " +
+        "IDs " + unresolvedCallEdges.slice(0, 3).map(concise).join("; ") +
+        (unresolvedCallEdges.length > 3
+          ? "; +" + (unresolvedCallEdges.length - 3) + " further."
+          : ".") +
+        " Resolve the exact authored target before attributing downstream " +
+        "state/effects; this is NOT a gameplay defect or runtime proof.",
+    );
+  }
   if (input.candidateGroups !== undefined) {
     const includedLinks = new Set(input.candidateGroups.flatMap(group =>
       group.causalLinkIds));
