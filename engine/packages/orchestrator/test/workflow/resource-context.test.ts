@@ -409,7 +409,7 @@ describe("developer practice manifest-scoped version hints", () => {
       ...baseline,
       data: {
         ...data,
-        probeSnapshot: { observedSkillsLockTag: "v0.23.0" },
+        probeSnapshot: { observedSkillsLockTag: "v0.23.0", archiveSha256: "c".repeat(64), archiveHistorySha256: [] },
         probeExamples: exampleIndex,
       },
       sourceLocators: ["behavior_packs/demo/scripts/main.ts:17"],
@@ -435,10 +435,25 @@ describe("developer practice manifest-scoped version hints", () => {
       ...full,
       data: {
         ...full.data,
-        probeSnapshot: { observedSkillsLockTag: "v0.27.0" },
+        probeSnapshot: { observedSkillsLockTag: "v0.27.0", archiveSha256: "c".repeat(64), archiveHistorySha256: [] },
       },
     });
     expect(wrongRelease?.items[0]?.cleanExamples).toBeUndefined();
+
+    // The same installed skill-lock with a *different probe source ZIP*
+    // cannot borrow the previous clean-example index's runtime claims.
+    const wrongArchive = compileDeveloperPracticeReferenceContext({
+      ...full,
+      data: {
+        ...full.data,
+        probeSnapshot: {
+          observedSkillsLockTag: "v0.23.0",
+          archiveSha256: "f".repeat(64),
+          archiveHistorySha256: ["c".repeat(64)],
+        },
+      },
+    });
+    expect(wrongArchive?.items[0]?.cleanExamples).toBeUndefined();
   });
   it("never selects a source-reviewed but un-routed upstream technical skill", () => {
     const unroutedData = {

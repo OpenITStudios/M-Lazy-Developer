@@ -1137,28 +1137,35 @@
   ],
   "deferredSources": [],
   "probeSnapshot": {
-    "sourceName": "skills-probe-main.zip",
-    "archiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
-    "files": 572,
-    "uncompressedBytes": 14999905,
+    "sourceName": "skills-probe-main (1).zip",
+    "archiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+    "files": 829,
+    "uncompressedBytes": 17203233,
     "observedSkillsLockTag": "v0.23.0",
     "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
     "companionSkillArchiveRelease": "v0.27.0",
-    "identityWarning": "Skills Probe installed skills lock v0.23.0 is distinct from reviewed v0.27.0 developer SKILL.md source identities and may not validate newly added or revised developer guidance.",
+    "identityWarning": "Skills Probe still pins installed developer skills v0.23.0 at f5b8275d..., distinct from source-reviewed v0.27.0 developer method release. New P63 visual/lifecycle work and source revisions must not be back-projected to v0.27.0 map findings.",
     "licenseWarning": "No root LICENSE found; scripts, Minecraft packs, media and user-specific test harness are not vendored.",
     "executionBoundary": "Third-party self-reported native reports inspected as text; no Minecraft client, test harness, dependencies, installers or scripts were executed here.",
-    "reportsIndexed": 22,
-    "evidenceScope": "Individual upstream outcomes may differ within a report; mixed and partial statuses must preserve original per-case qualification.",
+    "reportsIndexed": 49,
+    "evidenceScope": "49 original narrative reports (22 previously indexed, 27 newly reviewed as scoped text). P63 consists of 23 linked revision reports; failures, blockers, and narrow passes coexist. A report's overall status is not every subcase's outcome, and a newer candidate must not overwrite another report's failure.",
     "otherCodeSurfaces": {
-      "probePackScriptFiles": 56,
-      "probeToolScriptFiles": 13,
-      "duplicatedInstalledSkillScripts": 86,
-      "note": "Probe scripts, command blocks, texture/effects and assets are environment-specific fixtures; do not promote to gameplay truth."
+      "probePackScriptFiles": 106,
+      "probeToolScriptFiles": 35,
+      "duplicatedInstalledSkillScripts": 58,
+      "note": "All 106 pack TypeScript and 35 textual tools are pinned by current ZIP SHA; 49 narrative source reports remain independently pinned, not executed. Minecraft runtime outcomes and media behavior are external self-reports.",
+      "installedSkillScriptIdentityNote": "Current probe ZIP contains 29 script files under .agents/skills/ and 29 mirrored under .claude/skills/, locked to v0.23.0. They are external instructions/scripts, not imported."
     },
-    "sourcePackFiles": 56,
+    "sourcePackFiles": 106,
     "databaseInstalledVersion": "2.1.1",
     "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified.",
-    "probeToolScriptSourcesTracked": 13
+    "probeToolScriptSourcesTracked": 35,
+    "reportSourceIdentityPolicy": "49 SHA-pinned report texts, 22 originally indexed from previousArchiveSha256 and 27 newly indexed from current archive. All original 22 report digests were reobserved byte-for-byte in the new ZIP. Source-file references in older reports may differ from the latest 106-file code inventory and must remain historically pinned.",
+    "reportReviewMethod": "Whole test-runs directory inventoried. Twenty-seven new reports reviewed by declared overall verdict, scoped subcase outcomes, source revision, original client/target and negative proof boundaries; no upstream fixture was executed or source status recast as Minecraft runtime truth.",
+    "archiveHistorySha256": [
+      "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203"
+    ],
+    "zipEntries": 1111
   },
   "probeEvidence": [
     {
@@ -1202,7 +1209,9 @@
           "path": "packs/BP/scripts/probe/probes/sound.ts",
           "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-p14-agent",
@@ -1221,7 +1230,9 @@
           "path": "packs/BP/scripts/probe/probes/hud.ts",
           "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-p21-agent",
@@ -1240,7 +1251,9 @@
           "path": "packs/BP/scripts/probe/probes/combat.ts",
           "sha256": "bd673e7451306365d6de55777094a6c1a057f784cb617e0ad8dbde9ef60bbb96"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-p29-run2-agent",
@@ -1259,7 +1272,9 @@
           "path": "packs/BP/scripts/probe/probes/hud.ts",
           "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-t10-playback-agent",
@@ -1283,7 +1298,9 @@
           "path": "packs/BP/scripts/probe/probes/hud.ts",
           "sha256": "15d4360a0aff69c7925eb03a74c1fa0f4ccbbfbb3eb6e09d2dce84f5d3be9cb3"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-t11-agent",
@@ -1303,7 +1320,9 @@
           "path": "packs/BP/scripts/probe/probes/content.ts",
           "sha256": "1ed728f797d5d996dd3bde90295897c4f39e8bf0d76ff1b2f4a838465778ba09"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-t8-agent",
@@ -1322,7 +1341,9 @@
           "path": "packs/BP/scripts/probe/probes/sound.ts",
           "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-t8-run2-agent",
@@ -1341,7 +1362,9 @@
           "path": "packs/BP/scripts/probe/probes/sound.ts",
           "sha256": "027f88d017d8851b7ed17ca40d16886933382ab75d210b2cb4d9d015356c3763"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-15-t9-agent",
@@ -1365,7 +1388,9 @@
           "path": "packs/BP/scripts/probe/probes/coords.ts",
           "sha256": "261213c04809a576e53ab14599ad8194e4f53af40220aa0cb8fe1d3edf0f2462"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-16-t12-agent",
@@ -1389,7 +1414,9 @@
           "path": "packs/BP/scripts/probe/probes/visual.ts",
           "sha256": "486df23b7e2c1fcccc419fd934d0bd9ee5bde4d7618c4c501ccddc3e79fef840"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-16-t13-agent",
@@ -1408,7 +1435,9 @@
           "path": "packs/BP/scripts/probe/probes/results.ts",
           "sha256": "008cc627b9e41ad570fb7467a2a2c86756849f479ece5dfee4834785a8d7eaf8"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-16-t14-agent",
@@ -1432,7 +1461,9 @@
           "path": "packs/BP/scripts/probe/probes/commands.ts",
           "sha256": "6b265011244ffb58edc2f34ac1df935174c99f65c596e4ded1eeeb62503a0b1a"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-16-t14b-agent",
@@ -1456,7 +1487,9 @@
           "path": "packs/BP/scripts/probe/probes/commands.ts",
           "sha256": "6b265011244ffb58edc2f34ac1df935174c99f65c596e4ded1eeeb62503a0b1a"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-17-t15-agent",
@@ -1480,7 +1513,9 @@
           "path": "packs/BP/scripts/probe/probes/content.ts",
           "sha256": "1ed728f797d5d996dd3bde90295897c4f39e8bf0d76ff1b2f4a838465778ba09"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-17-t16-agent",
@@ -1504,7 +1539,9 @@
           "path": "packs/BP/scripts/probe/probes/perf.ts",
           "sha256": "375b818ebcc24a31576e21494002b041fd9a4842c7b7c736d49c5b5bee3dbbdd"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-17-t17-agent",
@@ -1528,7 +1565,9 @@
           "path": "packs/BP/scripts/probe/probes/entities.ts",
           "sha256": "f41257f153cb90b2768bf99fd4daa99a1b234b5e42f8913a1f2f39cb4ec9fce9"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-17-t18-agent",
@@ -1547,7 +1586,9 @@
           "path": "packs/BP/scripts/probe/probes/perf.ts",
           "sha256": "375b818ebcc24a31576e21494002b041fd9a4842c7b7c736d49c5b5bee3dbbdd"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-17-t19-agent",
@@ -1566,7 +1607,9 @@
           "path": "packs/BP/scripts/probe/probes/testing.ts",
           "sha256": "012a88ef3c33cf65b9da300e44ba59bae9c847007a0d7f32019bc4d993ad0083"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-18-t20-agent",
@@ -1590,7 +1633,9 @@
           "path": "packs/BP/scripts/probe/probes/scene.ts",
           "sha256": "a7ebed91ab301f3e551e7ed9be1455851faf129858ac642f50b2563cbfb60408"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-18-t20b-agent",
@@ -1614,7 +1659,9 @@
           "path": "packs/BP/scripts/probe/probes/chunks.ts",
           "sha256": "02857963d2bc18fafb4a3d64899bcb9b39f790428b73a299bc2d5304eac708f5"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-21-p49-labels",
@@ -1638,7 +1685,9 @@
           "path": "packs/BP/scripts/probe/probes/label-codec.ts",
           "sha256": "f5d1020bd0a2888655c533854bc64d366984ffc771708754567e9259feb4fa31"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
     },
     {
       "id": "probe.report.2026-10-21-p50-glyphs",
@@ -1662,7 +1711,581 @@
           "path": "packs/BP/scripts/probe/probes/glyph-icons.ts",
           "sha256": "b9e06a9892b1f5b7df7f5011f55a75214018db571ca9a648fff9706dd0dc6b3f"
         }
-      ]
+      ],
+      "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
+    },
+    {
+      "id": "probe.report.2026-10-22-examples-agent",
+      "sourcePath": "docs/test-runs/2026-10-22-examples-agent.md",
+      "sourceSha256": "bbb5c9cb219ba6007bedc6b634713d5410aedc38a839da9a9da5b0dfff6cafd8",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Combined E1-E8 native run: scoped functional success, form art/full-card failures and unexecuted cases; overall FAIL/partial coverage",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-forms",
+        "src.bedrock-onscreen-display",
+        "src.bedrock-text-glyphs",
+        "src.bedrock-game-results",
+        "src.bedrock-script-optimization",
+        "src.bedrock-entity-lifecycle"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "examples-integration",
+      "series": "examples-integration",
+      "reportedRevisionPin": "0701cbae43c7616f025350509ae4ee12ca02523e",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-22-p50-glyphs-run2",
+      "sourcePath": "docs/test-runs/2026-10-22-p50-glyphs-run2.md",
+      "sourceSha256": "1f61134a3e70ac93720c0ebb9b0c2d335b5cb3e41dfa1551beaee74f65824b10",
+      "status": "UPSTREAM_REPORTED_PARTIAL",
+      "summary": "P50 glyph surfaces showed scoped rendering; layout failures and measurement blockers prevent full acceptance",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-text-glyphs",
+        "src.bedrock-onscreen-display"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "glyph-rerun",
+      "series": "P50",
+      "reportedRevisionPin": "e8fe36e0ab532f38573a25c80d74eaa1ebeeefcb",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-22-p51-results-agent",
+      "sourcePath": "docs/test-runs/2026-10-22-p51-results-agent.md",
+      "sourceSha256": "b557cf92bab453e7fa2e4f0fbc2c7c7fdb538b48bf8fe4a2012e4dc386dfe736",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "P51 E7 dev/release results routing and P35 stress passed locally; debugger/BDS/backend acceptance outside scope",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-game-results"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "results-export",
+      "series": "P51",
+      "reportedRevisionPin": "3ccbacf4348116ae8edcf69052f8cd6abb02ddfb",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-22-visual-audit-lead",
+      "sourcePath": "docs/test-runs/2026-10-22-visual-audit-lead.md",
+      "sourceSha256": "f3999457bb4d713f1e2764a4c41d65c8937cae0ba687d28e10b305c4a40a132e",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Lead P55/P56/P57 visual audit: repaired card/display successes alongside remaining failures and blocked animation observations",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-forms",
+        "src.bedrock-onscreen-display",
+        "src.bedrock-text-glyphs"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "visual-audit",
+      "series": "visual-audit",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-1",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-1.md",
+      "sourceSha256": "e39e95414a7973c73f9c746e0068a4897fca375ee626f42bc7051db96739792f",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 aura startup restoration errors blocked all variant testing despite completed export",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "ca8685d61b60da98a96bad17d93c5d5a48aace3c",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-10",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-10.md",
+      "sourceSha256": "90ee3cfcdd90acccde479a5737226b31f7e6e94ea768722d37b03016a65eb4b6",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 lifecycle overall FAIL; shoulder-height double-failure trigger could not be completed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "a1ba66e5afe9fca62097a0775ab5f98a1d29d7c5",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-11",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-11.md",
+      "sourceSha256": "b9bc0a8146350e97f4f0a0a661688ccf236ac91d58bca49834d1854ce846d1ac",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 focused native source-retention run blocked; prior Test10 failure not superseded",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "b09bb345c5f1a2e146da5c725fd8074fccca2026",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-2",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-2.md",
+      "sourceSha256": "fead8edd8bfec0528123fb4a671198e4444bafd233646c5b053e617eab265dc2",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 player-component load fails on unsupported knockback-rule content in Education 26.32",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "2b365c1377df60e1669a5523633ea98eec14d4b3",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-3",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-3.md",
+      "sourceSha256": "df1c9aca60bba1cd2f94c864d25b2a97275d4f8be4853227658d4b815ef36b3c",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 retest fails required visual acceptance despite partial source/runtime observations",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "0dfdeea706572810e5bdcaf82e919ba9c3d1a83f",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-4",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-4.md",
+      "sourceSha256": "e7c8d1176c8a9e04fd518dbb46184ed57759cf7c91394c96c47d14929065718b",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 retest fails overall; knockback causal comparison remains inconclusive",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "f4f21b3d21d23822a6fc43204681e04e7d5b57ef",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-5",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-5.md",
+      "sourceSha256": "266cecb8e1609bf1e8ef880bc9a7ccaf5aa97fecd774ac4888bf8d2716654ef1",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 mount feet rendering, parrot return, respawn and KB leave cleanup failed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "dd28f2f749e7f8d87385a07ea13079020f464b61",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-6",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-6.md",
+      "sourceSha256": "636d7a50e68c5db2ed000ad81953000003af32b65eff7e38aa2b0e0f0bbda470",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 red feet/death recovery partially recovered, but part switching and dimension recovery failed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "701d66db1ae526933c419225b5fcb87776effb40",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-7",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-7.md",
+      "sourceSha256": "04502e1b7325a8d77d54e975a0030796e48e58e00583537511adb8dbfab17209",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 colour switch/clear passes while dimension addRider recovery and unsupported jump teleport option fail",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-8",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-8.md",
+      "sourceSha256": "e5e39ff0547212058278ad309e0e55c5946afab6806a06114adcb1947da9f2d9",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 teleport/walk/jump isolated cases pass but post-dimension ghost clearing fails",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "754e25137b8e17ac5159ab8c476f50b8d93da5b9",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-aura-test-9",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-aura-test-9.md",
+      "sourceSha256": "c86272ca0649263c7956c79dbfb48c3dbe12715c5ffaf3a2a1a247d30293d8af",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 protected dimension transition cannot rebuild both legs despite other narrow passes",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-aura-lifecycle",
+      "series": "P63",
+      "reportedRevisionPin": "491fa30720821931443faafacf28df9108fcff3e",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-combined-test-1",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-combined-test-1.md",
+      "sourceSha256": "78ca78ba41bd98f670db4377f47145173fa77ac407dbed479c49fa0270ff415d",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 combined integration blocked by debugger connection failure; dependent trials not run",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-combined",
+      "series": "P63",
+      "reportedRevisionPin": "454275c81d4bfeb88595e077efed68bbe10dc423",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-combined-test-2",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-combined-test-2.md",
+      "sourceSha256": "6a1d1c055d0d9d6229ca92099df09137ee845f87583d121d39ec826762531216",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 cold reopen server READY but no visible feet; combined integration FAIL",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-combined",
+      "series": "P63",
+      "reportedRevisionPin": "454275c81d4bfeb88595e077efed68bbe10dc423",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-reopen-test-1",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-reopen-test-1.md",
+      "sourceSha256": "c608b21966f477b44d428fbcf35ad3bcebd300a9de356db43e28a65beb99fd50",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 reopen test blocked before entering world; native recovery unobserved",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-reopen",
+      "series": "P63",
+      "reportedRevisionPin": "d37f4c31f728288ecee69901a86ed20c1be6d7da",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-reopen-test-1b",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-reopen-test-1b.md",
+      "sourceSha256": "288e6f7d22a6294ce109dbae8049fa85d01f0befc31955797bac4fa59b9fc43e",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 sign-in prerequisite blocks in-game reopen test despite actionable account UI",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-reopen",
+      "series": "P63",
+      "reportedRevisionPin": "d37f4c31f728288ecee69901a86ed20c1be6d7da",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-reopen-test-1c",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-reopen-test-1c.md",
+      "sourceSha256": "6c1cb7c862ff4a666d7a9dac0819ff57fa3eb6355d728919abfff0394531e0db",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 cold reopen initially shows red feet then disappears with server READY",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-reopen",
+      "series": "P63",
+      "reportedRevisionPin": "d37f4c31f728288ecee69901a86ed20c1be6d7da",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-visual-test-1",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-visual-test-1.md",
+      "sourceSha256": "1fa07b1ad662eb66ceb40d65e745f5fd69c91e2f988025525526e2a372c6105c",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 feet appearance comparison completed but rotation fails; lifecycle/combat outside scope",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-visual",
+      "series": "P63",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-visual-test-2b",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-visual-test-2b.md",
+      "sourceSha256": "90a4e1e0a2cb7819f06839b351dbf69df11236626b16fd390475a48c046cb536",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 read-only visual preflight blocked; installed/runtime candidate identity not established",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-visual",
+      "series": "P63",
+      "reportedRevisionPin": "5e9d860ef5364e4da50c978d0791a02e70c7fa05",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-visual-test-2c",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-visual-test-2c.md",
+      "sourceSha256": "84e77e81ba7713d1ab7cbbd6cef53f91e0a3b7435afe3fcabe5b82ed35834243",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 one chat-key attempt altered window focus, blocking non-interfering observation",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-visual",
+      "series": "P63",
+      "reportedRevisionPin": "5e9d860ef5364e4da50c978d0791a02e70c7fa05",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-visual-test-2d",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-visual-test-2d.md",
+      "sourceSha256": "97a1fa228e5a5b97396cdb38858a8f92af25f070a3c82cf2d5a61a444a2c56af",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "P63 selected arcs_sparks rotation fails in captured native visuals",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-visual",
+      "series": "P63",
+      "reportedRevisionPin": "5e9d860ef5364e4da50c978d0791a02e70c7fa05",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-visual-test-3",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-visual-test-3.md",
+      "sourceSha256": "d44ad541bd8443447331327c6146ebfa0f56660143d1c037e56435d9a77d45f1",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 rotation passes but three distinct rising spark seeds remain unconfirmed; overall BLOCKED",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-visual",
+      "series": "P63",
+      "reportedRevisionPin": "3613c3de1f2cd3fb574ce092e921900268fc2362",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-23-p63-visual-test-4",
+      "sourcePath": "docs/test-runs/2026-10-23-p63-visual-test-4.md",
+      "sourceSha256": "553dc8922861dd2af7aefc14d5b5c13c647522607f6d5659681b5a7de4cd2a3d",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 smooth feet-only playback reviewed, strict spark identities and switch-phase measurement remain BLOCKED",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-visual",
+      "series": "P63",
+      "reportedRevisionPin": "95e1bde3d358e3e47ba918ebaf402938eea5a453",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-24-p63-dev20-backport-1",
+      "sourcePath": "docs/test-runs/2026-10-24-p63-dev20-backport-1.md",
+      "sourceSha256": "ca01ccf1a0867483f3be907d8379bab7e2d1378ba384c7208dec53e26fc78f4c",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "P63 dev20 backport: narrow reopen/respawn/teleport passes; wrong-shoulder repair and strict lifecycle acceptance blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "family": "p63-backport",
+      "series": "P63",
+      "reportedRevisionPin": "60aafe29e9e0fd7f578c7cf4e658ba136331b66b",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_OR_IMPLEMENTATION_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
     }
   ],
   "codeInventory": {
@@ -1982,6 +2605,201 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/examples/display/quest-card.test.ts",
+        "sha256": "b44ef105a98428118746c64211fcad8ddbe83db1392883ecf1bae4bd1773be89",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/display/quest-card.ts",
+        "sha256": "bb533d3204b68bfd26b83559a55109cfe85b3e305e6dfac5e796efa0c4f4afff",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/forms/forms.test.ts",
+        "sha256": "d18e64d28aad0164c270d3231692571654f0f3229c42bcfe70d02e436466794e",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/forms/menu.ts",
+        "sha256": "6284bc803b5f84969dc278c61cc74849f6a90d39354b5ade4423606ed36056cd",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/forms/payload.ts",
+        "sha256": "2d170009d20a1ba07db0feeeeece0d41e9237fd24b7111b6778ba110a1567584",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/forms/settings.ts",
+        "sha256": "1d4c9761e915114cf8d1c8563bbc1786e697eadeb711dbc164a11464c1ef0681",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/game-results/adapter.test.ts",
+        "sha256": "0220678b85d035a553328fa58a6c1297edaf2c9a707bc42df583ef673f4c7da1",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/game-results/adapter.ts",
+        "sha256": "39d4d5142c2472c3645ac2e7c4f08d5034e56bf32f83ed2b5a1dcf5f8062f1e1",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/game-results/fixtures.ts",
+        "sha256": "16e821c4c15d1ff130706589606b66574f7013a5318ea350a6b62b3906238a29",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/game-results/wiring.test.ts",
+        "sha256": "92f3ec3157ee0f0c5ebac3f14002e02f2357402afa75a6c22fe7c3deb3a4a055",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/adapters.test.ts",
+        "sha256": "e3df7e6d33ac809ee6490f6422493fe15cb339e88c32a7ba19e71d74616b0fd7",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/assets.test.ts",
+        "sha256": "92a982967ae3e71d533b740df3ff10c5600b0de597ce0fccad65ac8a87f5f8cd",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/content.test.ts",
+        "sha256": "1f984a5bc55c099a997f539df233f7b2f4ebea1f85d5b18613e6e9cfc5d274f1",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/content.ts",
+        "sha256": "92a28ff7c77bf57c2787429f4f6e4031792770f2d394f31151fc08e41b077748",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/countdown.test.ts",
+        "sha256": "f93fe0b49bb73adc1caeef281bec5d2c428b1633aa1c78d8cee6e551de1fae83",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/countdown.ts",
+        "sha256": "24ae24dc95d1002dc7531ffb2d9c3c634990c25e0c6279c8a9bb145802b0f50d",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/forms.ts",
+        "sha256": "a5f06938ceccb827eb71a2851357ca5d2d1f078bdf0db72c2a9bdf53027d49af",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/model.test.ts",
+        "sha256": "0eadbab92a117c30f4822e2083698068996f5ef3ba56187401e42f15273c31b9",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/model.ts",
+        "sha256": "3ecd530aa513434d1e1da99c2e6d61c85d484d4dd51d18cf2d673f7c3a518fff",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/sound.ts",
+        "sha256": "640f945598fac708176db31620687e80a480bec97a153032d6e5cfc53471bf8b",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/teleport.test.ts",
+        "sha256": "89604c8bf440225ffc21bfcc816fbf43006005bf5b8b4bcd317fac6d9d4cb000",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/gaps/teleport.ts",
+        "sha256": "ffe4c100185b3dbd17830d809fb18e00fcbde97874ccf01d4b84ad7b27cfec54",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/lifecycle/player-state.test.ts",
+        "sha256": "f422fe89968e2a9d059ebbacccd8df637cc6d7e4a29e8d62a6fae21ef10573d1",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/lifecycle/player-state.ts",
+        "sha256": "f1c37fbcea30889f9881360a7241e8c47a1248ee88ae961b7d4c191fdb9d5c20",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/placements.test.ts",
+        "sha256": "4205152b49e5d1e9b820802342f80e7f89658d5d0a84b3c30f396e58da3ad828",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/placements.ts",
+        "sha256": "b9050afa3811f96b0577f42d0f3b49ba151ef41c0bbf8be6e888fd521a83ae15",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/state.test.ts",
+        "sha256": "3dcaa132ad0a3da54770d4e96052c38277eaf954dc7391d64b0c4372deca2b06",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/state.ts",
+        "sha256": "bae0bba6d941b93694d2f3c4ae04c27378c50b308d1f618bfdf073328b07b043",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/transitions.test.ts",
+        "sha256": "034833448be46b145b95eb8ae16a6841618a9f6c9bf4f6b19c035fa433e1f0ce",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/transitions.ts",
+        "sha256": "7b6c5aa1a49739b7a094b6ee40d756a5c0449dd39d86e986a7bd12e4f3f9d827",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/examples/optimization/visuals.ts",
+        "sha256": "0a32214da071d460a86a82ecf222d1fa5053b7a3f58be616ae3d26ec94677570",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura-knockback.test.ts",
+        "sha256": "d2419c16db67b0bcb65eb3b01ecb24333e18c755816e5e10434122e96586e39f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura-knockback.ts",
+        "sha256": "d73d95d2a915658024b0cb97275f2a97af1ea8ff5ce8588cb709fb9801526859",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura-motion.test.ts",
+        "sha256": "7a022fe7fc2c5b48e58f4a97ffd6360c1456044d3129e3bdce3afe4b0cb129d3",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura-motion.ts",
+        "sha256": "bac2336fb32bb5baded1c1e31197966ba787e61a6c40771f0d80f4f4bbb4dc16",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura-mount.test.ts",
+        "sha256": "a639951fcbec4d1dc595be656bcfa5fd60361ec25f3582b921152eb00addba4b",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura-mount.ts",
+        "sha256": "8b68a602c9e9ef9dedb87a4adfb97bfb0dc2c5774d0a98648e4c94c525805161",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura.test.ts",
+        "sha256": "019cc822b3cd95af17181bbc12f9300c24bc0d18b62597afae60e2a8f937a664",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/aura.ts",
+        "sha256": "89987b40b25e2ec2271fab83440bb11df075138b6fb3013b00af27523baf47a2",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/probes/blocks.ts",
         "sha256": "afb134a671ab8490cf3e78a4c91ff8bee326122a30ffbbe1c21837908e981e61",
         "kind": "PROBE_FIXTURE_SOURCE"
@@ -2027,8 +2845,18 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/probes/display-example.ts",
+        "sha256": "b39edfe821cfb55ccb4932e51a4322e203d89133456f439f1868f7d095caab7c",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/probes/entities.ts",
         "sha256": "f41257f153cb90b2768bf99fd4daa99a1b234b5e42f8913a1f2f39cb4ec9fce9",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/forms-example.ts",
+        "sha256": "0cc423257f2231180102ce4ea637355be20c932d44c5b7e70086d46a0943db1d",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2037,8 +2865,28 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/probes/gap-examples.ts",
+        "sha256": "39a68e1c1c7380d480b2436394e7975b118c3cf82f7a72ae1bc4a932c912e938",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/probes/glyph-icons.ts",
         "sha256": "b9e06a9892b1f5b7df7f5011f55a75214018db571ca9a648fff9706dd0dc6b3f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/glyph-page-samples.test.ts",
+        "sha256": "a74435022989dd8563d81a9f5da43bccd4f4daea8c26da5fd1ef9a9904ef3a20",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/glyph-page-samples.ts",
+        "sha256": "b812ea57547e4834806c6eb8fd4385555b375d8ecee65a63c4992c6aafa2a48f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/glyph-pages.ts",
+        "sha256": "5c1d766a85ca119f3b5c6fcec5e3265efd084dc665a2ec6520e191f5f0f482ad",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2077,18 +2925,38 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/probes/optimization-examples.ts",
+        "sha256": "331aacbfc5334b42397376292eeee0e5b98c97163e3c5069f0dbef3f164e0001",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/probes/perf.ts",
         "sha256": "375b818ebcc24a31576e21494002b041fd9a4842c7b7c736d49c5b5bee3dbbdd",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/probes/placement.test.ts",
+        "sha256": "23ddeb3cc69b8583c747bb14ab0d4107902230f9b880d21bf4c94120cda3ea60",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/probes/placement.ts",
-        "sha256": "72fac51c09bc0c3116291861ffa84ca6cba8355851497f15007c8ec49ef6bb64",
+        "sha256": "0c27077359dca05ed776a69b71e271e60bde3931bbc49c56dcd41e40fbf20ca3",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/player-state.test.ts",
+        "sha256": "f58737f033bf7932cb28785ee73aa13fa67b725904718c4d89d7fe0baa15a88a",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/player-state.ts",
+        "sha256": "99ac37c580b11f1d6ea6e0f9ac36434b1b5fa13136cadbbce6f4b67bdd753040",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
         "path": "packs/BP/scripts/probe/probes/probes.ts",
-        "sha256": "8af33f650ffe5a9d24743aad7688d1c9b33031a668d05fd6020992aa338cbe9d",
+        "sha256": "36a1ca57cc573c444de06ef9935ea256e63d215409914b703aa5ed7637276b28",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2098,7 +2966,7 @@
       },
       {
         "path": "packs/BP/scripts/probe/probes/results.ts",
-        "sha256": "008cc627b9e41ad570fb7467a2a2c86756849f479ece5dfee4834785a8d7eaf8",
+        "sha256": "c379b5466d2149782cc65fc04376350c70259752e1762934f69a1899404d6605",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2132,8 +3000,13 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/runner/runner.test.ts",
+        "sha256": "60dab0edcaaaf18e1d47242ff2d238d15d739536cc2c92de7673ac18d203dd43",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/runner/runner.ts",
-        "sha256": "38801a109bc75c9f9df4ac0bc514dde6789bfaf35ecfbcbd8cc1a50fe3c1f3f7",
+        "sha256": "d2fd141a833d91e9cc923dc8e41552574b81c58917a5293cdd0d7935281fd796",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2443,13 +3316,118 @@
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
+        "path": "tools/check-examples-index.mjs",
+        "sha256": "5f89c97d67674c6a5db901fe81ad792f16124fb95235b8be77b06ba58cfc1c8b",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
         "path": "tools/check.mjs",
-        "sha256": "40d84411eb87130697f08e972036635ac53191b86ffbbfb76c376feab0eb20af",
+        "sha256": "9e9556641681a0d35228a0b0c46e0fbd8a267c4144806ef4df1a13458a101e10",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/aura/mount-particles.test.mjs",
+        "sha256": "ab9c7222a173058bf102305ec1f49c55aa70ddb4f913fda493e04d6f0cf374aa",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/examples/aura/player-reference.test.mjs",
+        "sha256": "178cb76a9d962f2e49c0a130a0f9d5219a6cf23b3cd38a3639c3e202aeb09e26",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/examples/forms/wiring.test.mjs",
+        "sha256": "b5edb306b2ab54a9fa0afe23d6b566458d4af57c5de7e4a30704e957db7d2742",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/examples/gap-art/generate.py",
+        "sha256": "9640a494fb8edee033c8163e5a3108c5e483c271a515bda2e0dd4466a35b8a35",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/gaps/assets.test.mjs",
+        "sha256": "f9e4cad2bbc303d22a9b2f6369bc041290999f75690d07a298f5765e50c74409",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/examples/gaps/glyphs.py",
+        "sha256": "db166949090d40f38da69dce4619cdb2c7157649b8725c7f481f3e0c2836f233",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/gaps/mocks.py",
+        "sha256": "0d846a1d4e2f446e4b878e6b84d2c8d0bf5fcfce876d92a7ad9efea15d41e99b",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/audit.mjs",
+        "sha256": "7e1de9979bd0dfa0793b2925baedc58c96ccbcbe0142bfce0aadffbc85c98022",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/audit.test.mjs",
+        "sha256": "5b6827eb85bdb9d81380692f4803739ce2db61b53f517cec908a5d1ec1a23959",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/examples/glyphs/compare-pillow.py",
+        "sha256": "53d9b1f05375fa24a05d4704eabf46aab1c698cee9d94e347edabcfd7ac0d501",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/inventory-vanilla.py",
+        "sha256": "76224a3491a1ed688215738a60a66668e89b8374a5b6682fa0a8c1cc91795263",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/make-inputs.mjs",
+        "sha256": "044f8975cc731082e824bd5429c57d482b511f4baab6f5dd7ece3c5af077228c",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/make-sheet.mjs",
+        "sha256": "578e88d73f6d3af199dfa6575aacbd94a17a2fc2fe5f0485f0c15bac134cff66",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/png.mjs",
+        "sha256": "0441408933e6049d2b84a64eafcc0179bc8ff91b974be630cce3a60dce2f757d",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/glyphs/preview.py",
+        "sha256": "1f6255f2a4b3cf549cc7ad362399bdd697f29f9196c9a4d80b35e059690eb968",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/ui-art/generate.py",
+        "sha256": "e3a737cccc74c7a930f9c06fadeeb1ccf4e89de3c19db9af4b7fd1d96fa57960",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/examples/ui/layout.test.mjs",
+        "sha256": "6e071f25d6136988eb466b0ac2794d5ad92412dbd0f80eba064c6e73bd34cb8c",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/examples/ui/render-mocks.py",
+        "sha256": "92da30b0468085f1dd940861a00a4a34f4f2caadf4e8d02fe5dfc5e7a3c2190a",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
         "path": "tools/glyph-icons/make-inputs.mjs",
         "sha256": "d7622892a39cd625585ea7b7b386af8c3b73b21043e7bc53cc2f6bf37269d409",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/make-aura-mount-rotation.mjs",
+        "sha256": "51ec1f9de6fbba3e76d4e9eaf204cbee0e6c6c800ac884858ed955b4ead1c2f2",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/make-aura-textures.py",
+        "sha256": "0eb8325ce88cf9a5369a2277c4b19ec1fc0f6a8939f72efca622013211d25ddf",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
@@ -2469,7 +3447,7 @@
       },
       {
         "path": "tools/make-textures.mjs",
-        "sha256": "84f732d9cf059819f491440b784664239e3d2139c9856d55c3af5f6a9f3b2647",
+        "sha256": "3edf7a52e0b6f9c432196bf56e7bc96c98da714f3d7f52bba9bdc10594f20732",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
@@ -2480,6 +3458,11 @@
       {
         "path": "tools/regolith/hud-variant.js",
         "sha256": "090c03b78e4d146acaf57e5762b0a6db50598e9586246ddef129e4064b080f00",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/regolith/p63-player-baseline.js",
+        "sha256": "6ffbd68aa7b6e081f116f3bee1564c5deb672b662c95f9eae719d9f019bde91c",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
@@ -2503,24 +3486,7 @@
         "kind": "PROBE_TOOL_TEST_SOURCE"
       }
     ],
-    "untrackedSourcePolicy": "ZIP SHA-256 covers every original byte; source paths listed here have per-file hash identities. Developer modules and test files are read-only reference code, never executable requirements for map checking."
-  },
-  "pendingIntake": {
-    "status": "PENDING_SEMANTIC_REVIEW",
-    "usagePolicy": "CANDIDATE_ONLY_NOT_ACTIVE_IN_MAP_AUDIT",
-    "observedDate": "2026-10-24",
-    "inputs": {
-      "skillsProbe": {
-        "sourceRepository": "https://github.com/achmadawdi/skills-probe",
-        "origin": "USER_SUPPLIED_ZIP",
-        "archiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
-        "fileCount": 829,
-        "reportsFound": 49,
-        "observedSkillsLockTag": "v0.23.0",
-        "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55"
-      }
-    },
-    "reviewBoundary": "Developer methods v0.27.0 are source-reviewed, with one un-routed technical skill; newer Skills Probe report payloads remain separately pending. Upstream test claims and method text never prove current-map gameplay."
+    "untrackedSourcePolicy": "Source code inventory indexes every 106 *.ts files under current Skills Probe ZIP packs/BP/scripts/ with current exact SHA-256; older report fixture hashes are pinned as historical report claims and may refer to earlier code revisions. Other assets, RP/BP binaries and unsurveyed docs remain covered by whole-archive identity, not executable proof."
   },
   "probeExamples": {
     "schemaVersion": 1,

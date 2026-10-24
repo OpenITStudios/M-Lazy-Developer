@@ -533,25 +533,64 @@ for (const pattern of patterns) {
       pattern.id);
   }
 }
+// Report text, run fixture, and current source code are different identity
+// boundaries. Older report fixture SHA identities must survive later ZIPs;
+// a current source inventory is never retroactive proof of an old run.
+const archiveHistory = developerMetadata.probeSnapshot?.archiveHistorySha256 ?? [];
+if (!Array.isArray(archiveHistory) ||
+    archiveHistory.some(sha => !validSha(sha) ||
+      sha === developerMetadata.probeSnapshot?.archiveSha256) ||
+    new Set(archiveHistory).size !== archiveHistory.length) {
+  failures.push(developerMetadataPath +
+    ": historical Skills Probe archive identity list is malformed.");
+}
+const knownReportArchives = new Set([
+  developerMetadata.probeSnapshot?.archiveSha256,
+  ...(Array.isArray(archiveHistory) ? archiveHistory : []),
+].filter(validSha));
+const statusVocabulary = new Set([
+  "UPSTREAM_REPORTED_PASS", "UPSTREAM_REPORTED_FAIL",
+  "UPSTREAM_REPORTED_BLOCKED", "UPSTREAM_REPORTED_PARTIAL",
+  "UPSTREAM_REPORTED_MIXED",
+]);
 for (const report of reports) {
+  const pinnedHistorical =
+    report.reportArchiveSha256 !== developerMetadata.probeSnapshot?.archiveSha256;
   if (!validSha(report.sourceSha256) ||
-      !report.status?.startsWith("UPSTREAM_REPORTED_") ||
+      !knownReportArchives.has(report.reportArchiveSha256) ||
+      !statusVocabulary.has(report.status) ||
       report.proofAuthority !==
         "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF" ||
+      typeof report.summary !== "string" || !report.summary.trim() ||
       !Array.isArray(report.relatedSkillIds) ||
-      report.relatedSkillIds.some(id => !sourceById.has(id))) {
+      !report.relatedSkillIds.length ||
+      report.relatedSkillIds.some(id => !sourceById.has(id)) ||
+      (report.reportedRevisionPin !== undefined &&
+       !/^[a-f0-9]{40}$/.test(report.reportedRevisionPin)) ||
+      (report.series === "P63" &&
+       (report.family?.startsWith("p63-") !== true ||
+        report.relatedSkillIds.length !== 1 ||
+        report.relatedSkillIds[0] !== "src.bedrock-player-attached-particles"))) {
     failures.push(developerMetadataPath +
-      ": probe identity or skill attribution is invalid: " + report.id);
+      ": probe identity/revision/proof or skill attribution is invalid: " + report.id);
   }
   for (const fixture of report.fixtureSources ?? []) {
+    const currentSha = packByPath.get(fixture.path);
     if (!validSha(fixture.sha256) ||
-        packByPath.get(fixture.path) !== fixture.sha256) {
+        typeof fixture.path !== "string" ||
+        !/^packs\/BP\/scripts\/[^.][a-zA-Z0-9_./-]+\.ts$/.test(fixture.path) ||
+        !currentSha ||
+        (!pinnedHistorical && currentSha !== fixture.sha256) ||
+        (pinnedHistorical &&
+         report.fixtureProvenance !== "PINNED_HISTORICAL_SOURCE_REVISION")) {
       failures.push(developerMetadataPath +
-        ": probe fixture does not resolve to the pinned source inventory: " +
+        ": probe fixture is not a valid source-pinned current or historical reference: " +
         report.id + " / " + fixture.path);
     }
   }
 }
+// Counts remain source-snapshot driven (expectedCounts), not hardcoded to
+// today's P63 corpus: future source revisions may legitimately add reports.
 const developerDocs = [
   "docs/analysis/developer-practice-context.md",
   "docs/examples/bedrock-developer-agent-skills-reference.md",

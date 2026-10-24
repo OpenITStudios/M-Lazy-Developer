@@ -20,9 +20,9 @@ with the ZIP-derived `skills/bedrock/source-lock.json`. It preserves original
 upstream `skills/<name>/SKILL.md` identities, folder hashes, module
 `requires` edges and independent probe locks without installing upstream
 agent instructions. The curated interpretation authority remains the existing
-`experiments/developer-practice-signals.json`; pending **probe** evidence
-and un-routed developer technical methods are not implicitly selected for
-map audits.
+`experiments/developer-practice-signals.json`; the current Probe report
+index is source-reviewed separately, and un-routed developer technical
+methods cannot be implicitly selected for map audits.
 
 **Machine-readable candidate data:** [Developer practice signals](../../experiments/developer-practice-signals.json)
 (`experiments/developer-practice-signals.json`).
@@ -82,10 +82,12 @@ skills cannot be Map Audit rules. New skill
 `bedrock-player-attached-particles` is inventoried as
 `REFERENCE_ONLY_NOT_ROUTED`: it is a technical method, not a detected
 map mechanic or universal client guarantee. The independently supplied
-Skills Probe ZIP contains 49 `docs/test-runs/*.md` documents and still
-locks installed skills to v0.23.0; its broader report payload remains
-pending. The 14 clean-example source rows retain their separate target and
-node/engine/status dimensions. GitHub HEAD, redistribution permission,
+Skills Probe ZIP contains 49 individually source-reviewed
+`docs/test-runs/*.md` documents and still locks installed skills to
+v0.23.0. The 27 newly indexed report identities (including 23 P63 attempts)
+preserve their original overall status and reported revision; the 14
+clean-example source rows retain separate target, node/engine/status fields.
+Neither ZIP has been used to replay native Minecraft behavior here. GitHub HEAD, redistribution permission,
 runtime outcome and current-map applicability remain **unverified** from
 these source ZIPs; no Minecraft client execution occurred here.
 
@@ -115,7 +117,7 @@ The supplied Skills Probe ZIP has a separate `skills-lock.json`
 three index `PASS` and eleven `pending` as published by that archive.
 The SHA-pinned **source-index metadata**, not raw third-party code, lives
 in the *existing* `experiments/developer-practice-signals.json#probeExamples`
-alongside the older `probeEvidence[]` report attributions. The index
+alongside the current 49-report `probeEvidence[]` source attributions. The index
 is tied to the separately observed probe ZIP SHA and original target
 `education 26.32` / engine `1.26.30`. A PASS in the index does not
 mean the engineStatus is PASS or that another world was observed.

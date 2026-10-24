@@ -33,7 +33,8 @@ owns **native upstream package identity/dependency relationships**.
 Its source archive SHA must equal the matching, independently pinned
 reviewed developer source or pending candidate. As of the 24 October 2026
 review, v0.27.0 is the **reviewed developer source** for 23 skills; the
-native source lock keeps an independent pending Skills Probe revision.
+native source lock retains a separately reviewed Skills Probe source
+archive, still using the older installed skills lock v0.23.0.
 Only 16 interpretation patterns have source-grounded Map Audit consumers,
 six methods are workflow/project reference, and
 `bedrock-player-attached-particles` is reviewed but **not yet routable**
@@ -81,7 +82,17 @@ developer native skill ZIP claims v0.27.0. Preserve the two versions.
 `nodeStatus`, `engineStatus` and overall example `status` must remain
 separate; experimental probes can be deliberately broken.
 The original probe code and reports remain untrusted source, never
-automatically executed or installed into this repo.
+automatically executed or installed into this repo. The reviewed
+Skills Probe ZIP has 49 individually pinned narrative reports and
+14 source-indexed clean examples. Their categories are stored per report in
+the one existing `experiments/developer-practice-signals.json#probeEvidence`
+owner: P63 aura/lifecycle (11), combined (2), reopen (3), visual (6),
+backport (1), plus four other 22 October follow-ups. P63's overall
+13 FAIL and 10 BLOCKED reports still include partial per-case successes.
+Use report archive SHA and original revision pin; do not replace their
+historical fixture SHA with current 106-pack-source and 35-tool fingerprints.
+The latest reported source identity is not proof of which code an old
+native test executed.
 
 ### Routing into the existing product
 

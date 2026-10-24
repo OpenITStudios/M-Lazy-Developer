@@ -253,6 +253,9 @@ export interface DeveloperPracticeReferenceData {
   };
   readonly probeSnapshot?: {
     readonly observedSkillsLockTag: string;
+    /** Independently verified source-archive identities, NOT runtime proof. */
+    readonly archiveSha256?: string;
+    readonly archiveHistorySha256?: readonly string[];
   };
   /** Scope-limited, historical upstream test reports (not map evidence). */
   readonly probeEvidence?: readonly {
@@ -262,6 +265,12 @@ export interface DeveloperPracticeReferenceData {
     readonly status: string;
     readonly summary: string;
     readonly relatedSkillIds: readonly string[];
+    readonly reportArchiveSha256?: string;
+    readonly family?: string;
+    readonly series?: string;
+    /** Upstream branch HEAD or implementation SHA, not proof of installed code. */
+    readonly reportedRevisionPin?: string;
+    readonly targetBasis?: string;
     readonly fixtureSources?: readonly {
       readonly path: string;
       readonly sha256: string;
@@ -593,6 +602,12 @@ export interface CompiledDeveloperPracticeReferenceContext {
       readonly sourcePath: string;
       readonly status: string;
       readonly summary: string;
+      readonly reportArchiveSha256?: string;
+      readonly family?: string;
+      readonly series?: string;
+      readonly reportedRevisionPin?: string;
+      /** Historical record, not independently observed map/client proof. */
+      readonly proof: "UPSTREAM_REPORTED_NOT_SELECTED_MAP_BEHAVIOR_PROOF";
       readonly fixtureSources?: readonly { readonly path: string; readonly sha256: string }[];
     }[];
     /** Exact installed database source; probe-zip only, not imported. */
@@ -676,6 +691,12 @@ export function compileDeveloperPracticeReferenceContext(input: {
   if (queryDomains.size === 0 || candidatesObserved.length === 0) return undefined;
   const sourceById = new Map(data.sourceFiles.map(file => [file.id, file]));
   const sorted = (items: readonly string[]) => [...new Set(items)].sort();
+  const recordedReportArchives = [
+    data.probeSnapshot?.archiveSha256,
+    ...(data.probeSnapshot?.archiveHistorySha256 ?? []),
+  ].filter((value): value is string =>
+    typeof value === "string" && /^[a-f0-9]{64}$/.test(value));
+  const reportArchives = new Set(recordedReportArchives);
   const cleanIndex = data.probeExamples;
   const cleanIndexEligible = cleanIndex?.schemaVersion === 1 &&
     cleanIndex.authority === "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF" &&
@@ -683,6 +704,7 @@ export function compileDeveloperPracticeReferenceContext(input: {
     /^[a-f0-9]{64}$/.test(cleanIndex.indexSha256) &&
     /^[a-f0-9]{64}$/.test(cleanIndex.sourceArchiveSha256) &&
     cleanIndex.sourceSkillLockTag === data.probeSnapshot?.observedSkillsLockTag &&
+    cleanIndex.sourceArchiveSha256 === data.probeSnapshot?.archiveSha256 &&
     /^v\d+\.\d+\.\d+$/.test(cleanIndex.sourceSkillLockTag);
   const candidates = data.patterns.flatMap(pattern => {
     if (pattern.status !== "SOURCE_REVIEWED" &&
@@ -843,7 +865,9 @@ export function compileDeveloperPracticeReferenceContext(input: {
           .filter((item) =>
             item.relatedSkillIds.includes(source.id) &&
             item.status.startsWith("UPSTREAM_REPORTED_") &&
-            /^[a-f0-9]{64}$/.test(item.sourceSha256))
+            /^[a-f0-9]{64}$/.test(item.sourceSha256) &&
+            item.reportArchiveSha256 !== undefined &&
+            reportArchives.has(item.reportArchiveSha256))
           // Favor newer, explicitly scoped developer observations over stale
           // generic early probes; even newer PASS remains only a question.
           .sort((a, b) => b.sourcePath.localeCompare(a.sourcePath))
@@ -853,6 +877,13 @@ export function compileDeveloperPracticeReferenceContext(input: {
             sourcePath: item.sourcePath,
             status: item.status,
             summary: item.summary,
+            ...(item.reportArchiveSha256 === undefined ? {} :
+              { reportArchiveSha256: item.reportArchiveSha256 }),
+            ...(item.family === undefined ? {} : { family: item.family }),
+            ...(item.series === undefined ? {} : { series: item.series }),
+            ...(item.reportedRevisionPin === undefined ? {} :
+              { reportedRevisionPin: item.reportedRevisionPin }),
+            proof: "UPSTREAM_REPORTED_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
             ...(item.fixtureSources === undefined ? {} : {
               fixtureSources: item.fixtureSources
                 .filter((fixture) => (

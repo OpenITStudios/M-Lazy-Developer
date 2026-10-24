@@ -78,6 +78,13 @@ and corresponding code/checker/probe references. **Use these as
 questions, not mandatory game behavior or test instructions.**
 Six development-only methods stay outside map audit selection.
 A referenced helper or unit test is historical source, **NOT RUN**.
+The independent Skills Probe source index now includes all 49 SHA-pinned
+reports and 106 pack source-file identities; newer P63 reports link only
+to the un-routed particle skill, not to general entity-spawn audit cues.
+Do not collapse the 23 P63 revisions into a PASS: 13 report overall FAIL,
+10 BLOCKED, and some individual subcases passed under their own locks.
+Historical fixture SHA may differ from latest pack source and must not be
+rewritten as if a prior test ran new source.
 
 ## External source inventory and proof boundary
 

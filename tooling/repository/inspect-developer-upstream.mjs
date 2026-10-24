@@ -220,11 +220,42 @@ async function main() {
       }, null, 2) + "\n");
       return;
     }
+    const reportFiles = probe.paths.filter(path => classify.probeReports.test(path))
+      .map(path => ({ path, sha256: sha(probe.readEntry(path)) }));
+    // Only path/hash deltas can be classified without reading the complete
+    // original report. Do not infer PASS or FAIL from prose keyword counts.
+    const reportDelta = compare(metadata.probeEvidence ?? [],
+      new Map(reportFiles.map(file => [file.path, file.sha256])),
+      "sourcePath", "sourceSha256");
+    const familyFor = path => {
+      if (/\/p63-aura-/.test(path)) return "p63-aura-lifecycle";
+      if (/\/p63-combined-/.test(path)) return "p63-combined";
+      if (/\/p63-reopen-/.test(path)) return "p63-reopen";
+      if (/\/p63-visual-/.test(path)) return "p63-visual";
+      if (/\/p63-dev20-/.test(path)) return "p63-backport";
+      if (/\/p50-/.test(path)) return "glyph-rerun";
+      if (/\/p51-/.test(path)) return "results-export";
+      if (/\/examples-/.test(path)) return "examples-integration";
+      if (/\/visual-audit-/.test(path)) return "visual-audit";
+      return "other-original-report";
+    };
+    const familyCounts = {};
+    for (const file of reportFiles) {
+      const family = familyFor(file.path);
+      familyCounts[family] = (familyCounts[family] ?? 0) + 1;
+    }
     process.stdout.write(JSON.stringify({
       ...index,
-      reportFiles: probe.paths.filter(path => classify.probeReports.test(path))
-        .map(path => ({ path, sha256: sha(probe.readEntry(path)) })),
-      policy: "A clean example PASS may be narrow or non-runtime; an experimental probe may be deliberately broken. Never treat the index or report as current-map gameplay proof.",
+      reportFiles,
+      reportDelta,
+      reportFamilyCounts: Object.fromEntries(
+        Object.entries(familyCounts).sort(([a], [b]) => a.localeCompare(b))),
+      sourceRevisionBoundary: {
+        oldReferenceArchiveSha256: metadata.probeSnapshot?.archiveSha256 ?? null,
+        suppliedArchiveSha256: probe.archiveSha256,
+        installedSkillsLockTag: index.sourceSkillLockTag,
+      },
+      policy: "Every new/changed/removed report requires outcome and revision review. File-name families are routing hints only; never infer native PASS/FAIL from text counts or claim selected-map proof.",
     }, null, 2) + "\n");
     return;
   }

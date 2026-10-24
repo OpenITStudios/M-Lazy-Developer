@@ -94,11 +94,22 @@ not routed to Map Audit**, because no precise supported particle-attachment
 witness exists yet. Its P63 source reports include scoped failures and
 blocked cases, not universal verified gameplay.
 
-Skills Probe remains independently locked to v0.23.0. The 14 clean examples
-are original source-index metadata, not replayed Minecraft tests; their
-per-surface PASS/pending boundaries remain visible only on already
-selected reviewed patterns. A subsequent new ZIP is reviewed by changed
-source and consumer, never wholesale installed as policy.
+Skills Probe remains independently locked to v0.23.0, and its new
+829-file source ZIP has **49 individually SHA-pinned narrative reports**.
+The 22 previously indexed report texts remain byte-identical; 27 new
+reports include 23 separate P63 attempts (13 overall FAIL and 10 BLOCKED,
+with some narrow successful subcases). Neither the report status nor a
+P63 later visual/user judgement certifies all lifecycle and strict spark
+criteria. The 14 clean examples remain source-index metadata, not replayed
+Minecraft tests; per-surface PASS/pending boundaries appear only on
+reviewed, selected-source matched references.
+
+Every report retains its own original archive identity, reported source
+revision where available and family. The newest 106 pack TypeScript and
+35 source tool files are separately hashed; current code SHA must never
+silently replace a historical report fixture SHA. A future ZIP update
+reviews only changed source and its real consumers, not every Map Audit
+case or test suite.
 
 See [Developer-Practice Context](../analysis/developer-practice-context.md)
 for review rules and [Native Bedrock Skills](../../skills/bedrock/README.md)

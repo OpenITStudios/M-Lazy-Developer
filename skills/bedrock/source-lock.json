@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "PENDING_SEMANTIC_REVIEW",
+  "status": "SOURCE_REVIEWED",
   "authority": "REFERENCE_NOT_EXECUTABLE",
   "skillsArchiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
   "skillsLock": {
@@ -165,12 +165,14 @@
     "reportedTestRuns": 49,
     "installedSkills": 22,
     "installedModules": 9,
-    "lockDrift": "LOCKS_MATCH_PACKAGED_FILES"
+    "lockDrift": "LOCKS_MATCH_PACKAGED_FILES",
+    "sourceReview": "SOURCE_REPORT_AND_INDEX_REVIEWED_NOT_NATIVE_RUNTIME_REPLAYED",
+    "originalClientTarget": "Minecraft Education 26.32"
   },
-  "note": "Developer v0.27.0 source reviewed (23 native SKILL.md and 12 module contracts), including one un-routed technical skill; Skills Probe v0.23.0 installed lock and external reports remain independently pending. This is package provenance, not an agent install, runtime proof or game design authority.",
+  "note": "Both provided upstream ZIP source snapshots are indexed and source-reviewed independently: developer v0.27.0, Probe source reports with v0.23.0 installed skills. The 49 report verdicts are self-reported and individually scoped; no Minecraft session, exporter, script or P63 protocol was rerun by Lazy-Developer. Raw private source is not redistributed.",
   "componentReview": {
     "developerSkills": "SOURCE_REVIEWED",
-    "skillsProbe": "PENDING_SEMANTIC_REVIEW",
-    "sourceSelectionPolicy": "Native skills are technical references. Only source-reviewed patterns with exact current-map Semantic IR evidence are consumable; un-routed particle skill remains reference-only."
+    "skillsProbe": "SOURCE_REVIEWED",
+    "sourceSelectionPolicy": "External source and test-report text reviewed, not gameplay tested. Map Audit still selects only the 16 exact Semantic IR-supported patterns; particle skill remains unrouted. Upstream Probe v0.23.0 installed skills differ from developer v0.27.0 release."
   }
 }

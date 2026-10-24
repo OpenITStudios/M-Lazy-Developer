@@ -20,9 +20,14 @@ questions. The new `bedrock-player-attached-particles` is explicitly
 unrouted because the engine does not yet have a precise typed witness.
 Six other publisher workflow/project methods remain outside Map Audit.
 
-The independent Skills Probe ZIP has 49 external test-run documents and
-v0.23.0 installed skills; its broader report inventory stays pending.
-Its 14 clean-example index rows are separately SHA-pinned external
+The independently reviewed Skills Probe source ZIP contains 49
+individually SHA-pinned reports (22 unchanged historical texts plus
+27 additional reports), 106 indexed pack TypeScript sources and
+35 tool/code sources. Its installed skills lock remains v0.23.0, not
+the developer v0.27.0 release. The 27 additional records include 23 P63
+attempts whose overall statuses are 13 FAIL and 10 BLOCKED; narrow subcase
+PASS observations do not override a report's whole-run verdict.
+The 14 clean-example index rows are separately SHA-pinned external
 reference source, **not** executed tests by M-Lazy-Developer. Current
 archive hashes are in the one machine owner, not duplicated here.
 The previous v0.24.0 and v0.23.0 review below remains historical.
