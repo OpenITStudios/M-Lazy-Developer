@@ -9,6 +9,9 @@ import {
 export type CanonicalReportReconcileIssueCode =
   | "map-name-mismatch"
   | "map-version-mismatch"
+  | "source-artifact-mismatch"
+  | "base-version-mismatch"
+  | "test-scope-mismatch"
   | "bug-id-semantic-conflict";
 
 export interface CanonicalReportReconcileIssue {
@@ -42,7 +45,7 @@ function sameBugIdentityMeaning(
  * Reconcile a refreshed current-version audit into canonical report state.
  *
  * Safety rules:
- * - never cross map/version boundaries;
+ * - never cross map/version, Drive artifact, base-version or tested-scope boundaries;
  * - incoming content may refresh descriptive fields;
  * - generic reconciliation never changes an existing bug's fixed state;
  * - newly discovered bugs always start fixed=false;
@@ -70,6 +73,31 @@ export function reconcileCanonicalBugReport(
       code: "map-version-mismatch",
       message:
         "Canonical reconciliation is current-version scoped and cannot merge different map versions.",
+    });
+  }
+
+  // A repeated report of the same named map/version may still describe
+  // a different world file or tested environment. Preserve fixed state only
+  // within the same exact recorded source and test context.
+  if (existing.map.drive !== incoming.map.drive) {
+    issues.push({
+      code: "source-artifact-mismatch",
+      message:
+        "Canonical reconciliation cannot carry a previous report's fixed state to another selected Drive artifact.",
+    });
+  }
+  if (existing.map.baseVersion !== incoming.map.baseVersion) {
+    issues.push({
+      code: "base-version-mismatch",
+      message:
+        "Canonical reconciliation cannot silently carry fixed state across different base-version contexts.",
+    });
+  }
+  if (existing.map.testedVersion !== incoming.map.testedVersion) {
+    issues.push({
+      code: "test-scope-mismatch",
+      message:
+        "Canonical reconciliation cannot silently carry fixed state across different tested-version or audit-scope records.",
     });
   }
 

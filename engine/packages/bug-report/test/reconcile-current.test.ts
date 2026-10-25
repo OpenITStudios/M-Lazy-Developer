@@ -118,6 +118,24 @@ describe("canonical current-version reconciliation", () => {
       .toContain("map-version-mismatch");
   });
 
+  it.each([
+    ["Drive artifact URL", "drive", "https://drive.google.com/file/d/another-map/view", "source-artifact-mismatch"],
+    ["base-version context", "baseVersion", "1.26.40", "base-version-mismatch"],
+    ["tested-version or audit scope", "testedVersion", "Education 1.26.32 source review only", "test-scope-mismatch"],
+  ] as const)("does not inherit repaired bugs across a changed %s", (_name, field, value, expectedCode) => {
+    const existing = report({
+      bugs: [{ ...report().bugs[0]!, fixed: true }],
+    });
+    const incoming = report({
+      map: { ...report().map, [field]: value },
+    });
+
+    const result = reconcileCanonicalBugReport(existing, incoming);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.issues.map(issue => issue.code)).toContain(expectedCode);
+  });
+
   it("rejects stable id reuse for a different category", () => {
     const incoming = report({
       bugs: [{

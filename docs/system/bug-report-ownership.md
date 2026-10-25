@@ -182,6 +182,8 @@ Reconciliation preserves existing completion state, retains omitted known bugs, 
 
 Absence from a later scan is not proof that a bug never existed or is fixed.
 
+The selected map's **release version** is `mapVersion`; `testedVersion` is a testing-context field (it may hold an Education client version or a documented audit scope), not the map release version. Production review must not reject a correct map solely because these distinct values differ. When reconciling an existing current-version report, require the same Drive artifact URL, base-version context and tested-version/scope before retaining previously recorded `fixed` states. A change in one of those identifiers requires an explicit new review/reconciliation decision rather than silently carrying closure into another source or test scope.
+
 ## Completion
 
 `fixed: true` is canonical only after the orchestrator closes a repair through `completeBugReportFromClosedRepair()` with matching repair and preservation proof. New report creation always starts bugs open, and generic reconciliation preserves existing completion state without creating a new completion decision.

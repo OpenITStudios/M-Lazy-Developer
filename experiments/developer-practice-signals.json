@@ -2289,7 +2289,7 @@
     }
   ],
   "codeInventory": {
-    "scope": "Entire modules/*.ts source surface from v0.24.0 skill ZIP; full source contents remain in the supplied archive, not copied into the Lazy-Developer engine.",
+    "scope": "Entire modules/*.ts source surface from v0.27.0 skill ZIP; full source contents remain in the supplied archive, not copied into the Lazy-Developer engine.",
     "codeModules": [
       {
         "path": "modules/coords/coords.ts",

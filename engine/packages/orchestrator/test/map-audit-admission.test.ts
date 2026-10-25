@@ -8,6 +8,7 @@ import {
 import type {
   MandatoryAuditProcedureReceipt,
 } from "../src/inspection/mandatory-audit-procedure.js";
+import { selectedMapReportIdentityIssues } from "../src/map-audit-identity.js";
 
 function procedure(
   blockingCheckpointIds: readonly string[],
@@ -409,6 +410,28 @@ describe("selected-map audit admission", () => {
         : item),
     };
     expect(canProjectIndependentAuditEvidence(partialWithInvalidTarget)).toBe(false);
+  });
+
+  it("accepts an authored map release independently from the tested Education context", () => {
+    const identity = {
+      artifactId: "selected-map",
+      artifactFingerprint: "sha256:" + "a".repeat(64),
+      levelName: "Attack Challenge",
+      releaseVersion: "1.1.1",
+      releaseIdentityStatus: "consistent" as const,
+    };
+    const map = {
+      name: "Attack Challenge",
+      mapVersion: "1.1.1",
+      drive: "https://drive.google.com/file/d/selected-map/view",
+      baseVersion: "1.21.130",
+      testedVersion: "Source audit + tester feedback on Education 1.26.32",
+    };
+    expect(selectedMapReportIdentityIssues(identity, map)).toEqual([]);
+    expect(selectedMapReportIdentityIssues(identity, {
+      ...map,
+      mapVersion: "1.1.2",
+    })).toEqual([expect.stringContaining("Report mapVersion does not match")]);
   });
 
   it("groups the seven internal proof stages into exactly four operator stages", () => {

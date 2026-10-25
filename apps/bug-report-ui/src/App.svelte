@@ -318,7 +318,7 @@
         <h1>{report.map.name}</h1>
         <div class="meta">
           <span>{BUG_REPORT_V2_LABELS.mapVersion} {report.map.mapVersion}</span>
-          <span>{BUG_REPORT_V2_LABELS.testedVersion} Minecraft Education {report.map.testedVersion}</span>
+          <span>{BUG_REPORT_V2_LABELS.testedVersion}: {report.map.testedVersion}</span>
         </div>
       </div>
 

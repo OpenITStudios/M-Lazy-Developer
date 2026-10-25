@@ -87,15 +87,8 @@ export function selectedMapReportIdentityIssues(
     );
   }
 
-  if (map.testedVersion.trim() !== identity.releaseVersion) {
-    issues.push(
-      "Report testedVersion does not match selected-artifact release version: expected " +
-        identity.releaseVersion +
-        ", received " +
-        map.testedVersion +
-        ".",
-    );
-  }
+  // testedVersion belongs to the tester/client or audit-scope record.
+  // It is not another spelling of the selected map's releaseVersion.
 
   return issues;
 }
