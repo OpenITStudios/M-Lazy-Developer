@@ -13,17 +13,17 @@ import { exportBugTracker, verifyPublishedBugTracker } from "./export.js";
 import { trackerIssueIds, validateBugTrackerDocument } from "./validate.js";
 
 const cases = [
-  { projectId: "attack-challenge", developerNotes: 0 },
-  { projectId: "defense-challenge", developerNotes: 9 },
-  { projectId: "composite-challenge", developerNotes: 0 },
-  { projectId: "the-circuit", developerNotes: 2 },
-  { projectId: "build-and-decode", developerNotes: 6 },
+  "attack-challenge",
+  "defense-challenge",
+  "composite-challenge",
+  "the-circuit",
+  "build-and-decode",
 ] as const;
 
 describe("Golden Tracker real approved-report parity", () => {
   for (const testCase of cases) {
-    it(testCase.projectId, async () => {
-      const projectRoot = resolve("workspace/projects", testCase.projectId);
+    it(testCase, async () => {
+      const projectRoot = resolve("workspace/projects", testCase);
       const [source, projectSource] = await Promise.all([
         readFile(resolve(projectRoot, "report/bug-report.json"), "utf8"),
         readFile(resolve(projectRoot, "project.json"), "utf8"),
@@ -56,7 +56,7 @@ describe("Golden Tracker real approved-report parity", () => {
           schema: localDeveloperNotes.schema,
           notes: localDeveloperNotes.notes.map((note) => ({
             ...note,
-            projectId: testCase.projectId,
+            projectId: testCase,
           })),
         } as DeveloperNoteRegistry,
       );
@@ -105,10 +105,17 @@ describe("Golden Tracker real approved-report parity", () => {
         game.levels.flatMap((level) => level.devNotes),
       ).length;
 
-      expect(developerNoteCount).toBe(testCase.developerNotes);
+      // Derive source parity from the current canonical Developer Notes.
+      // A new, valid note must not cause a stale hard-coded count failure
+      // or disappear from the tester/developer handoff.
+      const authoredNoteIds = localDeveloperNotes.notes.map((note) => note.id).sort();
+      const projectedNoteIds = tracker.games.flatMap((game) =>
+        game.levels.flatMap((level) => level.devNotes.map((note) => note.id)),
+      ).sort();
+      expect(developerNoteCount).toBe(authoredNoteIds.length);
+      expect(projectedNoteIds).toEqual(authoredNoteIds);
 
-      if (testCase.projectId === "the-circuit") {
-        expect(developerNoteCount).toBe(2);
+      if (testCase === "the-circuit") {
         expect(html).toContain("DEV-CIR-FORTIFY-WAVE-PREVIEW");
         expect(html).toContain("DEV-CIR-BLOCK-BREAK-FEEDBACK");
         expect(html).toContain("DEV NOTE");
@@ -120,8 +127,7 @@ describe("Golden Tracker real approved-report parity", () => {
         expect(html.slice(noteStart, noteEnd)).not.toContain("Mark fixed");
       }
 
-      if (testCase.projectId === "defense-challenge") {
-        expect(developerNoteCount).toBe(9);
+      if (testCase === "defense-challenge") {
         expect(html).toContain("<h3>DEVELOPER NOTES");
         expect(client.issues.every((issue) => issue.whyThisIsBug?.trim())).toBe(true);
         expect(client.issues.every((issue) => issue.impact?.trim())).toBe(true);
@@ -133,11 +139,10 @@ describe("Golden Tracker real approved-report parity", () => {
         expect(html).toContain("Action Required");
       }
 
-      if (testCase.projectId === "build-and-decode") {
+      if (testCase === "build-and-decode") {
         expect(client.issues.length).toBe(2);
         expect(client.issues.every((issue) => issue.issueType === "DESIGN_MISMATCH")).toBe(true);
         expect(client.issues.every((issue) => issue.severity === "minor")).toBe(true);
-        expect(developerNoteCount).toBe(6);
         expect(html).toContain("BUG-BAD-FINAL-RESULT-PRESENTATION");
         expect(html).toContain("BUG-BAD-LAST-ROUND-NEXT-ROUND");
       }
