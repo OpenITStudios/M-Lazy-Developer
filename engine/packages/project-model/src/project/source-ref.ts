@@ -145,6 +145,47 @@ export function sourceLocatorMatchesSourcePath(
   return false;
 }
 
+/**
+ * Join an independently identified authored record to its source site.
+ * File identity alone cannot link another call in the same one-line bundle
+ * or a different JSON member. Caller must independently establish exact
+ * evidence ID, artifact scope and canonical graph owner.
+ *
+ * Without an IR line range, a numeric locator establishes only source-file
+ * identity, not independently proven line precision. SourceRef has no
+ * verified @symbol identity; never guess a symbol from its filename.
+ * This does not prove runtime execution or gameplay behavior.
+ */
+export function sourceLocatorMatchesSourceRef(
+  locator: string,
+  source: SourceRef,
+): boolean {
+  if (!sourceLocatorMatchesSourcePath(locator, source.relativePath)) return false;
+  const suffix = locator.slice(source.relativePath.length);
+  if (suffix === "") return true;
+  if (suffix.startsWith("#/")) {
+    return source.jsonPointer !== undefined &&
+      source.jsonPointer === suffix.slice(1);
+  }
+  if (suffix.startsWith("@")) return false;
+  const position = /^:([1-9]\d*)(?::([1-9]\d*))?(?::([1-9]\d*))?(?::([1-9]\d*))?$/.exec(suffix);
+  const localized = /^#L([1-9]\d*)(?:-L?([1-9]\d*))?(?::([1-9]\d*))?$/.exec(suffix);
+  if (!position && !localized) return false;
+  const firstLine = Number((position ?? localized)![1]);
+  const lastLine = Number(position?.[3] ?? localized?.[2] ?? firstLine);
+  if (lastLine < firstLine) return false;
+  const column = Number(position?.[2] ?? localized?.[3] ?? 0);
+  const range = source.range;
+  if (range?.lineStart === undefined) return true; // File identity only.
+  const endLine = range.lineEnd ?? range.lineStart;
+  if (firstLine > endLine || lastLine < range.lineStart) return false;
+  if (column > 0 && firstLine === range.lineStart &&
+      range.columnStart !== undefined && column < range.columnStart) return false;
+  if (column > 0 && firstLine === endLine &&
+      range.columnEnd !== undefined && column > range.columnEnd) return false;
+  return true;
+}
+
 export function sourceRefHasPreciseLocation(
   source: SourceRef,
 ): boolean {

@@ -11,7 +11,7 @@ import type {
   GameplayIntentModel,
 } from "../../../gameplay-intent/src/index.js";
 import {
-  sourceLocatorMatchesSourcePath,
+  sourceLocatorMatchesSourceRef,
   type SourceRef,
 } from "../../../project-model/src/index.js";
 import {
@@ -35,15 +35,30 @@ export interface GameplayDiscoveryChallengeSignal {
   readonly reason: string;
 }
 
+/** An evidence ID shared by two source records has no unique owner. */
+function uniquelySelectedEvidence(
+  intent: GameplayIntentModel,
+): ReadonlyMap<string, GameplayIntentModel["evidence"][number]> {
+  const counts = new Map<string, number>();
+  for (const item of intent.evidence) {
+    counts.set(item.id, (counts.get(item.id) ?? 0) + 1);
+  }
+  const selected = new Map<string, GameplayIntentModel["evidence"][number]>();
+  for (const item of intent.evidence) {
+    if (item.scope === "selected-artifact" && counts.get(item.id) === 1) {
+      selected.set(item.id, item);
+    }
+  }
+  return selected;
+}
+
 function usedEvidenceIds(
   intent: GameplayIntentModel,
   graph: GameplayScenarioGraph,
+  selected: ReadonlyMap<string, GameplayIntentModel["evidence"][number]>,
 ): ReadonlySet<string> {
-  // An authored label is insufficient without a registered selected-artifact
-  // evidence record. Unregistered IDs must not close Semantic IR challenges.
-  const groundedIds = new Set(intent.evidence
-    .filter(item => item.scope === "selected-artifact")
-    .map(item => item.id));
+  // Do not close an IR obligation from unregistered or duplicate IDs.
+  const groundedIds = new Set(selected.keys());
   const authoredEvidenceIds = new Set([
     ...intent.nodes.filter(node => node.status === "authored")
       .flatMap(node => node.evidenceIds),
@@ -94,14 +109,15 @@ export function challengeGameplayDiscovery(input: {
   readonly intent: GameplayIntentModel;
   readonly graph: GameplayScenarioGraph;
 }): readonly GameplayDiscoveryChallengeSignal[] {
+  const selected = uniquelySelectedEvidence(input.intent);
   const evidence = usedEvidenceIds(
     input.intent,
     input.graph,
+    selected,
   );
   const output: GameplayDiscoveryChallengeSignal[] = [];
-  const evidenceLocations = new Map(input.intent.evidence
-    .filter(item => item.scope === "selected-artifact")
-    .map(item => [item.id, item.locator.replaceAll("\\", "/")]));
+  const evidenceLocations = new Map([...selected.values()]
+    .map(item => [item.id, item.locator.replaceAll("\\", "/")] as const));
   const matchesSource = (id: string, source: SourceRef): boolean => {
     const locator = evidenceLocations.get(id);
     // An older selected map may reuse the same path and ID. When the
@@ -109,12 +125,12 @@ export function challengeGameplayDiscovery(input: {
     if (!evidence.has(id) || locator === undefined ||
         (input.intent.artifactId !== undefined &&
           input.intent.artifactId !== source.artifactId)) return false;
-    // Share the canonical source-locator contract with Resource Context.
-    // Positional or JSON-pointer locators are valid current-file evidence;
-    // arbitrary path prefixes and guessed suffixes are not.
-    return sourceLocatorMatchesSourcePath(
-      locator, source.relativePath.replaceAll("\\", "/"),
-    );
+    // A source locator cannot borrow an unrelated same-file operation
+    // or JSON member when the IR has a precise authored-site witness.
+    return sourceLocatorMatchesSourceRef(locator, {
+      ...source,
+      relativePath: source.relativePath.replaceAll("\\", "/"),
+    });
   };
 
   for (const operation of input.semanticIr.state.operations) {

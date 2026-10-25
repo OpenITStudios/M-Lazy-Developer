@@ -294,6 +294,15 @@ unrestricted source-path prefix matching in the existing developer
 reference selector; the authored `GameplayIntentEvidence` scope and
 typed Semantic IR witness still decide eligibility.
 
+Discovery source ownership uses the same canonical SourceRef identity but a
+stricter selected-artifact site join when Semantic IR provides a range or JSON
+pointer: an operation on another line/column or a different JSON member is
+**not** the same evidence. A file-only SourceRef remains file-scoped evidence,
+not independently verified positional proof; unresolvable `@symbol` hints and
+duplicate evidence, causal-link or scenario IDs cannot close an ownership
+question. Discovery challenges remain source-analysis debt, not automatic
+BUGs, player reachability, or Minecraft runtime proof.
+
 `modelTaskPackets` derive conditional context from the **current,
 explicit** Knowledge Catalog and developer-reference snapshot. A
 continuation without those snapshots does not silently retain

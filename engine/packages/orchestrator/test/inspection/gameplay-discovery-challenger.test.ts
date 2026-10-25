@@ -1018,10 +1018,12 @@ describe("gameplay discovery challenger", () => {
         operations: [
           { id: "op:grant", executionRegionId: "region:inventory",
             surfaceId: "state:inventory", operation: "write",
-            source: { artifactId: "a", relativePath: "scripts/inventory.js" } },
+            source: { artifactId: "a", relativePath: "scripts/inventory.js",
+              range: { lineStart: 12, lineEnd: 12, columnStart: 2, columnEnd: 12 } } },
           { id: "op:clear", executionRegionId: "region:inventory",
             surfaceId: "state:inventory", operation: "write",
-            source: { artifactId: "a", relativePath: "scripts/inventory.js" } },
+            source: { artifactId: "a", relativePath: "scripts/inventory.js",
+              range: { lineStart: 13, lineEnd: 13, columnStart: 2, columnEnd: 12 } } },
         ],
         authorityBindings: [],
       },
@@ -1075,8 +1077,6 @@ describe("gameplay discovery challenger", () => {
       "scripts/inventory.js",
       "scripts/inventory.js:12:3",
       "scripts/inventory.js#L12",
-      "scripts/inventory.js#/state/grant",
-      "scripts/inventory.js@inventory.grant",
     ]) {
       const currentIntent = {
         ...intent, artifactId: "a",
@@ -1095,6 +1095,10 @@ describe("gameplay discovery challenger", () => {
       ["scripts/inventory.js:fake", "a"],
       ["scripts/inventory.js-other:12:3", "a"],
       ["scripts/inventory.js:12:3", "other-map"],
+      ["scripts/inventory.js:13:3", "a"],
+      ["scripts/inventory.js:12:15", "a"],
+      ["scripts/inventory.js#/state/grant", "a"],
+      ["scripts/inventory.js@inventory.grant", "a"],
     ] as const) {
       const foreignIntent = {
         ...intent, artifactId,
@@ -1107,6 +1111,21 @@ describe("gameplay discovery challenger", () => {
         .map((item) => item.evidenceIds[0]), locator + " / " + artifactId)
         .toEqual(["op:grant", "op:clear"]);
     }
+    // The same evidence ID in two records must never select the last
+    // source, even when both are claimed to come from the selected map.
+    const duplicateEvidence = {
+      ...intent, artifactId: "a",
+      evidence: [...intent.evidence, {
+        ...intent.evidence[0]!, locator: "scripts/another.js:13:3",
+      }],
+    };
+    const duplicateSource = challengeGameplayDiscovery({
+      semanticIr: ir, intent: duplicateEvidence, graph,
+    });
+    expect(duplicateSource.filter((item) => item.kind === "unowned-state-operation")
+      .map((item) => item.evidenceIds[0]))
+      .toEqual(["op:grant", "op:clear"]);
+
     // Duplicate scenario or causal-link identities cannot silently
     // establish that a selected source operation has one gameplay owner.
     const duplicatedScenario: GameplayScenarioGraph = {
