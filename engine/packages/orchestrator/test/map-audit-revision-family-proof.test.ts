@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   deriveSelectedMapAuditRevision,
 } from "../src/map-audit-revision.js";
+import {
+  createFallbackAuditUserIntent,
+} from "../src/map-audit-user-intent.js";
 
 describe("selected-map audit revision freshness", () => {
   it("changes when family proof changes", () => {
@@ -64,6 +67,38 @@ describe("selected-map audit revision freshness", () => {
     });
 
     expect(after).not.toBe(before);
+  });
+
+  it("binds the current operator investigation scope, not user claims as gameplay proof", () => {
+    const core: any = {
+      identity: { artifactId: "same-map", artifactFingerprint: "sha:stable" },
+      admission: { status: "BLOCKED", firstBlockingStage: "PROVE", issues: [] },
+      procedure: { status: "PARTIAL", checkpoints: [],
+        blockingCheckpointIds: ["D3"] },
+      graph: { scenarios: [], components: [], causalLinks: [],
+        knowledgeRequirements: [], knowledgeReceipts: [] },
+      defectResolution: { status: "BLOCKED", resolutions: [],
+        counterProofSearchRequiredIds: ["link:one"] },
+    };
+    const first = createFallbackAuditUserIntent(
+      "Check arena capacity when a player reconnects.",
+    );
+    const same = createFallbackAuditUserIntent(
+      "Check   arena capacity when a player reconnects. ",
+    );
+    const changed = createFallbackAuditUserIntent(
+      "Check stage progression after a world reload.",
+    );
+    const firstRevision = deriveSelectedMapAuditRevision({
+      ...core, userIntent: first,
+    });
+    expect(firstRevision).toBe(deriveSelectedMapAuditRevision({
+      ...core, userIntent: same,
+    }));
+    expect(firstRevision).not.toBe(deriveSelectedMapAuditRevision(core));
+    expect(firstRevision).not.toBe(deriveSelectedMapAuditRevision({
+      ...core, userIntent: changed,
+    }));
   });
 
   it("invalidates unchanged-ID checkpoint task text and Defect Resolution routing", () => {

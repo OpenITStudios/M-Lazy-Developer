@@ -191,6 +191,37 @@ describe("map audit proof saturation", () => {
     expect(assessReadyResolutionSaturation(duplicateLink, complete as any).saturated)
       .toBe(false);
 
+    // The link ID and scenario ID still exist, but the scenario no longer
+    // claims THIS causal link: source/PROVE/report evidence must vanish.
+    const detachedLink = {
+      ...scenario,
+      scenarios: [{
+        ...scenario.scenarios[0]!,
+        causalLinkIds: [],
+      }],
+    };
+    expect(sourceBoundAuditEvidenceIds(detachedLink, "l1")).toEqual([]);
+    expect(assessReadyResolutionSaturation(
+      detachedLink, complete as any,
+    ).saturated).toBe(false);
+    expect(projectReadyAuditIssues(detachedLink, {
+      confirmedDefectReadyIds: ["l1"], resolutions: [complete],
+    } as any)).toEqual([]);
+
+    // Nor may an otherwise unique link borrow components from a scenario
+    // that no longer declares its source components.
+    const detachedComponent = {
+      ...scenario,
+      scenarios: [{
+        ...scenario.scenarios[0]!,
+        componentIds: ["objective:wave"],
+      }],
+    };
+    expect(sourceBoundAuditEvidenceIds(detachedComponent, "l1")).toEqual([]);
+    expect(assessReadyResolutionSaturation(
+      detachedComponent, complete as any,
+    ).saturated).toBe(false);
+
     const duplicateComponent = {
       ...scenario,
       components: [...scenario.components, {

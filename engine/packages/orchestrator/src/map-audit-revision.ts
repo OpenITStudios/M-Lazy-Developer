@@ -14,6 +14,9 @@ import type {
 import type {
   SelectedMapAuditIdentity,
 } from "./map-audit-identity.js";
+import type {
+  AuditUserIntentEnvelope,
+} from "./map-audit-user-intent.js";
 
 function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical);
@@ -33,10 +36,17 @@ export function deriveSelectedMapAuditRevision(input: {
   readonly procedure: MandatoryAuditProcedureReceipt;
   readonly graph: GameplayScenarioGraph;
   readonly defectResolution: GameplayDefectResolutionGate;
+  /** Current operator intent is task/response scope, not gameplay proof. */
+  readonly userIntent?: AuditUserIntentEnvelope;
 }): string {
   const basis = {
     schemaVersion: 1,
     identity: input.identity,
+    // Two questions about the SAME immutable map can require different
+    // source navigation, exclusions and deciding-proof tasks. A response to
+    // the prior question must not be admitted solely because graph IDs and
+    // artifact SHA stayed unchanged. User input is guidance, never evidence.
+    userIntent: input.userIntent ?? null,
     admission: {
       status: input.admission.status,
       firstBlockingStage:

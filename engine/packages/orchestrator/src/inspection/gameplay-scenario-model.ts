@@ -402,6 +402,14 @@ export function uniqueGameplayCausalLinkScope(
   const scenarios = graph.scenarios.filter(item => item.id === link.scenarioId);
   if (scenarios.length !== 1) return undefined;
   const scenario = scenarios[0]!;
+  // A causal link is not owned merely because its scenario ID exists.
+  // The scenario must explicitly bind this exact link and every component
+  // asserted by the link. Scenario Closure already classifies detached links
+  // as invalid, but independently visible findings need the same local guard.
+  if (!scenario.causalLinkIds.includes(link.id) ||
+      link.componentIds.some(id => !scenario.componentIds.includes(id))) {
+    return undefined;
+  }
   const ambiguousComponents = new Set(ambiguous.componentIds);
   const scopeIds = [
     ...scenario.componentIds,

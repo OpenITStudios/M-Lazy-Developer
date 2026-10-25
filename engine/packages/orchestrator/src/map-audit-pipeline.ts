@@ -672,6 +672,7 @@ function assembleSelectedMapAuditRun(
     procedure,
     graph: scenario.graph,
     defectResolution: scenario.defectResolution,
+    ...(userIntent === undefined ? {} : { userIntent }),
   });
   const control = deriveSelectedMapAuditControl({
     admission,

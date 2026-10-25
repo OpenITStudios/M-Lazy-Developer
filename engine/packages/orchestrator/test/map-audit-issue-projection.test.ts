@@ -643,6 +643,27 @@ describe("map audit issue projection", () => {
     expect(projectAllNeedValidationAuditIssues(duplicateScenario, unfinished))
       .toEqual([]);
 
+    // An otherwise uniquely named causal link is NOT a scenario-owned
+    // finding if the scenario omits that link or its declared components.
+    for (const detached of [
+      { ...graph, scenarios: graph.scenarios.map(scenario =>
+        scenario.id === "scenario:capacity"
+          ? { ...scenario, causalLinkIds: [] }
+          : scenario,
+      ) },
+      { ...graph, scenarios: graph.scenarios.map(scenario =>
+        scenario.id === "scenario:capacity"
+          ? { ...scenario, componentIds: [] }
+          : scenario,
+      ) },
+    ]) {
+      expect(projectionContext(detached, "link:capacity", []))
+        .toBeUndefined();
+      expect(projectReadyAuditIssues(detached, gate)).toEqual([]);
+      expect(projectAllNeedValidationAuditIssues(detached, unfinished))
+        .toEqual([]);
+    }
+
     // A stale confirmation index must not relabel graph identity ambiguity
     // as a gameplay NEED_VALIDATION finding. A different arena/component can
     // have its own proof but cannot borrow the same generated component ID.

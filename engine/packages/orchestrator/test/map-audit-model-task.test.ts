@@ -530,6 +530,35 @@ describe("PROVE model evidence handoff", () => {
       },
     })).toThrow(/ambiguous causal scope/);
 
+    const detachedScenario = {
+      ...audit,
+      inspection: { hiddenGameplayDefects: {
+        scenarioAudit: {
+          graph: { ...graph, scenarios: graph.scenarios.map(scenario => ({
+            ...scenario, causalLinkIds: [],
+          })) },
+          defectResolution: gate,
+        },
+      } },
+    } as unknown as SelectedMapAuditRun;
+    // A valid model-task ID and a claimed in-scope witness do not repair
+    // the missing scenario -> causal-link source ownership binding.
+    expect(() => applySelectedMapAuditModelResponses({
+      audit: detachedScenario,
+      responses: {
+        ...responses,
+        resolutions: [{
+          taskId: task!.id,
+          resolution: {
+            causalLinkId: id,
+            scenarioId,
+            disposition: "COUNTERPROOF_SEARCH_REQUIRED" as const,
+            evidenceIds: [ownId],
+          },
+        }],
+      },
+    })).toThrow(/ambiguous causal scope/);
+
     // Model response with ZERO claimed evidence must also fail when the
     // selected causal link shares its component ID with another owner.
     // Earlier code admitted the empty list and tried to continue a blocked

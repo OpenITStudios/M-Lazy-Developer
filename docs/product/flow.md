@@ -321,10 +321,15 @@ when present. Source facts and canonical proof receipts are never
 rewritten from these reference hints.
 
 Full structured evidence remains with its original owners. Audit
-revision protects source/proof decisions; the reference snapshot
-lifecycle protects read-only retrieval. Neither is a second
-checkpoint, another source of Expected Behavior or proof that a
-previously opened Minecraft map behaved in a particular way.
+revision protects source/proof decisions **and the exact current operator
+intent used to formulate model tasks**; a new question or exclusion
+replaces stale response authority even when the selected .mcworld bytes
+and causal IDs remain unchanged. The reference snapshot lifecycle
+protects read-only retrieval. A causal link must also be named by its
+own scenario and its declared component IDs must belong to that
+scenario before PROVE/report or model-response admission. None of these
+guards is a second checkpoint, an expected-behavior source, or proof
+that a previously opened Minecraft map behaved in a particular way.
 
 ### One developer-method investigation path
 
