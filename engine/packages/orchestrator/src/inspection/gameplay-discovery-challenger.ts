@@ -15,6 +15,7 @@ import {
   type SourceRef,
 } from "../../../project-model/src/index.js";
 import {
+  ambiguousGameplayGraphIds,
   deriveObservedGameplaySourceRelationships,
   type GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
@@ -68,26 +69,25 @@ function usedEvidenceIds(
   // Scenario composition must consume the same exact evidence identity.
   // A stranded intent fact is not proof of a modeled gameplay path.
   // Neither component placement nor unproven links establish a gameplay path.
-  const components = new Set(graph.components.map(component => component.id));
-  const scenarios = new Map<string, GameplayScenarioGraph["scenarios"][number][]>();
-  const causalIdCounts = new Map<string, number>();
-  for (const scenario of graph.scenarios) {
-    const owned = scenarios.get(scenario.id) ?? [];
-    owned.push(scenario);
-    scenarios.set(scenario.id, owned);
-  }
-  for (const link of graph.causalLinks) {
-    causalIdCounts.set(link.id, (causalIdCounts.get(link.id) ?? 0) + 1);
-  }
+  const ambiguous = ambiguousGameplayGraphIds(graph);
+  const ambiguousComponents = new Set(ambiguous.componentIds);
+  const ambiguousLinks = new Set(ambiguous.causalLinkIds);
+  const ambiguousScenarios = new Set(ambiguous.scenarioIds);
+  const components = new Set(graph.components
+    .filter(component => !ambiguousComponents.has(component.id))
+    .map(component => component.id));
+  const scenarios = new Map(graph.scenarios
+    .filter(scenario => !ambiguousScenarios.has(scenario.id))
+    .map(scenario => [scenario.id, scenario] as const));
   const scenarioEvidenceIds = new Set(graph.causalLinks
     .filter(link => {
-      const owned = scenarios.get(link.scenarioId) ?? [];
-      const owner = owned.length === 1 ? owned[0] : undefined;
-      // Duplicate graph owners cannot claim selected source evidence.
-      // Keep the same unique causal-link/scenario identity as PROVE.
+      const owner = scenarios.get(link.scenarioId);
+      // A PROVEN label on duplicate components/scenarios/causal links
+      // cannot independently close a selected-artifact source obligation.
       return link.status === "PROVEN" &&
-        causalIdCounts.get(link.id) === 1 &&
+        !ambiguousLinks.has(link.id) &&
         owner !== undefined &&
+        !owner.componentIds.some(id => ambiguousComponents.has(id)) &&
         owner.causalLinkIds.includes(link.id) &&
         owner.componentIds.includes(link.fromComponentId) &&
         owner.componentIds.includes(link.toComponentId) &&

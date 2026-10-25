@@ -1,6 +1,7 @@
-import type {
-  GameplayCausalLink,
-  GameplayScenarioGraph,
+import {
+  ambiguousGameplayGraphIds,
+  type GameplayCausalLink,
+  type GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
 import {
   satisfiedScenarioKnowledgeReceipt,
@@ -1035,37 +1036,42 @@ export function assessGameplayDefectResolutionGate(
   const byId = new Map<string, GameplayDefectResolution>();
   const issues: string[] = [];
 
-  // One causal-link ID must name one source dependency and one scenario.
-  // Other proof owners already reject duplicate graph identities. The
-  // resolution gate must fail closed as well, otherwise a first-match
-  // lookup could mark an ambiguous graph READY or discard the other owner.
-  const causalIdCounts = new Map<string, number>();
-  const scenarioIdCounts = new Map<string, number>();
-  for (const link of graph.causalLinks) {
-    causalIdCounts.set(link.id, (causalIdCounts.get(link.id) ?? 0) + 1);
-  }
-  for (const scenario of graph.scenarios) {
-    scenarioIdCounts.set(
-      scenario.id, (scenarioIdCounts.get(scenario.id) ?? 0) + 1,
-    );
-  }
-  for (const [id, count] of causalIdCounts) {
-    if (count > 1) issues.push(
-      "Ambiguous causal-link ID " + id + " has " + count +
-      " source owners; resolve graph identity before proof or report.",
-    );
-  }
-  for (const [id, count] of scenarioIdCounts) {
-    if (count > 1) issues.push(
-      "Ambiguous scenario ID " + id + " has " + count +
-      " owners; resolve graph identity before proof or report.",
-    );
-  }
+  // Identity ambiguity must not pass from a source graph through EVALUATE
+  // into a BUG, counter-proof dismissal, or report. One component may occur
+  // in multiple scenarios, but its graph definition cannot be duplicated.
+  const ambiguous = ambiguousGameplayGraphIds(graph);
+  const ambiguousCausalIds = new Set(ambiguous.causalLinkIds);
+  const ambiguousScenarioIds = new Set(ambiguous.scenarioIds);
+  const ambiguousComponentIds = new Set(ambiguous.componentIds);
+  for (const id of ambiguous.causalLinkIds) issues.push(
+    "Ambiguous causal-link ID " + id +
+    " has multiple source owners; resolve graph identity before proof or report.",
+  );
+  for (const id of ambiguous.scenarioIds) issues.push(
+    "Ambiguous scenario ID " + id +
+    " has multiple owners; resolve graph identity before proof or report.",
+  );
+  for (const id of ambiguous.componentIds) issues.push(
+    "Ambiguous component ID " + id +
+    " has multiple source owners; resolve graph identity before proof or report.",
+  );
   const uniquelyOwnedCausalLink = (id: string): boolean => {
-    if (causalIdCounts.get(id) !== 1) return false;
+    if (ambiguousCausalIds.has(id)) return false;
     const owner = graph.causalLinks.find((link) => link.id === id);
-    return owner !== undefined &&
-      scenarioIdCounts.get(owner.scenarioId) === 1;
+    if (owner === undefined || ambiguousScenarioIds.has(owner.scenarioId)) {
+      return false;
+    }
+    const scenario = graph.scenarios.find((item) =>
+      item.id === owner.scenarioId,
+    );
+    if (scenario === undefined) return false;
+    return ![
+      ...scenario.componentIds,
+      ...owner.componentIds,
+      owner.fromComponentId,
+      owner.toComponentId,
+      ...owner.impactPathComponentIds,
+    ].some((componentId) => ambiguousComponentIds.has(componentId));
   };
 
   for (const resolution of suppliedResolutions) {

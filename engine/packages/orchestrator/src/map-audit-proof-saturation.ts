@@ -9,8 +9,9 @@ import {
   familyCounterProofDimensionsForCriterion,
   type GameplayDefectResolution,
 } from "./inspection/gameplay-defect-resolution.js";
-import type {
-  GameplayScenarioGraph,
+import {
+  ambiguousGameplayGraphIds,
+  type GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
 import {
   satisfiedScenarioKnowledgeReceipt,
@@ -144,6 +145,16 @@ export function sourceBoundAuditEvidenceIds(
     item.id === link.scenarioId
   );
   if (scenarios.length !== 1) return [];
+  const ambiguousComponents = new Set(
+    ambiguousGameplayGraphIds(graph).componentIds,
+  );
+  if ([
+    ...scenarios[0]!.componentIds,
+    ...link.componentIds,
+    link.fromComponentId,
+    link.toComponentId,
+    ...link.impactPathComponentIds,
+  ].some(id => ambiguousComponents.has(id))) return [];
   const knowledgeEvidence = link.knowledgeRequirementIds.flatMap((id) => {
     const requirement = uniqueScenarioKnowledgeRequirement(
       graph, id, link.scenarioId,
@@ -270,6 +281,18 @@ export function assessReadyResolutionSaturation(
     (item) => item.id === link.scenarioId,
   );
   const scenario = scenarios.length === 1 ? scenarios[0] : undefined;
+  const ambiguousComponents = new Set(
+    ambiguousGameplayGraphIds(graph).componentIds,
+  );
+  const scopedComponentsUnambiguous = link !== undefined &&
+    scenario !== undefined &&
+    ![
+      ...scenario.componentIds,
+      ...link.componentIds,
+      link.fromComponentId,
+      link.toComponentId,
+      ...link.impactPathComponentIds,
+    ].some(id => ambiguousComponents.has(id));
 
   // The causal link, not a supplied resolution, owns required knowledge.
   // Every exact scenario requirement must have one matching satisfied receipt;
@@ -373,7 +396,8 @@ export function assessReadyResolutionSaturation(
           "Finding is attached to one concrete gameplay scenario with selected-artifact components.",
         satisfied:
           scenario !== undefined &&
-          scenario.componentIds.length > 0,
+          scenario.componentIds.length > 0 &&
+          scopedComponentsUnambiguous,
         evidenceIds,
       },
       {

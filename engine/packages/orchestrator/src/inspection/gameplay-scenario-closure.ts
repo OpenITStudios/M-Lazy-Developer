@@ -1,6 +1,7 @@
-import type {
-  GameplayScenarioClosure,
-  GameplayScenarioGraph,
+import {
+  ambiguousGameplayGraphIds,
+  type GameplayScenarioClosure,
+  type GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
 import {
   satisfiedScenarioKnowledgeReceipt,
@@ -11,6 +12,7 @@ export function assessGameplayScenarioClosure(
   graph: GameplayScenarioGraph,
   unmodeledSourceChallengeIds: readonly string[] = [],
 ): GameplayScenarioClosure {
+  const ambiguousIds = ambiguousGameplayGraphIds(graph);
   const orphanComponentIds = graph.components
     .filter((component) => component.orphan)
     .map((component) => component.id)
@@ -205,6 +207,17 @@ export function assessGameplayScenarioClosure(
   const unresolvedSourceIds = [...new Set(unmodeledSourceChallengeIds)].sort();
   const journeyTruncated = graph.gameplayJourneyTruncated === true;
   const reasons: string[] = [];
+  for (const [label, ids] of [
+    ["scenario", ambiguousIds.scenarioIds],
+    ["component", ambiguousIds.componentIds],
+    ["causal-link", ambiguousIds.causalLinkIds],
+  ] as const) {
+    if (ids.length > 0) reasons.push(
+      "Ambiguous selected-map " + label + " ID owner(s): " +
+      ids.join(", ") + ". A duplicated graph identity cannot close " +
+      "Scenario/Discovery source ownership or prove a player-facing finding.",
+    );
+  }
   if (journeyTruncated) {
     reasons.push("Source journey exploration hit its path/depth budget; whole-game scenario closure is not established.");
   }
@@ -290,6 +303,9 @@ export function assessGameplayScenarioClosure(
 
   const status =
     graph.scenarios.length === 0 ||
+    ambiguousIds.scenarioIds.length > 0 ||
+    ambiguousIds.componentIds.length > 0 ||
+    ambiguousIds.causalLinkIds.length > 0 ||
     journeyTruncated ||
     incompleteJourneyIds.length > 0 ||
     unresolvedSourceIds.length > 0 ||

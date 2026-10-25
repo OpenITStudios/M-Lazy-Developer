@@ -351,6 +351,31 @@ export interface GameplayScenarioGraph {
   readonly guardedSourceTransitions?: readonly SourceGuardedStateTransitionCandidate[];
 }
 
+/** One graph identity check, shared by Discovery, Scenario Closure and PROVE.
+ * These are only ownership ambiguities, not gameplay or runtime findings.
+ * A component can legitimately participate in several scenarios, but may
+ * have only one definition for its ID within one selected-map graph.
+ */
+export function ambiguousGameplayGraphIds(
+  graph: Pick<GameplayScenarioGraph, "scenarios" | "components" | "causalLinks">,
+): {
+  readonly scenarioIds: readonly string[];
+  readonly componentIds: readonly string[];
+  readonly causalLinkIds: readonly string[];
+} {
+  const duplicates = (rows: readonly { readonly id: string }[]): readonly string[] => {
+    const counts = new Map<string, number>();
+    for (const row of rows) counts.set(row.id, (counts.get(row.id) ?? 0) + 1);
+    return [...counts].filter(([, count]) => count > 1)
+      .map(([id]) => id).sort();
+  };
+  return {
+    scenarioIds: duplicates(graph.scenarios),
+    componentIds: duplicates(graph.components),
+    causalLinkIds: duplicates(graph.causalLinks),
+  };
+}
+
 export type GameplayScenarioClosureStatus =
   | "CLOSED"
   | "PARTIAL"
@@ -963,16 +988,24 @@ export function deriveObservedGameplaySourceRelationships(
           : "SOURCE_ORDER_UNRESOLVED" as const,
       }))),
   ];
+  const ambiguousGraphIds = ambiguousGameplayGraphIds(graph);
+  const ambiguousComponents = new Set(ambiguousGraphIds.componentIds);
+  const ambiguousScenarios = new Set(ambiguousGraphIds.scenarioIds);
+  const ambiguousLinks = new Set(ambiguousGraphIds.causalLinkIds);
   const componentIdsByEvidence = new Map<string, Set<string>>();
   for (const component of graph.components) {
+    // A duplicate component ID does not establish a unique source owner.
+    if (ambiguousComponents.has(component.id)) continue;
     for (const id of component.evidenceIds) {
       const ids = componentIdsByEvidence.get(id) ?? new Set<string>();
       ids.add(component.id);
       componentIdsByEvidence.set(id, ids);
     }
   }
-  const scenarioLinkIds = new Map(graph.scenarios.map(scenario =>
-    [scenario.id, new Set(scenario.causalLinkIds)]));
+  const scenarioLinkIds = new Map(graph.scenarios
+    .filter(scenario => !ambiguousScenarios.has(scenario.id))
+    .map(scenario =>
+      [scenario.id, new Set(scenario.causalLinkIds)] as const));
   const observedSourceRelationships: ObservedRelation[] = sourceRelationshipCandidates
     .map(relation => {
       const fromComponents = componentIdsByEvidence.get(relation.fromEvidenceId) ??
@@ -981,6 +1014,7 @@ export function deriveObservedGameplaySourceRelationships(
         new Set<string>();
       const sharedScenarioIds = sorted(graph.scenarios
         .filter(scenario =>
+          !ambiguousScenarios.has(scenario.id) &&
           scenario.componentIds.some(id => fromComponents.has(id)) &&
           scenario.componentIds.some(id => outcomeComponents.has(id)))
         .map(scenario => scenario.id));
@@ -988,6 +1022,9 @@ export function deriveObservedGameplaySourceRelationships(
       const exactProvenCausalLinkIds = sorted(graph.causalLinks
         .filter(link =>
           link.status === "PROVEN" &&
+          !ambiguousLinks.has(link.id) &&
+          !ambiguousComponents.has(link.fromComponentId) &&
+          !ambiguousComponents.has(link.toComponentId) &&
           sharedScenarios.has(link.scenarioId) &&
           scenarioLinkIds.get(link.scenarioId)?.has(link.id) === true &&
           fromComponents.has(link.fromComponentId) &&

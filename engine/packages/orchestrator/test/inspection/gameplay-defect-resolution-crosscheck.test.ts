@@ -389,6 +389,28 @@ describe("gameplay defect resolution crosscheck depth", () => {
     expect(ambiguousScenario.status).toBe("BLOCKED");
     expect(ambiguousScenario.issues.join(" ")).toMatch(/Ambiguous scenario ID/);
 
+    const component = {
+      id: "runtime:arena", label: "Current arena owner",
+      kind: "runtime-domain" as const, technicalRole: "Source arena",
+      gameplayPurpose: "Arena admission", evidenceIds: ["source:current-arena"],
+      usedByScenarioIds: ["preset:arena-capacity"], orphan: false,
+    };
+    const duplicateComponent: GameplayScenarioGraph = {
+      ...withExactGuard,
+      components: [component, { ...component, label: "Foreign arena owner" }],
+    };
+    const ambiguousComponentGate = assessGameplayDefectResolutionGate(
+      duplicateComponent, [{
+        causalLinkId: "link:arena-capacity",
+        disposition: "BLOCKING_COUNTERPROOF",
+        counterProofEvidenceIds: ["source:exact-guard"],
+      }],
+    );
+    expect(ambiguousComponentGate.status).toBe("BLOCKED");
+    expect(ambiguousComponentGate.issues.join(" "))
+      .toMatch(/Ambiguous component ID runtime:arena/);
+    expect(ambiguousComponentGate.confirmedDefectReadyIds).toEqual([]);
+
     const forged = assessGameplayDefectResolutionGate(withExactGuard, [{
       causalLinkId: "link:arena-capacity",
       disposition: "BLOCKING_COUNTERPROOF",

@@ -299,8 +299,12 @@ stricter selected-artifact site join when Semantic IR provides a range or JSON
 pointer: an operation on another line/column or a different JSON member is
 **not** the same evidence. A file-only SourceRef remains file-scoped evidence,
 not independently verified positional proof; unresolvable `@symbol` hints and
-duplicate evidence, causal-link or scenario IDs cannot close an ownership
-question. Discovery challenges remain source-analysis debt, not automatic
+duplicate evidence, component, causal-link or scenario IDs cannot close an
+ownership question. The canonical Scenario Graph identity check prevents
+ambiguous components from satisfying raw Discovery ownership, closing
+Scenario Closure, or promoting PROVEN Map Audit findings while unrelated
+independently scoped source evidence remains navigable. Discovery challenges
+remain source-analysis debt, not automatic
 BUGs, player reachability, or Minecraft runtime proof.
 
 `modelTaskPackets` derive conditional context from the **current,

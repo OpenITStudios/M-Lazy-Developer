@@ -93,6 +93,28 @@ describe("gameplay scenario closure", () => {
       knowledgeReceipts: [receipt],
     };
     expect(assessGameplayScenarioClosure(valid).status).toBe("CLOSED");
+    // A generated scenario/component/causal ID is not a unique owner simply
+    // because all referenced IDs exist. Duplicate definitions must prevent
+    // Scenario Closure from declaring a player-facing graph complete.
+    for (const [kind, candidate] of [
+      ["component", {
+        ...valid, components: [...valid.components,
+          { ...valid.components[0]!, label: "Different arena state owner" }],
+      }],
+      ["scenario", {
+        ...valid, scenarios: [...valid.scenarios,
+          { ...valid.scenarios[0]!, label: "Different authored mode" }],
+      }],
+      ["causal-link", {
+        ...valid, causalLinks: [...valid.causalLinks,
+          { ...valid.causalLinks[0]!, purpose: "Different dependency" }],
+      }],
+    ] as readonly [string, GameplayScenarioGraph][]) {
+      const closure = assessGameplayScenarioClosure(candidate);
+      expect(closure.status, kind).toBe("OPEN");
+      expect(closure.reasons.join(" "), kind)
+        .toContain("Ambiguous selected-map " + kind + " ID owner(s)");
+    }
     const variants: GameplayScenarioGraph[] = [
       { ...valid, knowledgeReceipts: [] },
       { ...valid, knowledgeReceipts: [{ ...receipt, evidenceIds: [] }] },

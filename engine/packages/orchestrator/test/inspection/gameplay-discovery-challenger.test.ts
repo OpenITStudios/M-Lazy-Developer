@@ -1140,7 +1140,15 @@ describe("gameplay discovery challenger", () => {
         { ...graph.causalLinks[0]!, purpose: "another dependency" },
       ],
     };
-    for (const ambiguous of [duplicatedScenario, duplicatedLink]) {
+    const duplicatedComponent: GameplayScenarioGraph = {
+      ...graph, components: [
+        ...graph.components,
+        { ...graph.components[0]!, label: "Another scenario component owner" },
+      ],
+    };
+    for (const ambiguous of [
+      duplicatedScenario, duplicatedLink, duplicatedComponent,
+    ]) {
       const result = challengeGameplayDiscovery({
         semanticIr: ir, intent: { ...intent, artifactId: "a" },
         graph: ambiguous,

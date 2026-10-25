@@ -190,6 +190,41 @@ describe("map audit proof saturation", () => {
     expect(sourceBoundAuditEvidenceIds(duplicateLink, "l1")).toEqual([]);
     expect(assessReadyResolutionSaturation(duplicateLink, complete as any).saturated)
       .toBe(false);
+
+    const duplicateComponent = {
+      ...scenario,
+      components: [...scenario.components, {
+        ...scenario.components[0]!,
+        label: "Another chunk manager with the same graph ID",
+        evidenceIds: ["source:foreign-manager"],
+      }],
+    };
+    expect(sourceBoundAuditEvidenceIds(duplicateComponent, "l1")).toEqual([]);
+    const unsaturated = assessReadyResolutionSaturation(
+      duplicateComponent, complete as any,
+    );
+    expect(unsaturated.saturated).toBe(false);
+    expect(unsaturated.missingUniversalCriteriaIds)
+      .toContain("scenario-grounded");
+    expect(projectReadyAuditIssues(duplicateComponent, {
+      confirmedDefectReadyIds: ["l1"], resolutions: [complete],
+    } as any)).toEqual([]);
+
+    // Do not hide independently owned evidence when a different system
+    // has a duplicate component ID. Whole-map closure remains blocked,
+    // but this particular causal scope still has one unique component.
+    const unrelatedDuplicate = {
+      ...scenario,
+      components: [...scenario.components,
+        { ...scenario.components[0]!, id: "unrelated:component" },
+        { ...scenario.components[0]!, id: "unrelated:component",
+          label: "Second unrelated component" }],
+    };
+    expect(sourceBoundAuditEvidenceIds(unrelatedDuplicate, "l1"))
+      .toContain("source:contradiction");
+    expect(assessReadyResolutionSaturation(
+      unrelatedDuplicate, complete as any,
+    ).saturated).toBe(true);
     expect(assessReadyResolutionSaturation(scenario, complete as any).saturated)
       .toBe(true);
   });
