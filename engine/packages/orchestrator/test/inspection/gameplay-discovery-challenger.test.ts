@@ -1069,10 +1069,66 @@ describe("gameplay discovery challenger", () => {
         status: "PROVEN", reason: "Source ownership fixture",
       }],
     };
-    const result = challengeGameplayDiscovery({
-      semanticIr: ir, intent, graph,
-    });
-    expect(result.filter((item) => item.kind === "unowned-state-operation")
-      .map((item) => item.evidenceIds[0])).toEqual(["op:clear"]);
+    // Source-owned operations may have precise locators rather than bare
+    // filenames. All supported forms must preserve THIS operation's proof.
+    for (const locator of [
+      "scripts/inventory.js",
+      "scripts/inventory.js:12:3",
+      "scripts/inventory.js#L12",
+      "scripts/inventory.js#/state/grant",
+      "scripts/inventory.js@inventory.grant",
+    ]) {
+      const currentIntent = {
+        ...intent, artifactId: "a",
+        evidence: intent.evidence.map(item => ({ ...item, locator })),
+      };
+      const result = challengeGameplayDiscovery({
+        semanticIr: ir, intent: currentIntent, graph,
+      });
+      expect(result.filter((item) => item.kind === "unowned-state-operation")
+        .map((item) => item.evidenceIds[0]), locator)
+        .toEqual(["op:clear"]);
+    }
+    // Reject foreign map versions and guessed aliases, even when raw IDs
+    // and filenames resemble an owned selected-artifact source operation.
+    for (const [locator, artifactId] of [
+      ["scripts/inventory.js:fake", "a"],
+      ["scripts/inventory.js-other:12:3", "a"],
+      ["scripts/inventory.js:12:3", "other-map"],
+    ] as const) {
+      const foreignIntent = {
+        ...intent, artifactId,
+        evidence: intent.evidence.map(item => ({ ...item, locator })),
+      };
+      const result = challengeGameplayDiscovery({
+        semanticIr: ir, intent: foreignIntent, graph,
+      });
+      expect(result.filter((item) => item.kind === "unowned-state-operation")
+        .map((item) => item.evidenceIds[0]), locator + " / " + artifactId)
+        .toEqual(["op:grant", "op:clear"]);
+    }
+    // Duplicate scenario or causal-link identities cannot silently
+    // establish that a selected source operation has one gameplay owner.
+    const duplicatedScenario: GameplayScenarioGraph = {
+      ...graph, scenarios: [
+        ...graph.scenarios,
+        { ...graph.scenarios[0]!, label: "another authored mode" },
+      ],
+    };
+    const duplicatedLink: GameplayScenarioGraph = {
+      ...graph, causalLinks: [
+        ...graph.causalLinks,
+        { ...graph.causalLinks[0]!, purpose: "another dependency" },
+      ],
+    };
+    for (const ambiguous of [duplicatedScenario, duplicatedLink]) {
+      const result = challengeGameplayDiscovery({
+        semanticIr: ir, intent: { ...intent, artifactId: "a" },
+        graph: ambiguous,
+      });
+      expect(result.filter(item => item.kind === "unowned-state-operation")
+        .map(item => item.evidenceIds[0]))
+        .toEqual(["op:grant", "op:clear"]);
+    }
   });
 });

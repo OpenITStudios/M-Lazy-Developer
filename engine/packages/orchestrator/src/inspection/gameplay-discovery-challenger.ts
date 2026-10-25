@@ -11,6 +11,10 @@ import type {
   GameplayIntentModel,
 } from "../../../gameplay-intent/src/index.js";
 import {
+  sourceLocatorMatchesSourcePath,
+  type SourceRef,
+} from "../../../project-model/src/index.js";
+import {
   deriveObservedGameplaySourceRelationships,
   type GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
@@ -50,15 +54,24 @@ function usedEvidenceIds(
   // A stranded intent fact is not proof of a modeled gameplay path.
   // Neither component placement nor unproven links establish a gameplay path.
   const components = new Set(graph.components.map(component => component.id));
-  const scenarios = new Map(graph.scenarios.map(scenario =>
-    [scenario.id, scenario]));
+  const scenarios = new Map<string, GameplayScenarioGraph["scenarios"][number][]>();
+  const causalIdCounts = new Map<string, number>();
+  for (const scenario of graph.scenarios) {
+    const owned = scenarios.get(scenario.id) ?? [];
+    owned.push(scenario);
+    scenarios.set(scenario.id, owned);
+  }
+  for (const link of graph.causalLinks) {
+    causalIdCounts.set(link.id, (causalIdCounts.get(link.id) ?? 0) + 1);
+  }
   const scenarioEvidenceIds = new Set(graph.causalLinks
     .filter(link => {
-      const owner = scenarios.get(link.scenarioId);
-      // A PROVEN label or scenario link reference does not repair dangling
-      // endpoints. Scenario Closure already treats these graphs as invalid;
-      // Discovery Challenger must not close individual raw-source records.
+      const owned = scenarios.get(link.scenarioId) ?? [];
+      const owner = owned.length === 1 ? owned[0] : undefined;
+      // Duplicate graph owners cannot claim selected source evidence.
+      // Keep the same unique causal-link/scenario identity as PROVE.
       return link.status === "PROVEN" &&
+        causalIdCounts.get(link.id) === 1 &&
         owner !== undefined &&
         owner.causalLinkIds.includes(link.id) &&
         owner.componentIds.includes(link.fromComponentId) &&
@@ -89,13 +102,25 @@ export function challengeGameplayDiscovery(input: {
   const evidenceLocations = new Map(input.intent.evidence
     .filter(item => item.scope === "selected-artifact")
     .map(item => [item.id, item.locator.replaceAll("\\", "/")]));
-  const matchesSource = (id: string, path: string): boolean =>
-    evidence.has(id) && evidenceLocations.get(id) === path.replaceAll("\\", "/");
+  const matchesSource = (id: string, source: SourceRef): boolean => {
+    const locator = evidenceLocations.get(id);
+    // An older selected map may reuse the same path and ID. When the
+    // source model identifies this artifact, require that exact identity.
+    if (!evidence.has(id) || locator === undefined ||
+        (input.intent.artifactId !== undefined &&
+          input.intent.artifactId !== source.artifactId)) return false;
+    // Share the canonical source-locator contract with Resource Context.
+    // Positional or JSON-pointer locators are valid current-file evidence;
+    // arbitrary path prefixes and guessed suffixes are not.
+    return sourceLocatorMatchesSourcePath(
+      locator, source.relativePath.replaceAll("\\", "/"),
+    );
+  };
 
   for (const operation of input.semanticIr.state.operations) {
     // Surface ownership alone does not account for every state mutation.
     // Require the individual operation to be consumed as evidence.
-    if (matchesSource(operation.id, operation.source.relativePath)) {
+    if (matchesSource(operation.id, operation.source)) {
       continue;
     }
     output.push({
@@ -109,7 +134,7 @@ export function challengeGameplayDiscovery(input: {
   }
 
   for (const outcome of input.semanticIr.execution.outcomes ?? []) {
-    if (matchesSource(outcome.id, outcome.source.relativePath)) continue;
+    if (matchesSource(outcome.id, outcome.source)) continue;
     output.push({
       id: "discovery-challenge:outcome:" + outcome.id,
       kind: "unowned-return-outcome",
@@ -121,7 +146,7 @@ export function challengeGameplayDiscovery(input: {
   }
 
   for (const action of input.semanticIr.state.resourceActions ?? []) {
-    if (matchesSource(action.id, action.source.relativePath)) continue;
+    if (matchesSource(action.id, action.source)) continue;
     output.push({
       id: "discovery-challenge:resource:" + action.id,
       kind: "unowned-resource-action",
@@ -137,7 +162,7 @@ export function challengeGameplayDiscovery(input: {
   const ownedRegions = new Set(
     input.semanticIr.execution.regions
       .filter((region) => region.source !== undefined &&
-        matchesSource(region.id, region.source.relativePath))
+        matchesSource(region.id, region.source))
       .map((region) => region.id),
   );
   for (const region of input.semanticIr.execution.regions) {
@@ -155,7 +180,7 @@ export function challengeGameplayDiscovery(input: {
   }
 
   for (const edge of input.semanticIr.execution.edges) {
-    if (edge.resolution === "resolved" && matchesSource(edge.id, edge.source.relativePath)) {
+    if (edge.resolution === "resolved" && matchesSource(edge.id, edge.source)) {
       continue;
     }
     const unresolved = edge.resolution === "unresolved";
@@ -175,7 +200,7 @@ export function challengeGameplayDiscovery(input: {
   for (const relation of input.semanticIr.temporal.relations) {
     // A generation guard proves a scheduling safety property, not that
     // the temporal relation has a gameplay/scenario owner.
-    const relatedEvidence = matchesSource(relation.id, relation.source.relativePath);
+    const relatedEvidence = matchesSource(relation.id, relation.source);
     // Evidence ownership cannot turn an unresolved scheduler target into
     // a resolved execution path.
     if (relatedEvidence && relation.resolution === "resolved") continue;
@@ -196,19 +221,19 @@ export function challengeGameplayDiscovery(input: {
   // Challenge the *pair*, not just its members. When either member is
   // unowned, its existing single-record challenge already preserves the gap.
   const ownedOutcomes = (input.semanticIr.execution.outcomes ?? []).some(item =>
-    matchesSource(item.id, item.source.relativePath));
+    matchesSource(item.id, item.source));
   const hasOwnedPrecursor = ownedOutcomes && (
     input.semanticIr.execution.regions.some(item => item.source &&
-      matchesSource(item.id, item.source.relativePath)) ||
+      matchesSource(item.id, item.source)) ||
     input.semanticIr.execution.edges.some(item =>
       item.resolution === "resolved" &&
-      matchesSource(item.id, item.source.relativePath)) ||
+      matchesSource(item.id, item.source)) ||
     input.semanticIr.state.operations.some(item =>
-      matchesSource(item.id, item.source.relativePath)) ||
+      matchesSource(item.id, item.source)) ||
     (input.semanticIr.state.resourceActions ?? []).some(item =>
-      matchesSource(item.id, item.source.relativePath)) ||
+      matchesSource(item.id, item.source)) ||
     (input.semanticIr.execution.worldEffects ?? []).some(item =>
-      matchesSource(item.id, item.source.relativePath))
+      matchesSource(item.id, item.source))
   );
   if (hasOwnedPrecursor) {
     const sourceRelations = deriveObservedGameplaySourceRelationships(
@@ -235,8 +260,8 @@ export function challengeGameplayDiscovery(input: {
       const to = sourceById.get(relation.outcomeId);
       if (relation.gap === null ||
           from === undefined || to === undefined ||
-          !matchesSource(relation.fromEvidenceId, from.relativePath) ||
-          !matchesSource(relation.outcomeId, to.relativePath)) continue;
+          !matchesSource(relation.fromEvidenceId, from) ||
+          !matchesSource(relation.outcomeId, to)) continue;
       output.push({
         id: "discovery-challenge:relationship:" + relation.kind + ":" +
           relation.fromEvidenceId + ":" + relation.outcomeId,
