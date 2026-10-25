@@ -10,7 +10,7 @@ import {
   type GameplayDefectResolution,
 } from "./inspection/gameplay-defect-resolution.js";
 import {
-  ambiguousGameplayGraphIds,
+  uniqueGameplayCausalLinkScope,
   type GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
 import {
@@ -136,25 +136,11 @@ export function sourceBoundAuditEvidenceIds(
   graph: GameplayScenarioGraph,
   causalLinkId: string,
 ): readonly string[] {
-  const owned = graph.causalLinks.filter((item) => item.id === causalLinkId);
-  // Duplicate link/scenario identities are ambiguous, not a first-match
-  // license to use evidence from a different operation or source revision.
-  if (owned.length !== 1) return [];
-  const link = owned[0]!;
-  const scenarios = graph.scenarios.filter((item) =>
-    item.id === link.scenarioId
-  );
-  if (scenarios.length !== 1) return [];
-  const ambiguousComponents = new Set(
-    ambiguousGameplayGraphIds(graph).componentIds,
-  );
-  if ([
-    ...scenarios[0]!.componentIds,
-    ...link.componentIds,
-    link.fromComponentId,
-    link.toComponentId,
-    ...link.impactPathComponentIds,
-  ].some(id => ambiguousComponents.has(id))) return [];
+  // The typed Scenario Graph owns identity, including exact component
+  // scope. No report/model task may select a first matching duplicate.
+  const owned = uniqueGameplayCausalLinkScope(graph, causalLinkId);
+  if (owned === undefined) return [];
+  const { link, scenario } = owned;
   const knowledgeEvidence = link.knowledgeRequirementIds.flatMap((id) => {
     const requirement = uniqueScenarioKnowledgeRequirement(
       graph, id, link.scenarioId,
@@ -165,7 +151,7 @@ export function sourceBoundAuditEvidenceIds(
   // Reuse exact dimension witnesses from the sole counterproof owner.
   // Do not import every nearby link's generic evidenceIds into reporting.
   const searched = automaticCounterProofSearch(
-    graph, link, scenarios[0],
+    graph, link, scenario,
   );
   return [...new Set([
     ...causalSourceEvidenceIds(link),
@@ -273,26 +259,11 @@ export function assessReadyResolutionSaturation(
   graph: GameplayScenarioGraph,
   resolution: GameplayDefectResolution,
 ): AuditProofSaturationAssessment {
-  const owned = graph.causalLinks.filter((item) =>
-    item.id === resolution.causalLinkId
+  const owned = uniqueGameplayCausalLinkScope(
+    graph, resolution.causalLinkId,
   );
-  const link = owned.length === 1 ? owned[0] : undefined;
-  const scenarios = link === undefined ? [] : graph.scenarios.filter(
-    (item) => item.id === link.scenarioId,
-  );
-  const scenario = scenarios.length === 1 ? scenarios[0] : undefined;
-  const ambiguousComponents = new Set(
-    ambiguousGameplayGraphIds(graph).componentIds,
-  );
-  const scopedComponentsUnambiguous = link !== undefined &&
-    scenario !== undefined &&
-    ![
-      ...scenario.componentIds,
-      ...link.componentIds,
-      link.fromComponentId,
-      link.toComponentId,
-      ...link.impactPathComponentIds,
-    ].some(id => ambiguousComponents.has(id));
+  const link = owned?.link;
+  const scenario = owned?.scenario;
 
   // The causal link, not a supplied resolution, owns required knowledge.
   // Every exact scenario requirement must have one matching satisfied receipt;
@@ -396,8 +367,7 @@ export function assessReadyResolutionSaturation(
           "Finding is attached to one concrete gameplay scenario with selected-artifact components.",
         satisfied:
           scenario !== undefined &&
-          scenario.componentIds.length > 0 &&
-          scopedComponentsUnambiguous,
+          scenario.componentIds.length > 0,
         evidenceIds,
       },
       {

@@ -1,5 +1,6 @@
 import {
   ambiguousGameplayGraphIds,
+  uniqueGameplayCausalLinkScope,
   type GameplayCausalLink,
   type GameplayScenarioGraph,
 } from "./gameplay-scenario-model.js";
@@ -1040,9 +1041,6 @@ export function assessGameplayDefectResolutionGate(
   // into a BUG, counter-proof dismissal, or report. One component may occur
   // in multiple scenarios, but its graph definition cannot be duplicated.
   const ambiguous = ambiguousGameplayGraphIds(graph);
-  const ambiguousCausalIds = new Set(ambiguous.causalLinkIds);
-  const ambiguousScenarioIds = new Set(ambiguous.scenarioIds);
-  const ambiguousComponentIds = new Set(ambiguous.componentIds);
   for (const id of ambiguous.causalLinkIds) issues.push(
     "Ambiguous causal-link ID " + id +
     " has multiple source owners; resolve graph identity before proof or report.",
@@ -1055,24 +1053,11 @@ export function assessGameplayDefectResolutionGate(
     "Ambiguous component ID " + id +
     " has multiple source owners; resolve graph identity before proof or report.",
   );
-  const uniquelyOwnedCausalLink = (id: string): boolean => {
-    if (ambiguousCausalIds.has(id)) return false;
-    const owner = graph.causalLinks.find((link) => link.id === id);
-    if (owner === undefined || ambiguousScenarioIds.has(owner.scenarioId)) {
-      return false;
-    }
-    const scenario = graph.scenarios.find((item) =>
-      item.id === owner.scenarioId,
-    );
-    if (scenario === undefined) return false;
-    return ![
-      ...scenario.componentIds,
-      ...owner.componentIds,
-      owner.fromComponentId,
-      owner.toComponentId,
-      ...owner.impactPathComponentIds,
-    ].some((componentId) => ambiguousComponentIds.has(componentId));
-  };
+  // Reuse the same per-link owner boundary as PROVE, report projection
+  // and model-response admission. Independent causal scopes remain usable
+  // even while the whole-map audit is blocked by an unrelated duplicate.
+  const uniquelyOwnedCausalLink = (id: string): boolean =>
+    uniqueGameplayCausalLinkScope(graph, id, ambiguous) !== undefined;
 
   for (const resolution of suppliedResolutions) {
     if (!resolvableIds.has(resolution.causalLinkId)) {

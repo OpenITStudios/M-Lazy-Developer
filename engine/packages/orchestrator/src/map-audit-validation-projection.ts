@@ -1,5 +1,6 @@
-import type {
-  GameplayScenarioGraph,
+import {
+  uniqueGameplayCausalLinkScope,
+  type GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
 import type {
   GameplayDefectResolutionGate,
@@ -31,16 +32,14 @@ export function projectNeedValidationAuditIssues(
 
   return sortIssues(
     gate.resolutions.flatMap((resolution) => {
-      const matchingLinks = graph.causalLinks.filter((item) =>
-        item.id === resolution.causalLinkId
+      // A stale confirmation index is not permission to translate an
+      // ambiguous graph component into a gameplay NEED_VALIDATION finding.
+      // Keep identity residue with Scenario Closure and the proof gate.
+      const scope = uniqueGameplayCausalLinkScope(
+        graph, resolution.causalLinkId,
       );
-      // An ambiguous link or scenario is not a NEED_VALIDATION gameplay
-      // finding. The canonical resolution gate owns the graph-identity
-      // blocker; do not project an arbitrary first match as a player issue.
-      if (matchingLinks.length !== 1) return [];
-      const causalLink = matchingLinks[0]!;
-      if (graph.scenarios.filter(item =>
-        item.id === causalLink.scenarioId).length !== 1) return [];
+      if (scope === undefined) return [];
+      const causalLink = scope.link;
       // Even a stale confirmation index cannot promote a safe counter-proof,
       // unresolved runtime observation or foreign scenario into a defect.
       if (!confirmed.has(resolution.causalLinkId) ||

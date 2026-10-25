@@ -1,5 +1,6 @@
-import type {
-  GameplayScenarioGraph,
+import {
+  uniqueGameplayCausalLinkScope,
+  type GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
 import {
   uniqueScenarioKnowledgeRequirement,
@@ -136,18 +137,12 @@ export function projectionContext(
   capabilityDelivery:
     readonly GameplayCapabilityDeliveryAssessment[],
 ) {
-  // Report projection must use the same unique causal-link and scenario
-  // identity as PROVE. A first-match would borrow unrelated source scope.
-  const owned = graph.causalLinks.filter(
-    (item) => item.id === causalLinkId,
-  );
-  if (owned.length !== 1) return undefined;
-  const link = owned[0]!;
-  const scenarios = graph.scenarios.filter(
-    (item) => item.id === link.scenarioId,
-  );
-  if (scenarios.length !== 1) return undefined;
-  const scenario = scenarios[0]!;
+  // A stale gate/confirmation index cannot supply the first matching
+  // component, scenario or causal-link owner to the published finding.
+  // Use the exact scope used by the canonical PROVE gate.
+  const owned = uniqueGameplayCausalLinkScope(graph, causalLinkId);
+  if (owned === undefined) return undefined;
+  const { link, scenario } = owned;
 
   const subjectIds = [...new Set(link.subjectIds)].sort();
   const componentIds = [...new Set(link.componentIds)].sort();
@@ -229,10 +224,9 @@ export function projectReadyAuditIssues(
   return sortIssues(
     gate.resolutions
       .filter((resolution) => {
-        const link = graph.causalLinks.find(
-          (item) =>
-            item.id === resolution.causalLinkId,
-        );
+        const link = uniqueGameplayCausalLinkScope(
+          graph, resolution.causalLinkId,
+        )?.link;
         return (
         ready.has(resolution.causalLinkId) &&
         resolution.disposition === "CONFIRMED_DEFECT_READY" &&

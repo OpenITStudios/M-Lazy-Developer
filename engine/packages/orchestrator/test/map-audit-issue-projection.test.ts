@@ -642,6 +642,45 @@ describe("map audit issue projection", () => {
     expect(projectReadyAuditIssues(duplicateScenario, gate)).toEqual([]);
     expect(projectAllNeedValidationAuditIssues(duplicateScenario, unfinished))
       .toEqual([]);
+
+    // A stale confirmation index must not relabel graph identity ambiguity
+    // as a gameplay NEED_VALIDATION finding. A different arena/component can
+    // have its own proof but cannot borrow the same generated component ID.
+    const arenaOwner = {
+      id: "runtime:arena", label: "Arena source owner",
+      kind: "state" as const, technicalRole: "admission source",
+      gameplayPurpose: "Enter arena", evidenceIds: ["world:arena-count"],
+      usedByScenarioIds: ["scenario:capacity"], orphan: false,
+    };
+    const duplicatedComponent: GameplayScenarioGraph = {
+      ...graph,
+      components: [arenaOwner, {
+        ...arenaOwner, label: "Unrelated arena writer with the same ID",
+      }],
+    };
+    expect(projectionContext(duplicatedComponent, "link:capacity", []))
+      .toBeUndefined();
+    expect(assessGameplayDefectResolutionGate(duplicatedComponent).status)
+      .toBe("BLOCKED");
+    expect(projectReadyAuditIssues(duplicatedComponent, gate))
+      .toEqual([]);
+    expect(projectAllNeedValidationAuditIssues(duplicatedComponent, unfinished))
+      .toEqual([]);
+
+    // Whole-map identity remains unresolved, but unrelated graph-component
+    // duplicates must not hide a correctly scoped independent finding.
+    const unrelatedComponentDuplicate: GameplayScenarioGraph = {
+      ...graph,
+      components: [arenaOwner, {
+        ...arenaOwner, id: "component:unrelated",
+      }, {
+        ...arenaOwner, id: "component:unrelated",
+        label: "Other independent duplicate",
+      }],
+    };
+    expect(projectAllNeedValidationAuditIssues(
+      unrelatedComponentDuplicate, unfinished,
+    ).map(item => item.causalLinkId)).toEqual(["link:capacity"]);
   });
 
 

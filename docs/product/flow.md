@@ -303,9 +303,14 @@ duplicate evidence, component, causal-link or scenario IDs cannot close an
 ownership question. The canonical Scenario Graph identity check prevents
 ambiguous components from satisfying raw Discovery ownership, closing
 Scenario Closure, or promoting PROVEN Map Audit findings while unrelated
-independently scoped source evidence remains navigable. Discovery challenges
-remain source-analysis debt, not automatic
-BUGs, player reachability, or Minecraft runtime proof.
+independently scoped source evidence remains navigable. The same *exact
+link + scenario + component scope* is now required by Defect Resolution,
+minimum-sufficient PROVE, both PROVEN/NEED_VALIDATION report projections,
+and admission of model responses (including responses with zero cited
+evidence). A stale confirmation index cannot turn ambiguous graph ownership
+into a provisional player-facing defect. Discovery challenges remain
+source-analysis debt, not automatic BUGs, player reachability, or Minecraft
+runtime proof.
 
 `modelTaskPackets` derive conditional context from the **current,
 explicit** Knowledge Catalog and developer-reference snapshot. A

@@ -376,6 +376,44 @@ export function ambiguousGameplayGraphIds(
   };
 }
 
+/**
+ * The single source-scoped owner check for a causal link. A duplicate graph
+ * component makes ONLY its own scenario/link scope ambiguous, not independent
+ * causal scopes in other mechanics. These identities are selected-source
+ * navigation and proof prerequisites, never Minecraft runtime observations.
+ *
+ * Pass a precomputed graph ambiguity receipt when resolving many links in
+ * one gate evaluation; it must come from this same immutable graph.
+ */
+export function uniqueGameplayCausalLinkScope(
+  graph: GameplayScenarioGraph,
+  causalLinkId: string,
+  ambiguous: ReturnType<typeof ambiguousGameplayGraphIds> =
+    ambiguousGameplayGraphIds(graph),
+): {
+  readonly link: GameplayCausalLink;
+  readonly scenario: GameplayScenario;
+} | undefined {
+  if (ambiguous.causalLinkIds.includes(causalLinkId)) return undefined;
+  const links = graph.causalLinks.filter(link => link.id === causalLinkId);
+  if (links.length !== 1) return undefined;
+  const link = links[0]!;
+  if (ambiguous.scenarioIds.includes(link.scenarioId)) return undefined;
+  const scenarios = graph.scenarios.filter(item => item.id === link.scenarioId);
+  if (scenarios.length !== 1) return undefined;
+  const scenario = scenarios[0]!;
+  const ambiguousComponents = new Set(ambiguous.componentIds);
+  const scopeIds = [
+    ...scenario.componentIds,
+    ...link.componentIds,
+    link.fromComponentId,
+    link.toComponentId,
+    ...link.impactPathComponentIds,
+  ];
+  if (scopeIds.some(id => ambiguousComponents.has(id))) return undefined;
+  return { link, scenario };
+}
+
 export type GameplayScenarioClosureStatus =
   | "CLOSED"
   | "PARTIAL"

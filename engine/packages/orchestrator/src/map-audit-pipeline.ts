@@ -34,6 +34,7 @@ import {
 } from "./reporting/report-defect-collector.js";
 import {
   deriveGameplayArchitectureNavigation,
+  uniqueGameplayCausalLinkScope,
   type GameplayArchitectureNavigation,
 } from "./inspection/gameplay-scenario-model.js";
 import type {
@@ -1149,8 +1150,6 @@ export function applySelectedMapAuditModelResponses(input: {
   const graph = audit.inspection.hiddenGameplayDefects.scenarioAudit.graph;
   const byTask = new Map(audit.modelTaskPackets
     .map((task) => [task.id, task] as const));
-  const byLink = new Map(graph.causalLinks
-    .map((link) => [link.id, link] as const));
   const seenTasks = new Set<string>();
   const seenLinks = new Set<string>();
   const candidateResolutions = new Map(
@@ -1185,10 +1184,13 @@ export function applySelectedMapAuditModelResponses(input: {
         answer.taskId,
       );
     }
-    const link = byLink.get(task.causalLinkId);
+    // Model narrative cannot choose a component identity that canonical
+    // Scenario Closure/PROVE has already found ambiguous. This check must
+    // occur even when the model supplies no evidence IDs.
+    const link = uniqueGameplayCausalLinkScope(
+      graph, task.causalLinkId,
+    )?.link;
     if (!link ||
-        graph.causalLinks.filter((item) => item.id === task.causalLinkId).length !== 1 ||
-        graph.scenarios.filter((item) => item.id === link.scenarioId).length !== 1 ||
         !["CONTRADICTED", "RUNTIME_BLOCKED", "DETECTION_GAP"]
           .includes(link.status) ||
         (resolution.scenarioId !== undefined &&

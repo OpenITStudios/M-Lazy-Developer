@@ -529,5 +529,45 @@ describe("PROVE model evidence handoff", () => {
         }],
       },
     })).toThrow(/ambiguous causal scope/);
+
+    // Model response with ZERO claimed evidence must also fail when the
+    // selected causal link shares its component ID with another owner.
+    // Earlier code admitted the empty list and tried to continue a blocked
+    // graph, rather than rejecting its ambiguous proof subject.
+    const arenaOwner = {
+      id: "runtime:arena", label: "Arena state owner",
+      kind: "state" as const, technicalRole: "arena",
+      gameplayPurpose: "Admission", evidenceIds: [ownId],
+      usedByScenarioIds: [scenarioId], orphan: false,
+    };
+    const duplicateComponent = {
+      ...audit,
+      inspection: { hiddenGameplayDefects: {
+        scenarioAudit: {
+          graph: {
+            ...graph,
+            components: [arenaOwner, {
+              ...arenaOwner, label: "Another component with this source ID",
+            }],
+          },
+          defectResolution: gate,
+        },
+      } },
+    } as unknown as SelectedMapAuditRun;
+    expect(() => applySelectedMapAuditModelResponses({
+      audit: duplicateComponent,
+      responses: {
+        ...responses,
+        resolutions: [{
+          taskId: task!.id,
+          resolution: {
+            causalLinkId: id,
+            scenarioId,
+            disposition: "COUNTERPROOF_SEARCH_REQUIRED" as const,
+            evidenceIds: [],
+          },
+        }],
+      },
+    })).toThrow(/ambiguous causal scope/);
   });
 });
