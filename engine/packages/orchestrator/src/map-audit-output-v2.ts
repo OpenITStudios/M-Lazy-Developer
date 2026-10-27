@@ -247,8 +247,9 @@ export interface MapAuditOutputV2 {
      * Discovery A2. Optional for existing V2 readers; never game or bug proof.
      */
     readonly unresolvedSourceLinkIds?: readonly string[];
-    /** Bounded source-only unresolved deferred mutations from the existing
-     * Arena Lifecycle owner, NOT observed callbacks or reportable bugs.
+    /** Bounded source-only deferred mutation candidates from the existing
+     * Arena Lifecycle owner. These investigative leads are NOT included in
+     * unresolved.total/status, never proof-gated audit obligations or BUGs.
      * Optional so existing V2 consumers remain valid.
      */
     readonly deferredMutationOwnership?: {
@@ -657,12 +658,9 @@ export function projectMapAuditOutputV2(input: {
         (b.source.range?.columnStart ?? 0) ||
       a.callbackRegion.localeCompare(b.callbackRegion) ||
       a.scheduler.localeCompare(b.scheduler));
-  // One source-only question, not one independent audit blocker for EVERY
-  // callback. Preserve exact site count and bounded provenance below; this
-  // never creates a canonical finding, audit obligation or proof receipt.
-  const deferredMutationIds = deferredMutationSources.length > 0
-    ? ["source-only:deferred-mutation-ownership"]
-    : [];
+  // Source-only callback candidates have no admitted gameplay/material
+  // obligation yet. Keep their exact count and source preview separately
+  // without fabricating unresolved proof debt or changing audit readiness.
   const deferredMutationSamples = deferredMutationSources.slice(0, 6).map(item => ({
     scheduler: item.scheduler,
     source: item.source,
@@ -675,7 +673,6 @@ export function projectMapAuditOutputV2(input: {
     ...auditObligationIds,
     ...unknownSurfaceIds,
     ...unresolvedSourceLinkIds,
-    ...deferredMutationIds,
   ]);
   const unresolved = {
     status:

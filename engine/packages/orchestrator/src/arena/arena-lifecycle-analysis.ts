@@ -1557,20 +1557,6 @@ function materialMutationRegions(
   ].sort();
 }
 
-/** Source-only demand: deferred work and at least one material mutation
- * owner somewhere in the selected scripts. Cross-file helper regions can
- * be reached later by the canonical lifecycle graph; no execution is implied.
- * Do not route scheduler-only modules into a heavyweight arena audit.
- */
-export function hasMaterialDeferredLifecycleSurface(
-  scripts: readonly ParsedScriptFile[],
-): boolean {
-  if (!scripts.some(script => script.deferredCallbacks.length > 0)) {
-    return false;
-  }
-  return scripts.some(script => materialMutationRegions(script).length > 0);
-}
-
 function deferredMutationAssessments(
   scripts: readonly ParsedScriptFile[],
   crossFileCalls:

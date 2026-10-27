@@ -330,23 +330,26 @@ TypeScript, Vitest, CI and Minecraft testing remain NOT EXECUTED.
 
 ### Production demand and report visibility for deferred ownership
 
-The existing preflight selects Arena Lifecycle whenever source-authored arena
-authority exists, or when the selected scripts jointly contain deferred
-scheduling and a material mutation surface recognized by the same canonical
-lifecycle analyzer. Scheduler-only scripts remain pruned, and deferred-only
-routing does not imply multi-arena concurrency or automatically activate
-`multiplayer-interleaving`. This is scoped source selection, not a
+The existing preflight selects Arena Lifecycle only where the current map
+has source-authored arena authority (or the requested target explicitly
+requires the domain). A generic scheduler in one module and unrelated
+state writes in another module do NOT establish an arena lifecycle;
+such deferred evidence remains in typed Semantic IR / temporal-ownership
+routing. This prevents unrelated deferred state from being promoted into
+arena lifecycle coverage warnings. It is scoped source routing, not
 runtime or gameplay-availability observation.
 
 The Arena Lifecycle assessment retains the original scheduler SourceRef for
 each reachable material deferred mutation. The existing Map Audit Output V2
 `unresolved` projection includes a bounded preview, exact source locations,
 status, omitted count and total number of still-unproven deferred mutation
-owners. Many source callbacks are summarized as **one** source-only
-uncertainty in the aggregate unresolved index, while
-`deferredMutationOwnership.total` preserves their true authored-site
-count. The brief supplies a bounded source investigation when there is no
-earlier canonical audit obligation. This does not create an audit obligation,
+owners. Source-only callbacks do **not** enter the canonical aggregate
+`unresolved.total` or `unresolved.status` without an independently admitted
+material finding, discovery gap or audit obligation. Their exact count
+remains in `deferredMutationOwnership.total`, with up to six source sites
+in the JSON projection. The brief puts a bounded sample *after* the
+canonical next decision, and a BLOCKED checkpoint takes precedence over
+this optional investigation. This does not create a new audit obligation,
 change admission/honesty/proof decisions, request a test or infer a BUG.
 The same derived data passes through the existing model handoff; no
 additional proof owner, test suite or report pipeline is created.

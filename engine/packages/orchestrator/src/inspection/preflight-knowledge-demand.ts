@@ -13,7 +13,6 @@ import type {
 import {
   isAuthoredSourceContentNode,
 } from "./gameplay-scenario-knowledge.js";
-import { hasMaterialDeferredLifecycleSurface } from "../arena/arena-lifecycle-analysis.js";
 
 export interface PreflightKnowledgeDemandInput {
   readonly intent?: GameplayIntentModel;
@@ -74,19 +73,12 @@ export function derivePreflightKnowledgeDemand(
         !isAuthoredSourceContentNode(node),
     );
 
-  const authoredArenaAuthority = hasAny(
-    input.scripts,
-    (script) => script.arenaAuthorityPaths,
-  );
-  // The arena lifecycle owner also tracks deferred state mutations without
-  // an authored arena membership path (including cross-file helper paths).
-  // Use the SAME mutation surface owner; do not duplicate its kind lists.
-  if (authoredArenaAuthority ||
-      hasMaterialDeferredLifecycleSurface(input.scripts)) {
+  // Arena lifecycle and multiplayer interleaving require actual authored
+  // arena authority. Generic deferred state writes belong to the existing
+  // temporal-ownership/typed-IR source evidence, not an invented arena.
+  // Explicit requiredKnowledgeDomains still work through the Set above.
+  if (hasAny(input.scripts, script => script.arenaAuthorityPaths)) {
     domains.add("arena-lifecycle");
-  }
-  // Only actual authored arena authority routes multiplayer interleaving.
-  if (authoredArenaAuthority) {
     domains.add("multiplayer-interleaving");
   }
 

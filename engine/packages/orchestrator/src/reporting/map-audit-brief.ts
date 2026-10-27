@@ -394,26 +394,17 @@ export function formatSelectedMapAuditBrief(input: {
       "; remaining evidence questions: " + report.unresolved.total +
       ". Neither is a bug verdict.",
   );
-  // Existing JSON report and model handoff now share this same bounded,
-  // unresolved-only lifecycle evidence; no extra diagnosis/bug owner.
+  // Diagnostic source candidates are a separate, optional navigation
+  // preview: do not outrank admitted findings/obligations or inflate the
+  // canonical unresolved count/quality gates.
   const pendingDeferred = report.unresolved.deferredMutationOwnership;
   if (pendingDeferred !== undefined && pendingDeferred.total > 0) {
     out.push(
-      "**Deferred mutation ownership NOT PROVEN:** " +
-        pendingDeferred.total + " source callback(s) require exact owner/" +
-        "generation/guard-path reconciliation. No gameplay BUG or runtime " +
-        "failure is inferred.",
+      "**Deferred source leads (NOT audit blockers):** " +
+        pendingDeferred.total + " authored callback(s) with unproven " +
+        "mutation ownership. These are NOT included in the " +
+        report.unresolved.total + " material unresolved question(s).",
     );
-    for (const item of pendingDeferred.samples.slice(0, 3)) {
-      out.push("- " + item.status + " [" + item.scheduler + "] @ " +
-        concise(item.source.relativePath + ":" +
-          (item.source.range?.lineStart ?? "?") + ":" +
-          (item.source.range?.columnStart ?? "?")) +
-        "; " + concise(item.reason));
-    }
-    if (pendingDeferred.total > 3) out.push(
-      "Further deferred source candidates omitted from immediate decision: " +
-        (pendingDeferred.total - 3) + ".");
   }
   // One selected-source call can have several candidates in attached packs.
   // Show a bounded, stable identity for unresolved source edges near the next
@@ -558,10 +549,11 @@ export function formatSelectedMapAuditBrief(input: {
       "**Deciding evidence:** " + concise(pendingFindings[0]!.missingProof ??
         pendingFindings[0]!.validationReason ?? "not identified"),
     );
-  } else if (pendingDeferred !== undefined && pendingDeferred.total > 0) {
+  } else if (pendingDeferred !== undefined && pendingDeferred.total > 0 &&
+             report.control.status !== "BLOCKED") {
     // This is NOT a new obligation/task or permission for execution.
-    // Give a useful next SOURCE check when only source guard candidates
-    // remain, instead of claiming there is no outstanding question.
+    // A canonical BLOCKED stage still takes precedence over optional
+    // source-only work that cannot close audit proof.
     const first = pendingDeferred.samples[0];
     out.push(
       "**Next source-only check (NOT an admitted audit obligation):** " +
@@ -582,6 +574,22 @@ export function formatSelectedMapAuditBrief(input: {
           ? "Current stage is blocked; no bounded source task was produced."
           : "No pending model task is present in this view."),
     );
+  }
+  // Preserve a small exact-site navigation view AFTER the canonical next
+  // decision. Additional sites remain in the canonical inspection result.
+  if (pendingDeferred !== undefined && pendingDeferred.total > 0) {
+    out.push("", "### Deferred callback source leads (NOT GAMEPLAY PROOF)");
+    for (const item of pendingDeferred.samples.slice(0, 3)) {
+      out.push("- " + item.status + " [" + item.scheduler + "] @ " +
+        concise(item.source.relativePath + ":" +
+          (item.source.range?.lineStart ?? "?") + ":" +
+          (item.source.range?.columnStart ?? "?")) +
+        "; " + concise(item.reason));
+    }
+    if (pendingDeferred.total > 3) {
+      out.push("Additional source candidates omitted from the brief: " +
+        (pendingDeferred.total - 3) + ".");
+    }
   }
   // Existing analyzer observations are investigative leads, not BUG proof.
   // Keep material selector risks visible before verbose source navigation.
