@@ -1,10 +1,8 @@
-# ChatGPT Chat source/dependency transfer only. Never run the map audit or test suite here.
+# Manual source/dependency transfer only. Never run the map audit or test suite here.
+# Automatic push, PR and schedule triggers remain disabled on Local.
 name: Package Source Snapshot
 
 on:
-  push:
-    branches:
-      - Local
   workflow_dispatch:
 
 permissions:
