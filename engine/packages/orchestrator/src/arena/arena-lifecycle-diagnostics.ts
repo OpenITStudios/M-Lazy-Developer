@@ -51,6 +51,8 @@ export function arenaLifecycleDiagnostics(
           lifecycle.unresolved,
         deferredSourceGuardCandidates:
           lifecycle.sourceGuardCandidateDeferredMutations,
+        deferredSourceSnapshotCandidates:
+          lifecycle.sourceSnapshotCandidateDeferredMutations,
         deferredMutationOwnershipUnresolved:
           lifecycle.unresolvedDeferredMutations,
         cleanupAcquiredSurfaces:

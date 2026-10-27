@@ -8,7 +8,7 @@ import type {
 import {
   composeQualifiedScriptLifecycleProjectGraph,
 } from "../../../../analyzers/scripts/src/index.js";
-import type { SourceRef } from "../../../project-model/src/index.js";
+import type { SourceRef, SourceGenerationCapture } from "../../../project-model/src/index.js";
 
 export type ArenaLifecycleConvergenceStatus =
   | "proven"
@@ -101,12 +101,14 @@ export interface ArenaDeferredMutationAssessment {
   readonly guardIdentifiers: readonly string[];
   readonly generationGuardSource?: SourceRef;
   readonly generationGuardOperands?: readonly [string, string];
+  readonly sourceGenerationCapture?: SourceGenerationCapture;
   /** Reserved 'protected' requires ownership/capture proof not provided by
    * a lexical guard pattern or region-level reachability alone.
    */
   readonly status:
     | "protected"
     | "source-guard-candidate"
+    | "source-snapshot-candidate"
     | "unresolved";
   readonly reason: string;
 }
@@ -129,6 +131,7 @@ export interface ArenaLifecycleAnalysis {
   /** Source-only guard patterns must never increment protected. */
   protectedDeferredMutations: number;
   sourceGuardCandidateDeferredMutations: number;
+  sourceSnapshotCandidateDeferredMutations: number;
   /** Includes candidate guard patterns without owner/capture proof. */
   unresolvedDeferredMutations: number;
   staleReadySnapshotRisks: number;
@@ -1639,6 +1642,9 @@ function deferredMutationAssessments(
           region === (projectGraph
             ? qualifiedRegion(script, callback.callbackRegion!)
             : callback.callbackRegion));
+      const sourceSnapshotCandidate =
+        sameCallbackGuardCandidate &&
+        callback.sourceGenerationCapture !== undefined;
       output.push({
         scriptId:
           script.identifier,
@@ -1656,12 +1662,19 @@ function deferredMutationAssessments(
         ...(callback.generationGuardOperands === undefined ? {} : {
           generationGuardOperands: callback.generationGuardOperands,
         }),
-        status: sameCallbackGuardCandidate
-          ? "source-guard-candidate"
-          : "unresolved",
-        reason: sameCallbackGuardCandidate
-          ? "A leading mismatch exit is authored, but immutable captured token, same arena/session identity, invalidation, and mutation ownership remain unproven."
-          : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.",
+        ...(callback.sourceGenerationCapture === undefined ? {} : {
+          sourceGenerationCapture: callback.sourceGenerationCapture,
+        }),
+        status: sourceSnapshotCandidate
+          ? "source-snapshot-candidate"
+          : sameCallbackGuardCandidate
+            ? "source-guard-candidate"
+            : "unresolved",
+        reason: sourceSnapshotCandidate
+          ? "Same-block const generation snapshot and leading guard exist; arena/session identity, mutation-target dominance and all-path invalidation remain unproven."
+          : sameCallbackGuardCandidate
+            ? "A leading mismatch exit is authored, but immutable captured token, same arena/session identity, invalidation, and mutation ownership remain unproven."
+            : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.",
       });
     }
   }
@@ -1810,6 +1823,9 @@ export function analyzeArenaLifecycleConvergence(
     sourceGuardCandidateDeferredMutations:
       deferredMutations.filter(item =>
         item.status === "source-guard-candidate").length,
+    sourceSnapshotCandidateDeferredMutations:
+      deferredMutations.filter(item =>
+        item.status === "source-snapshot-candidate").length,
     unresolvedDeferredMutations:
       deferredMutations.filter(item => item.status !== "protected").length,
     staleReadySnapshotRisks:

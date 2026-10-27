@@ -293,6 +293,21 @@ not a finding that the selected Minecraft map is actually broken.
 Existing tests asserting `protected` from guard syntax require reassessment
 when the deferred verification phase is authorized.
 
+### Same-block generation snapshot candidates
+
+The parser now captures a unique direct `const owner` followed by
+`const token = owner.generation` in the scheduler's exact lexical block
+before a direct scheduling call whose callback first checks a token-vs-
+generation mismatch and exits. Mutable or competing declarations, callback
+shadows and non-direct schedulers remain unknown. This record passes
+through the existing Semantic IR, Player Session, Arena Lifecycle and brief.
+
+`source-snapshot-candidate` is NOT `protected`: live selected-arena and
+session identity, the exact mutation target, control-flow dominance, and
+all-path generation invalidation/cancellation remain unproven. Both
+snapshot and guard-only candidates still count toward unresolved deferred
+mutation ownership, and Minecraft execution is not implied.
+
 ### Exact statement order versus generation safety
 
 The canonical script parser records the containing lexical block and

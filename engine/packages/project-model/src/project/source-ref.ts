@@ -22,6 +22,17 @@ export interface SourceSequentialSite {
   readonly stableWorldReceiver?: boolean;
 }
 
+/** Immutable authored generation snapshot before scheduling; this is NOT
+ * a runtime generation or guarded-mutation proof.
+ */
+export interface SourceGenerationCapture {
+  readonly capturedIdentifier: string;
+  readonly ownerExpression: string;
+  readonly generationExpression: string;
+  readonly captureSource: SourceRef;
+  readonly ownerBindingSource: SourceRef;
+}
+
 export type SourceRefPrecision =
   | "file"
   | "line"

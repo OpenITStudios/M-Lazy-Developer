@@ -4,7 +4,7 @@ import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptCon
 export const SCRIPT_PARSER_REVISION =
   "m-bedrock-script-parser:10:typescript:" +
   ts.version;
-import type { SourceRef } from "../../../../packages/project-model/src/index.js";
+import type { SourceRef, SourceGenerationCapture } from "../../../../packages/project-model/src/index.js";
 import type {
   DynamicPropertyAccess,
   ParsedScriptFile,
@@ -492,6 +492,88 @@ function leadingGenerationGuard(
     identifiers: [...identifiers].sort(),
     guardSource: lineSource(file, first.expression, source),
     operands: [comparison.left.getText(file), comparison.right.getText(file)],
+  };
+}
+
+/** Capture only one immutable source-owned generation snapshot in the
+ * scheduler's exact lexical block; reject indirect and shadowed forms.
+ * This does not prove a live current-session or arena owner.
+ */
+function directGenerationSnapshot(
+  schedulerCall: ts.CallExpression,
+  callback: ts.Node | undefined,
+  guard: ReturnType<typeof leadingGenerationGuard>,
+  file: ts.SourceFile,
+  source: SourceRef,
+): SourceGenerationCapture | undefined {
+  if (!guard || !callback ||
+      !(ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))) {
+    return undefined;
+  }
+  const schedulerStatement = schedulerCall.parent;
+  if (!ts.isExpressionStatement(schedulerStatement) ||
+      schedulerStatement.expression !== schedulerCall ||
+      !ts.isBlock(schedulerStatement.parent)) return undefined;
+  const block = schedulerStatement.parent;
+  const schedulerIndex = block.statements.indexOf(schedulerStatement);
+  if (schedulerIndex < 0) return undefined;
+  const identifier = /^[A-Za-z_$][\w$]*$/;
+  const generation = /^([A-Za-z_$][\w$]*)\.(generation|arenaGeneration|generationId)$/i;
+  const [left, right] = guard.operands;
+  const leftGeneration = generation.exec(left);
+  const rightGeneration = generation.exec(right);
+  if (Boolean(leftGeneration) === Boolean(rightGeneration)) return undefined;
+  const live = (leftGeneration ?? rightGeneration)!;
+  const capturedIdentifier = leftGeneration ? right : left;
+  const ownerExpression = live[1]!;
+  const generationExpression = leftGeneration ? left : right;
+  if (!identifier.test(capturedIdentifier) ||
+      capturedIdentifier === ownerExpression) return undefined;
+  if (callback.parameters.some(parameter =>
+    ts.isIdentifier(parameter.name) &&
+    (parameter.name.text === capturedIdentifier ||
+     parameter.name.text === ownerExpression))) return undefined;
+  if (!ts.isBlock(callback.body) ||
+      callback.body.statements.some(statement =>
+        (ts.isVariableStatement(statement) &&
+         statement.declarationList.declarations.some(decl =>
+           ts.isIdentifier(decl.name) &&
+           (decl.name.text === capturedIdentifier ||
+            decl.name.text === ownerExpression))) ||
+        (ts.isFunctionDeclaration(statement) &&
+         (statement.name?.text === capturedIdentifier ||
+          statement.name?.text === ownerExpression)) ||
+        (ts.isClassDeclaration(statement) &&
+         (statement.name?.text === capturedIdentifier ||
+          statement.name?.text === ownerExpression)))) return undefined;
+  const declarations = (name: string) =>
+    block.statements.slice(0, schedulerIndex).flatMap((statement, index) =>
+      ts.isVariableStatement(statement)
+        ? statement.declarationList.declarations.flatMap(decl =>
+            ts.isIdentifier(decl.name) && decl.name.text === name
+              ? [{ statement, declaration: decl, index }] : [])
+        : []);
+  const captures = declarations(capturedIdentifier);
+  const owners = declarations(ownerExpression);
+  if (captures.length !== 1 || owners.length !== 1) return undefined;
+  const capture = captures[0]!, owner = owners[0]!;
+  if (owner.index >= capture.index ||
+      !(owner.statement.declarationList.flags & ts.NodeFlags.Const) ||
+      !(capture.statement.declarationList.flags & ts.NodeFlags.Const) ||
+      !owner.declaration.initializer ||
+      !capture.declaration.initializer ||
+      !ts.isPropertyAccessExpression(capture.declaration.initializer) ||
+      !ts.isIdentifier(capture.declaration.initializer.expression) ||
+      capture.declaration.initializer.expression.text !== ownerExpression ||
+      capture.declaration.initializer.getText(file) !== generationExpression) {
+    return undefined;
+  }
+  return {
+    capturedIdentifier,
+    ownerExpression,
+    generationExpression,
+    captureSource: lineSource(file, capture.declaration, source),
+    ownerBindingSource: lineSource(file, owner.declaration, source),
   };
 }
 
@@ -3592,6 +3674,9 @@ export function parseScriptFile(
                 delayArgument,
               );
         const schedulerSite = sourceSequentialSite(node, file, source);
+        const generationCapture = directGenerationSnapshot(
+          node, callback, generationGuard, file, source,
+        );
         deferredCallbacks.push({
           scheduler,
           source: lineSource(file, node, source),
@@ -3614,6 +3699,9 @@ export function parseScriptFile(
             ? "explicit-generation-check"
             : "unresolved",
           guardIdentifiers,
+          ...(generationCapture === undefined ? {} : {
+            sourceGenerationCapture: generationCapture,
+          }),
           ...(generationGuard === undefined ? {} : {
             generationGuardSource: generationGuard.guardSource,
             ...(generationGuard.operands === undefined ? {} : {

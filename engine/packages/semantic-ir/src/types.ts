@@ -1,6 +1,7 @@
 import type {
   SourceRef,
   SourceSequentialSite,
+  SourceGenerationCapture,
   StateAuthorityContract,
   StateSurfaceRef,
 } from "../../project-model/src/index.js";
@@ -101,6 +102,8 @@ export interface ExecutionEdge {
   generationGuardSource?: SourceRef;
   /** Exact authored operand source spelling, not runtime alias identity. */
   generationGuardOperands?: readonly [string, string];
+  /** The authored const source snapshot, not a runtime identity. */
+  sourceGenerationCapture?: SourceGenerationCapture;
   sourceSequence?: SourceSequentialSite;
 }
 

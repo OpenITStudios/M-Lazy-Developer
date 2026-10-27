@@ -656,6 +656,9 @@ export function buildInspectionSemanticIr(
         ...(callback.generationGuardOperands === undefined ? {} : {
           generationGuardOperands: callback.generationGuardOperands,
         }),
+        ...(callback.sourceGenerationCapture === undefined ? {} : {
+          sourceGenerationCapture: callback.sourceGenerationCapture,
+        }),
       });
     }
 

@@ -252,6 +252,11 @@ export function formatSelectedMapAuditBrief(input: {
                 " [scheduler vs generation write in same block=" +
                 callback.schedulerRelativeToGenerationWrite +
                 "; source order only]" +
+                (callback.sourceGenerationCapture === undefined ? "" :
+                  " [const generation snapshot candidate @ " +
+                  callback.sourceGenerationCapture.captureSource.relativePath + ":" +
+                  (callback.sourceGenerationCapture.captureSource.range?.lineStart ?? "?") +
+                  "; arena/session identity NOT proven]") +
                 (callback.generationGuardSource === undefined
                   ? " [leading generation guard NOT evidenced]"
                   : callback.mentionsSameAuthoredArenaGeneration

@@ -26,6 +26,7 @@ import type {
   RepairSourceTransformHint,
   SourceRef,
   SourceSequentialSite,
+  SourceGenerationCapture,
 } from "../../../../packages/project-model/src/index.js";
 import type { ScriptArgumentKind } from "../../../../packages/compatibility/src/index.js";
 
@@ -360,6 +361,8 @@ export interface ScriptDeferredCallback {
   generationGuardSource?: SourceRef;
   /** Both syntactically authored reference expressions; no alias inference. */
   generationGuardOperands?: readonly [string, string];
+  /** Same-block direct const snapshot candidate; not session safety proof. */
+  sourceGenerationCapture?: SourceGenerationCapture;
   /** Scheduler invocation's exact containing statement/block (if direct).
    * It is not evidence the scheduled callback ran.
    */
