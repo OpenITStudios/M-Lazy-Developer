@@ -223,9 +223,12 @@ export function formatSelectedMapAuditBrief(input: {
               concise(release.arenaExpression + " @ " +
                 release.membershipSource.relativePath + ":" +
                 (release.membershipSource.range?.lineStart ?? "?") +
-                (release.generationInvalidationSource === undefined
-                  ? " [arena generation write not linked]"
-                  : "; same-arena generation write @ " +
+                (release.ambiguousGenerationInvalidationSites
+                  ? " [arena generation writes AMBIGUOUS: " +
+                    release.ambiguousGenerationInvalidationSites + "]"
+                  : release.generationInvalidationSource === undefined
+                    ? " [arena generation write not linked]"
+                    : "; same-arena generation write @ " +
                     release.generationInvalidationSource.relativePath + ":" +
                     (release.generationInvalidationSource.range?.lineStart ?? "?")) +
                 " [same-block lexical order: cache vs membership=" +

@@ -635,6 +635,9 @@ export interface ScriptArenaAuthorityEvidence {
     | "ready-set-snapshot-risk";
   arenaExpression: string;
   subjectExpression?: string;
+  /** Direct binding to the actual helper formal, never name-only. */
+  subjectParameterIndex?: number;
+  subjectParameterCount?: number;
   membershipExpression?: string;
   capacityExpression?: string;
   /** Exact source span of the roster write enforced by this guard. */
@@ -666,6 +669,9 @@ export interface ScriptArenaAuthorityPath {
   parserExecutionRegion?: string;
   membershipCommit?: ScriptArenaAuthorityEvidence;
   membershipRelease?: ScriptArenaAuthorityEvidence;
+  /** Authored source candidates are retained as ambiguous, never first-hit proof. */
+  ambiguousMembershipReleaseSites?: number;
+  ambiguousGenerationInvalidationSites?: number;
   capacityOperand?: ScriptArenaAuthorityEvidence;
   capacityCheck?: ScriptArenaAuthorityEvidence;
   generationOperand?: ScriptArenaAuthorityEvidence;

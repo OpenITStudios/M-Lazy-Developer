@@ -273,6 +273,26 @@ sibling-arena preservation remain `UNKNOWN` without independent proof.
 The analysis does not modify the original map, replace the existing
 arena-lifecycle analyzer, or copy project-specific upstream modules.
 
+### Source ambiguity and deferred safety boundary
+
+The arena authority correlator keeps multiple matching membership releases
+or generation writes ambiguous rather than selecting the first source
+statement in a region. Player Session accepts a helper membership-release
+join only when the release's AST argument resolves to the same unshadowed
+formal parameter index and arity as the selected playerLeave call.
+Same-spelled local identifiers do not establish that binding.
+
+Arena Lifecycle now classifies a leading generation mismatch exit as
+`source-guard-candidate`, not `protected`, even when a material mutation
+occurs in that callback region. Mutable session tokens, owner identity,
+mutation-target scope, generation invalidation on all reset paths, and
+side effects between checks remain unproven. The existing lifecycle
+diagnostic surfaces unresolved deferred mutation safety, including
+authored guard candidates. This is a conservative source-level change,
+not a finding that the selected Minecraft map is actually broken.
+Existing tests asserting `protected` from guard syntax require reassessment
+when the deferred verification phase is authorized.
+
 ### Exact statement order versus generation safety
 
 The canonical script parser records the containing lexical block and

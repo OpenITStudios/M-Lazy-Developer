@@ -27,7 +27,8 @@ export function arenaLifecycleDiagnostics(
   const reviewRisk =
     lifecycle.partial > 0 ||
     cleanup.partial > 0 ||
-    ledgerPartial > 0;
+    ledgerPartial > 0 ||
+    lifecycle.unresolvedDeferredMutations > 0;
 
   if (!strongRisk && !reviewRisk) {
     return [];
@@ -40,7 +41,7 @@ export function arenaLifecycleDiagnostics(
         ? "medium"
         : "minor",
       message:
-        "Arena terminal lifecycle or cleanup convergence is not fully proven for all discovered terminal/resource obligations.",
+        "Arena terminal, cleanup, or deferred mutation ownership remains unproven for the selected source; guard syntax alone is not runtime protection.",
       data: {
         lifecycleTerminalCandidates:
           lifecycle.terminalCandidates,
@@ -48,6 +49,10 @@ export function arenaLifecycleDiagnostics(
           lifecycle.partial,
         lifecycleUnresolved:
           lifecycle.unresolved,
+        deferredSourceGuardCandidates:
+          lifecycle.sourceGuardCandidateDeferredMutations,
+        deferredMutationOwnershipUnresolved:
+          lifecycle.unresolvedDeferredMutations,
         cleanupAcquiredSurfaces:
           cleanup.acquiredSurfaces,
         cleanupPartial:

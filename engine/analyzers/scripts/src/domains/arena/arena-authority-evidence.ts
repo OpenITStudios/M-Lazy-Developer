@@ -261,6 +261,48 @@ function authoredStatementPosition(
   };
 }
 
+/** Exact helper formal binding for membership release; lexical source only.
+ * Reject nested shadows instead of equating same-spelled ID identifiers.
+ */
+function directFormalSubject(
+  statement: ts.Node,
+  subject: ts.Expression,
+): { index: number; count: number } | undefined {
+  if (!ts.isIdentifier(subject)) return undefined;
+  let owner: ts.Node | undefined = statement.parent;
+  while (owner && !ts.isFunctionLike(owner)) owner = owner.parent;
+  if (!owner || !ts.isFunctionLike(owner)) return undefined;
+  const matched = owner.parameters.flatMap((formal, index) =>
+    ts.isIdentifier(formal.name) && formal.name.text === subject.text &&
+    !formal.dotDotDotToken && formal.initializer === undefined
+      ? [index] : []);
+  if (matched.length !== 1) return undefined;
+  const binds = (name: ts.BindingName): boolean =>
+    ts.isIdentifier(name)
+      ? name.text === subject.text
+      : name.elements.some(element =>
+          ts.isBindingElement(element) && binds(element.name));
+  for (let scope: ts.Node | undefined = subject.parent;
+       scope && scope !== owner; scope = scope.parent) {
+    if (ts.isFunctionLike(scope)) return undefined;
+    if (ts.isCatchClause(scope) && scope.variableDeclaration &&
+        binds(scope.variableDeclaration.name)) return undefined;
+    if ((ts.isForStatement(scope) || ts.isForInStatement(scope) ||
+         ts.isForOfStatement(scope)) &&
+        scope.initializer && ts.isVariableDeclarationList(scope.initializer) &&
+        scope.initializer.declarations.some(decl =>
+          binds(decl.name))) return undefined;
+    if (ts.isBlock(scope) && scope.statements.some(item =>
+      (ts.isVariableStatement(item) &&
+       item.declarationList.declarations.some(decl => binds(decl.name))) ||
+      (ts.isFunctionDeclaration(item) && item.name?.text === subject.text) ||
+      (ts.isClassDeclaration(item) && item.name?.text === subject.text))) {
+      return undefined;
+    }
+  }
+  return { index: matched[0]!, count: owner.parameters.length };
+}
+
 function membershipReleaseEvidence(
   node: ts.Node,
   file: ts.SourceFile,
@@ -287,11 +329,16 @@ function membershipReleaseEvidence(
   const subject = call.arguments[0];
   if (!subject) return undefined;
   const statementPosition = authoredStatementPosition(node, file, source);
+  const formal = directFormalSubject(node, subject);
 
   return {
     kind: "membership-release",
     arenaExpression: membership.arenaExpression,
     subjectExpression: subject.getText(file),
+    ...(formal === undefined ? {} : {
+      subjectParameterIndex: formal.index,
+      subjectParameterCount: formal.count,
+    }),
     membershipExpression:
       membership.membershipExpression,
     executionRegion:
@@ -2837,11 +2884,11 @@ export function correlateScriptArenaAuthorityPaths(
           ? first : undefined;
       const membershipCommit = bound?.commit ??
         items.find((item) => item.kind === "membership-commit");
-      const membershipRelease = items.find(
-        (item) =>
-          item.kind ===
-            "membership-release",
+      const membershipReleases = items.filter(
+        item => item.kind === "membership-release",
       );
+      const membershipRelease = membershipReleases.length === 1
+        ? membershipReleases[0] : undefined;
       const capacityOperand = items.find(
         (item) =>
           item.kind ===
@@ -2854,11 +2901,11 @@ export function correlateScriptArenaAuthorityPaths(
           item.kind ===
             "arena-generation-operand",
       );
-      const generationInvalidation = items.find(
-        (item) =>
-          item.kind ===
-            "generation-invalidate",
+      const generationWrites = items.filter(
+        item => item.kind === "generation-invalidate",
       );
+      const generationInvalidation = generationWrites.length === 1
+        ? generationWrites[0] : undefined;
       const startOwnerGuard = items.find(
         (item) =>
           item.kind ===
@@ -2930,6 +2977,12 @@ export function correlateScriptArenaAuthorityPaths(
         ...(membershipRelease
           ? { membershipRelease }
           : {}),
+        ...(membershipReleases.length > 1 ? {
+          ambiguousMembershipReleaseSites: membershipReleases.length,
+        } : {}),
+        ...(generationWrites.length > 1 ? {
+          ambiguousGenerationInvalidationSites: generationWrites.length,
+        } : {}),
         ...(capacityOperand
           ? { capacityOperand }
           : {}),

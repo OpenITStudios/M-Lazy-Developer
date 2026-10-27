@@ -8,6 +8,7 @@ import type {
 import {
   composeQualifiedScriptLifecycleProjectGraph,
 } from "../../../../analyzers/scripts/src/index.js";
+import type { SourceRef } from "../../../project-model/src/index.js";
 
 export type ArenaLifecycleConvergenceStatus =
   | "proven"
@@ -98,9 +99,16 @@ export interface ArenaDeferredMutationAssessment {
   readonly callbackRegion: string;
   readonly mutationRegions: readonly string[];
   readonly guardIdentifiers: readonly string[];
+  readonly generationGuardSource?: SourceRef;
+  readonly generationGuardOperands?: readonly [string, string];
+  /** Reserved 'protected' requires ownership/capture proof not provided by
+   * a lexical guard pattern or region-level reachability alone.
+   */
   readonly status:
     | "protected"
+    | "source-guard-candidate"
     | "unresolved";
+  readonly reason: string;
 }
 
 export interface ArenaLifecycleAnalysis {
@@ -118,7 +126,10 @@ export interface ArenaLifecycleAnalysis {
   unresolvedTerminalRaces: number;
   terminalPrecedenceProven: number;
   terminalPrecedenceUnresolved: number;
+  /** Source-only guard patterns must never increment protected. */
   protectedDeferredMutations: number;
+  sourceGuardCandidateDeferredMutations: number;
+  /** Includes candidate guard patterns without owner/capture proof. */
   unresolvedDeferredMutations: number;
   staleReadySnapshotRisks: number;
   readySetSnapshotRisks: readonly {
@@ -1618,6 +1629,16 @@ function deferredMutationAssessments(
         continue;
       }
 
+      // A leading mismatch return is merely an authored guard candidate:
+      // region co-location cannot prove stable token capture or arena/session
+      // identity, and must never imply a protected gameplay mutation.
+      const sameCallbackGuardCandidate =
+        callback.guardEvidence === "explicit-generation-check" &&
+        callback.generationGuardSource !== undefined &&
+        mutationRegions.every(region =>
+          region === (projectGraph
+            ? qualifiedRegion(script, callback.callbackRegion!)
+            : callback.callbackRegion));
       output.push({
         scriptId:
           script.identifier,
@@ -1629,19 +1650,18 @@ function deferredMutationAssessments(
           [...mutationRegions].sort(),
         guardIdentifiers:
           [...callback.guardIdentifiers],
-        // Only direct callback-region mutations are covered by the
-        // first-statement mismatch early exit. Reachable mutations in
-        // another function need exact guarded call-site provenance, which
-        // this region-level analyzer does not yet carry; do not overclaim.
-        status:
-          callback.guardEvidence === "explicit-generation-check" &&
-          callback.generationGuardSource !== undefined &&
-          mutationRegions.every(region =>
-            region === (projectGraph
-              ? qualifiedRegion(script, callback.callbackRegion!)
-              : callback.callbackRegion))
-            ? "protected"
-            : "unresolved",
+        ...(callback.generationGuardSource === undefined ? {} : {
+          generationGuardSource: callback.generationGuardSource,
+        }),
+        ...(callback.generationGuardOperands === undefined ? {} : {
+          generationGuardOperands: callback.generationGuardOperands,
+        }),
+        status: sameCallbackGuardCandidate
+          ? "source-guard-candidate"
+          : "unresolved",
+        reason: sameCallbackGuardCandidate
+          ? "A leading mismatch exit is authored, but immutable captured token, same arena/session identity, invalidation, and mutation ownership remain unproven."
+          : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.",
       });
     }
   }
@@ -1786,17 +1806,12 @@ export function analyzeArenaLifecycleConvergence(
             "unresolved",
       ).length,
     protectedDeferredMutations:
-      deferredMutations.filter(
-        (item) =>
-          item.status ===
-            "protected",
-      ).length,
+      deferredMutations.filter(item => item.status === "protected").length,
+    sourceGuardCandidateDeferredMutations:
+      deferredMutations.filter(item =>
+        item.status === "source-guard-candidate").length,
     unresolvedDeferredMutations:
-      deferredMutations.filter(
-        (item) =>
-          item.status ===
-            "unresolved",
-      ).length,
+      deferredMutations.filter(item => item.status !== "protected").length,
     staleReadySnapshotRisks:
       readySetSnapshotRisks.length,
     readySetSnapshotRisks,

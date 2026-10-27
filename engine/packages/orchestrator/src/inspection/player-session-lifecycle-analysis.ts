@@ -31,6 +31,7 @@ export type PlayerSessionSourceSite = NonNullable<
     readonly membershipSource: SourceRef;
     readonly generationExpression?: string;
     readonly generationInvalidationSource?: SourceRef;
+    readonly ambiguousGenerationInvalidationSites?: number;
     /** Relative direct-statement order ONLY when all sites have the same
      * exact containing block. Different branches stay unknown.
      */
@@ -215,7 +216,11 @@ export function analyzePlayerSessionLifecycle(
               path.membershipRelease.source.artifactId === script.source.artifactId &&
               path.membershipRelease.source.relativePath ===
                 target.helperTarget.relativePath &&
+              path.membershipRelease.subjectParameterIndex === site.argumentIndex &&
+              path.membershipRelease.subjectParameterCount === site.argumentCount &&
               directDeletes.some(deletion =>
+                deletion.parameterIndex === path.membershipRelease!.subjectParameterIndex &&
+                deletion.parameterCount === path.membershipRelease!.subjectParameterCount &&
                 deletion.parameterName === path.membershipRelease!.subjectExpression))
           : [];
         const arenaReleaseSites = candidateArenaPaths.map(path => {
@@ -241,6 +246,10 @@ export function analyzePlayerSessionLifecycle(
           return {
             arenaExpression: path.arenaExpression,
             membershipSource: release.source,
+            ...(path.ambiguousGenerationInvalidationSites === undefined ? {} : {
+              ambiguousGenerationInvalidationSites:
+                path.ambiguousGenerationInvalidationSites,
+            }),
             ...(generation?.generationExpression === undefined ? {} : {
               generationExpression: generation.generationExpression,
               generationInvalidationSource: generation.source,
