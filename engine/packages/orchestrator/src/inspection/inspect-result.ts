@@ -310,6 +310,7 @@ export function buildInspectionResult(
     scriptSafeConfig,
     worldRuleAuthority,
     playerCapabilitySurfaces,
+    playerSessionLifecycle,
     clientMutationReconciliation,
     capabilityMutationFootprint,
     progressionActorAccounting,
@@ -708,6 +709,7 @@ export function buildInspectionResult(
     scriptSpatial,
     worldRuleAuthority,
     playerCapabilitySurfaces,
+    playerSessionLifecycle,
     clientMutationReconciliation,
     capabilityMutationFootprint,
     ...(spatialAuthority === undefined

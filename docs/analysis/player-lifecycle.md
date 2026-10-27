@@ -206,3 +206,31 @@ while a typed player alias is still visible. Join, spawn and leave event
 subscriptions require an actual `@minecraft/server` runtime import; source
 presence alone does not establish session cleanup, generation invalidation,
 or post-reconnect state correctness.
+
+### Source-first player ID / initial-spawn investigation (2026-10-27)
+
+The canonical script parser now retains only exact current-map callback
+evidence from imported `world.afterEvents.playerLeave` and `playerSpawn`:
+direct `event.playerId` call arguments; a bounded direct
+`moduleConstMapOrSet.delete(event.playerId)` call when the receiver is a
+unique module-level `new Map` / `new Set`; and explicit reads of the
+callback's `event.initialSpawn` flag. Shadows, arbitrary method names,
+nested callbacks and unrelated user objects cannot manufacture these
+sites. Passing an ID to a helper is NOT evidence of that helper's cleanup;
+one direct delete is NOT proof all session caches were evicted.
+
+The existing `analyzePlayerSessionLifecycle()` owner is now consumed by the
+production `analyzeInspectionRuntimeState()` stage using the selected
+artifact's parsed scripts; its source-only summary flows through
+`InspectDirectoryResult.playerSessionLifecycle` into the existing
+`--brief` formatter. No new game-audit entrypoint, engine proof gate,
+cache manager or external code was installed. A textual arena authority
+in `world.getPlayers()` is a candidate partition, not proof that its
+result or later mutations exclude sibling arenas.
+
+The developer's `bedrock-entity-lifecycle` guidance and Skills Probe P53
+source demonstrate player-ID-keyed ephemeral collections, leave eviction,
+initial-spawn invalidation and different respawn behavior. P53's Node
+reports do **not** establish Minecraft event delivery or multiplayer
+correctness: its engine/multiclient checks remain pending. No Minecraft,
+TypeScript, Vitest or CI execution is implied by this source change.

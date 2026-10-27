@@ -555,14 +555,14 @@ function worldPlayerEnumerationObservation(
       authorityPartitioned
         ? "arena-local"
         : "world-global",
-    status:
-      authorityPartitioned
-        ? "isolated"
-        : "partition-proof-required",
+    // Source mention of arena authority is a filter CANDIDATE, not a proof
+    // that queried players belong to this one arena or that later mutation
+    // uses that same filtered result. Never close multiplayer isolation here.
+    status: "partition-proof-required",
     reason:
       authorityPartitioned
-        ? "World player enumeration is explicitly filtered by the authored arena authority expression."
-        : "Arena flow enumerates world players without proving arena partitioning. Downstream player/tag/state mutations must prove an arena filter or arena-context proxy before isolation can close.",
+        ? "The authored world-player query references an arena authority expression, but player membership, distinct arena IDs and downstream mutation ownership remain unverified. This is a source partition candidate, not isolation proof."
+        : "Arena flow enumerates world players without proving arena partitioning. Downstream player/tag/state mutations must prove an arena filter or arena-context proxy before isolation can close."
   };
 }
 

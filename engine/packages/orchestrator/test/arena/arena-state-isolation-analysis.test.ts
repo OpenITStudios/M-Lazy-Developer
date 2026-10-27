@@ -551,7 +551,7 @@ describe("arena state isolation analysis", () => {
     });
   });
 
-  it("accepts arena-keyed world player queries as isolated", () => {
+  it("treats arena-keyed world player queries as candidates pending isolation proof", () => {
     const script = parseScriptFile(
       "main",
       [
@@ -577,7 +577,7 @@ describe("arena state isolation analysis", () => {
       ),
     ).toMatchObject({
       scope: "arena-local",
-      status: "isolated",
+      status: "partition-proof-required",
     });
   });
 

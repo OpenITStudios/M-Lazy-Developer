@@ -38,6 +38,7 @@ import { analyzeInventoryContract } from "./inventory-contract-analysis.js";
 import { analyzeInventoryRestoreOwnership } from "./inventory-restore-ownership-analysis.js";
 import { analyzeCombatLifecycle } from "./combat-lifecycle-analysis.js";
 import { analyzeCombatBehaviorContract } from "./combat-contract-analysis.js";
+import { analyzePlayerSessionLifecycle } from "./player-session-lifecycle-analysis.js";
 import { analyzeChunkLifecycle } from "./chunk-lifecycle-analysis.js";
 import { analyzePersistenceSource } from "./persistence-source-analysis.js";
 import { analyzeRewardSources } from "./reward-source-analysis.js";
@@ -203,6 +204,9 @@ export function analyzeInspectionRuntimeState(
 
   const parsedScriptModels =
     input.parsedScripts.map((item) => item.parsed);
+  // One canonical player lifecycle projection for the selected source,
+  // independent of knowledge-domain demand and never runtime proof.
+  const playerSessionLifecycle = analyzePlayerSessionLifecycle(parsedScriptModels);
   const worldRuleAuthority =
     analyzeWorldRuleAuthority(
       input.parsedScripts.map((item) => ({
@@ -846,6 +850,7 @@ export function analyzeInspectionRuntimeState(
     preflightKnowledgeDemand,
     worldRuleAuthority,
     playerCapabilitySurfaces,
+    playerSessionLifecycle,
     clientMutationReconciliation,
     entityAiStack,
     entityPopulation,

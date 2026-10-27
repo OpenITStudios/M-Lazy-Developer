@@ -2474,6 +2474,101 @@ export function parseScriptFile(
     };
   };
 
+  // Developer Skills / Probe P53 distinguish leave.playerId from a Player
+  // object and initialSpawn from death respawn. Evidence is per exact
+  // imported-world callback and never a claim the callback was delivered.
+  const modulePlayerCollections = new Set<string>();
+  if (!moduleBindings.has("Map") && !moduleBindings.has("Set")) {
+    for (const statement of file.statements) {
+      if (!ts.isVariableStatement(statement) ||
+          !(statement.declarationList.flags & ts.NodeFlags.Const)) continue;
+      for (const decl of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(decl.name) ||
+            !decl.initializer || !ts.isNewExpression(decl.initializer) ||
+            !ts.isIdentifier(decl.initializer.expression) ||
+            !["Map", "Set"].includes(decl.initializer.expression.text) ||
+            !uniqueModuleBinding(decl.name.text)) continue;
+        modulePlayerCollections.add(decl.name.text);
+      }
+    }
+  }
+  const playerSessionSites = (
+    callback: ts.Node | undefined,
+    eventName: string,
+  ): NonNullable<ScriptEventSubscription["playerSessionSites"]> => {
+    if (!(eventName === "playerLeave" || eventName === "playerSpawn") ||
+        !callback ||
+        !(ts.isArrowFunction(callback) ||
+          ts.isFunctionExpression(callback) ||
+          ts.isFunctionDeclaration(callback)) ||
+        callback.parameters.length !== 1 ||
+        !ts.isIdentifier(callback.parameters[0]!.name) ||
+        !callback.body) return [];
+    const paramDecl = callback.parameters[0]!.name;
+    if (!ts.isIdentifier(paramDecl)) return [];
+    const param = paramDecl.text;
+    const body = callback.body;
+    const sites: NonNullable<ScriptEventSubscription["playerSessionSites"]>[number][] = [];
+    const shadowedParam = (id: ts.Identifier): boolean => {
+      let current: ts.Node | undefined = id.parent;
+      while (current && current !== callback) {
+        if (ts.isBlock(current) && current.statements.some(statement =>
+          ts.isVariableStatement(statement) &&
+          statement.declarationList.declarations.some(decl =>
+            bindsName(decl.name, param)))) return true;
+        if (ts.isCatchClause(current) && current.variableDeclaration &&
+            bindsName(current.variableDeclaration.name, param)) return true;
+        current = current.parent;
+      }
+      return current !== callback;
+    };
+    const eventMember = (expr: ts.Expression, member: string): boolean =>
+      ts.isPropertyAccessExpression(expr) &&
+      ts.isIdentifier(expr.expression) &&
+      expr.expression.text === param &&
+      expr.name.text === member &&
+      !shadowedParam(expr.expression);
+    const scan = (node: ts.Node): void => {
+      // A nested closure might run later and cannot prove this handler's
+      // immediate source behavior.
+      if (ts.isFunctionLike(node)) return;
+      if (eventName === "playerSpawn" &&
+          ts.isPropertyAccessExpression(node) &&
+          eventMember(node, "initialSpawn") &&
+          !(ts.isBinaryExpression(node.parent) &&
+            node.parent.left === node &&
+            node.parent.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+            node.parent.operatorToken.kind <= ts.SyntaxKind.LastAssignment)) {
+        sites.push({
+          kind: "spawn-initial-flag-read",
+          source: lineSource(file, node, source),
+        });
+      }
+      if (eventName === "playerLeave" &&
+          ts.isCallExpression(node) &&
+          node.arguments.some(arg => eventMember(arg, "playerId"))) {
+        const callee = node.expression;
+        const directDelete = ts.isPropertyAccessExpression(callee) &&
+          callee.name.text === "delete" &&
+          ts.isIdentifier(callee.expression) &&
+          modulePlayerCollections.has(callee.expression.text) &&
+          !isShadowed(callee.expression) &&
+          node.arguments.length > 0 &&
+          eventMember(node.arguments[0]!, "playerId");
+        sites.push({
+          kind: directDelete ? "leave-direct-cache-delete" : "leave-id-argument",
+          source: lineSource(file, node, source),
+          ...(directDelete && ts.isPropertyAccessExpression(callee) &&
+              ts.isIdentifier(callee.expression)
+            ? { collection: callee.expression.text } : {}),
+        });
+      }
+      ts.forEachChild(node, scan);
+    };
+    scan(body);
+    return sites;
+  };
+
   const imports: ScriptImport[] = [];
   const events: ScriptEventSubscription[] = [];
   const dynamicProperties: DynamicPropertyAccess[] = [];
@@ -3512,6 +3607,10 @@ export function parseScriptFile(
               normalizedPhase === "afterEvents" && event === "scriptEventReceive"
             ? scriptEventIdGuard(guardedCallback)
             : undefined;
+          const sessionSites = normalizedRoot === "world" &&
+              normalizedPhase === "afterEvents"
+            ? playerSessionSites(guardedCallback, event)
+            : [];
           events.push({
             root: normalizedRoot,
             phase: normalizedPhase,
@@ -3532,6 +3631,7 @@ export function parseScriptFile(
                 : {}),
             source: eventSource,
             ...(eventIdGuard === undefined ? {} : { eventIdGuard }),
+            ...(sessionSites.length === 0 ? {} : { playerSessionSites: sessionSites }),
           });
           capabilities.push({
             capability: "event-subscription",

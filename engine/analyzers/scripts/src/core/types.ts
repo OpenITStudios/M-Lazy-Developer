@@ -118,6 +118,15 @@ export interface ScriptEventSubscription {
     readonly source: SourceRef;
     readonly syntax: "if-event-id-strict-neq-return";
   };
+  /** Authored callback evidence only: not cache eviction or spawn success. */
+  playerSessionSites?: readonly {
+    readonly kind:
+      | "leave-id-argument"
+      | "leave-direct-cache-delete"
+      | "spawn-initial-flag-read";
+    readonly source: SourceRef;
+    readonly collection?: string;
+  }[];
   source: SourceRef;
 }
 

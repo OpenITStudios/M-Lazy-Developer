@@ -173,6 +173,8 @@ export interface InspectDirectoryResult {
   scriptSpatial: ScriptSpatialAnalysis;
   worldRuleAuthority: WorldRuleAuthorityAnalysis;
   playerCapabilitySurfaces: PlayerCapabilitySurfaceAnalysis;
+  /** Source-only player lifecycle observations, not a tested reconnect. */
+  playerSessionLifecycle?: import("../inspection/player-session-lifecycle-analysis.js").PlayerSessionLifecycleAnalysis;
   clientMutationReconciliation: ClientMutationReconciliationAnalysis;
   capabilityMutationFootprint: CapabilityMutationFootprintAnalysis;
   spatialAuthority?: SpatialAuthorityCoverageReport;

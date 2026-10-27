@@ -33,6 +33,8 @@ export function formatSelectedMapAuditBrief(input: {
   readonly scriptSourceMapNavigation?: readonly import(
     "../inspection/inspect-source-index.js"
   ).InspectionScriptSourceMapNavigation[];
+  /** Selected-source player lifecycle projection, not live session proof. */
+  readonly playerSessionLifecycle?: import("../inspection/player-session-lifecycle-analysis.js").PlayerSessionLifecycleAnalysis;
   readonly modelTaskPackets: readonly AuditModelTaskPacket[];
   /** Existing admitted BUG root candidates; absent outside a full audit run. */
   readonly candidateGroups?: readonly ReadyAuditCandidateGroup[];
@@ -154,6 +156,45 @@ export function formatSelectedMapAuditBrief(input: {
         : "See independently grounded win/lose conditions; runtime NOT proven."),
     "",
   ];
+  const playerSession = input.playerSessionLifecycle;
+  if (playerSession && (
+      playerSession.playerJoinSubscriptions +
+      playerSession.playerSpawnSubscriptions +
+      playerSession.playerLeaveSubscriptions > 0 ||
+      playerSession.persistentPlayerStateAccesses > 0)) {
+    out.push(
+      "## Player Session Source (NOT gameplay proof)",
+      "Author-owned event subscriptions: join " +
+        playerSession.playerJoinSubscriptions + ", spawn " +
+        playerSession.playerSpawnSubscriptions + ", leave " +
+        playerSession.playerLeaveSubscriptions + ".",
+      "Player dynamic-property API sites: " +
+        playerSession.persistentPlayerStateAccesses +
+        "; authored leave playerId call arguments: " +
+        playerSession.leaveIdArgumentSites +
+        "; directly named Map/Set.delete(playerId) sites: " +
+        playerSession.directLeaveCacheDeleteSites +
+        "; initialSpawn flag read sites: " +
+        playerSession.spawnInitialFlagReadSites + ".",
+      "Leave cleanup: " + playerSession.leaveCleanupStatus +
+        "; session readiness: " + playerSession.sessionReadinessStatus +
+        ". Direct source statements do NOT prove every cache was evicted, " +
+        "that a callback executed, or that respawn retained the intended locks/cooldowns.",
+    );
+    for (const site of playerSession.playerSessionSourceSites.slice(0, 4)) {
+      out.push("- " + site.kind +
+        (site.collection === undefined ? "" : " [" + concise(site.collection) + "]") +
+        ": " + concise(site.source.relativePath + ":" +
+          (site.source.range?.lineStart ?? "?") +
+          (site.source.range?.columnStart === undefined
+            ? "" : ":" + site.source.range.columnStart)));
+    }
+    if (playerSession.omittedPlayerSessionSourceSites > 0) {
+      out.push("Additional source sites omitted: " +
+        playerSession.omittedPlayerSessionSourceSites + ".");
+    }
+    out.push("");
+  }
   // Preserve non-generic, authored locale wording as a source cue BEFORE
   // listing inferred mechanics. The original text and file/line are owned
   // by the canonical Gameplay Intent evidence, not a report-side classifier.
