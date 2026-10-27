@@ -2544,6 +2544,7 @@ export function parseScriptFile(
         !formal.dotDotDotToken && formal.initializer === undefined
           ? [index] : []);
       if (matched.length !== 1 || !formalStable(key.text)) continue;
+      const site = sourceSequentialSite(call, file, source);
       moduleCollectionDeletes.push({
         callableSource: lineSource(file, helper, source),
         source: lineSource(file, call, source),
@@ -2551,6 +2552,7 @@ export function parseScriptFile(
         parameterName: key.text,
         parameterIndex: matched[0]!,
         parameterCount: helper.parameters.length,
+        ...(site === undefined ? {} : { sourceSequence: site }),
       });
     }
   };
@@ -3589,10 +3591,12 @@ export function parseScriptFile(
             : numericLiteralValue(
                 delayArgument,
               );
+        const schedulerSite = sourceSequentialSite(node, file, source);
         deferredCallbacks.push({
           scheduler,
           source: lineSource(file, node, source),
           callerRegion: localExecutionRegionId(node, file),
+          ...(schedulerSite === undefined ? {} : { sourceSequence: schedulerSite }),
           ...(callback
             ? {
                 callbackRegion: callbackExecutionRegionId(callback, file),

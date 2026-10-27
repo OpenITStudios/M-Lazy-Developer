@@ -2,7 +2,7 @@ import type {
   ParsedScriptFile,
   CrossFileCallEdge,
 } from "../../../../analyzers/scripts/src/index.js";
-import type { SourceRef } from "../../../project-model/src/index.js";
+import type { SourceRef, SourceSequentialSite } from "../../../project-model/src/index.js";
 
 /** A current-artifact call-site witness enriched by the existing exact
  * local/ESM resolver. A resolved helper is NOT proof the helper deletes
@@ -31,6 +31,12 @@ export type PlayerSessionSourceSite = NonNullable<
     readonly membershipSource: SourceRef;
     readonly generationExpression?: string;
     readonly generationInvalidationSource?: SourceRef;
+    /** Relative direct-statement order ONLY when all sites have the same
+     * exact containing block. Different branches stay unknown.
+     */
+    readonly cacheDeleteRelativeToMembership: "before" | "after" | "unknown";
+    readonly generationWriteRelativeToMembership: "before" | "after" | "unknown";
+    readonly generationWriteRelativeToCache: "before" | "after" | "unknown";
   }[];
   readonly omittedHelperArenaReleaseSites?: number;
   /** Scheduler call authored inside the uniquely resolved helper. The
@@ -42,6 +48,10 @@ export type PlayerSessionSourceSite = NonNullable<
     readonly generationGuardSource?: SourceRef;
     readonly generationGuardOperands?: readonly [string, string];
     readonly mentionsSameAuthoredArenaGeneration: boolean;
+    /** Scheduling call relative to the uniquely linked generation write,
+     * source statement order, not delivery/cancellation/guard dominance.
+     */
+    readonly schedulerRelativeToGenerationWrite: "before" | "after" | "unknown";
   }[];
   readonly omittedHelperDeferredWorkSites?: number;
 };
@@ -58,6 +68,19 @@ function exactCallSite(a: SourceRef, b: SourceRef): boolean {
     ar.lineEnd === br.lineEnd &&
     ar.columnStart === br.columnStart &&
     ar.columnEnd === br.columnEnd;
+}
+
+/** Source statement index within exactly one lexical block. Nested if,
+ * loops and other source blocks cannot be ordered by line proximity or
+ * function name. An order never proves an operation was executed.
+ */
+function sameBlockOrder(
+  a: SourceSequentialSite | undefined,
+  b: SourceSequentialSite | undefined,
+): "before" | "after" | "unknown" {
+  if (!a || !b || !exactCallSite(a.block, b.block) ||
+      a.statementIndex === b.statementIndex) return "unknown";
+  return a.statementIndex < b.statementIndex ? "before" : "after";
 }
 
 
@@ -83,6 +106,10 @@ export interface PlayerSessionLifecycleAnalysis {
    * arena source region. It does not prove session isolation.
    */
   resolvedLeaveHelperGenerationInvalidationPaths: number;
+  /** Three direct cleanup source sites admit a common lexical block/order.
+   * Neither actual execution nor generation-owner identity is proven.
+   */
+  sourceOrderedLeaveCleanupPaths: number;
   /** Schedulers authored directly in resolved playerLeave helpers; never
    * infer callback execution or generation-safe cleanup from the count.
    */
@@ -191,19 +218,41 @@ export function analyzePlayerSessionLifecycle(
               directDeletes.some(deletion =>
                 deletion.parameterName === path.membershipRelease!.subjectExpression))
           : [];
-        const arenaReleaseSites = candidateArenaPaths.map(path => ({
-          arenaExpression: path.arenaExpression,
-          membershipSource: path.membershipRelease!.source,
-          ...(path.generationInvalidation?.generationExpression === undefined ||
-              path.generationInvalidation.source.artifactId !==
-                script.source.artifactId ||
-              path.generationInvalidation.source.relativePath !==
-                target.helperTarget.relativePath
-            ? {} : {
-              generationExpression: path.generationInvalidation.generationExpression,
-              generationInvalidationSource: path.generationInvalidation.source,
+        const arenaReleaseSites = candidateArenaPaths.map(path => {
+          const release = path.membershipRelease!;
+          const matchingDeletes = directDeletes.filter(deletion =>
+            deletion.parameterName === release.subjectExpression);
+          // Two matching direct collection deletions can refer to distinct
+          // caches: do not pick an arbitrary one to establish lexical order.
+          const uniqueDelete = matchingDeletes.length === 1
+            ? matchingDeletes[0] : undefined;
+          const directDeleteSequence =
+            uniqueDelete?.sourceSequence?.directCall === true
+              ? uniqueDelete.sourceSequence : undefined;
+          const directReleaseSequence =
+            release.sourceSequence?.directCall === true
+              ? release.sourceSequence : undefined;
+          const generation = path.generationInvalidation?.generationExpression !==
+              undefined && path.generationInvalidation.source.artifactId ===
+              script.source.artifactId &&
+              path.generationInvalidation.source.relativePath ===
+              target.helperTarget.relativePath
+            ? path.generationInvalidation : undefined;
+          return {
+            arenaExpression: path.arenaExpression,
+            membershipSource: release.source,
+            ...(generation?.generationExpression === undefined ? {} : {
+              generationExpression: generation.generationExpression,
+              generationInvalidationSource: generation.source,
             }),
-        }));
+            cacheDeleteRelativeToMembership: sameBlockOrder(
+              directDeleteSequence, directReleaseSequence),
+            generationWriteRelativeToMembership: sameBlockOrder(
+              generation?.sourceSequence, directReleaseSequence),
+            generationWriteRelativeToCache: sameBlockOrder(
+              generation?.sourceSequence, directDeleteSequence),
+          };
+        });
         const deferredWork = owned.length === 1
           ? owned[0]!.deferredCallbacks.filter(callback =>
               callback.callerRegion === target.helperRegion &&
@@ -211,24 +260,41 @@ export function analyzePlayerSessionLifecycle(
               callback.source.relativePath === target.helperTarget.relativePath)
           : [];
         const normalize = (value: string): string => value.replace(/\s+/g, "");
-        const helperDeferredWork = deferredWork.map(callback => ({
-          scheduler: callback.scheduler,
-          source: callback.source,
-          ...(callback.generationGuardSource === undefined ? {} : {
-            generationGuardSource: callback.generationGuardSource,
-          }),
-          ...(callback.generationGuardOperands === undefined ? {} : {
-            generationGuardOperands: callback.generationGuardOperands,
-          }),
-          // A literal operand matching an arena.generation source write is
-          // still NOT proof that the captured token belongs to this session.
-          mentionsSameAuthoredArenaGeneration:
-            callback.generationGuardSource !== undefined &&
-            callback.generationGuardOperands !== undefined &&
-            arenaReleaseSites.some(path => path.generationExpression !== undefined &&
-              callback.generationGuardOperands!.some(operand =>
-                normalize(operand) === normalize(path.generationExpression!))),
-        }));
+        const authoredGenerationPaths = candidateArenaPaths.filter(path =>
+          path.generationInvalidation?.generationExpression !== undefined &&
+          path.generationInvalidation.source.artifactId === script.source.artifactId &&
+          path.generationInvalidation.source.relativePath ===
+            target.helperTarget.relativePath);
+        // A helper touching two different arena generations cannot borrow
+        // one arena's guard or scheduling order to establish another's.
+        const uniqueGeneration = authoredGenerationPaths.length === 1
+          ? authoredGenerationPaths[0]!.generationInvalidation : undefined;
+        const helperDeferredWork = deferredWork.map(callback => {
+          const generation = uniqueGeneration?.generationExpression;
+          const operands = callback.generationGuardOperands;
+          const citedGeneration = generation !== undefined && operands !== undefined &&
+            operands.filter(operand => normalize(operand) === normalize(generation)).length === 1 &&
+            operands.filter(operand => normalize(operand) !== normalize(generation)).length === 1;
+          return {
+            scheduler: callback.scheduler,
+            source: callback.source,
+            ...(callback.generationGuardSource === undefined ? {} : {
+              generationGuardSource: callback.generationGuardSource,
+            }),
+            ...(callback.generationGuardOperands === undefined ? {} : {
+              generationGuardOperands: callback.generationGuardOperands,
+            }),
+            // Exact syntax of an early-exit reference is not a stable
+            // captured token or proof of the selected arena's generation.
+            mentionsSameAuthoredArenaGeneration:
+              callback.guardEvidence === "explicit-generation-check" &&
+              callback.generationGuardSource !== undefined && citedGeneration,
+            schedulerRelativeToGenerationWrite: sameBlockOrder(
+              callback.sourceSequence?.directCall === true
+                ? callback.sourceSequence : undefined,
+              uniqueGeneration?.sourceSequence),
+          };
+        });
         return {
           ...site,
           helperTarget: target.helperTarget,
@@ -269,6 +335,12 @@ export function analyzePlayerSessionLifecycle(
     site.kind === "leave-id-argument" &&
     site.helperArenaReleaseSites?.some(path =>
       path.generationInvalidationSource !== undefined)).length;
+  const sourceOrderedLeaveCleanupPaths = sites.filter(site =>
+    site.kind === "leave-id-argument" &&
+    site.helperArenaReleaseSites?.some(path =>
+      path.cacheDeleteRelativeToMembership !== "unknown" &&
+      path.generationWriteRelativeToMembership !== "unknown" &&
+      path.generationWriteRelativeToCache !== "unknown")).length;
   const resolvedLeaveHelperDeferredWorkPaths = sites.filter(site =>
     site.kind === "leave-id-argument" &&
     (site.helperDeferredWorkSites?.length ?? 0) > 0).length;
@@ -297,6 +369,7 @@ export function analyzePlayerSessionLifecycle(
     resolvedLeaveHelperDeletePaths,
     resolvedLeaveHelperArenaReleasePaths,
     resolvedLeaveHelperGenerationInvalidationPaths,
+    sourceOrderedLeaveCleanupPaths,
     resolvedLeaveHelperDeferredWorkPaths,
     spawnInitialFlagReadSites,
     playerSessionSourceSites: orderedSites.slice(0, 12),

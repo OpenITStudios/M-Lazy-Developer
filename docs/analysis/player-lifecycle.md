@@ -273,6 +273,30 @@ sibling-arena preservation remain `UNKNOWN` without independent proof.
 The analysis does not modify the original map, replace the existing
 arena-lifecycle analyzer, or copy project-specific upstream modules.
 
+### Exact statement order versus generation safety
+
+The canonical script parser records the containing lexical block and
+statement index for direct helper `Map/Set.delete(formal)` calls and
+scheduler invocations. The existing arena-authority extractor now supplies
+the same source positions for membership release and generation
+invalidation. The Player Session projection compares source positions
+**only** inside the exact same artifact/module/block. A deletion in a
+different `if` arm, loop, nested function, or unrelated arena therefore
+has unknown relative order. Multiple matching source deletes or generation
+paths cannot be selected arbitrarily.
+
+Reported `before`/`after` directions are authored statement indices, not
+control-flow dominance: intervening exits, callbacks, mutations, exceptions,
+runtime time of execution and captured generation correctness remain
+unproven. A deferred guard is a source candidate only when the existing
+parser finds its leading generation mismatch exit, and an authored arena
+generation comparison is noted only where one unambiguous path and
+distinct operands are visible. The existing arena-lifecycle analysis
+remains the owner for whether a deferred gameplay mutation has direct
+generation-guard evidence. No new proof owner or test runner is created.
+All TypeScript, Vitest, CI and Minecraft validation remain NOT EXECUTED
+until the user permits them.
+
 The developer's `bedrock-entity-lifecycle` guidance and Skills Probe P53
 source demonstrate player-ID-keyed ephemeral collections, leave eviction,
 initial-spawn invalidation and different respawn behavior. P53's Node

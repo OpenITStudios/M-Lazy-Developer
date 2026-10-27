@@ -2,6 +2,7 @@ import ts from "typescript";
 import { directStatementSequence } from "../../core/statement-sequence.js";
 import type {
   SourceRef,
+  SourceSequentialSite,
 } from "../../../../../packages/project-model/src/index.js";
 import type {
   ScriptArenaAuthorityEvidence,
@@ -238,6 +239,28 @@ function membershipCommitEvidence(
   };
 }
 
+/** Share the canonical direct-statement/block meaning used by the
+ * main script parser. A nested conditional owns its own block; merely
+ * sharing an enclosing function never establishes sequential cleanup.
+ */
+function authoredStatementPosition(
+  statement: ts.Node,
+  file: ts.SourceFile,
+  source: SourceRef,
+): SourceSequentialSite | undefined {
+  if (!ts.isExpressionStatement(statement) || !ts.isBlock(statement.parent)) {
+    return undefined;
+  }
+  const block = statement.parent;
+  const index = block.statements.indexOf(statement);
+  if (index < 0) return undefined;
+  return {
+    block: lineSource(file, block, source),
+    statementIndex: index,
+    directCall: ts.isCallExpression(statement.expression),
+  };
+}
+
 function membershipReleaseEvidence(
   node: ts.Node,
   file: ts.SourceFile,
@@ -263,6 +286,7 @@ function membershipReleaseEvidence(
 
   const subject = call.arguments[0];
   if (!subject) return undefined;
+  const statementPosition = authoredStatementPosition(node, file, source);
 
   return {
     kind: "membership-release",
@@ -273,6 +297,9 @@ function membershipReleaseEvidence(
     executionRegion:
       localExecutionRegionId(node, file),
     source: lineSource(file, node, source),
+    ...(statementPosition === undefined ? {} : {
+      sourceSequence: statementPosition,
+    }),
   };
 }
 
@@ -319,6 +346,7 @@ function generationInvalidationEvidence(
   const sequence = directStatementSequence(
     node, property.owner.getText(file), file, source,
   );
+  const statementPosition = authoredStatementPosition(node, file, source);
   return {
     kind: "generation-invalidate",
     arenaExpression: property.owner.getText(file),
@@ -333,6 +361,9 @@ function generationInvalidationEvidence(
       sequentialBlockSource: sequence.blockSource,
       sequentialPathEvidence: sequence,
     } : {}),
+    ...(statementPosition === undefined ? {} : {
+      sourceSequence: statementPosition,
+    }),
   };
 }
 

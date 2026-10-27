@@ -143,6 +143,10 @@ export interface ScriptSessionHelperCollectionDelete {
   readonly parameterName: string;
   readonly parameterIndex: number;
   readonly parameterCount: number;
+  /** Exact direct expression-statement position in the owning helper block.
+   * Lexical order only; not a dominance or runtime cleanup proof.
+   */
+  readonly sourceSequence?: SourceSequentialSite;
 }
 
 export interface DynamicPropertyAccess {
@@ -356,6 +360,10 @@ export interface ScriptDeferredCallback {
   generationGuardSource?: SourceRef;
   /** Both syntactically authored reference expressions; no alias inference. */
   generationGuardOperands?: readonly [string, string];
+  /** Scheduler invocation's exact containing statement/block (if direct).
+   * It is not evidence the scheduled callback ran.
+   */
+  sourceSequence?: SourceSequentialSite;
   delayTicks?: number;
 }
 
@@ -646,6 +654,8 @@ export interface ScriptArenaAuthorityEvidence {
   /** Present only for an authored direct statement within one lexical block. */
   sequentialBlockSource?: SourceRef;
   sequentialPathEvidence?: ScriptSequentialPathEvidence;
+  /** Direct authored statement index; branch-local blocks are distinct. */
+  sourceSequence?: SourceSequentialSite;
 }
 
 export interface ScriptArenaAuthorityPath {

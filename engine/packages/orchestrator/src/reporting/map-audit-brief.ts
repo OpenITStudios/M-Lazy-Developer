@@ -182,7 +182,9 @@ export function formatSelectedMapAuditBrief(input: {
         playerSession.resolvedLeaveHelperArenaReleasePaths +
         "; same-helper arena generation writes: " +
         playerSession.resolvedLeaveHelperGenerationInvalidationPaths +
-        "; helper paths with deferred scheduling: " +
+        "; helper paths with direct cleanup statement source order: " +
+        playerSession.sourceOrderedLeaveCleanupPaths +
+        " (lexical block order, NOT dominance); helper paths with deferred scheduling: " +
         playerSession.resolvedLeaveHelperDeferredWorkPaths +
         " (source candidates, NOT cleanup proof); initialSpawn flag read sites: " +
         playerSession.spawnInitialFlagReadSites + ".",
@@ -225,7 +227,14 @@ export function formatSelectedMapAuditBrief(input: {
                   ? " [arena generation write not linked]"
                   : "; same-arena generation write @ " +
                     release.generationInvalidationSource.relativePath + ":" +
-                    (release.generationInvalidationSource.range?.lineStart ?? "?"))))
+                    (release.generationInvalidationSource.range?.lineStart ?? "?")) +
+                " [same-block lexical order: cache vs membership=" +
+                release.cacheDeleteRelativeToMembership +
+                ", generation vs membership=" +
+                release.generationWriteRelativeToMembership +
+                ", generation vs cache=" +
+                release.generationWriteRelativeToCache +
+                "; not control-flow or runtime proof]"))
               .join("; ") +
             (site.omittedHelperArenaReleaseSites
               ? " (+" + site.omittedHelperArenaReleaseSites + " more omitted)"
@@ -237,10 +246,13 @@ export function formatSelectedMapAuditBrief(input: {
             site.helperDeferredWorkSites.map(callback =>
               concise(callback.scheduler + " @ " + callback.source.relativePath +
                 ":" + (callback.source.range?.lineStart ?? "?") +
+                " [scheduler vs generation write in same block=" +
+                callback.schedulerRelativeToGenerationWrite +
+                "; source order only]" +
                 (callback.generationGuardSource === undefined
                   ? " [leading generation guard NOT evidenced]"
                   : callback.mentionsSameAuthoredArenaGeneration
-                    ? " [guard cites authored arena generation, identity NOT proven]"
+                    ? " [guard cites one authored arena generation, identity NOT proven]"
                     : " [guard unrelated or arena-generation link UNKNOWN]")))
               .join("; ") +
             (site.omittedHelperDeferredWorkSites
