@@ -205,6 +205,19 @@ idempotence, `system.runInterval` is only a reason to trace an
 effect/guard. None establishes visual failure, data corruption, or lag
 without selected-source and appropriate runtime evidence.
 
+### Source-first persistence owner correction (2026-10-27)
+
+The same script parser already classifies Bedrock dynamic-property methods to
+typed `World`, `Player`, `Entity` and `ItemStack` receivers. Persistence
+scope now consumes that existing typed direct receiver identity rather than
+promoting a variable named `world` or `player` to `exact-receiver`.
+Bounded/mixed receiver evidence remains `unknown`; `ItemStack` is scoped
+separately from entity/player/world. Typed dynamic-property clear, delete
+and enumeration sites can prompt a source-specific owner/recovery
+investigation. No developer ZIP storage preference becomes a general map
+correctness rule, and an authored reset does not prove that reset executed.
+The external Skills Probe evidence remains version-scoped source reference.
+
 ## Why this is separate from the other knowledge owners
 
 - **Source ZIP**: developer statements, example code, prior project surveys,

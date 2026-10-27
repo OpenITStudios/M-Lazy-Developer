@@ -135,6 +135,9 @@ export interface DynamicPropertyAccess {
     comparisonSource: SourceRef;
   };
   receiverHint?: string;
+  /** The parser-classified Script API receiver, never a lexical-name guess. */
+  receiverType?: "World" | "Player" | "Entity" | "ItemStack";
+  receiverInference?: "direct" | "bounded";
   executionRegion?: string;
   source: SourceRef;
   sourceSequence?: SourceSequentialSite;

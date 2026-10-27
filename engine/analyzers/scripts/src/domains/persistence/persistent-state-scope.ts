@@ -5,6 +5,7 @@ import type {
 export type PersistentStateScope =
   | "player"
   | "entity"
+  | "item"
   | "arena"
   | "session"
   | "world"
@@ -35,20 +36,22 @@ export function inferPersistentStateScopes(
 
   return [...byProperty.entries()]
     .map(([propertyId, items]) => {
-      const receiverKinds = items.map((item) => {
-        const receiver = item.receiverHint?.trim().toLowerCase();
-        if (!receiver) return undefined;
-        if (/(?:^|\\.)player$/.test(receiver) ||
-            receiver.includes("player.")) return "player" as const;
-        if (/(?:^|\\.)entity$/.test(receiver) ||
-            receiver.includes("entity.")) return "entity" as const;
-        if (receiver === "world" || receiver.endsWith(".world")) {
-          return "world" as const;
+      // A receiverHint is original source spelling, NOT Script API identity.
+      // An arbitrary object named "world" or "player" must never gain
+      // "exact-receiver" evidence by matching a regex. Use only direct typed
+      // receiver witnesses and abstain on bounded/ambiguous ownership.
+      const receiverKinds = items.map(item => {
+        if (item.receiverInference !== "direct") return undefined;
+        switch (item.receiverType) {
+          case "World": return "world" as const;
+          case "Player": return "player" as const;
+          case "Entity": return "entity" as const;
+          case "ItemStack": return "item" as const;
+          default: return undefined;
         }
-        return undefined;
       });
       const known = [...new Set(receiverKinds.filter(
-        (scope): scope is "player" | "entity" | "world" =>
+        (scope): scope is "player" | "entity" | "item" | "world" =>
           scope !== undefined,
       ))];
 
@@ -77,7 +80,21 @@ export function inferPersistentStateScopes(
         };
       }
 
-      // Only use names when there is no exact receiver evidence.
+      // An actual typed-but-bounded observation blocks naming guesses.
+      // It may be real, but the current source cannot prove a unique scope.
+      if (items.some(item => item.receiverType !== undefined)) {
+        return {
+          propertyId,
+          scope: "unknown" as const,
+          confidence: "unknown" as const,
+          reasons: [
+            "Receiver type is inferred only within bounds or mixed with unknown source; a property key or variable name cannot upgrade ownership proof.",
+          ],
+        };
+      }
+
+      // Only an expressly low-confidence name-pattern suggestion remains
+      // when no typed receiver evidence exists at all.
       if (/arena/i.test(propertyId)) {
         return {
           propertyId,

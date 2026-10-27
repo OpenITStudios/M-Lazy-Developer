@@ -3605,6 +3605,8 @@ export function parseScriptFile(
         const access: DynamicPropertyAccess = {
           operation: dynamicPropertyOperation(method),
           receiverHint: node.expression.expression.getText(file),
+          receiverType: storageOwner,
+          receiverInference: typedStorageCall!.inference,
           executionRegion: localExecutionRegionId(node, file),
           source: lineSource(file, node, source),
           lexicalGuards: lexicalBranchGuards(node, file, source),

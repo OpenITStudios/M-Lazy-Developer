@@ -282,7 +282,11 @@ system.afterEvents.scriptEventReceive.subscribe(() => {});
       }),
     ]));
     expect(parsed.dynamicProperties).toEqual(expect.arrayContaining([
-      expect.objectContaining({ operation: "set", propertyId: "joined" }),
+      expect.objectContaining({
+        operation: "set", propertyId: "joined",
+        receiverType: "Player",
+        receiverInference: expect.stringMatching(/^(direct|bounded)$/),
+      }),
     ]));
   });
 

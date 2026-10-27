@@ -841,7 +841,9 @@
         "setDynamicProperty",
         "getDynamicProperty",
         "scoreboard",
-        "config.ts"
+        "config.ts",
+        "dynamic-property-reset",
+        "dynamic-property-enumerate"
       ],
       "question": "Which actor/session/arena owns the state, how long does it survive, and where is the reset or recovery?",
       "candidateRelations": [
@@ -849,9 +851,9 @@
         "disconnect/reconnect → possible preserve/reset",
         "state write → later read"
       ],
-      "negativeControl": "Scoreboards can legitimately store gameplay state in maps; the author's display-only preference is not universal",
+      "negativeControl": "A world, player, entity or item dynamic-property owner must be established from a typed source site, not a variable name. Scoreboards and non-database-module storage can be intentional in legacy maps; the author's one-store convention is not universal bug proof.",
       "versionApplicability": "NOT_INDEPENDENTLY_VERIFIED",
-      "prohibits": "Do not mark scoreboard storage or a different persistence strategy as defective merely for differing from this author's preference"
+      "prohibits": "Never mark a different persistence strategy or scoreboard as defective based on developer style, infer exact world/player scope from receiverHint strings, or equate an authored clear with completed session reset."
     },
     {
       "id": "developer.hint.profiler.source-hotspots",

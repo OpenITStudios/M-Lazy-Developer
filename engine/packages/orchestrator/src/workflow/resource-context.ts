@@ -369,6 +369,12 @@ export function developerPracticeSignalsFromSemanticIr(
         add(operation.id, operation.source, "getDynamicProperty");
       } else if (operation.operation === "write") {
         add(operation.id, operation.source, "setDynamicProperty");
+      } else if (operation.operation === "delete" ||
+                 operation.operation === "clear") {
+        // Actual typed reset/clear site, not an inferred round reset.
+        add(operation.id, operation.source, "dynamic-property-reset");
+      } else if (operation.operation === "enumerate") {
+        add(operation.id, operation.source, "dynamic-property-enumerate");
       }
     } else if (surface?.kind === "scoreboard") {
       // Scoreboard is technical state, NOT necessarily an economy or score.
