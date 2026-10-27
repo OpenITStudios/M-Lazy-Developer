@@ -23,6 +23,27 @@ export type PlayerSessionSourceSite = NonNullable<
     readonly parameterName: string;
   }[];
   readonly omittedHelperCacheDeleteSites?: number;
+  /** Same-helper, same-parameter source membership release, joined from
+   * the parser's arena authority paths. Not a live identity or safe reset.
+   */
+  readonly helperArenaReleaseSites?: readonly {
+    readonly arenaExpression: string;
+    readonly membershipSource: SourceRef;
+    readonly generationExpression?: string;
+    readonly generationInvalidationSource?: SourceRef;
+  }[];
+  readonly omittedHelperArenaReleaseSites?: number;
+  /** Scheduler call authored inside the uniquely resolved helper. The
+   * leading generation mismatch check is only a source guard candidate.
+   */
+  readonly helperDeferredWorkSites?: readonly {
+    readonly scheduler: ParsedScriptFile["deferredCallbacks"][number]["scheduler"];
+    readonly source: SourceRef;
+    readonly generationGuardSource?: SourceRef;
+    readonly generationGuardOperands?: readonly [string, string];
+    readonly mentionsSameAuthoredArenaGeneration: boolean;
+  }[];
+  readonly omittedHelperDeferredWorkSites?: number;
 };
 
 /** Never match a guessed call by filename or nearby text. */
@@ -54,6 +75,18 @@ export interface PlayerSessionLifecycleAnalysis {
    */
   resolvedLeaveHelperSites: number;
   resolvedLeaveHelperDeletePaths: number;
+  /** A direct helper body releases arena membership with the same parameter
+   * receiving event.playerId. These are source attempts, not runtime facts.
+   */
+  resolvedLeaveHelperArenaReleasePaths: number;
+  /** Of those, authored generation invalidation occurs in the same
+   * arena source region. It does not prove session isolation.
+   */
+  resolvedLeaveHelperGenerationInvalidationPaths: number;
+  /** Schedulers authored directly in resolved playerLeave helpers; never
+   * infer callback execution or generation-safe cleanup from the count.
+   */
+  resolvedLeaveHelperDeferredWorkPaths: number;
   spawnInitialFlagReadSites: number;
   playerSessionSourceSites: readonly PlayerSessionSourceSite[];
   omittedPlayerSessionSourceSites: number;
@@ -111,6 +144,7 @@ export function analyzePlayerSessionLifecycle(
             call.targetSource.relativePath === script.source.relativePath)
           .map(call => ({
             helperTarget: call.targetSource!,
+            helperRegion: call.targetRegion,
             helperResolution: "local" as const,
           }));
         const imported = crossFileCalls
@@ -125,6 +159,7 @@ export function analyzePlayerSessionLifecycle(
             call.targetSource.relativePath === call.targetModule)
           .map(call => ({
             helperTarget: call.targetSource!,
+            helperRegion: call.targetRegion!,
             helperResolution: "imported-esm" as const,
           }));
         // Multiple competing targets or incomplete range = unresolved.
@@ -142,9 +177,62 @@ export function analyzePlayerSessionLifecycle(
               deletion.parameterIndex === site.argumentIndex &&
               deletion.parameterCount === site.argumentCount)
           : [];
+        // The shared identity of an arena cannot be inferred from
+        // source spelling alone. Here we can only correlate the *same*
+        // unshadowed helper formal with the exact arena membership release.
+        const candidateArenaPaths = owned.length === 1
+          ? (owned[0]!.arenaAuthorityPaths ?? []).filter(path =>
+              path.parserExecutionRegion === target.helperRegion &&
+              path.membershipRelease !== undefined &&
+              path.membershipRelease.arenaExpression === path.arenaExpression &&
+              path.membershipRelease.source.artifactId === script.source.artifactId &&
+              path.membershipRelease.source.relativePath ===
+                target.helperTarget.relativePath &&
+              directDeletes.some(deletion =>
+                deletion.parameterName === path.membershipRelease!.subjectExpression))
+          : [];
+        const arenaReleaseSites = candidateArenaPaths.map(path => ({
+          arenaExpression: path.arenaExpression,
+          membershipSource: path.membershipRelease!.source,
+          ...(path.generationInvalidation?.generationExpression === undefined ||
+              path.generationInvalidation.source.artifactId !==
+                script.source.artifactId ||
+              path.generationInvalidation.source.relativePath !==
+                target.helperTarget.relativePath
+            ? {} : {
+              generationExpression: path.generationInvalidation.generationExpression,
+              generationInvalidationSource: path.generationInvalidation.source,
+            }),
+        }));
+        const deferredWork = owned.length === 1
+          ? owned[0]!.deferredCallbacks.filter(callback =>
+              callback.callerRegion === target.helperRegion &&
+              callback.source.artifactId === script.source.artifactId &&
+              callback.source.relativePath === target.helperTarget.relativePath)
+          : [];
+        const normalize = (value: string): string => value.replace(/\s+/g, "");
+        const helperDeferredWork = deferredWork.map(callback => ({
+          scheduler: callback.scheduler,
+          source: callback.source,
+          ...(callback.generationGuardSource === undefined ? {} : {
+            generationGuardSource: callback.generationGuardSource,
+          }),
+          ...(callback.generationGuardOperands === undefined ? {} : {
+            generationGuardOperands: callback.generationGuardOperands,
+          }),
+          // A literal operand matching an arena.generation source write is
+          // still NOT proof that the captured token belongs to this session.
+          mentionsSameAuthoredArenaGeneration:
+            callback.generationGuardSource !== undefined &&
+            callback.generationGuardOperands !== undefined &&
+            arenaReleaseSites.some(path => path.generationExpression !== undefined &&
+              callback.generationGuardOperands!.some(operand =>
+                normalize(operand) === normalize(path.generationExpression!))),
+        }));
         return {
           ...site,
-          ...target,
+          helperTarget: target.helperTarget,
+          helperResolution: target.helperResolution,
           ...(directDeletes.length === 0 ? {} : {
             helperCacheDeleteSites: directDeletes.slice(0, 4).map(deletion => ({
               collection: deletion.collection,
@@ -152,6 +240,14 @@ export function analyzePlayerSessionLifecycle(
               parameterName: deletion.parameterName,
             })),
             omittedHelperCacheDeleteSites: Math.max(0, directDeletes.length - 4),
+          }),
+          ...(arenaReleaseSites.length === 0 ? {} : {
+            helperArenaReleaseSites: arenaReleaseSites.slice(0, 4),
+            omittedHelperArenaReleaseSites: Math.max(0, arenaReleaseSites.length - 4),
+          }),
+          ...(helperDeferredWork.length === 0 ? {} : {
+            helperDeferredWorkSites: helperDeferredWork.slice(0, 4),
+            omittedHelperDeferredWorkSites: Math.max(0, helperDeferredWork.length - 4),
           }),
         };
       })));
@@ -166,6 +262,16 @@ export function analyzePlayerSessionLifecycle(
   const resolvedLeaveHelperDeletePaths = sites.filter(site =>
     site.kind === "leave-id-argument" &&
     (site.helperCacheDeleteSites?.length ?? 0) > 0).length;
+  const resolvedLeaveHelperArenaReleasePaths = sites.filter(site =>
+    site.kind === "leave-id-argument" &&
+    (site.helperArenaReleaseSites?.length ?? 0) > 0).length;
+  const resolvedLeaveHelperGenerationInvalidationPaths = sites.filter(site =>
+    site.kind === "leave-id-argument" &&
+    site.helperArenaReleaseSites?.some(path =>
+      path.generationInvalidationSource !== undefined)).length;
+  const resolvedLeaveHelperDeferredWorkPaths = sites.filter(site =>
+    site.kind === "leave-id-argument" &&
+    (site.helperDeferredWorkSites?.length ?? 0) > 0).length;
   const spawnInitialFlagReadSites = sites.filter(site =>
     site.kind === "spawn-initial-flag-read").length;
   const orderedSites = [...sites].sort((a, b) =>
@@ -189,6 +295,9 @@ export function analyzePlayerSessionLifecycle(
     directLeaveCacheDeleteSites,
     resolvedLeaveHelperSites,
     resolvedLeaveHelperDeletePaths,
+    resolvedLeaveHelperArenaReleasePaths,
+    resolvedLeaveHelperGenerationInvalidationPaths,
+    resolvedLeaveHelperDeferredWorkPaths,
     spawnInitialFlagReadSites,
     playerSessionSourceSites: orderedSites.slice(0, 12),
     omittedPlayerSessionSourceSites: Math.max(0, orderedSites.length - 12),

@@ -250,6 +250,29 @@ existing audit brief reports the matched source location as a **candidate
 deletion call**, never a verified eviction, complete multi-cache cleanup,
 generation invalidation, or player/arena safety proof.
 
+### Player-leave helper, arena generation, and delayed-work boundaries
+
+The production Player Session source projection now correlates the exact
+`event.playerId` helper call to an authored arena membership release
+**only** when the uniquely resolved target's direct module-const
+`Map/Set.delete(formal)` witness receives the same parameter as an
+`arena.members/players.delete(formal)` source statement in the same
+parser-resolved helper region. An `arena.generation` write from that same
+authored arena/region is listed separately, never treated as proof it ran
+before or after another operation. Unknown parameter forwarding, another
+helper, a different region, or a different arena expression cannot close
+the join.
+
+Scheduler sites authored inside that resolved helper are also surfaced,
+with the parser's existing *leading mismatch early-exit* generation-guard
+source when present. Exact syntax matching of a guarded operand against
+the same authored arena generation write is a **source reference candidate**,
+not a valid session-token capture or executed cancellation. The actual
+player object, stale callback generation, active arena membership, and
+sibling-arena preservation remain `UNKNOWN` without independent proof.
+The analysis does not modify the original map, replace the existing
+arena-lifecycle analyzer, or copy project-specific upstream modules.
+
 The developer's `bedrock-entity-lifecycle` guidance and Skills Probe P53
 source demonstrate player-ID-keyed ephemeral collections, leave eviction,
 initial-spawn invalidation and different respawn behavior. P53's Node

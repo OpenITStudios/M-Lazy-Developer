@@ -178,7 +178,13 @@ export function formatSelectedMapAuditBrief(input: {
         playerSession.resolvedLeaveHelperSites +
         "; helper paths with direct Map/Set.delete(formal) source: " +
         playerSession.resolvedLeaveHelperDeletePaths +
-        " (NOT executed eviction); initialSpawn flag read sites: " +
+        "; helper paths with playerId-linked arena membership release: " +
+        playerSession.resolvedLeaveHelperArenaReleasePaths +
+        "; same-helper arena generation writes: " +
+        playerSession.resolvedLeaveHelperGenerationInvalidationPaths +
+        "; helper paths with deferred scheduling: " +
+        playerSession.resolvedLeaveHelperDeferredWorkPaths +
+        " (source candidates, NOT cleanup proof); initialSpawn flag read sites: " +
         playerSession.spawnInitialFlagReadSites + ".",
       "Leave cleanup: " + playerSession.leaveCleanupStatus +
         "; session readiness: " + playerSession.sessionReadinessStatus +
@@ -208,6 +214,39 @@ export function formatSelectedMapAuditBrief(input: {
               ? " (+" + site.omittedHelperCacheDeleteSites + " further sites omitted)"
               : "") +
             " [NOT executed eviction]"
+          : "") +
+        (site.helperArenaReleaseSites?.length
+          ? "; authored arena membership release candidate(s): " +
+            site.helperArenaReleaseSites.map(release =>
+              concise(release.arenaExpression + " @ " +
+                release.membershipSource.relativePath + ":" +
+                (release.membershipSource.range?.lineStart ?? "?") +
+                (release.generationInvalidationSource === undefined
+                  ? " [arena generation write not linked]"
+                  : "; same-arena generation write @ " +
+                    release.generationInvalidationSource.relativePath + ":" +
+                    (release.generationInvalidationSource.range?.lineStart ?? "?"))))
+              .join("; ") +
+            (site.omittedHelperArenaReleaseSites
+              ? " (+" + site.omittedHelperArenaReleaseSites + " more omitted)"
+              : "") +
+            " [NOT runtime or per-arena proof]"
+          : "") +
+        (site.helperDeferredWorkSites?.length
+          ? "; authored deferred work candidate(s): " +
+            site.helperDeferredWorkSites.map(callback =>
+              concise(callback.scheduler + " @ " + callback.source.relativePath +
+                ":" + (callback.source.range?.lineStart ?? "?") +
+                (callback.generationGuardSource === undefined
+                  ? " [leading generation guard NOT evidenced]"
+                  : callback.mentionsSameAuthoredArenaGeneration
+                    ? " [guard cites authored arena generation, identity NOT proven]"
+                    : " [guard unrelated or arena-generation link UNKNOWN]")))
+              .join("; ") +
+            (site.omittedHelperDeferredWorkSites
+              ? " (+" + site.omittedHelperDeferredWorkSites + " more omitted)"
+              : "") +
+            " [NOT scheduled or executed proof]"
           : ""));
     }
     if (playerSession.omittedPlayerSessionSourceSites > 0) {
