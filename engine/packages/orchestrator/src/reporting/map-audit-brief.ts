@@ -558,6 +558,23 @@ export function formatSelectedMapAuditBrief(input: {
       "**Deciding evidence:** " + concise(pendingFindings[0]!.missingProof ??
         pendingFindings[0]!.validationReason ?? "not identified"),
     );
+  } else if (pendingDeferred !== undefined && pendingDeferred.total > 0) {
+    // This is NOT a new obligation/task or permission for execution.
+    // Give a useful next SOURCE check when only source guard candidates
+    // remain, instead of claiming there is no outstanding question.
+    const first = pendingDeferred.samples[0];
+    out.push(
+      "**Next source-only check (NOT an admitted audit obligation):** " +
+        "Trace callback generation capture, its actual mutation owner and " +
+        "all reachable invalidation paths before considering gameplay safety.",
+      ...(first === undefined ? [] : [
+        "**First selected source:** " + concise(
+          first.source.relativePath + ":" +
+          (first.source.range?.lineStart ?? "?")),
+      ]),
+      "**Proof boundary:** Source uncertainty alone cannot establish a BUG " +
+        "or request Minecraft testing.",
+    );
   } else {
     out.push(
       "**Next decision:** " +

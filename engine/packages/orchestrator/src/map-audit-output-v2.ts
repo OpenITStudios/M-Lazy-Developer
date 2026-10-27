@@ -657,13 +657,12 @@ export function projectMapAuditOutputV2(input: {
         (b.source.range?.columnStart ?? 0) ||
       a.callbackRegion.localeCompare(b.callbackRegion) ||
       a.scheduler.localeCompare(b.scheduler));
-  const deferredMutationIds = deferredMutationSources.map(item =>
-    "deferred-mutation:" + JSON.stringify([
-      item.source.artifactId, item.source.relativePath,
-      item.source.range?.lineStart ?? null,
-      item.source.range?.columnStart ?? null,
-      item.callbackRegion, item.scheduler,
-    ]));
+  // One source-only question, not one independent audit blocker for EVERY
+  // callback. Preserve exact site count and bounded provenance below; this
+  // never creates a canonical finding, audit obligation or proof receipt.
+  const deferredMutationIds = deferredMutationSources.length > 0
+    ? ["source-only:deferred-mutation-ownership"]
+    : [];
   const deferredMutationSamples = deferredMutationSources.slice(0, 6).map(item => ({
     scheduler: item.scheduler,
     source: item.source,

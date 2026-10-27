@@ -342,10 +342,14 @@ The Arena Lifecycle assessment retains the original scheduler SourceRef for
 each reachable material deferred mutation. The existing Map Audit Output V2
 `unresolved` projection includes a bounded preview, exact source locations,
 status, omitted count and total number of still-unproven deferred mutation
-owners. The same record appears in the human brief and passes unchanged
-through the existing model handoff. An unresolved source candidate is NOT
-a published BUG, observed failed callback, or an admitted proof obligation;
-no additional proof owner, test suite or report pipeline is created.
+owners. Many source callbacks are summarized as **one** source-only
+uncertainty in the aggregate unresolved index, while
+`deferredMutationOwnership.total` preserves their true authored-site
+count. The brief supplies a bounded source investigation when there is no
+earlier canonical audit obligation. This does not create an audit obligation,
+change admission/honesty/proof decisions, request a test or infer a BUG.
+The same derived data passes through the existing model handoff; no
+additional proof owner, test suite or report pipeline is created.
 
 ### Exact statement order versus generation safety
 

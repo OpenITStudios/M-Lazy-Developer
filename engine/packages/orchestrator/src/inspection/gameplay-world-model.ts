@@ -161,20 +161,19 @@ export interface GameplayWorldModel {
         executionRegion: string;
         snapshotExpression?: string;
       }[];
-      deferredMutations: readonly {
-        scriptId: string;
-        scheduler:
-          | "run"
-          | "runTimeout"
-          | "runInterval"
-          | "runJob";
-        callbackRegion: string;
-        mutationRegions: readonly string[];
-        guardIdentifiers: readonly string[];
-        status:
-          | "protected"
-          | "unresolved";
-      }[];
+      /** Preserve the canonical lifecycle status union, including authored
+       * guard/snapshot candidates. Source evidence is not runtime proof.
+       * A projected subset avoids duplicating the full analyzer model.
+       */
+      deferredMutations: readonly Pick<
+        ArenaLifecycleAnalysis["deferredMutations"][number],
+        | "scriptId"
+        | "scheduler"
+        | "callbackRegion"
+        | "mutationRegions"
+        | "guardIdentifiers"
+        | "status"
+      >[];
       terminalRaces: readonly {
         scriptId: string;
         terminalRegion: string;
