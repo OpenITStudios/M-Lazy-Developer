@@ -12,6 +12,7 @@ import type {
   ScriptCapabilityUse,
   ScriptMethodCall,
   ScriptEventSubscription,
+  ScriptSessionHelperCollectionDelete,
   ScriptEntityEventTrigger,
   ScriptDeferredCallback,
   ScriptLocalFunctionCall,
@@ -2492,6 +2493,74 @@ export function parseScriptFile(
       }
     }
   }
+  // Follow the upstream playerLeave ID lifecycle without promoting a
+  // call to a successful cache eviction. Only a unique top-level callable
+  // and a direct Map/Set.delete(unchanged formal) source site are admitted.
+  const moduleCollectionDeletes: ScriptSessionHelperCollectionDelete[] = [];
+  const collectHelperDeletes = (
+    helper: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  ): void => {
+    const body = helper.body;
+    if (!body || !ts.isBlock(body)) return;
+    const formalStable = (name: string): boolean => {
+      let unstable = false;
+      const scan = (node: ts.Node): void => {
+        if (unstable) return;
+        if ((ts.isVariableDeclaration(node) || ts.isParameter(node)) &&
+            bindsName(node.name, name)) unstable = true;
+        if (ts.isBinaryExpression(node) &&
+            ts.isIdentifier(node.left) && node.left.text === name &&
+            node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+            node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) unstable = true;
+        if ((ts.isForOfStatement(node) || ts.isForInStatement(node)) &&
+            ts.isIdentifier(node.initializer) &&
+            node.initializer.text === name) unstable = true;
+        if ((ts.isPrefixUnaryExpression(node) ||
+             ts.isPostfixUnaryExpression(node)) &&
+            ts.isIdentifier(node.operand) && node.operand.text === name &&
+            (node.operator === ts.SyntaxKind.PlusPlusToken ||
+             node.operator === ts.SyntaxKind.MinusMinusToken)) unstable = true;
+        ts.forEachChild(node, scan);
+      };
+      scan(body);
+      return !unstable;
+    };
+    for (const statement of body.statements) {
+      if (!ts.isExpressionStatement(statement) ||
+          !ts.isCallExpression(statement.expression)) continue;
+      const call = statement.expression;
+      if (!ts.isPropertyAccessExpression(call.expression)) continue;
+      const callee = call.expression;
+      const collection = callee.expression;
+      const key = call.arguments[0];
+      if (callee.name.text !== "delete" ||
+          !ts.isIdentifier(collection) ||
+          !modulePlayerCollections.has(collection.text) ||
+          isShadowed(collection) ||
+          call.arguments.length !== 1 ||
+          !key || !ts.isIdentifier(key)) continue;
+      const matched = helper.parameters.flatMap((formal, index) =>
+        ts.isIdentifier(formal.name) && formal.name.text === key.text &&
+        !formal.dotDotDotToken && formal.initializer === undefined
+          ? [index] : []);
+      if (matched.length !== 1 || !formalStable(key.text)) continue;
+      moduleCollectionDeletes.push({
+        callableSource: lineSource(file, helper, source),
+        source: lineSource(file, call, source),
+        collection: collection.text,
+        parameterName: key.text,
+        parameterIndex: matched[0]!,
+        parameterCount: helper.parameters.length,
+      });
+    }
+  };
+  for (const helper of localCallableDeclarations.values()) {
+    collectHelperDeletes(helper);
+  }
+  for (const [name, helper] of topLevelConstCallbacks) {
+    if (uniqueModuleBinding(name)) collectHelperDeletes(helper);
+  }
+
   const playerSessionSites = (
     callback: ts.Node | undefined,
     eventName: string,
@@ -2544,24 +2613,31 @@ export function parseScriptFile(
           source: lineSource(file, node, source),
         });
       }
-      if (eventName === "playerLeave" &&
-          ts.isCallExpression(node) &&
-          node.arguments.some(arg => eventMember(arg, "playerId"))) {
-        const callee = node.expression;
-        const directDelete = ts.isPropertyAccessExpression(callee) &&
-          callee.name.text === "delete" &&
-          ts.isIdentifier(callee.expression) &&
-          modulePlayerCollections.has(callee.expression.text) &&
-          !isShadowed(callee.expression) &&
-          node.arguments.length > 0 &&
-          eventMember(node.arguments[0]!, "playerId");
-        sites.push({
-          kind: directDelete ? "leave-direct-cache-delete" : "leave-id-argument",
-          source: lineSource(file, node, source),
-          ...(directDelete && ts.isPropertyAccessExpression(callee) &&
-              ts.isIdentifier(callee.expression)
-            ? { collection: callee.expression.text } : {}),
-        });
+      if (eventName === "playerLeave" && ts.isCallExpression(node)) {
+        const idArgumentPositions = node.arguments.flatMap((arg, index) =>
+          eventMember(arg, "playerId") ? [index] : []);
+        if (idArgumentPositions.length > 0) {
+          const callee = node.expression;
+          const directDelete = ts.isPropertyAccessExpression(callee) &&
+            callee.name.text === "delete" &&
+            ts.isIdentifier(callee.expression) &&
+            modulePlayerCollections.has(callee.expression.text) &&
+            !isShadowed(callee.expression) &&
+            node.arguments.length === 1 &&
+            idArgumentPositions.length === 1 &&
+            idArgumentPositions[0] === 0;
+          sites.push({
+            kind: directDelete ? "leave-direct-cache-delete" : "leave-id-argument",
+            source: lineSource(file, node, source),
+            ...(idArgumentPositions.length === 1 ? {
+              argumentIndex: idArgumentPositions[0]!,
+              argumentCount: node.arguments.length,
+            } : {}),
+            ...(directDelete && ts.isPropertyAccessExpression(callee) &&
+                ts.isIdentifier(callee.expression)
+              ? { collection: callee.expression.text } : {}),
+          });
+        }
       }
       ts.forEachChild(node, scan);
     };
@@ -3847,6 +3923,7 @@ export function parseScriptFile(
     ],
     imports,
     events,
+    moduleCollectionDeletes,
     dynamicProperties,
     restrictedMutations,
     deferredCallbacks,

@@ -13,6 +13,16 @@ export type PlayerSessionSourceSite = NonNullable<
 >[number] & {
   readonly helperTarget?: SourceRef;
   readonly helperResolution?: "local" | "imported-esm";
+  /** Direct source call(s) to module-const Map/Set.delete(formal) in the
+   * resolved helper, with exact playerId argument index/arity. This does NOT
+   * prove that the event or helper executed or that every cache was cleared.
+   */
+  readonly helperCacheDeleteSites?: readonly {
+    readonly collection: string;
+    readonly source: SourceRef;
+    readonly parameterName: string;
+  }[];
+  readonly omittedHelperCacheDeleteSites?: number;
 };
 
 /** Never match a guessed call by filename or nearby text. */
@@ -43,6 +53,7 @@ export interface PlayerSessionLifecycleAnalysis {
    * independent of whether that helper actually releases session state.
    */
   resolvedLeaveHelperSites: number;
+  resolvedLeaveHelperDeletePaths: number;
   spawnInitialFlagReadSites: number;
   playerSessionSourceSites: readonly PlayerSessionSourceSite[];
   omittedPlayerSessionSourceSites: number;
@@ -118,9 +129,31 @@ export function analyzePlayerSessionLifecycle(
           }));
         // Multiple competing targets or incomplete range = unresolved.
         const targets = [...local, ...imported];
-        return targets.length === 1
-          ? { ...site, ...targets[0]! }
-          : site;
+        if (targets.length !== 1) return site;
+        const target = targets[0]!;
+        if (site.argumentIndex === undefined ||
+            site.argumentCount === undefined) return { ...site, ...target };
+        const owned = scripts.filter(candidate =>
+          candidate.source.artifactId === script.source.artifactId &&
+          candidate.source.relativePath === target.helperTarget.relativePath);
+        const directDeletes = owned.length === 1
+          ? (owned[0]!.moduleCollectionDeletes ?? []).filter(deletion =>
+              exactCallSite(deletion.callableSource, target.helperTarget) &&
+              deletion.parameterIndex === site.argumentIndex &&
+              deletion.parameterCount === site.argumentCount)
+          : [];
+        return {
+          ...site,
+          ...target,
+          ...(directDeletes.length === 0 ? {} : {
+            helperCacheDeleteSites: directDeletes.slice(0, 4).map(deletion => ({
+              collection: deletion.collection,
+              source: deletion.source,
+              parameterName: deletion.parameterName,
+            })),
+            omittedHelperCacheDeleteSites: Math.max(0, directDeletes.length - 4),
+          }),
+        };
       })));
   const leaveIdArgumentSites = sites.filter(site =>
     site.kind === "leave-id-argument" ||
@@ -130,6 +163,9 @@ export function analyzePlayerSessionLifecycle(
   const resolvedLeaveHelperSites = sites.filter(site =>
     site.kind === "leave-id-argument" &&
     site.helperTarget !== undefined).length;
+  const resolvedLeaveHelperDeletePaths = sites.filter(site =>
+    site.kind === "leave-id-argument" &&
+    (site.helperCacheDeleteSites?.length ?? 0) > 0).length;
   const spawnInitialFlagReadSites = sites.filter(site =>
     site.kind === "spawn-initial-flag-read").length;
   const orderedSites = [...sites].sort((a, b) =>
@@ -152,6 +188,7 @@ export function analyzePlayerSessionLifecycle(
     leaveIdArgumentSites,
     directLeaveCacheDeleteSites,
     resolvedLeaveHelperSites,
+    resolvedLeaveHelperDeletePaths,
     spawnInitialFlagReadSites,
     playerSessionSourceSites: orderedSites.slice(0, 12),
     omittedPlayerSessionSourceSites: Math.max(0, orderedSites.length - 12),

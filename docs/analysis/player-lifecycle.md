@@ -236,6 +236,20 @@ helper targets remain unknown. This is source call topology only: a
 resolved declaration may not delete a single cache entry, invalidate a
 generation or preserve the other arena's active player state.
 
+### Exact helper-body Map/Set deletion source (2026-10-27)
+
+The one script parser also retains direct `Map/Set.delete(formal)` calls in
+unique top-level helpers with a module-const collection and an unreassigned,
+unshadowed helper parameter. The established exact local/ESM call resolver
+joins a `playerLeave` callback to that authored helper deletion only when
+there is a unique source call, a unique direct `event.playerId` argument
+position, and matching callable declaration, parameter position and arity
+in the same selected artifact. Nested closures, unsupported aliases, edited
+parameters, ambiguous targets and unowned collections stay unresolved. The
+existing audit brief reports the matched source location as a **candidate
+deletion call**, never a verified eviction, complete multi-cache cleanup,
+generation invalidation, or player/arena safety proof.
+
 The developer's `bedrock-entity-lifecycle` guidance and Skills Probe P53
 source demonstrate player-ID-keyed ephemeral collections, leave eviction,
 initial-spawn invalidation and different respawn behavior. P53's Node

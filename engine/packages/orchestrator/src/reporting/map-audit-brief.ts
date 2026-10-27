@@ -176,7 +176,9 @@ export function formatSelectedMapAuditBrief(input: {
         playerSession.directLeaveCacheDeleteSites +
         "; source-resolved helper targets receiving playerId: " +
         playerSession.resolvedLeaveHelperSites +
-        " (callee effects NOT proven); initialSpawn flag read sites: " +
+        "; helper paths with direct Map/Set.delete(formal) source: " +
+        playerSession.resolvedLeaveHelperDeletePaths +
+        " (NOT executed eviction); initialSpawn flag read sites: " +
         playerSession.spawnInitialFlagReadSites + ".",
       "Leave cleanup: " + playerSession.leaveCleanupStatus +
         "; session readiness: " + playerSession.sessionReadinessStatus +
@@ -194,7 +196,19 @@ export function formatSelectedMapAuditBrief(input: {
           " → " + site.helperResolution + " helper " +
           concise(site.helperTarget.relativePath + ":" +
             (site.helperTarget.range?.lineStart ?? "?")) +
-          " [source resolution, NOT cleanup proof]"));
+          " [source resolution, NOT cleanup proof]") +
+        (site.helperCacheDeleteSites?.length
+          ? "; authored delete candidate(s): " +
+            site.helperCacheDeleteSites.map(deletion =>
+              concise(deletion.collection + ".delete(" +
+                deletion.parameterName + ") @ " +
+                deletion.source.relativePath + ":" +
+                (deletion.source.range?.lineStart ?? "?"))).join("; ") +
+            (site.omittedHelperCacheDeleteSites
+              ? " (+" + site.omittedHelperCacheDeleteSites + " further sites omitted)"
+              : "") +
+            " [NOT executed eviction]"
+          : ""));
     }
     if (playerSession.omittedPlayerSessionSourceSites > 0) {
       out.push("Additional source sites omitted: " +

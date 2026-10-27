@@ -126,8 +126,23 @@ export interface ScriptEventSubscription {
       | "spawn-initial-flag-read";
     readonly source: SourceRef;
     readonly collection?: string;
+    /** Exactly one direct callback event.playerId argument if known. */
+    readonly argumentIndex?: number;
+    readonly argumentCount?: number;
   }[];
   source: SourceRef;
+}
+
+/** Direct authored Map/Set.delete(formal) within a unique top-level helper,
+ * not an executed eviction, total cache reset, or resolved player identity.
+ */
+export interface ScriptSessionHelperCollectionDelete {
+  readonly callableSource: SourceRef;
+  readonly source: SourceRef;
+  readonly collection: string;
+  readonly parameterName: string;
+  readonly parameterIndex: number;
+  readonly parameterCount: number;
 }
 
 export interface DynamicPropertyAccess {
@@ -733,6 +748,8 @@ export interface ParsedScriptFile {
   persistentReconciliation?: PersistentReconciliationEvidence;
   imports: ScriptImport[];
   events: ScriptEventSubscription[];
+  /** Direct source collection-deletion attempts in unique top-level helpers. */
+  moduleCollectionDeletes?: readonly ScriptSessionHelperCollectionDelete[];
   dynamicProperties: DynamicPropertyAccess[];
   restrictedMutations: RestrictedExecutionMutation[];
   deferredCallbacks: ScriptDeferredCallback[];
