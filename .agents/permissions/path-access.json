@@ -32,6 +32,11 @@
       "testMap": "read"
     },
     {
+      "path": ".agents/schemas/map-audit-output-v2.schema.json",
+      "improveSystem": "read-write",
+      "testMap": "read"
+    },
+    {
       "path": ".agents/skills/**",
       "improveSystem": "read-write",
       "testMap": "read"
