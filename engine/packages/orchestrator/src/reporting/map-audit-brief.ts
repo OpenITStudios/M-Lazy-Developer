@@ -257,6 +257,16 @@ export function formatSelectedMapAuditBrief(input: {
                   callback.sourceGenerationCapture.captureSource.relativePath + ":" +
                   (callback.sourceGenerationCapture.captureSource.range?.lineStart ?? "?") +
                   "; arena/session identity NOT proven]") +
+                (callback.sourceDirectMutationSites?.length
+                  ? " [direct typed mutation candidates: " +
+                    callback.sourceDirectMutationSites.slice(0, 3).map(item =>
+                      item.kind + ":" + item.arenaExpression + " @" +
+                      (item.source.range?.lineStart ?? "?") + "=" +
+                      item.ownerExpressionRelation).join("; ") +
+                    (callback.sourceDirectMutationSites.length > 3
+                      ? "; +" + (callback.sourceDirectMutationSites.length - 3) + " more"
+                      : "") + "; NOT runtime dominance]"
+                  : "") +
                 (callback.generationGuardSource === undefined
                   ? " [leading generation guard NOT evidenced]"
                   : callback.mentionsSameAuthoredArenaGeneration

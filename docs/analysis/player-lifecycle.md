@@ -308,6 +308,26 @@ all-path generation invalidation/cancellation remain unproven. Both
 snapshot and guard-only candidates still count toward unresolved deferred
 mutation ownership, and Minecraft execution is not implied.
 
+### Captured generation versus direct typed mutation source
+
+The canonical arena authority and state-write evidence can now be joined
+to direct expression statements after a callback's leading mismatch guard
+ONLY inside its exact authored callback body. A typed mutation's arena
+expression is compared with the prior same-block `const` owner expression;
+same-authored-expression and different-authored-expression remain distinct.
+Lexical shadowed/nested statements, indirect helpers and unknown side
+effects do not inherit a direct guard or owner identity.
+
+A `source-snapshot-candidate` now additionally requires at least one
+direct typed mutation of the captured authored owner expression and no
+direct different-expression mutation or reachable helper mutation region.
+The source evidence is carried through the existing Semantic IR execution
+edge, Arena Lifecycle diagnostic and Player Session brief. This cannot
+prove live object identity, arbitrary control-flow dominance, actual
+generation invalidation/cancellation or Minecraft gameplay safety.
+Every such candidate remains unresolved for runtime ownership, while
+TypeScript, Vitest, CI and Minecraft testing remain NOT EXECUTED.
+
 ### Exact statement order versus generation safety
 
 The canonical script parser records the containing lexical block and

@@ -226,6 +226,7 @@ function membershipCommitEvidence(
 
   const subject = call.arguments[0];
   if (!subject) return undefined;
+  const sequence = authoredStatementPosition(node, file, source);
 
   return {
     kind: "membership-commit",
@@ -236,6 +237,7 @@ function membershipCommitEvidence(
     executionRegion:
       localExecutionRegionId(node, file),
     source: lineSource(file, node, source),
+    ...(sequence === undefined ? {} : { sourceSequence: sequence }),
   };
 }
 
@@ -2196,6 +2198,7 @@ function startStateCommitEvidence(
     return undefined;
   }
 
+  const sequence = authoredStatementPosition(node, file, source);
   return {
     kind: "start-state-commit",
     arenaExpression:
@@ -2204,11 +2207,8 @@ function startStateCommitEvidence(
       target.text + "=" + state,
     executionRegion:
       localExecutionRegionId(node, file),
-    source: lineSource(
-      file,
-      value.statement,
-      source,
-    ),
+    source: lineSource(file, value.statement, source),
+    ...(sequence === undefined ? {} : { sourceSequence: sequence }),
   };
 }
 

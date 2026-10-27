@@ -49,6 +49,7 @@ export type PlayerSessionSourceSite = NonNullable<
     readonly generationGuardSource?: SourceRef;
     readonly generationGuardOperands?: readonly [string, string];
     readonly sourceGenerationCapture?: ParsedScriptFile["deferredCallbacks"][number]["sourceGenerationCapture"];
+    readonly sourceDirectMutationSites?: ParsedScriptFile["deferredCallbacks"][number]["sourceDirectMutationSites"];
     readonly mentionsSameAuthoredArenaGeneration: boolean;
     /** Scheduling call relative to the uniquely linked generation write,
      * source statement order, not delivery/cancellation/guard dominance.
@@ -296,6 +297,9 @@ export function analyzePlayerSessionLifecycle(
             }),
             ...(callback.sourceGenerationCapture === undefined ? {} : {
               sourceGenerationCapture: callback.sourceGenerationCapture,
+            }),
+            ...(callback.sourceDirectMutationSites === undefined ? {} : {
+              sourceDirectMutationSites: callback.sourceDirectMutationSites,
             }),
             // Exact syntax of an early-exit reference is not a stable
             // captured token or proof of the selected arena's generation.

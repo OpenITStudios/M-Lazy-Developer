@@ -659,6 +659,9 @@ export function buildInspectionSemanticIr(
         ...(callback.sourceGenerationCapture === undefined ? {} : {
           sourceGenerationCapture: callback.sourceGenerationCapture,
         }),
+        ...(callback.sourceDirectMutationSites === undefined ? {} : {
+          sourceDirectMutationSites: callback.sourceDirectMutationSites,
+        }),
       });
     }
 

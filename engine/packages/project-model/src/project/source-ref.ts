@@ -31,6 +31,19 @@ export interface SourceGenerationCapture {
   readonly generationExpression: string;
   readonly captureSource: SourceRef;
   readonly ownerBindingSource: SourceRef;
+  /** Exact direct scheduled callback body lexical-block identity. */
+  readonly callbackBlockSource: SourceRef;
+}
+
+/** Source-owned direct mutation witness, not live game/arena equivalence. */
+export interface SourceGenerationMutationSite {
+  readonly kind: "membership-commit" | "membership-release" |
+    "generation-invalidate" | "start-state-commit" | "state-write";
+  readonly arenaExpression: string;
+  readonly source: SourceRef;
+  readonly statementIndex: number;
+  readonly ownerExpressionRelation:
+    "same-authored-expression" | "different-authored-expression";
 }
 
 export type SourceRefPrecision =

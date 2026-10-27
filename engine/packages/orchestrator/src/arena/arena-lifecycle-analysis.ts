@@ -8,7 +8,9 @@ import type {
 import {
   composeQualifiedScriptLifecycleProjectGraph,
 } from "../../../../analyzers/scripts/src/index.js";
-import type { SourceRef, SourceGenerationCapture } from "../../../project-model/src/index.js";
+import type {
+  SourceRef, SourceGenerationCapture, SourceGenerationMutationSite,
+} from "../../../project-model/src/index.js";
 
 export type ArenaLifecycleConvergenceStatus =
   | "proven"
@@ -98,6 +100,9 @@ export interface ArenaDeferredMutationAssessment {
     | "runJob";
   readonly callbackRegion: string;
   readonly mutationRegions: readonly string[];
+  /** Reachable helper mutations do not inherit the direct callback guard. */
+  readonly indirectMutationRegions: readonly string[];
+  readonly sourceDirectMutationSites?: readonly SourceGenerationMutationSite[];
   readonly guardIdentifiers: readonly string[];
   readonly generationGuardSource?: SourceRef;
   readonly generationGuardOperands?: readonly [string, string];
@@ -132,6 +137,8 @@ export interface ArenaLifecycleAnalysis {
   protectedDeferredMutations: number;
   sourceGuardCandidateDeferredMutations: number;
   sourceSnapshotCandidateDeferredMutations: number;
+  sourceBoundDeferredMutationCandidates: number;
+  indirectDeferredMutationPaths: number;
   /** Includes candidate guard patterns without owner/capture proof. */
   unresolvedDeferredMutations: number;
   staleReadySnapshotRisks: number;
@@ -1642,9 +1649,21 @@ function deferredMutationAssessments(
           region === (projectGraph
             ? qualifiedRegion(script, callback.callbackRegion!)
             : callback.callbackRegion));
+      const sites = callback.sourceDirectMutationSites ?? [];
+      const matchingSites = sites.filter(item =>
+        item.ownerExpressionRelation === "same-authored-expression");
+      const otherSites = sites.filter(item =>
+        item.ownerExpressionRelation === "different-authored-expression");
+      const directRegion = projectGraph
+        ? qualifiedRegion(script, callback.callbackRegion!)
+        : callback.callbackRegion;
+      const indirectMutationRegions = mutationRegions.filter(region =>
+        region !== directRegion);
       const sourceSnapshotCandidate =
         sameCallbackGuardCandidate &&
-        callback.sourceGenerationCapture !== undefined;
+        callback.sourceGenerationCapture !== undefined &&
+        matchingSites.length > 0 && otherSites.length === 0 &&
+        indirectMutationRegions.length === 0;
       output.push({
         scriptId:
           script.identifier,
@@ -1654,6 +1673,8 @@ function deferredMutationAssessments(
           callback.callbackRegion,
         mutationRegions:
           [...mutationRegions].sort(),
+        indirectMutationRegions: [...indirectMutationRegions].sort(),
+        ...(sites.length ? { sourceDirectMutationSites: sites } : {}),
         guardIdentifiers:
           [...callback.guardIdentifiers],
         ...(callback.generationGuardSource === undefined ? {} : {
@@ -1671,10 +1692,14 @@ function deferredMutationAssessments(
             ? "source-guard-candidate"
             : "unresolved",
         reason: sourceSnapshotCandidate
-          ? "Same-block const generation snapshot and leading guard exist; arena/session identity, mutation-target dominance and all-path invalidation remain unproven."
-          : sameCallbackGuardCandidate
-            ? "A leading mismatch exit is authored, but immutable captured token, same arena/session identity, invalidation, and mutation ownership remain unproven."
-            : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.",
+          ? "Direct typed mutation of captured authored owner expression follows the leading guard; runtime identity, untyped effects and all-path invalidation remain unproven."
+          : indirectMutationRegions.length > 0
+            ? "Reachable helper mutations cannot inherit direct callback guard or owner identity without independent proof."
+            : otherSites.length > 0
+              ? "Another direct mutation owner expression exists, so the captured generation does not cover all authored targets."
+              : sameCallbackGuardCandidate
+                ? "Leading generation guard exists but no uniquely source-bound direct mutation target closes the association."
+                : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.",
       });
     }
   }
@@ -1826,6 +1851,13 @@ export function analyzeArenaLifecycleConvergence(
     sourceSnapshotCandidateDeferredMutations:
       deferredMutations.filter(item =>
         item.status === "source-snapshot-candidate").length,
+    sourceBoundDeferredMutationCandidates:
+      deferredMutations.filter(item =>
+        item.sourceDirectMutationSites?.some(site =>
+          site.ownerExpressionRelation === "same-authored-expression")).length,
+    indirectDeferredMutationPaths:
+      deferredMutations.filter(item =>
+        item.indirectMutationRegions.length > 0).length,
     unresolvedDeferredMutations:
       deferredMutations.filter(item => item.status !== "protected").length,
     staleReadySnapshotRisks:

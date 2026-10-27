@@ -4,7 +4,9 @@ import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptCon
 export const SCRIPT_PARSER_REVISION =
   "m-bedrock-script-parser:10:typescript:" +
   ts.version;
-import type { SourceRef, SourceGenerationCapture } from "../../../../packages/project-model/src/index.js";
+import type {
+  SourceRef, SourceGenerationCapture, SourceGenerationMutationSite,
+} from "../../../../packages/project-model/src/index.js";
 import type {
   DynamicPropertyAccess,
   ParsedScriptFile,
@@ -574,6 +576,7 @@ function directGenerationSnapshot(
     generationExpression,
     captureSource: lineSource(file, capture.declaration, source),
     ownerBindingSource: lineSource(file, owner.declaration, source),
+    callbackBlockSource: lineSource(file, callback.body, source),
   };
 }
 
@@ -3437,6 +3440,11 @@ export function parseScriptFile(
             ...target,
             value,
             executionRegion: localExecutionRegionId(node, file),
+            ...(ts.isExpressionStatement(node.parent) &&
+                node.parent.expression === node ? (() => {
+              const site = sourceSequentialSite(node, file, source);
+              return site === undefined ? {} : { sourceSequence: site };
+            })() : {}),
             lexicalGuards: lexicalBranchGuards(node, file, source),
             precedenceGuards: precedingEarlyExitGuards(node, file, source),
             source: lineSource(file, node, source),
@@ -3935,6 +3943,73 @@ export function parseScriptFile(
 
   visit(file);
 
+  // Join the SAME authored arena/state evidence to exact callback block
+  // statement indices after its leading mismatch early return. Neither
+  // naming proximity nor an indirect helper is direct owner evidence.
+  const sameSourceBlock = (a: SourceRef, b: SourceRef): boolean =>
+    a.artifactId === b.artifactId && a.relativePath === b.relativePath &&
+    a.jsonPointer === b.jsonPointer &&
+    a.range?.lineStart !== undefined && b.range?.lineStart !== undefined &&
+    a.range.lineStart === b.range.lineStart &&
+    a.range.lineEnd === b.range.lineEnd &&
+    a.range.columnStart === b.range.columnStart &&
+    a.range.columnEnd === b.range.columnEnd;
+  const boundDeferredCallbacks = deferredCallbacks.map(callback => {
+    const capture = callback.sourceGenerationCapture;
+    if (!capture || !callback.callbackRegion) return callback;
+    const directInCallback = (site: typeof callback.sourceSequence): boolean =>
+      site !== undefined && site.statementIndex > 0 &&
+      sameSourceBlock(site.block, capture.callbackBlockSource);
+    const relation = (owner: string):
+      SourceGenerationMutationSite["ownerExpressionRelation"] =>
+      owner === capture.ownerExpression
+        ? "same-authored-expression" : "different-authored-expression";
+    const arenaSites: SourceGenerationMutationSite[] =
+      arenaAuthorityEvidence.flatMap(item => {
+        if (item.executionRegion !== callback.callbackRegion ||
+            !directInCallback(item.sourceSequence) ||
+            (item.kind !== "membership-commit" &&
+             item.kind !== "membership-release" &&
+             item.kind !== "generation-invalidate" &&
+             item.kind !== "start-state-commit")) return [];
+        return [{
+          kind: item.kind,
+          arenaExpression: item.arenaExpression,
+          source: item.source,
+          statementIndex: item.sourceSequence!.statementIndex,
+          ownerExpressionRelation: relation(item.arenaExpression),
+        }];
+      });
+    const stateSites: SourceGenerationMutationSite[] =
+      stateMutations.flatMap(item => {
+        if (item.executionRegion !== callback.callbackRegion ||
+            !directInCallback(item.sourceSequence)) return [];
+        const owner =
+          /^([A-Za-z_$][\w$]*)\.[A-Za-z_$][\w$]*$/.exec(item.target)?.[1];
+        if (!owner) return [];
+        return [{
+          kind: "state-write" as const,
+          arenaExpression: owner,
+          source: item.source,
+          statementIndex: item.sourceSequence!.statementIndex,
+          ownerExpressionRelation: relation(owner),
+        }];
+      });
+    const sites: SourceGenerationMutationSite[] = [...arenaSites];
+    // A start-state arena write can also appear as generic stateMutation;
+    // retain the domain-owned witness instead of double-counting.
+    for (const state of stateSites) {
+      if (!sites.some(s => s.statementIndex === state.statementIndex &&
+          s.arenaExpression === state.arenaExpression)) sites.push(state);
+    }
+    sites.sort((a, b) =>
+      a.statementIndex - b.statementIndex ||
+      a.arenaExpression.localeCompare(b.arenaExpression) ||
+      a.kind.localeCompare(b.kind));
+    return sites.length
+      ? { ...callback, sourceDirectMutationSites: sites } : callback;
+  });
+
   // Reuse import-bound event ownership from the same parsed source.
   const chunkLifecycleEvidence = deriveScriptChunkLifecycleEvidence(
     text, source, events,
@@ -4018,7 +4093,7 @@ export function parseScriptFile(
     moduleCollectionDeletes,
     dynamicProperties,
     restrictedMutations,
-    deferredCallbacks,
+    deferredCallbacks: boundDeferredCallbacks,
     localFunctionCalls,
     importedCallGuardSites,
     blockMatchGuards,

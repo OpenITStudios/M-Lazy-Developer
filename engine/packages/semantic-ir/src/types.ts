@@ -2,6 +2,7 @@ import type {
   SourceRef,
   SourceSequentialSite,
   SourceGenerationCapture,
+  SourceGenerationMutationSite,
   StateAuthorityContract,
   StateSurfaceRef,
 } from "../../project-model/src/index.js";
@@ -104,6 +105,8 @@ export interface ExecutionEdge {
   generationGuardOperands?: readonly [string, string];
   /** The authored const source snapshot, not a runtime identity. */
   sourceGenerationCapture?: SourceGenerationCapture;
+  /** Direct authored mutation targets, not helper or runtime proof. */
+  sourceDirectMutationSites?: readonly SourceGenerationMutationSite[];
   sourceSequence?: SourceSequentialSite;
 }
 

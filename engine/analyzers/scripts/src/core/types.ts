@@ -27,6 +27,7 @@ import type {
   SourceRef,
   SourceSequentialSite,
   SourceGenerationCapture,
+  SourceGenerationMutationSite,
 } from "../../../../packages/project-model/src/index.js";
 import type { ScriptArgumentKind } from "../../../../packages/compatibility/src/index.js";
 
@@ -363,6 +364,8 @@ export interface ScriptDeferredCallback {
   generationGuardOperands?: readonly [string, string];
   /** Same-block direct const snapshot candidate; not session safety proof. */
   sourceGenerationCapture?: SourceGenerationCapture;
+  /** Typed direct arena/state writes in the exact guarded callback block. */
+  sourceDirectMutationSites?: readonly SourceGenerationMutationSite[];
   /** Scheduler invocation's exact containing statement/block (if direct).
    * It is not evidence the scheduled callback ran.
    */
@@ -463,6 +466,8 @@ export interface ScriptStateMutation {
       };
   executionRegion: string;
   source: SourceRef;
+  /** Source order only for an exact top-level expression statement. */
+  sourceSequence?: SourceSequentialSite;
 }
 
 export interface ScriptTypeProperty {
