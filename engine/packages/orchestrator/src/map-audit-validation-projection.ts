@@ -10,7 +10,6 @@ import type {
 } from "../../diagnostic-reasoning/src/index.js";
 import {
   assessReadyResolutionSaturation,
-  sourceBoundAuditEvidenceIds,
 } from "./map-audit-proof-saturation.js";
 import {
   projectionContext,
@@ -80,6 +79,7 @@ export function projectNeedValidationAuditIssues(
         informationMismatch,
         classification,
         issueType,
+        authorizedEvidenceIds,
       } = context;
 
       const gameplayTrigger =
@@ -113,10 +113,7 @@ export function projectNeedValidationAuditIssues(
       ];
       const counterProofPending = saturation.missingUniversalCriteriaIds
         .includes("counter-proof-cleared");
-      const authorizedEvidenceIds = new Set(
-        sourceBoundAuditEvidenceIds(graph, link.id),
-      );
-
+      // Reuse the exact link-sourced evidence set used for issue taxonomy.
       return [{
         status: "NEED_VALIDATION" as const,
         issueType,

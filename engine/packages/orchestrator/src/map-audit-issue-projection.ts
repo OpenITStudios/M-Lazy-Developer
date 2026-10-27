@@ -155,18 +155,26 @@ export function projectionContext(
     );
     return requirement === undefined ? [] : [requirement.domain];
   });
-  const relatedDelivery =
-    relatedCapabilityDelivery(
-      scenario.label,
-      subjectIds,
-      componentIds,
-      capabilityDelivery,
-    );
+  // A shared subject/arena can participate in several independent causal
+  // links. Only capability evidence bound to THIS exact link may change
+  // BUG vs DESIGN_MISMATCH or assert player-facing information mismatch.
+  // Reuse the same canonical proof/source evidence selector that REPORT
+  // already uses, rather than taking a neighbor's capability by name.
+  const authorizedEvidenceIds = new Set(
+    sourceBoundAuditEvidenceIds(graph, link.id),
+  );
+  const relatedDelivery = relatedCapabilityDelivery(
+    scenario.label,
+    subjectIds,
+    componentIds,
+    capabilityDelivery,
+  ).filter(item =>
+    item.evidenceIds.some(id => authorizedEvidenceIds.has(id)));
   const playerFacingEvidenceIds = [
     ...new Set(
-      relatedDelivery.flatMap(
-        (item) => item.playerFacingEvidenceIds,
-      ),
+      relatedDelivery.flatMap(item =>
+        item.playerFacingEvidenceIds.filter(id =>
+          authorizedEvidenceIds.has(id))),
     ),
   ].sort();
   const classification =
@@ -185,15 +193,15 @@ export function projectionContext(
     knowledgeDomains,
     playerFacingEvidenceIds,
     informationMismatch:
-      relatedDelivery.some(
-        (item) => item.informationMismatch,
-      ),
+      relatedDelivery.some(item => item.informationMismatch) &&
+      playerFacingEvidenceIds.length > 0,
+    authorizedEvidenceIds,
     classification,
     issueType: issueTypeFor(
       scenario.label,
       subjectIds,
       componentIds,
-      capabilityDelivery,
+      relatedDelivery,
     ),
   };
 }
@@ -266,12 +274,10 @@ export function projectReadyAuditIssues(
           informationMismatch,
           classification,
           issueType,
+          authorizedEvidenceIds,
         } = context;
-        // Resolve the permitted evidence set once per finding, rather than
-        // rescanning the canonical graph for every supplied evidence ID.
-        const authorizedEvidenceIds = new Set(
-          sourceBoundAuditEvidenceIds(graph, link.id),
-        );
+        // The canonical proof-bound ID set was computed once while resolving
+        // this link's capability classification; reuse it in REPORT evidence.
         return [{
           status: "PROVEN" as const,
           issueType,
