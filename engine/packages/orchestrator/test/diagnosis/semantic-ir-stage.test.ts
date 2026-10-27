@@ -474,6 +474,44 @@ describe("inspection semantic IR", () => {
     expect(ir.execution.edges.filter(edge => edge.kind === "event-dispatch")).toHaveLength(2);
   });
 
+  it("resolves the native imported Daigon filter only from the selected source", () => {
+    const path = "behavior_packs/a/scripts/";
+    const handler = parseScriptFile("results", [
+      'import { system } from "@minecraft/server";',
+      'import { GAME_RESULTS_EVENT_ID } from "./modules/game-results/game-results-contract.js";',
+      'system.afterEvents.scriptEventReceive.subscribe((event) => {',
+      '  if (event.id !== GAME_RESULTS_EVENT_ID) return;',
+      '  exportStoredResults();',
+      '});',
+    ].join("\n"), { artifactId: "selected", relativePath: path + "results.ts" });
+    const parseContract = (id: string, artifactId = "selected") =>
+      parseScriptFile("contract",
+        'export const GAME_RESULTS_EVENT_ID = "' + id + '";',
+        { artifactId, relativePath: path + "modules/game-results/game-results-contract.ts" });
+    const build = (contract = parseContract("daigon:get_all_scoring")) =>
+      buildInspectionSemanticIr({
+        parsedScripts: [{ parsed: handler }, { parsed: contract }],
+        parsedFunctions: [],
+      });
+    const eventRegion = (contract?: ReturnType<typeof parseContract>) =>
+      build(contract).execution.regions.find(region =>
+        region.label === "system.afterEvents.scriptEventReceive");
+    const event = eventRegion();
+    expect(event?.scriptEventIdRejection).toMatchObject({
+      eventId: "daigon:get_all_scoring",
+      resolution: "unique-imported-literal",
+      valueSource: { relativePath:
+        path + "modules/game-results/game-results-contract.ts" },
+    });
+    expect(developerPracticeSignalsFromSemanticIr(build(), "selected")
+      .some(item => item.signal === "scriptevent:daigon:get_all_scoring"))
+      .toBe(true);
+    expect(eventRegion(parseContract("other:export"))
+      ?.scriptEventIdRejection?.eventId).toBe("other:export");
+    expect(eventRegion(parseContract("daigon:get_all_scoring", "other"))
+      ?.scriptEventIdRejection).toBeUndefined();
+  });
+
   it("preserves distinct subscriptions of the same event within one script", () => {
     const script = parseScriptFile("scripts/main", [
       'import { world } from "@minecraft/server";',

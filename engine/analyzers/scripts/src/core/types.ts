@@ -108,6 +108,16 @@ export interface ScriptEventSubscription {
   executionRegion?: string;
   callbackRegion?: string;
   callbackSource?: SourceRef;
+  /** Exact source-level event ID rejection; neither event delivery nor
+   * imported constant identity is proven by parser syntax alone.
+   */
+  eventIdGuard?: {
+    readonly expression:
+      | { readonly kind: "literal"; readonly value: string }
+      | { readonly kind: "identifier"; readonly name: string };
+    readonly source: SourceRef;
+    readonly syntax: "if-event-id-strict-neq-return";
+  };
   source: SourceRef;
 }
 

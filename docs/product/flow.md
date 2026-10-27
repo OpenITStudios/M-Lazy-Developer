@@ -88,9 +88,10 @@ target and implementation remains a separate step.
 **Current snapshot separation:** all 23 developer skill documents are
 source-reviewed against the v0.27.0 ZIP. The existing sixteen interpretation
 patterns retain their exact selected-source Semantic IR admission. One
-additional, strictly conditional `bedrock-game-results` investigation now
-uses the imported-system `scriptEventReceive` source witness: **17 reviewed
-reference patterns**. Five upstream team/project/testing/release methods
+additional, strictly conditional `bedrock-game-results` investigation
+requires an exact source-owned `scriptEventReceive` rejection guard for
+`daigon:get_all_scoring`, including a uniquely resolved imported constant:
+**17 reviewed reference patterns**. Generic subscriptions do not qualify. Five upstream team/project/testing/release methods
 remain non-audit workflows. The new
 `bedrock-player-attached-particles` method is **technical REFERENCE only,
 not routed to Map Audit**, because no precise supported particle-attachment
@@ -183,7 +184,7 @@ Adopt the **source-reviewed developer's method and its negative controls**, not 
 | `bedrock-git-workflow` | **IMPROVE SYSTEM: IMPLEMENT / COMMIT & STOP** | Pinned GitHub source, cohesive patch, confirmed SHA; no upstream branch/release permission imported. |
 | `bedrock-testing-policy` + Skills Probe | **IMPROVE SYSTEM: VERIFY** and **TEST MAP: TEST** | Focused positive/negative/runtime-boundary reasoning; Probe PASS/FAIL/BLOCKED/PARTIAL and original client/lock are not current-map gameplay proof, and broad CI is not assumed. |
 | `bedrock-release-export` | Existing report/export owners, **TEST MAP: REPORT** when relevant | Keep source and edition/release authority; no automatic release or upload. |
-| `bedrock-game-results` | **TEST MAP: UNDERSTAND / TEST**, conditional source-reference method | Only an imported-system `scriptEventReceive` source witness in a results-related investigation can select the Daigon export *question*. Its specific contract applies only when the selected map expressly adopts Daigon points export; console output and BDS behavior are not inferred. |
+| `bedrock-game-results` | **TEST MAP: UNDERSTAND / TEST**, conditional source-reference method | A typed system `scriptEventReceive` subscriber must have a strict early-return ID filter resolving to `daigon:get_all_scoring`, including the native imported constant. Only a results-related selected-source task can then select the reference question. The map must still expressly adopt Daigon's contract; output or BDS runtime cannot be inferred. |
 | 17 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + scoped current-map typed Semantic IR → relevant Resource Context hints (max two per task), not a global bug-coverage cap or automatic detector. |
 | Un-routed `bedrock-player-attached-particles` | **REFERENCE ONLY** | Preserve scoped Probe negatives; abstain until a precise supported typed source witness exists. |
 

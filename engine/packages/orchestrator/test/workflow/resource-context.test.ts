@@ -496,6 +496,12 @@ describe("source-first Daigon export investigation reference", () => {
     ownerId: "system",
     label: "system.afterEvents.scriptEventReceive",
     source,
+    scriptEventIdRejection: {
+      eventId: "daigon:get_all_scoring",
+      source,
+      valueSource: source,
+      resolution: "inline-literal" as const,
+    },
   };
   const data = {
     authority: "REFERENCE" as const,
@@ -523,7 +529,7 @@ describe("source-first Daigon export investigation reference", () => {
       sourceId: "src.bedrock-game-results",
       status: "SOURCE_REVIEWED" as const,
       domains: ["scoring", "result"],
-      sourceSignals: ["system.afterEvents.scriptEventReceive"],
+      sourceSignals: ["scriptevent:daigon:get_all_scoring"],
       question: "Does an explicitly adopted results export satisfy its contract?",
       candidateRelations: ["subscription to potential export investigation"],
       negativeControl: "A generic event subscriber never proves Daigon scope.",
@@ -545,7 +551,7 @@ describe("source-first Daigon export investigation reference", () => {
       sourceLocators,
     });
 
-  it("routes the reviewed developer question from an exact imported-system IR event", () => {
+  it("routes the reviewed developer question only from an exact authored Daigon event filter", () => {
     const result = context(subscription, ["behavior_packs/demo/scripts/results.ts:12:20"]);
     expect(result?.items.map(item => item.patternId)).toEqual([
       "developer.hint.game-results.daigon-export",
@@ -560,6 +566,14 @@ describe("source-first Daigon export investigation reference", () => {
       { ...subscription, ownerId: "world" },
       { ...subscription, label: "system.afterEvents.anotherEvent" },
       { ...subscription, source: { ...source, artifactId: "other-map" } },
+      { ...subscription, scriptEventIdRejection: undefined },
+      { ...subscription, scriptEventIdRejection: {
+        ...subscription.scriptEventIdRejection, eventId: "other:export",
+      } },
+      { ...subscription, scriptEventIdRejection: {
+        ...subscription.scriptEventIdRejection,
+        valueSource: { ...source, artifactId: "other-map" },
+      } },
     ]) {
       expect(context(event, ["behavior_packs/demo/scripts/results.ts:12:20"])?.items)
         .toEqual([]);

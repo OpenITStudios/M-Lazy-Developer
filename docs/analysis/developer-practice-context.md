@@ -79,8 +79,12 @@ never runtime proof.
 snapshot. The earlier 16 optional interpretation patterns retain their
 source-grounded selection and negative controls. On 2026-10-27 one
 additional, conditional Daigon results-export source question was admitted
-from the original `bedrock-game-results` method with the canonical typed
-`system.afterEvents.scriptEventReceive` witness. This yields **17** source
+from the original `bedrock-game-results` method. Its source-first witness
+now requires a typed system `scriptEventReceive` callback whose first
+strict inequality return filters event.id against the resolved
+`daigon:get_all_scoring` literal. The real developer implementation imports
+the unique exported `GAME_RESULTS_EVENT_ID` from a same-map module; an
+unresolved import or generic subscription cannot select the method. This yields **17** source
 interpretation patterns and **five** workflow-only methods; it adds no
 automatic BUG verdict. The script event alone does not establish a Daigon
 contract, export completion, or missing student points. New skill

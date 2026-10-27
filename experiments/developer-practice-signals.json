@@ -1151,16 +1151,16 @@
         "export"
       ],
       "sourceSignals": [
-        "system.afterEvents.scriptEventReceive"
+        "scriptevent:daigon:get_all_scoring"
       ],
-      "question": "When this map explicitly promises Daigon points export, does its sourced script-event handler follow the original stored-snapshot and canonical [GAME_RESULTS] export contract?",
+      "question": "When this map expressly adopts Daigon points export, does the source-owned event ID filter and stored-results adapter satisfy the original [GAME_RESULTS] contract?",
       "candidateRelations": [
-        "import-bound script-event subscription → conditional results-export investigation",
-        "persisted scoring records → record_id / canonical.score.total / export_summary questions"
+        "exact script-event subscription and resolved daigon:get_all_scoring ID guard → conditional export investigation",
+        "stored result records → stable record_id / canonical.score.total / export_summary questions"
       ],
-      "negativeControl": "A system script-event subscription alone never establishes that a map belongs to Daigon, emits results, or violates any scoring contract; an unrelated map must not be assigned Daigon rules.",
+      "negativeControl": "A generic scriptEventReceive subscription, unresolved imported event ID, or similarly named local variable never establishes Daigon export; an unrelated map is not obliged to export Daigon records.",
       "versionApplicability": "UPSTREAM_DAIGON_CONTRACT_2026-10-14_PROBE_EDUCATION_26.32_NOT_GENERALIZED",
-      "prohibits": "Never report an invalid/missing Daigon export, lost points, or a runtime console failure without an explicit map-specific contract and independently sufficient selected-source or runtime evidence.",
+      "prohibits": "Never infer Daigon contract adoption, console delivery, score loss or a gameplay bug from an event subscription, unresolved ID, source ZIP, or upstream Probe PASS.",
       "referenceCode": {
         "path": "modules/game-results/game-results-contract.ts",
         "sha256": "0fc57cac2d30d7a3bf1c2eeb14146700662cde79eabf94babd7f451f7bdbb7a4",

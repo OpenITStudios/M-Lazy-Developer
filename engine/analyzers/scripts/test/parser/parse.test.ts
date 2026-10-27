@@ -224,6 +224,34 @@ describe("script analyzer", () => {
       .toBeUndefined();
   });
 
+  it("captures a strict source-owned script-event filter, not a generic subscription", () => {
+    const parsed = parseScriptFile("results", [
+      'import { system } from "@minecraft/server";',
+      'import { GAME_RESULTS_EVENT_ID } from "./contract.js";',
+      'system.afterEvents.scriptEventReceive.subscribe((event) => {',
+      '  if (event.id !== GAME_RESULTS_EVENT_ID) return;',
+      '  exportStoredRecords();',
+      '});',
+    ].join("\n"), source);
+    const event = parsed.events.find(item => item.event === "scriptEventReceive");
+    expect(event?.eventIdGuard).toMatchObject({
+      expression: { kind: "identifier", name: "GAME_RESULTS_EVENT_ID" },
+      syntax: "if-event-id-strict-neq-return",
+      source: { artifactId: source.artifactId, relativePath: source.relativePath },
+    });
+    expect(event?.eventIdGuard?.source.range?.lineStart).toBe(4);
+    for (const snippet of [
+      'system.afterEvents.scriptEventReceive.subscribe((event) => { exportStoredRecords(); });',
+      'system.afterEvents.scriptEventReceive.subscribe((event) => { if (event.id === "daigon:get_all_scoring") return; });',
+      'system.afterEvents.scriptEventReceive.subscribe((event) => { if (other.id !== "daigon:get_all_scoring") return; });',
+    ]) {
+      const other = parseScriptFile("other", [
+        'import { system } from "@minecraft/server";', snippet,
+      ].join("\n"), source);
+      expect(other.events[0]?.eventIdGuard).toBeUndefined();
+    }
+  });
+
   it("extracts Minecraft imports, event subscriptions and dynamic properties", () => {
     const parsed = parseScriptFile(
       "scripts/main",

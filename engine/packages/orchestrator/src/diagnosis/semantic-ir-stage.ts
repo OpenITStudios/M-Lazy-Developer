@@ -403,6 +403,69 @@ export function buildInspectionSemanticIr(
     }
   }
 
+  // Resolve the native developer's imported GAME_RESULTS_EVENT_ID through
+  // the current, same-artifact ESM and immutable safe-config owners.
+  const sourceScripts = input.parsedScripts.map(item => item.parsed);
+  const resolvedImports = input.resolvedScriptImports ??
+    resolveScriptImports(sourceScripts);
+  const eventIdRejection = (
+    parsed: ParsedScriptFile,
+    guard: NonNullable<ParsedScriptFile["events"][number]["eventIdGuard"]>,
+  ): NonNullable<ExecutionRegion["scriptEventIdRejection"]> | undefined => {
+    if (guard.syntax !== "if-event-id-strict-neq-return" ||
+        guard.source.artifactId !== parsed.source.artifactId ||
+        guard.source.relativePath !== parsed.source.relativePath) return undefined;
+    if (guard.expression.kind === "literal") {
+      return guard.expression.value.trim() ? {
+        eventId: guard.expression.value,
+        source: guard.source,
+        valueSource: guard.source,
+        resolution: "inline-literal",
+      } : undefined;
+    }
+    const identifier = guard.expression.name;
+    const locals = (parsed.safeConfigBindings ?? []).filter(item =>
+      item.name === identifier && item.expression.kind === "literal" &&
+      typeof item.expression.value === "string");
+    const imported = (parsed.safeConfigImports ?? [])
+      .filter(item => item.localName === identifier && item.kind === "named");
+    if (locals.length === 1 && imported.length === 0) {
+      return {
+        eventId: locals[0]!.expression.value as string,
+        source: guard.source, valueSource: locals[0]!.source,
+        resolution: "local-literal",
+      };
+    }
+    if (locals.length !== 0 || imported.length !== 1) return undefined;
+    const binding = imported[0]!;
+    const resolutions = resolvedImports.filter(item =>
+      item.status === "resolved" && item.typeOnly !== true &&
+      item.importSyntax === undefined &&
+      item.fromSourcePath === parsed.source.relativePath &&
+      item.fromIdentifier === parsed.identifier &&
+      item.module === binding.module && item.targetSourcePath !== undefined);
+    if (resolutions.length !== 1) return undefined;
+    const targets = sourceScripts.filter(item =>
+      item.source.artifactId === parsed.source.artifactId &&
+      item.source.relativePath === resolutions[0]!.targetSourcePath);
+    if (targets.length !== 1) return undefined;
+    const target = targets[0]!;
+    const exported = (target.safeConfigExports ?? [])
+      .filter(item => item.exportedName === binding.importedName);
+    if (exported.length !== 1) return undefined;
+    const values = (target.safeConfigBindings ?? []).filter(item =>
+      item.name === exported[0]!.localName &&
+      item.expression.kind === "literal" &&
+      typeof item.expression.value === "string");
+    if (values.length !== 1 ||
+        values[0]!.source.artifactId !== parsed.source.artifactId) return undefined;
+    return {
+      eventId: values[0]!.expression.value as string,
+      source: guard.source, valueSource: values[0]!.source,
+      resolution: "unique-imported-literal",
+    };
+  };
+
   for (const { parsed } of input.parsedScripts) {
     for (const flow of parsed.controlFlowRegions ?? []) {
       const executionRegionId = scriptRegionId(parsed.source, flow.region);
@@ -515,12 +578,19 @@ export function buildInspectionSemanticIr(
         event.event,
         event.source,
       );
+      const idGuard = event.root === "system" &&
+          event.phase === "afterEvents" &&
+          event.event === "scriptEventReceive" &&
+          event.eventIdGuard !== undefined
+        ? eventIdRejection(parsed, event.eventIdGuard)
+        : undefined;
       ensureRegion({
         id: eventId,
         kind: "event-source",
         ownerId: event.root,
         label: event.root + "." + event.phase + "." + event.event,
         source: event.source,
+        ...(idGuard === undefined ? {} : { scriptEventIdRejection: idGuard }),
       });
 
       const to = event.callbackRegion
@@ -1002,9 +1072,6 @@ export function buildInspectionSemanticIr(
     const path = parsed.source.relativePath.replaceAll("\\", "/");
     scriptsByPath.set(path, [...(scriptsByPath.get(path) ?? []), parsed]);
   }
-  const resolvedImports = input.resolvedScriptImports ?? resolveScriptImports(
-    input.parsedScripts.map(item => item.parsed),
-  );
   // Only an exact, manifest-rooted static import authorizes source module
   // dependency topology. It does NOT prove runtime evaluation or callback
   // execution, and must never become a synchronous function call.

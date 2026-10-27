@@ -2432,6 +2432,53 @@ export function parseScriptFile(
     return name && uniqueModuleBinding(name) && topLevelFunctionNames.has(name) ? name : undefined;
   };
 
+  // Only the callback's first strict event.id inequality with an immediate
+  // return is a filter witness; a string elsewhere is not a contract guard.
+  const scriptEventIdGuard = (
+    callback: ts.Node | undefined,
+  ): ScriptEventSubscription["eventIdGuard"] | undefined => {
+    if (!callback ||
+        !(ts.isArrowFunction(callback) ||
+          ts.isFunctionExpression(callback) ||
+          ts.isFunctionDeclaration(callback)) ||
+        callback.parameters.length !== 1 ||
+        callback.body === undefined || !ts.isBlock(callback.body)) return undefined;
+    const parameter = callback.parameters[0]!.name;
+    if (!ts.isIdentifier(parameter)) return undefined;
+    const first = callback.body.statements[0];
+    if (!first || !ts.isIfStatement(first) || first.elseStatement) return undefined;
+    const branch = first.thenStatement;
+    const returned = ts.isBlock(branch) && branch.statements.length === 1
+      ? branch.statements[0] : branch;
+    if (!returned || !ts.isReturnStatement(returned) ||
+        returned.expression !== undefined) return undefined;
+    const test = ts.isParenthesizedExpression(first.expression)
+      ? first.expression.expression : first.expression;
+    if (!ts.isBinaryExpression(test) ||
+        test.operatorToken.kind !== ts.SyntaxKind.ExclamationEqualsEqualsToken)
+      return undefined;
+    const isEventId = (value: ts.Expression): boolean =>
+      ts.isPropertyAccessExpression(value) &&
+      ts.isIdentifier(value.expression) &&
+      value.expression.text === parameter.text &&
+      value.name.text === "id";
+    const operand = isEventId(test.left) ? test.right
+      : isEventId(test.right) ? test.left : undefined;
+    if (!operand) return undefined;
+    const expression: NonNullable<ScriptEventSubscription["eventIdGuard"]>["expression"] | undefined =
+      ts.isStringLiteralLike(operand)
+        ? { kind: "literal", value: operand.text }
+        : ts.isIdentifier(operand) && operand.text !== parameter.text &&
+            !isShadowed(operand)
+          ? { kind: "identifier", name: operand.text }
+          : undefined;
+    return expression === undefined ? undefined : {
+      expression,
+      source: lineSource(file, test, source),
+      syntax: "if-event-id-strict-neq-return",
+    };
+  };
+
   const imports: ScriptImport[] = [];
   const events: ScriptEventSubscription[] = [];
   const dynamicProperties: DynamicPropertyAccess[] = [];
@@ -3464,6 +3511,12 @@ export function parseScriptFile(
           const eventSource = lineSource(file, node, source);
           const eventCallback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
           const namedEventCallback = namedCallback(node);
+          const guardedCallback = eventCallback ??
+            (namedEventCallback ? localCallableDeclarations.get(namedEventCallback) : undefined);
+          const eventIdGuard = normalizedRoot === "system" &&
+              normalizedPhase === "afterEvents" && event === "scriptEventReceive"
+            ? scriptEventIdGuard(guardedCallback)
+            : undefined;
           events.push({
             root: normalizedRoot,
             phase: normalizedPhase,
@@ -3483,6 +3536,7 @@ export function parseScriptFile(
                   }
                 : {}),
             source: eventSource,
+            ...(eventIdGuard === undefined ? {} : { eventIdGuard }),
           });
           capabilities.push({
             capability: "event-subscription",

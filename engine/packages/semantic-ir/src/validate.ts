@@ -77,6 +77,21 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
   for (const duplicate of duplicateIds(ir.execution.regions)) {
     errors.push("Duplicate execution region id: " + duplicate);
   }
+  for (const region of ir.execution.regions) {
+    const guard = region.scriptEventIdRejection;
+    if (!guard) continue;
+    if (region.kind !== "event-source" ||
+        region.ownerId !== "system" ||
+        region.label !== "system.afterEvents.scriptEventReceive" ||
+        !region.source ||
+        guard.source.artifactId !== region.source.artifactId ||
+        guard.source.relativePath !== region.source.relativePath ||
+        guard.valueSource.artifactId !== region.source.artifactId ||
+        !guard.valueSource.relativePath ||
+        !guard.eventId.trim()) {
+      errors.push("Unowned script-event ID rejection source: " + region.id);
+    }
+  }
   for (const duplicate of duplicateIds(ir.execution.edges)) {
     errors.push("Duplicate execution edge id: " + duplicate);
   }

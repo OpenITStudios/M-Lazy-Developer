@@ -20,6 +20,15 @@ export interface ExecutionRegion {
   ownerId: string;
   label: string;
   source?: SourceRef;
+  /** Source-owned strict event.id != value early-return check on an
+   * imported-system scriptEventReceive callback. Not runtime delivery.
+   */
+  scriptEventIdRejection?: {
+    readonly eventId: string;
+    readonly source: SourceRef;
+    readonly valueSource: SourceRef;
+    readonly resolution: "inline-literal" | "local-literal" | "unique-imported-literal";
+  };
 }
 
 export type ExecutionEdgeKind =
