@@ -2,6 +2,7 @@ import ts from "typescript";
 import type {
   SourceRef,
 } from "../../../../../packages/project-model/src/index.js";
+import type { ScriptEventSubscription } from "../../core/types.js";
 
 export type ScriptChunkLifecycleEvidenceKind =
   | "world-load-subscription"
@@ -102,32 +103,6 @@ function executionRegion(
   return "module";
 }
 
-function callbackRegion(
-  call: ts.CallExpression,
-  file: ts.SourceFile,
-): string | undefined {
-  const callback = call.arguments[0];
-  if (
-    !callback ||
-    (
-      !ts.isArrowFunction(callback) &&
-      !ts.isFunctionExpression(callback)
-    )
-  ) {
-    return undefined;
-  }
-  const start =
-    file.getLineAndCharacterOfPosition(
-      callback.getStart(file),
-    );
-  return (
-    "callback@" +
-    (start.line + 1) +
-    ":" +
-    (start.character + 1)
-  );
-}
-
 function literalString(
   expression: ts.Expression | undefined,
 ): string | undefined {
@@ -144,26 +119,11 @@ function literalString(
     : undefined;
 }
 
-function eventName(
-  call: ts.CallExpression,
-): string | undefined {
-  if (
-    !ts.isPropertyAccessExpression(
-      call.expression,
-    ) ||
-    call.expression.name.text !== "subscribe"
-  ) {
-    return undefined;
-  }
-  const owner = call.expression.expression;
-  return ts.isPropertyAccessExpression(owner)
-    ? owner.name.text
-    : undefined;
-}
-
 export function deriveScriptChunkLifecycleEvidence(
   text: string,
   source: SourceRef,
+  /** Source-owned subscriptions already verified by the script parser. */
+  subscriptions: readonly ScriptEventSubscription[] = [],
 ): ScriptChunkLifecycleEvidence[] {
   const file = ts.createSourceFile(
     source.relativePath,
@@ -445,79 +405,6 @@ export function deriveScriptChunkLifecycleEvidence(
         node.expression.name.text;
       const receiver =
         node.expression.expression.getText(file);
-      const event = eventName(node);
-
-      const region =
-        callbackRegion(node, file);
-
-      if (event === "worldLoad") {
-        push(
-          node,
-          "world-load-subscription",
-          receiver,
-          {
-            ...(region === undefined
-              ? {}
-              : { executionRegion: region }),
-          },
-        );
-      } else if (event === "entityLoad") {
-        push(
-          node,
-          "entity-load-subscription",
-          receiver,
-          {
-            ...(region === undefined
-              ? {}
-              : { executionRegion: region }),
-          },
-        );
-      } else if (event === "entityRemove") {
-        push(
-          node,
-          "entity-remove-subscription",
-          receiver,
-          {
-            ...(region === undefined
-              ? {}
-              : { executionRegion: region }),
-          },
-        );
-      } else if (event === "entityDie") {
-        push(
-          node,
-          "entity-die-subscription",
-          receiver,
-          {
-            ...(region === undefined
-              ? {}
-              : { executionRegion: region }),
-          },
-        );
-      } else if (event === "entitySpawn") {
-        push(
-          node,
-          "entity-spawn-subscription",
-          receiver,
-          {
-            ...(region === undefined
-              ? {}
-              : { executionRegion: region }),
-          },
-        );
-      } else if (event === "shutdown") {
-        push(
-          node,
-          "shutdown-subscription",
-          receiver,
-          {
-            ...(region === undefined
-              ? {}
-              : { executionRegion: region }),
-          },
-        );
-      }
-
       if (method === "isChunkLoaded") {
         push(
           node,
@@ -573,6 +460,34 @@ export function deriveScriptChunkLifecycleEvidence(
   };
 
   visit(file);
+
+  // The canonical parser verifies @minecraft/server imports and lexical
+  // shadowing; never infer Minecraft events from arbitrary .subscribe names.
+  for (const event of subscriptions) {
+    if (event.source.artifactId !== source.artifactId ||
+        event.source.relativePath !== source.relativePath) continue;
+    let kind: ScriptChunkLifecycleEvidenceKind | undefined;
+    if (event.root === "world" && event.phase === "afterEvents") {
+      switch (event.event) {
+        case "worldLoad": kind = "world-load-subscription"; break;
+        case "entityLoad": kind = "entity-load-subscription"; break;
+        case "entityRemove": kind = "entity-remove-subscription"; break;
+        case "entityDie": kind = "entity-die-subscription"; break;
+        case "entitySpawn": kind = "entity-spawn-subscription"; break;
+      }
+    } else if (event.root === "system" &&
+               event.phase === "beforeEvents" &&
+               event.event === "shutdown") {
+      kind = "shutdown-subscription";
+    }
+    if (kind === undefined) continue;
+    output.push({
+      kind,
+      executionRegion: event.callbackRegion ?? event.executionRegion ?? "module",
+      receiverExpression: event.root + "." + event.phase + "." + event.event,
+      source: event.source,
+    });
+  }
 
   return output
     .filter((item, index, array) =>

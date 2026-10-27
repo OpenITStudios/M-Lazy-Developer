@@ -218,6 +218,29 @@ investigation. No developer ZIP storage preference becomes a general map
 correctness rule, and an authored reset does not prove that reset executed.
 The external Skills Probe evidence remains version-scoped source reference.
 
+### Entity lifecycle and multiplayer cleanup source ownership (2026-10-27)
+
+The native `bedrock-entity-lifecycle` method distinguishes `Entity.kill()`
+(gameplay death) from `Entity.remove()` (immediate cleanup/despawn).
+The existing arena cleanup analysis no longer accepts `kill()` or
+unrelated same-named methods as a removal receipt: only typed
+`Dimension.spawnEntity()` and `Entity.remove()` sites are eligible,
+and neither proves an arena-specific spawn-to-removal join. The
+chunk/lifecycle projection now accepts event subscriptions solely from
+the import-bound canonical script parser; a user-defined
+`world.afterEvents.entityRemove` lookalike is not a Bedrock event.
+
+For dynamic-property reset obligations, only a directly proven World
+singleton permits exact cross-site key matching. Player, Entity and
+ItemStack receiver expressions may refer to different session/arena
+instances despite identical source spelling; at most a PARTIAL
+investigation remains. These static receipts do not establish that
+callbacks executed, entities were removed, loaded chunks were scanned,
+player caches were invalidated, or sibling arenas were preserved.
+Per-arena tags and bounds and the original Probe's version-specific
+outcomes remain separately scoped investigation evidence, not
+automatic map correctness contracts.
+
 ## Why this is separate from the other knowledge owners
 
 - **Source ZIP**: developer statements, example code, prior project surveys,

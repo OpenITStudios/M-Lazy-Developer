@@ -230,6 +230,66 @@ describe("arena cleanup surface analysis", () => {
     });
   });
 
+
+  it("does not treat Entity.kill or Player.remove as a typed arena cleanup", () => {
+    const source = { artifactId: "fixture", relativePath: "scripts/main.ts" };
+    const script = parseScriptFile("main", [
+      "function start() { cleanup(); }",
+      "function cleanup() {}",
+    ].join("\n"), source);
+    script.methodCalls = [
+      {
+        receiverType: "Dimension", method: "spawnEntity",
+        symbol: "Dimension.spawnEntity", inference: "bounded",
+        receiverHint: "actor", executionRegion: "function:start",
+        argumentCount: 1, argumentKinds: ["string"],
+        hasSpreadArgument: false, resultUse: "ignored", source,
+      },
+      {
+        receiverType: "Entity", method: "kill",
+        symbol: "Entity.kill", inference: "bounded",
+        receiverHint: "actor", executionRegion: "function:cleanup",
+        argumentCount: 0, argumentKinds: [],
+        hasSpreadArgument: false, resultUse: "ignored", source,
+      },
+    ];
+    expect(analyzeArenaCleanupSurfaces([script]).ledger?.obligations
+      .find(item => item.surface === "entity")?.status).toBe("missing");
+    script.methodCalls[1] = {
+      ...script.methodCalls[1]!, receiverType: "Player",
+      method: "remove", symbol: "Player.remove",
+    };
+    expect(analyzeArenaCleanupSurfaces([script]).ledger?.obligations
+      .find(item => item.surface === "entity")?.status).toBe("missing");
+  });
+
+  it("separates bounded player state from exact World singleton cleanup", () => {
+    const source = { artifactId: "fixture", relativePath: "scripts/main.ts" };
+    const script = parseScriptFile("main", [
+      "function start() { cleanup(); }",
+      "function cleanup() {}",
+    ].join("\n"), source);
+    script.dynamicProperties = [
+      { operation: "set", propertyId: "arena:ready",
+        receiverHint: "player", receiverType: "Player",
+        receiverInference: "bounded", executionRegion: "function:start", source },
+      { operation: "delete", propertyId: "arena:ready",
+        receiverHint: "player", receiverType: "Player",
+        receiverInference: "bounded", executionRegion: "function:cleanup", source },
+      { operation: "set", propertyId: "round_state",
+        receiverHint: "w", receiverType: "World",
+        receiverInference: "direct", executionRegion: "function:start", source },
+      { operation: "delete", propertyId: "round_state",
+        receiverHint: "world", receiverType: "World",
+        receiverInference: "direct", executionRegion: "function:cleanup", source },
+    ];
+    const obligations = analyzeArenaCleanupSurfaces([script]).ledger?.obligations ?? [];
+    expect(obligations.find(item => item.surface === "dynamic-property" &&
+      item.key === "player:arena:ready")?.status).toBe("partial");
+    expect(obligations.find(item => item.surface === "dynamic-property" &&
+      item.key === "world:round_state")?.status).toBe("complete");
+  });
+
   it("flags temporary equipment without cleanup as missing", () => {
     const script = parseScriptFile(
       "main",

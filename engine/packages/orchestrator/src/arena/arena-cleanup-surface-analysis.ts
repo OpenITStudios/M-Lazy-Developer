@@ -203,38 +203,41 @@ function extractMutations(
 
   for (const access of script.dynamicProperties) {
     const region = normalizedRegion(access.executionRegion);
+    // Only a directly identified World singleton is stable across source
+    // sites. Same-spelled player/entity/item expressions may be different
+    // instances in separate arena sessions.
+    const stableWorld = access.receiverType === "World" &&
+      access.receiverInference === "direct";
+    const receiverKey = stableWorld
+      ? "world"
+      : access.receiverHint?.trim() || access.receiverType || "unknown";
+    const key = receiverKey + ":" + (access.propertyId ?? "*");
+    const precision = stableWorld && access.propertyId !== undefined
+      ? "exact" as const : "surface-level" as const;
     if (access.operation === "set") {
       output.push({
         scriptId: script.identifier,
         region,
         surface: "dynamic-property",
-        key: (access.receiverHint ?? "unknown") + ":" +
-          (access.propertyId ?? "*"),
+        key,
         action: "acquire",
-        precision:
-          access.propertyId === undefined
-            ? "surface-level"
-            : "exact",
+        precision,
       });
     } else if (access.operation === "delete") {
       output.push({
         scriptId: script.identifier,
         region,
         surface: "dynamic-property",
-        key: (access.receiverHint ?? "unknown") + ":" +
-          (access.propertyId ?? "*"),
+        key,
         action: "release",
-        precision:
-          access.propertyId === undefined
-            ? "surface-level"
-            : "exact",
+        precision,
       });
     } else if (access.operation === "clear") {
       output.push({
         scriptId: script.identifier,
         region,
         surface: "dynamic-property",
-        key: (access.receiverHint ?? "unknown") + ":*",
+        key: receiverKey + ":*",
         action: "release",
         precision: "surface-level",
       });
@@ -327,23 +330,21 @@ function extractMutations(
           key: string;
         }
       | undefined =
-      method === "spawnEntity"
+      method === "spawnEntity" && call.receiverType === "Dimension"
         ? {
             surface: "entity",
             action: "acquire",
-            key:
-              call.receiverHint ??
-              call.receiverType,
+            key: call.receiverHint ?? call.receiverType,
           }
-        : method === "remove" || method === "kill"
+        : method === "remove" && call.receiverType === "Entity"
           ? {
               surface: "entity",
               action: "release",
-              key:
-                call.receiverHint ??
-                call.receiverType,
+              key: call.receiverHint ?? call.receiverType,
             }
           : undefined;
+    // Entity.kill() is a gameplay death, not reset cleanup. Same-spelled
+    // remove() on another receiver is not entity despawn evidence.
     if (pair) {
       output.push({
         scriptId: script.identifier,
@@ -411,10 +412,12 @@ function releaseMatches(
   if (acquire.surface === "dynamic-property") {
     const acquireReceiver = acquire.key.split(":")[0];
     const releaseReceiver = release.key.split(":")[0];
-    return (
+    // Matching unverified player/entity text is at most PARTIAL, never
+    // exact identity across sessions. The status owner checks precision.
+    return acquireReceiver !== "unknown" &&
       acquireReceiver === releaseReceiver &&
-      release.key.endsWith(":*")
-    );
+      (acquire.key === release.key ||
+       release.key === releaseReceiver + ":*");
   }
 
   return (

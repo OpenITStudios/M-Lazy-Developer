@@ -2184,11 +2184,6 @@ export function parseScriptFile(
       text,
       source,
     );
-  const chunkLifecycleEvidence =
-    deriveScriptChunkLifecycleEvidence(
-      text,
-      source,
-    );
   const economyEvidence =
     deriveScriptEconomyEvidence(
       text,
@@ -3671,6 +3666,11 @@ export function parseScriptFile(
   };
 
   visit(file);
+
+  // Reuse import-bound event ownership from the same parsed source.
+  const chunkLifecycleEvidence = deriveScriptChunkLifecycleEvidence(
+    text, source, events,
+  );
 
   const withCallGuards = <T extends { source: SourceRef }>(item: T) => {
     const site = resourceSiteKey(item.source);
