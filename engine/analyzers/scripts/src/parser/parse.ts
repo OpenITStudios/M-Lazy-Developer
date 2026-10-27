@@ -5,7 +5,8 @@ export const SCRIPT_PARSER_REVISION =
   "m-bedrock-script-parser:10:typescript:" +
   ts.version;
 import type {
-  SourceRef, SourceGenerationCapture, SourceGenerationMutationSite,
+  SourceRef, SourceSequentialSite, SourceGenerationCapture,
+  SourceGenerationMutationSite,
 } from "../../../../packages/project-model/src/index.js";
 import type {
   DynamicPropertyAccess,
@@ -3943,72 +3944,103 @@ export function parseScriptFile(
 
   visit(file);
 
-  // Join the SAME authored arena/state evidence to exact callback block
-  // statement indices after its leading mismatch early return. Neither
-  // naming proximity nor an indirect helper is direct owner evidence.
-  const sameSourceBlock = (a: SourceRef, b: SourceRef): boolean =>
-    a.artifactId === b.artifactId && a.relativePath === b.relativePath &&
-    a.jsonPointer === b.jsonPointer &&
-    a.range?.lineStart !== undefined && b.range?.lineStart !== undefined &&
-    a.range.lineStart === b.range.lineStart &&
-    a.range.lineEnd === b.range.lineEnd &&
-    a.range.columnStart === b.range.columnStart &&
-    a.range.columnEnd === b.range.columnEnd;
-  const boundDeferredCallbacks = deferredCallbacks.map(callback => {
-    const capture = callback.sourceGenerationCapture;
-    if (!capture || !callback.callbackRegion) return callback;
-    const directInCallback = (site: typeof callback.sourceSequence): boolean =>
-      site !== undefined && site.statementIndex > 0 &&
-      sameSourceBlock(site.block, capture.callbackBlockSource);
-    const relation = (owner: string):
-      SourceGenerationMutationSite["ownerExpressionRelation"] =>
-      owner === capture.ownerExpression
-        ? "same-authored-expression" : "different-authored-expression";
-    const arenaSites: SourceGenerationMutationSite[] =
-      arenaAuthorityEvidence.flatMap(item => {
-        if (item.executionRegion !== callback.callbackRegion ||
-            !directInCallback(item.sourceSequence) ||
-            (item.kind !== "membership-commit" &&
-             item.kind !== "membership-release" &&
-             item.kind !== "generation-invalidate" &&
-             item.kind !== "start-state-commit")) return [];
-        return [{
-          kind: item.kind,
-          arenaExpression: item.arenaExpression,
-          source: item.source,
-          statementIndex: item.sourceSequence!.statementIndex,
-          ownerExpressionRelation: relation(item.arenaExpression),
-        }];
-      });
-    const stateSites: SourceGenerationMutationSite[] =
-      stateMutations.flatMap(item => {
-        if (item.executionRegion !== callback.callbackRegion ||
-            !directInCallback(item.sourceSequence)) return [];
-        const owner =
-          /^([A-Za-z_$][\w$]*)\.[A-Za-z_$][\w$]*$/.exec(item.target)?.[1];
-        if (!owner) return [];
-        return [{
-          kind: "state-write" as const,
-          arenaExpression: owner,
-          source: item.source,
-          statementIndex: item.sourceSequence!.statementIndex,
-          ownerExpressionRelation: relation(owner),
-        }];
-      });
-    const sites: SourceGenerationMutationSite[] = [...arenaSites];
-    // A start-state arena write can also appear as generic stateMutation;
-    // retain the domain-owned witness instead of double-counting.
-    for (const state of stateSites) {
-      if (!sites.some(s => s.statementIndex === state.statementIndex &&
-          s.arenaExpression === state.arenaExpression)) sites.push(state);
+  // An ephemeral, per-parse index replaces a full scan of every arena and
+  // state mutation for EACH scheduled callback with a generation capture.
+  // Index only direct statements, by exact artifact/file/block/region; the
+  // canonical analyzers above remain the sole producers of mutation facts.
+  const hasGenerationSnapshots = deferredCallbacks.some(callback =>
+    callback.sourceGenerationCapture !== undefined &&
+    callback.callbackRegion !== undefined);
+  const directMutationsByBlock = new Map<string, {
+    kind: SourceGenerationMutationSite["kind"];
+    arenaExpression: string;
+    source: SourceRef;
+    statementIndex: number;
+  }[]>();
+  const blockKey = (region: string, block: SourceRef | undefined): string | undefined => {
+    const range = block?.range;
+    if (!block || range?.lineStart === undefined ||
+        range.lineEnd === undefined || range.columnStart === undefined ||
+        range.columnEnd === undefined) return undefined;
+    return JSON.stringify([
+      block.artifactId, block.relativePath, block.jsonPointer ?? null, region,
+      range.lineStart, range.lineEnd, range.columnStart, range.columnEnd,
+    ]);
+  };
+  const recordDirectMutation = (
+    site: SourceSequentialSite | undefined,
+    region: string,
+    kind: SourceGenerationMutationSite["kind"],
+    arenaExpression: string,
+    sourceSite: SourceRef,
+  ): void => {
+    if (!site || site.statementIndex === 0) return;
+    const key = blockKey(region, site.block);
+    if (key === undefined) return;
+    const matching = directMutationsByBlock.get(key) ?? [];
+    matching.push({
+      kind, arenaExpression, source: sourceSite, statementIndex: site.statementIndex,
+    });
+    directMutationsByBlock.set(key, matching);
+  };
+  if (hasGenerationSnapshots) {
+    // Preserve arena-domain priority over a duplicate general state write.
+    for (const item of arenaAuthorityEvidence) {
+      if (item.kind === "membership-commit" ||
+          item.kind === "membership-release" ||
+          item.kind === "generation-invalidate" ||
+          item.kind === "start-state-commit") {
+        recordDirectMutation(
+          item.sourceSequence, item.executionRegion, item.kind,
+          item.arenaExpression, item.source,
+        );
+      }
     }
-    sites.sort((a, b) =>
-      a.statementIndex - b.statementIndex ||
-      a.arenaExpression.localeCompare(b.arenaExpression) ||
-      a.kind.localeCompare(b.kind));
-    return sites.length
-      ? { ...callback, sourceDirectMutationSites: sites } : callback;
-  });
+    for (const item of stateMutations) {
+      const owner =
+        /^([A-Za-z_$][\w$]*)\.[A-Za-z_$][\w$]*$/.exec(item.target)?.[1];
+      if (owner !== undefined) {
+        recordDirectMutation(
+          item.sourceSequence, item.executionRegion,
+          "state-write", owner, item.source,
+        );
+      }
+    }
+  }
+  const boundDeferredCallbacks = !hasGenerationSnapshots
+    ? deferredCallbacks
+    : deferredCallbacks.map(callback => {
+        const capture = callback.sourceGenerationCapture;
+        if (!capture || !callback.callbackRegion) return callback;
+        const key = blockKey(callback.callbackRegion, capture.callbackBlockSource);
+        const candidates = key === undefined
+          ? undefined : directMutationsByBlock.get(key);
+        if (!candidates?.length) return callback;
+        const seen = new Set<string>();
+        const sites: SourceGenerationMutationSite[] = [];
+        for (const candidate of candidates) {
+          // One direct statement can have both arena authority and a
+          // generic state-write witness: retain the original domain-first
+          // deduplication without a quadratic .some() for each state write.
+          const identity = JSON.stringify([
+            candidate.statementIndex, candidate.arenaExpression,
+          ]);
+          if (seen.has(identity)) continue;
+          seen.add(identity);
+          sites.push({
+            ...candidate,
+            ownerExpressionRelation:
+              candidate.arenaExpression === capture.ownerExpression
+                ? "same-authored-expression"
+                : "different-authored-expression",
+          });
+        }
+        sites.sort((a, b) =>
+          a.statementIndex - b.statementIndex ||
+          a.arenaExpression.localeCompare(b.arenaExpression) ||
+          a.kind.localeCompare(b.kind));
+        return { ...callback, sourceDirectMutationSites: sites };
+      });
 
   // Reuse import-bound event ownership from the same parsed source.
   const chunkLifecycleEvidence = deriveScriptChunkLifecycleEvidence(

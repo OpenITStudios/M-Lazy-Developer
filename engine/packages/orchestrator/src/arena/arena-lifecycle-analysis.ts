@@ -1573,32 +1573,23 @@ function deferredMutationAssessments(
           crossFileCalls,
         );
 
-  const projectMutationRegions =
-    new Set(
-      scripts.flatMap((script) =>
-        materialMutationRegions(script)
-          .map((region) =>
-            qualifiedRegion(
-              script,
-              region,
-            )
-          )
-      ),
-    );
+  // A script only needs ONE mutation-region inventory: either qualified
+  // by the project graph or local to its own call graph, never both.
+  const projectMutationRegions = projectGraph === undefined
+    ? undefined
+    : new Set(scripts.flatMap(script =>
+        materialMutationRegions(script).map(region =>
+          qualifiedRegion(script, region))));
 
   const output:
     ArenaDeferredMutationAssessment[] =
       [];
 
   for (const script of scripts) {
-    const localMutations =
-      new Set(
-        materialMutationRegions(
-          script,
-        ),
-      );
-    const localGraph =
-      graphFor(script);
+    const localMutations = projectGraph === undefined
+      ? new Set(materialMutationRegions(script)) : undefined;
+    const localGraph = projectGraph === undefined
+      ? graphFor(script) : undefined;
 
     for (
       const callback of
@@ -1619,7 +1610,7 @@ function deferredMutationAssessments(
               false,
             )
           : reachable(
-              localGraph,
+              localGraph!,
               callback.callbackRegion,
             );
 
@@ -1627,10 +1618,8 @@ function deferredMutationAssessments(
         reachableRegions.filter(
           (region) =>
             projectGraph
-              ? projectMutationRegions
-                  .has(region)
-              : localMutations
-                  .has(region),
+              ? projectMutationRegions!.has(region)
+              : localMutations!.has(region),
         );
 
       if (
@@ -1639,31 +1628,25 @@ function deferredMutationAssessments(
         continue;
       }
 
-      // A leading mismatch return is merely an authored guard candidate:
-      // region co-location cannot prove stable token capture or arena/session
-      // identity, and must never imply a protected gameplay mutation.
-      const sameCallbackGuardCandidate =
-        callback.guardEvidence === "explicit-generation-check" &&
-        callback.generationGuardSource !== undefined &&
-        mutationRegions.every(region =>
-          region === (projectGraph
-            ? qualifiedRegion(script, callback.callbackRegion!)
-            : callback.callbackRegion));
-      const sites = callback.sourceDirectMutationSites ?? [];
-      const matchingSites = sites.filter(item =>
-        item.ownerExpressionRelation === "same-authored-expression");
-      const otherSites = sites.filter(item =>
-        item.ownerExpressionRelation === "different-authored-expression");
+      // A leading mismatch return is only an authored guard candidate,
+      // never a runtime-safe or actually executed mutation.
       const directRegion = projectGraph
         ? qualifiedRegion(script, callback.callbackRegion!)
         : callback.callbackRegion;
       const indirectMutationRegions = mutationRegions.filter(region =>
         region !== directRegion);
+      const sameCallbackGuardCandidate =
+        callback.guardEvidence === "explicit-generation-check" &&
+        callback.generationGuardSource !== undefined &&
+        indirectMutationRegions.length === 0;
+      const sites = callback.sourceDirectMutationSites ?? [];
       const sourceSnapshotCandidate =
         sameCallbackGuardCandidate &&
         callback.sourceGenerationCapture !== undefined &&
-        matchingSites.length > 0 && otherSites.length === 0 &&
-        indirectMutationRegions.length === 0;
+        sites.some(site =>
+          site.ownerExpressionRelation === "same-authored-expression") &&
+        !sites.some(site =>
+          site.ownerExpressionRelation === "different-authored-expression");
       output.push({
         scriptId:
           script.identifier,
