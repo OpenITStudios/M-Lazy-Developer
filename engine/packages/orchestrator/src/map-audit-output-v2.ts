@@ -195,9 +195,13 @@ export interface MapAuditOutputV2 {
       | "incomplete";
     readonly records: readonly {
       readonly surface: string;
+      /** Preserve the canonical Gameplay Closure surface state. UNKNOWN is
+       * missing evidence, not an observed blocked gameplay path.
+       */
       readonly status:
         | "understood"
         | "blocked"
+        | "unknown"
         | "not-applicable";
       readonly reason?: string;
       readonly evidenceIds: readonly string[];
@@ -578,12 +582,9 @@ export function projectMapAuditOutputV2(input: {
   const coverageRecords = closure.surfaces.map(
     (surface) => ({
       surface: surface.id,
-      status:
-        surface.status === "understood"
-          ? "understood" as const
-          : surface.status === "not-applicable"
-            ? "not-applicable" as const
-            : "blocked" as const,
+      // Project the canonical state unchanged; do not relabel UNKNOWN
+      // coverage as a blocked/failed gameplay surface.
+      status: surface.status,
       ...(surface.reason === undefined
         ? {}
         : { reason: surface.reason }),
