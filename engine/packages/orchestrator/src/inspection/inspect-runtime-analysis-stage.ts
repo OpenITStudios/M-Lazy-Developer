@@ -204,9 +204,6 @@ export function analyzeInspectionRuntimeState(
 
   const parsedScriptModels =
     input.parsedScripts.map((item) => item.parsed);
-  // One canonical player lifecycle projection for the selected source,
-  // independent of knowledge-domain demand and never runtime proof.
-  const playerSessionLifecycle = analyzePlayerSessionLifecycle(parsedScriptModels);
   const worldRuleAuthority =
     analyzeWorldRuleAuthority(
       input.parsedScripts.map((item) => ({
@@ -312,6 +309,11 @@ export function analyzeInspectionRuntimeState(
             }],
       ),
     );
+  // Import/declaration resolution belongs to the existing ESM owner.
+  // The session projection is still source navigation, not cleanup proof.
+  const playerSessionLifecycle = analyzePlayerSessionLifecycle(
+    parsedScriptModels, crossFileCalls,
+  );
 
   const entityEventEvidence =
     deriveEntityEventExternalEvidence(

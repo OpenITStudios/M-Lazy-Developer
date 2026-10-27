@@ -174,7 +174,9 @@ export function formatSelectedMapAuditBrief(input: {
         playerSession.leaveIdArgumentSites +
         "; directly named Map/Set.delete(playerId) sites: " +
         playerSession.directLeaveCacheDeleteSites +
-        "; initialSpawn flag read sites: " +
+        "; source-resolved helper targets receiving playerId: " +
+        playerSession.resolvedLeaveHelperSites +
+        " (callee effects NOT proven); initialSpawn flag read sites: " +
         playerSession.spawnInitialFlagReadSites + ".",
       "Leave cleanup: " + playerSession.leaveCleanupStatus +
         "; session readiness: " + playerSession.sessionReadinessStatus +
@@ -187,7 +189,12 @@ export function formatSelectedMapAuditBrief(input: {
         ": " + concise(site.source.relativePath + ":" +
           (site.source.range?.lineStart ?? "?") +
           (site.source.range?.columnStart === undefined
-            ? "" : ":" + site.source.range.columnStart)));
+            ? "" : ":" + site.source.range.columnStart)) +
+        (site.helperTarget === undefined ? "" :
+          " → " + site.helperResolution + " helper " +
+          concise(site.helperTarget.relativePath + ":" +
+            (site.helperTarget.range?.lineStart ?? "?")) +
+          " [source resolution, NOT cleanup proof]"));
     }
     if (playerSession.omittedPlayerSessionSourceSites > 0) {
       out.push("Additional source sites omitted: " +

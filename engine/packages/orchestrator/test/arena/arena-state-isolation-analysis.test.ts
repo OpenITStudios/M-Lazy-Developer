@@ -209,7 +209,7 @@ describe("arena state isolation analysis", () => {
     ).toBe(true);
   });
 
-  it("accepts arena-keyed player tags as isolated", () => {
+  it("retains arena-keyed player tags as scope candidates requiring receiver proof", () => {
     const script = {
       identifier: "arena-gameplay",
       arenaAuthorityPaths: [{
@@ -238,7 +238,7 @@ describe("arena state isolation analysis", () => {
       result.observations.some(
         (item) =>
           item.surface === "entity-tag" &&
-          item.status === "isolated",
+          item.status === "partition-proof-required",
       ),
     ).toBe(true);
   });

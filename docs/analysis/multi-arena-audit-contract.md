@@ -136,6 +136,31 @@ Check that one arena cannot materially affect another through:
 - cleanup/reset;
 - developer/admin actions.
 
+### Source-first query and cleanup ownership
+
+An authored `world.getPlayers({ tags: ... })` query, a tag name
+containing `arenaId`, or a command mentioning an arena identifier
+is not proof that the returned players/targets are members of this
+arena. Distinguish a source filter candidate from unique live membership
+and downstream mutation ownership. `world.getAllPlayers()` must not
+inherit filtering evidence from unrelated source expressions.
+
+A typed `Dimension.getEntities(...)` inside an arena-associated source
+flow now yields a scoped investigation observation. Its source argument
+may include `tags`, `location`, `volume`, `maxDistance` or
+`minDistance`; even an arena-keyed combination requires proof of distinct
+tag allocation, correct query geometry, entity identity, unloaded-chunk
+handling and cleanup effect scope. A plain/global query or computed
+unresolved filter also remains `partition-proof-required` rather than a
+speculative cross-arena BUG or isolated PASS.
+
+A source-level `Entity.remove()`, `Entity.kill()` or persisted
+`playerId` helper call cannot independently establish that cleanup
+executed, targeted the right arena generation, or preserved active
+sibling arenas. Use selected-map contracts and stronger evidence at
+the existing audit proof/admission gates; publisher ZIP rules and
+historical Skills Probe outcomes are reference, not universal map design.
+
 ## Simultaneous-start rule
 
 Independent arenas must be reviewed under simultaneous start and overlapping lifecycle transitions. A system that works sequentially but fails when two arenas start together is a gameplay defect candidate.

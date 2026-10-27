@@ -33,6 +33,7 @@ export interface ArenaStateIsolationObservation {
     | "world-property"
     | "world-command"
     | "world-player-enumeration"
+    | "dimension-entity-enumeration"
     | "entity-tag"
     | "module-state";
   key: string;
@@ -539,7 +540,10 @@ function worldPlayerEnumerationObservation(
 
   const query =
     (call.argumentTexts ?? []).join(" ");
-  const authorityPartitioned =
+  const authoredFilter = call.method === "getPlayers" &&
+    /(?:^|[,{]\s*)(?:tags|location|volume|maxDistance|minDistance|name)\s*:/i
+      .test(query);
+  const authorityPartitioned = authoredFilter &&
     expressionUsesAuthority(query, authorities);
 
   return {
@@ -563,6 +567,49 @@ function worldPlayerEnumerationObservation(
       authorityPartitioned
         ? "The authored world-player query references an arena authority expression, but player membership, distinct arena IDs and downstream mutation ownership remain unverified. This is a source partition candidate, not isolation proof."
         : "Arena flow enumerates world players without proving arena partitioning. Downstream player/tag/state mutations must prove an arena filter or arena-context proxy before isolation can close."
+  };
+}
+
+/** A typed Dimension query is an authored enumeration, not a verified
+ * entity-owner filter or executed cleanup. Tag/spatial mention in the
+ * current arena region can guide inspection but cannot prove exclusion
+ * of entities from a sibling arena or an unloaded chunk.
+ */
+function dimensionEntityEnumerationObservation(
+  script: ParsedScriptFile,
+  call: ScriptMethodCall,
+  region: string,
+  authorities: readonly string[],
+): ArenaStateIsolationObservation | undefined {
+  if (call.receiverType !== "Dimension" ||
+      call.method !== "getEntities") return undefined;
+
+  const query = (call.argumentTexts ?? []).join(" ");
+  const tagFilter = /(?:^|[,{]\s*)tags\s*:/i.test(query);
+  const spatialFilter =
+    /(?:^|[,{]\s*)(?:location|volume|maxDistance|minDistance)\s*:/i
+      .test(query);
+  const arenaCandidate = (tagFilter || spatialFilter) &&
+    expressionUsesAuthority(query, authorities);
+
+  return {
+    scriptId: script.identifier,
+    region,
+    surface: "dimension-entity-enumeration",
+    key: call.symbol + "(" + query + ")",
+    scope: arenaCandidate ? "arena-local" : "world-global",
+    status: "partition-proof-required",
+    reason: arenaCandidate
+      ? "An authored Dimension.getEntities query contains an arena identity and " +
+        (tagFilter && spatialFilter ? "tag plus spatial" :
+         tagFilter ? "tag" : "spatial") +
+        " filter expressions. This is only a source partition candidate; " +
+        "unique arena tags, entity owner membership, query volume, unload " +
+        "handling and subsequent remove/kill target identity remain unverified."
+      : "An arena-associated Dimension.getEntities call lacks a source-verifiable " +
+        "arena-specific tag or spatial partition. Its returned entities and " +
+        "downstream cleanup may span other arenas; require exact query, " +
+        "membership, region and effect evidence before closing isolation.",
   };
 }
 
@@ -613,13 +660,12 @@ function tagMutationObservation(
       authorityPartitioned
         ? "arena-local"
         : "unknown",
-    status:
-      authorityPartitioned
-        ? "isolated"
-        : "partition-proof-required",
+    // A tag NAME with an arena token does not prove the target entity is
+    // owned by that arena. Keep the source-keyed candidate but no PASS.
+    status: "partition-proof-required",
     reason:
       authorityPartitioned
-        ? "Player/entity tag expression is explicitly keyed by the authored arena authority expression."
+        ? "Authored player/entity tag label contains an arena authority expression, but receiver entity identity and sibling-arena exclusion remain unverified."
         : "Arena flow mutates a player/entity tag without proving the tag or receiver is arena-partitioned. Generic tags are world-visible and cleanup/reconciliation must prove they cannot affect another arena.",
   };
 }
@@ -684,9 +730,9 @@ function commandObservation(
       surface: "world-command",
       key: raw,
       scope: authorityPartitioned ? "arena-local" : "world-global",
-      status: authorityPartitioned ? "isolated" : "partition-proof-required",
+      status: "partition-proof-required",
       reason: authorityPartitioned
-        ? "Global-selector command is explicitly partitioned by the authored arena authority expression."
+        ? "The authored global-selector command references an arena authority expression, but the selector's actual player set and arena membership exclusion are not proven by that text alone."
         : "Arena flow mutates players or nearby world state through a global @a selector. Arena-context translation or an equivalent partitioning guard must be proven before cross-arena isolation can close.",
     };
   }
@@ -798,6 +844,17 @@ function analyzeScript(
       );
     if (playerEnumeration) {
       observations.push({ ...playerEnumeration, source: call.source });
+    }
+
+    const entityQuery =
+      dimensionEntityEnumerationObservation(
+        script,
+        call,
+        region,
+        authoritiesForRegion(region),
+      );
+    if (entityQuery) {
+      observations.push({ ...entityQuery, source: call.source });
     }
 
     const tagMutation =

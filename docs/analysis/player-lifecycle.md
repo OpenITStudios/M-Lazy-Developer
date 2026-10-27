@@ -228,6 +228,14 @@ cache manager or external code was installed. A textual arena authority
 in `world.getPlayers()` is a candidate partition, not proof that its
 result or later mutations exclude sibling arenas.
 
+The existing exact local/ESM call resolver now links an authored
+`playerLeave` `event.playerId` argument to one resolved helper declaration
+in the same selected artifact, if unique. The selected-source brief shows
+the helper's file/line alongside the call site; unresolved/ambiguous
+helper targets remain unknown. This is source call topology only: a
+resolved declaration may not delete a single cache entry, invalidate a
+generation or preserve the other arena's active player state.
+
 The developer's `bedrock-entity-lifecycle` guidance and Skills Probe P53
 source demonstrate player-ID-keyed ephemeral collections, leave eviction,
 initial-spawn invalidation and different respawn behavior. P53's Node
