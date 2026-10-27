@@ -404,9 +404,18 @@ export function developerPracticeSignalsFromSemanticIr(
   // An event-source region comes from the parser's exact subscription,
   // not from an arbitrary string or a guessed gameplay event.
   for (const region of ir.execution.regions) {
-    if (region.kind !== "event-source" ||
-        region.ownerId !== "world" ||
-        region.source === undefined) continue;
+    if (region.kind !== "event-source" || region.source === undefined) continue;
+    // The imported system singleton and exact subscription are already
+    // classified by the script parser and preserved in canonical Semantic IR.
+    // This cue can select an upstream *question* about a result export, but
+    // does not prove a Daigon contract, event ID, subscriber activation, or
+    // successful console output for the selected map.
+    if (region.ownerId === "system" &&
+        region.label === "system.afterEvents.scriptEventReceive") {
+      add(region.id, region.source, "system.afterEvents.scriptEventReceive");
+      continue;
+    }
+    if (region.ownerId !== "world") continue;
     if (region.label === "world.beforeEvents.entityHurt") {
       add(region.id, region.source, "world.beforeEvents.entityHurt");
     } else if (region.label === "world.afterEvents.entityDie") {

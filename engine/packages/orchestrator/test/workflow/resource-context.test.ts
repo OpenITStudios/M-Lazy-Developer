@@ -483,3 +483,90 @@ describe("developer practice manifest-scoped version hints", () => {
   });
 
 });
+
+describe("source-first Daigon export investigation reference", () => {
+  const source = {
+    artifactId: "selected",
+    relativePath: "behavior_packs/demo/scripts/results.ts",
+    range: { lineStart: 12, lineEnd: 12, columnStart: 1, columnEnd: 65 },
+  };
+  const subscription = {
+    id: "event:results",
+    kind: "event-source" as const,
+    ownerId: "system",
+    label: "system.afterEvents.scriptEventReceive",
+    source,
+  };
+  const data = {
+    authority: "REFERENCE" as const,
+    usagePolicy: "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF" as const,
+    sourceSnapshot: { archiveSha256: "a".repeat(64), release: "v0.27.0" },
+    sourceFiles: [{
+      id: "src.bedrock-game-results",
+      path: "skills/bedrock-game-results/SKILL.md",
+      sha256: "b".repeat(64),
+      auditUsage: "INTERPRETATION_CANDIDATE",
+      methodology: {
+        applicability: "MAP_SOURCE_INTERPRETATION" as const,
+        sourceSections: ["1. How the export works"],
+        objective: "Check Daigon export only when adopted by this map.",
+        investigationSteps: [
+          "Establish selected-map Daigon requirement.",
+          "Inspect original handler and stored snapshot source.",
+        ],
+        disconfirmingCase: "Unrelated ScriptEventReceive is not a Daigon contract.",
+        proofBoundary: "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF" as const,
+      },
+    }],
+    patterns: [{
+      id: "developer.hint.game-results.daigon-export",
+      sourceId: "src.bedrock-game-results",
+      status: "SOURCE_REVIEWED" as const,
+      domains: ["scoring", "result"],
+      sourceSignals: ["system.afterEvents.scriptEventReceive"],
+      question: "Does an explicitly adopted results export satisfy its contract?",
+      candidateRelations: ["subscription to potential export investigation"],
+      negativeControl: "A generic event subscriber never proves Daigon scope.",
+      versionApplicability: "SOURCE_SCOPE_ONLY",
+      prohibits: "No Daigon bug without map-specific contractual proof.",
+    }],
+  };
+  const context = (event: typeof subscription, sourceLocators: string[], domains = ["scoring"]) =>
+    compileDeveloperPracticeReferenceContext({
+      data,
+      semanticIr: {
+        schemaVersion: 1 as const,
+        execution: { regions: [event], edges: [] },
+        state: { surfaces: [], operations: [], authorityBindings: [] },
+        temporal: { relations: [] },
+      },
+      selectedArtifactId: "selected",
+      domains,
+      sourceLocators,
+    });
+
+  it("routes the reviewed developer question from an exact imported-system IR event", () => {
+    const result = context(subscription, ["behavior_packs/demo/scripts/results.ts:12:20"]);
+    expect(result?.items.map(item => item.patternId)).toEqual([
+      "developer.hint.game-results.daigon-export",
+    ]);
+    expect(result?.items[0]?.methodology?.investigationSteps).toHaveLength(2);
+    expect(result?.authority).toBe("REFERENCE");
+    expect(result?.status).toBe("INVESTIGATION_HINTS_ONLY");
+  });
+
+  it("refuses a spoofed event root, another map/source, or an unrelated question", () => {
+    for (const event of [
+      { ...subscription, ownerId: "world" },
+      { ...subscription, label: "system.afterEvents.anotherEvent" },
+      { ...subscription, source: { ...source, artifactId: "other-map" } },
+    ]) {
+      expect(context(event, ["behavior_packs/demo/scripts/results.ts:12:20"])?.items)
+        .toEqual([]);
+    }
+    expect(context(subscription, ["behavior_packs/demo/scripts/elsewhere.ts"])?.items)
+      .toEqual([]);
+    expect(context(subscription, ["behavior_packs/demo/scripts/results.ts:12:20"], ["combat"])?.items)
+      .toEqual([]);
+  });
+});

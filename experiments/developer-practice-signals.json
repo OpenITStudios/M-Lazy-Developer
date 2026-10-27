@@ -15,9 +15,9 @@
     "pendingDocuments": 0,
     "sourceAttribution": "ZIP source declares v0.27.0 and publisher origin achmadawdi/minecraft-bedrock-agent-skills; live GitHub HEAD and redistribution license are not independently verified. No root LICENSE found.",
     "binaryIncludedInRepo": false,
-    "normalizedPatternCount": 16,
-    "interpretationEligibleSkillCount": 16,
-    "workflowOnlySkillCount": 6,
+    "normalizedPatternCount": 17,
+    "interpretationEligibleSkillCount": 17,
+    "workflowOnlySkillCount": 5,
     "deferredSourceFilesTracked": 0,
     "intakeEvidence": "All 23 upstream SKILL.md files inspected as untrusted source; 22 previously reviewed method-to-source relationships were reconciled against current headings, and the newly added particle skill was retained as un-routed technical reference pending a specific typed Semantic IR witness. Platform truth and runtime proof are not asserted.",
     "codeReferencesTracked": 10,
@@ -296,22 +296,23 @@
       "sha256": "a9dc42310a2c9c1467177465aa667f0fa74dba0d9d64c55157a2cdbc1e75a5da",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
+      "auditUsage": "INTERPRETATION_CANDIDATE",
       "methodology": {
-        "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
+        "applicability": "MAP_SOURCE_INTERPRETATION",
         "sourceSections": [
           "1. How the export works",
           "2. The record",
           "3. The map's adapter",
-          "5. Changes that need a written notice to Daigon before delivery"
+          "4. Scored record types and the Probe scenarios",
+          "6. Checking a version"
         ],
-        "objective": "Keep scoring/export contracts, schema migration and stakeholder approval distinct from gameplay correctness.",
+        "objective": "Determine whether this selected map explicitly adopts the Daigon points-export contract and, only then, examine its authored handler, stored result adapter, canonical scored records, and final console summary.",
         "investigationSteps": [
-          "Identify the current map's own result export envelope and adapter if one exists.",
-          "Trace stable participant/result IDs and finalized event semantics without guessing scores.",
-          "Record source-owned external contract/version requirements and explicit approval before release."
+          "Establish a map-specific Daigon points/export requirement before comparing against the external contract; an arbitrary script-event subscription or scoreboard is insufficient.",
+          "Inspect the actual system.afterEvents.scriptEventReceive handler and adapter source: daigon:get_all_scoring filtering, no source-entity dependency, complete persisted snapshot, stable record_id, exact saved names, scored canonical.total and finalized semantics.",
+          "Check authored [GAME_RESULTS] JSON and export_summary/failed_counts/24 KB handling where source is available; otherwise request the exact-version console log for a runtime conclusion, preserving the independent Skills Probe revision."
         ],
-        "disconfirmingCase": "The ZIP's Daigon-specific scoring schema is an external delivery agreement, not a required protocol for every Minecraft map.",
+        "disconfirmingCase": "A non-Daigon map, a generic ScriptEventReceive subscription, or a matching Skills Probe example has no obligation to implement Daigon scoring. The source method explicitly leaves a no-player BDS export unverified.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
@@ -1131,6 +1132,43 @@
         "symbols": [
           "onGameTick",
           "initGameClock"
+        ]
+      }
+    },
+    {
+      "id": "developer.hint.game-results.daigon-export",
+      "sourceId": "src.bedrock-game-results",
+      "heading": "1. How the export works",
+      "kind": "DESIGN_INTERPRETATION_HINT",
+      "status": "SOURCE_REVIEWED",
+      "domains": [
+        "score",
+        "scoring",
+        "result",
+        "results",
+        "outcome",
+        "session",
+        "export"
+      ],
+      "sourceSignals": [
+        "system.afterEvents.scriptEventReceive"
+      ],
+      "question": "When this map explicitly promises Daigon points export, does its sourced script-event handler follow the original stored-snapshot and canonical [GAME_RESULTS] export contract?",
+      "candidateRelations": [
+        "import-bound script-event subscription → conditional results-export investigation",
+        "persisted scoring records → record_id / canonical.score.total / export_summary questions"
+      ],
+      "negativeControl": "A system script-event subscription alone never establishes that a map belongs to Daigon, emits results, or violates any scoring contract; an unrelated map must not be assigned Daigon rules.",
+      "versionApplicability": "UPSTREAM_DAIGON_CONTRACT_2026-10-14_PROBE_EDUCATION_26.32_NOT_GENERALIZED",
+      "prohibits": "Never report an invalid/missing Daigon export, lost points, or a runtime console failure without an explicit map-specific contract and independently sufficient selected-source or runtime evidence.",
+      "referenceCode": {
+        "path": "modules/game-results/game-results-contract.ts",
+        "sha256": "0fc57cac2d30d7a3bf1c2eeb14146700662cde79eabf94babd7f451f7bdbb7a4",
+        "symbols": [
+          "GAME_RESULTS_EVENT_ID",
+          "GAME_RESULTS_MARKER",
+          "recordLine",
+          "exportLines"
         ]
       }
     }

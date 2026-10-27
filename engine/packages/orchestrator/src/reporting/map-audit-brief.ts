@@ -385,11 +385,11 @@ export function formatSelectedMapAuditBrief(input: {
       const guide = firstTask.developerPractice.items[0]!;
       out.push(
         "**Developer reference (NOT proof):** " + concise(guide.question),
-        ...(guide.methodology === undefined ? [] : [
-          "**Developer investigation path:** " +
-            concise(guide.methodology.investigationSteps[0] ??
-              guide.methodology.objective),
-        ]),
+        ...(guide.methodology === undefined ? [] :
+          guide.methodology.investigationSteps.slice(0, 3)
+            .map((step, index) =>
+              "**Developer investigation step " + (index + 1) + ":** " +
+              concise(step))),
         "**Design counterexample to check:** " + concise(guide.negativeControl),
       );
     }

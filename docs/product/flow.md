@@ -86,9 +86,12 @@ and unresolved conditions. Matching the current map's actual Edition,
 target and implementation remains a separate step.
 
 **Current snapshot separation:** all 23 developer skill documents are
-source-reviewed against the v0.27.0 ZIP. Sixteen original interpretation
-patterns retain their exact selected-source Semantic IR admission; six
-upstream workflow/project skills remain non-audit methods. The new
+source-reviewed against the v0.27.0 ZIP. The existing sixteen interpretation
+patterns retain their exact selected-source Semantic IR admission. One
+additional, strictly conditional `bedrock-game-results` investigation now
+uses the imported-system `scriptEventReceive` source witness: **17 reviewed
+reference patterns**. Five upstream team/project/testing/release methods
+remain non-audit workflows. The new
 `bedrock-player-attached-particles` method is **technical REFERENCE only,
 not routed to Map Audit**, because no precise supported particle-attachment
 witness exists yet. Its P63 source reports include scoped failures and
@@ -179,8 +182,9 @@ Adopt the **source-reviewed developer's method and its negative controls**, not 
 | `bedrock-agent-team`, `bedrock-project-setup` | **IMPROVE SYSTEM: DEFINE / INVESTIGATE / DESIGN** | Identify one owner, target edition, source/proof contract; no new agent-team hierarchy or scaffold. |
 | `bedrock-git-workflow` | **IMPROVE SYSTEM: IMPLEMENT / COMMIT & STOP** | Pinned GitHub source, cohesive patch, confirmed SHA; no upstream branch/release permission imported. |
 | `bedrock-testing-policy` + Skills Probe | **IMPROVE SYSTEM: VERIFY** and **TEST MAP: TEST** | Focused positive/negative/runtime-boundary reasoning; Probe PASS/FAIL/BLOCKED/PARTIAL and original client/lock are not current-map gameplay proof, and broad CI is not assumed. |
-| `bedrock-release-export`, `bedrock-game-results` | Existing report/export owners, **TEST MAP: REPORT** when relevant | Keep exact source result/edition/release authority; no Daigon-specific scoring or automatic release/export. |
-| 16 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + precise current-map source/typed Semantic IR → at most relevant Resource Context hints; no imported Expected Behavior or automatic detector. |
+| `bedrock-release-export` | Existing report/export owners, **TEST MAP: REPORT** when relevant | Keep source and edition/release authority; no automatic release or upload. |
+| `bedrock-game-results` | **TEST MAP: UNDERSTAND / TEST**, conditional source-reference method | Only an imported-system `scriptEventReceive` source witness in a results-related investigation can select the Daigon export *question*. Its specific contract applies only when the selected map expressly adopts Daigon points export; console output and BDS behavior are not inferred. |
+| 17 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + scoped current-map typed Semantic IR → relevant Resource Context hints (max two per task), not a global bug-coverage cap or automatic detector. |
 | Un-routed `bedrock-player-attached-particles` | **REFERENCE ONLY** | Preserve scoped Probe negatives; abstain until a precise supported typed source witness exists. |
 
 The existing selected-map pipeline remains: immutable artifact → source inventory → Semantic IR / Gameplay Intent → authored game systems and player journey → cross-system negative-path test/counterproof → one evidence-grounded REPORT. These map onto **LOAD → UNDERSTAND → TEST → REPORT** while retaining internal admission and runtime-proof checkpoints. Any unsupported behavior becomes a source-identified `capability-gap`, never an automatic third work lane.
@@ -349,9 +353,11 @@ standalone developer advice with one source-grounded investigation
 path. Additional contexts remain omitted if no exact selected-map
 typed source cue exists.
 
-The six team/release/setup/result/testing workflow methods are
-development-only provenance. They cannot be chosen as gameplay
-Expected Behavior or as a detector. All external tool scripts,
+The five team/release/setup/testing workflow methods are
+development-only provenance. The Daigon-specific results method is a
+conditional source-interpretation question, not a universal gameplay contract.
+Neither these developer methods nor workflow preferences can become
+gameplay Expected Behavior or a detector by themselves. All external tool scripts,
 developer unit-test sources and probe reports are **NOT executed**
 during source reference retrieval. The current source artifact and
 canonical proof gate always decide the map finding.

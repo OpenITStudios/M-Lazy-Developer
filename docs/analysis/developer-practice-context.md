@@ -77,8 +77,13 @@ never runtime proof.
 **2026-10-24 selective promotion:** developer v0.27.0 (23
 `skills/*/SKILL.md`) is the active **SOURCE_REVIEWED** methodology
 snapshot. The earlier 16 optional interpretation patterns retain their
-source-grounded selection and negative controls; six project/workflow
-skills cannot be Map Audit rules. New skill
+source-grounded selection and negative controls. On 2026-10-27 one
+additional, conditional Daigon results-export source question was admitted
+from the original `bedrock-game-results` method with the canonical typed
+`system.afterEvents.scriptEventReceive` witness. This yields **17** source
+interpretation patterns and **five** workflow-only methods; it adds no
+automatic BUG verdict. The script event alone does not establish a Daigon
+contract, export completion, or missing student points. New skill
 `bedrock-player-attached-particles` is inventoried as
 `REFERENCE_ONLY_NOT_ROUTED`: it is a technical method, not a detected
 map mechanic or universal client guarantee. The independently supplied

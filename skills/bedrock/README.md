@@ -35,10 +35,14 @@ reviewed developer source or pending candidate. As of the 24 October 2026
 review, v0.27.0 is the **reviewed developer source** for 23 skills; the
 native source lock retains a separately reviewed Skills Probe source
 archive, still using the older installed skills lock v0.23.0.
-Only 16 interpretation patterns have source-grounded Map Audit consumers,
-six methods are workflow/project reference, and
+Seventeen interpretation patterns now have source-grounded Map Audit
+reference consumers, five methods remain workflow/project reference, and
 `bedrock-player-attached-particles` is reviewed but **not yet routable**
-without a precise canonical Semantic IR witness. No 23-skill auto-install
+without a precise canonical Semantic IR witness. The seventeenth is a
+conditional Daigon results-export *investigation* sourced from the native
+`bedrock-game-results` method and a typed `scriptEventReceive` subscription.
+It cannot turn a generic event subscription or any non-Daigon map into a
+contract failure, and it is not an executed export or runtime receipt. No 23-skill auto-install
 or P63 gameplay verification is implied.
 
 ## Read-only operator operations
