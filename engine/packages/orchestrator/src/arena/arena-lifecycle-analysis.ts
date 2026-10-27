@@ -93,6 +93,8 @@ export interface ArenaTerminalRaceAssessment {
 
 export interface ArenaDeferredMutationAssessment {
   readonly scriptId: string;
+  /** Exact scheduler site in the selected artifact; not delivery evidence. */
+  readonly source: SourceRef;
   readonly scheduler:
     | "run"
     | "runTimeout"
@@ -1555,6 +1557,20 @@ function materialMutationRegions(
   ].sort();
 }
 
+/** Source-only demand: deferred work and at least one material mutation
+ * owner somewhere in the selected scripts. Cross-file helper regions can
+ * be reached later by the canonical lifecycle graph; no execution is implied.
+ * Do not route scheduler-only modules into a heavyweight arena audit.
+ */
+export function hasMaterialDeferredLifecycleSurface(
+  scripts: readonly ParsedScriptFile[],
+): boolean {
+  if (!scripts.some(script => script.deferredCallbacks.length > 0)) {
+    return false;
+  }
+  return scripts.some(script => materialMutationRegions(script).length > 0);
+}
+
 function deferredMutationAssessments(
   scripts: readonly ParsedScriptFile[],
   crossFileCalls:
@@ -1640,16 +1656,18 @@ function deferredMutationAssessments(
         callback.generationGuardSource !== undefined &&
         indirectMutationRegions.length === 0;
       const sites = callback.sourceDirectMutationSites ?? [];
+      const hasSameOwner = sites.some(site =>
+        site.ownerExpressionRelation === "same-authored-expression");
+      const hasOtherOwner = sites.some(site =>
+        site.ownerExpressionRelation === "different-authored-expression");
       const sourceSnapshotCandidate =
         sameCallbackGuardCandidate &&
         callback.sourceGenerationCapture !== undefined &&
-        sites.some(site =>
-          site.ownerExpressionRelation === "same-authored-expression") &&
-        !sites.some(site =>
-          site.ownerExpressionRelation === "different-authored-expression");
+        hasSameOwner && !hasOtherOwner;
       output.push({
         scriptId:
           script.identifier,
+        source: callback.source,
         scheduler:
           callback.scheduler,
         callbackRegion:
@@ -1678,7 +1696,7 @@ function deferredMutationAssessments(
           ? "Direct typed mutation of captured authored owner expression follows the leading guard; runtime identity, untyped effects and all-path invalidation remain unproven."
           : indirectMutationRegions.length > 0
             ? "Reachable helper mutations cannot inherit direct callback guard or owner identity without independent proof."
-            : otherSites.length > 0
+            : hasOtherOwner
               ? "Another direct mutation owner expression exists, so the captured generation does not cover all authored targets."
               : sameCallbackGuardCandidate
                 ? "Leading generation guard exists but no uniquely source-bound direct mutation target closes the association."

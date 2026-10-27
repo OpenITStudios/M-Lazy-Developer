@@ -30,6 +30,7 @@ import type {
 import type {
   AuditObligation,
 } from "./map-audit-obligations.js";
+import type { SourceRef } from "../../project-model/src/index.js";
 import type {
   GameplayArchitectureNavigation,
 } from "./inspection/gameplay-scenario-model.js";
@@ -246,6 +247,23 @@ export interface MapAuditOutputV2 {
      * Discovery A2. Optional for existing V2 readers; never game or bug proof.
      */
     readonly unresolvedSourceLinkIds?: readonly string[];
+    /** Bounded source-only unresolved deferred mutations from the existing
+     * Arena Lifecycle owner, NOT observed callbacks or reportable bugs.
+     * Optional so existing V2 consumers remain valid.
+     */
+    readonly deferredMutationOwnership?: {
+      readonly total: number;
+      readonly samples: readonly {
+        readonly scheduler: "run" | "runTimeout" | "runInterval" | "runJob";
+        readonly source: SourceRef;
+        readonly status:
+          | "source-guard-candidate"
+          | "source-snapshot-candidate"
+          | "unresolved";
+        readonly reason: string;
+      }[];
+      readonly omitted: number;
+    };
   };
   readonly honesty: AuditHonestyAssessment;
   readonly qualityGates: MapAuditQualityGates;
@@ -626,11 +644,39 @@ export function projectMapAuditOutputV2(input: {
   const unresolvedSourceLinkIds = [...new Set(
     input.inspection.gameplayDiscoveryClosure?.unresolvedSourceLinkIds ?? [],
   )].filter((id) => id.trim().length > 0).sort();
+  // Projection only: reuse the canonical selected-artifact Arena Lifecycle
+  // assessment and never infer a BUG from a missing runtime safety proof.
+  const deferredMutationSources = [
+    ...(input.inspection.arenaAnalysis.lifecycle?.deferredMutations ?? []),
+  ].filter(item => item.status !== "protected")
+    .sort((a, b) =>
+      a.source.relativePath.localeCompare(b.source.relativePath) ||
+      (a.source.range?.lineStart ?? 0) -
+        (b.source.range?.lineStart ?? 0) ||
+      (a.source.range?.columnStart ?? 0) -
+        (b.source.range?.columnStart ?? 0) ||
+      a.callbackRegion.localeCompare(b.callbackRegion) ||
+      a.scheduler.localeCompare(b.scheduler));
+  const deferredMutationIds = deferredMutationSources.map(item =>
+    "deferred-mutation:" + JSON.stringify([
+      item.source.artifactId, item.source.relativePath,
+      item.source.range?.lineStart ?? null,
+      item.source.range?.columnStart ?? null,
+      item.callbackRegion, item.scheduler,
+    ]));
+  const deferredMutationSamples = deferredMutationSources.slice(0, 6).map(item => ({
+    scheduler: item.scheduler,
+    source: item.source,
+    status: item.status as
+      "source-guard-candidate" | "source-snapshot-candidate" | "unresolved",
+    reason: item.reason,
+  }));
   const unresolvedIds = new Set([
     ...needValidationIds,
     ...auditObligationIds,
     ...unknownSurfaceIds,
     ...unresolvedSourceLinkIds,
+    ...deferredMutationIds,
   ]);
   const unresolved = {
     status:
@@ -645,6 +691,14 @@ export function projectMapAuditOutputV2(input: {
     unknownSurfaceIds,
     ...(unresolvedSourceLinkIds.length === 0
       ? {} : { unresolvedSourceLinkIds }),
+    ...(deferredMutationSources.length === 0 ? {} : {
+      deferredMutationOwnership: {
+        total: deferredMutationSources.length,
+        samples: deferredMutationSamples,
+        omitted: Math.max(0,
+          deferredMutationSources.length - deferredMutationSamples.length),
+      },
+    }),
   };
 
   const qualityGates = deriveMapAuditQualityGates({

@@ -394,6 +394,27 @@ export function formatSelectedMapAuditBrief(input: {
       "; remaining evidence questions: " + report.unresolved.total +
       ". Neither is a bug verdict.",
   );
+  // Existing JSON report and model handoff now share this same bounded,
+  // unresolved-only lifecycle evidence; no extra diagnosis/bug owner.
+  const pendingDeferred = report.unresolved.deferredMutationOwnership;
+  if (pendingDeferred !== undefined && pendingDeferred.total > 0) {
+    out.push(
+      "**Deferred mutation ownership NOT PROVEN:** " +
+        pendingDeferred.total + " source callback(s) require exact owner/" +
+        "generation/guard-path reconciliation. No gameplay BUG or runtime " +
+        "failure is inferred.",
+    );
+    for (const item of pendingDeferred.samples.slice(0, 3)) {
+      out.push("- " + item.status + " [" + item.scheduler + "] @ " +
+        concise(item.source.relativePath + ":" +
+          (item.source.range?.lineStart ?? "?") + ":" +
+          (item.source.range?.columnStart ?? "?")) +
+        "; " + concise(item.reason));
+    }
+    if (pendingDeferred.total > 3) out.push(
+      "Further deferred source candidates omitted from immediate decision: " +
+        (pendingDeferred.total - 3) + ".");
+  }
   // One selected-source call can have several candidates in attached packs.
   // Show a bounded, stable identity for unresolved source edges near the next
   // decision, not only in the long technical trace. This does not establish

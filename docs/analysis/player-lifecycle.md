@@ -328,6 +328,25 @@ generation invalidation/cancellation or Minecraft gameplay safety.
 Every such candidate remains unresolved for runtime ownership, while
 TypeScript, Vitest, CI and Minecraft testing remain NOT EXECUTED.
 
+### Production demand and report visibility for deferred ownership
+
+The existing preflight selects Arena Lifecycle whenever source-authored arena
+authority exists, or when the selected scripts jointly contain deferred
+scheduling and a material mutation surface recognized by the same canonical
+lifecycle analyzer. Scheduler-only scripts remain pruned, and deferred-only
+routing does not imply multi-arena concurrency or automatically activate
+`multiplayer-interleaving`. This is scoped source selection, not a
+runtime or gameplay-availability observation.
+
+The Arena Lifecycle assessment retains the original scheduler SourceRef for
+each reachable material deferred mutation. The existing Map Audit Output V2
+`unresolved` projection includes a bounded preview, exact source locations,
+status, omitted count and total number of still-unproven deferred mutation
+owners. The same record appears in the human brief and passes unchanged
+through the existing model handoff. An unresolved source candidate is NOT
+a published BUG, observed failed callback, or an admitted proof obligation;
+no additional proof owner, test suite or report pipeline is created.
+
 ### Exact statement order versus generation safety
 
 The canonical script parser records the containing lexical block and
