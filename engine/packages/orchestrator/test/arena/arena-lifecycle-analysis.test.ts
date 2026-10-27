@@ -425,7 +425,7 @@ describe("arena lifecycle convergence", () => {
     });
   });
 
-  it("closes deferred mutation ownership when a generation comparison is explicit", () => {
+  it("retains a lexical generation comparison as a source-only guard candidate", () => {
     const source = [
       "let remainingEnemies = 0;",
       "let arenaGeneration = 3;",
@@ -452,18 +452,21 @@ describe("arena lifecycle convergence", () => {
 
     expect(
       result.protectedDeferredMutations,
+    ).toBe(0);
+    expect(
+      result.sourceGuardCandidateDeferredMutations,
     ).toBe(1);
     expect(
       result.unresolvedDeferredMutations,
-    ).toBe(0);
+    ).toBe(1);
     expect(
       result.deferredMutations[0],
     ).toMatchObject({
-      status: "protected",
+      status: "source-guard-candidate",
     });
   });
 
-  it("accepts explicit connection-session generation revalidation before deferred mutation", () => {
+  it("keeps a connection-session guard visible without proving mutation ownership", () => {
     const source = [
       "let score = 0;",
       "let sessionId = 7;",
@@ -490,7 +493,13 @@ describe("arena lifecycle convergence", () => {
 
     expect(
       result.protectedDeferredMutations,
+    ).toBe(0);
+    expect(
+      result.unresolvedDeferredMutations,
     ).toBe(1);
+    expect(
+      result.deferredMutations[0]?.status,
+    ).toBe("source-guard-candidate");
     expect(
       result.deferredMutations[0]
         ?.guardIdentifiers,
@@ -502,7 +511,7 @@ describe("arena lifecycle convergence", () => {
     );
   });
 
-  it("accepts explicit countdown generation revalidation before delayed start mutation", () => {
+  it("does not promote a countdown guard into protected delayed-start ownership", () => {
     const source = [
       "let started = false;",
       "let countdownGeneration = 4;",
@@ -529,10 +538,16 @@ describe("arena lifecycle convergence", () => {
 
     expect(
       result.protectedDeferredMutations,
+    ).toBe(0);
+    expect(
+      result.sourceGuardCandidateDeferredMutations,
     ).toBe(1);
     expect(
       result.unresolvedDeferredMutations,
-    ).toBe(0);
+    ).toBe(1);
+    expect(
+      result.deferredMutations[0]?.status,
+    ).toBe("source-guard-candidate");
   });
 
   it("surfaces delayed start callbacks that reuse a stale ready-set snapshot", () => {
@@ -571,7 +586,7 @@ describe("arena lifecycle convergence", () => {
     });
   });
 
-  it("accepts a round timer callback that revalidates timer generation before terminal mutation", () => {
+  it("retains a round-timer generation guard as unresolved source evidence", () => {
     const source = [
       "let resultCommitted = false;",
       "let timerGeneration = 9;",
@@ -598,10 +613,16 @@ describe("arena lifecycle convergence", () => {
 
     expect(
       result.protectedDeferredMutations,
+    ).toBe(0);
+    expect(
+      result.sourceGuardCandidateDeferredMutations,
     ).toBe(1);
     expect(
       result.unresolvedDeferredMutations,
-    ).toBe(0);
+    ).toBe(1);
+    expect(
+      result.deferredMutations[0]?.status,
+    ).toBe("source-guard-candidate");
   });
 
   it("separates one-shot terminal protection from deterministic simultaneous-outcome precedence", () => {
