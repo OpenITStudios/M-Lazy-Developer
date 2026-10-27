@@ -267,6 +267,7 @@
                 "enum": [
                   "understood",
                   "blocked",
+                  "unknown",
                   "not-applicable"
                 ]
               },
@@ -2356,6 +2357,100 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "deferredMutationOwnership": {
+          "type": "object",
+          "description": "Optional bounded source-only deferred mutation ownership preview from the existing Arena Lifecycle analysis. Not an observed callback, admitted audit obligation, BUG, or additional material unresolved item.",
+          "required": [
+            "total",
+            "samples",
+            "omitted"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "samples": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": [
+                  "scheduler",
+                  "source",
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "scheduler": {
+                    "enum": [
+                      "run",
+                      "runTimeout",
+                      "runInterval",
+                      "runJob"
+                    ]
+                  },
+                  "source": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "artifactId",
+                      "relativePath"
+                    ],
+                    "properties": {
+                      "artifactId": {
+                        "type": "string"
+                      },
+                      "relativePath": {
+                        "type": "string"
+                      },
+                      "jsonPointer": {
+                        "type": "string"
+                      },
+                      "range": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [],
+                        "properties": {
+                          "lineStart": {
+                            "type": "integer"
+                          },
+                          "lineEnd": {
+                            "type": "integer"
+                          },
+                          "columnStart": {
+                            "type": "integer"
+                          },
+                          "columnEnd": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "source-guard-candidate",
+                      "source-snapshot-candidate",
+                      "unresolved"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "omitted": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false,
