@@ -201,11 +201,15 @@ export interface GameplayWorldModel {
       terminalEntryPaths: readonly {
         scriptId: string;
         terminalRegion: string;
-        status: "source-reachable" | "unresolved";
+        status:
+          | "source-reachable"
+          | "conditional-source-candidate"
+          | "unresolved";
         ingresses: readonly {
           kind: "event" | "deferred";
           id: string;
           callbackRegion: string;
+          sourcePathStatus?: "unconditional" | "conditional-candidate";
           eventIdGuard?: {
             expression:
               | { kind: "literal"; value: string }
@@ -1970,6 +1974,9 @@ export function deriveGameplayWorldModel(
                 kind: ingress.kind,
                 id: ingress.id,
                 callbackRegion: ingress.callbackRegion,
+                ...(ingress.sourcePathStatus === undefined ? {} : {
+                  sourcePathStatus: ingress.sourcePathStatus,
+                }),
                 ...(ingress.eventIdGuard === undefined ? {} : {
                   eventIdGuard: {
                     expression: ingress.eventIdGuard.expression,

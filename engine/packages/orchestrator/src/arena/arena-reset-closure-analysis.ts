@@ -44,7 +44,10 @@ export function assessArenaResetClosure(input: {
     terminalCandidates: number;
     proven: number;
     terminalEntryPaths?: readonly {
-      status: "source-reachable" | "unresolved";
+      status:
+        | "source-reachable"
+        | "conditional-source-candidate"
+        | "unresolved";
     }[];
   };
   cleanup: {

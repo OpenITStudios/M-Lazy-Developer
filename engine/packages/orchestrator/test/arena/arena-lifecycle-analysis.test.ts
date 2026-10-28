@@ -28,9 +28,10 @@ describe("arena lifecycle convergence", () => {
     const resetPath = result.terminalEntryPaths?.find(
       item => item.terminalRegion === "function:resetArena");
     expect(resetPath).toMatchObject({
-      status: "source-reachable",
+      status: "conditional-source-candidate",
       ingresses: [expect.objectContaining({
         kind: "event",
+        sourcePathStatus: "conditional-candidate",
         id: "system.afterEvents.scriptEventReceive",
         eventIdGuard: {
           expression: { kind: "literal", value: "dev:reset_arena" },

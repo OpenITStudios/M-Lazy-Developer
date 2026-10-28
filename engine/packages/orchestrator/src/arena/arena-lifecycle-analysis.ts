@@ -62,6 +62,8 @@ export interface ArenaTerminalRaceIngress {
   readonly source?: SourceRef;
   /** Authored ID guard, not proof of runtime routing or guard dominance. */
   readonly eventIdGuard?: ParsedScriptFile["events"][number]["eventIdGuard"];
+  /** A conditional call is a source candidate, never a proven entry. */
+  readonly sourcePathStatus?: "unconditional" | "conditional-candidate";
   readonly guardStatus:
     | "guarded"
     | "unguarded"
@@ -74,7 +76,10 @@ export interface ArenaTerminalRaceIngress {
 export interface ArenaTerminalEntryPath {
   readonly scriptId: string;
   readonly terminalRegion: string;
-  readonly status: "source-reachable" | "unresolved";
+  readonly status:
+    | "source-reachable"
+    | "conditional-source-candidate"
+    | "unresolved";
   readonly ingresses: readonly ArenaTerminalRaceIngress[];
 }
 
@@ -1087,6 +1092,7 @@ function terminalIngressReachable(
   root: string,
   target: string,
   allowDeferredRoot: boolean,
+  allowConditional = false,
 ): boolean {
   const seen =
     new Set<string>([root]);
@@ -1116,6 +1122,7 @@ function terminalIngressReachable(
       const allowed =
         edge.controlFlow ===
           "unconditional" ||
+        (allowConditional && edge.controlFlow === "conditional") ||
         (
           current.root &&
           allowDeferredRoot &&
@@ -1206,11 +1213,14 @@ function terminalRaceAssessments(
 
     const ingresses:
       ArenaTerminalRaceIngress[] = [];
+    const entryIngresses:
+      ArenaTerminalRaceIngress[] = [];
 
     for (const owner of scripts) {
       const localReach = (
         callbackRegion: string,
         allowDeferredRoot: boolean,
+        allowConditional = false,
       ): boolean => {
         if (projectGraph) {
           return terminalIngressReachable(
@@ -1221,6 +1231,7 @@ function terminalRaceAssessments(
             ),
             target,
             allowDeferredRoot,
+            allowConditional,
           );
         }
         if (
@@ -1246,6 +1257,7 @@ function terminalRaceAssessments(
           callbackRegion,
           assessment.terminalRegion,
           allowDeferredRoot,
+          allowConditional,
         );
       };
 
@@ -1259,15 +1271,17 @@ function terminalRaceAssessments(
           subscription.root ===
             "unknown" ||
           subscription.phase ===
-            "unknown" ||
-          !localReach(
-            subscription.callbackRegion,
-            false,
-          )
+            "unknown"
         ) {
           continue;
         }
-        ingresses.push({
+        const strongReach = localReach(
+          subscription.callbackRegion, false,
+        );
+        if (!strongReach && !localReach(
+          subscription.callbackRegion, false, true,
+        )) continue;
+        const entry: ArenaTerminalRaceIngress = {
           kind: "event",
           id:
             subscription.root +
@@ -1285,10 +1299,14 @@ function terminalRaceAssessments(
           guardStatus:
             "not-applicable",
           source: subscription.source,
+          sourcePathStatus: strongReach
+            ? "unconditional" : "conditional-candidate",
           ...(subscription.eventIdGuard === undefined ? {} : {
             eventIdGuard: subscription.eventIdGuard,
           }),
-        });
+        };
+        entryIngresses.push(entry);
+        if (strongReach) ingresses.push(entry);
       }
 
       for (
@@ -1297,15 +1315,17 @@ function terminalRaceAssessments(
       ) {
         if (
           callback.callbackRegion ===
-            undefined ||
-          !localReach(
-            callback.callbackRegion,
-            true,
-          )
+            undefined
         ) {
           continue;
         }
-        ingresses.push({
+        const strongReach = localReach(
+          callback.callbackRegion, true,
+        );
+        if (!strongReach && !localReach(
+          callback.callbackRegion, true, true,
+        )) continue;
+        const entry: ArenaTerminalRaceIngress = {
           kind: "deferred",
           id:
             "deferred:" +
@@ -1328,34 +1348,51 @@ function terminalRaceAssessments(
               ? "guarded"
               : "unguarded",
           source: callback.source,
-        });
+          sourcePathStatus: strongReach
+            ? "unconditional" : "conditional-candidate",
+        };
+        entryIngresses.push(entry);
+        if (strongReach) ingresses.push(entry);
       }
     }
 
-    const uniqueIngresses =
-      [...new Map(
-        ingresses.map((item) => [
-          item.kind +
-            "|" +
-            item.id +
-            "|" +
-            item.callbackRegion,
-          item,
-        ]),
-      ).values()].sort((a, b) =>
+    // Keep separately authored subscriptions (including filtered
+    // script-event IDs) distinct without widening collision/race proof.
+    const deduplicateIngresses = (
+      sites: readonly ArenaTerminalRaceIngress[],
+    ): ArenaTerminalRaceIngress[] =>
+      [...new Map(sites.map(item => {
+        const expression = item.eventIdGuard?.expression;
+        const filter = expression?.kind === "literal"
+          ? expression.value
+          : expression?.kind === "identifier"
+            ? expression.name
+            : "";
+        return [[
+          item.kind,
+          item.id,
+          item.callbackRegion,
+          item.source?.relativePath ?? "",
+          item.source?.range?.lineStart ?? "",
+          item.source?.range?.columnStart ?? "",
+          filter,
+        ].join("|"), item] as const;
+      })).values()].sort((a, b) =>
         a.id.localeCompare(b.id) ||
-        a.callbackRegion.localeCompare(
-          b.callbackRegion,
-        )
+        a.callbackRegion.localeCompare(b.callbackRegion)
       );
-
+    const uniqueIngresses = deduplicateIngresses(ingresses);
+    const uniqueEntryIngresses = deduplicateIngresses(entryIngresses);
     terminalEntryPaths.push({
       scriptId: assessment.scriptId,
       terminalRegion: assessment.terminalRegion,
-      status: uniqueIngresses.length > 0
-        ? "source-reachable"
-        : "unresolved",
-      ingresses: uniqueIngresses,
+      status: uniqueEntryIngresses.length === 0
+        ? "unresolved"
+        : uniqueEntryIngresses.some(item =>
+            item.sourcePathStatus === "conditional-candidate")
+          ? "conditional-source-candidate"
+          : "source-reachable",
+      ingresses: uniqueEntryIngresses,
     });
 
     const distinctIds =

@@ -76,6 +76,16 @@ describe("arena reset closure", () => {
     });
     expect(orphaned.blockers).toContain("terminalIngressEvidenceMissing");
 
+    const guarded = assessArenaResetClosure({
+      ...clean,
+      lifecycle: {
+        terminalCandidates: 1,
+        proven: 1,
+        terminalEntryPaths: [{ status: "conditional-source-candidate" }],
+      },
+    });
+    expect(guarded.blockers).toContain("terminalIngressEvidenceMissing");
+
     const partial = assessArenaResetClosure({
       ...clean,
       lifecycle: {
