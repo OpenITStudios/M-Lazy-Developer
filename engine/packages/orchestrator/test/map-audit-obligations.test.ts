@@ -73,6 +73,44 @@ const closed = {
 } as any;
 
 describe("audit obligations versus gameplay findings", () => {
+  it("keeps first source ownership and both proof edges with ambiguous duplicate IDs", () => {
+    const graph = baseGraph("DETECTION_GAP");
+    graph.causalLinks.push({
+      ...graph.causalLinks[0],
+      status: "SUPPORTED",
+      reason: "Duplicate link must never shadow the first owner.",
+      evidenceIds: ["e:wrong-shadow"],
+    });
+    graph.scenarios.push({
+      ...graph.scenarios[0], label: "wrong-shadow-label",
+    });
+    const gate = {
+      resolutions: [{
+        causalLinkId: "link:wave",
+        disposition: "RUNTIME_PROOF_REQUIRED",
+        runtimeReason: "One runtime value still needs proof.",
+        evidenceIds: ["e:resolution"],
+      }],
+    } as any;
+    const obligations = deriveAuditObligations({
+      graph, defectResolution: gate,
+      gameplayWorld: {
+        surfaceDiscovery: { surfaceIds: ["runtime:entities"] },
+        arenas: { detected: false, isolation: { observations: [] }, replicaProof: [] },
+        platformKnowledge: { claims: [] },
+      } as any,
+      gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
+      temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+    });
+    const link = obligations.find(item => item.id === "link:wave");
+    expect(link?.stage).toBe("UNDERSTAND");
+    expect(link?.evidenceIds).toEqual(["e:entity", "e:resolution"]);
+    expect(link?.validationTest).toContain("scenario 'wave'");
+    expect(link?.validationTest).not.toContain("wrong-shadow-label");
+    expect(obligations.filter(item => item.id === "link:wave")).toHaveLength(1);
+  });
+
   it("keeps runtime-blocked evidence as a non-finding obligation", () => {
     const graph = baseGraph("RUNTIME_BLOCKED");
     const gate = {

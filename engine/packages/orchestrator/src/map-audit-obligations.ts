@@ -78,8 +78,26 @@ export interface AuditObligation {
   readonly evidenceIds: readonly string[];
 }
 
-function unique(values: readonly string[]): string[] {
+// The projection creates tens of thousands of mostly empty evidence/subject
+// lists on large maps. Reuse only the immutable empty result; nonempty lists
+// remain freshly normalized so callers cannot share mutable source arrays.
+const EMPTY_IDS: readonly string[] = Object.freeze([]);
+
+function unique(values: readonly string[]): readonly string[] {
+  if (values.length === 0) return EMPTY_IDS;
+  if (values.length === 1) return values[0] ? [values[0]] : EMPTY_IDS;
   return [...new Set(values.filter(Boolean))].sort();
+}
+
+/** Preserve Array.find's first-match semantics even for ambiguous IDs. */
+function firstById<T extends { readonly id: string }>(
+  values: readonly T[],
+): ReadonlyMap<string, T> {
+  const index = new Map<string, T>();
+  for (const value of values) {
+    if (!index.has(value.id)) index.set(value.id, value);
+  }
+  return index;
 }
 
 function normalize(
@@ -134,6 +152,7 @@ export function unresolvedKnowledgeRequirements(
 
 function graphObligations(
   graph: GameplayScenarioGraph,
+  scenarioById: ReadonlyMap<string, GameplayScenarioGraph["scenarios"][number]>,
 ): AuditObligation[] {
   const items: AuditObligation[] = [];
 
@@ -144,9 +163,7 @@ function graphObligations(
     ) {
       continue;
     }
-    const scenario = graph.scenarios.find(
-      (item) => item.id === link.scenarioId,
-    );
+    const scenario = scenarioById.get(link.scenarioId);
     items.push(normalize({
       id: link.id,
       source:
@@ -187,9 +204,7 @@ function graphObligations(
   }
 
   for (const { requirement, receipt } of unresolvedKnowledgeRequirements(graph)) {
-    const scenario = graph.scenarios.find(
-      (item) => item.id === requirement.scenarioId,
-    );
+    const scenario = scenarioById.get(requirement.scenarioId);
     items.push(normalize({
       id: "knowledge-gap:" + requirement.id,
       source: "knowledge-gap",
@@ -382,8 +397,9 @@ function graphObligations(
 }
 
 function resolutionObligations(
-  graph: GameplayScenarioGraph,
   gate: GameplayDefectResolutionGate,
+  scenarioById: ReadonlyMap<string, GameplayScenarioGraph["scenarios"][number]>,
+  linkById: ReadonlyMap<string, GameplayScenarioGraph["causalLinks"][number]>,
 ): AuditObligation[] {
   const items: AuditObligation[] = [];
 
@@ -397,13 +413,9 @@ function resolutionObligations(
       continue;
     }
 
-    const link = graph.causalLinks.find(
-      (item) => item.id === resolution.causalLinkId,
-    );
+    const link = linkById.get(resolution.causalLinkId);
     if (!link) continue;
-    const scenario = graph.scenarios.find(
-      (item) => item.id === link.scenarioId,
-    );
+    const scenario = scenarioById.get(link.scenarioId);
     const label =
       scenario?.label ?? link.scenarioId;
 
@@ -873,15 +885,18 @@ export function capabilityDeliveryObligations(
   // A model-classified failure cannot be promoted without a grounded
   // CONTRADICTED causal link. Preserve a PROVE obligation for the missing
   // relation rather than assuming a particular root cause or player impact.
-  const unroutedFailures = assessments
-    .filter(item => item.status === "DEGRADED" || item.status === "MISSING")
-    .filter(item => !graph.causalLinks.some(link =>
-      link.status === "CONTRADICTED" &&
+  const discrepant = assessments.filter(item =>
+    item.status === "DEGRADED" || item.status === "MISSING"
+  );
+  const contradictedLinks = graph.causalLinks.filter(link =>
+    link.status === "CONTRADICTED"
+  );
+  const scenarioById = firstById(graph.scenarios);
+  const unroutedFailures = discrepant
+    .filter(item => !contradictedLinks.some(link =>
       capabilityDeliveryMatchesScope(
         item.subjectId,
-        graph.scenarios.find(scenario =>
-          scenario.id === link.scenarioId
-        )?.label,
+        scenarioById.get(link.scenarioId)?.label,
         link.subjectIds,
         link.componentIds,
       )
@@ -960,14 +975,19 @@ export function deriveAuditObligations(input: {
   readonly capabilityExposure?: CapabilityExposureSummary;
   readonly replicaDivergenceIds?: readonly string[];
 }): readonly AuditObligation[] {
+  // Both graph and resolution projection look up the same selected-map links.
+  // Index once rather than searching an ever-larger graph per obligation.
+  const scenarioById = firstById(input.graph.scenarios);
+  const linkById = firstById(input.graph.causalLinks);
   const items: AuditObligation[] = [
     ...mandatoryCrossSystemCoverageObligations(input.mandatoryAuditProcedure),
-    ...graphObligations(input.graph),
+    ...graphObligations(input.graph, scenarioById),
     ...closureObligations(input.gameplayClosure),
     ...capabilityDeliveryObligations(input.capabilityDelivery, input.graph),
     ...resolutionObligations(
-      input.graph,
       input.defectResolution,
+      scenarioById,
+      linkById,
     ),
     ...unmappedUserInputObligations(
       input.userIntent,
