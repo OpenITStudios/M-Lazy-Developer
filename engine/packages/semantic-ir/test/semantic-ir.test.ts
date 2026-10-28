@@ -174,6 +174,33 @@ describe("semantic IR", () => {
     expect(validateSemanticIr(ir)).toEqual([]);
   });
 
+  it("rejects forged external Promise exceptions on unrelated source edges", () => {
+    const forged: SemanticIr = {
+      ...ir,
+      execution: {
+        ...ir.execution,
+        edges: ir.execution.edges.map(edge => ({
+          ...edge, externalPromiseResolver: true as const,
+        })),
+      },
+    };
+    expect(validateSemanticIr(forged)).toContain(
+      "Invalid native Promise scheduler source exception: edge:1",
+    );
+    const temporalOnly: SemanticIr = {
+      ...ir,
+      temporal: {
+        ...ir.temporal,
+        relations: ir.temporal.relations.map(relation => ({
+          ...relation, externalPromiseResolver: true as const,
+        })),
+      },
+    };
+    expect(validateSemanticIr(temporalOnly)).toContain(
+      "Invalid native Promise temporal source exception: time:1",
+    );
+  });
+
   it("summarizes unresolved and unguarded temporal surfaces", () => {
     expect(semanticIrSummary(ir)).toMatchObject({
       executionRegions: 2,

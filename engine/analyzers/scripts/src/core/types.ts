@@ -371,6 +371,10 @@ export interface ScriptDeferredCallback {
    */
   sourceSequence?: SourceSequentialSite;
   delayTicks?: number;
+  /** Exact native Promise executor parameter passed to a scheduler.
+   * Source-only callback ownership; NOT runtime execution proof.
+   */
+  externalPromiseResolver?: true;
 }
 
 export interface ScriptEntityEventTrigger {

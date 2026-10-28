@@ -78,6 +78,9 @@ export interface ExecutionEdge {
   internalSubscriptionRegionId?: string;
   internalSubscriptionSource?: SourceRef;
   scheduler?: "run" | "runTimeout" | "runInterval" | "runJob";
+  /** Exact Promise executor resolver supplied as the scheduler callback.
+   * Remains resolution=unresolved; no runtime delivery is inferred. */
+  externalPromiseResolver?: true;
   /** Parsed local-call branching, not proof that a condition was satisfied. */
   controlFlow?: "unconditional" | "conditional" | "deferred";
   /** Exact caller-to-callee source formals for a uniquely resolved call.
@@ -251,6 +254,8 @@ export interface TemporalRelation {
   from: string;
   targetLabel: string;
   resolution: IrResolution;
+  /** Native Promise executor's unresolved scheduler callback, not runtime proof. */
+  externalPromiseResolver?: true;
   /** Authored dynamic import of a runtime-provided Minecraft API module.
    * No selected-map source target exists; module loading is NOT observed.
    */

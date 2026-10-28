@@ -125,6 +125,43 @@ describe("script analyzer", () => {
     expect(timeout?.callbackRegion).toBeUndefined();
   });
 
+  it("identifies only an exact Promise executor resolver as an external native callback", () => {
+    const script = [
+      'import { system } from "@minecraft/server";',
+      'function apply() {',
+      '  return new Promise((resolve) => {',
+      '    system.runTimeout(resolve, 20);',
+      '  });',
+      '}',
+      'system.run(() => {});',
+      'function unknown(callback) { system.runTimeout(callback, 2); }',
+    ].join("\n");
+    const parsed = parseScriptFile("scripts/main", script, source);
+    const native = parsed.deferredCallbacks.find(item =>
+      item.scheduler === "runTimeout" && item.delayTicks === 20);
+    expect(native?.externalPromiseResolver).toBe(true);
+    expect(native?.callbackRegion).toBeUndefined();
+    expect(native?.guardEvidence).toBe("unresolved");
+    expect(parsed.deferredCallbacks.filter(item => item.scheduler === "run")
+      .every(item => item.externalPromiseResolver !== true)).toBe(true);
+    expect(parsed.deferredCallbacks.find(item => item.delayTicks === 2)
+      ?.externalPromiseResolver).toBeUndefined();
+  });
+
+  it("keeps shadowed or non-native Promise-like callbacks unresolved", () => {
+    for (const fragment of [
+      'const Promise = customPromise; function start() { return new Promise((resolve) => system.runTimeout(resolve, 20)); }',
+      'function start(Promise) { return new Promise((resolve) => system.runTimeout(resolve, 20)); }',
+      'function start() { return new Promise((resolve) => { const job = resolve; system.runTimeout(job, 20); }); }',
+      'function start() { return new Promise((resolve) => { function inner(resolve) { system.runTimeout(resolve, 20); } }); }',
+      'function start() { return new Promise((resolve) => { let resolve = callback; system.runTimeout(resolve, 20); }); }',
+    ]) {
+      const parsed = parseScriptFile("scripts/main", 'import { system } from "@minecraft/server";\n' + fragment, source);
+      expect(parsed.deferredCallbacks.every(item => item.externalPromiseResolver !== true))
+        .toBe(true);
+    }
+  });
+
   it("does not resolve callback aliases with conflicting module bindings", () => {
     const parsed = parseScriptFile("scripts/main", [
       'import { world, system } from "@minecraft/server";',

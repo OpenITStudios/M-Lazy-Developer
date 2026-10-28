@@ -620,8 +620,14 @@ export function buildInspectionResult(
       discoveryChallengeIds:
         hiddenGameplayDefects.discoveryChallenges.map((item) => item.id),
        unresolvedSourceLinkIds: [
-         ...input.semanticIr.execution.edges.filter((item) => item.resolution === "unresolved").map((item) => item.id),
-         ...input.semanticIr.temporal.relations.filter((item) => item.resolution === "unresolved").map((item) => item.id),
+         ...input.semanticIr.execution.edges.filter((item) =>
+           item.resolution === "unresolved" &&
+           item.externalRuntimeModule === undefined &&
+           item.externalPromiseResolver !== true).map((item) => item.id),
+         ...input.semanticIr.temporal.relations.filter((item) =>
+           item.resolution === "unresolved" &&
+           item.externalRuntimeModule === undefined &&
+           item.externalPromiseResolver !== true).map((item) => item.id),
        ],
       gameplayIntentUnknownIds: input.gameplayIntent.unknowns.map(item => item.id),
     });

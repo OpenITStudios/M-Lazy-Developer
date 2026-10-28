@@ -2464,6 +2464,47 @@ export function parseScriptFile(
     }
     return false;
   };
+  // Exact native Promise executor parameter forwarded to an imported
+  // Minecraft system scheduler. The resolver is provided by the platform;
+  // treating it as a missing authored function creates a false A2 source
+  // target. This is an unresolved runtime callback, NOT execution proof.
+  const externalPromiseResolver = (call: ts.CallExpression): boolean => {
+    const arg = call.arguments[0];
+    if (!arg || !ts.isIdentifier(arg) || moduleBindings.has("Promise") ||
+        file.statements.some(item =>
+          (ts.isClassDeclaration(item) && item.name?.text === "Promise") ||
+          (ts.isEnumDeclaration(item) && item.name.text === "Promise"))) return false;
+    let current: ts.Node | undefined = call.parent;
+    while (current && current !== file) {
+      if (ts.isCatchClause(current) && current.variableDeclaration &&
+          bindsName(current.variableDeclaration.name, arg.text)) return false;
+      if ((ts.isForStatement(current) || ts.isForInStatement(current) ||
+           ts.isForOfStatement(current)) && current.initializer &&
+          ts.isVariableDeclarationList(current.initializer) &&
+          current.initializer.declarations.some(declaration =>
+            bindsName(declaration.name, arg.text))) return false;
+      if (ts.isBlock(current) && current.statements.some(statement =>
+        (ts.isVariableStatement(statement) &&
+         statement.declarationList.declarations.some(declaration =>
+           bindsName(declaration.name, arg.text))) ||
+        (ts.isFunctionDeclaration(statement) &&
+         statement.name?.text === arg.text))) return false;
+      if (ts.isFunctionLike(current)) {
+        if ((!ts.isArrowFunction(current) && !ts.isFunctionExpression(current)) ||
+            current.parameters.length < 1 ||
+            !ts.isIdentifier(current.parameters[0]!.name) ||
+            current.parameters[0]!.name.text !== arg.text) return false;
+        const owner = current.parent;
+        return ts.isNewExpression(owner) &&
+          owner.arguments?.[0] === current &&
+          ts.isIdentifier(owner.expression) &&
+          owner.expression.text === "Promise" &&
+          !isShadowed(owner.expression);
+      }
+      current = current.parent;
+    }
+    return false;
+  };
   // Resolve only lexical const function values actually in scope at the call.
   // Parameters, mutable bindings and uncertain aliases remain unresolved.
   const localConstCallback = (call: ts.CallExpression): ts.ArrowFunction | ts.FunctionExpression | undefined => {
@@ -3665,6 +3706,8 @@ export function parseScriptFile(
       if (scheduler) {
         const callback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
         const namedScheduledCallback = namedCallback(node);
+        const promiseResolver = callback === undefined &&
+          namedScheduledCallback === undefined && externalPromiseResolver(node);
         const generationGuard = callback
           ? leadingGenerationGuard(callback, file, source)
           : undefined;
@@ -3691,6 +3734,7 @@ export function parseScriptFile(
           source: lineSource(file, node, source),
           callerRegion: localExecutionRegionId(node, file),
           ...(schedulerSite === undefined ? {} : { sourceSequence: schedulerSite }),
+          ...(promiseResolver ? { externalPromiseResolver: true as const } : {}),
           ...(callback
             ? {
                 callbackRegion: callbackExecutionRegionId(callback, file),

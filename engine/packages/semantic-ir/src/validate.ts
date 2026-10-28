@@ -212,8 +212,18 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
     errors.push("Duplicate temporal relation id: " + duplicate);
   }
 
+  const temporalById = new Map(ir.temporal.relations.map(item => [item.id, item]));
   for (const edge of ir.execution.edges) {
     errors.push(...validateSourceSequence(edge.sourceSequence, edge.source, edge.id));
+    // An external Promise resolver is a narrow source-ownership exception, not
+    // permission to hide arbitrary missing authored targets from Discovery.
+    if (edge.externalPromiseResolver === true &&
+        (edge.resolution !== "unresolved" || edge.to !== undefined ||
+         (edge.kind !== "deferred" && edge.kind !== "periodic") ||
+         edge.scheduler === undefined ||
+         temporalById.get("time:" + edge.id)?.externalPromiseResolver !== true)) {
+      errors.push("Invalid native Promise scheduler source exception: " + edge.id);
+    }
     if (edge.kind === "internal-event-dispatch" ||
         edge.internalSubscriptionRegionId !== undefined ||
         edge.internalSubscriptionSource !== undefined) {
@@ -411,7 +421,14 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
     }
   }
 
+  const edgeByTemporalId = new Map(ir.execution.edges.map(item => ["time:" + item.id, item]));
   for (const relation of ir.temporal.relations) {
+    if (relation.externalPromiseResolver === true &&
+        (relation.resolution !== "unresolved" || relation.to !== undefined ||
+         (relation.kind !== "deferred" && relation.kind !== "periodic") ||
+         edgeByTemporalId.get(relation.id)?.externalPromiseResolver !== true)) {
+      errors.push("Invalid native Promise temporal source exception: " + relation.id);
+    }
     if (!regions.has(relation.from)) {
       errors.push("Temporal relation source does not exist: " + relation.id);
     }

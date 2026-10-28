@@ -648,6 +648,7 @@ export function buildInspectionSemanticIr(
         ...(to ? { to } : {}),
         source: callback.source,
         scheduler: callback.scheduler,
+        ...(callback.externalPromiseResolver ? { externalPromiseResolver: true as const } : {}),
         guardEvidence: callback.guardEvidence,
         guardIdentifiers: callback.guardIdentifiers,
         ...(callback.generationGuardSource === undefined ? {} : {
@@ -1465,6 +1466,7 @@ export function buildInspectionSemanticIr(
       ...(edge.externalRuntimeModule === undefined ? {} : {
         externalRuntimeModule: edge.externalRuntimeModule,
       }),
+      ...(edge.externalPromiseResolver ? { externalPromiseResolver: true as const } : {}),
       kind: temporalKind(edge),
       source: edge.source,
       ...(edge.guardEvidence === undefined

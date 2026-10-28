@@ -71,6 +71,42 @@ describe("inspection semantic IR", () => {
   });
 
 
+  it("retains runtime uncertainty on native Promise resolver without inventing a missing authored callback", () => {
+    const src = { artifactId: "selected", relativePath: "scripts/promise.js" };
+    const parsed = parseScriptFile("promise", [
+      'import { system } from "@minecraft/server";',
+      'function delay() { return new Promise((resolve) => { system.runTimeout(resolve, 20); }); }',
+      'function unknown(handler) { system.run(handler); }',
+    ].join("\n"), src);
+    const ir = buildInspectionSemanticIr({ parsedScripts: [{ parsed }], parsedFunctions: [] });
+    const native = ir.execution.edges.find(edge =>
+      edge.kind === "deferred" && edge.scheduler === "runTimeout");
+    expect(native?.externalPromiseResolver).toBe(true);
+    expect(native?.resolution).toBe("unresolved");
+    expect(native?.to).toBeUndefined();
+    expect(native?.source.relativePath).toBe(src.relativePath);
+    const authoredUnknown = ir.execution.edges.find(edge =>
+      edge.kind === "deferred" && edge.scheduler === "run");
+    expect(authoredUnknown?.externalPromiseResolver).toBeUndefined();
+    expect(authoredUnknown?.resolution).toBe("unresolved");
+    const a2MissingSourceTargets = ir.execution.edges.filter(edge =>
+      edge.resolution === "unresolved" &&
+      edge.externalRuntimeModule === undefined &&
+      edge.externalPromiseResolver !== true);
+    expect(a2MissingSourceTargets).toContain(authoredUnknown);
+    expect(a2MissingSourceTargets).not.toContain(native);
+    // Native resolver remains in the IR for A7 / temporal source analysis.
+    expect(ir.execution.edges).toContain(native);
+    const temporal = ir.temporal.relations.find(item => item.id === "time:" + native?.id);
+    expect(temporal?.externalPromiseResolver).toBe(true);
+    expect(temporal?.resolution).toBe("unresolved");
+    const a2TemporalMissingSources = ir.temporal.relations.filter(item =>
+      item.resolution === "unresolved" &&
+      item.externalRuntimeModule === undefined &&
+      item.externalPromiseResolver !== true);
+    expect(a2TemporalMissingSources).not.toContain(temporal);
+  });
+
   it("links event, deferred callback, state operations and mcfunction calls without guessing unresolved targets", () => {
     const script = parseScriptFile(
       "main",
