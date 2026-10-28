@@ -9,6 +9,19 @@ const source = {
 };
 
 describe("script analyzer", () => {
+  it("keeps transient static-class AST callables inside the parser, not its cacheable output", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      "class Bus { static dispatch(value) { return value; } }",
+      "function run(value) { return Bus.dispatch(value); }",
+    ].join("\n"), source);
+    expect(parsed.localFunctionCalls.some(call =>
+      call.targetName === "Bus.dispatch" &&
+      call.targetRegion?.includes("dispatch")
+    )).toBe(true);
+    expect(Object.keys(parsed)).not.toContain("localStaticCallables");
+    expect(structuredClone(parsed)).toEqual(parsed);
+  });
+
   it("retains exact authored translate-key object references, never random strings or computed keys", () => {
     const script = [
       'player.sendMessage({ translate: "welcome.guide" });',

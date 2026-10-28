@@ -100,6 +100,29 @@ const parsedSourceIndexSnapshots = new WeakMap<
   Omit<InspectionSourceIndex, "graph">
 >();
 
+// Source snapshots are an optional RIG acceleration, never a proof owner.
+// Refuse deep clones when known source strings/typed structure arrays alone
+// exceed the cap. The independent reparse remains the safe fallback.
+const SOURCE_INDEX_SNAPSHOT_BUDGET_BYTES = 32 * 1024 * 1024;
+function sourceIndexSnapshotWithinBudget(
+  index: Omit<InspectionSourceIndex, "graph">,
+): boolean {
+  let bytes = 0;
+  for (const script of index.parsedScripts) {
+    bytes += (script.text?.length ?? script.parsed.text?.length ?? 0) * 2;
+    if (bytes > SOURCE_INDEX_SNAPSHOT_BUDGET_BYTES) return false;
+  }
+  for (const structure of index.parsedStructureModels) {
+    for (const layer of structure.footprintSource?.blockIndexLayers ?? []) {
+      bytes += ArrayBuffer.isView(layer.indices)
+        ? layer.indices.byteLength
+        : layer.indices.length * 8;
+      if (bytes > SOURCE_INDEX_SNAPSHOT_BUDGET_BYTES) return false;
+    }
+  }
+  return true;
+}
+
 export async function inspectDirectory(
   root: string,
   artifactId = "art_working",
@@ -182,7 +205,8 @@ export async function inspectDirectory(
       // adds edges or unaccounted graph nodes, conservatively re-index the
       // next pass instead of silently dropping source evidence.
       if (indexedGraph.allEdges().length === 0 &&
-          indexedGraph.allNodes().length === parsed.nodes.length) {
+          indexedGraph.allNodes().length === parsed.nodes.length &&
+          sourceIndexSnapshotWithinBudget(parsed)) {
         try {
           parsedSourceIndexSnapshots.set(
             sourceInventoryReuse,

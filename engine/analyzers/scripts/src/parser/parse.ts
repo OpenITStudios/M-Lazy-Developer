@@ -4086,7 +4086,13 @@ export function parseScriptFile(
     authoredContentUses: extractScriptContentUseSites(file, source),
     authoredPropertyMutations,
     unresolvedReceiverCalls,
-    ...classWiring,
+    // The local static-callable lookup contains TypeScript AST nodes and is
+    // only needed during this parse. Retaining it in ParsedScriptFile would
+    // keep the AST alive and make source-index snapshots non-cloneable.
+    importedThisConstructions: classWiring.importedThisConstructions,
+    constructorFieldBindings: classWiring.constructorFieldBindings,
+    thisInstanceDispatches: classWiring.thisInstanceDispatches,
+    sourceClassMethods: classWiring.sourceClassMethods,
     ...mapWiring,
     blockCustomComponentRegistrations,
     persistentReconciliation,

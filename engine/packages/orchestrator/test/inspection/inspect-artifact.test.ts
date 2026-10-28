@@ -137,7 +137,14 @@ describe("inspectArtifact", () => {
       archive,
       async (inspect) => {
         const initial = await inspect({});
+        // Mutating a first-pass public result must never contaminate the
+        // prepared native source snapshot used by the next RIG pass.
+        const originalNativeScan = structuredClone(initial.worldDatabase.nativeScan);
+        initial.worldDatabase.nativeScan!.chunkSignals.push({
+          chunkX: 900, chunkZ: 900, dimensionId: 0, kinds: ["poisoned"],
+        });
         const expanded = await inspect(expandedTarget);
+        expect(expanded.worldDatabase.nativeScan).toEqual(originalNativeScan);
         expect(initial.artifactId).toBe(expanded.artifactId);
         expect(initial.fingerprint).toBe(expanded.fingerprint);
         expect(initial.archiveEntries).toBe(expanded.archiveEntries);

@@ -1,5 +1,6 @@
 import { mkdtemp, mkdir, cp, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { serialize, deserialize } from "node:v8";
 import { tmpdir } from "node:os";
 import { NORMAL_EXTRACTION_BUDGET } from "../../../archive/src/index.js";
 import { extractZipSafely, type ZipInventoryResult } from "../../../archive/src/index.js";
@@ -71,7 +72,11 @@ interface PreparedArtifactSource {
   readonly fingerprint: string;
   readonly inventory: ZipInventoryResult;
   readonly sourceInventoryReuse: InspectionFileInventoryReuse;
-  nativeWorldDb?: WorldDbNativeSummary;
+  /** Immutable, ephemeral source-only native summary. A second RIG pass
+   * deserializes an independent object rather than holding two large live
+   * metadata graphs while the first pass is still running.
+   */
+  nativeWorldDbSnapshot?: Uint8Array;
 }
 
 type PreparedArtifactInspect = (
@@ -150,11 +155,18 @@ async function inspectPreparedArtifact(
 
     // Native DB summary is determined by selected source bytes, not by
     // RIG knowledge demand. Do not cache FAILED reads: retry them on pass 2.
-    const nativeWorldDb = prepared.nativeWorldDb === undefined
+    const nativeWorldDb = prepared.nativeWorldDbSnapshot === undefined
       ? await analyzeWorldDbNative(workingRoot)
-      : structuredClone(prepared.nativeWorldDb);
-    if (prepared.nativeWorldDb === undefined && nativeWorldDb.status !== "failed") {
-      prepared.nativeWorldDb = structuredClone(nativeWorldDb);
+      : deserialize(prepared.nativeWorldDbSnapshot) as WorldDbNativeSummary;
+    if (prepared.nativeWorldDbSnapshot === undefined && nativeWorldDb.status !== "failed") {
+      // Compact snapshot of the same trusted parsed data. Consumer mutation
+      // cannot affect stored bytes; failed or nonserializable scans remain
+      // uncached and are independently retried on the next pass.
+      try {
+        prepared.nativeWorldDbSnapshot = serialize(nativeWorldDb);
+      } catch {
+        delete prepared.nativeWorldDbSnapshot;
+      }
     }
     const result = await inspectDirectory(
       workingRoot,
