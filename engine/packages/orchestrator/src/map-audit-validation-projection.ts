@@ -31,6 +31,11 @@ export function projectNeedValidationAuditIssues(
 
   return sortIssues(
     gate.resolutions.flatMap((resolution) => {
+      // Check the confirmed-report gate before graph-wide identity scanning.
+      // Unresolved obligations are never promoted to gameplay findings; a
+      // stale confirmation ID alone still cannot bypass scoped source proof.
+      if (!confirmed.has(resolution.causalLinkId) ||
+          resolution.disposition !== "CONFIRMED_DEFECT_READY") return [];
       // A stale confirmation index is not permission to translate an
       // ambiguous graph component into a gameplay NEED_VALIDATION finding.
       // Keep identity residue with Scenario Closure and the proof gate.
@@ -41,9 +46,7 @@ export function projectNeedValidationAuditIssues(
       const causalLink = scope.link;
       // Even a stale confirmation index cannot promote a safe counter-proof,
       // unresolved runtime observation or foreign scenario into a defect.
-      if (!confirmed.has(resolution.causalLinkId) ||
-          resolution.disposition !== "CONFIRMED_DEFECT_READY" ||
-          causalLink?.status !== "CONTRADICTED" ||
+      if (causalLink?.status !== "CONTRADICTED" ||
           resolution.scenarioId !== causalLink.scenarioId) {
         return [];
       }

@@ -45,6 +45,7 @@ describe("safe config compiler", () => {
     const result = compileScriptSafeConfig(
       [
         "let current = 1;",
+        "current += 2;",
         "const dynamic = world.getPlayers();",
       ].join("\n"),
       source,
@@ -53,6 +54,23 @@ describe("safe config compiler", () => {
     expect(result.bindings).toEqual([]);
     expect(result.rejected.map((item) => item.reason))
       .toEqual(["unsupported-call", "non-const"].sort());
+  });
+
+  it("preserves conservative reassignment ownership after indexing mutation sites", () => {
+    const result = compileScriptSafeConfig([
+      "let lowered = 7;",
+      "let nested = 3;",
+      "function mutate() { nested++; }",
+      "let ownInitializer = (ownInitializer = 1);",
+    ].join("\n"), source);
+    expect(result.bindings.map(item => item.name)).toContain("lowered");
+    expect(result.rejected).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "nested", reason: "non-const" }),
+      expect.objectContaining({ name: "ownInitializer", reason: "unsupported-expression" }),
+    ]));
+    expect(result.rejected).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "ownInitializer", reason: "non-const" }),
+    ]));
   });
 
   it("compiles map Array.from spreads conditionals and pure helpers", () => {

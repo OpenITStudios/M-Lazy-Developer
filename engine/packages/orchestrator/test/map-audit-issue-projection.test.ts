@@ -564,6 +564,30 @@ describe("report Knowledge domain provenance", () => {
   });
 });
 
+describe("unconfirmed bulk resolution projection", () => {
+  it("preserves reportable proofs while skipping thousands of unresolved graph lookups", () => {
+    const unresolved = Array.from({ length: 4000 }, (_, index) => ({
+      ...gate.resolutions[0]!,
+      causalLinkId: `unresolved:${index}`,
+      disposition: "RUNTIME_PROOF_REQUIRED" as const,
+    }));
+    const mixed: GameplayDefectResolutionGate = {
+      ...gate,
+      resolutions: [...unresolved, ...gate.resolutions],
+    };
+    expect(projectReadyAuditIssues(graph, mixed))
+      .toEqual(projectReadyAuditIssues(graph, gate));
+    expect(projectAllNeedValidationAuditIssues(graph, mixed))
+      .toEqual(projectAllNeedValidationAuditIssues(graph, gate));
+    const pending: GameplayDefectResolutionGate = {
+      ...mixed,
+      confirmedDefectReadyIds: [],
+    };
+    expect(projectReadyAuditIssues(graph, pending)).toEqual([]);
+    expect(projectAllNeedValidationAuditIssues(graph, pending)).toEqual([]);
+  });
+});
+
 describe("map audit issue projection", () => {
   it("does not promote stale, foreign or non-defect resolutions in report lanes", () => {
     const capacity = gate.resolutions[0]!;

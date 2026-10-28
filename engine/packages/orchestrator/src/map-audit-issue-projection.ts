@@ -232,12 +232,15 @@ export function projectReadyAuditIssues(
   return sortIssues(
     gate.resolutions
       .filter((resolution) => {
+        // Most real-map resolution gates contain unresolved/non-reportable
+        // work. Reject these before the graph-wide ambiguity/ownership scan;
+        // only a confirmation-ready candidate may reach source proof.
+        if (!ready.has(resolution.causalLinkId) ||
+            resolution.disposition !== "CONFIRMED_DEFECT_READY") return false;
         const link = uniqueGameplayCausalLinkScope(
           graph, resolution.causalLinkId,
         )?.link;
         return (
-        ready.has(resolution.causalLinkId) &&
-        resolution.disposition === "CONFIRMED_DEFECT_READY" &&
         link?.status === "CONTRADICTED" &&
         resolution.scenarioId === link.scenarioId &&
         assessReadyResolutionSaturation(

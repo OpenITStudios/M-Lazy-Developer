@@ -753,53 +753,59 @@ function rejectionReason(
   return "unsupported-expression";
 }
 
-function identifierIsReassigned(
+/**
+ * Collect assignment syntax once for all top-level mutable bindings. The
+ * original conservative name-only rule intentionally includes assignments
+ * in nested scopes; this index changes only its cost, not its proof policy.
+ */
+function indexReassignmentSites(
   file: ts.SourceFile,
+): ReadonlyMap<string, readonly ts.Node[]> {
+  const byName = new Map<string, ts.Node[]>();
+  const add = (name: string, node: ts.Node): void => {
+    const sites = byName.get(name);
+    if (sites) sites.push(node);
+    else byName.set(name, [node]);
+  };
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+      ts.isIdentifier(node.left)
+    ) {
+      add(node.left.text, node);
+    }
+    if (
+      (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+      (node.operator === ts.SyntaxKind.PlusPlusToken ||
+        node.operator === ts.SyntaxKind.MinusMinusToken) &&
+      ts.isIdentifier(node.operand)
+    ) {
+      add(node.operand.text, node);
+    }
+    ts.forEachChild(node, visit);
+  };
+  ts.forEachChild(file, visit);
+  return byName;
+}
+
+function identifierIsReassigned(
+  reassignmentSites: ReadonlyMap<string, readonly ts.Node[]>,
   name: string,
   declaration: ts.VariableDeclaration,
 ): boolean {
-  let reassigned = false;
-
-  const visit = (node: ts.Node): void => {
-    if (reassigned) return;
-    if (node === declaration) return;
-
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind >=
-        ts.SyntaxKind.FirstAssignment &&
-      node.operatorToken.kind <=
-        ts.SyntaxKind.LastAssignment &&
-      ts.isIdentifier(node.left) &&
-      node.left.text === name
-    ) {
-      reassigned = true;
-      return;
+  return (reassignmentSites.get(name) ?? []).some((site) => {
+    // The previous full-AST walk skipped the current declaration *and its
+    // initializer subtree*. Preserve that exact exclusion, including
+    // assignment syntax nested inside an initializer function.
+    let ancestor: ts.Node | undefined = site;
+    while (ancestor) {
+      if (ancestor === declaration) return false;
+      ancestor = ancestor.parent;
     }
-
-    if (
-      (
-        ts.isPrefixUnaryExpression(node) ||
-        ts.isPostfixUnaryExpression(node)
-      ) &&
-      (
-        node.operator ===
-          ts.SyntaxKind.PlusPlusToken ||
-        node.operator ===
-          ts.SyntaxKind.MinusMinusToken
-      ) &&
-      ts.isIdentifier(node.operand) &&
-      node.operand.text === name
-    ) {
-      reassigned = true;
-      return;
-    }
-
-    ts.forEachChild(node, visit);
-  };
-
-  ts.forEachChild(file, visit);
-  return reassigned;
+    return true;
+  });
 }
 
 export function compileScriptSafeConfig(
@@ -820,6 +826,9 @@ export function compileScriptSafeConfig(
   const exports: ScriptSafeConfigExport[] = [];
   const reExports: ScriptSafeConfigReExport[] = [];
   const rejected: ScriptSafeConfigRejection[] = [];
+  // Most files have no mutable top-level bindings; allocate the lookup only
+  // on the first declaration that needs reassignment inspection.
+  let reassignmentSites: ReadonlyMap<string, readonly ts.Node[]> | undefined;
 
   for (const statement of file.statements) {
     if (
@@ -1124,7 +1133,7 @@ export function compileScriptSafeConfig(
       if (
         !isConst &&
         identifierIsReassigned(
-          file,
+          reassignmentSites ??= indexReassignmentSites(file),
           name,
           declaration,
         )
