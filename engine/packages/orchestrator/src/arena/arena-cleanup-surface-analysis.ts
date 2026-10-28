@@ -94,6 +94,15 @@ export interface ArenaCleanupLifecycleSummary {
   assessments: readonly ArenaCleanupLifecycleAssessment[];
 }
 
+export interface ArenaResetCompletionSourceSummary {
+  swallowedFailurePaths: number;
+  partialResultPaths: number;
+  earlyIdlePaths: number;
+  observations: readonly ({
+    scriptId: string;
+  } & NonNullable<ParsedScriptFile["arenaResetCompletionEvidence"]>[number])[];
+}
+
 export interface ArenaCleanupSurfaceAnalysis {
   acquiredSurfaces: number;
   terminalAssessments: readonly ArenaCleanupTerminalAssessment[];
@@ -102,6 +111,7 @@ export interface ArenaCleanupSurfaceAnalysis {
   unresolved: number;
   ledger?: ArenaCleanupResourceLedger;
   lifecycle: ArenaCleanupLifecycleSummary;
+  asyncResetCompletion?: ArenaResetCompletionSourceSummary;
 }
 
 function normalizedRegion(region: string | undefined): string {
@@ -873,11 +883,26 @@ export function analyzeArenaCleanupSurfaces(
       scripts,
       acquiredSurfaces,
     );
+  const observations = scripts.flatMap(script =>
+    (script.arenaResetCompletionEvidence ?? []).map(evidence => ({
+      scriptId: script.identifier,
+      ...evidence,
+    })));
+  const asyncResetCompletion: ArenaResetCompletionSourceSummary = {
+    swallowedFailurePaths: observations.filter(item =>
+      item.kind === "reset-error-swallowed-candidate").length,
+    partialResultPaths: observations.filter(item =>
+      item.kind === "partial-reset-result-candidate").length,
+    earlyIdlePaths: observations.filter(item =>
+      item.kind === "idle-before-cleanup-settlement-candidate").length,
+    observations,
+  };
 
   return {
     acquiredSurfaces,
     terminalAssessments,
     ledger,
+    asyncResetCompletion,
     exactProven: terminalAssessments.reduce(
       (sum, item) => sum + item.exactProven,
       0,

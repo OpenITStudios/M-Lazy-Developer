@@ -67,6 +67,12 @@ export interface ArenaEngineeringProjection {
     reuseEligibility: ArenaResetClosureAssessment["reuseEligibility"] | "not-assessed";
     blockers: readonly string[];
     warnings: readonly string[];
+    sourceWitnesses: readonly {
+      kind: string;
+      executionRegion: string;
+      path: string;
+      line?: number;
+    }[];
   };
   globalState: {
     arenaScopedMutations: number;
@@ -431,6 +437,15 @@ export function buildArenaEngineeringProjection(
       reuseEligibility: arena.resetClosure?.reuseEligibility ?? "not-assessed",
       blockers: [...(arena.resetClosure?.blockers ?? [])],
       warnings: [...(arena.resetClosure?.warnings ?? [])],
+      sourceWitnesses: (arena.resetClosure?.sourceWitnesses ?? [])
+        .map(item => ({
+          kind: item.kind,
+          executionRegion: item.executionRegion,
+          path: item.source.relativePath,
+          ...(item.source.range?.lineStart === undefined ? {} : {
+            line: item.source.range.lineStart,
+          }),
+        })),
     },
     globalState: {
       arenaScopedMutations:

@@ -1,3 +1,5 @@
+import type { ArenaResetCompletionSourceSummary } from "./arena-cleanup-surface-analysis.js";
+
 export type ArenaResetClosureStatus =
   | "complete"
   | "partial"
@@ -13,10 +15,14 @@ export interface ArenaResetClosureAssessment {
   requiresRecovery: boolean;
   blockers: readonly string[];
   warnings: readonly string[];
+  /** Source locators, not runtime failures. */
+  sourceWitnesses?: ArenaResetCompletionSourceSummary["observations"];
   surfaces: {
     terminalSourceMissing: number;
     terminalConvergenceGaps: number;
     terminalIngressEvidenceMissing: number;
+    asyncResetFailureSwallowCandidates: number;
+    asyncResetPartialResultCandidates: number;
     cleanupLedgerMissing: number;
     cleanupLifecycleUnresolved: number;
     inventoryResetGaps: number;
@@ -53,6 +59,7 @@ export function assessArenaResetClosure(input: {
   cleanup: {
     ledger?: { missing: number; partial: number };
     lifecycle: { unresolved: number };
+    asyncResetCompletion?: ArenaResetCompletionSourceSummary;
   };
   inventory: {
     unresolvedResetPairs: number;
@@ -106,6 +113,10 @@ export function assessArenaResetClosure(input: {
       Math.max(0, input.lifecycle.terminalCandidates -
         (input.lifecycle.terminalEntryPaths ?? []).filter(entry =>
           entry.status === "source-reachable").length),
+    asyncResetFailureSwallowCandidates:
+      input.cleanup.asyncResetCompletion?.swallowedFailurePaths ?? 0,
+    asyncResetPartialResultCandidates:
+      input.cleanup.asyncResetCompletion?.partialResultPaths ?? 0,
     cleanupLedgerMissing:
       input.cleanup.ledger?.missing ?? 0,
     cleanupLifecycleUnresolved:
@@ -156,10 +167,12 @@ export function assessArenaResetClosure(input: {
     .filter(([, value]) => value > 0)
     .map(([key]) => key)
     .sort();
-  const warnings =
-    (input.cleanup.ledger?.partial ?? 0) > 0
-      ? ["cleanupLedgerPartial"]
-      : [];
+  const warnings = [
+    ...((input.cleanup.ledger?.partial ?? 0) > 0
+      ? ["cleanupLedgerPartial"] : []),
+    ...((input.cleanup.asyncResetCompletion?.earlyIdlePaths ?? 0) > 0
+      ? ["idleBeforeCleanupSettlementSourceCandidate"] : []),
+  ];
 
   const status:
     ArenaResetClosureStatus =
@@ -179,6 +192,7 @@ export function assessArenaResetClosure(input: {
       status !== "complete",
     blockers,
     warnings,
+    sourceWitnesses: [...(input.cleanup.asyncResetCompletion?.observations ?? [])],
     surfaces,
   };
 }

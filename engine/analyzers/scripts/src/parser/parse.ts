@@ -71,7 +71,7 @@ import {
 import { compileScriptSafeConfig } from "../config/safe-config-compiler.js";
 import { deriveScriptSpatialWorldMutations } from "../domains/spatial/spatial-world-mutation.js";
 import { deriveScriptSpatialMutations } from "../domains/spatial/spatial-mutation-evidence.js";
-import { deriveScriptCleanupResourceEvidence } from "../domains/cleanup/cleanup-resource-evidence.js";
+import { deriveScriptCleanupResourceEvidence, deriveScriptArenaResetCompletionEvidence } from "../domains/cleanup/cleanup-resource-evidence.js";
 import { deriveScriptCombatLifecycleEvidence } from "../domains/combat/combat-lifecycle-evidence.js";
 import { deriveScriptChunkLifecycleEvidence } from "../domains/chunk/chunk-lifecycle-evidence.js";
 import { deriveScriptEconomyEvidence } from "../domains/economy/economy-evidence.js";
@@ -2281,6 +2281,8 @@ export function parseScriptFile(
       text,
       source,
     );
+  const arenaResetCompletionEvidence =
+    deriveScriptArenaResetCompletionEvidence(file, source);
   // The domain extractor owns *which* resource calls are relevant. The
   // canonical parser owns branch provenance and already walks this AST.
   // Reconcile only complete, exact source spans; never match method names.
@@ -4202,6 +4204,7 @@ export function parseScriptFile(
     spatialWorldMutations: spatialWorldMutations.map(withCallGuards),
     spatialMutations: [...spatialMutations.mutations],
     cleanupResourceEvidence: contextualCleanupResourceEvidence,
+    arenaResetCompletionEvidence,
     chunkLifecycleEvidence: [
       ...chunkLifecycleEvidence,
     ],

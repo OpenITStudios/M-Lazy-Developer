@@ -58,6 +58,40 @@ const clean: Parameters<typeof assessArenaResetClosure>[0] = {
 };
 
 describe("arena reset closure", () => {
+  it("quarantines candidate swallowed failures or returned skipped chunks", () => {
+    const source = {
+      artifactId: "fixture",
+      relativePath: "scripts/reset.js",
+      range: { lineStart: 8, lineEnd: 8, columnStart: 1, columnEnd: 20 },
+    };
+    const result = assessArenaResetClosure({
+      ...clean,
+      cleanup: {
+        ...clean.cleanup,
+        asyncResetCompletion: {
+          swallowedFailurePaths: 1,
+          partialResultPaths: 1,
+          earlyIdlePaths: 1,
+          observations: [{
+            scriptId: "reset",
+            kind: "reset-error-swallowed-candidate",
+            executionRegion: "function:GameManager.trackArenaCleanup@7:1",
+            source,
+            detail: "log-only source catch",
+          }],
+        },
+      },
+    });
+    expect(result.status).toBe("unresolved");
+    expect(result.reuseEligibility).toBe("quarantined");
+    expect(result.blockers).toContain("asyncResetFailureSwallowCandidates");
+    expect(result.blockers).toContain("asyncResetPartialResultCandidates");
+    expect(result.warnings).toContain("idleBeforeCleanupSettlementSourceCandidate");
+    expect(result.sourceWitnesses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source, scriptId: "reset" }),
+    ]));
+  });
+
   it("fails closed when terminal, convergence, or entry proof is missing", () => {
     const absent = assessArenaResetClosure({
       ...clean,

@@ -13,6 +13,19 @@ export type ScriptCleanupResourceSurface =
   | "input-permission"
   | "mount-relationship";
 
+/** Source-only witnesses, not a runtime reset failure or observed skipped chunk. */
+export type ScriptArenaResetCompletionKind =
+  | "reset-error-swallowed-candidate"
+  | "partial-reset-result-candidate"
+  | "idle-before-cleanup-settlement-candidate";
+
+export interface ScriptArenaResetCompletionEvidence {
+  readonly kind: ScriptArenaResetCompletionKind;
+  readonly executionRegion: string;
+  readonly source: SourceRef;
+  readonly detail: string;
+}
+
 export interface ScriptCleanupResourceEvidence {
   surface: ScriptCleanupResourceSurface;
   action: "acquire" | "release";
@@ -356,4 +369,156 @@ export function deriveScriptCleanupResourceEvidence(
     a.key.localeCompare(b.key) ||
     a.action.localeCompare(b.action)
   );
+}
+
+/** Bounded reset-completion source witnesses using the parser's existing AST.
+ * A source catch or partial return is not evidence of an actual failed game.
+ */
+export function deriveScriptArenaResetCompletionEvidence(
+  file: ts.SourceFile,
+  source: SourceRef,
+): ScriptArenaResetCompletionEvidence[] {
+  const output: ScriptArenaResetCompletionEvidence[] = [];
+  const named = (name: ts.PropertyName | undefined): string | undefined =>
+    name && (ts.isIdentifier(name) || ts.isStringLiteralLike(name))
+      ? name.text : undefined;
+  const propertyCall = (
+    node: ts.Node, name: string,
+  ): node is ts.CallExpression & { expression: ts.PropertyAccessExpression } =>
+    ts.isCallExpression(node) &&
+    ts.isPropertyAccessExpression(node.expression) &&
+    node.expression.name.text === name;
+  const consoleOnly = (body: ts.ConciseBody): boolean =>
+    ts.isBlock(body) && body.statements.every(statement => {
+      if (!ts.isExpressionStatement(statement) ||
+          !ts.isCallExpression(statement.expression) ||
+          !ts.isPropertyAccessExpression(statement.expression.expression)) return false;
+      const member = statement.expression.expression;
+      return ts.isIdentifier(member.expression) &&
+        member.expression.text === "console" &&
+        ["warn", "error", "log", "info"].includes(member.name.text);
+    });
+  const resolvedReturn = (statement: ts.Statement): boolean => {
+    if (!ts.isReturnStatement(statement) || !statement.expression) return false;
+    const expr = statement.expression;
+    return ts.isCallExpression(expr) &&
+      ts.isPropertyAccessExpression(expr.expression) &&
+      ts.isIdentifier(expr.expression.expression) &&
+      expr.expression.expression.text === "Promise" &&
+      expr.expression.name.text === "resolve" &&
+      expr.arguments.length === 0;
+  };
+  const idleSessionCall = (statement: ts.Statement): boolean => {
+    if (!ts.isExpressionStatement(statement) ||
+        !propertyCall(statement.expression, "saveSession")) return false;
+    const config = statement.expression.arguments[1];
+    return !!config && ts.isObjectLiteralExpression(config) &&
+      config.properties.some(property =>
+        ts.isPropertyAssignment(property) &&
+        named(property.name) === "status" &&
+        ts.isStringLiteralLike(property.initializer) &&
+        property.initializer.text === "idle");
+  };
+  const cleanupCall = (statement: ts.Statement): boolean => {
+    const expr = ts.isReturnStatement(statement)
+      ? statement.expression
+      : ts.isExpressionStatement(statement) ? statement.expression : undefined;
+    return !!expr && propertyCall(expr, "trackArenaCleanup");
+  };
+  const inspectOwner = (
+    owner: ts.MethodDeclaration | ts.FunctionDeclaration,
+  ): void => {
+    if (!owner.body) return;
+    const methodName = named(owner.name);
+    if (!methodName) return;
+    const parent = ts.isMethodDeclaration(owner) ? owner.parent : undefined;
+    const className = parent &&
+      (ts.isClassDeclaration(parent) || ts.isClassExpression(parent))
+      ? parent.name?.text ??
+        (ts.isVariableDeclaration(parent.parent) &&
+         ts.isIdentifier(parent.parent.name) ? parent.parent.name.text : "")
+      : "";
+    const relevant = /(?:reset|cleanup)/i.test(methodName) ||
+      /reset/i.test(className);
+    const region = executionRegion(owner.body, file);
+    const emit = (kind: ScriptArenaResetCompletionKind, node: ts.Node, detail: string): void => {
+      output.push({ kind, executionRegion: region, source: nodeSource(file, node, source), detail });
+    };
+    // Only direct-statement order is known. No dominance or runtime re-entry
+    // is inferred from a preceding idle write.
+    const statements = owner.body.statements;
+    for (let i = 0; i < statements.length; i++) {
+      if (idleSessionCall(statements[i]!) &&
+          statements.slice(i + 1).some(cleanupCall)) {
+        emit("idle-before-cleanup-settlement-candidate", statements[i]!,
+          "Source idle-session write precedes cleanup handoff; admission guards are assessed separately.");
+      }
+    }
+    if (!relevant) return;
+
+    const skippedResultIds = new Set<string>();
+    const returnedIds = new Set<string>();
+    const skippedPushes: ts.CallExpression[] = [];
+    const visit = (node: ts.Node): void => {
+      // Callbacks are independent execution regions. Do not borrow their
+      // control flow as direct statements of the enclosing reset method.
+      if (node !== owner.body && (ts.isArrowFunction(node) ||
+          ts.isFunctionExpression(node) || ts.isFunctionDeclaration(node) ||
+          ts.isMethodDeclaration(node))) return;
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) &&
+          node.initializer && ts.isObjectLiteralExpression(node.initializer) &&
+          node.initializer.properties.some(property =>
+            ts.isPropertyAssignment(property) &&
+            named(property.name) === "skippedChunks" &&
+            ts.isArrayLiteralExpression(property.initializer))) {
+        skippedResultIds.add(node.name.text);
+      }
+      if (ts.isReturnStatement(node) && node.expression &&
+          ts.isIdentifier(node.expression)) returnedIds.add(node.expression.text);
+      if (propertyCall(node, "push") &&
+          ts.isPropertyAccessExpression(node.expression.expression) &&
+          node.expression.expression.name.text === "skippedChunks" &&
+          ts.isIdentifier(node.expression.expression.expression)) {
+        skippedPushes.push(node);
+      }
+      if (propertyCall(node, "catch") && !ts.isVoidExpression(node.parent)) {
+        const callback = node.arguments[0];
+        if (callback && (ts.isArrowFunction(callback) ||
+            ts.isFunctionExpression(callback)) && consoleOnly(callback.body)) {
+          emit("reset-error-swallowed-candidate", node,
+            "An inline catch has no direct failure propagation; source-only candidate.");
+        }
+      }
+      if (ts.isCatchClause(node) &&
+          node.block.statements.some(resolvedReturn) &&
+          !node.block.statements.some(ts.isThrowStatement)) {
+        emit("reset-error-swallowed-candidate", node,
+          "A reset-related catch returns an empty resolved Promise.");
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(owner.body);
+    const partial = skippedPushes.find(call =>
+      ts.isPropertyAccessExpression(call.expression) &&
+      ts.isPropertyAccessExpression(call.expression.expression) &&
+      ts.isIdentifier(call.expression.expression.expression) &&
+      skippedResultIds.has(call.expression.expression.expression.text) &&
+      returnedIds.has(call.expression.expression.expression.text));
+    if (partial && /reset/i.test(className)) {
+      emit("partial-reset-result-candidate", partial,
+        "A reset source records skippedChunks while allowing a normal resolved result.");
+    }
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isMethodDeclaration(node) || ts.isFunctionDeclaration(node)) {
+      inspectOwner(node);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return output.sort((a, b) =>
+    a.source.relativePath.localeCompare(b.source.relativePath) ||
+    (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+    (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
+    a.kind.localeCompare(b.kind));
 }

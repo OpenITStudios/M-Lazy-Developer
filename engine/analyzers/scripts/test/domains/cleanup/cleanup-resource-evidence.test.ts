@@ -8,6 +8,45 @@ const source = {
 };
 
 describe("script cleanup resource evidence", () => {
+  it("retains source evidence for async reset exceptions and partial results", () => {
+    const code = [
+      "const ResetMapService = class {",
+      "  static processChunksOverTime() {",
+      "    const result = { processedChunks: 0, skippedChunks: [] };",
+      "    try { result.processedChunks++; } catch (e) { result.skippedChunks.push(e); }",
+      "    return result;",
+      "  }",
+      "  static waitForReset(job) { return job.promise.catch(() => {}); }",
+      "};",
+      "const GameManager = class {",
+      "  static resetArenaPlacedBlocks() {",
+      "    try { return ResetMapService.resetMap(); }",
+      "    catch (e) { console.warn(e); return Promise.resolve(); }",
+      "  }",
+      "  static trackArenaCleanup(resetPromise) {",
+      "    return Promise.resolve(resetPromise).catch(e => { console.warn(e); }).then(() => {});",
+      "  }",
+      "  static safeReset(p) { return p.catch(e => { throw e; }); }",
+      "  static endGame(id) {",
+      "    this.saveSession(id, { status: 'idle' });",
+      "    return this.trackArenaCleanup(this.resetArenaPlacedBlocks());",
+      "  }",
+      "};",
+    ].join("\n");
+    const parsed = parseScriptFile("reset", code, source);
+    const found = parsed.arenaResetCompletionEvidence ?? [];
+    expect(found.filter(item => item.kind ===
+      "reset-error-swallowed-candidate").length).toBeGreaterThan(0);
+    expect(found.some(item => item.kind ===
+      "partial-reset-result-candidate")).toBe(true);
+    expect(found.some(item => item.kind ===
+      "idle-before-cleanup-settlement-candidate")).toBe(true);
+    expect(found.some(item => item.executionRegion.includes("safeReset@"))).toBe(false);
+    expect(found.every(item =>
+      item.source.relativePath === "scripts/main.ts" &&
+      item.source.range?.lineStart !== undefined)).toBe(true);
+  });
+
   it("extracts exact tag effect scoreboard and timer inverse keys", () => {
     const result =
       deriveScriptCleanupResourceEvidence(

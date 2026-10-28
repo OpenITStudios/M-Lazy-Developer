@@ -13,7 +13,7 @@ import type { ScriptChunkLifecycleEvidence } from "../domains/chunk/chunk-lifecy
 import type { ScriptCombatLifecycleEvidence } from "../domains/combat/combat-lifecycle-evidence.js";
 import type { ScriptInventoryLifecycleEvidence } from "../domains/inventory/inventory-lifecycle-evidence.js";
 import type { ScriptGlobalLeaseEvidence } from "../domains/arena/global-lease-evidence.js";
-import type { ScriptCleanupResourceEvidence } from "../domains/cleanup/cleanup-resource-evidence.js";
+import type { ScriptCleanupResourceEvidence, ScriptArenaResetCompletionEvidence } from "../domains/cleanup/cleanup-resource-evidence.js";
 import type {
   PersistentDataLifecycleEvidence,
   ScriptResultAuditRecordEvidence,
@@ -814,6 +814,7 @@ export interface ParsedScriptFile {
   spatialMutationRejected?: ScriptSpatialMutationRejection[];
   spatialWorldMutations?: ScriptSpatialWorldMutation[];
   cleanupResourceEvidence?: ScriptCleanupResourceEvidence[];
+  arenaResetCompletionEvidence?: readonly ScriptArenaResetCompletionEvidence[];
   chunkLifecycleEvidence?: ScriptChunkLifecycleEvidence[];
   combatLifecycleEvidence?: ScriptCombatLifecycleEvidence[];
   economyEvidence?: ScriptEconomyEvidence[];
