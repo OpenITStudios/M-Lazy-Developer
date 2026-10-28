@@ -685,6 +685,35 @@ export function formatSelectedMapAuditBrief(input: {
             concise(review.proposedGameplayMeaning),
           "  **Next source question:** " + concise(review.nextEvidenceQuestion),
         ]),
+        ...(investigation?.gameplayEvidenceInquiry ? [
+          "  **Gameplay purpose evidence (NOT source-to-design proof):** " +
+            investigation.gameplayEvidenceInquiry.designDisposition +
+            "; " + investigation.gameplayEvidenceInquiry.approvedDesignEvidenceIds.length +
+            " linked approved design witness(es); " +
+            investigation.gameplayEvidenceInquiry.playerFacingEvidenceIds.length +
+            " linked player-facing source cue(s); " +
+            investigation.gameplayEvidenceInquiry.subjectLinks.length +
+            " selected Intent subject link(s).",
+          ...investigation.gameplayEvidenceInquiry.questions.slice(0, 3)
+            .map(inquiry =>
+              "  **Question [" + inquiry.focus + "]:** " +
+                concise(inquiry.question) +
+                (inquiry.evidenceIds.length === 0 ? " [NO INDEPENDENT WITNESS]" :
+                  " [source evidence " +
+                    inquiry.evidenceIds.slice(0, 3).map(concise).join(", ") + "]")),
+          ...(investigation.gameplayEvidenceInquiry.independentCues.length === 0 ? [] : [
+            "  **Independent selected-source cue(s), NOT delivered gameplay:** " +
+              investigation.gameplayEvidenceInquiry.independentCues.slice(0, 2)
+                .map(cue => cue.approval + " @" + concise(cue.locator) +
+                  (cue.literalPlayerText === undefined ? "" :
+                    " (literal copy: " + concise(cue.literalPlayerText) + ")"))
+                .join("; ") + ".",
+          ]),
+          ...(investigation.candidateJourneyIds?.length ? [
+            "  **Exact authored journey candidates (NOT playable sequence):** " +
+              investigation.candidateJourneyIds.map(concise).join("; ") + ".",
+          ] : []),
+        ] : []),
         ...(investigation?.behaviorShape ? [
           "  Source structural shape (NOT gameplay equivalence): " +
             investigation.behaviorShape.status +
@@ -744,10 +773,18 @@ export function formatSelectedMapAuditBrief(input: {
         shapeAnalogs.slice(0, 3).map(item =>
           concise(item.leftUnknownId) + " ~ " + concise(item.rightUnknownId) +
           (item.comparison.entryKindsDiffer
-            ? " [different authored entry kinds]" : ""))
+            ? " [different authored entry kinds]" : "") +
+          (item.gameplayContrast.missingIndependentDesignFor.length > 0
+            ? " [design ungrounded for " +
+              item.gameplayContrast.missingIndependentDesignFor.map(concise).join(", ") + "]"
+            : " [independently linked design cues; applicability unverified]"))
           .join("; ") +
         (shapeAnalogs.length > 3 ? "; other source analogs omitted." : ".") +
         " Confirm player purpose, state owner, guards and observed outcomes independently.");
+      out.push(
+        "**Analog deciding question (NOT gameplay equivalence):** " +
+          concise(shapeAnalogs[0]!.gameplayContrast.question),
+      );
     }
     out.push(
       "**Next understanding check:** Trace each selected-source entry, guard, " +

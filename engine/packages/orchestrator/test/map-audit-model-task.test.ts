@@ -863,11 +863,23 @@ describe("unclassified source-effect relationship reuse", () => {
         { id: "effect:foreign", origin: "historical-diff" as const,
           scope: "external-reference" as const, locator: "old/novel.js:4",
           summary: "Historical source" },
+        { id: "design:open", origin: "game-design-spec" as const,
+          designStatus: "approved" as const, scope: "selected-artifact" as const,
+          locator: "design/flow.md#objective", summary: "Approved authored objective" },
+        { id: "cue:open", origin: "translation" as const,
+          scope: "selected-artifact" as const,
+          locator: "resource_packs/base/texts/en_US.lang#L12",
+          summary: "Authored player-facing copy",
+          playerFacingText: { key: "gate.prompt", text: "Open the door" } },
       ],
-      nodes: [], edges: [], invariants: [],
+      nodes: [{
+        id: "objective:gate", kind: "objective", label: "Possible objective",
+        status: "authored", evidenceIds: ["effect:open", "design:open", "cue:open"],
+      }],
+      edges: [], invariants: [],
       unknowns: [{
         id: "unknown:entry", question: "What is the intended mechanic?",
-        blockedSubjectIds: [], sourceEntryRegionId: "source:entry",
+        blockedSubjectIds: ["objective:gate"], sourceEntryRegionId: "source:entry",
         evidenceIds: [...ids, "effect:foreign"],
       }, {
         id: "unknown:other", question: "What does the alternate source do?",
@@ -937,7 +949,13 @@ describe("unclassified source-effect relationship reuse", () => {
       admission: { policy: "selected-map-audit-ordered-admission",
         status: "BLOCKED", firstBlockingStage: "UNDERSTAND", issues: [] },
       procedure: { checkpoints: [] } as any,
-      graph: { causalLinks: [], sourceFlowCandidates: [{
+      graph: {
+        causalLinks: [],
+        gameplayJourneyCandidates: [{
+          id: "journey:gate", exactSourceFlowIds: ["flow:entry"],
+          subjectIds: ["objective:gate"], evidenceIds: ["effect:open"],
+        }],
+        sourceFlowCandidates: [{
         id: "flow:entry", entryRegionId: "source:entry",
         entryKind: "script-function", sourceTraceStatus: "SOURCE_ROOT_TRACE",
         sourceSteps: [step("op:write", "state", "write"),
@@ -955,7 +973,8 @@ describe("unclassified source-effect relationship reuse", () => {
           alternateStep("return:other", "return"),
         ],
         branchPoints: [], sourceHandoffs: [], unresolvedExecutionEdgeIds: [],
-      }] } as any,
+      }],
+      } as any,
       sourceEffectContext: context,
       intent, defectResolution: {} as any, world: {} as any,
       auditRevision: "revision:novel",
@@ -979,12 +998,34 @@ describe("unclassified source-effect relationship reuse", () => {
       entry.behaviorShape?.status)).toEqual([
         "STRUCTURAL_CANDIDATE", "STRUCTURAL_CANDIDATE",
       ]);
+    expect(task.sourceInvestigation?.entries[0]?.gameplayEvidenceInquiry)
+      .toMatchObject({
+        designDisposition: "grounded-design",
+        approvedDesignEvidenceIds: ["design:open"],
+        playerFacingEvidenceIds: ["cue:open"],
+      });
+    expect(task.sourceInvestigation?.entries[0]?.candidateJourneyIds)
+      .toEqual(["journey:gate"]);
+    expect(task.sourceInvestigation?.entries[1]?.gameplayEvidenceInquiry)
+      .toMatchObject({
+        designDisposition: "implementation-only",
+        approvedDesignEvidenceIds: [],
+      });
     expect(task.sourceInvestigation?.structuralAnalogs).toMatchObject([{
       comparison: {
         disposition: "STRUCTURAL_ANALOG_CANDIDATE",
         proofBoundary: "SOURCE_STRUCTURE_NOT_GAMEPLAY_EQUIVALENCE_OR_RUNTIME",
       },
+      gameplayContrast: {
+        leftDesignEvidenceIds: ["design:open"],
+        rightDesignEvidenceIds: [],
+        leftPlayerFacingEvidenceIds: ["cue:open"],
+        missingIndependentDesignFor: ["unknown:other"],
+        entryKindsDiffer: true,
+        proof: "SOURCE_ANALOGY_NOT_GAMEPLAY_EQUIVALENCE",
+      },
     }]);
+    expect(task.evidenceIds).not.toContain("design:open");
     const propose = (kind: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" |
       "SOURCE_EFFECT_RETURN_CANDIDATE", fromStepId: string, toStepId: string) =>
       reviewAuditModelSourceInterpretation(task, {

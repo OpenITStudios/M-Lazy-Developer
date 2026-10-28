@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assessGameplayIntentGrounding,
+  deriveUnknownGameplayEvidenceInquiry,
   assessGameplayRouteObservation,
   evaluateGameplayOutcomeAdmissibility,
   evaluateGameplayPolicyPredicate,
@@ -1104,5 +1105,133 @@ describe("gameplay intent", () => {
         ["mechanic:plot-build"],
       ).disposition,
     ).toBe("ambiguous");
+  });
+});
+
+
+describe("current-map unknown gameplay purpose evidence", () => {
+  it("links only exact source/blocked Intent subjects to independent design and player cues", () => {
+    const current: GameplayIntentModel = {
+      schemaVersion: 1, id: "intent:selected", artifactId: "selected",
+      evidence: [{
+        id: "op:effect", origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/entry.js:10:2", summary: "Exact selected operation",
+      }, {
+        id: "op:outcome", origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/entry.js:20:2", summary: "Exact return",
+      }, {
+        id: "spec:approved", origin: "game-design-spec",
+        designStatus: "approved", scope: "selected-artifact",
+        locator: "design/accepted.md#objective", summary: "Approved selected objective",
+      }, {
+        id: "cue:choice", origin: "translation", scope: "selected-artifact",
+        locator: "resource_packs/demo/texts/en_US.lang#L8",
+        summary: "Authored display copy", playerFacingText: {
+          key: "demo.choice", text: "Choose your path",
+        },
+      }, {
+        id: "spec:unrelated", origin: "game-design-spec",
+        designStatus: "approved", scope: "selected-artifact",
+        locator: "design/unrelated.md#goal", summary: "Other feature",
+      }, {
+        id: "spec:speculative", origin: "game-design-spec",
+        designStatus: "approved", scope: "selected-artifact",
+        locator: "design/speculation.md#goal", summary: "Hypothesis-only feature",
+      }, {
+        id: "spec:old", origin: "historical-diff",
+        scope: "external-reference", locator: "older/goal.md",
+        summary: "Old map claim",
+      }, {
+        id: "op:orphan", origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/other.js:9:1", summary: "Independent unknown",
+      }],
+      nodes: [{
+        id: "objective:active", kind: "objective", label: "Possible objective",
+        status: "authored", evidenceIds: ["op:effect", "spec:approved", "cue:choice"],
+      }, {
+        id: "outcome:result", kind: "outcome", label: "Possible outcome",
+        status: "inferred", evidenceIds: ["op:outcome"],
+      }, {
+        id: "objective:unrelated", kind: "objective", label: "Other objective",
+        status: "authored", evidenceIds: ["spec:unrelated"],
+      }, {
+        id: "objective:unverified", kind: "objective", label: "Hypothetical",
+        status: "hypothesis", evidenceIds: ["op:effect", "spec:speculative"],
+      }],
+      edges: [{
+        id: "edge:to-outcome", from: "objective:active",
+        to: "outcome:result", kind: "produces", status: "inferred",
+        evidenceIds: ["op:effect"],
+      }],
+      invariants: [],
+      unknowns: [{
+        id: "unknown:entry", question: "What does the selected code mean?",
+        blockedSubjectIds: ["objective:active"],
+        sourceEntryRegionId: "entry",
+        evidenceIds: ["op:effect", "spec:old"],
+      }, {
+        id: "unknown:orphan", question: "What is the purpose of this state?",
+        blockedSubjectIds: [], sourceEntryRegionId: "other",
+        evidenceIds: ["op:orphan"],
+      }],
+    };
+    const linked = deriveUnknownGameplayEvidenceInquiry(
+      current, "unknown:entry", ["op:effect"]);
+    expect(linked?.designDisposition).toBe("grounded-design");
+    expect(linked?.approvedDesignEvidenceIds).toEqual(["spec:approved"]);
+    expect(linked?.playerFacingEvidenceIds).toEqual(["cue:choice"]);
+    expect(linked?.independentCues[0]?.approval).toBe("approved");
+    expect(linked?.independentCues.find(item =>
+      item.evidenceId === "cue:choice")?.literalPlayerText).toBe("Choose your path");
+    expect(linked?.subjectLinks).toEqual([{
+      subjectId: "objective:active", kind: "objective",
+      basis: "SHARED_SELECTED_SOURCE_EVIDENCE",
+    }]);
+    expect(linked?.authoredRelationLeads.map(edge => edge.edgeId))
+      .toEqual(["edge:to-outcome"]);
+    expect(linked?.questions.map(question => question.focus))
+      .toEqual(["DESIGN_PURPOSE", "PLAYER_PRESENTATION", "PLAYER_FLOW_OWNERSHIP"]);
+    const allRefs = [
+      ...(linked?.approvedDesignEvidenceIds ?? []),
+      ...(linked?.playerFacingEvidenceIds ?? []),
+    ];
+    expect(allRefs).not.toContain("spec:unrelated");
+    expect(allRefs).not.toContain("spec:speculative");
+    expect(allRefs).not.toContain("spec:old");
+
+    // A design record authored at the SAME technical site is not
+    // independent corroboration, even if labeled approved.
+    const coLocated: GameplayIntentModel = {
+      ...current,
+      evidence: current.evidence.map(item => item.id === "spec:approved"
+        ? { ...item, locator: "scripts/entry.js:10:2" } : item),
+    };
+    const noIndependentDesign = deriveUnknownGameplayEvidenceInquiry(
+      coLocated, "unknown:entry", ["op:effect"]);
+    expect(noIndependentDesign?.approvedDesignEvidenceIds).toEqual([]);
+    expect(noIndependentDesign?.designDisposition).not.toBe("grounded-design");
+
+    // Draft gameplay notes must remain a claim, never an approved rule.
+    const draft: GameplayIntentModel = {
+      ...current,
+      evidence: current.evidence.map(item => item.id === "spec:approved"
+        ? { ...item, designStatus: "draft" as const } : item),
+    };
+    const draftInquiry = deriveUnknownGameplayEvidenceInquiry(
+      draft, "unknown:entry", ["op:effect"]);
+    expect(draftInquiry?.designDisposition).toBe("design-claim");
+    expect(draftInquiry?.approvedDesignEvidenceIds).toEqual([]);
+    expect(draftInquiry?.draftDesignEvidenceIds).toEqual(["spec:approved"]);
+
+    const orphan = deriveUnknownGameplayEvidenceInquiry(
+      current, "unknown:orphan", ["op:orphan"]);
+    expect(orphan?.designDisposition).toBe("implementation-only");
+    expect(orphan?.approvedDesignEvidenceIds).toEqual([]);
+    expect(orphan?.subjectLinks).toEqual([]);
+    expect(orphan?.questions[0]?.evidenceIds).toEqual([]);
+    expect(deriveUnknownGameplayEvidenceInquiry(
+      current, "unknown:entry", ["spec:old"])).toBeUndefined();
+    expect(deriveUnknownGameplayEvidenceInquiry(
+      current, "unknown:missing", ["op:effect"])).toBeUndefined();
   });
 });

@@ -1,5 +1,6 @@
 import type {
   GameplayIntentEvidence,
+  GameplayIntentModel,
   GameplayIntentStatus,
 } from "./types.js";
 
@@ -166,4 +167,189 @@ export function selectedArtifactPlayerFacingEvidence(
   return [...new Set(evidence
     .filter(isSelectedArtifactPlayerFacingClaimEvidence)
     .map(item => item.id))].sort();
+}
+
+
+/**
+ * Navigate from an unclassified exact source entry to independently authored
+ * current-map design/presentation cues. A shared Intent subject or an explicit
+ * blocked-subject link is a SOURCE NAVIGATION relation, never proof the
+ * technical operations implement its objective or delivered UI.
+ */
+export interface UnknownGameplayEvidenceInquiry {
+  readonly unknownId: string;
+  readonly sourceEvidenceIds: readonly string[];
+  readonly subjectLinks: readonly {
+    readonly subjectId: string;
+    readonly kind: GameplayIntentModel["nodes"][number]["kind"];
+    readonly basis: "SHARED_SELECTED_SOURCE_EVIDENCE" | "EXPLICIT_UNKNOWN_BLOCKED_SUBJECT";
+  }[];
+  readonly omittedSubjectLinks: number;
+  readonly authoredRelationLeads: readonly {
+    readonly edgeId: string;
+    readonly from: string;
+    readonly to: string;
+    readonly kind: GameplayIntentModel["edges"][number]["kind"];
+    readonly evidenceIds: readonly string[];
+    readonly omittedEvidenceIds: number;
+  }[];
+  readonly omittedAuthoredRelationLeads: number;
+  /** Uses canonical selected-source design validation. This is still just
+   * context for the unknown operation, not acceptance of that design rule. */
+  readonly designDisposition: DesignIntentChallengeDisposition;
+  readonly approvedDesignEvidenceIds: readonly string[];
+  readonly draftDesignEvidenceIds: readonly string[];
+  readonly playerFacingEvidenceIds: readonly string[];
+  readonly independentCues: readonly {
+    readonly evidenceId: string;
+    readonly origin: "game-design-spec" | "dialogue" | "translation";
+    readonly locator: string;
+    readonly summary: string;
+    readonly approval: "approved" | "draft" | "player-facing-cue";
+    readonly literalPlayerText?: string;
+  }[];
+  readonly omittedIndependentCues: number;
+  readonly questions: readonly {
+    readonly focus: "DESIGN_PURPOSE" | "PLAYER_PRESENTATION" | "PLAYER_FLOW_OWNERSHIP";
+    readonly question: string;
+    readonly evidenceIds: readonly string[];
+  }[];
+  readonly authority: "LINKED_SELECTED_INTENT_CONTEXT_NOT_UNKNOWN_MECHANIC_OR_RUNTIME_PROOF";
+}
+
+export function deriveUnknownGameplayEvidenceInquiry(
+  model: GameplayIntentModel,
+  unknownId: string,
+  exactSourceEvidenceIds: readonly string[],
+): UnknownGameplayEvidenceInquiry | undefined {
+  if (!model.artifactId) return undefined;
+  const unknowns = model.unknowns.filter(item => item.id === unknownId);
+  if (unknowns.length !== 1) return undefined;
+  const unknown = unknowns[0]!;
+  const evidenceById = new Map(model.evidence.map(item => [item.id, item] as const));
+  const sourceScope = new Set(unknown.evidenceIds ?? []);
+  const selected = (id: string): GameplayIntentEvidence | undefined => {
+    const item = evidenceById.get(id);
+    return item?.scope === "selected-artifact" &&
+      item.locator.trim() ? item : undefined;
+  };
+  const sourceEvidenceIds = [...new Set(exactSourceEvidenceIds)]
+    .filter(id => sourceScope.has(id) && selected(id) !== undefined &&
+      !isSelectedArtifactDesignClaimEvidence(selected(id)) &&
+      !isSelectedArtifactPlayerFacingClaimEvidence(selected(id))).sort();
+  if (sourceEvidenceIds.length === 0) return undefined;
+  const sourceIds = new Set(sourceEvidenceIds);
+  const blocked = new Set(unknown.blockedSubjectIds);
+  // A hypothesis-only subject cannot lend design or player-flow authority.
+  const linked = model.nodes.filter(node =>
+    node.status !== "hypothesis" &&
+    (blocked.has(node.id) ||
+      node.evidenceIds.some(id => sourceIds.has(id))) &&
+    node.evidenceIds.some(id => selected(id) !== undefined))
+    .map(node => ({
+      node,
+      basis: node.evidenceIds.some(id => sourceIds.has(id))
+        ? "SHARED_SELECTED_SOURCE_EVIDENCE" as const
+        : "EXPLICIT_UNKNOWN_BLOCKED_SUBJECT" as const,
+    })).sort((a, b) => a.node.id.localeCompare(b.node.id));
+  const linkedIds = new Set(linked.map(item => item.node.id));
+  const relatedEvidenceIds = [...new Set([
+    ...(unknown.evidenceIds ?? []),
+    ...linked.flatMap(item => item.node.evidenceIds),
+  ])];
+  const approvedAndDraft = relatedEvidenceIds.filter(id =>
+    isSelectedArtifactDesignClaimEvidence(selected(id)));
+  const playerFacing = relatedEvidenceIds.filter(id =>
+    isSelectedArtifactPlayerFacingClaimEvidence(selected(id)));
+  const challenge = challengeDesignIntent({
+    implementationEvidenceIds: sourceEvidenceIds,
+    independentDesignEvidenceIds: approvedAndDraft,
+    playerFacingEvidenceIds: playerFacing,
+    evidence: model.evidence,
+  });
+  const cueIds = [
+    ...challenge.designEvidenceIds,
+    ...challenge.designClaimEvidenceIds,
+    ...challenge.playerFacingEvidenceIds,
+  ];
+  const cues = cueIds.flatMap(evidenceId => {
+    const item = selected(evidenceId);
+    if (!item || !(isSelectedArtifactDesignClaimEvidence(item) ||
+        isSelectedArtifactPlayerFacingClaimEvidence(item))) return [];
+    return [{
+      evidenceId,
+      origin: item.origin as "game-design-spec" | "dialogue" | "translation",
+      locator: item.locator,
+      summary: item.summary.slice(0, 180),
+      approval: isSelectedArtifactApprovedDesignEvidence(item)
+        ? "approved" as const
+        : item.origin === "game-design-spec"
+          ? "draft" as const : "player-facing-cue" as const,
+      ...(item.playerFacingText === undefined ? {} :
+        { literalPlayerText: item.playerFacingText.text.slice(0, 180) }),
+    }];
+  });
+  const authoredRelations = model.edges.filter(edge =>
+    edge.status !== "hypothesis" &&
+    (linkedIds.has(edge.from) || linkedIds.has(edge.to)) &&
+    edge.evidenceIds.some(id => selected(id) !== undefined) &&
+    model.nodes.some(node =>
+      node.id === edge.from && node.status !== "hypothesis" &&
+      node.evidenceIds.some(id => selected(id) !== undefined)) &&
+    model.nodes.some(node =>
+      node.id === edge.to && node.status !== "hypothesis" &&
+      node.evidenceIds.some(id => selected(id) !== undefined)))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const questions: UnknownGameplayEvidenceInquiry["questions"][number][] = [{
+    focus: "DESIGN_PURPOSE",
+    question: challenge.designEvidenceIds.length > 0
+      ? "Does the linked, independently located APPROVED selected-map design actually specify the intended player objective and expected result for this source entry? Validate applicability against its exact activation and state owner."
+      : challenge.designClaimEvidenceIds.length > 0
+        ? "Does the linked DRAFT design describe this entry's intended player objective, and is there independent approval or current-map authority? Do not promote draft wording into a requirement."
+        : "What is the independently supported intended player objective and expected result for this source entry? No linked selected-artifact approved design witness has been established.",
+    evidenceIds: [
+      ...challenge.designEvidenceIds, ...challenge.designClaimEvidenceIds,
+    ].slice(0, 4),
+  }];
+  if (challenge.playerFacingEvidenceIds.length > 0) {
+    questions.push({
+      focus: "PLAYER_PRESENTATION",
+      question: "Is the linked dialogue/translation actually presented to players on this exact source path, under the selected locale and conditions? Source copy is a cue, not delivered gameplay or approved design.",
+      evidenceIds: challenge.playerFacingEvidenceIds.slice(0, 4),
+    });
+  }
+  questions.push({
+    focus: "PLAYER_FLOW_OWNERSHIP",
+    question: linkedIds.size > 0
+      ? "Does an explicitly linked or shared-source Intent subject actually own this entry's player-flow step? Trace entrance, guard, player/arena/session scope, effect and exit independently; Intent edge direction is not game-time order."
+      : "Which player-flow step and owner, if any, uses the exact source operations? No independently linked non-hypothetical Intent subject was found.",
+    evidenceIds: sourceEvidenceIds.slice(0, 4),
+  });
+  return {
+    unknownId,
+    sourceEvidenceIds: sourceEvidenceIds.slice(0, 12),
+    subjectLinks: linked.slice(0, 4).map(item => ({
+      subjectId: item.node.id,
+      kind: item.node.kind,
+      basis: item.basis,
+    })),
+    omittedSubjectLinks: Math.max(0, linked.length - 4),
+    authoredRelationLeads: authoredRelations.slice(0, 4).map(edge => {
+      const ids = edge.evidenceIds.filter(id => selected(id) !== undefined);
+      return {
+        edgeId: edge.id, from: edge.from, to: edge.to, kind: edge.kind,
+        evidenceIds: ids.slice(0, 4),
+        omittedEvidenceIds: Math.max(0, ids.length - 4),
+      };
+    }),
+    omittedAuthoredRelationLeads: Math.max(0, authoredRelations.length - 4),
+    designDisposition: challenge.disposition,
+    approvedDesignEvidenceIds: challenge.designEvidenceIds.slice(0, 4),
+    draftDesignEvidenceIds: challenge.designClaimEvidenceIds.slice(0, 4),
+    playerFacingEvidenceIds: challenge.playerFacingEvidenceIds.slice(0, 4),
+    independentCues: cues.slice(0, 4),
+    omittedIndependentCues: Math.max(0, cues.length - 4),
+    questions,
+    authority: "LINKED_SELECTED_INTENT_CONTEXT_NOT_UNKNOWN_MECHANIC_OR_RUNTIME_PROOF",
+  };
 }

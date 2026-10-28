@@ -1,5 +1,7 @@
-import type {
-  GameplayIntentModel,
+import {
+  deriveUnknownGameplayEvidenceInquiry,
+  type GameplayIntentModel,
+  type UnknownGameplayEvidenceInquiry,
 } from "../../gameplay-intent/src/index.js";
 import {
   describeSourceBehaviorShape,
@@ -185,6 +187,15 @@ export interface AuditModelSourceInvestigation {
     readonly omittedEffectPaths?: number;
     /** Name-independent authored anatomy; not a gameplay rule. */
     readonly behaviorShape?: SourceBehaviorShape;
+    /** Independently source-linked design / player presentation / Intent
+     * navigation. Never a confirmed mechanic or playable journey.
+     */
+    readonly gameplayEvidenceInquiry?: UnknownGameplayEvidenceInquiry;
+    /** Existing authored journey candidates joined by exact source-flow and
+     * selected source evidence. Context only, NOT causal/gameplay proof.
+     */
+    readonly candidateJourneyIds?: readonly string[];
+    readonly omittedCandidateJourneys?: number;
     readonly unresolvedExecutionEdgeIds: readonly string[];
     readonly omittedUnresolvedExecutionEdges: number;
     /** Selected-source evidence not represented by this one exact IR flow. */
@@ -197,6 +208,19 @@ export interface AuditModelSourceInvestigation {
     readonly leftUnknownId: string;
     readonly rightUnknownId: string;
     readonly comparison: SourceBehaviorShapeComparison;
+    /** Separate design and player-flow questions must be settled per entry;
+     * similarity cannot transfer an objective from one source path to another.
+     */
+    readonly gameplayContrast: {
+      readonly question: string;
+      readonly leftDesignEvidenceIds: readonly string[];
+      readonly rightDesignEvidenceIds: readonly string[];
+      readonly leftPlayerFacingEvidenceIds: readonly string[];
+      readonly rightPlayerFacingEvidenceIds: readonly string[];
+      readonly missingIndependentDesignFor: readonly string[];
+      readonly entryKindsDiffer: boolean;
+      readonly proof: "SOURCE_ANALOGY_NOT_GAMEPLAY_EQUIVALENCE";
+    };
   }[];
   readonly omittedStructuralAnalogs?: number;
 }
@@ -975,6 +999,21 @@ function deriveSourceInvestigation(
             step.source.artifactId === intent.artifactId))
         .sort((a, b) => a.effectId.localeCompare(b.effectId))
       : [];
+    const gameplayEvidenceInquiry = deriveUnknownGameplayEvidenceInquiry(
+      intent, unknown.id, steps.map(step => step.id));
+    // Cross from source to an existing authored journey ONLY when the same
+    // current source effect ID and rooted flow are both represented AND a
+    // selected Intent subject is explicitly linked to this unknown. No
+    // chronological claim follows from this membership.
+    const linkedSubjects = new Set(gameplayEvidenceInquiry?.subjectLinks
+      .map(link => link.subjectId) ?? []);
+    const journeyLeads = flow.sourceTraceStatus === "SOURCE_ROOT_TRACE"
+      ? (graph.gameplayJourneyCandidates ?? []).filter(journey =>
+          journey.exactSourceFlowIds.includes(flow.id) &&
+          journey.evidenceIds.some(id => matchedIds.has(id)) &&
+          journey.subjectIds.some(id => linkedSubjects.has(id)))
+        .sort((a, b) => a.id.localeCompare(b.id))
+      : [];
     const effectPaths = applicableEffects.slice(0, 4).map(effect => {
       const guardReads = unique(effect.guardStateReadIds);
       const handoffs = effect.sourceLocalStateValueHandoffs.filter(item =>
@@ -1013,6 +1052,11 @@ function deriveSourceInvestigation(
       sourceTraceStatus: flow.sourceTraceStatus ?? "UNKNOWN",
       steps,
       omittedSteps: matchedSteps.length - steps.length,
+      ...(gameplayEvidenceInquiry === undefined ? {} : {
+        gameplayEvidenceInquiry,
+        candidateJourneyIds: journeyLeads.slice(0, 3).map(item => item.id),
+        omittedCandidateJourneys: Math.max(0, journeyLeads.length - 3),
+      }),
       branchContexts: branchContexts.slice(0, 4),
       omittedBranchContexts: branchContexts.length - Math.min(4, branchContexts.length),
       handoffs: handoffs.slice(0, 4),
@@ -1047,10 +1091,46 @@ function deriveSourceInvestigation(
           !left.behaviorShape || !right.behaviorShape) return [];
       const comparison = compareSourceBehaviorShapes(
         left.behaviorShape, right.behaviorShape);
-      return comparison.disposition === "STRUCTURAL_ANALOG_CANDIDATE"
-        ? [{ leftUnknownId: left.unknownId,
-             rightUnknownId: right.unknownId, comparison }]
-        : [];
+      if (comparison.disposition !== "STRUCTURAL_ANALOG_CANDIDATE") return [];
+      const leftDesign = left.gameplayEvidenceInquiry?.approvedDesignEvidenceIds ?? [];
+      const rightDesign = right.gameplayEvidenceInquiry?.approvedDesignEvidenceIds ?? [];
+      const leftPlayer = left.gameplayEvidenceInquiry?.playerFacingEvidenceIds ?? [];
+      const rightPlayer = right.gameplayEvidenceInquiry?.playerFacingEvidenceIds ?? [];
+      return [{
+        leftUnknownId: left.unknownId,
+        rightUnknownId: right.unknownId,
+        comparison,
+        gameplayContrast: {
+          question: "Compare exact source entry " +
+            left.entryRegionId.slice(0, 120) +
+            " (" + left.behaviorShape.entryKind + ") with " +
+            right.entryRegionId.slice(0, 120) + " (" + right.behaviorShape.entryKind +
+            "). Do they serve the SAME player objective and flow step? " +
+            "Left approved design: " +
+            (leftDesign.length
+              ? leftDesign.slice(0, 2).map(id => id.slice(0, 120)).join(", ")
+              : "NOT LINKED") +
+            "; right approved design: " +
+            (rightDesign.length
+              ? rightDesign.slice(0, 2).map(id => id.slice(0, 120)).join(", ")
+              : "NOT LINKED") +
+            ". Independently verify both trigger conditions, player/arena/session " +
+            "ownership, source outcome and presented UI" +
+            (comparison.entryKindsDiffer
+              ? "; their authored entry kinds differ"
+              : "") + ". Source-shape similarity is not gameplay equivalence.",
+          leftDesignEvidenceIds: leftDesign,
+          rightDesignEvidenceIds: rightDesign,
+          leftPlayerFacingEvidenceIds: leftPlayer,
+          rightPlayerFacingEvidenceIds: rightPlayer,
+          missingIndependentDesignFor: [
+            ...(leftDesign.length ? [] : [left.unknownId]),
+            ...(rightDesign.length ? [] : [right.unknownId]),
+          ],
+          entryKindsDiffer: comparison.entryKindsDiffer,
+          proof: "SOURCE_ANALOGY_NOT_GAMEPLAY_EQUIVALENCE" as const,
+        },
+      }];
     }));
   return {
     authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
