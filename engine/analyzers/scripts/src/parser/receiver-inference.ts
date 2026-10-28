@@ -935,6 +935,229 @@ function uniqueSpawnPlayerForward(
   return trusted;
 }
 
+/**
+ * A Dimension source is proved only from the actual imported Minecraft world
+ * singleton. Names such as `world`, `dimension` and `getDimension` alone are
+ * insufficient, even in generated/minified bundles.
+ */
+function importedWorldDimensionCall(
+  node: ts.Expression | undefined,
+  worldBindings: ReadonlyMap<string, ScriptApiReceiverType>,
+): node is ts.CallExpression {
+  if (!node || !ts.isCallExpression(node) ||
+      !ts.isPropertyAccessExpression(node.expression) ||
+      node.expression.name.text !== "getDimension" ||
+      !ts.isIdentifier(node.expression.expression)) return false;
+  return worldBindings.get(node.expression.expression.text) === "World";
+}
+
+function bindingContains(name: ts.BindingName, target: string): boolean {
+  if (ts.isIdentifier(name)) return name.text === target;
+  return name.elements.some(element =>
+    ts.isBindingElement(element) && bindingContains(element.name, target));
+}
+
+function assignmentContains(node: ts.Node, target: string): boolean {
+  if (ts.isIdentifier(node)) return node.text === target;
+  let found = false;
+  ts.forEachChild(node, child => {
+    if (assignmentContains(child, target)) found = true;
+  });
+  return found;
+}
+
+/**
+ * Conservative whole-callable mutation/shadow inventory. The exception is
+ * the one first-in-try assignment already checked separately. This refuses
+ * late writes, destructuring, nested captures, local shadows, and eval.
+ */
+function unstableReceiverName(
+  body: ts.Block,
+  name: string,
+  allowedAssignment?: ts.BinaryExpression,
+  allowedDeclaration?: ts.VariableDeclaration,
+): boolean {
+  let unsafe = false;
+  const visit = (node: ts.Node): void => {
+    if ((ts.isVariableDeclaration(node) || ts.isParameter(node) ||
+         ts.isBindingElement(node)) && node !== allowedDeclaration &&
+        bindingContains(node.name, name)) {
+      unsafe = true;
+    } else if ((ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node) ||
+                ts.isFunctionExpression(node) || ts.isClassExpression(node)) &&
+               node.name?.text === name) {
+      unsafe = true;
+    } else if (ts.isBinaryExpression(node) &&
+               node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+               node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+               node !== allowedAssignment && assignmentContains(node.left, name)) {
+      unsafe = true;
+    } else if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+               (node.operator === ts.SyntaxKind.PlusPlusToken ||
+                node.operator === ts.SyntaxKind.MinusMinusToken) &&
+               assignmentContains(node.operand, name)) {
+      unsafe = true;
+    } else if ((ts.isForOfStatement(node) || ts.isForInStatement(node)) &&
+               ts.isExpression(node.initializer) &&
+               assignmentContains(node.initializer, name)) {
+      unsafe = true;
+    } else if (ts.isCallExpression(node) &&
+               ts.isIdentifier(node.expression) && node.expression.text === "eval") {
+      unsafe = true;
+    } else if (ts.isWithStatement(node)) {
+      unsafe = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(body);
+  return unsafe;
+}
+
+/**
+ * Source-only definite assignment: `let dimension; try {
+ *   dimension = importedWorld.getDimension(id)
+ * } catch { return/throw }` followed by use in the same function.
+ * The try must be a top-level statement, its first operation the assignment,
+ * and the catch must terminate. No other writes/shadows are accepted.
+ */
+function guardedWorldDimensionAssignment(
+  use: ts.CallExpression,
+  receiver: ts.Expression,
+  file: ts.SourceFile,
+  source: SourceRef,
+  worldBindings: ReadonlyMap<string, ScriptApiReceiverType>,
+): SourceRef | undefined {
+  if (!ts.isIdentifier(receiver)) return undefined;
+  let owner: ts.Node | undefined = use.parent;
+  while (owner &&
+         !ts.isFunctionDeclaration(owner) &&
+         !ts.isFunctionExpression(owner) &&
+         !ts.isArrowFunction(owner) &&
+         !ts.isMethodDeclaration(owner)) owner = owner.parent;
+  if (!owner || !owner.body || !ts.isBlock(owner.body)) return undefined;
+  const body = owner.body;
+  const statements = body.statements;
+  let declarationEnd = -1;
+  let declarationCount = 0;
+  let trustedDeclaration: ts.VariableDeclaration | undefined;
+  for (const statement of statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const item of statement.declarationList.declarations) {
+      if (!ts.isIdentifier(item.name) || item.name.text !== receiver.text) continue;
+      declarationCount += 1;
+      if (item.initializer) return undefined;
+      declarationEnd = statement.getEnd();
+      trustedDeclaration = item;
+    }
+  }
+  if (declarationCount !== 1) return undefined;
+
+  for (const statement of statements) {
+    if (!ts.isTryStatement(statement) || !statement.catchClause ||
+        statement.finallyBlock || statement.getStart(file) < declarationEnd ||
+        use.getStart(file) < statement.getEnd()) continue;
+    const first = statement.tryBlock.statements[0];
+    const lastCatch = statement.catchClause.block.statements.at(-1);
+    if (!first || !ts.isExpressionStatement(first) ||
+        !ts.isBinaryExpression(first.expression) ||
+        first.expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+        !ts.isIdentifier(first.expression.left) ||
+        first.expression.left.text !== receiver.text ||
+        !importedWorldDimensionCall(first.expression.right, worldBindings) ||
+        !lastCatch || !statementTerminates(lastCatch)) continue;
+    const assignment = first.expression;
+    const worldName = (assignment.right as ts.CallExpression).expression;
+    if (!ts.isPropertyAccessExpression(worldName) ||
+        !ts.isIdentifier(worldName.expression)) continue;
+    const worldAlias = worldName.expression.text;
+    if (owner.parameters.some(param =>
+          bindingContains(param.name, receiver.text) ||
+          bindingContains(param.name, worldAlias)) ||
+        unstableReceiverName(body, receiver.text, assignment, trustedDeclaration) ||
+        unstableReceiverName(body, worldAlias)) continue;
+    // This is one authored getDimension request, not a runtime guarantee.
+    return lineSource(file, assignment.right, source);
+  }
+  return undefined;
+}
+
+/**
+ * Single-call, non-exported top-level helper handoff. Other calls, escaped
+ * references, local shadows, or parameter writes make the formal uncertain.
+ * Only a direct getDimension call from an imported Minecraft world qualifies.
+ */
+function uniqueDimensionForward(
+  file: ts.SourceFile,
+  source: SourceRef,
+  bindings: ReadonlyMap<string, ScriptApiReceiverType>,
+): ReadonlyMap<ts.FunctionDeclaration, {
+  index: number;
+  source: SourceRef;
+}> {
+  const functions = new Map<string, ts.FunctionDeclaration>();
+  const invalid = new Set<string>();
+  for (const statement of file.statements) {
+    if (!ts.isFunctionDeclaration(statement) || !statement.name || !statement.body ||
+        statement.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword ||
+          m.kind === ts.SyntaxKind.DefaultKeyword)) continue;
+    if (functions.has(statement.name.text)) invalid.add(statement.name.text);
+    else functions.set(statement.name.text, statement);
+  }
+  for (const name of invalid) functions.delete(name);
+  const references = new Map<string, ts.CallExpression[]>();
+  const escaped = new Set<string>();
+  const shadowedWorld = new Set<string>();
+  const inspect = (node: ts.Node): void => {
+    if (ts.isIdentifier(node)) {
+      const parent = node.parent;
+      const name = node.text;
+      const fn = functions.get(name);
+      if (fn && !(ts.isFunctionDeclaration(parent) && parent === fn && parent.name === node)) {
+        if (ts.isCallExpression(parent) && parent.expression === node) {
+          references.set(name, [...(references.get(name) ?? []), parent]);
+        } else if (!(ts.isPropertyAccessExpression(parent) && parent.name === node)) {
+          escaped.add(name);
+        }
+      }
+      if (bindings.get(name) === "World" &&
+          ((ts.isVariableDeclaration(parent) || ts.isParameter(parent) ||
+            ts.isBindingElement(parent)) && parent.name === node ||
+           (ts.isFunctionDeclaration(parent) || ts.isClassDeclaration(parent)) && parent.name === node ||
+           ts.isBinaryExpression(parent) && parent.left === node &&
+             parent.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+             parent.operatorToken.kind <= ts.SyntaxKind.LastAssignment)) {
+        shadowedWorld.add(name);
+      }
+    }
+    ts.forEachChild(node, inspect);
+  };
+  inspect(file);
+
+  const output = new Map<ts.FunctionDeclaration, {index: number;source:SourceRef}>();
+  for (const [name, fn] of functions) {
+    const calls = references.get(name) ?? [];
+    if (escaped.has(name) || calls.length !== 1 || !fn.body ||
+        unstableReceiverName(fn.body, "eval")) continue;
+    const call = calls[0]!;
+    for (let index = 0; index < Math.min(fn.parameters.length, call.arguments.length); index++) {
+      const param = fn.parameters[index];
+      const arg = call.arguments[index];
+      if (!param || !arg || !ts.isIdentifier(param.name) ||
+          !importedWorldDimensionCall(arg, bindings) ||
+          !ts.isPropertyAccessExpression(arg.expression) ||
+          !ts.isIdentifier(arg.expression.expression) ||
+          shadowedWorld.has(arg.expression.expression.text) ||
+          unstableReceiverName(fn.body, param.name.text)) continue;
+      // Never infer a shadowed helper call inside the helper itself or a
+      // nested local declaration of the helper name.
+      if (call.pos >= fn.pos && call.end <= fn.end) continue;
+      output.set(fn, { index, source: lineSource(file, arg, source) });
+      break;
+    }
+  }
+  return output;
+}
+
 export function inferScriptMethodCalls(
   file: ts.SourceFile,
   source: SourceRef,
@@ -946,6 +1169,7 @@ export function inferScriptMethodCalls(
   seedMinecraftSingletons(rootScope, singletonBindings);
   seedMinecraftUiBindings(rootScope, file);
   const trustedSpawnForward = uniqueSpawnPlayerForward(file, singletonBindings);
+  const trustedDimensionForward = uniqueDimensionForward(file, source, singletonBindings);
   const importedWorlds = isImportedMinecraftWorld(file);
 
   const recordCall = (
@@ -954,15 +1178,38 @@ export function inferScriptMethodCalls(
   ): void => {
     if (!ts.isPropertyAccessExpression(call.expression)) return;
     const receiverExpression = call.expression.expression;
-    const receiver = receiverObject(
+    const directReceiver = receiverObject(
       inferExpressionType(receiverExpression, scope, functionReturns),
     );
+    // A source-labelled, definite assignment is the only new fallback.
+    // An arbitrary `dimension.spawnEntity` name remains untyped.
+    const guaranteedOrigin = directReceiver === undefined &&
+      call.expression.name.text === "spawnEntity"
+      ? guardedWorldDimensionAssignment(call, receiverExpression, file, source, singletonBindings)
+      : undefined;
+    const receiver = directReceiver ?? (guaranteedOrigin ? "Dimension" : undefined);
     if (!receiver) return;
 
     const method = call.expression.name.text;
     const direct =
       ts.isIdentifier(receiverExpression) &&
       directSingletonType(scope, receiverExpression, receiver, singletonBindings);
+    let forwardedOrigin: SourceRef | undefined;
+    if (ts.isIdentifier(receiverExpression) && receiver === "Dimension") {
+      let ancestor: ts.Node | undefined = call.parent;
+      while (ancestor && !ts.isSourceFile(ancestor)) {
+        if (ts.isFunctionDeclaration(ancestor)) {
+          const handoff = trustedDimensionForward.get(ancestor);
+          const formal = handoff ? ancestor.parameters[handoff.index]?.name : undefined;
+          if (handoff && formal && ts.isIdentifier(formal) &&
+              formal.text === receiverExpression.text) {
+            forwardedOrigin = handoff.source;
+          }
+          break;
+        }
+        ancestor = ancestor.parent;
+      }
+    }
 
     calls.push({
       receiverType: receiver,
@@ -973,6 +1220,9 @@ export function inferScriptMethodCalls(
       symbol: canonicalMethodSymbol(receiver, method),
       inference: direct ? "direct" : "bounded",
       receiverHint: receiverExpression.getText(file),
+      ...((guaranteedOrigin ?? forwardedOrigin) === undefined ? {} : {
+        receiverOriginSource: (guaranteedOrigin ?? forwardedOrigin)!,
+      }),
       executionRegion: executionRegionId(call, file),
       argumentCount: call.arguments.length,
       argumentKinds: call.arguments.map((argument) => argumentKind(argument)),
@@ -999,6 +1249,11 @@ export function inferScriptMethodCalls(
         const parameter = index === undefined ? undefined : node.parameters[index];
         if (parameter && ts.isIdentifier(parameter.name)) {
           fnScope.values.set(parameter.name.text, "Player");
+        }
+        const dimension = trustedDimensionForward.get(node);
+        const forwarded = dimension === undefined ? undefined : node.parameters[dimension.index];
+        if (forwarded && ts.isIdentifier(forwarded.name)) {
+          fnScope.values.set(forwarded.name.text, "Dimension");
         }
       }
       if (node.body) visit(node.body, fnScope);

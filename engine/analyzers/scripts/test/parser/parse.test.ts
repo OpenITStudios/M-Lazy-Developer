@@ -505,6 +505,114 @@ world.scoreboard.getObjective("round");
       .toBe(false);
   });
 
+  it("proves a single guarded imported-world Dimension assignment before a spawn", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world as w } from "@minecraft/server";',
+      'function updateHologram(typeId, position) {',
+      '  let dimension;',
+      '  try {',
+      '    dimension = w.getDimension("overworld");',
+      '  } catch (error) { return; }',
+      '  if (!typeId) return;',
+      '  dimension.spawnEntity(typeId, position);',
+      '}',
+    ].join("\n"), source);
+    const calls = parsed.methodCalls.filter(call => call.method === "spawnEntity");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      receiverType: "Dimension",
+      symbol: "Dimension.spawnEntity",
+      inference: "bounded",
+      receiverHint: "dimension",
+      receiverOriginSource: { range: { lineStart: 5 } },
+    });
+    expect(parsed.methodCalls).toEqual(expect.arrayContaining([
+      expect.objectContaining({ symbol: "world.getDimension", root: "world" }),
+    ]));
+  });
+
+  it("rejects fallthrough, modified, fake and shadowed world-to-Dimension assignments", () => {
+    const sources = [
+      [
+        'import { world } from "@minecraft/server";',
+        'function setup() { let d;',
+        'try { d = world.getDimension("overworld"); } catch (e) { console.warn(e); }',
+        'd.spawnEntity("demo:unsafe", P); }',
+      ],
+      [
+        'import { world } from "@minecraft/server";',
+        'function setup() { let d;',
+        'try { d = world.getDimension("overworld"); } catch (e) { return; }',
+        'd = other; d.spawnEntity("demo:unsafe", P); }',
+      ],
+      [
+        'function setup() { let d;',
+        'try { d = world.getDimension("overworld"); } catch (e) { return; }',
+        'd.spawnEntity("demo:unsafe", P); }',
+      ],
+      [
+        'import { world } from "@minecraft/server";',
+        'function setup(world) { let d;',
+        'try { d = world.getDimension("overworld"); } catch (e) { return; }',
+        'd.spawnEntity("demo:unsafe", P); }',
+      ],
+      [
+        'import { world } from "@minecraft/server";',
+        'function setup() { let d;',
+        'try { d = world.getDimension("overworld"); } catch (e) { return; }',
+        '{ let d = fake; d.spawnEntity("demo:unsafe", P); } }',
+      ],
+    ];
+    for (const [index, lines] of sources.entries()) {
+      const parsed = parseScriptFile("scripts/main", lines.join("\n"), source);
+      expect(parsed.methodCalls.filter(call => call.method === "spawnEntity"),
+        "Unsafe case " + index).toEqual([]);
+    }
+  });
+
+  it("forwards imported-world Dimension only through a unique stable helper argument", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world as w } from "@minecraft/server";',
+      'function spawn(d, position) {',
+      '  d.spawnEntity("demo:mob", position);',
+      '}',
+      'function setup() {',
+      '  spawn(w.getDimension("overworld"), { x: 0, y: 64, z: 0 });',
+      '}',
+    ].join("\n"), source);
+    const calls = parsed.methodCalls.filter(call => call.method === "spawnEntity");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      receiverType: "Dimension",
+      inference: "bounded",
+      receiverOriginSource: { range: { lineStart: 6 } },
+    });
+    expect((parsed.spatialMutations ?? []).filter(item => item.kind === "entity-spawn")
+      .map(item => item.identifier)).toEqual(["demo:mob"]);
+  });
+
+  it("keeps helper forwarding unknown with multiple callers, escape, or changed parameter", () => {
+    const variations = [
+      ['spawn(w.getDimension("overworld"), P);', 'spawn(fake, P);'],
+      ['spawn(w.getDimension("overworld"), P);', 'const escaped = spawn;'],
+      ['spawn(w.getDimension("overworld"), P);', 'w = fake;'],
+    ];
+    for (const suffix of variations) {
+      const parsed = parseScriptFile("scripts/main", [
+        'import { world as w } from "@minecraft/server";',
+        'function spawn(d, position) { d.spawnEntity("demo:mob", position); }',
+        ...suffix,
+      ].join("\n"), source);
+      expect(parsed.methodCalls.some(call => call.method === "spawnEntity")).toBe(false);
+    }
+    const changed = parseScriptFile("scripts/main", [
+      'import { world as w } from "@minecraft/server";',
+      'function spawn(d, position) { d = fake; d.spawnEntity("demo:mob", position); }',
+      'spawn(w.getDimension("overworld"), P);',
+    ].join("\n"), source);
+    expect(changed.methodCalls.some(call => call.method === "spawnEntity")).toBe(false);
+  });
+
   it("infers bounded receiver types through variables, loops, callbacks and property chains", () => {
     const parsed = parseScriptFile(
       "scripts/main",

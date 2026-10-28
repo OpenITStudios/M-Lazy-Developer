@@ -231,6 +231,10 @@ export interface ScriptMethodCall {
   symbol: string;
   inference: "direct" | "bounded";
   receiverHint?: string;
+  /** Exact imported-world getDimension call that justified a bounded
+   * receiver; source evidence only, never live Minecraft spawn proof.
+   */
+  receiverOriginSource?: SourceRef;
   executionRegion?: string;
   argumentCount: number;
   argumentKinds: ScriptArgumentKind[];
