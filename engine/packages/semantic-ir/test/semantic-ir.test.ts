@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  findExclusiveAuthoredBranch,
   semanticIrSummary,
   semanticIrSourceWriteContinuations,
   sourceSiteStrictlyAfter,
@@ -294,5 +295,36 @@ describe("semantic IR", () => {
       "Event registration region lacks exact source ownership: edge:event-registration",
     );
   });
+
+  it("falsifies only a source-located opposite branch, never a foreign or ambiguous arm", () => {
+    const condition = {
+      ...source,
+      range: { lineStart: 21, columnStart: 2, lineEnd: 21, columnEnd: 16 },
+    };
+    const points = [{
+      expression: "ready",
+      source: condition,
+      arms: [
+        { branch: "true" as const, evidenceIds: ["op:first"] },
+        { branch: "false" as const, evidenceIds: ["op:second"] },
+      ],
+    }];
+    expect(findExclusiveAuthoredBranch(points, ["op:first"], ["op:second"], "a"))
+      .toMatchObject({ leftArm: "true", rightArm: "false" });
+    expect(findExclusiveAuthoredBranch(points, ["op:first"], ["op:first"], "a"))
+      .toBeUndefined();
+    expect(findExclusiveAuthoredBranch(points, ["op:first"], ["op:second"], "foreign"))
+      .toBeUndefined();
+    expect(findExclusiveAuthoredBranch([{ ...points[0]!, source }],
+      ["op:first"], ["op:second"], "a")).toBeUndefined();
+    expect(findExclusiveAuthoredBranch([{
+      ...points[0]!,
+      arms: [
+        { branch: "true" as const, evidenceIds: ["op:first", "op:second"] },
+        { branch: "false" as const, evidenceIds: ["op:second"] },
+      ],
+    }], ["op:first"], ["op:second"], "a")).toBeUndefined();
+  });
+
 
 });

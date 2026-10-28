@@ -319,6 +319,133 @@ describe("unfamiliar source gameplay evidence handoff", () => {
   });
 });
 
+
+describe("source interpretation admission is a read-only model-task review", () => {
+  const path = "scripts/unnamed.js";
+  const from = {
+    id: "op:a", kind: "state" as const, operation: "write",
+    executionRegionId: "entry",
+    source: { artifactId: "selected", relativePath: path },
+  };
+  const to = {
+    ...from, id: "op:b", operation: "clear",
+  };
+  const condition = {
+    artifactId: "selected", relativePath: path,
+    range: { lineStart: 14, columnStart: 2, lineEnd: 14, columnEnd: 18 },
+  };
+  const task = {
+    id: "task:audit-obligation:uninterpreted-gameplay-intent",
+    auditRevision: "revision:selected",
+    kind: "AUDIT_OBLIGATION" as const,
+    stage: "UNDERSTAND" as const,
+    evidenceIds: ["op:a", "op:b"],
+    sourceInvestigation: {
+      authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+      entries: [{
+        unknownId: "unknown:entry", question: "What does this source do?",
+        entryRegionId: "entry", sourceTraceStatus: "SOURCE_ROOT_TRACE",
+        steps: [from, to], omittedSteps: 0,
+        branchContexts: [{
+          expression: "phaseReady", source: condition,
+          arms: [
+            { branch: "true", matchedStepIds: ["op:a"] },
+            { branch: "false", matchedStepIds: ["op:b"] },
+          ],
+        }],
+        omittedBranchContexts: 0, handoffs: [], omittedHandoffs: 0,
+        unresolvedExecutionEdgeIds: [], omittedUnresolvedExecutionEdges: 0,
+        unmatchedEvidenceIds: [], omittedUnmatchedEvidence: 0,
+      }],
+      omittedEntries: 0,
+    },
+  };
+  const report = { bugs: [], designMismatches: [] };
+  const audit = {
+    identity: { artifactId: "selected", artifactFingerprint: "x".repeat(64) },
+    auditRevision: "revision:selected",
+    modelTaskPackets: [task],
+    mapAuditReport: report,
+    status: "BLOCKED",
+    admission: { status: "BLOCKED" },
+  } as unknown as SelectedMapAuditRun;
+  const proposal = {
+    taskId: task.id, unknownId: "unknown:entry",
+    fromStepId: "op:a", toStepId: "op:b",
+    sourceClaim: "SAME_AUTHORED_BRANCH_CANDIDATE" as const,
+    proposedGameplayMeaning: "These effects represent one gameplay action.",
+    disconfirmingQuestion: "Are these operations on mutually exclusive branches?",
+  };
+  const responses = {
+    schemaVersion: 1 as const,
+    policy: "selected-map-audit-model-responses" as const,
+    artifactId: "selected", artifactFingerprint: "x".repeat(64),
+    auditRevision: "revision:selected",
+    resolutions: [],
+    sourceInterpretations: [proposal],
+  };
+
+  it("refutes exclusive authored arms without promoting audit or game design", () => {
+    const result = applySelectedMapAuditModelResponses({ audit, responses });
+    const review = result.modelTaskPackets[0]?.sourceInterpretationReviews?.[0];
+    expect(review?.disposition).toBe("AUTHORED_BRANCH_COUNTEREXAMPLE");
+    expect(review?.counterexample).toMatchObject({
+      leftArm: "true", rightArm: "false",
+    });
+    expect(review?.proofBoundary).toBe(
+      "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF");
+    expect(result.mapAuditReport).toBe(audit.mapAuditReport);
+    expect(result.admission).toBe(audit.admission);
+    expect(result.auditRevision).toBe(audit.auditRevision);
+    expect(audit.modelTaskPackets[0]).not.toHaveProperty("sourceInterpretationReviews");
+  });
+
+  it("keeps a shared-arm proposal unresolved and rejects foreign or stale source", () => {
+    const sameArmAudit = {
+      ...audit,
+      modelTaskPackets: [{
+        ...task,
+        sourceInvestigation: {
+          ...task.sourceInvestigation,
+          entries: [{
+            ...task.sourceInvestigation.entries[0]!,
+            branchContexts: [{
+              expression: "phaseReady", source: condition,
+              arms: [
+                { branch: "true", matchedStepIds: ["op:a", "op:b"] },
+                { branch: "false", matchedStepIds: [] },
+              ],
+            }],
+          }],
+        },
+      }],
+    } as unknown as SelectedMapAuditRun;
+    const reviewed = applySelectedMapAuditModelResponses({
+      audit: sameArmAudit, responses,
+    });
+    expect(reviewed.modelTaskPackets[0]?.sourceInterpretationReviews?.[0]
+      ?.disposition).toBe("SOURCE_RELATION_UNRESOLVED");
+    expect(() => applySelectedMapAuditModelResponses({
+      audit,
+      responses: { ...responses, artifactId: "another-map" },
+    })).toThrow(/different selected artifact/);
+    expect(() => applySelectedMapAuditModelResponses({
+      audit,
+      responses: {
+        ...responses, sourceInterpretations: [{
+          ...proposal, toStepId: "op:foreign",
+        }],
+      },
+    })).toThrow(/foreign operation IDs/);
+    expect(() => applySelectedMapAuditModelResponses({
+      audit,
+      responses: { ...responses, resolutions: [{
+        taskId: "other", resolution: { causalLinkId: "link:other" },
+      }] as any },
+    })).toThrow(/Cannot mix source interpretation/);
+  });
+});
+
 describe("PROVE model evidence handoff", () => {
   it("preserves exact analyzer witnesses while rejecting a neighboring source and duplicate identity", () => {
     const artifactId = "artifact:selected";

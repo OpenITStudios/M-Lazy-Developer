@@ -650,6 +650,9 @@ export function formatSelectedMapAuditBrief(input: {
       const locators = located.length > 0 ? located : evidenceLocators;
       const effect = unknown.effectPaths[0];
       const investigation = investigationByUnknown.get(unknown.unknownId);
+      const review = modelTaskPackets.flatMap(task =>
+        task.sourceInterpretationReviews ?? [])
+        .find(item => item.unknownId === unknown.unknownId);
       out.push(
         "- Source entry " + concise(unknown.entryRegionId) +
           " [" + (flow?.sourceTraceStatus ?? "UNKNOWN_ROOT") +
@@ -668,6 +671,17 @@ export function formatSelectedMapAuditBrief(input: {
             effect.effectGuards.length + ", candidate code returns " +
             effect.candidateOutcomeIds.length + ", candidate source ingresses " +
             effect.matchingIngress.length + ".",
+        ]),
+        ...(review === undefined ? [] : [
+          "  **AI source hypothesis (NOT game/bug proof):** " +
+            review.disposition + "; operations " +
+            concise(review.fromStepId) + " / " + concise(review.toStepId) +
+            (review.counterexample === undefined ? "." :
+              "; authored guard at " +
+              concise(review.counterexample.source.relativePath) +
+              (review.counterexample.source.range?.lineStart === undefined
+                ? "" : ":" + review.counterexample.source.range.lineStart) + "."),
+          "  **Next source question:** " + concise(review.nextEvidenceQuestion),
         ]),
         ...(investigation === undefined ? [] : [
           "  Exact IR source operations (not gameplay classification): " +

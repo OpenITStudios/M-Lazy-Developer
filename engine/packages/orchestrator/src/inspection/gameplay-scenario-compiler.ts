@@ -33,7 +33,8 @@ import type {
   GameplayJourneyInterpretation,
 } from "./gameplay-scenario-model.js";
 import {
-  semanticIrExecutionTraces, type ObservedBranchPoint, type SemanticIr,
+  findExclusiveAuthoredBranch, semanticIrExecutionTraces,
+  type AuthoredBranchMembership, type ObservedBranchPoint, type SemanticIr,
 } from "../../../semantic-ir/src/index.js";
 import {
   reconcileSourceGuardedStateTransitions,
@@ -2808,21 +2809,20 @@ export function reconstructAuthoredJourneyCandidates(
       // The canonical Semantic IR branch points are keyed by exact
       // authored condition source site, not matched expression text.
       // Only DIRECT evidence is used: precedence is not a runtime path.
-      oppositeArms: flow.branchPoints.flatMap(point => {
-        const byArm = (arm: "true" | "false") => {
-          const selected = point.branches.find(branch => branch.branch === arm);
-          return selected === undefined ? undefined : new Set([
-            ...selected.executionEdgeIds,
-            ...selected.stateWriteOperationIds,
-            ...selected.returnOutcomeIds,
-            ...selected.resourceActionIds,
-            ...(selected.worldEffectIds ?? []),
-          ]);
-        };
-        const trueArm = byArm("true");
-        const falseArm = byArm("false");
-        return trueArm && falseArm ? [{ trueArm, falseArm }] : [];
-      }),
+      branchContexts: flow.branchPoints.map((point): AuthoredBranchMembership => ({
+        expression: point.expression,
+        source: point.source,
+        arms: point.branches.map(arm => ({
+          branch: arm.branch,
+          evidenceIds: [
+            ...arm.executionEdgeIds,
+            ...arm.stateWriteOperationIds,
+            ...arm.returnOutcomeIds,
+            ...arm.resourceActionIds,
+            ...(arm.worldEffectIds ?? []),
+          ],
+        })),
+      })),
     }));
   type SourceJoinProof = NonNullable<
     GameplayJourneyInterpretation["sourceJoinGap"]
@@ -2840,17 +2840,9 @@ export function reconstructAuthoredJourneyCandidates(
       const nextInFlow = [...nextIds].filter(id =>
         flow.evidenceIds.has(id));
       if (previousInFlow.length === 0 || nextInFlow.length === 0) continue;
-      const opposite = flow.oppositeArms.some(({ trueArm, falseArm }) => {
-        const previousTrue = previousInFlow.some(id => trueArm.has(id));
-        const previousFalse = previousInFlow.some(id => falseArm.has(id));
-        const nextTrue = nextInFlow.some(id => trueArm.has(id));
-        const nextFalse = nextInFlow.some(id => falseArm.has(id));
-        // Only an EXCLUSIVE opposite authored arm establishes this conflict.
-        // A fact appearing in both arms is unresolved, never an exclusive arm.
-        return (previousTrue && !previousFalse && nextFalse && !nextTrue) ||
-          (previousFalse && !previousTrue && nextTrue && !nextFalse);
-      });
-      if (opposite) foundOppositeArms = true;
+      const exclusion = findExclusiveAuthoredBranch(
+        flow.branchContexts, previousInFlow, nextInFlow, selectedArtifactId!);
+      if (exclusion) foundOppositeArms = true;
       else foundCompatibleFlow = true;
     }
     // A conflicting EXACT authored branch site is a counter-witness even

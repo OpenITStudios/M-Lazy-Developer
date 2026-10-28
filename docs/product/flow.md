@@ -135,6 +135,8 @@ Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inv
 
 For unclassified material source behavior, the existing UNDERSTAND Audit Obligation can carry a bounded, selected-artifact Semantic IR source slice inside its model task: exact operation identities, authored branch membership, resolved source handoffs, and explicitly unmatched or omitted evidence. This is an **investigation aid**, not a newly inferred mechanic, an alternative Gameplay Intent authority, an executed path, or permission to close a checkpoint. A source-grounded interpretation is a hypothesis until the canonical semantic owner and proof gates re-evaluate it; absent evidence remains UNKNOWN.
 
+For a material unknown with two precisely identified source operations, a ChatGPT model may submit one bounded SAME_AUTHORED_BRANCH_CANDIDATE through the existing selected-map model-response admission. The shared Semantic IR source owner can refute that specific direct branch-co-occurrence claim if the operations reside on opposite exclusive true/false arms of one source-located condition; otherwise the proposed relationship remains UNKNOWN. This is an ephemeral review on the existing model task only: it is discarded when the canonical audit is rebuilt and can never redefine Gameplay Intent, close checkpoints, promote issues, or assert runtime execution.
+
 ## Concrete operating loop — from map to decision
 
 Exactly **two internal skills** are registered. IMPROVE SYSTEM builds and

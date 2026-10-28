@@ -63,7 +63,9 @@ import {
 } from "./map-audit-admission.js";
 import {
   deriveAuditModelTaskPackets,
+  reviewAuditModelSourceInterpretation,
   MODEL_RESOLVABLE_KINDS,
+  type AuditModelSourceInterpretationProposal,
   type AuditModelTaskPacket,
 } from "./map-audit-model-task.js";
 import {
@@ -270,6 +272,8 @@ export interface SelectedMapAuditModelResponseBatch {
     readonly taskId: string;
     readonly resolution: GameplayDefectResolution;
   }[];
+  /** Non-authoritative source investigation, not a defect resolution. */
+  readonly sourceInterpretations?: readonly AuditModelSourceInterpretationProposal[];
 }
 
 function deriveSelectedMapAuditControl(input: {
@@ -1145,6 +1149,50 @@ export function applySelectedMapAuditModelResponses(input: {
   if (!Array.isArray(responses.resolutions) ||
       responses.resolutions.length > 50) {
     throw new Error("Model responses must contain at most 50 bounded resolutions.");
+  }
+  const interpretations = responses.sourceInterpretations ?? [];
+  if (!Array.isArray(interpretations) || interpretations.length > 12) {
+    throw new Error("Model source interpretations must be a bounded array of at most 12.");
+  }
+  if (interpretations.length > 0 && responses.resolutions.length > 0) {
+    throw new Error("Cannot mix source interpretation reviews with causal resolutions.");
+  }
+  if (interpretations.length > 0) {
+    const tasks = new Map(audit.modelTaskPackets.map(task => [task.id, task] as const));
+    const reviewsByTask = new Map<string,
+      ReturnType<typeof reviewAuditModelSourceInterpretation>[]>();
+    const seen = new Set<string>();
+    for (const proposal of interpretations) {
+      if (!proposal || typeof proposal !== "object") {
+        throw new Error("Malformed model source interpretation.");
+      }
+      const task = tasks.get(proposal.taskId);
+      if (!task || task.auditRevision !== audit.auditRevision) {
+        throw new Error("Source interpretation has no current matching model task.");
+      }
+      const key = task.id + "\u0000" + proposal.unknownId;
+      if (seen.has(key)) {
+        throw new Error("Duplicate source interpretation for one task and unknown.");
+      }
+      seen.add(key);
+      const review = reviewAuditModelSourceInterpretation(
+        task, proposal, audit.identity.artifactId);
+      reviewsByTask.set(task.id, [
+        ...(reviewsByTask.get(task.id) ?? []), review,
+      ]);
+    }
+    // Ephemeral model-task projection only. Intent, scenario, issues, stage
+    // admission and MapAuditOutputV2 retain their original authorities.
+    return {
+      ...audit,
+      modelTaskPackets: audit.modelTaskPackets.map(task => {
+        const { sourceInterpretationReviews: _prior, ...canonicalTask } = task;
+        const reviews = reviewsByTask.get(task.id);
+        return reviews === undefined ? canonicalTask : {
+          ...canonicalTask, sourceInterpretationReviews: reviews,
+        };
+      }),
+    };
   }
   if (responses.resolutions.length === 0) return audit;
 

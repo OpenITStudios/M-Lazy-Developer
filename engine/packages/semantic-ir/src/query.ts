@@ -21,6 +21,71 @@ export interface ObservedBranchPoint {
   }[];
 }
 
+
+/** A condition's source-located true/false arms can refute SAME-ARM source
+ * interpretations. It cannot prove execution, causal timing or gameplay intent.
+ */
+export interface AuthoredBranchMembership {
+  readonly expression: string;
+  readonly source: AuthoredBranchGuard["source"];
+  readonly arms: readonly {
+    readonly branch: "true" | "false";
+    readonly evidenceIds: readonly string[];
+  }[];
+}
+
+export interface AuthoredBranchExclusion {
+  readonly expression: string;
+  readonly source: AuthoredBranchGuard["source"];
+  readonly leftArm: "true" | "false";
+  readonly rightArm: "true" | "false";
+  readonly proof: "OPPOSITE_EXCLUSIVE_AUTHORED_ARMS_NOT_RUNTIME_PROOF";
+}
+
+export function findExclusiveAuthoredBranch(
+  contexts: readonly AuthoredBranchMembership[],
+  leftEvidenceIds: readonly string[],
+  rightEvidenceIds: readonly string[],
+  selectedArtifactId: string,
+): AuthoredBranchExclusion | undefined {
+  if (!leftEvidenceIds.length || !rightEvidenceIds.length ||
+      !selectedArtifactId.trim()) return undefined;
+  const left = new Set(leftEvidenceIds);
+  const right = new Set(rightEvidenceIds);
+  for (const point of contexts) {
+    const range = point.source.range;
+    // A shared expression or file path is not a uniquely identified guard.
+    if (point.source.artifactId !== selectedArtifactId ||
+        !point.source.relativePath.trim() ||
+        range?.lineStart === undefined || range.columnStart === undefined ||
+        range.lineEnd === undefined || range.columnEnd === undefined) continue;
+    const truth = point.arms.filter(arm => arm.branch === "true");
+    const falsity = point.arms.filter(arm => arm.branch === "false");
+    if (truth.length !== 1 || falsity.length !== 1) continue;
+    const trueIds = new Set(truth[0]!.evidenceIds);
+    const falseIds = new Set(falsity[0]!.evidenceIds);
+    const leftTrue = [...left].some(id => trueIds.has(id));
+    const leftFalse = [...left].some(id => falseIds.has(id));
+    const rightTrue = [...right].some(id => trueIds.has(id));
+    const rightFalse = [...right].some(id => falseIds.has(id));
+    if (leftTrue && !leftFalse && rightFalse && !rightTrue) {
+      return {
+        expression: point.expression, source: point.source,
+        leftArm: "true", rightArm: "false",
+        proof: "OPPOSITE_EXCLUSIVE_AUTHORED_ARMS_NOT_RUNTIME_PROOF",
+      };
+    }
+    if (leftFalse && !leftTrue && rightTrue && !rightFalse) {
+      return {
+        expression: point.expression, source: point.source,
+        leftArm: "false", rightArm: "true",
+        proof: "OPPOSITE_EXCLUSIVE_AUTHORED_ARMS_NOT_RUNTIME_PROOF",
+      };
+    }
+  }
+  return undefined;
+}
+
 export interface ObservedExecutionTrace {
   /** Authored entry candidate, NOT proof that gameplay actually executed. */
   readonly entryRegionId: string;

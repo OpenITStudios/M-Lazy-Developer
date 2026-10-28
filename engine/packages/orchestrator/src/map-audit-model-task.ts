@@ -1,7 +1,11 @@
 import type {
   GameplayIntentModel,
 } from "../../gameplay-intent/src/index.js";
-import type { SemanticIr } from "../../semantic-ir/src/index.js";
+import {
+  findExclusiveAuthoredBranch,
+  type AuthoredBranchExclusion,
+  type SemanticIr,
+} from "../../semantic-ir/src/index.js";
 import type { InspectedPack } from "./core/types.js";
 import {
   compileDeveloperPracticeReferenceContext,
@@ -158,6 +162,29 @@ export interface AuditModelSourceInvestigation {
   readonly omittedEntries: number;
 }
 
+
+/** A model's bounded SAME-ARM source hypothesis, never authored design. */
+export interface AuditModelSourceInterpretationProposal {
+  readonly taskId: string;
+  readonly unknownId: string;
+  readonly fromStepId: string;
+  readonly toStepId: string;
+  readonly proposedGameplayMeaning: string;
+  readonly disconfirmingQuestion: string;
+  readonly sourceClaim: "SAME_AUTHORED_BRANCH_CANDIDATE";
+}
+
+/** Source-falsification review: never a Gameplay Intent or PROVE receipt. */
+export interface AuditModelSourceInterpretationReview
+  extends AuditModelSourceInterpretationProposal {
+  readonly disposition:
+    "AUTHORED_BRANCH_COUNTEREXAMPLE" | "SOURCE_RELATION_UNRESOLVED";
+  readonly counterexample?: AuthoredBranchExclusion;
+  readonly nextEvidenceQuestion: string;
+  readonly proofBoundary:
+    "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF";
+}
+
 export interface AuditModelTaskPacket {
   readonly schemaVersion: 1;
   readonly policy: "bounded-audit-model-task";
@@ -178,6 +205,8 @@ export interface AuditModelTaskPacket {
   readonly unresolvedEvidenceIds: readonly string[];
   /** Unclassified source behavior is investigable without inventing a mechanic. */
   readonly sourceInvestigation?: AuditModelSourceInvestigation;
+  /** One-shot, non-authoritative model review; discarded on audit rebuild. */
+  readonly sourceInterpretationReviews?: readonly AuditModelSourceInterpretationReview[];
   /** Routing provenance, not an audit checkpoint or proof-state change. */
   readonly subjectSelection?: {
     readonly basis: "CHECKPOINT_EVIDENCE_LINK" | "SOURCE_ROLE_CANDIDATE";
@@ -906,6 +935,80 @@ function deriveSourceInvestigation(
     authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
     entries,
     omittedEntries: candidates.length - entries.length,
+  };
+}
+
+
+/** Validate exact source ownership before assessing a model-supplied claim.
+ * The only falsifiable relation here is SAME-ARM code-site membership; do
+ * not promote model language into authored game rules or defect findings.
+ */
+export function reviewAuditModelSourceInterpretation(
+  task: AuditModelTaskPacket,
+  proposal: AuditModelSourceInterpretationProposal,
+  selectedArtifactId: string,
+): AuditModelSourceInterpretationReview {
+  if (task.kind !== "AUDIT_OBLIGATION" ||
+      task.stage !== "UNDERSTAND" ||
+      task.id !== proposal.taskId ||
+      task.sourceInvestigation?.authority !==
+        "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF" ||
+      proposal.sourceClaim !== "SAME_AUTHORED_BRANCH_CANDIDATE" ||
+      !selectedArtifactId.trim()) {
+    throw new Error("Source interpretation is not a current UNDERSTAND source task.");
+  }
+  const meaning = proposal.proposedGameplayMeaning?.trim();
+  const question = proposal.disconfirmingQuestion?.trim();
+  if (typeof meaning !== "string" || meaning.length < 5 || meaning.length > 500 ||
+      typeof question !== "string" || question.length < 5 || question.length > 400 ||
+      typeof proposal.fromStepId !== "string" ||
+      typeof proposal.toStepId !== "string" ||
+      !proposal.fromStepId.trim() || !proposal.toStepId.trim() ||
+      proposal.fromStepId === proposal.toStepId) {
+    throw new Error("Source interpretation requires two distinct steps and bounded falsifiable wording.");
+  }
+  const entries = task.sourceInvestigation.entries.filter(entry =>
+    entry.unknownId === proposal.unknownId);
+  if (entries.length !== 1) {
+    throw new Error("Source interpretation lacks a unique selected unknown.");
+  }
+  const entry = entries[0]!;
+  const from = entry.steps.filter(step =>
+    step.id === proposal.fromStepId &&
+    step.source.artifactId === selectedArtifactId);
+  const to = entry.steps.filter(step =>
+    step.id === proposal.toStepId &&
+    step.source.artifactId === selectedArtifactId);
+  if (from.length !== 1 || to.length !== 1 ||
+      !task.evidenceIds.includes(proposal.fromStepId) ||
+      !task.evidenceIds.includes(proposal.toStepId)) {
+    throw new Error("Source interpretation cites missing, duplicate or foreign operation IDs.");
+  }
+  const contexts = entry.branchContexts.map(point => ({
+    expression: point.expression,
+    source: point.source,
+    arms: point.arms.map(arm => ({
+      branch: arm.branch,
+      evidenceIds: arm.matchedStepIds,
+    })),
+  }));
+  const counterexample = findExclusiveAuthoredBranch(
+    contexts, [proposal.fromStepId], [proposal.toStepId], selectedArtifactId);
+  return {
+    taskId: task.id,
+    unknownId: entry.unknownId,
+    fromStepId: proposal.fromStepId,
+    toStepId: proposal.toStepId,
+    proposedGameplayMeaning: meaning,
+    disconfirmingQuestion: question,
+    sourceClaim: "SAME_AUTHORED_BRANCH_CANDIDATE",
+    disposition: counterexample
+      ? "AUTHORED_BRANCH_COUNTEREXAMPLE" : "SOURCE_RELATION_UNRESOLVED",
+    ...(counterexample ? { counterexample } : {}),
+    nextEvidenceQuestion: counterexample
+      ? "Inspect the alternative authored branch and later re-entry/repeat paths before attributing both sites to one mechanic."
+      : "Trace exact guards, other entry paths, state ownership and independent intended gameplay; a shared trace is not execution proof.",
+    proofBoundary: "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF",
   };
 }
 
