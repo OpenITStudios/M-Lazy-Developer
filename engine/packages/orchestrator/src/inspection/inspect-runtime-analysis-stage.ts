@@ -761,6 +761,7 @@ export function analyzeInspectionRuntimeState(
 
   const arenaResetClosure =
     assessArenaResetClosure({
+      lifecycle: arenaLifecycle,
       cleanup: arenaCleanupSurfaces,
       inventory: {
         unresolvedResetPairs: Math.max(0, inventoryLifecycle.resetCandidates - inventoryLifecycle.completeResets),

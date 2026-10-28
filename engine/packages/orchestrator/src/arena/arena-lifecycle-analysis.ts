@@ -58,10 +58,24 @@ export interface ArenaTerminalRaceIngress {
     | "deferred";
   readonly id: string;
   readonly callbackRegion: string;
+  /** Exact subscription/scheduler source site; not event delivery proof. */
+  readonly source?: SourceRef;
+  /** Authored ID guard, not proof of runtime routing or guard dominance. */
+  readonly eventIdGuard?: ParsedScriptFile["events"][number]["eventIdGuard"];
   readonly guardStatus:
     | "guarded"
     | "unguarded"
     | "not-applicable";
+}
+
+/** Source entry witnesses retained even when only one ingress exists.
+ * Race/collision proof remains the separate, pre-existing assessment.
+ */
+export interface ArenaTerminalEntryPath {
+  readonly scriptId: string;
+  readonly terminalRegion: string;
+  readonly status: "source-reachable" | "unresolved";
+  readonly ingresses: readonly ArenaTerminalRaceIngress[];
 }
 
 export interface ArenaTerminalRaceAssessment {
@@ -130,6 +144,8 @@ export interface ArenaLifecycleAnalysis {
     readonly ArenaTerminalIngressAssessment[];
   terminalRaces:
     readonly ArenaTerminalRaceAssessment[];
+  /** Additive source projection; old consumer fixtures may omit it. */
+  terminalEntryPaths?: readonly ArenaTerminalEntryPath[];
   protectedTerminalRaces: number;
   provenTerminalRaces: number;
   unresolvedTerminalRaces: number;
@@ -1136,7 +1152,10 @@ function terminalRaceAssessments(
     readonly ScriptTerminalIdempotencyEvidence[],
   precedenceEvidence:
     readonly ScriptTerminalPrecedenceEvidence[],
-): ArenaTerminalRaceAssessment[] {
+): {
+  terminalRaces: ArenaTerminalRaceAssessment[];
+  terminalEntryPaths: ArenaTerminalEntryPath[];
+} {
   const idempotency =
     terminalIdempotencyMap(
       idempotencyEvidence,
@@ -1151,6 +1170,7 @@ function terminalRaceAssessments(
   );
   const output:
     ArenaTerminalRaceAssessment[] = [];
+  const terminalEntryPaths: ArenaTerminalEntryPath[] = [];
 
   const projectGraph =
     crossFileCalls.length === 0
@@ -1264,6 +1284,10 @@ function terminalRaceAssessments(
               : subscription.callbackRegion,
           guardStatus:
             "not-applicable",
+          source: subscription.source,
+          ...(subscription.eventIdGuard === undefined ? {} : {
+            eventIdGuard: subscription.eventIdGuard,
+          }),
         });
       }
 
@@ -1303,6 +1327,7 @@ function terminalRaceAssessments(
               "explicit-generation-check"
               ? "guarded"
               : "unguarded",
+          source: callback.source,
         });
       }
     }
@@ -1323,6 +1348,15 @@ function terminalRaceAssessments(
           b.callbackRegion,
         )
       );
+
+    terminalEntryPaths.push({
+      scriptId: assessment.scriptId,
+      terminalRegion: assessment.terminalRegion,
+      status: uniqueIngresses.length > 0
+        ? "source-reachable"
+        : "unresolved",
+      ingresses: uniqueIngresses,
+    });
 
     const distinctIds =
       new Set(
@@ -1408,14 +1442,15 @@ function terminalRaceAssessments(
     });
   }
 
-  return output.sort((a, b) =>
-    a.scriptId.localeCompare(
-      b.scriptId,
-    ) ||
-    a.terminalRegion.localeCompare(
-      b.terminalRegion,
-    )
-  );
+  const compareTerminal = (
+    a: { scriptId: string; terminalRegion: string },
+    b: { scriptId: string; terminalRegion: string },
+  ) => a.scriptId.localeCompare(b.scriptId) ||
+    a.terminalRegion.localeCompare(b.terminalRegion);
+  return {
+    terminalRaces: output.sort(compareTerminal),
+    terminalEntryPaths: terminalEntryPaths.sort(compareTerminal),
+  };
 }
 
 
@@ -1729,7 +1764,7 @@ export function analyzeArenaLifecycleConvergence(
           crossFileCalls,
           assessments,
         );
-  const terminalRaces =
+  const { terminalRaces, terminalEntryPaths } =
     terminalRaceAssessments(
       scripts,
       crossFileCalls,
@@ -1800,6 +1835,7 @@ export function analyzeArenaLifecycleConvergence(
       ).length,
     terminalIngresses,
     terminalRaces,
+    terminalEntryPaths,
     protectedTerminalRaces:
       terminalRaces.filter(
         (item) =>

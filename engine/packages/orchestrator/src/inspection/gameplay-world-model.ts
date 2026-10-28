@@ -197,6 +197,22 @@ export interface GameplayWorldModel {
           | "state-latch";
         reason: string;
       }[];
+      /** Exact event source routing is separate from race proof. */
+      terminalEntryPaths: readonly {
+        scriptId: string;
+        terminalRegion: string;
+        status: "source-reachable" | "unresolved";
+        ingresses: readonly {
+          kind: "event" | "deferred";
+          id: string;
+          callbackRegion: string;
+          eventIdGuard?: {
+            expression:
+              | { kind: "literal"; value: string }
+              | { kind: "identifier"; name: string };
+          };
+        }[];
+      }[];
       terminalIngresses: readonly {
         scriptId: string;
         terminalRegion: string;
@@ -1216,17 +1232,22 @@ export function deriveGameplayWorldModel(
   }
 
   if (source.arena.lifecycle !== undefined) {
+    const terminalEvidenceUnresolved =
+      source.arena.lifecycle.terminalCandidates === 0 ||
+      source.arena.lifecycle.partial > 0 ||
+      source.arena.lifecycle.unresolved > 0 ||
+      (source.arena.lifecycle.terminalEntryPaths ?? []).some(
+        path => path.status !== "source-reachable") ||
+      (source.arena.lifecycle.terminalEntryPaths?.length ?? 0) <
+        source.arena.lifecycle.terminalCandidates;
     runtimeSurfaces.push({
       id: "runtime:arena-lifecycle",
       label: "Arena lifecycle",
       kind: "runtime-domain",
-      status:
-        source.arena.lifecycle.unresolved > 0
-          ? "unknown"
-          : "understood",
+      status: terminalEvidenceUnresolved ? "unknown" : "understood",
       material: true,
-      ...(source.arena.lifecycle.unresolved > 0
-        ? { reason: "Arena lifecycle has unresolved terminal/transition evidence." }
+      ...(terminalEvidenceUnresolved
+        ? { reason: "Arena lifecycle terminal convergence or entry ownership remains source-unproven." }
         : {}),
     });
   }
@@ -1938,6 +1959,23 @@ export function deriveGameplayWorldModel(
                       item.idempotencyKind,
                   }),
               reason: item.reason,
+            })) ?? [],
+        terminalEntryPaths:
+          source.arena.lifecycle
+            ?.terminalEntryPaths?.map((item) => ({
+              scriptId: item.scriptId,
+              terminalRegion: item.terminalRegion,
+              status: item.status,
+              ingresses: item.ingresses.map(ingress => ({
+                kind: ingress.kind,
+                id: ingress.id,
+                callbackRegion: ingress.callbackRegion,
+                ...(ingress.eventIdGuard === undefined ? {} : {
+                  eventIdGuard: {
+                    expression: ingress.eventIdGuard.expression,
+                  },
+                }),
+              })),
             })) ?? [],
         terminalIngresses:
           source.arena.lifecycle

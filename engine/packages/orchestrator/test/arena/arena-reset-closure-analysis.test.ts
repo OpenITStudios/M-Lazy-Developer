@@ -8,6 +8,11 @@ import {
 } from "../../src/arena/arena-reset-closure-analysis.js";
 
 const clean: Parameters<typeof assessArenaResetClosure>[0] = {
+  lifecycle: {
+    terminalCandidates: 1,
+    proven: 1,
+    terminalEntryPaths: [{ status: "source-reachable" }],
+  },
   cleanup: {
     ledger: { missing: 0, partial: 0 },
     lifecycle: { unresolved: 0 },
@@ -53,6 +58,36 @@ const clean: Parameters<typeof assessArenaResetClosure>[0] = {
 };
 
 describe("arena reset closure", () => {
+  it("fails closed when terminal, convergence, or entry proof is missing", () => {
+    const absent = assessArenaResetClosure({
+      ...clean,
+      lifecycle: { terminalCandidates: 0, proven: 0, terminalEntryPaths: [] },
+    });
+    expect(absent.reuseEligibility).toBe("quarantined");
+    expect(absent.blockers).toContain("terminalSourceMissing");
+
+    const orphaned = assessArenaResetClosure({
+      ...clean,
+      lifecycle: {
+        terminalCandidates: 1,
+        proven: 1,
+        terminalEntryPaths: [{ status: "unresolved" }],
+      },
+    });
+    expect(orphaned.blockers).toContain("terminalIngressEvidenceMissing");
+
+    const partial = assessArenaResetClosure({
+      ...clean,
+      lifecycle: {
+        terminalCandidates: 2,
+        proven: 1,
+        terminalEntryPaths: [{ status: "source-reachable" }],
+      },
+    });
+    expect(partial.blockers).toContain("terminalConvergenceGaps");
+    expect(partial.reuseEligibility).toBe("quarantined");
+  });
+
   it("reports complete only when every consumed domain is closed", () => {
     expect(
       assessArenaResetClosure(clean),

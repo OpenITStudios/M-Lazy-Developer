@@ -556,6 +556,12 @@ export async function inspectDirectory(
     ...arenaLifecycleDiagnostics(
       runtimeAnalysis.arenaLifecycle,
       runtimeAnalysis.arenaCleanupSurfaces,
+      runtimeAnalysis.scriptSafeConfig.resolvedArenaCount !== undefined ||
+      runtimeAnalysis.topology.arenaReplicaDiscovery !== undefined ||
+      runtimeAnalysis.arenaLifecycle.terminalCandidates > 0 ||
+      runtimeAnalysis.arenaCleanupSurfaces.acquiredSurfaces > 0
+        ? runtimeAnalysis.arenaResetClosure
+        : undefined,
     ),
   );
 

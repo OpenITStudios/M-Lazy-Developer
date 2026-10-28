@@ -14,6 +14,9 @@ export interface ArenaResetClosureAssessment {
   blockers: readonly string[];
   warnings: readonly string[];
   surfaces: {
+    terminalSourceMissing: number;
+    terminalConvergenceGaps: number;
+    terminalIngressEvidenceMissing: number;
     cleanupLedgerMissing: number;
     cleanupLifecycleUnresolved: number;
     inventoryResetGaps: number;
@@ -36,6 +39,14 @@ export interface ArenaResetClosureAssessment {
 }
 
 export function assessArenaResetClosure(input: {
+  /** Required positive source witness; no executed reset is inferred. */
+  lifecycle: {
+    terminalCandidates: number;
+    proven: number;
+    terminalEntryPaths?: readonly {
+      status: "source-reachable" | "unresolved";
+    }[];
+  };
   cleanup: {
     ledger?: { missing: number; partial: number };
     lifecycle: { unresolved: number };
@@ -83,6 +94,15 @@ export function assessArenaResetClosure(input: {
   };
 }): ArenaResetClosureAssessment {
   const surfaces = {
+    // No reported gap is not positive evidence of reset or reusable arena.
+    terminalSourceMissing:
+      input.lifecycle.terminalCandidates === 0 ? 1 : 0,
+    terminalConvergenceGaps:
+      Math.max(0, input.lifecycle.terminalCandidates - input.lifecycle.proven),
+    terminalIngressEvidenceMissing:
+      Math.max(0, input.lifecycle.terminalCandidates -
+        (input.lifecycle.terminalEntryPaths ?? []).filter(entry =>
+          entry.status === "source-reachable").length),
     cleanupLedgerMissing:
       input.cleanup.ledger?.missing ?? 0,
     cleanupLifecycleUnresolved:

@@ -8,6 +8,38 @@ import {
 import { analyzeArenaLifecycleConvergence } from "../../src/arena/arena-lifecycle-analysis.js";
 
 describe("arena lifecycle convergence", () => {
+  it("retains a single developer script-event entry without inventing a terminal race", () => {
+    const sourceText = [
+      'import { system } from "@minecraft/server";',
+      "function resetArena(arena, player) {",
+      "  arena.players.delete(player);",
+      "  arena.generation++;",
+      "}",
+      "system.afterEvents.scriptEventReceive.subscribe((event) => {",
+      '  if (event.id !== "dev:reset_arena") return;',
+      "  resetArena(arena, player);",
+      "});",
+    ].join("\n");
+    const script = parseScriptFile("main", sourceText, {
+      artifactId: "fixture",
+      relativePath: "scripts/main.ts",
+    });
+    const result = analyzeArenaLifecycleConvergence([script]);
+    const resetPath = result.terminalEntryPaths?.find(
+      item => item.terminalRegion === "function:resetArena");
+    expect(resetPath).toMatchObject({
+      status: "source-reachable",
+      ingresses: [expect.objectContaining({
+        kind: "event",
+        id: "system.afterEvents.scriptEventReceive",
+        eventIdGuard: {
+          expression: { kind: "literal", value: "dev:reset_arena" },
+        },
+      })],
+    });
+    expect(result.terminalRaces).toHaveLength(0);
+  });
+
   it("proves release and generation invalidation through a cleanup helper", () => {
     const script = parseScriptFile(
       "main",
