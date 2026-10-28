@@ -54,9 +54,19 @@ export function describeLevelDbEntry(
   return result;
 }
 
+/** Optional streaming projection. The caller can aggregate exact evidence without
+ * retaining a second copy of every scanned key. Existing callers retain the
+ * complete metadata array by default; budgets and truncation are unchanged.
+ */
+export interface LevelDbMetadataScanOptions {
+  retainMetadata?: boolean;
+  onMetadata?: (entry: LevelDbEntryMetadata) => void;
+}
+
 export async function scanLevelDbMetadata(
   reader: BedrockLevelDbReader,
   budget: LevelDbScanBudget = DEFAULT_LEVELDB_SCAN_BUDGET,
+  options: LevelDbMetadataScanOptions = {},
 ): Promise<LevelDbScanResult> {
   const metadata: LevelDbEntryMetadata[] = [];
   let entriesScanned = 0;
@@ -82,7 +92,8 @@ export async function scanLevelDbMetadata(
     }
 
     const described = describeLevelDbEntry(entry.key, entry.value);
-    metadata.push(described);
+    if (options.retainMetadata !== false) metadata.push(described);
+    options.onMetadata?.(described);
     if (described.keyFamily) {
       keyFamilies[described.keyFamily] = (keyFamilies[described.keyFamily] ?? 0) + 1;
     }

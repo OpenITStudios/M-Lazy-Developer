@@ -10,9 +10,12 @@ import { scanLevelDbMetadata } from "../../../../adapters/leveldb/src/index.js";
 // observed chunk within the budget. A separate preview slice would falsely
 // make Discovery incomplete even when the DB itself was fully inventoried.
 const INSPECTION_LEVELDB_BUDGET = {
-  maxEntries: 100_000,
+  // The frozen Defense calibration map has 306,522 entries / 335 MB of
+  // decoded values; the former 100k cap silently omitted most of its world.
+  // Keep strict finite limits for substantially larger/untrusted worlds.
+  maxEntries: 500_000,
   maxValueBytes: 8 * 1024 * 1024,
-  maxTotalValueBytes: 256 * 1024 * 1024,
+  maxTotalValueBytes: 512 * 1024 * 1024,
 };
 
 export interface WorldDbNativeSummary {
@@ -95,39 +98,45 @@ export async function analyzeWorldDbNative(
     const reader = await openBedrockLevelDbSnapshot(snapshotRoot);
 
     try {
-      const scan = await scanLevelDbMetadata(reader, INSPECTION_LEVELDB_BUDGET);
       const dimensions = new Set<number>();
       const chunks = new Set<string>();
       const chunkKinds = new Map<string, Set<string>>();
-
-      for (const entry of scan.metadata) {
-        if (entry.dimensionId !== undefined) dimensions.add(entry.dimensionId);
-        if (
-          entry.keyFamily === "chunk-data" &&
-          entry.chunkX !== undefined &&
-          entry.chunkZ !== undefined
-        ) {
+      const actorHashes: { keyHex: string; valueHash: string }[] = [];
+      const chunkContentObservations: NonNullable<
+        WorldDbNativeSummary["chunkContentObservations"]
+      >[number][] = [];
+      let chunkValueHashes = 0;
+      // The adapter owns entry budgets and value hashes. Aggregate once as
+      // each record arrives rather than retaining another 300k-entry list.
+      const scan = await scanLevelDbMetadata(reader, INSPECTION_LEVELDB_BUDGET, {
+        retainMetadata: false,
+        onMetadata(entry) {
+          if (entry.dimensionId !== undefined) dimensions.add(entry.dimensionId);
+          if (entry.keyFamily === "actor" && entry.valueHash !== undefined) {
+            actorHashes.push({ keyHex: entry.keyHex, valueHash: entry.valueHash });
+          }
+          if (entry.keyFamily !== "chunk-data") return;
+          if (entry.valueHash !== undefined) chunkValueHashes += 1;
+          if (entry.chunkX === undefined || entry.chunkZ === undefined) return;
           const dimensionId = entry.dimensionId ?? 0;
           const chunkKey = `${dimensionId}:${entry.chunkX}:${entry.chunkZ}`;
           chunks.add(chunkKey);
           const kinds = chunkKinds.get(chunkKey) ?? new Set<string>();
           if (entry.chunkDataKind) kinds.add(entry.chunkDataKind);
           chunkKinds.set(chunkKey, kinds);
-        }
-      }
-
-      const actorHashes = scan.metadata
-        .filter((entry) =>
-          entry.keyFamily === "actor" &&
-          entry.valueHash !== undefined
-        )
-        .map((entry) => ({
-          keyHex: entry.keyHex,
-          valueHash: entry.valueHash!,
-        }))
-        .sort((a, b) =>
-          a.keyHex.localeCompare(b.keyHex)
-        );
+          if (entry.chunkDataKind === undefined || entry.valueHash === undefined) return;
+          chunkContentObservations.push({
+            chunkX: entry.chunkX,
+            chunkZ: entry.chunkZ,
+            dimensionId,
+            kind: entry.chunkDataKind,
+            valueHash: entry.valueHash,
+            ...(entry.subChunkIndex === undefined
+              ? {} : { subChunkIndex: entry.subChunkIndex }),
+          });
+        },
+      });
+      actorHashes.sort((a, b) => a.keyHex.localeCompare(b.keyHex));
       const actorContentFingerprint =
         actorHashes.length === 0
           ? undefined
@@ -137,26 +146,8 @@ export async function analyzeWorldDbNative(
               )
               .digest("hex");
 
-      // Downstream arena comparisons need all scanned value hashes; do not
-      // discard hashes before interpreting this exact bounded scan.
-      const chunkContentObservations = scan.metadata
-        .filter((entry) =>
-          entry.keyFamily === "chunk-data" &&
-          entry.chunkX !== undefined &&
-          entry.chunkZ !== undefined &&
-          entry.chunkDataKind !== undefined &&
-          entry.valueHash !== undefined
-        )
-        .map((entry) => ({
-          chunkX: entry.chunkX!,
-          chunkZ: entry.chunkZ!,
-          dimensionId: entry.dimensionId ?? 0,
-          kind: entry.chunkDataKind!,
-          valueHash: entry.valueHash!,
-          ...(entry.subChunkIndex === undefined
-            ? {}
-            : { subChunkIndex: entry.subChunkIndex }),
-        }));
+      // Preserve every scanned chunk hash for downstream exact-coordinate
+      // arena proof; only the duplicate metadata array is omitted.
 
       // Keep one summary per observed chunk. The scanner budget, not a
       // display-only slice, is the authority for completeness/truncation.
@@ -198,11 +189,7 @@ export async function analyzeWorldDbNative(
         chunkSignalsTruncated: chunkKinds.size > chunkSignals.length,
         chunkContentObservations,
         chunkContentObservationsTruncated:
-          scan.metadata.filter((entry) =>
-            entry.keyFamily === "chunk-data" &&
-            entry.valueHash !== undefined
-          ).length >
-          chunkContentObservations.length,
+          chunkValueHashes > chunkContentObservations.length,
       };
     } finally {
       await reader.close();

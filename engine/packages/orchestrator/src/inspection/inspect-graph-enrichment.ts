@@ -1,6 +1,7 @@
 import {
   populateFunctionEdges,
   populateEntityLootTableEdges,
+  populateOwnedEconomyReferences,
 } from "../../../../analyzers/references/src/index.js";
 import type { ParsedFunction } from "../../../../analyzers/functions/src/index.js";
 import type { SemanticGraph } from "../../../graph/src/index.js";
@@ -187,6 +188,9 @@ export function enrichInspectionSemanticGraph(
     input.parsedEntities ?? [],
     input.nodes,
   );
+  // Cross-definition literals add precise missing-reference obligations but
+  // do not close semantic gaps for loot rolls, recipes, or item use.
+  populateOwnedEconomyReferences(input.graph, input.nodes);
 
   for (const dialogue of dialogueGraphDocuments) {
     populateDialogueCommandGraph(

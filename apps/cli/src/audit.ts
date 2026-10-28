@@ -1,5 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { createGzip } from "node:zlib";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import {
   runSelectedMapAudit,
   applySelectedMapAuditModelResponses,
@@ -32,6 +35,8 @@ async function main(): Promise<void> {
   const auditArgs: string[] = [];
   let brief = false;
   let handoff = false;
+  let compact = false;
+  let gzip = false;
   let handoffOffset = 0;
   let offsetSupplied = false;
   let responsesPath: string | undefined;
@@ -45,6 +50,16 @@ async function main(): Promise<void> {
         throw new Error("--developer-practice may only be supplied once");
       }
       legacyDeveloperPracticeFlagSeen = true;
+      continue;
+    }
+    if (argument === "--gzip") {
+      if (gzip) throw new Error("--gzip may only be supplied once");
+      gzip = true;
+      continue;
+    }
+    if (argument === "--compact") {
+      if (compact) throw new Error("--compact may only be supplied once");
+      compact = true;
       continue;
     }
     if (argument === "--brief" || argument === "--handoff") {
@@ -91,6 +106,9 @@ async function main(): Promise<void> {
   if (brief && handoff) {
     throw new Error("--brief and --handoff are alternative audit views");
   }
+  if (brief && (compact || gzip)) {
+    throw new Error("--compact and --gzip apply to machine JSON only; use --brief without them");
+  }
   if (offsetSupplied && !handoff) {
     throw new Error("--handoff-offset requires --handoff");
   }
@@ -98,7 +116,7 @@ async function main(): Promise<void> {
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--handoff-offset N] [--responses model.json] [target options]");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--compact] [--gzip] [--handoff-offset N] [--responses model.json] [target options]");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -146,7 +164,7 @@ async function main(): Promise<void> {
     ? JSON.stringify(
         projectSelectedMapAuditModelHandoff(resolvedAudit, handoffOffset),
         null,
-        2,
+        compact ? undefined : 2,
       ) + "\n"
     : brief
       ? formatSelectedMapAuditBrief({
@@ -164,8 +182,15 @@ async function main(): Promise<void> {
           candidateGroups: resolvedAudit.candidateGroups,
           validationTests: resolvedAudit.validationTests,
         })
-      : JSON.stringify(resolvedAudit.mapAuditReport, null, 2) + "\n";
-  process.stdout.write(output);
+      : JSON.stringify(resolvedAudit.mapAuditReport, null, compact ? undefined : 2) + "\n";
+  // Transport only: decompression yields the exact same canonical JSON
+  // document and audit proof state. Stream with backpressure instead of
+  // retaining another compressed copy of an often enormous report.
+  if (gzip) {
+    await pipeline(Readable.from([output]), createGzip(), process.stdout);
+  } else {
+    process.stdout.write(output);
+  }
   if (resolvedAudit.mapAuditReport.control.status === "BLOCKED") {
     process.exitCode = 1;
   }
