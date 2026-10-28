@@ -1,3 +1,4 @@
+import { extractMcStructureFootprint } from "../../../../adapters/mcstructure/src/index.js";
 import { assessArenaResetClosure } from "../arena/arena-reset-closure-analysis.js";
 import {
   entityHasConfiguredTargeting,
@@ -110,16 +111,36 @@ export function analyzeInspectionRuntimeState(
   const parsedFunctionModels =
     input.parsedFunctions.map((item) => item.parsed);
 
+  // Preserve existing per-structure footprint access for actual structure
+  // loads, but avoid constructing every geometry array during source indexing.
+  // This getter is created *after* the source-only snapshot is cloned, so a
+  // second RIG pass never expands the cached footprint source accidentally.
   const parsedStructureSummaries =
-    input.parsedStructureModels.map((item) => ({
-      identifier: item.identifier,
-      relativePath: item.node.source.relativePath,
-      ...(item.size ? { size: item.size } : {}),
-      ...(item.footprint
-        ? { footprint: item.footprint }
-        : {}),
-      semantics: item.semantics,
-    }));
+    input.parsedStructureModels.map((item) => {
+      let attempted = false;
+      let footprint = item.footprint;
+      return {
+        identifier: item.identifier,
+        relativePath: item.node.source.relativePath,
+        ...(item.size ? { size: item.size } : {}),
+        get footprint() {
+          if (!attempted) {
+            attempted = true;
+            if (footprint === undefined && item.footprintSource !== undefined) {
+              try {
+                footprint = extractMcStructureFootprint(item.footprintSource);
+              } catch {
+                // Unsupported/invalid geometry retains the existing unknown
+                // footprint proof state; no cell can be fabricated here.
+                footprint = undefined;
+              }
+            }
+          }
+          return footprint;
+        },
+        semantics: item.semantics,
+      };
+    });
 
   const structureRuntime =
     analyzeStructureAndChunkRuntime(

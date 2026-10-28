@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractMcStructureFootprint,
+  compactMcStructureFootprintSource,
   placeMcStructureFootprint,
 } from "../src/footprint.js";
 import type {
@@ -112,5 +113,28 @@ describe("mcstructure footprint", () => {
         z: 201,
       }),
     );
+  });
+
+  it("packs immutable source inputs without losing any canonical footprint cells", () => {
+    const input = structure();
+    const expected = extractMcStructureFootprint(input);
+    const packed = compactMcStructureFootprintSource(input);
+    expect(packed.blockIndexLayers[0]?.indices).toBeInstanceOf(Int32Array);
+    expect(extractMcStructureFootprint(structuredClone(packed))).toEqual(expected);
+    // The source-index reuse snapshot cannot depend on later parser mutation.
+    input.blockIndexLayers[0] = { layer: 0, indices: [2, 2, 2, 2] };
+    input.palette[0]!.name = "minecraft:gold_block";
+    expect(extractMcStructureFootprint(packed)).toEqual(expected);
+  });
+
+  it("keeps out-of-int32 palette indices exact rather than wrapping them", () => {
+    const input: McStructureModel = {
+      ...structure(),
+      palette: [{ index: 2147483648, name: "minecraft:stone", raw: {} }],
+      blockIndexLayers: [{ layer: 0, indices: [2147483648, -1, -1, -1] }],
+    };
+    const packed = compactMcStructureFootprintSource(input);
+    expect(packed.blockIndexLayers[0]?.indices).toBeInstanceOf(Float64Array);
+    expect(extractMcStructureFootprint(packed)).toEqual(extractMcStructureFootprint(input));
   });
 });

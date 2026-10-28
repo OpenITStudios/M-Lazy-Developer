@@ -59,7 +59,7 @@ export interface ParsedStructureSummary {
   relativePath: string;
   size?: StructureSize;
   semantics: McStructureSemantics;
-  footprint?: McStructureFootprint;
+  footprint?: McStructureFootprint | undefined;
 }
 
 export interface StructureTransitionResidueAnalysis {

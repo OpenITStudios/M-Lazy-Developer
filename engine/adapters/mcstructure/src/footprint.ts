@@ -9,7 +9,46 @@ import {
 import type {
   McStructureModel,
   StructureCoordinate,
+  StructurePaletteEntry,
+  StructureSize,
 } from "./types.js";
+
+/** Lossless normalized inputs needed to derive a complete per-block footprint.
+ * Index layers may use compact typed arrays without changing cell semantics.
+ * This is a read-only source projection, not a substitute for NBT authority.
+ */
+export interface McStructureFootprintSource {
+  readonly size?: StructureSize;
+  readonly palette: readonly (Pick<StructurePaletteEntry, "index" | "name"> &
+    Partial<Pick<StructurePaletteEntry, "raw" | "states">>)[];
+  readonly blockIndexLayers: readonly {
+    readonly layer: number;
+    readonly indices: ArrayLike<number>;
+  }[];
+}
+
+/** Preserve all palette IDs and primary-layer values without retaining millions
+ * of eager `{x,y,z,mode}` objects for structures never loaded by commands.
+ * Out-of-int32 values fall back to float64 instead of silently wrapping.
+ */
+export function compactMcStructureFootprintSource(structure: McStructureModel): McStructureFootprintSource {
+  return {
+    ...(structure.size === undefined ? {} : { size: structure.size }),
+    palette: structure.palette.map(entry => ({
+      index: entry.index,
+      ...(entry.name === undefined ? {} : { name: entry.name }),
+    })),
+    blockIndexLayers: structure.blockIndexLayers.map(layer => {
+      const indices = layer.indices;
+      const int32 = indices.every(value =>
+        Number.isInteger(value) && value >= -2147483648 && value <= 2147483647);
+      return {
+        layer: layer.layer,
+        indices: int32 ? Int32Array.from(indices) : Float64Array.from(indices),
+      };
+    }),
+  };
+}
 
 export type McStructureFootprintMode =
   | "replace"
@@ -35,7 +74,7 @@ export interface PlacedMcStructureFootprint
 }
 
 export function extractMcStructureFootprint(
-  structure: McStructureModel,
+  structure: McStructureFootprintSource,
 ): McStructureFootprint {
   if (!structure.size) {
     throw new Error(

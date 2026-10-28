@@ -27,6 +27,8 @@ import {
 } from "../../../../analyzers/diagnostics/src/index.js";
 import {
   MCSTRUCTURE_PARSER_REVISION,
+  type McStructureFootprintSource,
+  compactMcStructureFootprintSource,
   extractMcStructureFootprint,
   parseMcStructure,
 } from "../../../../adapters/mcstructure/src/index.js";
@@ -156,6 +158,10 @@ export interface InspectionSourceIndex {
     footprint?: ReturnType<
       typeof extractMcStructureFootprint
     >;
+    /** Source-only compact indices; footprint cells are created only when an
+     * applicable authored structure transition actually needs geometry.
+     */
+    footprintSource?: McStructureFootprintSource;
     embeddedCommands: ReturnType<
       typeof analyzeEmbeddedStructureCommands
     >;
@@ -819,10 +825,10 @@ export async function indexInspectionSources(
       },
     };
     try {
+      // readFile returns Buffer (already Uint8Array). The NBT parser owns
+      // its required preservation copy; avoid a redundant transport copy.
       const structure = await parseMcStructure(
-        new Uint8Array(
-          await readFile(join(root, file.relativePath)),
-        ),
+        await readFile(join(root, file.relativePath)),
         file.relativePath,
       );
 
@@ -834,18 +840,10 @@ export async function indexInspectionSources(
           node.source,
         );
 
-      let footprint:
-        ReturnType<
-          typeof extractMcStructureFootprint
-        > | undefined;
-      try {
-        footprint =
-          extractMcStructureFootprint(
-            structure,
-          );
-      } catch {
-        footprint = undefined;
-      }
+      // Preserve exact normalized indices, but do not expand every parsed structure
+      // into millions of cell objects before any source-owned load requires
+      // residue or collision analysis. Invariant diagnostics still run below.
+      const footprintSource = compactMcStructureFootprintSource(structure);
 
       parsedStructureModels.push({
         identifier: structureId,
@@ -854,9 +852,7 @@ export async function indexInspectionSources(
           ? { size: structure.size }
           : {}),
         semantics: deriveMcStructureSemantics(structure),
-        ...(footprint === undefined
-          ? {}
-          : { footprint }),
+        footprintSource,
         embeddedCommands,
         containerItems:
           runtimeContent.containerItems,

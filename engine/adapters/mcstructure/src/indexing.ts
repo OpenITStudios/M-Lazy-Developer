@@ -1,12 +1,17 @@
 import type { McStructureModel, StructureCoordinate } from "./types.js";
 
-export function structureVolume(structure: McStructureModel): number | undefined {
+export function structureVolume(structure: Pick<McStructureModel, "size">): number | undefined {
   if (!structure.size) return undefined;
   return structure.size.x * structure.size.y * structure.size.z;
 }
 
 export function validateStructureLayerLengths(
-  structure: McStructureModel,
+  structure: Pick<McStructureModel, "size"> & {
+    readonly blockIndexLayers: readonly {
+      readonly layer: number;
+      readonly indices: ArrayLike<number>;
+    }[];
+  },
 ): { ok: boolean; expected?: number; invalidLayers: number[] } {
   const expected = structureVolume(structure);
   if (expected === undefined) return { ok: false, invalidLayers: structure.blockIndexLayers.map((x) => x.layer) };
