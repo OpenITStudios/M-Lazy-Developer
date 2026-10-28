@@ -17,6 +17,7 @@ import { buildInspectionResult } from "./inspect-result.js";
 import { prepareInspectionRuntimeEvidence } from "./inspect-runtime-evidence.js";
 import { classifyContentPath } from "../../../../analyzers/discovery/src/index.js";
 import { referenceDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
+import { classifyOwnedLootTableSourceRoutes } from "../../../../analyzers/references/src/index.js";
 import { duplicateManifestUuidDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
 import { buildFilesystemInventory } from "../../../project-model/src/index.js";
 import type { FileInventoryEntry, RuntimeEvidenceRecord } from "../../../project-model/src/index.js";
@@ -466,7 +467,7 @@ export async function inspectDirectory(
     ...referenceDiagnostics([
       ...graph.unresolvedEdges().filter((edge) => edge.type !== "IMPORTS_MINECRAFT_MODULE"),
       ...graph.ambiguousEdges(),
-    ]),
+    ], classifyOwnedLootTableSourceRoutes(graph)),
   );
 
   const runtimeAnalysis =

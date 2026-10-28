@@ -142,3 +142,120 @@ export function populateOwnedEconomyReferences(
     }
   }
 }
+
+/**
+ * An observed authored reference chain, never proof that the entity spawned,
+ * its component group was enabled, or the loot table executed in Minecraft.
+ * A missing chain does NOT mean the table is unreachable: scripts, runtime
+ * identifiers and unsupported source paths may still supply the table.
+ */
+export interface OwnedLootTableSourceRoute {
+  readonly classification: "entity-authored-chain" | "no-entity-chain-observed";
+  readonly proofCeiling: "SOURCE_REFERENCES_ONLY";
+  readonly rootEntityId?: string;
+  readonly rootReferencePath?: string;
+  readonly rootReferencePointer?: string;
+}
+
+/**
+ * Annotate only literal, same-artifact/same-pack loot-table references.
+ * The graph already owns the authoritative edges; this is a derived routing
+ * hint for diagnostic investigation, not another detector, issue or owner.
+ */
+export function classifyOwnedLootTableSourceRoutes(
+  graph: SemanticGraph,
+): ReadonlyMap<string, OwnedLootTableSourceRoute> {
+  const nodes = new Map(graph.allNodes().map(node => [node.id, node]));
+  const edges = graph.allEdges();
+  type Root = { entityId: string; path: string; pointer: string };
+  const rooted = new Map<string, Root>();
+  const children = new Map<string, string[]>();
+  const queue: string[] = [];
+  const isTable = (id: string | undefined): id is string =>
+    id !== undefined && nodes.get(id)?.kind === "loot_table";
+  const sameSourcePack = (from: SemanticNode, to: SemanticNode): boolean => {
+    const owner = packRoot(from.source.relativePath);
+    return owner !== undefined && owner === packRoot(to.source.relativePath) &&
+      from.source.artifactId === to.source.artifactId;
+  };
+
+  for (const edge of edges) {
+    if (edge.type !== "REFERENCES" || edge.status !== "resolved" ||
+        !isTable(edge.to)) continue;
+    const from = nodes.get(edge.from);
+    const to = nodes.get(edge.to!);
+    if (!from || !to || !sameSourcePack(from, to) ||
+        edge.evidence.source.artifactId !== from.source.artifactId ||
+        edge.evidence.source.relativePath.replaceAll("\\", "/") !==
+          from.source.relativePath.replaceAll("\\", "/")) continue;
+    if (from.kind === "entity" &&
+        /^\/minecraft:entity\/(components|component_groups\/[^/]+)\/minecraft:(loot|equipment)\/table$/.test(
+          edge.evidence.source.jsonPointer ?? "") &&
+        edge.targetIdentifier.replaceAll("\\", "/").startsWith("loot_tables/")) {
+      // Component-group references are authored MAY paths, not active groups.
+      if (!rooted.has(to.id)) {
+        rooted.set(to.id, {
+          entityId: from.id,
+          path: edge.evidence.source.relativePath,
+          pointer: edge.evidence.source.jsonPointer ?? "",
+        });
+        queue.push(to.id);
+      }
+    } else if (from.kind === "loot_table" &&
+               /^\/pools\/\d+\/entries\/\d+(?:\/children\/\d+)*\/name$/.test(
+                 edge.evidence.source.jsonPointer ?? "")) {
+      const links = children.get(from.id) ?? [];
+      links.push(to.id);
+      children.set(from.id, links);
+    }
+  }
+  // Finite breadth-first traversal handles nesting, cross-pack isolation and
+  // cycles; each table gets one deterministic source-root witness at most.
+  for (let i = 0; i < queue.length; i++) {
+    const sourceId = queue[i]!;
+    const root = rooted.get(sourceId)!;
+    for (const targetId of children.get(sourceId) ?? []) {
+      if (rooted.has(targetId)) continue;
+      rooted.set(targetId, root);
+      queue.push(targetId);
+    }
+  }
+
+  const routes = new Map<string, OwnedLootTableSourceRoute>();
+  for (const edge of edges) {
+    if (edge.type !== "REFERENCES" ||
+        (edge.status !== "unresolved" && edge.status !== "ambiguous") ||
+        !edge.targetIdentifier.replaceAll("\\", "/").startsWith("loot_tables/")) continue;
+    const from = nodes.get(edge.from);
+    if (!from || (from.kind !== "loot_table" && from.kind !== "entity") ||
+        packRoot(from.source.relativePath) === undefined ||
+        edge.evidence.source.artifactId !== from.source.artifactId ||
+        edge.evidence.source.relativePath.replaceAll("\\", "/") !==
+          from.source.relativePath.replaceAll("\\", "/")) continue;
+    const pointer = edge.evidence.source.jsonPointer ?? "";
+    if (from.kind === "entity" &&
+        !/^\/minecraft:entity\/(components|component_groups\/[^/]+)\/minecraft:(loot|equipment)\/table$/.test(pointer)) continue;
+    if (from.kind === "loot_table" &&
+        !/^\/pools\/\d+\/entries\/\d+(?:\/children\/\d+)*\/name$/.test(pointer)) continue;
+    const root: Root | undefined = from.kind === "entity"
+      ? {
+          entityId: from.id,
+          path: edge.evidence.source.relativePath,
+          pointer: edge.evidence.source.jsonPointer ?? "",
+        }
+      : rooted.get(from.id);
+    routes.set(edge.id, root === undefined
+      ? {
+          classification: "no-entity-chain-observed",
+          proofCeiling: "SOURCE_REFERENCES_ONLY",
+        }
+      : {
+          classification: "entity-authored-chain",
+          proofCeiling: "SOURCE_REFERENCES_ONLY",
+          rootEntityId: root.entityId,
+          rootReferencePath: root.path,
+          rootReferencePointer: root.pointer,
+        });
+  }
+  return routes;
+}
