@@ -133,6 +133,8 @@ A partial source review may already give this useful **scoped** design-and-devia
 
 Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inventory, permissions, concurrency) serve the reconstructed player journey. They are not independent feature quotas. An unfamiliar mechanic remains valid even if no pre-existing category covers it.
 
+For unclassified material source behavior, the existing UNDERSTAND Audit Obligation can carry a bounded, selected-artifact Semantic IR source slice inside its model task: exact operation identities, authored branch membership, resolved source handoffs, and explicitly unmatched or omitted evidence. This is an **investigation aid**, not a newly inferred mechanic, an alternative Gameplay Intent authority, an executed path, or permission to close a checkpoint. A source-grounded interpretation is a hypothesis until the canonical semantic owner and proof gates re-evaluate it; absent evidence remains UNKNOWN.
+
 ## Concrete operating loop — from map to decision
 
 Exactly **two internal skills** are registered. IMPROVE SYSTEM builds and

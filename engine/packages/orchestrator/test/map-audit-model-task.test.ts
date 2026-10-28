@@ -239,7 +239,48 @@ describe("unfamiliar source gameplay evidence handoff", () => {
         status: "BLOCKED", firstBlockingStage: "UNDERSTAND", issues: [],
       } as any,
       procedure: { checkpoints: [] } as any,
-      graph: { causalLinks: [] } as any,
+      graph: {
+        causalLinks: [],
+        sourceFlowCandidates: [{
+          id: "source-flow:entry", entryRegionId: "entry",
+          sourceTraceStatus: "SOURCE_ROOT_TRACE",
+          sourceSteps: [{
+            id: "op:clear", kind: "state", operation: "clear",
+            executionRegionId: "handler",
+            source: { artifactId: "selected", relativePath: "scripts/minified.js" },
+          }, {
+            id: "op:other", kind: "state", operation: "clear",
+            executionRegionId: "handler",
+            source: { artifactId: "older", relativePath: "scripts/minified.js" },
+          }],
+          branchPoints: [{
+            expression: "canReset()", source: {
+              artifactId: "selected", relativePath: "scripts/minified.js",
+            },
+            branches: [{
+              branch: "true", stateWriteOperationIds: ["op:clear"],
+              returnOutcomeIds: [], resourceActionIds: [], worldEffectIds: [],
+            }],
+          }],
+          sourceHandoffs: [{
+            edgeId: "edge:entry-handler",
+            fromRegionId: "entry", toRegionId: "handler",
+            source: { artifactId: "selected", relativePath: "scripts/minified.js" },
+            directTargetStepIds: ["op:clear"],
+          }],
+          unresolvedExecutionEdgeIds: ["edge:dynamic"],
+        }, {
+          // Same entry and material ID from an older artifact cannot become
+          // selected-world proof or override the current source path.
+          id: "source-flow:historical", entryRegionId: "entry",
+          sourceTraceStatus: "SOURCE_ROOT_TRACE",
+          sourceSteps: [{
+            id: "op:clear", kind: "state", operation: "clear",
+            executionRegionId: "handler",
+            source: { artifactId: "older", relativePath: "scripts/minified.js" },
+          }],
+        }],
+      } as any,
       defectResolution: {} as any,
       intent, auditRevision: "revision:1", world: {} as any,
       auditObligations: [{
@@ -261,6 +302,19 @@ describe("unfamiliar source gameplay evidence handoff", () => {
       summary: "Unknown state clear.",
     });
     expect(task?.evidenceIds).not.toContain("op:other");
+    const investigation = task?.sourceInvestigation;
+    expect(investigation?.authority).toBe(
+      "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF");
+    expect(investigation?.entries).toHaveLength(1);
+    expect(investigation?.entries[0]?.steps.map(step => step.id)).toEqual(["op:clear"]);
+    expect(investigation?.entries[0]?.sourceTraceStatus).toBe("SOURCE_ROOT_TRACE");
+    expect(investigation?.entries[0]?.branchContexts[0]?.arms[0]?.matchedStepIds)
+      .toEqual(["op:clear"]);
+    expect(investigation?.entries[0]?.handoffs.map(item => item.edgeId))
+      .toEqual(["edge:entry-handler"]);
+    expect(investigation?.entries[0]?.unresolvedExecutionEdgeIds)
+      .toEqual(["edge:dynamic"]);
+    expect(investigation?.entries[0]?.unmatchedEvidenceIds).toEqual([]);
     expect(task?.allowedOutputs).not.toContain("confirmed gameplay bug");
   });
 });

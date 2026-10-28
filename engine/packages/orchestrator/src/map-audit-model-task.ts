@@ -25,6 +25,7 @@ import type {
 } from "./inspection/mandatory-audit-procedure.js";
 import type {
   GameplayScenarioGraph,
+  GameplaySourceFlowCandidate,
 } from "./inspection/gameplay-scenario-model.js";
 import {
   satisfiedScenarioKnowledgeReceipt,
@@ -117,6 +118,46 @@ export interface AuditModelTaskKnowledgeSelection {
   readonly basis: "CURRENT_MAP_SOURCE_GROUNDED_MECHANICS";
 }
 
+
+/**
+ * A bounded SOURCE investigation of material operations whose gameplay owner
+ * is still unknown. It is a view of the existing Intent/Scenario/IR owners,
+ * never another gameplay contract, proof receipt, or AI-generated source fact.
+ */
+export interface AuditModelSourceInvestigation {
+  readonly authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF";
+  readonly entries: readonly {
+    readonly unknownId: string;
+    readonly question: string;
+    readonly entryRegionId: string;
+    readonly sourceTraceStatus:
+      "SOURCE_ROOT_TRACE" | "DISCONNECTED_SOURCE_REGION" | "UNKNOWN";
+    readonly steps: ReadonlyArray<GameplaySourceFlowCandidate["sourceSteps"][number]>;
+    readonly omittedSteps: number;
+    /** Branch membership describes authored source syntax, not feasibility. */
+    readonly branchContexts: readonly {
+      readonly expression: string;
+      readonly source: GameplaySourceFlowCandidate["branchPoints"][number]["source"];
+      readonly arms: readonly {
+        readonly branch: "true" | "false";
+        readonly matchedStepIds: readonly string[];
+      }[];
+    }[];
+    readonly omittedBranchContexts: number;
+    /** Resolved source calls are candidates, not observed callback delivery. */
+    readonly handoffs: ReadonlyArray<
+      NonNullable<GameplaySourceFlowCandidate["sourceHandoffs"]>[number]
+    >;
+    readonly omittedHandoffs: number;
+    readonly unresolvedExecutionEdgeIds: readonly string[];
+    readonly omittedUnresolvedExecutionEdges: number;
+    /** Selected-source evidence not represented by this one exact IR flow. */
+    readonly unmatchedEvidenceIds: readonly string[];
+    readonly omittedUnmatchedEvidence: number;
+  }[];
+  readonly omittedEntries: number;
+}
+
 export interface AuditModelTaskPacket {
   readonly schemaVersion: 1;
   readonly policy: "bounded-audit-model-task";
@@ -135,6 +176,8 @@ export interface AuditModelTaskPacket {
   readonly evidenceIds: readonly string[];
   readonly evidenceContext: readonly AuditModelTaskEvidenceContext[];
   readonly unresolvedEvidenceIds: readonly string[];
+  /** Unclassified source behavior is investigable without inventing a mechanic. */
+  readonly sourceInvestigation?: AuditModelSourceInvestigation;
   /** Routing provenance, not an audit checkpoint or proof-state change. */
   readonly subjectSelection?: {
     readonly basis: "CHECKPOINT_EVIDENCE_LINK" | "SOURCE_ROLE_CANDIDATE";
@@ -225,6 +268,7 @@ const OBLIGATION_ALLOWED_OUTPUTS: readonly string[] = Object.freeze([
   "selected-artifact evidence that resolves the obligation",
   "evidence-backed not-applicable or normal-behavior disposition",
   "new causal dependency/contradiction evidence for a fresh canonical audit run",
+  "source-bounded interpretation hypothesis with a counterexample, never an inferred gameplay rule",
   "exact remaining missing-proof statement",
 ]);
 const OBLIGATION_FORBIDDEN_ACTIONS: readonly string[] = Object.freeze([
@@ -761,11 +805,116 @@ function checkpointPackets(
     });
 }
 
+
+/** Bind an existing UNDERSTAND obligation to its exact selected-source IR
+ * neighborhood. Do not classify methods or infer gameplay from symbols;
+ * unmatched paths and omitted sites remain visible, not silently absent.
+ */
+function deriveSourceInvestigation(
+  obligation: AuditObligation,
+  intent: GameplayIntentModel,
+  graph: GameplayScenarioGraph,
+  evidenceById: AuditModelIntentLookup["evidenceById"],
+): AuditModelSourceInvestigation | undefined {
+  if (obligation.stage !== "UNDERSTAND" ||
+      intent.artifactId === undefined) return undefined;
+  const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
+  // Resolve candidate flows by entry once, rather than scanning the entire
+  // scenario graph again for every unknown in a large map.
+  const flowsByEntry = new Map<string, GameplaySourceFlowCandidate[]>();
+  for (const flow of graph.sourceFlowCandidates ?? []) {
+    const flows = flowsByEntry.get(flow.entryRegionId) ?? [];
+    flows.push(flow);
+    flowsByEntry.set(flow.entryRegionId, flows);
+  }
+  const candidates = obligation.subjectIds.flatMap(unknownId => {
+    const unknown = unknownById.get(unknownId);
+    if (!unknown?.sourceEntryRegionId) return [];
+    const scopedIds = new Set((unknown.evidenceIds ?? []).filter(id =>
+      isCurrentArtifactSourceEvidence(evidenceById.get(id))));
+    if (scopedIds.size === 0) return [];
+    const matching = (flowsByEntry.get(unknown.sourceEntryRegionId) ?? [])
+      .map(flow => ({
+        flow,
+        matchedSteps: flow.sourceSteps.filter(step =>
+          scopedIds.has(step.id) &&
+          step.source.artifactId === intent.artifactId),
+      }))
+      .filter(item => item.matchedSteps.length > 0)
+      .sort((a, b) =>
+        Number(b.flow.sourceTraceStatus === "SOURCE_ROOT_TRACE") -
+          Number(a.flow.sourceTraceStatus === "SOURCE_ROOT_TRACE") ||
+        b.matchedSteps.length - a.matchedSteps.length ||
+        a.flow.id.localeCompare(b.flow.id));
+    const best = matching[0];
+    return best === undefined ? [] : [{
+      unknown,
+      scopedIds,
+      flow: best.flow,
+      matchedSteps: best.matchedSteps,
+    }];
+  }).sort((a, b) =>
+    Number(b.flow.sourceTraceStatus === "SOURCE_ROOT_TRACE") -
+      Number(a.flow.sourceTraceStatus === "SOURCE_ROOT_TRACE") ||
+    b.matchedSteps.length - a.matchedSteps.length ||
+    a.unknown.id.localeCompare(b.unknown.id));
+
+  if (candidates.length === 0) return undefined;
+  const entries = candidates.slice(0, 4).map(({ unknown, scopedIds, flow, matchedSteps }) => {
+    const steps = matchedSteps.slice(0, 6);
+    const matchedIds = new Set(steps.map(step => step.id));
+    const branchContexts = flow.branchPoints.flatMap(point => {
+      if (point.source.artifactId !== intent.artifactId) return [];
+      const arms = point.branches.map(arm => ({
+        branch: arm.branch,
+        matchedStepIds: [...new Set([
+          ...arm.stateWriteOperationIds,
+          ...arm.returnOutcomeIds,
+          ...arm.resourceActionIds,
+          ...(arm.worldEffectIds ?? []),
+        ].filter(id => matchedIds.has(id)))].sort(),
+      })).filter(arm => arm.matchedStepIds.length > 0);
+      return arms.length > 0
+        ? [{ expression: point.expression, source: point.source, arms }]
+        : [];
+    });
+    const handoffs = (flow.sourceHandoffs ?? []).filter(handoff =>
+      handoff.source.artifactId === intent.artifactId &&
+      handoff.directTargetStepIds.some(id => matchedIds.has(id)));
+    const unresolved = unique(flow.unresolvedExecutionEdgeIds);
+    const matchedAll = new Set(matchedSteps.map(step => step.id));
+    const unmatched = [...scopedIds].filter(id =>
+      !matchedAll.has(id)).sort();
+    return {
+      unknownId: unknown.id,
+      question: unknown.question,
+      entryRegionId: unknown.sourceEntryRegionId!,
+      sourceTraceStatus: flow.sourceTraceStatus ?? "UNKNOWN",
+      steps,
+      omittedSteps: matchedSteps.length - steps.length,
+      branchContexts: branchContexts.slice(0, 4),
+      omittedBranchContexts: branchContexts.length - Math.min(4, branchContexts.length),
+      handoffs: handoffs.slice(0, 4),
+      omittedHandoffs: handoffs.length - Math.min(4, handoffs.length),
+      unresolvedExecutionEdgeIds: unresolved.slice(0, 6),
+      omittedUnresolvedExecutionEdges: unresolved.length - Math.min(6, unresolved.length),
+      unmatchedEvidenceIds: unmatched.slice(0, 4),
+      omittedUnmatchedEvidence: unmatched.length - Math.min(4, unmatched.length),
+    };
+  });
+  return {
+    authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+    entries,
+    omittedEntries: candidates.length - entries.length,
+  };
+}
+
 function obligationPackets(
   obligations: readonly AuditObligation[],
   auditRevision: string,
   intent: GameplayIntentModel,
   lookupIndex: AuditModelIntentLookup,
+  graph: GameplayScenarioGraph,
 ): readonly AuditModelTaskPacket[] {
   const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
   const evidenceById = lookupIndex.evidenceById;
@@ -780,10 +929,17 @@ function obligationPackets(
           unknownById.get(id)?.evidenceIds ?? []))
         .filter(id => isCurrentArtifactSourceEvidence(evidenceById.get(id)))
       : EMPTY_TASK_IDS;
+    const sourceInvestigation = deriveSourceInvestigation(
+      obligation, intent, graph, evidenceById);
+    // Prioritize exact material source operations over unrelated unknown IDs.
+    // This preserves the one-packet budget and never changes proof admission.
+    const prioritizedIds = sourceInvestigation?.entries.flatMap(entry =>
+      entry.steps.map(step => step.id)) ?? [];
     const selectedUnknownEvidenceIds = unknownEvidenceIds.length === 0
-      ? EMPTY_TASK_IDS : unknownEvidenceIds.slice(0, 24);
+      ? EMPTY_TASK_IDS
+      : [...new Set([...prioritizedIds, ...unknownEvidenceIds])].slice(0, 24);
     const omittedUnknownEvidenceCount =
-      unknownEvidenceIds.length - selectedUnknownEvidenceIds.length;
+      unknownEvidenceIds.filter(id => !selectedUnknownEvidenceIds.includes(id)).length;
     const evidenceIds = obligation.evidenceIds.length === 0 &&
         selectedUnknownEvidenceIds.length === 0
       ? EMPTY_TASK_IDS
@@ -813,6 +969,7 @@ function obligationPackets(
       evidenceContext: evidence.context,
       unresolvedEvidenceIds:
         evidence.unresolved,
+      ...(sourceInvestigation === undefined ? {} : { sourceInvestigation }),
       knowledgeContext: EMPTY_KNOWLEDGE_CONTEXT,
       unresolvedObligationIds: [
         obligation.id,
@@ -1108,6 +1265,7 @@ export function deriveAuditModelTaskPackets(input: {
       input.auditRevision,
       input.intent,
       lookupIndex,
+      input.graph,
     );
 
   const stage = input.admission.firstBlockingStage;

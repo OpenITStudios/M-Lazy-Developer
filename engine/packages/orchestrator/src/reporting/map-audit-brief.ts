@@ -616,6 +616,9 @@ export function formatSelectedMapAuditBrief(input: {
   // the material source sites. Surface a BOUNDED, source-first decision
   // without inventing a mechanic, a game purpose or a defect verdict.
   const unidentified = report.gameplayStructure?.uninterpretedSourceFlows ?? [];
+  const investigationByUnknown = new Map(modelTaskPackets
+    .flatMap(task => task.sourceInvestigation?.entries ?? [])
+    .map(entry => [entry.unknownId, entry] as const));
   const sourceByEntry = new Map((report.gameplayStructure?.sourceFlowCandidates ?? [])
     .map(flow => [flow.entryRegionId, flow] as const));
   const rankedUnidentified = [...unidentified].sort((a, b) => {
@@ -646,6 +649,7 @@ export function formatSelectedMapAuditBrief(input: {
         .map(item => item!.locator))];
       const locators = located.length > 0 ? located : evidenceLocators;
       const effect = unknown.effectPaths[0];
+      const investigation = investigationByUnknown.get(unknown.unknownId);
       out.push(
         "- Source entry " + concise(unknown.entryRegionId) +
           " [" + (flow?.sourceTraceStatus ?? "UNKNOWN_ROOT") +
@@ -664,6 +668,26 @@ export function formatSelectedMapAuditBrief(input: {
             effect.effectGuards.length + ", candidate code returns " +
             effect.candidateOutcomeIds.length + ", candidate source ingresses " +
             effect.matchingIngress.length + ".",
+        ]),
+        ...(investigation === undefined ? [] : [
+          "  Exact IR source operations (not gameplay classification): " +
+            investigation.steps.slice(0, 3).map(step =>
+              concise(step.kind + (step.operation ? ":" + step.operation : "") +
+                (step.targetLabel ? " -> " + step.targetLabel : "") +
+                " @" + step.executionRegionId)).join("; ") +
+              (investigation.omittedSteps > 0
+                ? "; +" + investigation.omittedSteps + " omitted." : "."),
+          "  Authored source conditions (bounded): " +
+            investigation.branchContexts.length + " branch context(s)" +
+            (investigation.omittedBranchContexts > 0
+              ? " (+" + investigation.omittedBranchContexts + " omitted)" : "") + ", " +
+            investigation.handoffs.length + " directly matched call handoff(s)" +
+            (investigation.omittedHandoffs > 0
+              ? " (+" + investigation.omittedHandoffs + " omitted)" : "") + ", " +
+            investigation.unresolvedExecutionEdgeIds.length + " unresolved edge(s)" +
+            (investigation.omittedUnresolvedExecutionEdges > 0
+              ? " (+" + investigation.omittedUnresolvedExecutionEdges + " omitted)" : "") +
+            ". Source paths are NOT runtime proof.",
         ]),
       );
     }
