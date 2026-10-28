@@ -3,6 +3,27 @@ import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import { analyzeArenaCleanupSurfaces } from "../../src/arena/arena-cleanup-surface-analysis.js";
 
 describe("arena cleanup surface analysis", () => {
+  it("joins class-method cleanup through an exact parser region", () => {
+    const script = parseScriptFile("class-cleanup", [
+      "const ArenaFlow = class {",
+      "  static start(player) { player.addTag('arena_active'); }",
+      "  static endGame(player) { this.cleanupArena(player); }",
+      "  static cleanupArena(player) { player.removeTag('arena_active'); }",
+      "};",
+    ].join("\n"), {
+      artifactId: "fixture",
+      relativePath: "scripts/bundle.js",
+    });
+    const result = analyzeArenaCleanupSurfaces([script]);
+    const terminal = result.terminalAssessments.find(item =>
+      /^function:ArenaFlow\.endGame@\d+:\d+$/.test(item.terminalRegion));
+    expect(terminal).toBeDefined();
+    const tag = terminal?.surfaces.find(item => item.surface === "tag");
+    expect(tag?.releaseReachableFromTerminal).toBe(true);
+    // The tag inverse remains surface-level, not live player identity proof.
+    expect(tag?.status).toBe("partial");
+  });
+
   it("proves exact dynamic-property and membership cleanup reachable from terminal", () => {
     const script = parseScriptFile(
       "main",

@@ -1,6 +1,7 @@
 import type {
   ParsedScriptFile,
 } from "../../../../analyzers/scripts/src/index.js";
+import { isArenaTerminalRegionCandidate } from "./arena-lifecycle-analysis.js";
 
 export type ArenaCleanupSurfaceKind =
   | "membership"
@@ -103,9 +104,6 @@ export interface ArenaCleanupSurfaceAnalysis {
   lifecycle: ArenaCleanupLifecycleSummary;
 }
 
-const TERMINAL_PATTERN =
-  /^(?:function:)?(?:endgame|endmatch|finishgame|finishmatch|cleanup|cleanuparena|reset|resetarena|abort|abortgame|timeout|victory|defeat|stopgame|leavearena|disconnect|playerleave|onplayerleave)$/i;
-
 function normalizedRegion(region: string | undefined): string {
   return region ?? "module";
 }
@@ -142,24 +140,27 @@ function reachable(
 function terminalRegions(script: ParsedScriptFile): string[] {
   const regions = new Set<string>();
   for (const call of script.localFunctionCalls) {
-    if (TERMINAL_PATTERN.test(call.callerRegion)) {
+    if (isArenaTerminalRegionCandidate(call.callerRegion)) {
       regions.add(call.callerRegion);
     }
-    if (TERMINAL_PATTERN.test(call.targetRegion)) {
+    if (isArenaTerminalRegionCandidate(call.targetRegion)) {
       regions.add(call.targetRegion);
     }
   }
   for (const path of script.arenaAuthorityPaths ?? []) {
+    // Graph edges are parser-region qualified; keep that identity when
+    // joining a class method to arena cleanup ownership evidence.
+    const region = path.parserExecutionRegion ?? path.executionRegion;
     if (
-      TERMINAL_PATTERN.test(path.executionRegion) ||
+      isArenaTerminalRegionCandidate(region) ||
       path.membershipRelease ||
       path.generationInvalidation
     ) {
-      regions.add(path.executionRegion);
+      regions.add(region);
     }
   }
   for (const resource of script.cleanupResourceEvidence ?? []) {
-    if (TERMINAL_PATTERN.test(resource.executionRegion)) {
+    if (isArenaTerminalRegionCandidate(resource.executionRegion)) {
       regions.add(resource.executionRegion);
     }
   }
@@ -182,7 +183,7 @@ function extractMutations(
     if (path.membershipCommit?.membershipExpression) {
       output.push({
         scriptId: script.identifier,
-        region: path.executionRegion,
+        region: path.parserExecutionRegion ?? path.executionRegion,
         surface: "membership",
         key: path.membershipCommit.membershipExpression,
         action: "acquire",
@@ -192,7 +193,7 @@ function extractMutations(
     if (path.membershipRelease?.membershipExpression) {
       output.push({
         scriptId: script.identifier,
-        region: path.executionRegion,
+        region: path.parserExecutionRegion ?? path.executionRegion,
         surface: "membership",
         key: path.membershipRelease.membershipExpression,
         action: "release",

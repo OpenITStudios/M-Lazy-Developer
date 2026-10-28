@@ -8,6 +8,37 @@ import {
 import { analyzeArenaLifecycleConvergence } from "../../src/arena/arena-lifecycle-analysis.js";
 
 describe("arena lifecycle convergence", () => {
+  it("retains exact class-method terminal ownership in a bundled source", () => {
+    const script = parseScriptFile("class-owners", [
+      "const GameManager = class {",
+      "  static endGame(arena, player) { this.cleanupArena(arena, player); }",
+      "  static cleanupArena(arena, player) {",
+      "    arena.players.delete(player);",
+      "    arena.generation++;",
+      "  }",
+      "  static resetGame(arena, player) { this.cleanupArena(arena, player); }",
+      "  static endGameUnrelated(arena) { return arena; }",
+      "};",
+      "function finish(arena, player) { GameManager.endGame(arena, player); }",
+    ].join("\n"), {
+      artifactId: "fixture",
+      relativePath: "scripts/bundle.js",
+    });
+    const result = analyzeArenaLifecycleConvergence([script]);
+    const regions = result.assessments.map(item => item.terminalRegion);
+    expect(regions.some(region =>
+      /^function:GameManager\.endGame@\d+:\d+$/.test(region),
+    )).toBe(true);
+    expect(regions.some(region =>
+      /^function:GameManager\.resetGame@\d+:\d+$/.test(region),
+    )).toBe(true);
+    expect(regions.some(region => region.includes("endGameUnrelated"))).toBe(false);
+    // Naming a terminal must never manufacture a gameplay event ingress.
+    const end = result.terminalEntryPaths?.find(item =>
+      item.terminalRegion.includes("GameManager.endGame@"));
+    expect(end?.status).toBe("unresolved");
+  });
+
   it("retains a single developer script-event entry without inventing a terminal race", () => {
     const sourceText = [
       'import { system } from "@minecraft/server";',

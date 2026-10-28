@@ -186,6 +186,8 @@ const TERMINAL_NAMES = new Set([
   "cleanuparena",
   "reset",
   "resetarena",
+  "resetgame",
+  "performresetgame",
   "abort",
   "abortgame",
   "timeout",
@@ -201,28 +203,40 @@ const TERMINAL_NAMES = new Set([
 type CandidateBasis =
   ArenaLifecycleTerminalAssessment["candidateBasis"][number];
 
-function regionFunctionName(
-  region: string,
-): string {
+/** Extract a name for terminal search only. Never discard the actual
+ * source-qualified method region or treat a name as call/reachability proof.
+ * The parser emits function:Class.method@line:column for class methods;
+ * function:name regions remain supported. Malformed identities fail closed.
+ */
+function regionFunctionName(region: string): string | undefined {
   const marker = "#function:";
   const qualified = region.lastIndexOf(marker);
-  if (qualified >= 0) {
-    return region.slice(
-      qualified + marker.length,
-    );
-  }
-  return region.startsWith("function:")
-    ? region.slice("function:".length)
+  const local = qualified >= 0
+    ? region.slice(qualified + 1)
     : region;
+  if (!local.startsWith("function:")) return undefined;
+  const identity = local.slice("function:".length);
+  const method = /^([^.@]+)\.([^.@]+)@([1-9]\d*):([1-9]\d*)$/.exec(identity);
+  if (method) {
+    try {
+      return decodeURIComponent(method[2]!);
+    } catch {
+      return undefined;
+    }
+  }
+  // Plain function declarations lack class coordinates. Do not treat an
+  // unverified dotted or coordinate-like region as a source-owned method.
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(identity)
+    ? identity : undefined;
 }
 
-function terminalNameCandidate(
-  region: string,
-): boolean {
-  return TERMINAL_NAMES.has(
-    regionFunctionName(region)
-      .replace(/[^A-Za-z0-9]/g, "")
-      .toLowerCase(),
+/** One terminal-name owner for function and class-method source candidates.
+ * A terminal candidate is not proof of gameplay origin or runtime cleanup.
+ */
+export function isArenaTerminalRegionCandidate(region: string): boolean {
+  const name = regionFunctionName(region);
+  return name !== undefined && TERMINAL_NAMES.has(
+    name.replace(/[^A-Za-z0-9]/g, "").toLowerCase(),
   );
 }
 
@@ -340,7 +354,7 @@ function terminalRegions(
       script.localFunctionCalls
   ) {
     if (
-      terminalNameCandidate(
+      isArenaTerminalRegionCandidate(
         call.callerRegion,
       )
     ) {
@@ -350,7 +364,7 @@ function terminalRegions(
       );
     }
     if (
-      terminalNameCandidate(
+      isArenaTerminalRegionCandidate(
         call.targetRegion,
       )
     ) {
@@ -366,7 +380,7 @@ function terminalRegions(
       script.arenaAuthorityPaths ?? []
   ) {
     if (
-      terminalNameCandidate(
+      isArenaTerminalRegionCandidate(
         arenaRegion(path),
       )
     ) {
@@ -395,7 +409,7 @@ function terminalRegions(
   ) {
     if (
       callback.callerRegion &&
-      terminalNameCandidate(
+      isArenaTerminalRegionCandidate(
         callback.callerRegion,
       )
     ) {
@@ -664,7 +678,7 @@ function assessProject(
       );
     if (
       callerScript &&
-      terminalNameCandidate(
+      isArenaTerminalRegionCandidate(
         call.callerRegion,
       )
     ) {
@@ -685,7 +699,7 @@ function assessProject(
         );
       if (
         targetScript &&
-        terminalNameCandidate(
+        isArenaTerminalRegionCandidate(
           "function:" +
             call.targetExport,
         )
@@ -717,7 +731,7 @@ function assessProject(
       paths.set(key, list);
 
       if (
-        terminalNameCandidate(
+        isArenaTerminalRegionCandidate(
           arenaRegion(path),
         )
       ) {
@@ -750,7 +764,7 @@ function assessProject(
         script.localFunctionCalls
     ) {
       if (
-        terminalNameCandidate(
+        isArenaTerminalRegionCandidate(
           call.callerRegion,
         )
       ) {
@@ -761,7 +775,7 @@ function assessProject(
         );
       }
       if (
-        terminalNameCandidate(
+        isArenaTerminalRegionCandidate(
           call.targetRegion,
         )
       ) {
@@ -779,7 +793,7 @@ function assessProject(
     ) {
       if (
         callback.callerRegion &&
-        terminalNameCandidate(
+        isArenaTerminalRegionCandidate(
           callback.callerRegion,
         )
       ) {
