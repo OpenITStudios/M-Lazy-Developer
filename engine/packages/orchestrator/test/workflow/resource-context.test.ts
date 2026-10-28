@@ -4,6 +4,7 @@ import {
   compileResourceContext,
   compileSectionContext,
   compileDeveloperPracticeReferenceContext,
+  prepareDeveloperPracticeReferenceSelector,
   type RetrievedKnowledgeContext,
 } from "../../src/workflow/resource-context.js";
 
@@ -351,6 +352,28 @@ describe("developer practice manifest-scoped version hints", () => {
       worldAttachment: "unknown",
       proof: "MANIFEST_DECLARATION_ONLY",
     }]);
+  });
+
+  it("keeps per-audit precompiled typed IR references identical to per-query compilation", () => {
+    const prepared = prepareDeveloperPracticeReferenceSelector(ir, "selected");
+    for (const sourceLocators of [
+      ["behavior_packs/demo/scripts/main.ts:17"],
+      ["behavior_packs/demo-other/scripts/main.ts"],
+      [],
+    ]) {
+      const query = {
+        data, domains: ["manifest"], sourceLocators,
+        manifestWitnesses: [witness], maximum: 2,
+      };
+      expect(prepared(query)).toEqual(compileDeveloperPracticeReferenceContext({
+        ...query, semanticIr: ir, selectedArtifactId: "selected",
+      }));
+    }
+    expect(prepareDeveloperPracticeReferenceSelector(ir, "other-artifact")({
+      data, domains: ["manifest"],
+      sourceLocators: ["behavior_packs/demo/scripts/main.ts"],
+      manifestWitnesses: [witness],
+    })?.items ?? []).toEqual([]);
   });
 
   it("abstains from another pack, missing source, or another artifact", () => {

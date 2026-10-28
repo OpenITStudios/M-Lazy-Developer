@@ -660,7 +660,7 @@ export interface CompiledDeveloperPracticeReferenceContext {
  * The default maximum of two is a developer-reference context budget, not
  * a threshold for gameplay understanding or defect detection.
  */
-export function compileDeveloperPracticeReferenceContext(input: {
+interface DeveloperPracticeReferenceQuery {
   readonly data: DeveloperPracticeReferenceData;
   readonly selectedArtifactId: string;
   /** Canonical source observations, not user-provided lookup labels. */
@@ -671,7 +671,37 @@ export function compileDeveloperPracticeReferenceContext(input: {
   /** Real selected-map pack manifests, never caller-supplied guessed versions. */
   readonly manifestWitnesses?: readonly DeveloperPracticeManifestWitness[];
   readonly maximum?: number;
-}): CompiledDeveloperPracticeReferenceContext | undefined {
+}
+
+/** Authorize reference retrieval only from selected-map typed IR. This one-run
+ * selector precomputes the unchanged typed witnesses; neither a filename nor
+ * an external ZIP can supply a new witness. No persisted cache or policy. */
+export function prepareDeveloperPracticeReferenceSelector(
+  semanticIr: SemanticIr,
+  selectedArtifactId: string,
+): (input: Omit<DeveloperPracticeReferenceQuery, "semanticIr" | "selectedArtifactId">) =>
+  CompiledDeveloperPracticeReferenceContext | undefined {
+  const observations = developerPracticeSignalsFromSemanticIr(
+    semanticIr, selectedArtifactId,
+  );
+  return (input) => compileDeveloperPracticeReferenceContextWithSignals(
+    { ...input, semanticIr, selectedArtifactId }, observations,
+  );
+}
+
+export function compileDeveloperPracticeReferenceContext(
+  input: DeveloperPracticeReferenceQuery,
+): CompiledDeveloperPracticeReferenceContext | undefined {
+  return compileDeveloperPracticeReferenceContextWithSignals(
+    input,
+    developerPracticeSignalsFromSemanticIr(input.semanticIr, input.selectedArtifactId),
+  );
+}
+
+function compileDeveloperPracticeReferenceContextWithSignals(
+  input: DeveloperPracticeReferenceQuery,
+  allObserved: readonly SelectedArtifactReferenceSignal[],
+): CompiledDeveloperPracticeReferenceContext | undefined {
   const { data, selectedArtifactId } = input;
   if (data.authority !== "REFERENCE" ||
       data.usagePolicy !== "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF" ||
@@ -682,9 +712,7 @@ export function compileDeveloperPracticeReferenceContext(input: {
   // A task must identify the selected-map source it is investigating.
   // Without this boundary, unrelated source sites could supply ZIP guidance.
   if (!locators?.length) return undefined;
-  const observed = developerPracticeSignalsFromSemanticIr(
-    input.semanticIr, selectedArtifactId,
-  ).filter(item => locators.some(locator =>
+  const observed = allObserved.filter(item => locators.some(locator =>
     sourceLocatorMatchesReferenceSignal(locator, item)
   ));
   // Manifest evidence uses the existing selected-map pack owner. A manifest

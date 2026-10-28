@@ -5,10 +5,11 @@ import type { SemanticIr } from "../../semantic-ir/src/index.js";
 import type { InspectedPack } from "./core/types.js";
 import {
   compileDeveloperPracticeReferenceContext,
+  prepareDeveloperPracticeReferenceSelector,
   type CompiledDeveloperPracticeReferenceContext,
   type DeveloperPracticeReferenceData,
 } from "./workflow/resource-context.js";
-import { scoreTextDocuments } from "../../analysis-planner/src/index.js";
+import { prepareTextDocumentScorer } from "../../analysis-planner/src/index.js";
 import type {
   KnowledgeApplicability,
   KnowledgeCatalog,
@@ -229,20 +230,32 @@ function isCurrentArtifactSourceEvidence(
 // A lookup suggestion uses only source-grounded selected-map mechanics.
 // Unknown/hypothetical subjects remain visible and never become a reason to
 // invent a mechanic or force an unrelated global knowledge domain.
+/** Ephemeral lookup tables for one audit-result projection. The canonical Intent
+ * arrays remain the authority; no cache survives a run or its revisions. */
+interface AuditModelIntentLookup {
+  readonly evidenceById: ReadonlyMap<string, GameplayIntentModel["evidence"][number]>;
+  readonly nodeById: ReadonlyMap<string, GameplayIntentModel["nodes"][number]>;
+}
+function buildAuditModelIntentLookup(intent: GameplayIntentModel): AuditModelIntentLookup {
+  // Maintain the existing Map-from-array last-owner semantics for duplicate IDs.
+  return {
+    evidenceById: new Map(intent.evidence.map(item => [item.id, item])),
+    nodeById: new Map(intent.nodes.map(item => [item.id, item])),
+  };
+}
+
 export function deriveAuditModelKnowledgeLookup(
   intent: GameplayIntentModel,
   question: string,
   subjectIds: readonly string[],
+  lookupIndex?: AuditModelIntentLookup,
 ): AuditModelTaskKnowledgeLookup | undefined {
   const wanted = unique(subjectIds);
   if (wanted.length === 0) return undefined;
 
-  const evidenceById = new Map(
-    intent.evidence.map((evidence) => [evidence.id, evidence]),
-  );
-  const bySubject = new Map(
-    intent.nodes.map((node) => [node.id, node]),
-  );
+  const index = lookupIndex ?? buildAuditModelIntentLookup(intent);
+  const evidenceById = index.evidenceById;
+  const bySubject = index.nodeById;
   const supported = wanted.flatMap((id) => {
     const node = bySubject.get(id);
     if (node === undefined || node.status === "hypothesis") return [];
@@ -280,6 +293,61 @@ export function deriveAuditModelKnowledgeLookup(
 }
 
 
+/** One-query-batch Knowledge index. Same catalog, edition and source order;
+ * only repeated tokenization/source resolution is avoided. Not a knowledge
+ * cache across audits, proof state, map revisions or source variants. */
+function prepareAuditTaskKnowledgeIndex(
+  catalog: KnowledgeCatalog,
+  edition?: KnowledgeEdition,
+) {
+  const sourcesById = new Map(
+    catalog.sources.map(source => [source.id, source]),
+  );
+  const entries = [
+    ...catalog.facts.map((item) => ({
+      kind: "fact" as const,
+      item,
+      statement: item.statement,
+      extra: [
+        ...item.capabilityTags,
+        ...item.riskSurfaces,
+        ...(item.diagnosticHints ?? []),
+      ],
+    })),
+    ...(catalog.relations ?? []).map((item) => ({
+      kind: "relation" as const,
+      item,
+      statement: item.subject + " " + item.kind + " " + item.object,
+      extra: [
+        ...(item.diagnosticHint === undefined ? [] : [item.diagnosticHint]),
+        ...(item.causalConsequences ?? []),
+      ],
+    })),
+  ].filter(({ item }) =>
+    item.classification !== "project-policy" &&
+    item.classification !== "open-assumption" &&
+    (edition === undefined ||
+      item.applicability.editions.includes(edition))
+  );
+  const documents = entries.map(({ item, statement, extra }) => ({
+    id: item.id,
+    text: [
+      item.id, item.domain, item.subject, statement, ...extra,
+    ].join(" "),
+  }));
+  return {
+    catalog,
+    edition,
+    sourcesById,
+    entries,
+    score: prepareTextDocumentScorer(documents),
+    // Exact Unicode token vocabulary from the original candidate filter.
+    bodyTerms: documents.map(doc => new Set(
+      doc.text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [],
+    )),
+  };
+}
+
 // This is a read-only retrieval projection of the already-loaded Knowledge
 // Catalog. The index and scores are ephemeral; source files retain authority.
 // No Knowledge entry can create a gameplay subject or a report finding.
@@ -288,6 +356,10 @@ export function retrieveAuditTaskKnowledge(input: {
   readonly lookup: AuditModelTaskKnowledgeLookup;
   readonly intent: GameplayIntentModel;
   readonly edition?: KnowledgeEdition;
+  /** Optional only within one projection; independent calls rebuild from current Intent. */
+  readonly lookupIndex?: AuditModelIntentLookup;
+  /** One canonical preprocessed catalog per model-task batch. */
+  readonly preparedKnowledge?: ReturnType<typeof prepareAuditTaskKnowledgeIndex>;
 }): AuditModelTaskKnowledgeSelection {
   const empty = (): AuditModelTaskKnowledgeSelection => ({
     status: "NO_SCOPED_MATCH",
@@ -301,10 +373,9 @@ export function retrieveAuditTaskKnowledge(input: {
     input.lookup.sourceEvidenceIds.length === 0
   ) return empty();
 
-  const subjects = new Map(input.intent.nodes.map((node) => [node.id, node]));
-  const evidenceById = new Map(
-    input.intent.evidence.map((evidence) => [evidence.id, evidence]),
-  );
+  const index = input.lookupIndex ?? buildAuditModelIntentLookup(input.intent);
+  const subjects = index.nodeById;
+  const evidenceById = index.evidenceById;
   const groundedEvidenceIds = new Set(
     input.lookup.sourceEvidenceIds.filter((id) =>
       isCurrentArtifactSourceEvidence(evidenceById.get(id))),
@@ -340,42 +411,12 @@ export function retrieveAuditTaskKnowledge(input: {
     !mechanicTokens.includes(token));
 
   const edition = input.edition;
-  const sourcesById = new Map(
-    input.catalog.sources.map((source) => [source.id, source]),
-  );
-  const entries = [
-    ...input.catalog.facts.map((item) => ({
-      kind: "fact" as const,
-      item,
-      statement: item.statement,
-      extra: [
-        ...item.capabilityTags,
-        ...item.riskSurfaces,
-        ...(item.diagnosticHints ?? []),
-      ],
-    })),
-    ...(input.catalog.relations ?? []).map((item) => ({
-      kind: "relation" as const,
-      item,
-      statement: item.subject + " " + item.kind + " " + item.object,
-      extra: [
-        ...(item.diagnosticHint === undefined ? [] : [item.diagnosticHint]),
-        ...(item.causalConsequences ?? []),
-      ],
-    })),
-  ].filter(({ item }) =>
-    item.classification !== "project-policy" &&
-    item.classification !== "open-assumption" &&
-    (edition === undefined ||
-      item.applicability.editions.includes(edition))
-  );
-  const documents = entries.map(({ item, statement, extra }) => ({
-    id: item.id,
-    text: [
-      item.id, item.domain, item.subject, statement, ...extra,
-    ].join(" "),
-  }));
-  const scores = scoreTextDocuments(documents, input.lookup.query);
+  const prepared = input.preparedKnowledge?.catalog === input.catalog &&
+    input.preparedKnowledge.edition === edition
+      ? input.preparedKnowledge
+      : prepareAuditTaskKnowledgeIndex(input.catalog, edition);
+  const { sourcesById, entries, bodyTerms } = prepared;
+  const scores = prepared.score(input.lookup.query);
   const candidates = entries.flatMap(({ kind, item, statement, extra }, index) => {
     const sourceIds = item.sourceIds;
     const sources = sourceIds.flatMap((id) => {
@@ -388,12 +429,11 @@ export function retrieveAuditTaskKnowledge(input: {
     if (sourceIds.length === 0 || sources.length !== sourceIds.length) {
       return [];
     }
-    const body = documents[index]?.text.toLowerCase() ?? "";
-    const bodyTerms = new Set(body.match(/[\p{L}\p{N}]+/gu) ?? []);
+    const bodyTermsForEntry = bodyTerms[index];
     const matchedMechanicTerms = mechanicTokens.filter((token) =>
-      bodyTerms.has(token));
+      bodyTermsForEntry?.has(token));
     const matchedQuestionTerms = questionTerms.filter((token) =>
-      bodyTerms.has(token));
+      bodyTermsForEntry?.has(token));
     const minimumMatch = mechanicTokens.length >= 2 ? 2 : 1;
     if (
       matchedMechanicTerms.length < minimumMatch ||
@@ -445,13 +485,12 @@ export function retrieveAuditTaskKnowledge(input: {
 function evidenceContext(
   evidenceIds: readonly string[],
   intent: GameplayIntentModel,
+  lookupIndex?: AuditModelIntentLookup,
 ): {
   readonly context: readonly AuditModelTaskEvidenceContext[];
   readonly unresolved: readonly string[];
 } {
-  const byId = new Map(
-    intent.evidence.map((item) => [item.id, item]),
-  );
+  const byId = (lookupIndex ?? buildAuditModelIntentLookup(intent)).evidenceById;
   const context: AuditModelTaskEvidenceContext[] = [];
   const unresolved: string[] = [];
 
@@ -675,9 +714,10 @@ function obligationPackets(
   obligations: readonly AuditObligation[],
   auditRevision: string,
   intent: GameplayIntentModel,
+  lookupIndex: AuditModelIntentLookup,
 ): readonly AuditModelTaskPacket[] {
   const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
-  const evidenceById = new Map(intent.evidence.map(item => [item.id, item]));
+  const evidenceById = lookupIndex.evidenceById;
   return obligations.map((obligation) => {
     // UNDERSTAND obligations may reference exact unknown IDs rather than
     // ordinary model nodes. Preserve those identities while supplying their
@@ -695,7 +735,7 @@ function obligationPackets(
     const evidenceIds = unique([
       ...obligation.evidenceIds, ...selectedUnknownEvidenceIds,
     ]);
-    const evidence = evidenceContext(evidenceIds, intent);
+    const evidence = evidenceContext(evidenceIds, intent, lookupIndex);
 
     return {
       schemaVersion: 1 as const,
@@ -850,6 +890,14 @@ export function deriveAuditModelTaskPackets(input: {
   /** Only edition identity may be checked here; API/version remain unverified. */
   readonly knowledgeEdition?: KnowledgeEdition;
 }): readonly AuditModelTaskPacket[] {
+  const lookupIndex = buildAuditModelIntentLookup(input.intent);
+  const preparedKnowledge = input.knowledgeCatalog === undefined ? undefined
+    : prepareAuditTaskKnowledgeIndex(input.knowledgeCatalog, input.knowledgeEdition);
+  const selectDeveloperReference = input.developerPractice !== undefined &&
+    input.semanticIr !== undefined && input.intent.artifactId
+      ? prepareDeveloperPracticeReferenceSelector(
+          input.semanticIr, input.intent.artifactId,
+        ) : undefined;
   const userPressure =
     deriveAuditUserIntentSearchPressure(
       input.userIntent,
@@ -1016,6 +1064,7 @@ export function deriveAuditModelTaskPackets(input: {
       input.auditObligations ?? [],
       input.auditRevision,
       input.intent,
+      lookupIndex,
     );
 
   const stage = input.admission.firstBlockingStage;
@@ -1074,6 +1123,7 @@ export function deriveAuditModelTaskPackets(input: {
       input.intent,
       packet.decisionNeeded,
       packet.subjectIds,
+      lookupIndex,
     );
     const retrievedKnowledge =
       input.knowledgeCatalog === undefined ||
@@ -1084,6 +1134,8 @@ export function deriveAuditModelTaskPackets(input: {
             catalog: input.knowledgeCatalog,
             lookup: knowledgeLookup,
             intent: input.intent,
+            lookupIndex,
+            ...(preparedKnowledge === undefined ? {} : { preparedKnowledge }),
             ...(input.knowledgeEdition === undefined
               ? {}
               : { edition: input.knowledgeEdition }),
@@ -1140,17 +1192,13 @@ export function deriveAuditModelTaskPackets(input: {
       packet.causalLinkId !== undefined && scopedSites.length > 0
         ? scopedSites
         : allSites.length > 0 ? allSites : candidateSourceLocators;
-    const reference = input.developerPractice === undefined ||
-      input.semanticIr === undefined ||
-      !input.intent.artifactId ||
+    const reference = selectDeveloperReference === undefined ||
       knowledgeLookup?.grounding !== "SELECTED_ARTIFACT" ||
       referenceSourceLocators.length === 0 ||
       domains.length === 0
         ? undefined
-        : compileDeveloperPracticeReferenceContext({
-            data: input.developerPractice,
-            selectedArtifactId: input.intent.artifactId,
-            semanticIr: input.semanticIr,
+        : selectDeveloperReference({
+            data: input.developerPractice!,
             domains: [...new Set([
               ...domains,
               ...(versionQuestion ? ["manifest", "edition", "script-api"] : []),

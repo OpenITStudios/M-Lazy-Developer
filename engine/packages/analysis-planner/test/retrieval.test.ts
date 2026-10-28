@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   retrieveResources,
   scoreTextDocuments,
+  prepareTextDocumentScorer,
   type CatalogResource,
   type GraphEdge,
 } from "../src/retrieval.js";
@@ -80,6 +81,21 @@ describe("retrieveResources", () => {
     expect(scoreTextDocuments([{
       id: "empty", text: "inventory",
     }], "")).toEqual({});
+  });
+
+  it("reuses BM25 document tokens across queries without changing ranking or duplicate-ID overwrite", () => {
+    const docs = [
+      { id: "same", text: "arena rescue ☃ player state" },
+      { id: "other", text: "state ownership persistence 重大" },
+      { id: "same", text: "arena return player slot" },
+    ];
+    const prepared = prepareTextDocumentScorer(docs);
+    for (const query of [
+      "arena player", "state ownership", "重大 persistence", "not-present", "",
+    ]) {
+      expect(prepared(query)).toEqual(scoreTextDocuments(docs, query));
+    }
+    expect(prepared("arena return").same).toBeGreaterThan(0);
   });
 
   it("keeps routing structural and authority signals explicit", () => {
