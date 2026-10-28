@@ -252,7 +252,13 @@ function extractMutations(
       surface: resource.surface,
       key: resource.key,
       action: resource.action,
-      precision: resource.precision,
+      // Literal tag/effect keys identify source syntax, not a stable
+      // Player/Entity receiver across two different gameplay paths.
+      // Never upgrade that text match into exact reset/cleanup proof.
+      precision:
+        resource.surface === "tag" || resource.surface === "effect"
+          ? "surface-level"
+          : resource.precision,
     });
   }
 

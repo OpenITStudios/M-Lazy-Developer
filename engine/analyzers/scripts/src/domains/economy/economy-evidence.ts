@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { sourceMethodRegion } from "../../core/control-flow.js";
 import type {
   SourceRef,
 } from "../../../../../packages/project-model/src/index.js";
@@ -71,13 +72,9 @@ function executionRegion(
       return "function:" + current.name.text;
     }
     if (ts.isMethodDeclaration(current)) {
-      const name = current.name;
-      if (
-        ts.isIdentifier(name) ||
-        ts.isStringLiteralLike(name)
-      ) {
-        return "function:" + name.text;
-      }
+      // Use the parser's canonical source-qualified class-method identity.
+      // A bare method name can alias another class in the same bundle.
+      return sourceMethodRegion(current, file);
     }
     if (
       ts.isArrowFunction(current) ||
