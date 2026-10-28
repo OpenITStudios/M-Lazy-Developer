@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   parseScriptFile,
   deriveScriptTerminalPrecedenceEvidence,
+  deriveScriptTerminalIdempotencyEvidence,
+  deriveScriptTerminalEvidenceBundle,
 } from "../../../src/index.js";
 
 const source = {
@@ -10,6 +12,33 @@ const source = {
 };
 
 describe("arena authority evidence", () => {
+  it("preserves terminal latch and priority findings when one AST is shared", () => {
+    const text = [
+      "const RESULT_PRECEDENCE = ['objective', 'timeout', 'disconnect'];",
+      "function endGame(candidates) {",
+      "  if (gameState.ended) return;",
+      "  gameState.ended = true;",
+      "  return RESULT_PRECEDENCE.find(reason => candidates.has(reason));",
+      "}",
+    ].join("\n");
+    const independent = {
+      idempotency: deriveScriptTerminalIdempotencyEvidence(text, source),
+      precedence: deriveScriptTerminalPrecedenceEvidence(text, source),
+    };
+    const bundle = deriveScriptTerminalEvidenceBundle(text, source);
+    expect(bundle).toEqual(independent);
+    expect(JSON.stringify(bundle)).toBe(JSON.stringify(independent));
+    expect(bundle.idempotency).toHaveLength(1);
+    expect(bundle.precedence).toHaveLength(1);
+  });
+
+  it("does not invent terminal safety evidence for unrelated declarations", () => {
+    const text = "const RESULT_PRECEDENCE = ['win', 'lose']; function idle() { return 0; }";
+    expect(deriveScriptTerminalEvidenceBundle(text, source)).toEqual({
+      idempotency: [], precedence: [],
+    });
+  });
+
   it("retains a direct generation mutation's lexical block identity only", () => {
     const parsed = parseScriptFile("arena", [
       "function reset(arena, flag) {",

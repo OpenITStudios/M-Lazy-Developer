@@ -79,8 +79,7 @@ import {
 } from "./entity-event-evidence.js";
 import {
   deriveProgressionActiveStateValues,
-  deriveScriptTerminalIdempotencyEvidence,
-  deriveScriptTerminalPrecedenceEvidence,
+  deriveScriptTerminalEvidenceBundle,
   deriveScriptProgressionAdvanceEvidence,
   deriveScriptProgressionIdempotencyEvidence,
   deriveScriptProgressionOrdinalAdvanceEvidence,
@@ -394,24 +393,17 @@ export function analyzeInspectionRuntimeState(
       (item) => item.evidence.calls,
     ),
   ];
-  const terminalIdempotencyEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : deriveScriptTerminalIdempotencyEvidence(
-            item.text,
-            item.node.source,
-          )
-    );
-  const terminalPrecedenceEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : deriveScriptTerminalPrecedenceEvidence(
-            item.text,
-            item.node.source,
-          )
-    );
+  const terminalBundles = input.parsedScripts.flatMap((item) =>
+    item.text === undefined
+      ? []
+      : [deriveScriptTerminalEvidenceBundle(item.text, item.node.source)]
+  );
+  const terminalIdempotencyEvidence = terminalBundles.flatMap(
+    (bundle) => bundle.idempotency,
+  );
+  const terminalPrecedenceEvidence = terminalBundles.flatMap(
+    (bundle) => bundle.precedence,
+  );
 
   const arenaLifecycle =
     analyzeArenaLifecycleConvergence(

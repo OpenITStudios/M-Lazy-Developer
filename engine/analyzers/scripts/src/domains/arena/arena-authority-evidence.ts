@@ -2617,6 +2617,13 @@ export function deriveScriptTerminalIdempotencyEvidence(
     true,
     scriptKind(source.relativePath),
   );
+  return terminalIdempotencyFromFile(file, source);
+}
+
+function terminalIdempotencyFromFile(
+  file: ts.SourceFile,
+  source: SourceRef,
+): ScriptTerminalIdempotencyEvidence[] {
   const output:
     ScriptTerminalIdempotencyEvidence[] = [];
 
@@ -3120,6 +3127,13 @@ export function deriveScriptTerminalPrecedenceEvidence(
     true,
     scriptKind(source.relativePath),
   );
+  return terminalPrecedenceFromFile(file, source);
+}
+
+function terminalPrecedenceFromFile(
+  file: ts.SourceFile,
+  source: SourceRef,
+): ScriptTerminalPrecedenceEvidence[] {
 
   const policies = new Map<
     string,
@@ -3228,4 +3242,28 @@ export function deriveScriptTerminalPrecedenceEvidence(
       b.policyBinding,
     )
   );
+}
+
+/** One transient source AST for both terminal safety checks. Independent public
+ * detectors retain their old signatures; no syntax tree enters Semantic IR,
+ * diagnostic reporting, or the cached selected-map evidence model.
+ */
+export function deriveScriptTerminalEvidenceBundle(
+  text: string,
+  source: SourceRef,
+): {
+  readonly idempotency: readonly ScriptTerminalIdempotencyEvidence[];
+  readonly precedence: readonly ScriptTerminalPrecedenceEvidence[];
+} {
+  const file = ts.createSourceFile(
+    source.relativePath,
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind(source.relativePath),
+  );
+  return {
+    idempotency: terminalIdempotencyFromFile(file, source),
+    precedence: terminalPrecedenceFromFile(file, source),
+  };
 }

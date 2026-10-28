@@ -48,7 +48,19 @@ function normalizePalette(root: Record<string, unknown>): StructurePaletteEntry[
   });
 }
 
-function normalizeBlockIndices(root: Record<string, unknown>): StructureBlockIndexLayer[] {
+/** The default normalization owns its independent block-index arrays.
+ * Read-only source indexing may share the already-parsed simplified NBT
+ * arrays until it has constructed its own compact, immutable projection.
+ * Do not use that mode for mutations, round-trips, or retained models.
+ */
+export interface McStructureNormalizeOptions {
+  readonly readOnlySharedBlockIndices?: boolean;
+}
+
+function normalizeBlockIndices(
+  root: Record<string, unknown>,
+  options: McStructureNormalizeOptions = {},
+): StructureBlockIndexLayer[] {
   const structure = record(root.structure);
   const value = structure?.block_indices;
   if (!Array.isArray(value)) return [];
@@ -56,6 +68,16 @@ function normalizeBlockIndices(root: Record<string, unknown>): StructureBlockInd
   const layers: StructureBlockIndexLayer[] = [];
   value.forEach((layer, index) => {
     if (!Array.isArray(layer)) return;
+    if (options.readOnlySharedBlockIndices) {
+      // Avoid allocating a second large JS number array for each source-only
+      // .mcstructure. Checking each index explicitly also rejects sparse
+      // arrays, exactly as the original filter+length gate did.
+      for (let position = 0; position < layer.length; position += 1) {
+        if (!Number.isInteger(layer[position])) return;
+      }
+      layers.push({ layer: index, indices: layer });
+      return;
+    }
     const numbers = layer.filter((entry): entry is number => Number.isInteger(entry));
     if (numbers.length !== layer.length) return;
     layers.push({ layer: index, indices: numbers });
@@ -66,6 +88,7 @@ function normalizeBlockIndices(root: Record<string, unknown>): StructureBlockInd
 export function normalizeMcStructure(
   nbt: ParsedNbtDocument,
   sourceName?: string,
+  options: McStructureNormalizeOptions = {},
 ): McStructureModel {
   const root = record(nbt.simplified) ?? {};
   const structure = record(root.structure);
@@ -74,7 +97,7 @@ export function normalizeMcStructure(
 
   const result: McStructureModel = {
     palette: normalizePalette(root),
-    blockIndexLayers: normalizeBlockIndices(root),
+    blockIndexLayers: normalizeBlockIndices(root, options),
     entities: Array.isArray(structure?.entities) ? structure.entities : [],
     rawSimplified: nbt.simplified,
     nbt,

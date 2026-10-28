@@ -830,6 +830,10 @@ export async function indexInspectionSources(
       const structure = await parseMcStructure(
         await readFile(join(root, file.relativePath)),
         file.relativePath,
+        // This source-only scope immediately makes a separately owned typed
+        // footprint projection. No caller mutates/retains the raw NBT index
+        // layers, so a redundant array copy is unnecessary here.
+        { readOnlySharedBlockIndices: true },
       );
 
       const runtimeContent =
