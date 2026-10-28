@@ -9,6 +9,7 @@ import {
   deriveScriptProgressionActiveTransitionEvidence,
   deriveScriptProgressionStateTransitionEvidence,
   deriveScriptProgressionActorRegistryEvidence,
+  deriveScriptProgressionRuntimeEvidenceBundle,
 } from "../../../src/domains/progression/progression-counter-evidence.js";
 
 const source = {
@@ -425,5 +426,63 @@ describe("progression actor registry evidence", () => {
           item.generationBound === false,
       ),
     ).toBe(true);
+  });
+});
+
+
+describe("shared progression AST projection", () => {
+  it("preserves each independent detector and source identity across positive and negative paths", () => {
+    const text = [
+      "let waveState = 'preparing';",
+      "let remainingEnemies = 0;",
+      "let waveAdvancing = false;",
+      "function begin(entity) {",
+      "  if (waveState === 'preparing') waveState = 'active';",
+      "  if (waveState === 'active') {",
+      "    entity.triggerEvent('test:awake');",
+      "    announceActive(entity);",
+      "  }",
+      "  waveState = 'active';",
+      "  notify(entity);",
+      "  entity.triggerEvent('test:active');",
+      "}",
+      "function maybeAdvance() {",
+      "  if (remainingEnemies === 0) { nextWave(); nextWave(); }",
+      "}",
+      "function nextWave() {",
+      "  if (waveAdvancing) return;",
+      "  waveAdvancing = true;",
+      "  currentWave++;",
+      "}",
+      "function announceActive(entity) {}",
+      "function notify(entity) {}",
+    ].join("\n");
+    const active = ["active", "combat_live"];
+    const independent = {
+      activeEvents: deriveScriptProgressionActiveEventEvidence(text, source, active),
+      activeCalls: deriveScriptProgressionActiveCallEvidence(text, source, active),
+      activeTransition: deriveScriptProgressionActiveTransitionEvidence(text, source, active),
+      stateTransitions: deriveScriptProgressionStateTransitionEvidence(text, source),
+      advances: deriveScriptProgressionAdvanceEvidence(text, source),
+      ordinals: deriveScriptProgressionOrdinalAdvanceEvidence(text, source),
+      idempotency: deriveScriptProgressionIdempotencyEvidence(text, source),
+    };
+    const bundled = deriveScriptProgressionRuntimeEvidenceBundle(text, source, active);
+    expect(bundled).toEqual(independent);
+    expect(bundled.activeEvents.length).toBeGreaterThan(0);
+    expect(bundled.activeCalls.length).toBeGreaterThan(0);
+    expect(bundled.activeTransition.calls.length).toBeGreaterThan(0);
+    expect(bundled.advances.length).toBeGreaterThan(0);
+    expect(Object.keys(bundled)).toEqual(Object.keys(independent));
+    expect(JSON.stringify(bundled)).toBe(JSON.stringify(independent));
+  });
+
+  it("preserves uncertainty and does not create evidence from unrelated source", () => {
+    const text = "function idle(entity) { entity.triggerEvent('test:idle'); }";
+    const bundle = deriveScriptProgressionRuntimeEvidenceBundle(text, source, []);
+    expect(bundle.activeEvents).toEqual([]);
+    expect(bundle.activeTransition.events).toEqual([]);
+    expect(bundle.stateTransitions).toEqual([]);
+    expect(bundle.advances).toEqual([]);
   });
 });

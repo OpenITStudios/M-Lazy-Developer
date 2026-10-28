@@ -1049,13 +1049,26 @@ export function deriveScriptProgressionStateTransitionEvidence(
   text: string,
   source: SourceRef,
 ): ScriptProgressionStateTransitionEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionStateTransitionEvidenceFromSourceFile(text, source);
+}
+
+function deriveScriptProgressionStateTransitionEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  parsedFile?: ts.SourceFile,
+): ScriptProgressionStateTransitionEvidence[] {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const output:
     ScriptProgressionStateTransitionEvidence[] = [];
 
@@ -1560,13 +1573,26 @@ export function deriveScriptProgressionIdempotencyEvidence(
   text: string,
   source: SourceRef,
 ): ScriptProgressionIdempotencyEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionIdempotencyEvidenceFromSourceFile(text, source);
+}
+
+function deriveScriptProgressionIdempotencyEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  parsedFile?: ts.SourceFile,
+): ScriptProgressionIdempotencyEvidence[] {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const output:
     ScriptProgressionIdempotencyEvidence[] = [];
 
@@ -1603,13 +1629,26 @@ export function deriveScriptProgressionOrdinalAdvanceEvidence(
   text: string,
   source: SourceRef,
 ): ScriptProgressionOrdinalAdvanceEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionOrdinalAdvanceEvidenceFromSourceFile(text, source);
+}
+
+function deriveScriptProgressionOrdinalAdvanceEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  parsedFile?: ts.SourceFile,
+): ScriptProgressionOrdinalAdvanceEvidence[] {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const output:
     ScriptProgressionOrdinalAdvanceEvidence[] = [];
   const targetPattern =
@@ -1703,13 +1742,26 @@ export function deriveScriptProgressionAdvanceEvidence(
   text: string,
   source: SourceRef,
 ): ScriptProgressionAdvanceEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionAdvanceEvidenceFromSourceFile(text, source);
+}
+
+function deriveScriptProgressionAdvanceEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  parsedFile?: ts.SourceFile,
+): ScriptProgressionAdvanceEvidence[] {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const output:
     ScriptProgressionAdvanceEvidence[] = [];
 
@@ -1766,13 +1818,33 @@ export function deriveScriptProgressionActiveTransitionEvidence(
   readonly events:
     ScriptProgressionActiveEventEvidence[];
 } {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionActiveTransitionEvidenceFromSourceFile(text, source, activeStateValues);
+}
+
+function deriveScriptProgressionActiveTransitionEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  activeStateValues:
+    readonly string[] = [],
+  parsedFile?: ts.SourceFile,
+): {
+  readonly calls:
+    ScriptProgressionActiveCallEvidence[];
+  readonly events:
+    ScriptProgressionActiveEventEvidence[];
+} {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const calls:
     ScriptProgressionActiveCallEvidence[] = [];
   const events:
@@ -1880,13 +1952,28 @@ export function deriveScriptProgressionActiveCallEvidence(
   activeStateValues:
     readonly string[] = [],
 ): ScriptProgressionActiveCallEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionActiveCallEvidenceFromSourceFile(text, source, activeStateValues);
+}
+
+function deriveScriptProgressionActiveCallEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  activeStateValues:
+    readonly string[] = [],
+  parsedFile?: ts.SourceFile,
+): ScriptProgressionActiveCallEvidence[] {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const output:
     ScriptProgressionActiveCallEvidence[] = [];
 
@@ -1975,13 +2062,28 @@ export function deriveScriptProgressionActiveEventEvidence(
   activeStateValues:
     readonly string[] = [],
 ): ScriptProgressionActiveEventEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  return deriveScriptProgressionActiveEventEvidenceFromSourceFile(text, source, activeStateValues);
+}
+
+function deriveScriptProgressionActiveEventEvidenceFromSourceFile(
+  text: string,
+  source: SourceRef,
+  activeStateValues:
+    readonly string[] = [],
+  parsedFile?: ts.SourceFile,
+): ScriptProgressionActiveEventEvidence[] {
+  // The optional file is supplied only by the same selected-script bundle.
+  // A mismatched source falls back to the independent canonical parse.
+  const file = parsedFile?.text === text &&
+    parsedFile.fileName === source.relativePath
+    ? parsedFile
+    : ts.createSourceFile(
+        source.relativePath,
+        text,
+        ts.ScriptTarget.Latest,
+        true,
+        scriptKind(source.relativePath),
+      );
   const output:
     ScriptProgressionActiveEventEvidence[] = [];
 
@@ -2332,4 +2434,29 @@ export function deriveScriptProgressionActorRegistryEvidence(
         b.executionRegion,
       )
     );
+}
+
+/** Parse one exact selected source for related progression analyses. These
+ * seven existing detectors retain independent dispositions and return values;
+ * only their transient TypeScript syntax tree is shared within this call.
+ * The tree is not retained in the resulting evidence or Semantic IR.
+ */
+export function deriveScriptProgressionRuntimeEvidenceBundle(
+  text: string,
+  source: SourceRef,
+  activeStateValues: readonly string[] = [],
+) {
+  const file = ts.createSourceFile(
+    source.relativePath, text, ts.ScriptTarget.Latest,
+    true, scriptKind(source.relativePath),
+  );
+  return {
+    activeEvents: deriveScriptProgressionActiveEventEvidenceFromSourceFile(text, source, activeStateValues, file),
+    activeCalls: deriveScriptProgressionActiveCallEvidenceFromSourceFile(text, source, activeStateValues, file),
+    activeTransition: deriveScriptProgressionActiveTransitionEvidenceFromSourceFile(text, source, activeStateValues, file),
+    stateTransitions: deriveScriptProgressionStateTransitionEvidenceFromSourceFile(text, source, file),
+    advances: deriveScriptProgressionAdvanceEvidenceFromSourceFile(text, source, file),
+    ordinals: deriveScriptProgressionOrdinalAdvanceEvidenceFromSourceFile(text, source, file),
+    idempotency: deriveScriptProgressionIdempotencyEvidenceFromSourceFile(text, source, file),
+  };
 }

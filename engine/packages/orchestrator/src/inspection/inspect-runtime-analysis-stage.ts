@@ -87,6 +87,7 @@ import {
   deriveScriptProgressionActiveCallEvidence,
   deriveScriptProgressionActiveEventEvidence,
   deriveScriptProgressionActiveTransitionEvidence,
+  deriveScriptProgressionRuntimeEvidenceBundle,
   deriveScriptProgressionStateTransitionEvidence,
 } from "../../../../analyzers/scripts/src/index.js";
 
@@ -341,95 +342,46 @@ export function analyzeInspectionRuntimeState(
       parsedFunctionModels,
       parsedScriptModels,
     );
-  const progressionActiveEventEvidence =
-    input.parsedScripts.flatMap((item) => {
-      if (item.text === undefined) {
-        return [];
-      }
-      const activeStateValues =
-        deriveProgressionActiveStateValues(
-          item.parsed
-            .transitionDeclarations ??
-            [],
-        );
-      return deriveScriptProgressionActiveEventEvidence(
-        item.text,
-        item.node.source,
-        activeStateValues,
-      );
-    });
-  const progressionActiveCallEvidence =
-    input.parsedScripts.flatMap((item) => {
-      if (item.text === undefined) {
-        return [];
-      }
-      const activeStateValues =
-        deriveProgressionActiveStateValues(
-          item.parsed
-            .transitionDeclarations ??
-            [],
-        );
-      return deriveScriptProgressionActiveCallEvidence(
-        item.text,
-        item.node.source,
-        activeStateValues,
-      );
-    });
-  const progressionActiveTransitionEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : [{
-            sourcePath:
-              item.node.source.relativePath,
-            evidence:
-              deriveScriptProgressionActiveTransitionEvidence(
-                item.text,
-                item.node.source,
-                deriveProgressionActiveStateValues(
-                  item.parsed
-                    .transitionDeclarations ??
-                    [],
-                ),
-              ),
-          }]
-    );
-  const progressionStateTransitionEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : deriveScriptProgressionStateTransitionEvidence(
+  // One syntax tree per exact source for seven independent progression
+  // checks. Source-identified evidence and detector decisions are unchanged.
+  const progressionBundles = input.parsedScripts.map((item) =>
+    item.text === undefined
+      ? undefined
+      : {
+          sourcePath: item.node.source.relativePath,
+          evidence: deriveScriptProgressionRuntimeEvidenceBundle(
             item.text,
             item.node.source,
-          )
-    );
-  const progressionAdvanceEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : deriveScriptProgressionAdvanceEvidence(
-            item.text,
-            item.node.source,
-          )
-    );
-  const progressionOrdinalAdvanceEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : deriveScriptProgressionOrdinalAdvanceEvidence(
-            item.text,
-            item.node.source,
-          )
-    );
-  const progressionIdempotencyEvidence =
-    input.parsedScripts.flatMap((item) =>
-      item.text === undefined
-        ? []
-        : deriveScriptProgressionIdempotencyEvidence(
-            item.text,
-            item.node.source,
-          )
-    );
+            deriveProgressionActiveStateValues(
+              item.parsed.transitionDeclarations ?? [],
+            ),
+          ),
+        },
+  );
+  const progressionActiveEventEvidence = progressionBundles.flatMap(
+    (item) => item?.evidence.activeEvents ?? [],
+  );
+  const progressionActiveCallEvidence = progressionBundles.flatMap(
+    (item) => item?.evidence.activeCalls ?? [],
+  );
+  const progressionActiveTransitionEvidence = progressionBundles.flatMap(
+    (item) => item === undefined ? [] : [{
+      sourcePath: item.sourcePath,
+      evidence: item.evidence.activeTransition,
+    }],
+  );
+  const progressionStateTransitionEvidence = progressionBundles.flatMap(
+    (item) => item?.evidence.stateTransitions ?? [],
+  );
+  const progressionAdvanceEvidence = progressionBundles.flatMap(
+    (item) => item?.evidence.advances ?? [],
+  );
+  const progressionOrdinalAdvanceEvidence = progressionBundles.flatMap(
+    (item) => item?.evidence.ordinals ?? [],
+  );
+  const progressionIdempotencyEvidence = progressionBundles.flatMap(
+    (item) => item?.evidence.idempotency ?? [],
+  );
   const effectiveProgressionActiveEventEvidence = [
     ...progressionActiveEventEvidence,
     ...progressionActiveTransitionEvidence.flatMap(
