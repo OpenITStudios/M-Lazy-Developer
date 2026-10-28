@@ -4,6 +4,7 @@ export * from "./state-key.js";
 export * from "./condition.js";
 export * from "./transition.js";
 export * from "./source-evidence.js";
+export * from "./source-behavior-shape.js";
 export * from "./temporal.js";
 export * from "./validate.js";
 export * from "./compose.js";

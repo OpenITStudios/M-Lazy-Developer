@@ -66,6 +66,17 @@ Observed behavior does not automatically become a general engine fact.
 
 Absence of a claim is unknown, not false.
 
+## Source-behavior structural comparison
+
+`source-behavior-shape.ts` compares typed, bounded source effect anatomy
+and state operations without identifying source files, function names or
+gameplay labels. It supports source navigation across differing coding styles
+and is consumed by existing UNDERSTAND model-task projections. A structural
+analog is **not a gameplay-equivalence claim**. Missing typed effects,
+unresolved call edges, disconnected entries or omitted source evidence must
+keep the comparison inconclusive. Independent design, scope and runtime proof
+remain necessary for stronger claims.
+
 
 ## Provenance naming
 

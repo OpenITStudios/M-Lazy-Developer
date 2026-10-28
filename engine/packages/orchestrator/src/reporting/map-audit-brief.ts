@@ -685,6 +685,16 @@ export function formatSelectedMapAuditBrief(input: {
             concise(review.proposedGameplayMeaning),
           "  **Next source question:** " + concise(review.nextEvidenceQuestion),
         ]),
+        ...(investigation?.behaviorShape ? [
+          "  Source structural shape (NOT gameplay equivalence): " +
+            investigation.behaviorShape.status +
+            "; " + investigation.behaviorShape.effectShapes.length +
+            " normalized effect shape(s)" +
+            (investigation.behaviorShape.limitations.length
+              ? "; source gaps: " +
+                investigation.behaviorShape.limitations.slice(0, 2).map(concise).join("; ")
+              : "") + ".",
+        ] : []),
         ...(investigation?.effectPaths?.length ? [
           "  Candidate source effect chains (NOT gameplay/runtime proof): " +
             investigation.effectPaths.slice(0, 2).map(effect =>
@@ -727,6 +737,18 @@ export function formatSelectedMapAuditBrief(input: {
       "Additional unclassified source paths omitted from this brief: " +
         (rankedUnidentified.length - 4) + ".",
     );
+    const shapeAnalogs = modelTaskPackets.flatMap(task =>
+      task.sourceInvestigation?.structuralAnalogs ?? []);
+    if (shapeAnalogs.length > 0) {
+      out.push("**Cross-implementation source analogy candidates (NOT SAME GAMEPLAY):** " +
+        shapeAnalogs.slice(0, 3).map(item =>
+          concise(item.leftUnknownId) + " ~ " + concise(item.rightUnknownId) +
+          (item.comparison.entryKindsDiffer
+            ? " [different authored entry kinds]" : ""))
+          .join("; ") +
+        (shapeAnalogs.length > 3 ? "; other source analogs omitted." : ".") +
+        " Confirm player purpose, state owner, guards and observed outcomes independently.");
+    }
     out.push(
       "**Next understanding check:** Trace each selected-source entry, guard, " +
         "state mutation, effect and return; establish its exact player/mode/" +

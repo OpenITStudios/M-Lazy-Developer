@@ -2,6 +2,12 @@ import type {
   GameplayIntentModel,
 } from "../../gameplay-intent/src/index.js";
 import {
+  describeSourceBehaviorShape,
+  compareSourceBehaviorShapes,
+  type SourceBehaviorShape,
+  type SourceBehaviorShapeComparison,
+} from "../../behavior-model/src/source-behavior-shape.js";
+import {
   findExclusiveAuthoredBranch,
   type AuthoredBranchExclusion,
   type SemanticIr,
@@ -162,6 +168,7 @@ export interface AuditModelSourceInvestigation {
     readonly effectPaths?: readonly {
       readonly effectId: string;
       readonly effectKind: UnclassifiedSourceEffect["effectKind"];
+      readonly worldEffectKind: UnclassifiedSourceEffect["worldEffectKind"];
       readonly targetLabel: string | null;
       readonly evidenceStatus: UnclassifiedSourceEffect["evidenceStatus"];
       readonly guardStateReadIds: readonly string[];
@@ -176,6 +183,8 @@ export interface AuditModelSourceInvestigation {
       readonly temporalBoundaryCount: number;
     }[];
     readonly omittedEffectPaths?: number;
+    /** Name-independent authored anatomy; not a gameplay rule. */
+    readonly behaviorShape?: SourceBehaviorShape;
     readonly unresolvedExecutionEdgeIds: readonly string[];
     readonly omittedUnresolvedExecutionEdges: number;
     /** Selected-source evidence not represented by this one exact IR flow. */
@@ -183,6 +192,13 @@ export interface AuditModelSourceInvestigation {
     readonly omittedUnmatchedEvidence: number;
   }[];
   readonly omittedEntries: number;
+  /** Name-independent structural analogs among this task's source entries. */
+  readonly structuralAnalogs?: readonly {
+    readonly leftUnknownId: string;
+    readonly rightUnknownId: string;
+    readonly comparison: SourceBehaviorShapeComparison;
+  }[];
+  readonly omittedStructuralAnalogs?: number;
 }
 
 
@@ -975,6 +991,7 @@ function deriveSourceInvestigation(
       return {
         effectId: effect.effectId,
         effectKind: effect.effectKind,
+        worldEffectKind: effect.worldEffectKind,
         targetLabel: effect.targetLabel,
         evidenceStatus: effect.evidenceStatus,
         guardStateReadIds: guardReads.slice(0, 6),
@@ -1003,6 +1020,15 @@ function deriveSourceInvestigation(
       ...(sourceEffects === undefined ? {} : {
         effectPaths,
         omittedEffectPaths: applicableEffects.length - effectPaths.length,
+        behaviorShape: describeSourceBehaviorShape({
+          sourceTraceStatus: flow.sourceTraceStatus ?? "UNKNOWN",
+          entryKind: flow.entryKind,
+          steps,
+          effects: effectPaths,
+          omittedSteps: matchedSteps.length - steps.length,
+          omittedEffects: applicableEffects.length - effectPaths.length,
+          unresolvedSourceEdges: flow.unresolvedExecutionEdgeIds.length,
+        }),
       }),
       unresolvedExecutionEdgeIds: unresolved.slice(0, 6),
       omittedUnresolvedExecutionEdges: unresolved.length - Math.min(6, unresolved.length),
@@ -1010,10 +1036,30 @@ function deriveSourceInvestigation(
       omittedUnmatchedEvidence: unmatched.length - Math.min(4, unmatched.length),
     };
   });
+  // Pair only already-selected source entries. This neither discovers new
+  // mechanics nor permits source-shape similarity to serve as defect proof.
+  const comparable = entries.flatMap((left, index) =>
+    entries.slice(index + 1).flatMap(right => {
+      // Never compare one duplicated unknown or its same execution entry as
+      // independent implementations, even when their shape is identical.
+      if (left.unknownId === right.unknownId ||
+          left.entryRegionId === right.entryRegionId ||
+          !left.behaviorShape || !right.behaviorShape) return [];
+      const comparison = compareSourceBehaviorShapes(
+        left.behaviorShape, right.behaviorShape);
+      return comparison.disposition === "STRUCTURAL_ANALOG_CANDIDATE"
+        ? [{ leftUnknownId: left.unknownId,
+             rightUnknownId: right.unknownId, comparison }]
+        : [];
+    }));
   return {
     authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
     entries,
     omittedEntries: candidates.length - entries.length,
+    ...(sourceEffects === undefined ? {} : {
+      structuralAnalogs: comparable.slice(0, 4),
+      omittedStructuralAnalogs: Math.max(0, comparable.length - 4),
+    }),
   };
 }
 

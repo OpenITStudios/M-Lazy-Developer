@@ -843,13 +843,22 @@ describe("obligation packet memory ownership", () => {
 describe("unclassified source-effect relationship reuse", () => {
   it("retains exact value guard and source return candidates without inventing gameplay", () => {
     const selected = { artifactId: "selected", relativePath: "scripts/novel.js" };
+    const alternateSource = {
+      artifactId: "selected", relativePath: "functions/alternate.mcfunction",
+    };
     const ids = ["op:write", "effect:open", "return:accepted"];
+    const alternateIds = ["op:other-write", "effect:other-open", "return:other"];
     const intent: GameplayIntentModel = {
       schemaVersion: 1, id: "novel", artifactId: "selected",
       evidence: [
         ...ids.map(id => ({
           id, origin: "source-code" as const, scope: "selected-artifact" as const,
           locator: "scripts/novel.js:10:1", summary: "Exact authored source",
+        })),
+        ...alternateIds.map(id => ({
+          id, origin: "source-code" as const, scope: "selected-artifact" as const,
+          locator: "functions/alternate.mcfunction:10:1",
+          summary: "Same typed source behavior with unrelated names",
         })),
         { id: "effect:foreign", origin: "historical-diff" as const,
           scope: "external-reference" as const, locator: "old/novel.js:4",
@@ -860,10 +869,18 @@ describe("unclassified source-effect relationship reuse", () => {
         id: "unknown:entry", question: "What is the intended mechanic?",
         blockedSubjectIds: [], sourceEntryRegionId: "source:entry",
         evidenceIds: [...ids, "effect:foreign"],
+      }, {
+        id: "unknown:other", question: "What does the alternate source do?",
+        blockedSubjectIds: [], sourceEntryRegionId: "source:other",
+        evidenceIds: alternateIds,
       }],
     };
     const step = (id: string, kind: string, operation?: string) => ({
       id, kind, executionRegionId: "source:entry", source: selected,
+      ...(operation === undefined ? {} : { operation }),
+    });
+    const alternateStep = (id: string, kind: string, operation?: string) => ({
+      id, kind, executionRegionId: "source:other", source: alternateSource,
       ...(operation === undefined ? {} : { operation }),
     });
     const context = [{
@@ -871,7 +888,7 @@ describe("unclassified source-effect relationship reuse", () => {
       materialEvidenceIds: ids, materialIdsWithoutEffectSlice: [],
       effectPaths: [{
         effectId: "effect:open", effectKind: "world-effect",
-        worldEffectKind: null, targetLabel: "open door",
+        worldEffectKind: "block-mutation", targetLabel: "open door",
         evidenceStatus: "CANDIDATE_INGRESS", effectGuards: [],
         guardStateReadIds: ["op:read"],
         sourceLocalStateValueHandoffs: [{
@@ -893,6 +910,28 @@ describe("unclassified source-effect relationship reuse", () => {
         candidateOutcomeIds: [], matchingIngress: [],
         candidateFeatureContextIds: [],
       }],
+    }, {
+      unknownId: "unknown:other", entryRegionId: "source:other",
+      materialEvidenceIds: alternateIds,
+      materialIdsWithoutEffectSlice: [],
+      effectPaths: [{
+        effectId: "effect:other-open", effectKind: "world-effect",
+        worldEffectKind: "block-mutation", targetLabel: "unrelated label",
+        evidenceStatus: "CANDIDATE_INGRESS", effectGuards: [],
+        guardStateReadIds: ["op:other-read"],
+        sourceLocalStateValueHandoffs: [{
+          guardReadOperationId: "op:other-read",
+          writeOperationId: "op:other-write",
+          surfaceId: "state:other", receiverHint: "alternate",
+          authoredValue: "different", scalarKind: "string", origin: "SOURCE_LOCAL",
+        }],
+        candidateOutcomeIds: ["return:other"],
+        matchingIngress: [{
+          executionEdgeIds: ["edge:other"], pathGuards: [],
+          temporalBoundaryEvidence: [], candidateCallerStateWriteIds: [],
+        }],
+        candidateFeatureContextIds: [],
+      }],
     }] as any;
     const tasks = deriveAuditModelTaskPackets({
       admission: { policy: "selected-map-audit-ordered-admission",
@@ -900,12 +939,21 @@ describe("unclassified source-effect relationship reuse", () => {
       procedure: { checkpoints: [] } as any,
       graph: { causalLinks: [], sourceFlowCandidates: [{
         id: "flow:entry", entryRegionId: "source:entry",
-        sourceTraceStatus: "SOURCE_ROOT_TRACE",
+        entryKind: "script-function", sourceTraceStatus: "SOURCE_ROOT_TRACE",
         sourceSteps: [step("op:write", "state", "write"),
           step("effect:open", "world-effect"),
           step("return:accepted", "return"),
           { ...step("effect:foreign", "world-effect"),
             source: { artifactId: "old", relativePath: selected.relativePath } }],
+        branchPoints: [], sourceHandoffs: [], unresolvedExecutionEdgeIds: [],
+      }, {
+        id: "flow:other", entryRegionId: "source:other",
+        entryKind: "mcfunction", sourceTraceStatus: "SOURCE_ROOT_TRACE",
+        sourceSteps: [
+          alternateStep("op:other-write", "state", "write"),
+          alternateStep("effect:other-open", "world-effect"),
+          alternateStep("return:other", "return"),
+        ],
         branchPoints: [], sourceHandoffs: [], unresolvedExecutionEdgeIds: [],
       }] } as any,
       sourceEffectContext: context,
@@ -917,7 +965,8 @@ describe("unclassified source-effect relationship reuse", () => {
         reason: "Unclassified material effect", missingProof: "Authored relationships",
         validationTest: "Examine exact source slice",
         validationGroupKey: "understand:novel",
-        subjectIds: ["unknown:entry"], componentIds: [], evidenceIds: [],
+        subjectIds: ["unknown:entry", "unknown:other"],
+        componentIds: [], evidenceIds: [],
       }],
     });
     const task = tasks.find(item => item.kind === "AUDIT_OBLIGATION")!;
@@ -926,6 +975,16 @@ describe("unclassified source-effect relationship reuse", () => {
     expect(effect?.sourceLocalStateValueHandoffs[0]?.writeOperationId).toBe("op:write");
     expect(effect?.candidateOutcomeIds).toEqual(["return:accepted"]);
     expect(task.evidenceIds).not.toContain("effect:foreign");
+    expect(task.sourceInvestigation?.entries.map(entry =>
+      entry.behaviorShape?.status)).toEqual([
+        "STRUCTURAL_CANDIDATE", "STRUCTURAL_CANDIDATE",
+      ]);
+    expect(task.sourceInvestigation?.structuralAnalogs).toMatchObject([{
+      comparison: {
+        disposition: "STRUCTURAL_ANALOG_CANDIDATE",
+        proofBoundary: "SOURCE_STRUCTURE_NOT_GAMEPLAY_EQUIVALENCE_OR_RUNTIME",
+      },
+    }]);
     const propose = (kind: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" |
       "SOURCE_EFFECT_RETURN_CANDIDATE", fromStepId: string, toStepId: string) =>
       reviewAuditModelSourceInterpretation(task, {

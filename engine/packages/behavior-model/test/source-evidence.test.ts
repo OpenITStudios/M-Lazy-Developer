@@ -5,6 +5,9 @@ import {
   reconcileSourceStateOutcomes,
   reconcileSourceResourceOutcomes,
   deriveSourceEffectSlices,
+  describeSourceBehaviorShape,
+  compareSourceBehaviorShapes,
+  type SourceBehaviorShapeInput,
 } from "../src/index.js";
 
 const src = (line: number, columnStart = 1, columnEnd = 10,
@@ -430,5 +433,76 @@ describe("source-observed resource/outcome reconciliation", () => {
     expect(post?.precedingResourceActionIds).toEqual([]);
     expect(post?.status).toBe("UNRESOLVED");
     expect(output.some(item => item.outcomeId === "outcome:foreign")).toBe(false);
+  });
+});
+
+
+describe("source-only behavior shapes across unlike code styles", () => {
+  it("recognizes typed structural analogs but abstains on missing or different source evidence", () => {
+    const source = (
+      entryKind: SourceBehaviorShapeInput["entryKind"],
+      stepId: string,
+      effectKind: "block-mutation" | "entity-spawn",
+    ): SourceBehaviorShapeInput => ({
+      sourceTraceStatus: "SOURCE_ROOT_TRACE",
+      entryKind,
+      steps: [
+        { kind: "state", operation: "write" },
+        { kind: "world-effect" },
+        { kind: "return" },
+      ],
+      effects: [{
+        effectKind: "world-effect",
+        worldEffectKind: effectKind,
+        evidenceStatus: "CANDIDATE_INGRESS",
+        guardStateReadIds: ["guard:" + stepId],
+        sourceLocalStateValueHandoffs: [{
+          origin: "SOURCE_LOCAL", scalarKind: "string",
+        }],
+        candidateOutcomeIds: ["return:" + stepId],
+        temporalBoundaryCount: 0,
+      }],
+      omittedSteps: 0, omittedEffects: 0,
+      unresolvedSourceEdges: 0,
+    });
+    // Source operation names, identifiers and entry syntax are deliberately
+    // different: neither profile claims that the game designs are equal.
+    const scripted = describeSourceBehaviorShape(source(
+      "script-function", "prepareArena", "block-mutation"));
+    const command = describeSourceBehaviorShape(source(
+      "mcfunction", "f_6", "block-mutation"));
+    const differentEffect = describeSourceBehaviorShape(source(
+      "script-callback", "change", "entity-spawn"));
+    expect(scripted.status).toBe("STRUCTURAL_CANDIDATE");
+    expect(scripted.proofBoundary)
+      .toBe("SOURCE_STRUCTURE_NOT_GAMEPLAY_EQUIVALENCE_OR_RUNTIME");
+    const sameShape = compareSourceBehaviorShapes(scripted, command);
+    expect(sameShape.disposition).toBe("STRUCTURAL_ANALOG_CANDIDATE");
+    expect(sameShape.entryKindsDiffer).toBe(true);
+    expect(compareSourceBehaviorShapes(scripted, differentEffect).disposition)
+      .toBe("OBSERVED_STRUCTURE_DIFFERS");
+    const incomplete = describeSourceBehaviorShape({
+      ...source("script-callback", "partial", "block-mutation"),
+      omittedEffects: 1,
+    });
+    expect(incomplete.status).toBe("INSUFFICIENT_SOURCE");
+    expect(compareSourceBehaviorShapes(scripted, incomplete).disposition)
+      .toBe("INSUFFICIENT_SOURCE");
+    const disconnected = describeSourceBehaviorShape({
+      ...source("script-function", "orphan", "block-mutation"),
+      sourceTraceStatus: "DISCONNECTED_SOURCE_REGION",
+    });
+    expect(compareSourceBehaviorShapes(command, disconnected).disposition)
+      .toBe("INSUFFICIENT_SOURCE");
+    const genericOnly = describeSourceBehaviorShape({
+      ...source("script-function", "generic", "block-mutation"),
+      effects: [{
+        ...source("script-function", "generic", "block-mutation").effects[0]!,
+        guardStateReadIds: [],
+        sourceLocalStateValueHandoffs: [],
+        candidateOutcomeIds: [],
+      }],
+    });
+    expect(genericOnly.status).toBe("INSUFFICIENT_SOURCE");
   });
 });
