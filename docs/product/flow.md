@@ -143,6 +143,24 @@ A read-only source behavior shape in the existing Behavioral Model compares type
 
 For each unclassified source entry, the existing Gameplay Intent design-intent challenge may now provide a **bounded independent-purpose investigation**. Only exact current-artifact source operation IDs and non-hypothetical Intent subjects tied by shared evidence or an explicitly blocked subject qualify. Linked approved Game Design, unapproved/draft wording, and authored player-facing copy remain distinct source cues; none establishes that an unknown source behavior implements that design or actually delivered the UI. An existing authored player-journey candidate is exposed only when its selected source-flow ID, operation evidence, and an Intent subject all intersect. Missing independent purpose, player activation, session/arena ownership and outcomes remain open questions. For structurally similar source entries, each side's design/copy evidence is contrasted separately: a known objective on one side **never transfers** to the other. These read-only questions live on the existing UNDERSTAND model task/brief, never alter Gameplay Intent, audit admission, defect proofs, or the model-response authority.
 
+**Cross-style source calibration, not blind scoring:** Direct read-only SHA-256
+examination of BlitzBuild v1.0.2 (d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504)
+and Beach Bedwars v1.1.0 (97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8)
+confirms materially different modular (45 JavaScript/source files) and
+bundled (1 JavaScript/source file) implementations. Both contain literal false
+and logical-expression writes to Boolean-like properties. The prior
+source-flow abstraction discarded the already captured RHS form and used
+only the generic state write operation for structural comparison. The
+existing Semantic IR owner now projects an authored syntax form into the
+existing source-flow step, and the Behavioral Model distinguishes literal,
+logical and unknown write forms while preserving per-operation multiplicity.
+Absent typed source write syntax causes INSUFFICIENT_SOURCE, not a forced
+structural analog. A logical RHS may contain nested calls; no evaluated
+value, receiver identity, player intent or Minecraft runtime result is inferred.
+These are calibration worlds already considered during development, not
+independent held-out acceptance; no frozen corpus expectation or score was changed.
+
+
 ## Concrete operating loop — from map to decision
 
 Exactly **two internal skills** are registered. IMPROVE SYSTEM builds and

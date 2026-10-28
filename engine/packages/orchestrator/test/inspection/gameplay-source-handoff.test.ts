@@ -58,6 +58,49 @@ function sample(overrideTarget = target): SemanticIr {
 }
 
 describe("cross-region source handoff tracing", () => {
+
+  it("carries known modular/minified Boolean RHS syntax into canonical source-flow steps", () => {
+    const selected = {
+      artifactId: "selected",
+      relativePath: "behavior_packs/demo/scripts/main.js",
+    };
+    const parsed = parseScriptFile("source-form", [
+      "class TestReady {",
+      "  setReady(member, ready) {",
+      "    member.ready = ready && member.teamId !== undefined;",
+      "  }",
+      "  reset(member) { member.ready = false; }",
+      "  minified(e,n) {",
+      "    e.ready = !!n && this.loading.sweep(e,n);",
+      "    n.ready = !1;",
+      "  }",
+      "}",
+    ].join("\n"), selected);
+    const ir = buildInspectionSemanticIr({
+      parsedFunctions: [],
+      parsedScripts: [{ parsed }],
+    });
+    const writes = ir.state.operations.filter(op =>
+      op.operation === "write" &&
+      op.authoredBooleanPropertyWrite !== undefined &&
+      op.source.artifactId === selected.artifactId);
+    expect(writes.map(op => op.authoredBooleanPropertyWrite?.form))
+      .toContain("logical-expression");
+    expect(writes.map(op => op.authoredBooleanPropertyWrite?.form))
+      .toContain("literal-false");
+    const steps = sourceFlowCandidates(ir).flatMap(flow => flow.sourceSteps);
+    for (const write of writes) {
+      const matches = steps.filter(step => step.id === write.id &&
+        step.source.artifactId === selected.artifactId);
+      expect(matches.length).toBeGreaterThan(0);
+      expect(matches.every(step => step.authoredWriteValueSyntax ===
+        "boolean:" + write.authoredBooleanPropertyWrite?.form)).toBe(true);
+    }
+    // The parser owns this syntax; a source-flow view does not prove
+    // that either branch ran or the two receiver objects are identical.
+  });
+
+
   it("links a resolved deferred edge to only its DIRECT callback state/teleport/cleanup", () => {
     const flows = sourceFlowCandidates(sample());
     const entry = flows.find(flow => flow.entryRegionId === "entry");

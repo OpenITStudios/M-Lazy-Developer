@@ -33,6 +33,7 @@ import type {
   GameplayJourneyInterpretation,
 } from "./gameplay-scenario-model.js";
 import {
+  authoredStateWriteValueSyntax,
   findExclusiveAuthoredBranch, semanticIrExecutionTraces,
   type AuthoredBranchMembership, type ObservedBranchPoint, type SemanticIr,
 } from "../../../semantic-ir/src/index.js";
@@ -2184,9 +2185,11 @@ export function sourceFlowCandidates(ir: SemanticIr): readonly GameplaySourceFlo
     stepsByRegion.set(regionId, list);
   };
   for (const op of ir.state.operations) {
+    const valueSyntax = authoredStateWriteValueSyntax(op);
     append(op.executionRegionId, {
       id: op.id, kind: "state", executionRegionId: op.executionRegionId,
       source: op.source, operation: op.operation,
+      ...(valueSyntax === undefined ? {} : { authoredWriteValueSyntax: valueSyntax }),
     });
   }
   for (const action of ir.state.resourceActions ?? []) {

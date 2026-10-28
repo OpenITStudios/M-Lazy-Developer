@@ -890,10 +890,12 @@ describe("unclassified source-effect relationship reuse", () => {
     const step = (id: string, kind: string, operation?: string) => ({
       id, kind, executionRegionId: "source:entry", source: selected,
       ...(operation === undefined ? {} : { operation }),
+      ...(operation === "write" ? { authoredWriteValueSyntax: "string:literal" } : {}),
     });
     const alternateStep = (id: string, kind: string, operation?: string) => ({
       id, kind, executionRegionId: "source:other", source: alternateSource,
       ...(operation === undefined ? {} : { operation }),
+      ...(operation === "write" ? { authoredWriteValueSyntax: "string:literal" } : {}),
     });
     const context = [{
       unknownId: "unknown:entry", entryRegionId: "source:entry",

@@ -5224,6 +5224,18 @@
                     "targetLabel": {
                       "type": "string"
                     },
+                    "authoredWriteValueSyntax": {
+                      "enum": [
+                        "boolean:literal-true",
+                        "boolean:literal-false",
+                        "boolean:self-negation",
+                        "boolean:logical-expression",
+                        "string:literal",
+                        "number:literal",
+                        "member-expression"
+                      ],
+                      "description": "Optional exact selected-source RHS form from Semantic IR; syntactic comparison context only, NOT a runtime value, player intent, or proof of successful state mutation."
+                    },
                     "authoredTimingSeconds": {
                       "type": "number"
                     }

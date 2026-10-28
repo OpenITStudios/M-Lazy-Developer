@@ -447,7 +447,8 @@ describe("source-only behavior shapes across unlike code styles", () => {
       sourceTraceStatus: "SOURCE_ROOT_TRACE",
       entryKind,
       steps: [
-        { kind: "state", operation: "write" },
+        { kind: "state", operation: "write",
+          authoredWriteValueSyntax: "number:literal" },
         { kind: "world-effect" },
         { kind: "return" },
       ],
@@ -457,7 +458,7 @@ describe("source-only behavior shapes across unlike code styles", () => {
         evidenceStatus: "CANDIDATE_INGRESS",
         guardStateReadIds: ["guard:" + stepId],
         sourceLocalStateValueHandoffs: [{
-          origin: "SOURCE_LOCAL", scalarKind: "string",
+          origin: "SOURCE_LOCAL", scalarKind: "number",
         }],
         candidateOutcomeIds: ["return:" + stepId],
         temporalBoundaryCount: 0,
@@ -504,5 +505,43 @@ describe("source-only behavior shapes across unlike code styles", () => {
       }],
     });
     expect(genericOnly.status).toBe("INSUFFICIENT_SOURCE");
+
+    const form = (rhs: "boolean:literal-false" | "boolean:literal-true" |
+      "boolean:logical-expression") => describeSourceBehaviorShape({
+      ...source("script-function", "variant", "block-mutation"),
+      steps: [
+        { kind: "state", operation: "write",
+          authoredWriteValueSyntax: rhs },
+        { kind: "world-effect" }, { kind: "return" },
+      ],
+    });
+    // The same write KIND with different source syntax is not one shape.
+    expect(compareSourceBehaviorShapes(
+      form("boolean:literal-false"), form("boolean:literal-true")
+    ).disposition).toBe("OBSERVED_STRUCTURE_DIFFERS");
+    expect(compareSourceBehaviorShapes(
+      form("boolean:logical-expression"), form("boolean:literal-false")
+    ).disposition).toBe("OBSERVED_STRUCTURE_DIFFERS");
+    const unknownWrite = describeSourceBehaviorShape({
+      ...source("script-function", "unknown", "block-mutation"),
+      steps: [{ kind: "state", operation: "write" }],
+    });
+    expect(unknownWrite.status).toBe("INSUFFICIENT_SOURCE");
+    expect(compareSourceBehaviorShapes(
+      form("boolean:literal-false"), unknownWrite
+    ).disposition).toBe("INSUFFICIENT_SOURCE");
+    const repeated = describeSourceBehaviorShape({
+      ...source("script-function", "repeat", "block-mutation"),
+      steps: [
+        { kind: "state", operation: "write",
+          authoredWriteValueSyntax: "boolean:literal-false" },
+        { kind: "state", operation: "write",
+          authoredWriteValueSyntax: "boolean:literal-false" },
+        { kind: "world-effect" }, { kind: "return" },
+      ],
+    });
+    expect(compareSourceBehaviorShapes(
+      form("boolean:literal-false"), repeated
+    ).disposition).toBe("OBSERVED_STRUCTURE_DIFFERS");
   });
 });

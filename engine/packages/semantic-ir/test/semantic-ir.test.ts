@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  authoredStateWriteValueSyntax,
   findExclusiveAuthoredBranch,
   semanticIrSummary,
   semanticIrSourceWriteContinuations,
@@ -324,6 +325,44 @@ describe("semantic IR", () => {
         { branch: "false" as const, evidenceIds: ["op:second"] },
       ],
     }], ["op:first"], ["op:second"], "a")).toBeUndefined();
+  });
+
+
+  it("preserves authored Boolean RHS form without inventing a runtime value", () => {
+    const write = (form: NonNullable<
+      SemanticIr["state"]["operations"][number]["authoredBooleanPropertyWrite"]
+    >["form"]) => ({
+      id: "op:write", executionRegionId: "exec:module",
+      surfaceId: "state:dynamic-property:round",
+      operation: "write" as const, source,
+      authoredBooleanPropertyWrite: {
+        targetExpression: "member.ready", valueExpression: "source RHS",
+        form, proof: "SITE_LOCAL_SOURCE_SYNTAX_NOT_RUNTIME_STATE" as const,
+      },
+    });
+    expect(authoredStateWriteValueSyntax(write("literal-false")))
+      .toBe("boolean:literal-false");
+    expect(authoredStateWriteValueSyntax(write("literal-true")))
+      .toBe("boolean:literal-true");
+    expect(authoredStateWriteValueSyntax(write("logical-expression")))
+      .toBe("boolean:logical-expression");
+    expect(authoredStateWriteValueSyntax(write("self-negation")))
+      .toBe("boolean:self-negation");
+    const { authoredBooleanPropertyWrite: _syntax, ...noForm } =
+      write("literal-false");
+    expect(authoredStateWriteValueSyntax({
+      ...noForm,
+      writtenValue: { kind: "literal" as const, value: "false",
+        scalarKind: "boolean" as const },
+    })).toBe("boolean:literal-false");
+    expect(authoredStateWriteValueSyntax({
+      ...noForm,
+      writtenValue: { kind: "member" as const, symbol: "other.flag" },
+    })).toBe("member-expression");
+    expect(authoredStateWriteValueSyntax(noForm)).toBeUndefined();
+    expect(authoredStateWriteValueSyntax({
+      ...write("literal-true"), operation: "read",
+    })).toBeUndefined();
   });
 
 

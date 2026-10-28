@@ -176,6 +176,8 @@ export interface GameplaySourceFlowCandidate {
     readonly source: import("../../../project-model/src/index.js").SourceRef;
     readonly targetLabel?: string;
     readonly operation?: string;
+    /** Exact parser/IR state-write RHS syntax, not its live value. */
+    readonly authoredWriteValueSyntax?: import("../../../semantic-ir/src/index.js").AuthoredStateWriteValueSyntax;
     readonly authoredTimingSeconds?: number;
   }[];
   /** Linked by IR world-effect IDs, never by filename/command text. */

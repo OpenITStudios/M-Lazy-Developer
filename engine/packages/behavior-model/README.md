@@ -77,6 +77,15 @@ unresolved call edges, disconnected entries or omitted source evidence must
 keep the comparison inconclusive. Independent design, scope and runtime proof
 remain necessary for stronger claims.
 
+The source shape also retains the authored write RHS syntax projected by
+Semantic IR (literal Boolean true/false, unevaluated logical RHS,
+self-negation, typed scalar literal, or member expression). These are
+syntactic forms, not runtime values or state aliases. A material write with
+unrecorded RHS syntax makes a proposed structural analog inconclusive;
+the source-only comparison also preserves repeated writes instead of
+collapsing them to one operation-kind count. This guards against comparing
+two maps as structurally equal merely because both assign a status field.
+
 
 ## Provenance naming
 

@@ -1,9 +1,45 @@
-import type { AuthoredBranchGuard, SemanticIr, StateOperationKind } from "./types.js";
+import type {
+  AuthoredBranchGuard, SemanticIr, StateOperation, StateOperationKind,
+} from "./types.js";
 
 /**
  * A single lexically authored condition at one exact source range.
  * Arms are source-observed alternatives, NOT exhaustive executable paths.
  */
+
+/**
+ * Only literal or predicate SYNTAX authored in the selected source.
+ * In particular !1 and false are both Boolean false literals in JS, while
+ * RHS logical AND is an unevaluated expression, NOT false. No runtime value,
+ * target alias, game design or Minecraft execution follows from this.
+ */
+export type AuthoredStateWriteValueSyntax =
+  | "boolean:literal-true"
+  | "boolean:literal-false"
+  | "boolean:self-negation"
+  | "boolean:logical-expression"
+  | "string:literal"
+  | "number:literal"
+  | "member-expression";
+
+export function authoredStateWriteValueSyntax(
+  operation: StateOperation,
+): AuthoredStateWriteValueSyntax | undefined {
+  if (operation.operation !== "write") return undefined;
+  const form = operation.authoredBooleanPropertyWrite?.form;
+  if (form !== undefined) return ("boolean:" + form) as AuthoredStateWriteValueSyntax;
+  const value = operation.writtenValue;
+  if (value?.kind === "member") return "member-expression";
+  if (value?.kind !== "literal") return undefined;
+  if (value.scalarKind === "string") return "string:literal";
+  if (value.scalarKind === "number") return "number:literal";
+  if (value.scalarKind === "boolean") {
+    if (value.value === "true") return "boolean:literal-true";
+    if (value.value === "false") return "boolean:literal-false";
+  }
+  return undefined;
+}
+
 export interface ObservedBranchPoint {
   readonly expression: string;
   readonly source: AuthoredBranchGuard["source"];

@@ -1,4 +1,6 @@
-import type { ExecutionRegionKind } from "../../semantic-ir/src/index.js";
+import type {
+  AuthoredStateWriteValueSyntax, ExecutionRegionKind,
+} from "../../semantic-ir/src/index.js";
 import type { SourceEffectSlice, SourceStateValueHandoff } from "./source-evidence.js";
 
 /**
@@ -16,6 +18,8 @@ export interface SourceBehaviorShapeInput {
   readonly steps: readonly {
     readonly kind: "state" | "resource-action" | "return" | "world-effect";
     readonly operation?: string;
+    /** A known authored write form, not proven runtime assignment. */
+    readonly authoredWriteValueSyntax?: AuthoredStateWriteValueSyntax;
   }[];
   readonly effects: readonly {
     readonly effectKind: SourceEffectSlice["effectKind"];
@@ -79,6 +83,11 @@ export function describeSourceBehaviorShape(
   if (input.unresolvedSourceEdges > 0) {
     limitations.push("At least one source call edge has an unresolved target.");
   }
+  if (input.steps.some(step =>
+    step.kind === "state" && step.operation === "write" &&
+    step.authoredWriteValueSyntax === undefined)) {
+    limitations.push("At least one authored state-write RHS has no typed source syntax; comparison must abstain.");
+  }
   if (input.effects.length === 0) {
     limitations.push("No exact selected-source effect slice is available.");
   }
@@ -105,8 +114,13 @@ export function describeSourceBehaviorShape(
     ].join("|");
   }).sort();
 
-  const operationKinds = [...new Set(input.steps.map(step =>
-    step.kind + (step.operation ? ":" + step.operation : "")))].sort();
+  // Preserve both per-site RHS syntax and multiplicity: a single true write
+  // cannot silently equal several false/reset writes in another map.
+  const operationKinds = input.steps.map(step =>
+    step.kind + (step.operation ? ":" + step.operation : "") +
+    (step.kind === "state" && step.operation === "write"
+      ? ":" + (step.authoredWriteValueSyntax ?? "RHS_UNKNOWN") : "")
+  ).sort();
 
   const hasMaterialRelation = input.effects.some(effect =>
     effect.sourceLocalStateValueHandoffs.length > 0 ||
