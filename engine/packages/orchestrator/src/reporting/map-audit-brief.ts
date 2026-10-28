@@ -674,15 +674,33 @@ export function formatSelectedMapAuditBrief(input: {
         ]),
         ...(review === undefined ? [] : [
           "  **AI source hypothesis (NOT game/bug proof):** " +
-            review.disposition + "; operations " +
+            review.sourceClaim + " / " + review.disposition + "; operations " +
             concise(review.fromStepId) + " / " + concise(review.toStepId) +
             (review.counterexample === undefined ? "." :
               "; authored guard at " +
               concise(review.counterexample.source.relativePath) +
               (review.counterexample.source.range?.lineStart === undefined
                 ? "" : ":" + review.counterexample.source.range.lineStart) + "."),
+          "  **Proposed meaning (UNVERIFIED):** " +
+            concise(review.proposedGameplayMeaning),
           "  **Next source question:** " + concise(review.nextEvidenceQuestion),
         ]),
+        ...(investigation?.effectPaths?.length ? [
+          "  Candidate source effect chains (NOT gameplay/runtime proof): " +
+            investigation.effectPaths.slice(0, 2).map(effect =>
+              concise(effect.effectKind + " " +
+                (effect.targetLabel ?? effect.effectId)) +
+              " [" + effect.evidenceStatus + "; " +
+                effect.sourceLocalStateValueHandoffs.length +
+                " local guard-value handoff(s); " +
+                effect.candidateOutcomeIds.length +
+                " source-ordered return(s); " +
+                effect.temporalBoundaryCount +
+                " temporal boundary/boundaries]")
+              .join("; ") +
+            ((investigation.omittedEffectPaths ?? 0) > 0
+              ? "; +" + investigation.omittedEffectPaths + " omitted." : "."),
+        ] : []),
         ...(investigation === undefined ? [] : [
           "  Exact IR source operations (not gameplay classification): " +
             investigation.steps.slice(0, 3).map(step =>

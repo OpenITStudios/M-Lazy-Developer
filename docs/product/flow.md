@@ -137,6 +137,8 @@ For unclassified material source behavior, the existing UNDERSTAND Audit Obligat
 
 For a material unknown with two precisely identified source operations, a ChatGPT model may submit one bounded SAME_AUTHORED_BRANCH_CANDIDATE through the existing selected-map model-response admission. The shared Semantic IR source owner can refute that specific direct branch-co-occurrence claim if the operations reside on opposite exclusive true/false arms of one source-located condition; otherwise the proposed relationship remains UNKNOWN. This is an ephemeral review on the existing model task only: it is discarded when the canonical audit is rebuilt and can never redefine Gameplay Intent, close checkpoints, promote issues, or assert runtime execution.
 
+The canonical Gameplay Architecture already builds `SourceEffectSlice` records for source-local guard reads/value handoffs, possible effect ingress and source-ordered return candidates. Reuse only the same selected-artifact, same unknown/source-entry slices in the bounded UNDERSTAND model task; never rebuild slices or turn nearby same-named variables into relationships. For two exact selected-source steps, model suggestions `SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE` and `SOURCE_EFFECT_RETURN_CANDIDATE` may be reviewed against these typed candidate records. A matching source relation remains a **source-only candidate**; nonmatching/incomplete relations remain UNKNOWN, and neither supplies game-design authority, runtime proof or a BUG.
+
 ## Concrete operating loop — from map to decision
 
 Exactly **two internal skills** are registered. IMPROVE SYSTEM builds and

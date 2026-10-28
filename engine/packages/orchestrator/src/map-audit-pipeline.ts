@@ -721,65 +721,6 @@ function assembleSelectedMapAuditRun(
     (edition === "bedrock" || edition === "education")
       ? edition
       : undefined;
-  const freshModelTaskPackets = deriveAuditModelTaskPackets({
-    admission,
-    procedure,
-    graph: scenario.graph,
-    defectResolution: scenario.defectResolution,
-    intent: inspection.gameplayIntent.model,
-    auditRevision,
-    world: inspection.gameplayWorld,
-    ...(userIntent === undefined ? {} : { userIntent }),
-    needValidationFindings,
-    auditObligations:
-      control.auditObligations,
-    ...(knowledgeCatalog === undefined ? {} : { knowledgeCatalog }),
-    ...(developerPractice === undefined ? {} : {
-      developerPractice,
-      semanticIr: inspection.semanticIrModel,
-      selectedPacks: inspection.packs,
-    }),
-    ...(knowledgeEdition === undefined ? {} : { knowledgeEdition }),
-  });
-  // resolveSelectedMapAudit reuses the same immutable artifact but may have
-  // no catalogue argument. Carry only a bounded selection whose task goal,
-  // evidence and source-grounded query are still identical.
-  // Context is re-derived ONLY from explicit current Knowledge/Developer
-  // inputs. Reusing a prior model task by ID, query and source locator does
-  // not bind its reference source revision, applicability or ZIP snapshot.
-  // A source-only continuation without those inputs must abstain rather than
-  // silently carry stale reference statements into the next audit revision.
-  const modelTaskPackets = freshModelTaskPackets;
-  const allFindings = [
-    ...control.issueLanes.BUG,
-    ...control.issueLanes.DESIGN_MISMATCH,
-  ];
-  const reasoningByCausalLinkId = Object.fromEntries(
-    allFindings.flatMap((finding) => {
-      const resolution = scenario.defectResolution.resolutions.find(
-        (item) => item.causalLinkId === finding.causalLinkId,
-      );
-      if (!resolution) return [];
-      const receipt = reasonAboutCausalLinkFinding({
-        graph: scenario.graph,
-        resolution,
-        finding,
-        diagnosticDisposition:
-          diagnosticDispositionForDefectResolution(
-            resolution.disposition,
-            finding.issueType,
-          ),
-        ...(runtimeProbeTranscript
-          ? { runtimeProbeTranscript }
-          : {}),
-        expectedArtifactId: identity.artifactId,
-      });
-      return receipt.status === "ADMITTED" && receipt.reasoning
-        ? [[finding.causalLinkId, receipt.reasoning] as const]
-        : [];
-    }),
-  );
-
   // One derived navigation for the run and the operator-facing audit output.
   // No second mechanic extractor or persisted game model.
   const gameplayArchitecture =
@@ -891,6 +832,69 @@ function assembleSelectedMapAuditRun(
           : { perArenaPlayerCapacity:
               inspection.gameplayWorld.arenas.perArenaPlayerCapacity }),
       });
+
+  const freshModelTaskPackets = deriveAuditModelTaskPackets({
+    admission,
+    procedure,
+    graph: scenario.graph,
+    // The source effect slices are ALREADY constructed by the canonical
+    // navigation. Reuse them; never run another analyzer for model context.
+    sourceEffectContext:
+      gameplayArchitecture.gameplayStructure.uninterpretedSourceFlows,
+    defectResolution: scenario.defectResolution,
+    intent: inspection.gameplayIntent.model,
+    auditRevision,
+    world: inspection.gameplayWorld,
+    ...(userIntent === undefined ? {} : { userIntent }),
+    needValidationFindings,
+    auditObligations:
+      control.auditObligations,
+    ...(knowledgeCatalog === undefined ? {} : { knowledgeCatalog }),
+    ...(developerPractice === undefined ? {} : {
+      developerPractice,
+      semanticIr: inspection.semanticIrModel,
+      selectedPacks: inspection.packs,
+    }),
+    ...(knowledgeEdition === undefined ? {} : { knowledgeEdition }),
+  });
+  // resolveSelectedMapAudit reuses the same immutable artifact but may have
+  // no catalogue argument. Carry only a bounded selection whose task goal,
+  // evidence and source-grounded query are still identical.
+  // Context is re-derived ONLY from explicit current Knowledge/Developer
+  // inputs. Reusing a prior model task by ID, query and source locator does
+  // not bind its reference source revision, applicability or ZIP snapshot.
+  // A source-only continuation without those inputs must abstain rather than
+  // silently carry stale reference statements into the next audit revision.
+  const modelTaskPackets = freshModelTaskPackets;
+  const allFindings = [
+    ...control.issueLanes.BUG,
+    ...control.issueLanes.DESIGN_MISMATCH,
+  ];
+  const reasoningByCausalLinkId = Object.fromEntries(
+    allFindings.flatMap((finding) => {
+      const resolution = scenario.defectResolution.resolutions.find(
+        (item) => item.causalLinkId === finding.causalLinkId,
+      );
+      if (!resolution) return [];
+      const receipt = reasonAboutCausalLinkFinding({
+        graph: scenario.graph,
+        resolution,
+        finding,
+        diagnosticDisposition:
+          diagnosticDispositionForDefectResolution(
+            resolution.disposition,
+            finding.issueType,
+          ),
+        ...(runtimeProbeTranscript
+          ? { runtimeProbeTranscript }
+          : {}),
+        expectedArtifactId: identity.artifactId,
+      });
+      return receipt.status === "ADMITTED" && receipt.reasoning
+        ? [[finding.causalLinkId, receipt.reasoning] as const]
+        : [];
+    }),
+  );
 
   const mapAuditReport =
     projectMapAuditOutputV2({

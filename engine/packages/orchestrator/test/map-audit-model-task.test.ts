@@ -4,6 +4,7 @@ import type { MandatoryAuditCheckpointReceipt } from "../src/inspection/mandator
 import {
   deriveAuditModelKnowledgeLookup,
   deriveAuditModelTaskPackets,
+  reviewAuditModelSourceInterpretation,
   selectCheckpointIntentSubjects,
 } from "../src/map-audit-model-task.js";
 import {
@@ -835,5 +836,116 @@ describe("obligation packet memory ownership", () => {
     expect(b?.missingClaims).toEqual(["Proof B"]);
     expect(c?.missingClaims).toEqual(["Proof C"]);
     expect(a?.stopCondition).toContain("Do not promote it directly");
+  });
+});
+
+
+describe("unclassified source-effect relationship reuse", () => {
+  it("retains exact value guard and source return candidates without inventing gameplay", () => {
+    const selected = { artifactId: "selected", relativePath: "scripts/novel.js" };
+    const ids = ["op:write", "effect:open", "return:accepted"];
+    const intent: GameplayIntentModel = {
+      schemaVersion: 1, id: "novel", artifactId: "selected",
+      evidence: [
+        ...ids.map(id => ({
+          id, origin: "source-code" as const, scope: "selected-artifact" as const,
+          locator: "scripts/novel.js:10:1", summary: "Exact authored source",
+        })),
+        { id: "effect:foreign", origin: "historical-diff" as const,
+          scope: "external-reference" as const, locator: "old/novel.js:4",
+          summary: "Historical source" },
+      ],
+      nodes: [], edges: [], invariants: [],
+      unknowns: [{
+        id: "unknown:entry", question: "What is the intended mechanic?",
+        blockedSubjectIds: [], sourceEntryRegionId: "source:entry",
+        evidenceIds: [...ids, "effect:foreign"],
+      }],
+    };
+    const step = (id: string, kind: string, operation?: string) => ({
+      id, kind, executionRegionId: "source:entry", source: selected,
+      ...(operation === undefined ? {} : { operation }),
+    });
+    const context = [{
+      unknownId: "unknown:entry", entryRegionId: "source:entry",
+      materialEvidenceIds: ids, materialIdsWithoutEffectSlice: [],
+      effectPaths: [{
+        effectId: "effect:open", effectKind: "world-effect",
+        worldEffectKind: null, targetLabel: "open door",
+        evidenceStatus: "CANDIDATE_INGRESS", effectGuards: [],
+        guardStateReadIds: ["op:read"],
+        sourceLocalStateValueHandoffs: [{
+          guardReadOperationId: "op:read", writeOperationId: "op:write",
+          surfaceId: "state:session", receiverHint: "world",
+          authoredValue: "armed", scalarKind: "string", origin: "SOURCE_LOCAL",
+        }],
+        candidateOutcomeIds: ["return:accepted", "return:unrelated"],
+        matchingIngress: [{
+          executionEdgeIds: ["edge:entry"], pathGuards: [],
+          temporalBoundaryEvidence: [], candidateCallerStateWriteIds: [],
+        }],
+        candidateFeatureContextIds: [],
+      }, {
+        effectId: "effect:foreign", effectKind: "world-effect",
+        worldEffectKind: null, targetLabel: "old map effect",
+        evidenceStatus: "NO_KNOWN_INGRESS", effectGuards: [],
+        guardStateReadIds: [], sourceLocalStateValueHandoffs: [],
+        candidateOutcomeIds: [], matchingIngress: [],
+        candidateFeatureContextIds: [],
+      }],
+    }] as any;
+    const tasks = deriveAuditModelTaskPackets({
+      admission: { policy: "selected-map-audit-ordered-admission",
+        status: "BLOCKED", firstBlockingStage: "UNDERSTAND", issues: [] },
+      procedure: { checkpoints: [] } as any,
+      graph: { causalLinks: [], sourceFlowCandidates: [{
+        id: "flow:entry", entryRegionId: "source:entry",
+        sourceTraceStatus: "SOURCE_ROOT_TRACE",
+        sourceSteps: [step("op:write", "state", "write"),
+          step("effect:open", "world-effect"),
+          step("return:accepted", "return"),
+          { ...step("effect:foreign", "world-effect"),
+            source: { artifactId: "old", relativePath: selected.relativePath } }],
+        branchPoints: [], sourceHandoffs: [], unresolvedExecutionEdgeIds: [],
+      }] } as any,
+      sourceEffectContext: context,
+      intent, defectResolution: {} as any, world: {} as any,
+      auditRevision: "revision:novel",
+      auditObligations: [{
+        id: "uninterpreted-gameplay-intent", source: "gameplay-closure",
+        stage: "UNDERSTAND", title: "Reconstruct source behavior",
+        reason: "Unclassified material effect", missingProof: "Authored relationships",
+        validationTest: "Examine exact source slice",
+        validationGroupKey: "understand:novel",
+        subjectIds: ["unknown:entry"], componentIds: [], evidenceIds: [],
+      }],
+    });
+    const task = tasks.find(item => item.kind === "AUDIT_OBLIGATION")!;
+    const effect = task.sourceInvestigation?.entries[0]?.effectPaths?.[0];
+    expect(task.sourceInvestigation?.entries[0]?.effectPaths).toHaveLength(1);
+    expect(effect?.sourceLocalStateValueHandoffs[0]?.writeOperationId).toBe("op:write");
+    expect(effect?.candidateOutcomeIds).toEqual(["return:accepted"]);
+    expect(task.evidenceIds).not.toContain("effect:foreign");
+    const propose = (kind: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" |
+      "SOURCE_EFFECT_RETURN_CANDIDATE", fromStepId: string, toStepId: string) =>
+      reviewAuditModelSourceInterpretation(task, {
+        taskId: task.id, unknownId: "unknown:entry",
+        fromStepId, toStepId, sourceClaim: kind,
+        proposedGameplayMeaning: "These operations might describe a player action.",
+        disconfirmingQuestion: "Could a different session or branch disprove this?",
+      }, "selected");
+    expect(propose("SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+      "op:write", "effect:open")).toMatchObject({
+      disposition: "SOURCE_RELATION_CANDIDATE",
+      sourceRelationEvidenceIds: ["effect:open", "op:write"],
+    });
+    expect(propose("SOURCE_EFFECT_RETURN_CANDIDATE",
+      "effect:open", "return:accepted").disposition)
+      .toBe("SOURCE_RELATION_CANDIDATE");
+    expect(propose("SOURCE_EFFECT_RETURN_CANDIDATE",
+      "op:write", "return:accepted").disposition)
+      .toBe("SOURCE_RELATION_UNRESOLVED");
+    expect(() => propose("SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+      "op:write", "effect:foreign")).toThrow(/foreign operation IDs/);
   });
 });

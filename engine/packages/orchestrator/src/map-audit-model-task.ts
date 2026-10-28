@@ -28,6 +28,7 @@ import type {
   MandatoryAuditCheckpointReceipt,
 } from "./inspection/mandatory-audit-procedure.js";
 import type {
+  GameplayArchitectureNavigation,
   GameplayScenarioGraph,
   GameplaySourceFlowCandidate,
 } from "./inspection/gameplay-scenario-model.js";
@@ -128,6 +129,10 @@ export interface AuditModelTaskKnowledgeSelection {
  * is still unknown. It is a view of the existing Intent/Scenario/IR owners,
  * never another gameplay contract, proof receipt, or AI-generated source fact.
  */
+type UnclassifiedSourceEffect = GameplayArchitectureNavigation[
+  "gameplayStructure"]["uninterpretedSourceFlows"][number]["effectPaths"][number];
+
+/** Read-only model task projection over the existing canonical source graph. */
 export interface AuditModelSourceInvestigation {
   readonly authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF";
   readonly entries: readonly {
@@ -153,6 +158,24 @@ export interface AuditModelSourceInvestigation {
       NonNullable<GameplaySourceFlowCandidate["sourceHandoffs"]>[number]
     >;
     readonly omittedHandoffs: number;
+    /** Existing source-effect slices: candidate syntax, never game semantics. */
+    readonly effectPaths?: readonly {
+      readonly effectId: string;
+      readonly effectKind: UnclassifiedSourceEffect["effectKind"];
+      readonly targetLabel: string | null;
+      readonly evidenceStatus: UnclassifiedSourceEffect["evidenceStatus"];
+      readonly guardStateReadIds: readonly string[];
+      readonly omittedGuardStateReads: number;
+      readonly sourceLocalStateValueHandoffs:
+        UnclassifiedSourceEffect["sourceLocalStateValueHandoffs"];
+      readonly omittedValueHandoffs: number;
+      readonly candidateOutcomeIds: readonly string[];
+      readonly omittedCandidateOutcomes: number;
+      readonly ingressEdgeIds: readonly string[];
+      readonly omittedIngressEdges: number;
+      readonly temporalBoundaryCount: number;
+    }[];
+    readonly omittedEffectPaths?: number;
     readonly unresolvedExecutionEdgeIds: readonly string[];
     readonly omittedUnresolvedExecutionEdges: number;
     /** Selected-source evidence not represented by this one exact IR flow. */
@@ -171,14 +194,21 @@ export interface AuditModelSourceInterpretationProposal {
   readonly toStepId: string;
   readonly proposedGameplayMeaning: string;
   readonly disconfirmingQuestion: string;
-  readonly sourceClaim: "SAME_AUTHORED_BRANCH_CANDIDATE";
+  readonly sourceClaim:
+    | "SAME_AUTHORED_BRANCH_CANDIDATE"
+    | "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE"
+    | "SOURCE_EFFECT_RETURN_CANDIDATE";
 }
 
 /** Source-falsification review: never a Gameplay Intent or PROVE receipt. */
 export interface AuditModelSourceInterpretationReview
   extends AuditModelSourceInterpretationProposal {
   readonly disposition:
-    "AUTHORED_BRANCH_COUNTEREXAMPLE" | "SOURCE_RELATION_UNRESOLVED";
+    | "AUTHORED_BRANCH_COUNTEREXAMPLE"
+    | "SOURCE_RELATION_UNRESOLVED"
+    | "SOURCE_RELATION_CANDIDATE";
+  /** Exact source operation IDs are NOT observed/runtime or gameplay proof. */
+  readonly sourceRelationEvidenceIds?: readonly string[];
   readonly counterexample?: AuthoredBranchExclusion;
   readonly nextEvidenceQuestion: string;
   readonly proofBoundary:
@@ -844,10 +874,13 @@ function deriveSourceInvestigation(
   intent: GameplayIntentModel,
   graph: GameplayScenarioGraph,
   evidenceById: AuditModelIntentLookup["evidenceById"],
+  sourceEffects?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"],
 ): AuditModelSourceInvestigation | undefined {
   if (obligation.stage !== "UNDERSTAND" ||
       intent.artifactId === undefined) return undefined;
   const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
+  const effectByUnknown = new Map(
+    (sourceEffects ?? []).map(item => [item.unknownId, item] as const));
   // Resolve candidate flows by entry once, rather than scanning the entire
   // scenario graph again for every unknown in a large map.
   const flowsByEntry = new Map<string, GameplaySourceFlowCandidate[]>();
@@ -914,6 +947,48 @@ function deriveSourceInvestigation(
     const matchedAll = new Set(matchedSteps.map(step => step.id));
     const unmatched = [...scopedIds].filter(id =>
       !matchedAll.has(id)).sort();
+    const sourceEffect = effectByUnknown.get(unknown.id);
+    // Match the SAME unknown, entry, selected-artifact effect identity and
+    // bound source steps. Other map versions and neighboring paths cannot
+    // silently provide evidence for this task.
+    const applicableEffects = sourceEffect !== undefined &&
+      sourceEffect.entryRegionId === flow.entryRegionId
+      ? sourceEffect.effectPaths.filter(effect =>
+          scopedIds.has(effect.effectId) &&
+          steps.some(step => step.id === effect.effectId &&
+            step.source.artifactId === intent.artifactId))
+        .sort((a, b) => a.effectId.localeCompare(b.effectId))
+      : [];
+    const effectPaths = applicableEffects.slice(0, 4).map(effect => {
+      const guardReads = unique(effect.guardStateReadIds);
+      const handoffs = effect.sourceLocalStateValueHandoffs.filter(item =>
+        guardReads.includes(item.guardReadOperationId) &&
+        steps.some(step => step.id === item.writeOperationId &&
+          step.kind === "state" && step.operation === "write" &&
+          step.source.artifactId === intent.artifactId));
+      const outcomes = unique(effect.candidateOutcomeIds.filter(id =>
+        steps.some(step => step.id === id &&
+          step.kind === "return" &&
+          step.source.artifactId === intent.artifactId)));
+      const ingressIds = unique(effect.matchingIngress
+        .flatMap(path => path.executionEdgeIds));
+      return {
+        effectId: effect.effectId,
+        effectKind: effect.effectKind,
+        targetLabel: effect.targetLabel,
+        evidenceStatus: effect.evidenceStatus,
+        guardStateReadIds: guardReads.slice(0, 6),
+        omittedGuardStateReads: Math.max(0, guardReads.length - 6),
+        sourceLocalStateValueHandoffs: handoffs.slice(0, 4),
+        omittedValueHandoffs: Math.max(0, handoffs.length - 4),
+        candidateOutcomeIds: outcomes.slice(0, 6),
+        omittedCandidateOutcomes: Math.max(0, outcomes.length - 6),
+        ingressEdgeIds: ingressIds.slice(0, 6),
+        omittedIngressEdges: Math.max(0, ingressIds.length - 6),
+        temporalBoundaryCount: effect.matchingIngress.reduce((sum, path) =>
+          sum + path.temporalBoundaryEvidence.length, 0),
+      };
+    });
     return {
       unknownId: unknown.id,
       question: unknown.question,
@@ -925,6 +1000,10 @@ function deriveSourceInvestigation(
       omittedBranchContexts: branchContexts.length - Math.min(4, branchContexts.length),
       handoffs: handoffs.slice(0, 4),
       omittedHandoffs: handoffs.length - Math.min(4, handoffs.length),
+      ...(sourceEffects === undefined ? {} : {
+        effectPaths,
+        omittedEffectPaths: applicableEffects.length - effectPaths.length,
+      }),
       unresolvedExecutionEdgeIds: unresolved.slice(0, 6),
       omittedUnresolvedExecutionEdges: unresolved.length - Math.min(6, unresolved.length),
       unmatchedEvidenceIds: unmatched.slice(0, 4),
@@ -953,7 +1032,11 @@ export function reviewAuditModelSourceInterpretation(
       task.id !== proposal.taskId ||
       task.sourceInvestigation?.authority !==
         "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF" ||
-      proposal.sourceClaim !== "SAME_AUTHORED_BRANCH_CANDIDATE" ||
+      !([
+        "SAME_AUTHORED_BRANCH_CANDIDATE",
+        "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+        "SOURCE_EFFECT_RETURN_CANDIDATE",
+      ] as readonly string[]).includes(proposal.sourceClaim) ||
       !selectedArtifactId.trim()) {
     throw new Error("Source interpretation is not a current UNDERSTAND source task.");
   }
@@ -992,8 +1075,24 @@ export function reviewAuditModelSourceInterpretation(
       evidenceIds: arm.matchedStepIds,
     })),
   }));
-  const counterexample = findExclusiveAuthoredBranch(
-    contexts, [proposal.fromStepId], [proposal.toStepId], selectedArtifactId);
+  const counterexample = proposal.sourceClaim === "SAME_AUTHORED_BRANCH_CANDIDATE"
+    ? findExclusiveAuthoredBranch(
+        contexts, [proposal.fromStepId], [proposal.toStepId], selectedArtifactId)
+    : undefined;
+  // An existing typed SourceEffectSlice is a candidate semantic relationship,
+  // not a causal or gameplay proof. Missing relationship stays UNKNOWN.
+  const matchedEffect = (entry.effectPaths ?? []).find(effect =>
+    proposal.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE"
+      ? effect.effectId === proposal.toStepId &&
+        effect.sourceLocalStateValueHandoffs.some(handoff =>
+          handoff.writeOperationId === proposal.fromStepId &&
+          effect.guardStateReadIds.includes(handoff.guardReadOperationId))
+      : proposal.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE"
+        ? effect.effectId === proposal.fromStepId &&
+          effect.candidateOutcomeIds.includes(proposal.toStepId)
+        : false);
+  const sourceRelationEvidenceIds = matchedEffect === undefined
+    ? undefined : unique([proposal.fromStepId, proposal.toStepId]);
   return {
     taskId: task.id,
     unknownId: entry.unknownId,
@@ -1001,13 +1100,18 @@ export function reviewAuditModelSourceInterpretation(
     toStepId: proposal.toStepId,
     proposedGameplayMeaning: meaning,
     disconfirmingQuestion: question,
-    sourceClaim: "SAME_AUTHORED_BRANCH_CANDIDATE",
+    sourceClaim: proposal.sourceClaim,
     disposition: counterexample
-      ? "AUTHORED_BRANCH_COUNTEREXAMPLE" : "SOURCE_RELATION_UNRESOLVED",
+      ? "AUTHORED_BRANCH_COUNTEREXAMPLE"
+      : sourceRelationEvidenceIds !== undefined
+        ? "SOURCE_RELATION_CANDIDATE" : "SOURCE_RELATION_UNRESOLVED",
     ...(counterexample ? { counterexample } : {}),
+    ...(sourceRelationEvidenceIds === undefined ? {} : { sourceRelationEvidenceIds }),
     nextEvidenceQuestion: counterexample
       ? "Inspect the alternative authored branch and later re-entry/repeat paths before attributing both sites to one mechanic."
-      : "Trace exact guards, other entry paths, state ownership and independent intended gameplay; a shared trace is not execution proof.",
+      : sourceRelationEvidenceIds !== undefined
+        ? "Verify session/receiver identity, guard feasibility, independent intended gameplay and runtime delivery before treating this source relation as gameplay."
+        : "Trace exact guards, other entry paths, state ownership and independent intended gameplay; a shared trace is not execution proof.",
     proofBoundary: "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF",
   };
 }
@@ -1018,6 +1122,7 @@ function obligationPackets(
   intent: GameplayIntentModel,
   lookupIndex: AuditModelIntentLookup,
   graph: GameplayScenarioGraph,
+  sourceEffects?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"],
 ): readonly AuditModelTaskPacket[] {
   const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
   const evidenceById = lookupIndex.evidenceById;
@@ -1033,7 +1138,7 @@ function obligationPackets(
         .filter(id => isCurrentArtifactSourceEvidence(evidenceById.get(id)))
       : EMPTY_TASK_IDS;
     const sourceInvestigation = deriveSourceInvestigation(
-      obligation, intent, graph, evidenceById);
+      obligation, intent, graph, evidenceById, sourceEffects);
     // Prioritize exact material source operations over unrelated unknown IDs.
     // This preserves the one-packet budget and never changes proof admission.
     const prioritizedIds = sourceInvestigation?.entries.flatMap(entry =>
@@ -1178,6 +1283,8 @@ export function deriveAuditModelTaskPackets(input: {
   readonly admission: SelectedMapAuditAdmission;
   readonly procedure: MandatoryAuditProcedureReceipt;
   readonly graph: GameplayScenarioGraph;
+  /** Produced by the ONE canonical source/behavior navigation for this map. */
+  readonly sourceEffectContext?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"];
   readonly defectResolution: GameplayDefectResolutionGate;
   readonly intent: GameplayIntentModel;
   readonly auditRevision: string;
@@ -1369,6 +1476,7 @@ export function deriveAuditModelTaskPackets(input: {
       input.intent,
       lookupIndex,
       input.graph,
+      input.sourceEffectContext,
     );
 
   const stage = input.admission.firstBlockingStage;
