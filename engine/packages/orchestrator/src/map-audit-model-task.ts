@@ -209,6 +209,33 @@ export interface AuditModelTaskPacket {
   readonly stopCondition: string;
 }
 
+/** Shared, frozen read-only projection values for the high-volume obligation
+ * lane. Values are not a new evidence store: each packet retains all own
+ * source IDs, reason, missing proof and task identity. */
+const EMPTY_TASK_IDS: readonly string[] = Object.freeze([] as string[]);
+const EMPTY_TASK_CONTEXT: readonly AuditModelTaskEvidenceContext[] =
+  Object.freeze([] as AuditModelTaskEvidenceContext[]);
+const EMPTY_KNOWLEDGE_CONTEXT: readonly AuditModelTaskKnowledgeContext[] =
+  Object.freeze([] as AuditModelTaskKnowledgeContext[]);
+const EMPTY_EVIDENCE_RESULT = Object.freeze({
+  context: EMPTY_TASK_CONTEXT,
+  unresolved: EMPTY_TASK_IDS,
+});
+const OBLIGATION_ALLOWED_OUTPUTS: readonly string[] = Object.freeze([
+  "selected-artifact evidence that resolves the obligation",
+  "evidence-backed not-applicable or normal-behavior disposition",
+  "new causal dependency/contradiction evidence for a fresh canonical audit run",
+  "exact remaining missing-proof statement",
+]);
+const OBLIGATION_FORBIDDEN_ACTIONS: readonly string[] = Object.freeze([
+  "classify BUG or DESIGN_MISMATCH without a player-visible causal contradiction",
+  "assign severity",
+  "invent expected behavior",
+  "treat risk presence as defect proof",
+  "use stale or external map behavior as current gameplay authority",
+  "claim the obligation is closed from model narrative alone",
+]);
+
 function unique(values: readonly string[]): string[] {
   return [...new Set(
     values.filter((value) => value.trim().length > 0),
@@ -513,6 +540,7 @@ function evidenceContext(
   readonly context: readonly AuditModelTaskEvidenceContext[];
   readonly unresolved: readonly string[];
 } {
+  if (evidenceIds.length === 0) return EMPTY_EVIDENCE_RESULT;
   const byId = (lookupIndex ?? buildAuditModelIntentLookup(intent)).evidenceById;
   const context: AuditModelTaskEvidenceContext[] = [];
   const unresolved: string[] = [];
@@ -751,13 +779,15 @@ function obligationPackets(
       ? unique(obligation.subjectIds.flatMap(id =>
           unknownById.get(id)?.evidenceIds ?? []))
         .filter(id => isCurrentArtifactSourceEvidence(evidenceById.get(id)))
-      : [];
-    const selectedUnknownEvidenceIds = unknownEvidenceIds.slice(0, 24);
+      : EMPTY_TASK_IDS;
+    const selectedUnknownEvidenceIds = unknownEvidenceIds.length === 0
+      ? EMPTY_TASK_IDS : unknownEvidenceIds.slice(0, 24);
     const omittedUnknownEvidenceCount =
       unknownEvidenceIds.length - selectedUnknownEvidenceIds.length;
-    const evidenceIds = unique([
-      ...obligation.evidenceIds, ...selectedUnknownEvidenceIds,
-    ]);
+    const evidenceIds = obligation.evidenceIds.length === 0 &&
+        selectedUnknownEvidenceIds.length === 0
+      ? EMPTY_TASK_IDS
+      : unique([...obligation.evidenceIds, ...selectedUnknownEvidenceIds]);
     const evidence = evidenceContext(evidenceIds, intent, lookupIndex);
 
     return {
@@ -774,34 +804,24 @@ function obligationPackets(
         (omittedUnknownEvidenceCount === 0 ? "" :
           " The bounded source view omits " + omittedUnknownEvidenceCount +
           " additional selected-artifact operations; the canonical Intent unknowns retain them."),
-      subjectIds: [...obligation.subjectIds],
-      componentIds: [...obligation.componentIds],
-      requiredKnowledgeIds: [],
+      subjectIds: obligation.subjectIds.length === 0
+        ? EMPTY_TASK_IDS : [...obligation.subjectIds],
+      componentIds: obligation.componentIds.length === 0
+        ? EMPTY_TASK_IDS : [...obligation.componentIds],
+      requiredKnowledgeIds: EMPTY_TASK_IDS,
       evidenceIds,
       evidenceContext: evidence.context,
       unresolvedEvidenceIds:
         evidence.unresolved,
-      knowledgeContext: [],
+      knowledgeContext: EMPTY_KNOWLEDGE_CONTEXT,
       unresolvedObligationIds: [
         obligation.id,
       ],
       missingClaims: [
         obligation.missingProof,
       ],
-      allowedOutputs: [
-        "selected-artifact evidence that resolves the obligation",
-        "evidence-backed not-applicable or normal-behavior disposition",
-        "new causal dependency/contradiction evidence for a fresh canonical audit run",
-        "exact remaining missing-proof statement",
-      ],
-      forbiddenActions: [
-        "classify BUG or DESIGN_MISMATCH without a player-visible causal contradiction",
-        "assign severity",
-        "invent expected behavior",
-        "treat risk presence as defect proof",
-        "use stale or external map behavior as current gameplay authority",
-        "claim the obligation is closed from model narrative alone",
-      ],
+      allowedOutputs: OBLIGATION_ALLOWED_OUTPUTS,
+      forbiddenActions: OBLIGATION_FORBIDDEN_ACTIONS,
       stopCondition:
         "Stop when the obligation is either evidence-backed normal/not-applicable, causally grounded for a fresh audit run, or reduced to one exact missing-proof requirement. Do not promote it directly to a report issue from model narrative.",
     };

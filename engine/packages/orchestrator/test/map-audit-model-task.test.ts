@@ -600,3 +600,59 @@ describe("PROVE model evidence handoff", () => {
     })).toThrow(/ambiguous causal scope/);
   });
 });
+
+
+describe("obligation packet memory ownership", () => {
+  it("reuses only immutable empties and proof policy, without merging task identities or evidence", () => {
+    const evidence = {
+      id: "ev:shared", origin: "source-code", scope: "selected-artifact",
+      locator: "behavior_packs/BP/scripts/main.js:7:9", summary: "Exact authored source",
+    };
+    const input = {
+      admission: { firstBlockingStage: undefined },
+      procedure: {}, graph: {}, defectResolution: {}, world: {},
+      auditRevision: "revision:source-only",
+      intent: {
+        schemaVersion: 1, id: "intent:selected", artifactId: "selected",
+        evidence: [evidence], nodes: [], edges: [], invariants: [], unknowns: [],
+      },
+      auditObligations: [
+        { id: "obligation:a", title: "Resolve A", reason: "Source A", stage: "UNDERSTAND",
+          subjectIds: [], componentIds: [], evidenceIds: [], missingProof: "Proof A" },
+        { id: "obligation:b", title: "Resolve B", reason: "Source B", stage: "UNDERSTAND",
+          subjectIds: [], componentIds: [], evidenceIds: [], missingProof: "Proof B" },
+        { id: "obligation:c", title: "Resolve C", reason: "Source C", stage: "UNDERSTAND",
+          subjectIds: ["actor:real"], componentIds: [], evidenceIds: ["ev:shared"],
+          missingProof: "Proof C" },
+      ],
+    } as any;
+    const tasks = deriveAuditModelTaskPackets(input);
+    const [a, b, c] = tasks;
+    expect(tasks.map(task => task.id)).toEqual([
+      "task:audit-obligation:obligation:a",
+      "task:audit-obligation:obligation:b",
+      "task:audit-obligation:obligation:c",
+    ]);
+    expect(a?.allowedOutputs).toBe(b?.allowedOutputs);
+    expect(a?.forbiddenActions).toBe(b?.forbiddenActions);
+    expect(a?.evidenceIds).toBe(b?.evidenceIds);
+    expect(a?.evidenceContext).toBe(b?.evidenceContext);
+    expect(a?.requiredKnowledgeIds).toBe(b?.requiredKnowledgeIds);
+    expect(a?.knowledgeContext).toBe(b?.knowledgeContext);
+    expect(Object.isFrozen(a?.allowedOutputs)).toBe(true);
+    expect(Object.isFrozen(a?.evidenceIds)).toBe(true);
+    expect(c?.evidenceIds).toEqual(["ev:shared"]);
+    expect(c?.evidenceContext).toEqual([{
+      id: "ev:shared", kind: "selected-artifact-evidence",
+      origin: "source-code", locator: evidence.locator, summary: evidence.summary,
+    }]);
+    expect(c?.evidenceIds).not.toBe(a?.evidenceIds);
+    expect(a?.unresolvedObligationIds).toEqual(["obligation:a"]);
+    expect(b?.unresolvedObligationIds).toEqual(["obligation:b"]);
+    expect(c?.unresolvedObligationIds).toEqual(["obligation:c"]);
+    expect(a?.missingClaims).toEqual(["Proof A"]);
+    expect(b?.missingClaims).toEqual(["Proof B"]);
+    expect(c?.missingClaims).toEqual(["Proof C"]);
+    expect(a?.stopCondition).toContain("Do not promote it directly");
+  });
+});
