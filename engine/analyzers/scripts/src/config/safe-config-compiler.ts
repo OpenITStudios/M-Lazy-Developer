@@ -758,6 +758,21 @@ function rejectionReason(
  * original conservative name-only rule intentionally includes assignments
  * in nested scopes; this index changes only its cost, not its proof policy.
  */
+// Reject direct source mutations of collection values as well as binding
+// reassignments. No runtime or alias-equivalence claim is made here.
+const MUTATING_COLLECTION_METHODS = new Set([
+  "push", "pop", "shift", "unshift", "splice", "sort", "reverse",
+  "fill", "copyWithin", "add", "delete", "clear", "set",
+]);
+
+function mutationRoot(node: ts.Expression): ts.Identifier | undefined {
+  if (ts.isIdentifier(node)) return node;
+  if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+    return mutationRoot(node.expression);
+  }
+  return undefined;
+}
+
 function indexReassignmentSites(
   file: ts.SourceFile,
 ): ReadonlyMap<string, readonly ts.Node[]> {
@@ -768,21 +783,23 @@ function indexReassignmentSites(
     else byName.set(name, [node]);
   };
   const visit = (node: ts.Node): void => {
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
-      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
-      ts.isIdentifier(node.left)
-    ) {
-      add(node.left.text, node);
+    if (ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) {
+      const target = mutationRoot(node.left);
+      if (target) add(target.text, node);
     }
-    if (
-      (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
-      (node.operator === ts.SyntaxKind.PlusPlusToken ||
-        node.operator === ts.SyntaxKind.MinusMinusToken) &&
-      ts.isIdentifier(node.operand)
-    ) {
-      add(node.operand.text, node);
+    if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+        (node.operator === ts.SyntaxKind.PlusPlusToken ||
+          node.operator === ts.SyntaxKind.MinusMinusToken)) {
+      const target = mutationRoot(node.operand);
+      if (target) add(target.text, node);
+    }
+    if (ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        MUTATING_COLLECTION_METHODS.has(node.expression.name.text) &&
+        ts.isIdentifier(node.expression.expression)) {
+      add(node.expression.expression.text, node);
     }
     ts.forEachChild(node, visit);
   };
@@ -1131,7 +1148,6 @@ export function compileScriptSafeConfig(
 
       const name = declaration.name.text;
       if (
-        !isConst &&
         identifierIsReassigned(
           reassignmentSites ??= indexReassignmentSites(file),
           name,
@@ -1142,7 +1158,9 @@ export function compileScriptSafeConfig(
           name,
           reason: "non-const",
           detail:
-            "Mutable top-level let/var declarations are rejected. Bundler-lowered let/var is accepted only when no reassignment exists in the file.",
+            isConst
+              ? "A const binding with authored collection mutation cannot be used as an immutable source configuration."
+              : "Mutable top-level let/var is accepted only without authored binding or collection mutations.",
           source: nodeSource(file, declaration, source),
         });
         continue;

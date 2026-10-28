@@ -15,6 +15,65 @@ function parsed(identifier: string, text: string): ParsedScriptFile {
 }
 
 describe("script safe config analysis", () => {
+  it("counts explicit enabled arena IDs with keyed numeric offsets, without inventing spatial anchors", () => {
+    const result = analyzeScriptSafeConfig([
+      parsed("config", [
+        "var ENABLED_ARENA_IDS = [\"arena_1\", \"arena_2\", \"arena_3\", \"arena_4\", \"arena_5\", \"arena_6\"];",
+        "var ARENA_OFFSETS = { arena_1: 0, arena_2: 596, arena_3: 1192, arena_4: 1788, arena_5: 2384, arena_6: 2980 };",
+      ].join("\n")),
+    ]);
+    expect(result.resolvedArenaCount).toBe(6);
+    expect(result.arenaCountConflict).toBe(false);
+    expect(result.arenaAuthoredIdConflict).toBe(false);
+    expect(result.arenaIdCandidates?.[0]?.arenaIds).toEqual([
+      "arena_1", "arena_2", "arena_3", "arena_4", "arena_5", "arena_6",
+    ]);
+    expect(result.arenaOffsetKeyCandidates?.[0]?.arenaIds).toHaveLength(6);
+    expect(result.resolvedArenaLayout).toBeUndefined();
+    expect(result.resolvedArenaConcurrencyLimit).toBeUndefined();
+  });
+
+  it("fails closed on equal-count arena ID/offset key mismatches", () => {
+    const result = analyzeScriptSafeConfig([
+      parsed("drift", [
+        'const ENABLED_ARENA_IDS = ["arena_a", "arena_b"];',
+        'const ARENA_OFFSETS = { arena_a: 0, arena_c: 200 };',
+      ].join("\n")),
+    ]);
+    expect(result.arenaAuthoredIdConflict).toBe(true);
+    expect(result.arenaCountConflict).toBe(true);
+    expect(result.resolvedArenaCount).toBeUndefined();
+  });
+
+  it("does not infer a count from keyed offsets alone or duplicated enabled IDs", () => {
+    const offsets = analyzeScriptSafeConfig([
+      parsed("only", "const ARENA_OFFSETS = { a: 0, b: 200 };")
+    ]);
+    expect(offsets.resolvedArenaCount).toBeUndefined();
+    const duplicate = analyzeScriptSafeConfig([
+      parsed("bad", 'const ENABLED_ARENA_IDS = ["arena_a", "arena_a"];'),
+    ]);
+    expect(duplicate.resolvedArenaCount).toBeUndefined();
+    expect(duplicate.arenaCountConflict).toBe(true);
+  });
+
+  it("rejects mutated and conflicting named ID sources while preserving static no-count boundaries", () => {
+    const amended = analyzeScriptSafeConfig([
+      parsed("mutable", [
+        'var ENABLED_ARENA_IDS = ["arena_a", "arena_b"];',
+        'ENABLED_ARENA_IDS.push("arena_c");',
+      ].join("\n")),
+    ]);
+    // A directly mutated collection is not an immutable source of capacity.
+    expect(amended.resolvedArenaCount).toBeUndefined();
+    const conflict = analyzeScriptSafeConfig([
+      parsed("alpha", 'const ENABLED_ARENA_IDS = ["arena_a", "arena_b"];'),
+      parsed("beta", 'const ENABLED_ARENA_IDS = ["arena_a", "arena_c"];'),
+    ]);
+    expect(conflict.arenaCountConflict).toBe(true);
+    expect(conflict.resolvedArenaCount).toBeUndefined();
+  });
+
   it("resolves a consistent explicit arena count", () => {
     const result = analyzeScriptSafeConfig([
       parsed("a", "const ARENA_COUNT = 3 + 3;"),

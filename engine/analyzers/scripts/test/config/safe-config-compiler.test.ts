@@ -73,6 +73,26 @@ describe("safe config compiler", () => {
     ]));
   });
 
+  it("rejects direct collection mutations while preserving read-only mapping", () => {
+    const result = compileScriptSafeConfig([
+      'var ENABLED_ARENA_IDS = ["arena_a", "arena_b"];',
+      'ENABLED_ARENA_IDS.push("arena_c");',
+      'const CONFIG = { x: 1 };',
+      'CONFIG.x = 2;',
+      'const BLOCKS = [1, 2];',
+      'BLOCKS[0] = 3;',
+      'const UNCHANGED = [1, 2];',
+      'UNCHANGED.map(value => value);',
+    ].join("\n"), source);
+    expect(result.rejected).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "ENABLED_ARENA_IDS", reason: "non-const" }),
+      expect.objectContaining({ name: "CONFIG", reason: "non-const" }),
+      expect.objectContaining({ name: "BLOCKS", reason: "non-const" }),
+    ]));
+    expect(result.bindings.map(binding => binding.name)).toContain("UNCHANGED");
+    expect(result.bindings.map(binding => binding.name)).not.toContain("ENABLED_ARENA_IDS");
+  });
+
   it("compiles map Array.from spreads conditionals and pure helpers", () => {
     const result = compileScriptSafeConfig(
       [

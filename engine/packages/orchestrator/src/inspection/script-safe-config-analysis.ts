@@ -35,6 +35,22 @@ export interface ScriptArenaConcurrencyCandidate {
   source: SourceRef;
 }
 
+/** Explicit, distinct authored arena identifiers; not physical world proof. */
+export interface ScriptArenaIdCandidate {
+  scriptId: string;
+  name: string;
+  arenaIds: readonly string[];
+  source: SourceRef;
+}
+
+/** Exact keys of one keyed offset map, not a reconstructed spatial layout. */
+export interface ScriptArenaOffsetKeyCandidate {
+  scriptId: string;
+  name: string;
+  arenaIds: readonly string[];
+  source: SourceRef;
+}
+
 export interface ScriptArenaLayoutCandidate {
   scriptId: string;
   name: string;
@@ -58,6 +74,11 @@ export interface ScriptSafeConfigAnalysis {
   resolvedBindings: readonly ResolvedScriptSafeConfigBinding[];
   failedBindings: readonly FailedScriptSafeConfigBinding[];
   arenaCountCandidates: readonly ScriptArenaCountCandidate[];
+  /** Explicit enabled IDs take part in count consistency, not runtime proof. */
+  arenaIdCandidates?: readonly ScriptArenaIdCandidate[];
+  arenaOffsetKeyCandidates?: readonly ScriptArenaOffsetKeyCandidate[];
+  /** Missing/ambiguous keyed offset ownership prevents count certification. */
+  arenaAuthoredIdConflict?: boolean;
   arenaConcurrencyCandidates:
     readonly ScriptArenaConcurrencyCandidate[];
   arenaLayoutCandidates: readonly ScriptArenaLayoutCandidate[];
@@ -67,6 +88,30 @@ export interface ScriptSafeConfigAnalysis {
   arenaCountConflict: boolean;
   arenaConcurrencyConflict: boolean;
   arenaLayoutConflict: boolean;
+}
+
+const ARENA_ENABLED_IDS_NAME = /^ENABLED_ARENA_IDS$/;
+const ARENA_KEYED_OFFSETS_NAME = /^ARENA_OFFSETS$/;
+
+function asEnabledArenaIds(value: SafeConfigValue): string[] | undefined {
+  if (!Array.isArray(value) || value.length < 1 ||
+      value.some(id => typeof id !== "string" || !id.trim() || id !== id.trim())) {
+    return undefined;
+  }
+  const ids = value as string[];
+  return new Set(ids).size === ids.length ? [...ids] : undefined;
+}
+
+function asKeyedArenaOffsets(value: SafeConfigValue): string[] | undefined {
+  if (value === null || Array.isArray(value) || typeof value !== "object") {
+    return undefined;
+  }
+  const entries = Object.entries(value);
+  if (entries.length === 0 || entries.some(([id, offset]) =>
+    !id.trim() || id !== id.trim() ||
+    !(typeof offset === "number" && Number.isFinite(offset)) &&
+    asVector3(offset) === undefined)) return undefined;
+  return entries.map(([id]) => id).sort();
 }
 
 const ARENA_COUNT_NAME =
@@ -135,6 +180,9 @@ export function analyzeScriptSafeConfig(
   const resolvedBindings: ResolvedScriptSafeConfigBinding[] = [];
   const failedBindings: FailedScriptSafeConfigBinding[] = [];
   const arenaCountCandidates: ScriptArenaCountCandidate[] = [];
+  const arenaIdCandidates: ScriptArenaIdCandidate[] = [];
+  const arenaOffsetKeyCandidates: ScriptArenaOffsetKeyCandidate[] = [];
+  let malformedArenaIdOrOffsets = false;
   const arenaConcurrencyCandidates:
     ScriptArenaConcurrencyCandidate[] = [];
   const arenaLayoutCandidates: ScriptArenaLayoutCandidate[] = [];
@@ -629,6 +677,46 @@ export function analyzeScriptSafeConfig(
           source: binding.source,
         });
 
+        // Map authors may declare a fixed named arena roster instead of
+        // ARENA_COUNT. Do not turn an unrecognized array or runtime list into
+        // a capacity or spatial proof. Generated `var` goes through the
+        // existing mutation/shadow checks in the safe-config compiler.
+        if (ARENA_ENABLED_IDS_NAME.test(binding.name)) {
+          const arenaIds = asEnabledArenaIds(value);
+          if (arenaIds === undefined) {
+            malformedArenaIdOrOffsets = true;
+          } else {
+            arenaIdCandidates.push({
+              scriptId: script.identifier,
+              name: binding.name,
+              arenaIds,
+              source: binding.source,
+            });
+            arenaCountCandidates.push({
+              scriptId: script.identifier,
+              name: binding.name,
+              value: arenaIds.length,
+              source: binding.source,
+            });
+          }
+        }
+        // Numeric X offsets or complete 3D keyed offsets are *relative*;
+        // an omitted world anchor must never be fabricated from them.
+        if (ARENA_KEYED_OFFSETS_NAME.test(binding.name) &&
+            !Array.isArray(value)) {
+          const arenaIds = asKeyedArenaOffsets(value);
+          if (arenaIds === undefined) {
+            malformedArenaIdOrOffsets = true;
+          } else {
+            arenaOffsetKeyCandidates.push({
+              scriptId: script.identifier,
+              name: binding.name,
+              arenaIds,
+              source: binding.source,
+            });
+          }
+        }
+
         if (
           ARENA_COUNT_NAME.test(binding.name) &&
           typeof value === "number" &&
@@ -687,6 +775,18 @@ export function analyzeScriptSafeConfig(
     }
   }
 
+  // A shadowed, dynamic or invalid enabled-list/offset declaration must not
+  // silently certify the one remaining source as a complete authored roster.
+  const failedAuthoredArenaSources = failedBindings.some(item =>
+    ARENA_ENABLED_IDS_NAME.test(item.name) ||
+    ARENA_KEYED_OFFSETS_NAME.test(item.name));
+  const idSignatures = [...new Set(arenaIdCandidates.map(candidate =>
+    JSON.stringify([...candidate.arenaIds].sort())))];
+  const arenaAuthoredIdConflict = malformedArenaIdOrOffsets ||
+    failedAuthoredArenaSources || idSignatures.length > 1 ||
+    (idSignatures.length === 1 && arenaOffsetKeyCandidates.some(candidate =>
+      JSON.stringify(candidate.arenaIds) !== idSignatures[0]));
+
   const distinctArenaCounts = [
     ...new Set(
       arenaCountCandidates.map((item) => item.value),
@@ -728,6 +828,7 @@ export function analyzeScriptSafeConfig(
       ? distinctArenaCounts[0]
       : undefined;
   const arenaCountConflict =
+    arenaAuthoredIdConflict ||
     distinctArenaCounts.length > 1 ||
     (
       countFromNames !== undefined &&
@@ -790,6 +891,11 @@ export function analyzeScriptSafeConfig(
       a.scriptId.localeCompare(b.scriptId) ||
       a.name.localeCompare(b.name)
     ),
+    arenaIdCandidates: arenaIdCandidates.sort((a,b) =>
+      a.scriptId.localeCompare(b.scriptId) || a.name.localeCompare(b.name)),
+    arenaOffsetKeyCandidates: arenaOffsetKeyCandidates.sort((a,b) =>
+      a.scriptId.localeCompare(b.scriptId) || a.name.localeCompare(b.name)),
+    arenaAuthoredIdConflict,
     arenaConcurrencyCandidates:
       arenaConcurrencyCandidates.sort((a, b) =>
         a.scriptId.localeCompare(b.scriptId) ||
