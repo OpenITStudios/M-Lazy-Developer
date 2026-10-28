@@ -6,6 +6,7 @@ import {
 import type {
   McStructureModel,
 } from "../src/types.js";
+import { flatIndexToCoordinate } from "../src/indexing.js";
 
 function structure(): McStructureModel {
   return {
@@ -61,6 +62,36 @@ describe("mcstructure footprint", () => {
       }),
     ]);
     expect(result.unknownPrimaryCells).toBe(1);
+  });
+
+  it("keeps unknown palette, sparse slots, duplicate palette entries and malformed-axis coordinates", () => {
+    const base = structure();
+    const sparse = new Array<number>(4);
+    sparse[0] = 0;
+    sparse[2] = 7;
+    const result = extractMcStructureFootprint({
+      ...base,
+      palette: [
+        { index: 0, name: "minecraft:stone", raw: {} },
+        { index: 0, name: "minecraft:air", raw: {} },
+      ],
+      blockIndexLayers: [{ layer: 0, indices: sparse }],
+    });
+    expect(result).toEqual({
+      cells: [{ x: 0, y: 0, z: 0, paletteIndex: 0,
+        blockName: "minecraft:air", mode: "air" }],
+      unknownPrimaryCells: 1,
+    });
+    // Even invalid volume-matching dimensions retain the old mathematical
+    // coordinate projection, rather than inventing new normal Bedrock axes.
+    const malformed = extractMcStructureFootprint({
+      ...base,
+      size: { x: -2, y: -1, z: 2 },
+      blockIndexLayers: [{ layer: 0, indices: [0, 0, 0, 0] }],
+    });
+    expect(malformed.cells.map(cell => ({ x: cell.x, y: cell.y, z: cell.z })))
+      .toEqual([0, 1, 2, 3].map(index =>
+        flatIndexToCoordinate(index, { x: -2, y: -1, z: 2 })));
   });
 
   it("delegates rotation and mirror to the canonical placement transform", () => {

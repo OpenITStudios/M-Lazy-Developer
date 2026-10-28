@@ -684,9 +684,47 @@ export function prepareDeveloperPracticeReferenceSelector(
   const observations = developerPracticeSignalsFromSemanticIr(
     semanticIr, selectedArtifactId,
   );
-  return (input) => compileDeveloperPracticeReferenceContextWithSignals(
-    { ...input, semanticIr, selectedArtifactId }, observations,
-  );
+  // One-run source witness index, never an authored or runtime proof cache.
+  const observedBySource = new Map<string, SelectedArtifactReferenceSignal[]>();
+  for (const item of observations) {
+    const group = observedBySource.get(item.sourcePath);
+    if (group) group.push(item);
+    else observedBySource.set(item.sourcePath, [item]);
+  }
+  // Many obligations ask identical source-scoped reference questions. Reuse
+  // only their immutable reference projection, bounded within this selector.
+  // Separate data objects must never share a cached answer.
+  const selectionByData = new WeakMap<
+    DeveloperPracticeReferenceData,
+    Map<string, CompiledDeveloperPracticeReferenceContext | undefined>
+  >();
+  return (input) => {
+    const key = JSON.stringify([
+      [...new Set(input.domains.filter(Boolean))].sort(),
+      [...new Set((input.sourceLocators ?? []).map(value => value.trim()).filter(Boolean))].sort(),
+      input.maximum ?? null,
+      (input.manifestWitnesses ?? []).map(witness => [
+        witness.packRoot,
+        witness.source.artifactId,
+        witness.source.relativePath,
+        witness.minEngineVersion ?? null,
+        witness.scriptModules.map(module => [module.moduleName, module.version, module.track]),
+        witness.worldAttachment ?? null,
+      ]),
+    ]);
+    let cache = selectionByData.get(input.data);
+    if (cache?.has(key)) return cache.get(key);
+    const result = compileDeveloperPracticeReferenceContextWithSignals(
+      { ...input, semanticIr, selectedArtifactId }, observations, observedBySource,
+    );
+    if (cache === undefined) {
+      cache = new Map();
+      selectionByData.set(input.data, cache);
+    }
+    if (cache.size >= 1024) cache.delete(cache.keys().next().value!);
+    cache.set(key, result);
+    return result;
+  };
 }
 
 export function compileDeveloperPracticeReferenceContext(
@@ -701,6 +739,7 @@ export function compileDeveloperPracticeReferenceContext(
 function compileDeveloperPracticeReferenceContextWithSignals(
   input: DeveloperPracticeReferenceQuery,
   allObserved: readonly SelectedArtifactReferenceSignal[],
+  observedBySource?: ReadonlyMap<string, readonly SelectedArtifactReferenceSignal[]>,
 ): CompiledDeveloperPracticeReferenceContext | undefined {
   const { data, selectedArtifactId } = input;
   if (data.authority !== "REFERENCE" ||
@@ -712,9 +751,18 @@ function compileDeveloperPracticeReferenceContextWithSignals(
   // A task must identify the selected-map source it is investigating.
   // Without this boundary, unrelated source sites could supply ZIP guidance.
   if (!locators?.length) return undefined;
-  const observed = allObserved.filter(item => locators.some(locator =>
-    sourceLocatorMatchesReferenceSignal(locator, item)
-  ));
+  const observed = observedBySource === undefined
+    ? allObserved.filter(item => locators.some(locator =>
+        sourceLocatorMatchesReferenceSignal(locator, item)))
+    : [...observedBySource.entries()].flatMap(([sourcePath, witnesses]) =>
+        locators.some(locator => sourceLocatorMatchesSourcePath(locator, sourcePath))
+          ? witnesses.filter(item => locators.some(locator =>
+              sourceLocatorMatchesReferenceSignal(locator, item)))
+          : [])
+      // Retain the original global IR witness order after source pruning.
+      .sort((a, b) => a.evidenceId.localeCompare(b.evidenceId) ||
+        a.signal.localeCompare(b.signal) ||
+        a.sourcePath.localeCompare(b.sourcePath));
   // Manifest evidence uses the existing selected-map pack owner. A manifest
   // may inform a task only when that task already has a source file in the
   // exact same pack root. The manifest does not prove active runtime version.

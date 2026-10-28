@@ -534,7 +534,7 @@ describe("source-first Daigon export investigation reference", () => {
       id: "src.bedrock-game-results",
       path: "skills/bedrock-game-results/SKILL.md",
       sha256: "b".repeat(64),
-      auditUsage: "INTERPRETATION_CANDIDATE",
+      auditUsage: "INTERPRETATION_CANDIDATE" as const,
       methodology: {
         applicability: "MAP_SOURCE_INTERPRETATION" as const,
         sourceSections: ["1. How the export works"],
@@ -550,6 +550,7 @@ describe("source-first Daigon export investigation reference", () => {
     patterns: [{
       id: "developer.hint.game-results.daigon-export",
       sourceId: "src.bedrock-game-results",
+      kind: "IMPLEMENTATION_PATTERN",
       status: "SOURCE_REVIEWED" as const,
       domains: ["scoring", "result"],
       sourceSignals: ["scriptevent:daigon:get_all_scoring"],
@@ -605,5 +606,43 @@ describe("source-first Daigon export investigation reference", () => {
       .toEqual([]);
     expect(context(subscription, ["behavior_packs/demo/scripts/results.ts:12:20"], ["combat"])?.items)
       .toEqual([]);
+  });
+
+  it("keeps bounded prepared selectors identical to direct source proof", () => {
+    const semanticIr = {
+      schemaVersion: 1 as const,
+      execution: { regions: [subscription], edges: [] },
+      state: { surfaces: [], operations: [], authorityBindings: [] },
+      temporal: { relations: [] },
+    };
+    const prepared = prepareDeveloperPracticeReferenceSelector(semanticIr, "selected");
+    for (const sourceLocators of [
+      ["behavior_packs/demo/scripts/results.ts:12:20"],
+      ["behavior_packs/demo/scripts/results.ts:12:20"],
+      ["behavior_packs/demo/scripts/results.ts:12:200"],
+      ["behavior_packs/demo/scripts/results.ts"],
+      ["behavior_packs/demo/scripts/results.ts@unresolved"],
+      ["behavior_packs/demo/scripts/results.ts-other:12:20"],
+      ["behavior_packs/demo/scripts/elsewhere.ts"],
+      [],
+    ]) {
+      expect(prepared({ data, sourceLocators, domains: ["scoring"] }))
+        .toEqual(context(subscription, sourceLocators));
+    }
+    const sourceLocators = ["behavior_packs/demo/scripts/results.ts:12:20"];
+    expect(prepared({ data, sourceLocators, domains: ["scoring", "scoring"] }))
+      .toEqual(context(subscription, sourceLocators));
+    // A different reviewed input cannot borrow an earlier selection.
+    const changedData = {
+      ...data,
+      patterns: data.patterns.map(pattern => ({
+        ...pattern, id: "developer.hint.game-results.changed",
+      })),
+    };
+    expect(prepared({ data: changedData, sourceLocators, domains: ["scoring"] }))
+      .toEqual(compileDeveloperPracticeReferenceContext({
+        data: changedData, semanticIr, selectedArtifactId: "selected",
+        sourceLocators, domains: ["scoring"],
+      }));
   });
 });
