@@ -72,6 +72,11 @@ export interface ArenaEngineeringProjection {
       executionRegion: string;
       path: string;
       line?: number;
+      /** Source expression only, not a resolved arena/generation identity. */
+      arenaArgument?: {
+        syntax: "string-literal" | "identifier" | "property-access";
+        expression: string;
+      };
     }[];
   };
   globalState: {
@@ -311,6 +316,12 @@ export function buildArenaEngineeringProjection(
         ? ": " + arena.resetClosure.blockers.join(", ") : "") + ".",
     );
   }
+  if ((arena.resetClosure?.surfaces.baselinePositiveProofMissing ?? 0) > 0) {
+    unresolved.push(
+      "World-reset requests lack attributable same-arena, same-generation VERIFY_EMPTY evidence; " +
+      "source argument expressions do not prove a runtime arena ID or readiness.",
+    );
+  }
   if (
     arena.globalState &&
     arena.globalState.unleasedArenaMutations > 0
@@ -444,6 +455,9 @@ export function buildArenaEngineeringProjection(
           path: item.source.relativePath,
           ...(item.source.range?.lineStart === undefined ? {} : {
             line: item.source.range.lineStart,
+          }),
+          ...(item.arenaArgument === undefined ? {} : {
+            arenaArgument: { ...item.arenaArgument },
           }),
         })),
     },

@@ -26,6 +26,11 @@ export interface ScriptArenaResetCompletionEvidence {
   readonly executionRegion: string;
   readonly source: SourceRef;
   readonly detail: string;
+  /** Authored resetMap first argument, not a proven arena or generation. */
+  readonly arenaArgument?: {
+    readonly syntax: "string-literal" | "identifier" | "property-access";
+    readonly expression: string;
+  };
 }
 
 export interface ScriptCleanupResourceEvidence {
@@ -427,6 +432,27 @@ export function deriveScriptArenaResetCompletionEvidence(
       : ts.isExpressionStatement(statement) ? statement.expression : undefined;
     return !!expr && propertyCall(expr, "trackArenaCleanup");
   };
+  /** Source syntax only: an identifier such as arenaId does not resolve
+   * the current runtime arena, and no argument below verifies generation.
+   */
+  const sourceArenaArgument = (
+    call: ts.CallExpression,
+  ): ScriptArenaResetCompletionEvidence["arenaArgument"] => {
+    const arg = call.arguments[0];
+    if (!arg) return undefined;
+    const syntax = ts.isStringLiteralLike(arg)
+      ? "string-literal" as const
+      : ts.isIdentifier(arg)
+        ? "identifier" as const
+        : ts.isPropertyAccessExpression(arg)
+          ? "property-access" as const
+          : undefined;
+    if (syntax === undefined) return undefined;
+    const expression = arg.getText(file);
+    return expression.length <= 160
+      ? { syntax, expression }
+      : undefined;
+  };
   const inspectOwner = (
     owner: ts.MethodDeclaration | ts.FunctionDeclaration,
   ): void => {
@@ -443,8 +469,19 @@ export function deriveScriptArenaResetCompletionEvidence(
     const relevant = /(?:reset|cleanup)/i.test(methodName) ||
       /reset/i.test(className);
     const region = executionRegion(owner.body, file);
-    const emit = (kind: ScriptArenaResetCompletionKind, node: ts.Node, detail: string): void => {
-      output.push({ kind, executionRegion: region, source: nodeSource(file, node, source), detail });
+    const emit = (
+      kind: ScriptArenaResetCompletionKind,
+      node: ts.Node,
+      detail: string,
+      arenaArgument?: ScriptArenaResetCompletionEvidence["arenaArgument"],
+    ): void => {
+      output.push({
+        kind,
+        executionRegion: region,
+        source: nodeSource(file, node, source),
+        detail,
+        ...(arenaArgument === undefined ? {} : { arenaArgument }),
+      });
     };
     // Only direct-statement order is known. No dominance or runtime re-entry
     // is inferred from a preceding idle write.
@@ -541,7 +578,8 @@ export function deriveScriptArenaResetCompletionEvidence(
           ) &&
           /(?:arena|game|block|world)/i.test(methodName)) {
         emit("world-baseline-reset-request-candidate", node,
-          "Arena/game cleanup requests a world reset; a returned Promise does not by itself verify its block baseline or completed chunk coverage.");
+          "Arena/game cleanup requests a world reset; an authored arena argument does not prove the arena/generation match or post-reset VERIFY_EMPTY result.",
+          sourceArenaArgument(node));
       }
       if (propertyCall(node, "catch") && !ts.isVoidExpression(node.parent)) {
         const callback = node.arguments[0];

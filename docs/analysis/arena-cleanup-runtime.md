@@ -85,6 +85,23 @@ Verify old critical entities and projectiles are gone, old-generation callbacks 
 
 Only then allow the next generation.
 
+## Source attribution for baseline proof
+
+An authored world-reset request and a verification result only close the
+same arena-reuse obligation when the source establishes the **same arena
+identity**, **same reset generation**, and an actual **post-reset baseline
+result**. A source call such as `resetMap(arenaId, dimension)`, a generation
+cancellation guard, a resolved cleanup Promise, and a verified
+`.mcfunction` command-ordering step are each narrower evidence.
+
+The first reset argument may be retained as source syntax to help an
+operator locate the owner. A string literal or variable named `arenaId`
+is not a verified runtime arena ID, and generation cancellation is not
+`VERIFY_EMPTY`. Do not borrow a verification from another arena, world,
+generation or analysis domain. In the absence of a proven bridge and
+baseline outcome, preserve the existing source-only quarantine rather
+than inventing a positive result.
+
 ## Dirty arena quarantine
 
 If baseline cannot be proven, transition RESET_FAILED -> QUARANTINE. Do not allow join, countdown, or setup until recovery succeeds.
