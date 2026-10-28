@@ -114,6 +114,51 @@ describe("graph-scoped Knowledge proof identity", () => {
 });
 
 describe("conditional gameplay knowledge dependencies", () => {
+  it("retains a reset-only arena lifecycle without inventing multiplayer authority", () => {
+    type Script = Parameters<typeof derivePreflightKnowledgeDemand>[0]["scripts"][number];
+    const script = {
+      arenaAuthorityPaths: [],
+      arenaResetCompletionEvidence: [{
+        kind: "world-baseline-reset-request-candidate",
+        executionRegion: "function:GameManager.resetArenaPlacedBlocks@2:3",
+        source: {
+          artifactId: "fixture",
+          relativePath: "scripts/game.js",
+        },
+        detail: "Source-only reset request",
+      }],
+    } as unknown as Script;
+    const demand = (selected: Script) => derivePreflightKnowledgeDemand({
+      scripts: [selected],
+      entityCount: 0,
+      target: {},
+    });
+    const resetOnly = demand(script);
+    expect(resetOnly).toContain("arena-lifecycle");
+    expect(resetOnly).not.toContain("multiplayer-interleaving");
+
+    // A generic catch or non-reset callback must not promote unrelated
+    // source into arena lifecycle or multiplayer interleaving analysis.
+    const unrelated = {
+      ...script,
+      arenaResetCompletionEvidence: [{
+        kind: "reset-error-swallowed-candidate",
+      }],
+    } as unknown as Script;
+    expect(demand(unrelated)).not.toContain("arena-lifecycle");
+    expect(demand(unrelated)).not.toContain("multiplayer-interleaving");
+
+    // Authored arena authority must keep both existing domain routes.
+    const authority = {
+      ...script,
+      arenaAuthorityPaths: [{ arenaExpression: "arena" }],
+      arenaResetCompletionEvidence: [],
+    } as unknown as Script;
+    expect(demand(authority)).toEqual(expect.arrayContaining([
+      "arena-lifecycle", "multiplayer-interleaving",
+    ]));
+  });
+
   it("expands reconnect inventory proof into persistence, arena, and temporal ownership when those surfaces coexist", () => {
     const domains =
       requiredKnowledgeDomainsForPreset(

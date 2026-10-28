@@ -81,6 +81,17 @@ export function derivePreflightKnowledgeDemand(
     domains.add("arena-lifecycle");
     domains.add("multiplayer-interleaving");
   }
+  // A source-authored world-reset request is independently arena-relevant.
+  // Do not prune its reset/cleanup obligations just because the arena
+  // authority extractor found no path. Do not infer multiplayer scope or
+  // actual reset success from this source candidate.
+  if (input.scripts.some(script =>
+    script.arenaResetCompletionEvidence?.some(evidence =>
+      evidence.kind === "world-baseline-reset-request-candidate",
+    ) === true
+  )) {
+    domains.add("arena-lifecycle");
+  }
 
   if (
     hasAny(
