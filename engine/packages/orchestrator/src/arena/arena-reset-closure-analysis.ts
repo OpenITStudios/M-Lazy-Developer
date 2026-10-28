@@ -104,6 +104,13 @@ export function assessArenaResetClosure(input: {
     unresolvedSpawnCommits: number;
   };
 }): ArenaResetClosureAssessment {
+  // The command transaction analyzer reports verified .mcfunction ordering.
+  // Those source facts do NOT bind an independently authored Script API
+  // reset request to the same arena or the same generation. Until a verified
+  // arena/generation attribution exists, each reset-world request still
+  // carries its own unclosed world-baseline obligation.
+  const worldResetRequests =
+    input.cleanup.asyncResetCompletion?.worldResetRequests ?? 0;
   const surfaces = {
     // No reported gap is not positive evidence of reset or reusable arena.
     terminalSourceMissing:
@@ -148,14 +155,11 @@ export function assessArenaResetClosure(input: {
       input.worldRules.conflictingGlobalRules,
     baselineRestoreVerificationGaps:
       input.baselineRestore.unresolved,
-    // A direct game/arena world-reset request is positive evidence of
-    // restoration *obligation*, not successful restoration. The generic
-    // mutation ordering proof has no such witness when candidates=0;
-    // absence of findings must not be upgraded to READY/reusable.
+    // Per-request source obligation. A verified transaction in another
+    // function/world/arena/generation must never close this count just
+    // because global mcfunction verified > 0.
     baselinePositiveProofMissing:
-      (input.cleanup.asyncResetCompletion?.worldResetRequests ?? 0) > 0 &&
-      input.baselineRestore.verified === 0
-        ? 1 : 0,
+      worldResetRequests,
     entityPopulationIdentityGaps:
       input.entityPopulation.registryAuthorities > 0
         ? input.entityPopulation.unresolvedAuthorities
@@ -185,6 +189,10 @@ export function assessArenaResetClosure(input: {
     // source warning, not a claim that admission occurred with dirty blocks.
     ...((input.cleanup.asyncResetCompletion?.settlementOnlyAdmissions ?? 0) > 0
       ? ["startAdmissionReliesOnCleanupSettlementSourceCandidate"] : []),
+    // Preserve the independently useful command verification fact while
+    // marking that its arena/generation attribution was never established.
+    ...(worldResetRequests > 0 && input.baselineRestore.verified > 0
+      ? ["baselineCommandVerificationUnattributedToArenaGeneration"] : []),
   ];
 
   const status:

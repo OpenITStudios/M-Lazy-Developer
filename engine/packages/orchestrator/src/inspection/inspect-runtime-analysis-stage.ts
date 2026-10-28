@@ -725,6 +725,10 @@ export function analyzeInspectionRuntimeState(
       input.target.mutationDependentActions ?? [],
     );
 
+  // These assessments are command-local mcfunction ordering witnesses.
+  // The result contains no proven binding to any Script API reset arenaId
+  // or TickingAreaManager reset generation. Retain the measurement, but
+  // never use verified as an arena/generation-scoped restoration receipt.
   const resetMutationTransactions =
     mutationTransactions.assessments.filter(
       (item) =>

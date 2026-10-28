@@ -58,6 +58,46 @@ const clean: Parameters<typeof assessArenaResetClosure>[0] = {
 };
 
 describe("arena reset closure", () => {
+  it("does not borrow unrelated mcfunction verification for arena world reset", () => {
+    const genericCommandVerification = {
+      candidates: 2,
+      verified: 2,
+      unresolved: 0,
+    };
+    const arenaRequest = assessArenaResetClosure({
+      ...clean,
+      baselineRestore: genericCommandVerification,
+      cleanup: {
+        ...clean.cleanup,
+        asyncResetCompletion: {
+          swallowedFailurePaths: 0,
+          partialResultPaths: 0,
+          earlyIdlePaths: 0,
+          worldResetRequests: 2,
+          observations: [],
+        },
+      },
+    });
+
+    // Two source reset requests, not two verified arenas or generations.
+    // Neither mcfunction witness is linked to an exact Script API request.
+    expect(arenaRequest.surfaces.baselinePositiveProofMissing).toBe(2);
+    expect(arenaRequest.blockers).toContain("baselinePositiveProofMissing");
+    expect(arenaRequest.warnings).toContain(
+      "baselineCommandVerificationUnattributedToArenaGeneration",
+    );
+    expect(arenaRequest.reuseEligibility).toBe("quarantined");
+
+    // Independent command evidence is not an arena-reset obligation
+    // on a source that has no world reset requests.
+    const withoutWorldReset = assessArenaResetClosure({
+      ...clean,
+      baselineRestore: genericCommandVerification,
+    });
+    expect(withoutWorldReset.surfaces.baselinePositiveProofMissing).toBe(0);
+    expect(withoutWorldReset.reuseEligibility).toBe("reusable");
+  });
+
   it("quarantines candidate swallowed failures or returned skipped chunks", () => {
     const source = {
       artifactId: "fixture",
