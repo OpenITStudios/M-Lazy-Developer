@@ -92,7 +92,6 @@ describe("inspection source index coverage", () => {
         expect.objectContaining({
           generatedPath: path,
           status: "unavailable",
-          mapPath: undefined,
           sites: [],
           claimedSourceSections: [
             { generatedLocator: path + ":2", generatedLine: 2,
@@ -182,6 +181,42 @@ describe("inspection source index coverage", () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
+  it("keeps loot tables under entities/ out of the entity parser without hiding source gaps", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-loot-owner-"));
+    const paths = [
+      "behavior_packs/a/loot_tables/entities/zombie.json",
+      "behavior_packs/a/entities/real.json",
+      "entities/standalone.json",
+    ];
+    try {
+      for (const path of paths) {
+        await mkdir(join(root, path.slice(0, path.lastIndexOf("/"))), { recursive: true });
+        await writeFile(join(root, path), path.includes("loot_tables")
+          ? JSON.stringify({ pools: [] })
+          : JSON.stringify({ "minecraft:entity": {
+              description: { identifier: path.includes("standalone")
+                ? "test:standalone" : "test:real" },
+            } }));
+      }
+      const index = await indexInspectionSources(root, "artifact:loot-entity",
+        paths.map(relativePath => ({ relativePath, size: 100 })));
+      expect(index.coverage.parseFailures).toHaveLength(0);
+      expect(index.coverage.fileOutcomes).toEqual([
+        { relativePath: paths[1], status: "indexed" },
+        { relativePath: paths[0], status: "semantic-gap" },
+        { relativePath: paths[2], status: "indexed" },
+      ]);
+      expect(index.parsedEntities.map(item => item.parsed.identifier).sort())
+        .toEqual(["test:real", "test:standalone"]);
+      // Source indexing is complete; semantic-gap is a separate A2 blocker.
+      expect(index.coverage.complete).toBe(true);
+      expect(index.coverage.semanticUnderstandingGaps).toEqual([paths[0]]);
+      expect(index.coverage.physicalInventoryAccounted).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("marks recognized source coverage incomplete when a relevant entity cannot be parsed", async () => {
     const root = await mkdtemp(
       join(tmpdir(), "m-bedrock-index-"),
@@ -262,7 +297,7 @@ describe("inspection source index coverage", () => {
         join(root, "dialogue", "npc.json"),
         JSON.stringify({
           format_version: "1.17",
-          minecraft_npc_dialogue: {
+          "minecraft:npc_dialogue": {
             scenes: [{
               scene_tag: "entry",
               npc_name: "Guide",
@@ -570,7 +605,9 @@ describe("inspection source index coverage", () => {
           }],
         );
 
-      expect(result.coverage).toEqual({
+      expect(result.coverage).toMatchObject({
+        physicalFiles: 1,
+        physicalInventoryAccounted: true,
         relevantFiles: 1,
         indexedFiles: 1,
         parseFailures: [],
@@ -578,6 +615,9 @@ describe("inspection source index coverage", () => {
         semanticUnderstandingGaps: [],
         complete: true,
       });
+      expect(result.coverage.fileOutcomes).toEqual([
+        { relativePath: "functions/start.mcfunction", status: "indexed" },
+      ]);
     } finally {
       await rm(root, {
         recursive: true,

@@ -657,11 +657,20 @@ export interface GameplayArchitectureNavigation {
       readonly observedFlowEntries: readonly {
         readonly entryRegionId: string;
         readonly modelingStatus: "UNMODELED" | "PARTIALLY_MODELED" | "PLACED_UNPROVEN";
-        readonly unmodeledEvidenceIds: readonly string[];
+        /** Resolve exact missing evidence from observedFlowEvidence by entryRegionId. */
       }[];
     }[];
     readonly unplacedFeatureIds: readonly string[];
     readonly unassignedSemanticIrEvidenceIds: readonly string[];
+    /** One source-trace evidence record per observed entry region, referenced
+     * by features[].observedFlowEntries[].entryRegionId. This is source
+     * coverage, NOT observed runtime behavior or a completed game path.
+     */
+    readonly observedFlowEvidence: readonly {
+      readonly entryRegionId: string;
+      readonly modelingStatus: "UNMODELED" | "PARTIALLY_MODELED" | "PLACED_UNPROVEN";
+      readonly unmodeledEvidenceIds: readonly string[];
+    }[];
   };
   readonly unplacedComponentIds: readonly string[];
   readonly unresolvedCausalLinkIds: readonly string[];
@@ -1747,8 +1756,19 @@ export function deriveGameplayArchitectureNavigation(
           .map(component => component.id)),
       };
     });
+  const featureComponentIds = new Set(featureComponents.map(component => component.id));
   const gameplayStructure: GameplayArchitectureNavigation["gameplayStructure"] = {
     scope: "OBSERVED_COMPONENTS_ONLY",
+    // Publish each source-only trace's missing evidence once. The former
+    // per-feature inline arrays multiplied the same IDs across features.
+    observedFlowEvidence: navigation.semanticIrCoverage.executionTraces
+      .filter(trace => trace.evidenceMatchedComponentIds.some(id => featureComponentIds.has(id)))
+      .map(trace => ({
+        entryRegionId: trace.entryRegionId,
+        modelingStatus: trace.modelingStatus,
+        unmodeledEvidenceIds: sorted(trace.evidenceWithoutComponentIds),
+      }))
+      .sort((a, b) => a.entryRegionId.localeCompare(b.entryRegionId)),
     gameSubjectIds: sorted(graph.components
       .filter(component => component.kind === "game")
       .map(component => component.id)),
@@ -1996,7 +2016,6 @@ export function deriveGameplayArchitectureNavigation(
           .map(trace => ({
             entryRegionId: trace.entryRegionId,
             modelingStatus: trace.modelingStatus,
-            unmodeledEvidenceIds: sorted(trace.evidenceWithoutComponentIds),
           }))
           .sort((a, b) => a.entryRegionId.localeCompare(b.entryRegionId)),
       };

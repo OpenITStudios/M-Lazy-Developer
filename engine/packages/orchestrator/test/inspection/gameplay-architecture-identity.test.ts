@@ -261,6 +261,24 @@ describe("arena identity evidence propagation", () => {
     expect(accounting(placed).behaviorFlowsPartiallyModeledCount).toBe(0);
     expect(accounting(placed).behaviorFlowsPlacedUnprovenCount).toBe(1);
     expect(observe(placed).sharedScenarioPlacementIds).toEqual(["scenario:observed"]);
+    const structure = deriveGameplayArchitectureNavigation(placed, {
+      relevantSourceCount: 1,
+      indexedSourceCount: 1,
+      arenaDetected: false,
+      semanticIr: ir,
+    }).gameplayStructure;
+    const sourceOnlyEvidence = structure.observedFlowEvidence.find(entry =>
+      entry.entryRegionId === "region:event");
+    expect(sourceOnlyEvidence).toEqual({
+      entryRegionId: "region:event",
+      modelingStatus: "PLACED_UNPROVEN",
+      unmodeledEvidenceIds: [],
+    });
+    const feature = structure.features.find(entry => entry.id === component.id);
+    expect(feature?.observedFlowEntries).toEqual([{
+      entryRegionId: "region:event",
+      modelingStatus: "PLACED_UNPROVEN",
+    }]);
   });
 
   it("keeps authored true/false branches distinct and maps only exact scenario evidence", () => {

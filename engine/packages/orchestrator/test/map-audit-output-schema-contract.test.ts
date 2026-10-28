@@ -61,6 +61,18 @@ describe("Map Audit Output V2 naming contract", () => {
     ),
   );
 
+  it("stores observed source trace evidence once and preserves feature trace references", () => {
+    const view = schema.properties.gameplayStructure;
+    expect(view.required).toContain("observedFlowEvidence");
+    expect(view.properties.observedFlowEvidence.items.required).toEqual([
+      "entryRegionId", "modelingStatus", "unmodeledEvidenceIds",
+    ]);
+    const entry = view.properties.features.items.properties.observedFlowEntries.items;
+    expect(entry.required).toEqual(["entryRegionId", "modelingStatus"]);
+    expect(entry.properties).not.toHaveProperty("unmodeledEvidenceIds");
+    expect(entry.additionalProperties).toBe(false);
+  });
+
   it("requires the canonical honesty and validation test surfaces", () => {
     expect(schema.required).toEqual(
       expect.arrayContaining([

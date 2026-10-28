@@ -578,9 +578,12 @@ export async function indexInspectionSources(
       continue;
     }
 
+    // Bedrock loot tables may live in loot_tables/entities/. Only an
+    // actual entities/ definition root is eligible for the entity parser.
+    // Preserve standalone test/project roots as well as packed sources.
     const isEntityJson =
-      normalizedPath.includes("/entities/") &&
-      normalizedPath.endsWith(".json");
+      /^(?:\/entities\/|\/(?:behavior_packs|behavior_pack)\/[^/]+\/entities\/).+\.json$/i
+        .test(normalizedPath);
 
     if (isEntityJson) {
       relevantFiles += 1;
