@@ -467,7 +467,35 @@ export async function inspectDirectory(
     ...referenceDiagnostics([
       ...graph.unresolvedEdges().filter((edge) => edge.type !== "IMPORTS_MINECRAFT_MODULE"),
       ...graph.ambiguousEdges(),
-    ], classifyOwnedLootTableSourceRoutes(graph, parsedEntities)),
+    ], classifyOwnedLootTableSourceRoutes(
+      graph, parsedEntities,
+      parsedScripts.flatMap(({ parsed }) => {
+        // A method named spawnEntity is insufficient: arbitrary objects can
+        // define it. Require the parser's *typed Dimension* call at the exact
+        // source site as the spatial literal. This remains a request, not an
+        // observed spawn or proof that the spawn hook was selected.
+        const siteKey = (source: typeof parsed.source) => [
+          source.relativePath,
+          source.range?.lineStart ?? 0,
+          source.range?.columnStart ?? 0,
+          source.range?.lineEnd ?? 0,
+          source.range?.columnEnd ?? 0,
+        ].join(":");
+        const dimensionCalls = new Set(parsed.methodCalls
+          .filter(item => item.method === "spawnEntity" &&
+            item.receiverType === "Dimension")
+          .map(item => siteKey(item.source)));
+        return (parsed.spatialMutations ?? [])
+          .filter(item => item.kind === "entity-spawn" &&
+            item.identifier !== undefined &&
+            dimensionCalls.has(siteKey(item.source)))
+          .map(item => ({
+            entityIdentifier: item.identifier!,
+            source: item.source,
+            executionRegion: item.executionRegion,
+          }));
+      }),
+    )),
   );
 
   const runtimeAnalysis =

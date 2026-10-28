@@ -548,6 +548,49 @@ describe("inspectDirectory", () => {
   });
 
 
+
+  it("joins typed literal Dimension.spawnEntity to authored loot reference without trusting lookalike methods", async () => {
+    const root = await mkdtemp(join(tmpdir(), "map-spawn-refs-"));
+    try {
+      const pack = join(root, "behavior_packs/a");
+      await mkdir(join(pack, "entities"), { recursive: true });
+      await mkdir(join(pack, "scripts"), { recursive: true });
+      await writeFile(join(pack, "entities/guard.json"), JSON.stringify({
+        "minecraft:entity": {
+          description: { identifier: "example:guard" },
+          components: { "minecraft:loot": { table: "loot_tables/entities/missing_guard.json" } },
+          events: { "minecraft:entity_spawned": { add: { component_groups: [] } } },
+        },
+      }));
+      await writeFile(join(pack, "scripts/main.js"), [
+        "import { world } from '@minecraft/server';",
+        "const dimension = world.getDimension('overworld');",
+        "dimension.spawnEntity('example:guard', {x:0,y:64,z:0});",
+        "const fake = { spawnEntity(type, position) {} };",
+        "fake.spawnEntity('example:guard', {x:0,y:65,z:0});",
+      ].join("\n"));
+      const result = await inspectDirectory(root, "selected-artifact");
+      const match = result.diagnostics.find(item => item.code === "UNRESOLVED_REFERENCE" &&
+        item.source?.relativePath === "behavior_packs/a/entities/guard.json");
+      expect(match?.data).toMatchObject({
+        sourceRoute: {
+          classification: "entity-authored-chain",
+          rootActivation: { scope: "base", status: "BASE_COMPONENT_DECLARED" },
+          sourceSpawnRequests: [expect.objectContaining({
+            source: expect.objectContaining({
+              relativePath: "behavior_packs/a/scripts/main.js",
+              range: expect.objectContaining({ lineStart: 3 }),
+            }),
+          })],
+        },
+      });
+      expect((match?.data as any)?.sourceRoute?.sourceSpawnRequests).toHaveLength(1);
+      expect(result.gameplayDiscoveryClosure.status).not.toBe("COMPLETE");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("preserves distinct source-labelled stage guides without claiming execution", async () => {
     const root = await mkdtemp(join(tmpdir(), "map-stage-guide-"));
     const path = "resource_packs/example/texts/en_US.lang";

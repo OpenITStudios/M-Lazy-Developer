@@ -1,4 +1,5 @@
 import type { SemanticEdge } from "../../../../packages/graph/src/index.js";
+import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import { createDiagnostic } from "../../../../packages/diagnostics/src/index.js";
 import type { DiagnosticFinding } from "../../../../packages/diagnostics/src/index.js";
 
@@ -21,10 +22,20 @@ export interface ReferenceDiagnosticRoute {
     readonly groupId?: string;
     readonly status: "BASE_COMPONENT_DECLARED" | "GROUP_ADD_EVENT_DECLARED" |
       "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED" | "UNSUPPORTED_EVENT_PROGRAM" |
-      "GROUP_ACTIVATION_UNASSESSED";
+      "GROUP_ACTIVATION_UNASSESSED" | "NO_NET_GROUP_ADD_AFTER_EVENT";
     readonly sourceEventIds?: readonly string[];
     readonly sourceEventPointers?: readonly string[];
+    readonly sourceEventPaths?: readonly {
+      readonly eventId: string;
+      readonly sourcePath: readonly string[];
+      readonly conditioned: boolean;
+      readonly spawnHookCandidate: boolean;
+    }[];
   };
+  readonly sourceSpawnRequests?: readonly {
+    readonly source: SourceRef;
+    readonly executionRegion: string;
+  }[];
 }
 
 export function referenceDiagnostics(

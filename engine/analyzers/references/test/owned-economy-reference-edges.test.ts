@@ -230,3 +230,99 @@ describe("source-scoped component-group activation and publisher fallback refere
     expect(matchPublishedVanillaLootSample("loot_tables/../armor_set_chain.json")).toBeUndefined();
   });
 });
+
+
+describe("source-only entity spawn and settled event group routes", () => {
+  it("requires the group to remain in an authored event branch; distinguishes spawn hook, randomize and remove", () => {
+    const graph = new SemanticGraph();
+    const entity = node("entity:guard-branch", "entity", "behavior_packs/a/entities/guard-branch.json", {});
+    const parsed = parseEntityDefinition({
+      "minecraft:entity": {
+        description: { identifier: "example:guard" },
+        component_groups: {
+          armed: { "minecraft:equipment": { table: "loot_tables/entities/armed.json" } },
+          transient: { "minecraft:equipment": { table: "loot_tables/entities/transient.json" } },
+          surprise: { "minecraft:loot": { table: "loot_tables/entities/surprise.json" } },
+        },
+        events: {
+          "minecraft:entity_spawned": { sequence: [
+            { add: { component_groups: ["armed"] } },
+            { remove: { component_groups: ["transient"] } },
+          ] },
+          "example:temporary": { sequence: [
+            { add: { component_groups: ["transient"] } },
+            { remove: { component_groups: ["transient"] } },
+          ] },
+          "example:surprise": { randomize: [
+            { weight: 1, add: { component_groups: ["surprise"] } },
+            { weight: 1, add: { component_groups: ["armed"] } },
+          ] },
+        },
+      },
+    }, entity.source);
+    graph.addNode(entity);
+    populateEntityLootTableEdges(graph, [{ node: entity, parsed }], [entity]);
+    const spawnedAt = { artifactId, relativePath: "behavior_packs/a/scripts/main.js",
+      range: { lineStart: 12, lineEnd: 12, columnStart: 2, columnEnd: 35 } };
+    const routes = classifyOwnedLootTableSourceRoutes(graph, [{ node: entity, parsed }], [
+      { entityIdentifier: "example:guard", source: spawnedAt, executionRegion: "function:spawn" },
+      { entityIdentifier: "example:guard", source: { ...spawnedAt, relativePath: "behavior_packs/b/scripts/main.js" }, executionRegion: "function:foreign" },
+      { entityIdentifier: "example:other", source: spawnedAt, executionRegion: "function:other" },
+    ]);
+    const route = (name: string) => routes.get(graph.unresolvedEdges()
+      .find(edge => edge.targetIdentifier === name)!.id)!;
+    expect(route("loot_tables/entities/armed.json").rootActivation).toMatchObject({
+      status: "GROUP_ADD_EVENT_DECLARED", scope: "component-group", groupId: "armed",
+      sourceEventIds: ["example:surprise", "minecraft:entity_spawned"],
+    });
+    expect(route("loot_tables/entities/armed.json").rootActivation?.sourceEventPaths)
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ eventId: "minecraft:entity_spawned", spawnHookCandidate: true, conditioned: false }),
+        expect.objectContaining({ eventId: "example:surprise", spawnHookCandidate: false, conditioned: true }),
+      ]));
+    expect(route("loot_tables/entities/armed.json").sourceSpawnRequests).toEqual([
+      { source: spawnedAt, executionRegion: "function:spawn" },
+    ]);
+    expect(route("loot_tables/entities/surprise.json").rootActivation?.sourceEventPaths)
+      .toEqual([expect.objectContaining({ eventId: "example:surprise", conditioned: true, spawnHookCandidate: false })]);
+    expect(route("loot_tables/entities/transient.json").rootActivation).toEqual({
+      scope: "component-group", groupId: "transient", status: "NO_NET_GROUP_ADD_AFTER_EVENT",
+    });
+    expect(graph.unresolvedEdges()).toHaveLength(3);
+    expect(graph.allEdges().every(edge => edge.status === "unresolved")).toBe(true);
+  });
+
+  it("does not treat an unsupported or deferred trigger as a proven group activation", () => {
+    const graph = new SemanticGraph();
+    const entity = node("entity:delayed", "entity", "behavior_packs/a/entities/delayed.json", {});
+    const parsed = parseEntityDefinition({
+      "minecraft:entity": {
+        description: { identifier: "example:delayed" },
+        component_groups: {
+          effect: { "minecraft:loot": { table: "loot_tables/entities/effect.json" } },
+          unknown: { "minecraft:loot": { table: "loot_tables/entities/unknown.json" } },
+        },
+        events: {
+          "minecraft:entity_spawned": { trigger: "example:activate_later" },
+          "example:activate_later": { add: { component_groups: ["effect"] } },
+          "example:opaque": { sequence: [{ add: { component_groups: ["unknown"] }, unsupported_feature: true }] },
+        },
+      },
+    }, entity.source);
+    graph.addNode(entity);
+    populateEntityLootTableEdges(graph, [{ node: entity, parsed }], [entity]);
+    const routes = classifyOwnedLootTableSourceRoutes(graph, [{ node: entity, parsed }]);
+    const route = (target: string) => routes.get(graph.unresolvedEdges()
+      .find(edge => edge.targetIdentifier === target)!.id)!.rootActivation;
+    expect(route("loot_tables/entities/effect.json")).toMatchObject({
+      status: "GROUP_ADD_EVENT_DECLARED",
+      sourceEventIds: ["example:activate_later"],
+      sourceEventPaths: [expect.objectContaining({ spawnHookCandidate: false })],
+    });
+    expect(route("loot_tables/entities/unknown.json")).toEqual({
+      scope: "component-group", groupId: "unknown", status: "UNSUPPORTED_EVENT_PROGRAM",
+    });
+    // We did not invent execution of the triggered event from its caller.
+    expect(route("loot_tables/entities/effect.json")?.sourceEventIds).not.toContain("minecraft:entity_spawned");
+  });
+});

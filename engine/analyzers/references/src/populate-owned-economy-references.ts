@@ -1,5 +1,6 @@
 import type { SemanticGraph, SemanticNode } from "../../../packages/graph/src/index.js";
-import type { EntityEventProgram, ParsedEntityDefinition } from "../../entities/src/index.js";
+import { deriveEntityStateGraph, type ParsedEntityDefinition } from "../../entities/src/index.js";
+import type { SourceRef } from "../../../packages/project-model/src/index.js";
 import {
   matchPublishedVanillaLootSample,
   type PublishedVanillaLootSample,
@@ -174,10 +175,29 @@ export interface OwnedLootTableSourceRoute {
       | "GROUP_ADD_EVENT_DECLARED"
       | "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED"
       | "UNSUPPORTED_EVENT_PROGRAM"
-      | "GROUP_ACTIVATION_UNASSESSED";
+      | "GROUP_ACTIVATION_UNASSESSED"
+      | "NO_NET_GROUP_ADD_AFTER_EVENT";
     readonly sourceEventIds?: readonly string[];
     readonly sourceEventPointers?: readonly string[];
+    /** Each independent supported event branch which retains the group
+     * after its own authored add/remove sequence, not a runtime transition.
+     */
+    readonly sourceEventPaths?: readonly {
+      readonly eventId: string;
+      readonly sourcePath: readonly string[];
+      readonly conditioned: boolean;
+      /** Built-in source event declaration, not proof it ran on this spawn mode. */
+      readonly spawnHookCandidate: boolean;
+    }[];
   };
+  /** Exact same-artifact/pack literal spawnEntity requests from parsed JS.
+   * Presence proves a source call site, not reachability, successful spawn,
+   * or selection of minecraft:entity_spawned (e.g. /summon differs).
+   */
+  readonly sourceSpawnRequests?: readonly {
+    readonly source: SourceRef;
+    readonly executionRegion: string;
+  }[];
 }
 
 /**
@@ -185,11 +205,23 @@ export interface OwnedLootTableSourceRoute {
  * The graph already owns the authoritative edges; this is a derived routing
  * hint for diagnostic investigation, not another detector, issue or owner.
  */
+export interface OwnedLiteralEntitySpawnRequest {
+  readonly entityIdentifier: string;
+  readonly source: SourceRef;
+  readonly executionRegion: string;
+}
+
 export function classifyOwnedLootTableSourceRoutes(
   graph: SemanticGraph,
   entities: readonly { node: SemanticNode; parsed: ParsedEntityDefinition }[] = [],
+  literalSpawnRequests: readonly OwnedLiteralEntitySpawnRequest[] = [],
 ): ReadonlyMap<string, OwnedLootTableSourceRoute> {
   const entityModels = new Map(entities.map(item => [item.node.id, item.parsed]));
+  // Reuse the existing source-only state graph's bounded add/remove/sequence/
+  // randomize interpretation. Do not implement another event interpreter here.
+  const entityStateGraphs = new Map(entities.map(item => [
+    item.node.id, deriveEntityStateGraph(item.parsed),
+  ] as const));
   const nodes = new Map(graph.allNodes().map(node => [node.id, node]));
   const edges = graph.allEdges();
   type Root = { entityId: string; path: string; pointer: string };
@@ -246,18 +278,7 @@ export function classifyOwnedLootTableSourceRoutes(
     }
   }
 
-  // A coarse addGroups list includes even branches whose execution operators
-  // were rejected by the entity parser. Only supported authored mutation nodes
-  // may witness a candidate event add; this never means the event ran.
-  const knownAdd = (program: EntityEventProgram | undefined, groupId: string): boolean => {
-    if (!program || program.kind === "unsupported") return false;
-    if (program.kind === "mutation") return program.addGroups?.includes(groupId) === true;
-    return program.steps?.some(step => knownAdd(step, groupId)) === true;
-  };
-
   const activationFor = (root: Root): OwnedLootTableSourceRoute["rootActivation"] => {
-    // Preserve the existing route output if no matching parsed source model is
-    // supplied (for example, reduced graph-only reference tests).
     const parsed = entityModels.get(root.entityId);
     if (!parsed || parsed.source.relativePath !== root.path ||
         nodes.get(root.entityId)?.source.artifactId !== parsed.source.artifactId) {
@@ -266,30 +287,64 @@ export function classifyOwnedLootTableSourceRoutes(
     if (root.pointer.startsWith("/minecraft:entity/components/")) {
       return { scope: "base", status: "BASE_COMPONENT_DECLARED" };
     }
-    const groupToken = /^\/minecraft:entity\/component_groups\/([^/]+)\//.exec(root.pointer)?.[1];
-    if (!groupToken) return undefined;
-    const groupId = groupToken.replaceAll("~1", "/").replaceAll("~0", "~");
+    const token = /^\/minecraft:entity\/component_groups\/([^/]+)\//.exec(root.pointer)?.[1];
+    if (!token) return undefined;
+    const groupId = token.replaceAll("~1", "/").replaceAll("~0", "~");
     if (parsed.componentGroupData[groupId] === undefined) {
       return { scope: "component-group", groupId, status: "GROUP_ACTIVATION_UNASSESSED" };
     }
-    const candidates = Object.entries(parsed.events)
-      .filter(([, event]) => event.addGroups.includes(groupId));
-    const supported = candidates.filter(([, event]) =>
-      knownAdd(event.program, groupId));
+
+    // A syntactic add that is subsequently removed in the same authored event
+    // does not establish a post-event active group. Source state candidates
+    // also retain conditional/randomize branch boundaries and exact pointers.
+    const supported = (entityStateGraphs.get(root.entityId)?.candidates ?? [])
+      .filter(candidate => candidate.viaEvent !== undefined &&
+        candidate.activeGroups.includes(groupId));
     if (supported.length > 0) {
+      const witness = supported.map(candidate => ({
+        eventId: candidate.viaEvent!,
+        sourcePath: [...(candidate.sourceEventPath ?? [])],
+        conditioned: candidate.sourceConditioned === true,
+        spawnHookCandidate: candidate.viaEvent === "minecraft:entity_spawned",
+      })).sort((a, b) =>
+        a.eventId.localeCompare(b.eventId) ||
+        JSON.stringify(a.sourcePath).localeCompare(JSON.stringify(b.sourcePath)));
+      const ids = [...new Set(witness.map(item => item.eventId))].sort();
       return {
         scope: "component-group", groupId,
         status: "GROUP_ADD_EVENT_DECLARED",
-        sourceEventIds: supported.map(([id]) => id).sort(),
-        sourceEventPointers: supported.map(([, event]) => event.program!.path).sort(),
+        sourceEventIds: ids,
+        sourceEventPointers: ids.map(id => parsed.events[id]!.program!.path),
+        sourceEventPaths: witness,
       };
     }
+    const authorsAdd = Object.entries(parsed.events)
+      .filter(([, event]) => event.addGroups.includes(groupId));
+    const unsupported = authorsAdd.some(([id, event]) =>
+      !event.program ||
+      (entityStateGraphs.get(root.entityId)?.staticAnalysisLimits ?? [])
+        .some(message => message.startsWith(id + ":")));
     return {
       scope: "component-group", groupId,
-      status: candidates.length > 0
-        ? "UNSUPPORTED_EVENT_PROGRAM"
-        : "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED",
+      status: unsupported ? "UNSUPPORTED_EVENT_PROGRAM" :
+        authorsAdd.length > 0 ? "NO_NET_GROUP_ADD_AFTER_EVENT" :
+        "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED",
     };
+  };
+
+  const spawnSourcesFor = (root: Root): OwnedLootTableSourceRoute["sourceSpawnRequests"] => {
+    const parsed = entityModels.get(root.entityId);
+    if (!parsed || parsed.source.relativePath !== root.path || !parsed.identifier) return undefined;
+    const owner = packRoot(parsed.source.relativePath);
+    const requests = literalSpawnRequests
+      .filter(item => item.entityIdentifier === parsed.identifier &&
+        item.source.artifactId === parsed.source.artifactId &&
+        packRoot(item.source.relativePath) === owner)
+      .map(item => ({ source: item.source, executionRegion: item.executionRegion }))
+      .sort((a, b) => a.source.relativePath.localeCompare(b.source.relativePath) ||
+        (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
+        (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0));
+    return requests.length ? requests : undefined;
   };
 
   const routes = new Map<string, OwnedLootTableSourceRoute>();
@@ -317,6 +372,7 @@ export function classifyOwnedLootTableSourceRoutes(
       : rooted.get(from.id);
     const published = matchPublishedVanillaLootSample(edge.targetIdentifier);
     const activation = root === undefined ? undefined : activationFor(root);
+    const spawnRequests = root === undefined ? undefined : spawnSourcesFor(root);
     routes.set(edge.id, {
       classification: root === undefined
         ? "no-entity-chain-observed" : "entity-authored-chain",
@@ -328,6 +384,7 @@ export function classifyOwnedLootTableSourceRoutes(
       }),
       ...(published === undefined ? {} : { publishedVanillaSample: published }),
       ...(activation === undefined ? {} : { rootActivation: activation }),
+      ...(spawnRequests === undefined ? {} : { sourceSpawnRequests: spawnRequests }),
     });
   }
   return routes;
