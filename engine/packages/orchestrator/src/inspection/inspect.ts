@@ -559,7 +559,11 @@ export async function inspectDirectory(
       runtimeAnalysis.scriptSafeConfig.resolvedArenaCount !== undefined ||
       runtimeAnalysis.topology.arenaReplicaDiscovery !== undefined ||
       runtimeAnalysis.arenaLifecycle.terminalCandidates > 0 ||
-      runtimeAnalysis.arenaCleanupSurfaces.acquiredSurfaces > 0
+      runtimeAnalysis.arenaCleanupSurfaces.acquiredSurfaces > 0 ||
+      // A source world-reset obligation is arena-relevant even if static
+      // capacity and generic cleanup-surface discovery found nothing.
+      // Keep its canonical fail-closed status in the diagnostic consumer.
+      runtimeAnalysis.arenaResetClosure.surfaces.baselinePositiveProofMissing > 0
         ? runtimeAnalysis.arenaResetClosure
         : undefined,
     ),

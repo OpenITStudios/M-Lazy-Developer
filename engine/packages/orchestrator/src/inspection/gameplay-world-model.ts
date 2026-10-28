@@ -1271,7 +1271,11 @@ export function deriveGameplayWorldModel(
       source.arena.cleanupSurfaces.lifecycle
         .unresolved > 0 ||
       (source.arena.cleanupSurfaces.ledger?.missing ?? 0) > 0 ||
-      (arenaDetected &&
+      // Script-owned reset requests also establish an arena cleanup
+      // obligation when topology/count discovery is incomplete. Reuse the
+      // canonical reset blocker; do not invent a second arena detector.
+      ((arenaDetected ||
+        (source.arena.resetClosure?.surfaces.baselinePositiveProofMissing ?? 0) > 0) &&
         source.arena.resetClosure !== undefined &&
         source.arena.resetClosure.status !== "complete");
     runtimeSurfaces.push({
