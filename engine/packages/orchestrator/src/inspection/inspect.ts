@@ -467,7 +467,7 @@ export async function inspectDirectory(
     ...referenceDiagnostics([
       ...graph.unresolvedEdges().filter((edge) => edge.type !== "IMPORTS_MINECRAFT_MODULE"),
       ...graph.ambiguousEdges(),
-    ], classifyOwnedLootTableSourceRoutes(graph)),
+    ], classifyOwnedLootTableSourceRoutes(graph, parsedEntities)),
   );
 
   const runtimeAnalysis =

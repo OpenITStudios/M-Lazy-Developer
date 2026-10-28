@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { SemanticGraph, type SemanticNode } from "../../../packages/graph/src/index.js";
 import { classifyOwnedLootTableSourceRoutes, populateOwnedEconomyReferences } from "../src/populate-owned-economy-references.js";
+import { populateEntityLootTableEdges } from "../src/populate-entity-loot-table-edges.js";
+import { parseEntityDefinition } from "../../entities/src/index.js";
+import { matchPublishedVanillaLootSample } from "../src/published-vanilla-loot-samples.js";
 
 const artifactId = "art_frozen";
 function node(id: string, kind: SemanticNode["kind"], path: string, data: unknown): SemanticNode {
@@ -138,12 +141,92 @@ describe("authored loot-table source routes (not runtime reachability)", () => {
       "loot_tables/entities/armor_set_chain.json",
       "loot_tables/entities/foreign_missing.json",
     ]) {
-      expect(byTarget.get(name)).toEqual({
+      expect(byTarget.get(name)).toMatchObject({
         classification: "no-entity-chain-observed",
         proofCeiling: "SOURCE_REFERENCES_ONLY",
       });
     }
     // A circular table reference is not a new root or infinite traversal.
     expect(routes.size).toBe(4);
+  });
+});
+
+
+describe("source-scoped component-group activation and publisher fallback references", () => {
+  it("keeps group event adds conditional, distinguishes unsupported/no-event, and records published vanilla samples without resolving graph edges", () => {
+    const graph = new SemanticGraph();
+    const entity = node("entity:guard", "entity", "behavior_packs/a/entities/guard.json", {});
+    const rootTable = node("loot:guard", "loot_table", "behavior_packs/a/loot_tables/entities/guard.json", {
+      pools: [{ entries: [{ type: "loot_table", name: "loot_tables/entities/armor_set_iron.json" }] }],
+    });
+    const parsed = parseEntityDefinition({
+      "minecraft:entity": {
+        description: { identifier: "demo:guard" },
+        components: { "minecraft:loot": { table: "loot_tables/empty.json" } },
+        component_groups: {
+          armored: { "minecraft:equipment": { table: "loot_tables/entities/guard.json" } },
+          dormant: { "minecraft:loot": { table: "loot_tables/entities/custom_missing.json" } },
+          unsupported: { "minecraft:loot": { table: "loot_tables/entities/other_missing.json" } },
+        },
+        events: {
+          "demo:equip": { add: { component_groups: ["armored"] } },
+          "demo:invalid": { sequence: [{
+            add: { component_groups: ["unsupported"] },
+            not_supported: true,
+          }] },
+        },
+      },
+    }, entity.source);
+    graph.addNode(entity);
+    graph.addNode(rootTable);
+    populateEntityLootTableEdges(graph, [{ node: entity, parsed }], [entity, rootTable]);
+    populateOwnedEconomyReferences(graph, [entity, rootTable]);
+    const unresolved = graph.unresolvedEdges();
+    const routes = classifyOwnedLootTableSourceRoutes(graph, [{ node: entity, parsed }]);
+    const route = (name: string) => routes.get(unresolved.find(edge => edge.targetIdentifier === name)!.id);
+    expect(unresolved).toHaveLength(4);
+    expect(route("loot_tables/entities/armor_set_iron.json")).toMatchObject({
+      classification: "entity-authored-chain",
+      rootEntityId: entity.id,
+      rootActivation: {
+        scope: "component-group", groupId: "armored",
+        status: "GROUP_ADD_EVENT_DECLARED",
+        sourceEventIds: ["demo:equip"],
+        sourceEventPointers: ["/minecraft:entity/events/demo:equip"],
+      },
+      publishedVanillaSample: {
+        referencePath: "loot_tables/entities/armor_set_iron.json",
+        publisher: "Mojang/bedrock-samples",
+        proof: "PUBLISHED_SAMPLE_ONLY_VERSION_AND_RUNTIME_UNVERIFIED",
+      },
+    });
+    expect(route("loot_tables/empty.json")).toMatchObject({
+      rootActivation: { scope: "base", status: "BASE_COMPONENT_DECLARED" },
+      publishedVanillaSample: { referencePath: "loot_tables/empty.json" },
+    });
+    expect(route("loot_tables/entities/custom_missing.json")).toMatchObject({
+      rootActivation: {
+        scope: "component-group", groupId: "dormant",
+        status: "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED",
+      },
+    });
+    expect(route("loot_tables/entities/custom_missing.json")?.publishedVanillaSample).toBeUndefined();
+    expect(route("loot_tables/entities/other_missing.json")).toMatchObject({
+      rootActivation: { status: "UNSUPPORTED_EVENT_PROGRAM", groupId: "unsupported" },
+    });
+    expect(unresolved.every(edge => edge.status === "unresolved")).toBe(true);
+    expect(graph.allEdges().some(edge => edge.targetIdentifier.includes("armor_set_iron") && edge.status === "resolved")).toBe(false);
+  });
+
+  it("pins the published source inventory without declaring runtime compatibility", () => {
+    const chain = matchPublishedVanillaLootSample("loot_tables/entities/armor_set_chain");
+    expect(chain).toMatchObject({
+      publisher: "Mojang/bedrock-samples",
+      commit: "46ba6ea985fb5a92d79a9419198f10dda14c199d",
+      referencePath: "loot_tables/entities/armor_set_chain.json",
+      proof: "PUBLISHED_SAMPLE_ONLY_VERSION_AND_RUNTIME_UNVERIFIED",
+    });
+    expect(matchPublishedVanillaLootSample("loot_tables/entities/tier_1_recruit.json")).toBeUndefined();
+    expect(matchPublishedVanillaLootSample("loot_tables/../armor_set_chain.json")).toBeUndefined();
   });
 });

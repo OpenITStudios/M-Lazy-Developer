@@ -448,6 +448,62 @@ describe("inspectDirectory", () => {
     expect(edges.every(edge => edge.type !== "EXECUTES_EVENT")).toBe(true);
   });
 
+  it("distinguishes authored group activation from publisher-only vanilla table matches", async () => {
+    const root = await mkdtemp(join(tmpdir(), "entity-loot-source-route-"));
+    const pack = join(root, "behavior_packs/a");
+    try {
+      await mkdir(join(pack, "entities"), { recursive: true });
+      await mkdir(join(pack, "loot_tables/entities"), { recursive: true });
+      await writeFile(join(pack, "entities/sentry.json"), JSON.stringify({
+        "minecraft:entity": {
+          description: { identifier: "demo:sentry" },
+          components: { "minecraft:loot": { table: "loot_tables/empty.json" } },
+          component_groups: {
+            armed: { "minecraft:equipment": { table: "loot_tables/entities/known.json" } },
+          },
+          events: { "demo:arm": { add: { component_groups: ["armed"] } } },
+        },
+      }));
+      await writeFile(join(pack, "loot_tables/entities/known.json"), JSON.stringify({
+        pools: [{ entries: [{ type: "loot_table",
+          name: "loot_tables/entities/armor_set_chain.json" }] }],
+      }));
+      const result = await inspectDirectory(root, "selected-artifact");
+      const missing = result.diagnostics.filter(item =>
+        item.code === "UNRESOLVED_REFERENCE");
+      const empty = missing.find(item =>
+        item.message.includes("loot_tables/empty.json"));
+      const chain = missing.find(item =>
+        item.message.includes("loot_tables/entities/armor_set_chain.json"));
+      expect(empty?.data).toMatchObject({
+        sourceRoute: {
+          rootActivation: { scope: "base", status: "BASE_COMPONENT_DECLARED" },
+          publishedVanillaSample: {
+            publisher: "Mojang/bedrock-samples",
+            proof: "PUBLISHED_SAMPLE_ONLY_VERSION_AND_RUNTIME_UNVERIFIED",
+          },
+        },
+      });
+      expect(chain?.data).toMatchObject({
+        sourceRoute: {
+          classification: "entity-authored-chain",
+          rootActivation: { scope: "component-group", groupId: "armed",
+            status: "GROUP_ADD_EVENT_DECLARED", sourceEventIds: ["demo:arm"],
+            sourceEventPointers: ["/minecraft:entity/events/demo:arm"] },
+          publishedVanillaSample: {
+            referencePath: "loot_tables/entities/armor_set_chain.json",
+          },
+        },
+      });
+      expect(result.unresolvedReferences).toBeGreaterThanOrEqual(2);
+      expect(missing.find(item => item.message.includes("armor_set_chain"))?.severity)
+        .toBe("medium");
+      // Source reference and event syntax do not certify a runtime drop.
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("surfaces the missing packaged equipment reference through the existing inspection diagnostics", async () => {
     const root = await mkdtemp(join(tmpdir(), "entity-loot-ref-"));
     const pack = join(root, "behavior_packs/a");

@@ -1,4 +1,9 @@
 import type { SemanticGraph, SemanticNode } from "../../../packages/graph/src/index.js";
+import type { EntityEventProgram, ParsedEntityDefinition } from "../../entities/src/index.js";
+import {
+  matchPublishedVanillaLootSample,
+  type PublishedVanillaLootSample,
+} from "./published-vanilla-loot-samples.js";
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -155,6 +160,24 @@ export interface OwnedLootTableSourceRoute {
   readonly rootEntityId?: string;
   readonly rootReferencePath?: string;
   readonly rootReferencePointer?: string;
+  /** A version-unverified match to Mojang's published vanilla sample tree.
+   * Source-graph status remains unresolved/ambiguous until the selected target
+   * and runtime pack stack supply independent proof.
+   */
+  readonly publishedVanillaSample?: PublishedVanillaLootSample;
+  /** Activation is an authored MAY path, never a witnessed game event. */
+  readonly rootActivation?: {
+    readonly scope: "base" | "component-group";
+    readonly groupId?: string;
+    readonly status:
+      | "BASE_COMPONENT_DECLARED"
+      | "GROUP_ADD_EVENT_DECLARED"
+      | "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED"
+      | "UNSUPPORTED_EVENT_PROGRAM"
+      | "GROUP_ACTIVATION_UNASSESSED";
+    readonly sourceEventIds?: readonly string[];
+    readonly sourceEventPointers?: readonly string[];
+  };
 }
 
 /**
@@ -164,7 +187,9 @@ export interface OwnedLootTableSourceRoute {
  */
 export function classifyOwnedLootTableSourceRoutes(
   graph: SemanticGraph,
+  entities: readonly { node: SemanticNode; parsed: ParsedEntityDefinition }[] = [],
 ): ReadonlyMap<string, OwnedLootTableSourceRoute> {
+  const entityModels = new Map(entities.map(item => [item.node.id, item.parsed]));
   const nodes = new Map(graph.allNodes().map(node => [node.id, node]));
   const edges = graph.allEdges();
   type Root = { entityId: string; path: string; pointer: string };
@@ -221,6 +246,52 @@ export function classifyOwnedLootTableSourceRoutes(
     }
   }
 
+  // A coarse addGroups list includes even branches whose execution operators
+  // were rejected by the entity parser. Only supported authored mutation nodes
+  // may witness a candidate event add; this never means the event ran.
+  const knownAdd = (program: EntityEventProgram | undefined, groupId: string): boolean => {
+    if (!program || program.kind === "unsupported") return false;
+    if (program.kind === "mutation") return program.addGroups?.includes(groupId) === true;
+    return program.steps?.some(step => knownAdd(step, groupId)) === true;
+  };
+
+  const activationFor = (root: Root): OwnedLootTableSourceRoute["rootActivation"] => {
+    // Preserve the existing route output if no matching parsed source model is
+    // supplied (for example, reduced graph-only reference tests).
+    const parsed = entityModels.get(root.entityId);
+    if (!parsed || parsed.source.relativePath !== root.path ||
+        nodes.get(root.entityId)?.source.artifactId !== parsed.source.artifactId) {
+      return undefined;
+    }
+    if (root.pointer.startsWith("/minecraft:entity/components/")) {
+      return { scope: "base", status: "BASE_COMPONENT_DECLARED" };
+    }
+    const groupToken = /^\/minecraft:entity\/component_groups\/([^/]+)\//.exec(root.pointer)?.[1];
+    if (!groupToken) return undefined;
+    const groupId = groupToken.replaceAll("~1", "/").replaceAll("~0", "~");
+    if (parsed.componentGroupData[groupId] === undefined) {
+      return { scope: "component-group", groupId, status: "GROUP_ACTIVATION_UNASSESSED" };
+    }
+    const candidates = Object.entries(parsed.events)
+      .filter(([, event]) => event.addGroups.includes(groupId));
+    const supported = candidates.filter(([, event]) =>
+      knownAdd(event.program, groupId));
+    if (supported.length > 0) {
+      return {
+        scope: "component-group", groupId,
+        status: "GROUP_ADD_EVENT_DECLARED",
+        sourceEventIds: supported.map(([id]) => id).sort(),
+        sourceEventPointers: supported.map(([, event]) => event.program!.path).sort(),
+      };
+    }
+    return {
+      scope: "component-group", groupId,
+      status: candidates.length > 0
+        ? "UNSUPPORTED_EVENT_PROGRAM"
+        : "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED",
+    };
+  };
+
   const routes = new Map<string, OwnedLootTableSourceRoute>();
   for (const edge of edges) {
     if (edge.type !== "REFERENCES" ||
@@ -244,18 +315,20 @@ export function classifyOwnedLootTableSourceRoutes(
           pointer: edge.evidence.source.jsonPointer ?? "",
         }
       : rooted.get(from.id);
-    routes.set(edge.id, root === undefined
-      ? {
-          classification: "no-entity-chain-observed",
-          proofCeiling: "SOURCE_REFERENCES_ONLY",
-        }
-      : {
-          classification: "entity-authored-chain",
-          proofCeiling: "SOURCE_REFERENCES_ONLY",
-          rootEntityId: root.entityId,
-          rootReferencePath: root.path,
-          rootReferencePointer: root.pointer,
-        });
+    const published = matchPublishedVanillaLootSample(edge.targetIdentifier);
+    const activation = root === undefined ? undefined : activationFor(root);
+    routes.set(edge.id, {
+      classification: root === undefined
+        ? "no-entity-chain-observed" : "entity-authored-chain",
+      proofCeiling: "SOURCE_REFERENCES_ONLY",
+      ...(root === undefined ? {} : {
+        rootEntityId: root.entityId,
+        rootReferencePath: root.path,
+        rootReferencePointer: root.pointer,
+      }),
+      ...(published === undefined ? {} : { publishedVanillaSample: published }),
+      ...(activation === undefined ? {} : { rootActivation: activation }),
+    });
   }
   return routes;
 }

@@ -9,6 +9,22 @@ export interface ReferenceDiagnosticRoute {
   readonly rootEntityId?: string;
   readonly rootReferencePath?: string;
   readonly rootReferencePointer?: string;
+  /** Publisher snapshot is reference-only, not a verified runtime table. */
+  readonly publishedVanillaSample?: {
+    readonly referencePath: string;
+    readonly publisher: "Mojang/bedrock-samples";
+    readonly commit: string;
+    readonly proof: "PUBLISHED_SAMPLE_ONLY_VERSION_AND_RUNTIME_UNVERIFIED";
+  };
+  readonly rootActivation?: {
+    readonly scope: "base" | "component-group";
+    readonly groupId?: string;
+    readonly status: "BASE_COMPONENT_DECLARED" | "GROUP_ADD_EVENT_DECLARED" |
+      "NO_LOCAL_GROUP_ADD_EVENT_OBSERVED" | "UNSUPPORTED_EVENT_PROGRAM" |
+      "GROUP_ACTIVATION_UNASSESSED";
+    readonly sourceEventIds?: readonly string[];
+    readonly sourceEventPointers?: readonly string[];
+  };
 }
 
 export function referenceDiagnostics(
