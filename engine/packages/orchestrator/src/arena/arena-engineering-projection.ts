@@ -1,6 +1,9 @@
 import type {
   DiagnosticFinding,
 } from "../../../diagnostics/src/index.js";
+import type {
+  ArenaResetClosureAssessment,
+} from "./arena-reset-closure-analysis.js";
 import { deriveArenaRuntimeAdapterRequirements } from "../arena/arena-runtime-adapter-requirements.js";
 import type {
   InspectArtifactResult,
@@ -49,12 +52,21 @@ export interface ArenaEngineeringProjection {
     proven: number;
     partial: number;
     unresolved: number;
+    /** Distinct source-reachable terminal paths, not executed resets. */
+    sourceReachableTerminalPaths: number;
   };
   cleanup: {
     acquiredSurfaces: number;
     exactProven: number;
     partial: number;
     unresolved: number;
+  };
+  /** Canonical source-only reuse gate, not a live arena readiness claim. */
+  reset: {
+    status: ArenaResetClosureAssessment["status"] | "not-assessed";
+    reuseEligibility: ArenaResetClosureAssessment["reuseEligibility"] | "not-assessed";
+    blockers: readonly string[];
+    warnings: readonly string[];
   };
   globalState: {
     arenaScopedMutations: number;
@@ -286,6 +298,13 @@ export function buildArenaEngineeringProjection(
       `${arena.cleanupSurfaces.unresolved} cleanup surface assessment(s) remain unresolved.`,
     );
   }
+  if (arena.resetClosure && arena.resetClosure.status !== "complete") {
+    unresolved.push(
+      "Arena reset/reuse source closure remains " + arena.resetClosure.status +
+      (arena.resetClosure.blockers.length > 0
+        ? ": " + arena.resetClosure.blockers.join(", ") : "") + ".",
+    );
+  }
   if (
     arena.globalState &&
     arena.globalState.unleasedArenaMutations > 0
@@ -391,6 +410,10 @@ export function buildArenaEngineeringProjection(
       partial: arena.lifecycle?.partial ?? 0,
       unresolved:
         arena.lifecycle?.unresolved ?? 0,
+      sourceReachableTerminalPaths:
+        arena.lifecycle?.terminalEntryPaths?.filter(
+          (item) => item.status === "source-reachable",
+        ).length ?? 0,
     },
     cleanup: {
       acquiredSurfaces:
@@ -402,6 +425,12 @@ export function buildArenaEngineeringProjection(
         arena.cleanupSurfaces?.partial ?? 0,
       unresolved:
         arena.cleanupSurfaces?.unresolved ?? 0,
+    },
+    reset: {
+      status: arena.resetClosure?.status ?? "not-assessed",
+      reuseEligibility: arena.resetClosure?.reuseEligibility ?? "not-assessed",
+      blockers: [...(arena.resetClosure?.blockers ?? [])],
+      warnings: [...(arena.resetClosure?.warnings ?? [])],
     },
     globalState: {
       arenaScopedMutations:
