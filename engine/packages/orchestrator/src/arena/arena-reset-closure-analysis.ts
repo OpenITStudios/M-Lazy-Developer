@@ -172,6 +172,10 @@ export function assessArenaResetClosure(input: {
       ? ["cleanupLedgerPartial"] : []),
     ...((input.cleanup.asyncResetCompletion?.earlyIdlePaths ?? 0) > 0
       ? ["idleBeforeCleanupSettlementSourceCandidate"] : []),
+    // Settlement alone is not positive evidence of VERIFY_EMPTY. This is a
+    // source warning, not a claim that admission occurred with dirty blocks.
+    ...((input.cleanup.asyncResetCompletion?.settlementOnlyAdmissions ?? 0) > 0
+      ? ["startAdmissionReliesOnCleanupSettlementSourceCandidate"] : []),
   ];
 
   const status:

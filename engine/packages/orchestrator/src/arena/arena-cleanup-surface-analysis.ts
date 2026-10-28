@@ -98,6 +98,8 @@ export interface ArenaResetCompletionSourceSummary {
   swallowedFailurePaths: number;
   partialResultPaths: number;
   earlyIdlePaths: number;
+  /** Same-source start waits for cleanup settlement before countdown. */
+  settlementOnlyAdmissions?: number;
   observations: readonly ({
     scriptId: string;
   } & NonNullable<ParsedScriptFile["arenaResetCompletionEvidence"]>[number])[];
@@ -895,6 +897,8 @@ export function analyzeArenaCleanupSurfaces(
       item.kind === "partial-reset-result-candidate").length,
     earlyIdlePaths: observations.filter(item =>
       item.kind === "idle-before-cleanup-settlement-candidate").length,
+    settlementOnlyAdmissions: observations.filter(item =>
+      item.kind === "start-admission-on-cleanup-settlement-candidate").length,
     observations,
   };
 

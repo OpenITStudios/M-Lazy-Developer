@@ -17,7 +17,8 @@ export type ScriptCleanupResourceSurface =
 export type ScriptArenaResetCompletionKind =
   | "reset-error-swallowed-candidate"
   | "partial-reset-result-candidate"
-  | "idle-before-cleanup-settlement-candidate";
+  | "idle-before-cleanup-settlement-candidate"
+  | "start-admission-on-cleanup-settlement-candidate";
 
 export interface ScriptArenaResetCompletionEvidence {
   readonly kind: ScriptArenaResetCompletionKind;
@@ -454,6 +455,53 @@ export function deriveScriptArenaResetCompletionEvidence(
           "Source idle-session write precedes cleanup handoff; admission guards are assessed separately.");
       }
     }
+
+    // A start callback can be gated by session state and party readiness,
+    // yet only wait on cleanup Promise settlement. This is a source-local
+    // admission candidate, NOT proof that reset actually failed or that
+    // every external baseline guard is absent.
+    if (methodName === "startGame") {
+      const sameOwnerCall = (
+        node: ts.Node, member: string,
+      ): node is ts.CallExpression & { expression: ts.PropertyAccessExpression } =>
+        propertyCall(node, member) && (
+          node.expression.expression.kind === ts.SyntaxKind.ThisKeyword ||
+          (className.length > 0 &&
+            ts.isIdentifier(node.expression.expression) &&
+            node.expression.expression.text === className)
+        );
+      const inspectWaitThen = (node: ts.Node): void => {
+        if (node !== owner.body &&
+            (ts.isArrowFunction(node) || ts.isFunctionExpression(node) ||
+             ts.isMethodDeclaration(node) || ts.isFunctionDeclaration(node))) return;
+        if (propertyCall(node, "then") &&
+            sameOwnerCall(node.expression.expression, "waitForArenaCleanup")) {
+          const callback = node.arguments[0];
+          if (callback && (ts.isArrowFunction(callback) ||
+              ts.isFunctionExpression(callback)) && ts.isBlock(callback.body)) {
+            const countdownSites: ts.CallExpression[] = [];
+            const scanCallback = (child: ts.Node): void => {
+              if (child !== callback.body &&
+                  (ts.isArrowFunction(child) || ts.isFunctionExpression(child) ||
+                   ts.isMethodDeclaration(child) || ts.isFunctionDeclaration(child))) return;
+              if (sameOwnerCall(child, "beginCountdown")) {
+                countdownSites.push(child);
+              }
+              ts.forEachChild(child, scanCallback);
+            };
+            scanCallback(callback.body);
+            for (const countdownSite of countdownSites) {
+              emit("start-admission-on-cleanup-settlement-candidate",
+                countdownSite,
+                "startGame invokes beginCountdown from a waitForArenaCleanup(...).then callback. Promise settlement orders the handoff, but its reset completeness and baseline verification are not established by this site.");
+            }
+          }
+        }
+        ts.forEachChild(node, inspectWaitThen);
+      };
+      inspectWaitThen(owner.body);
+    }
+
     if (!relevant) return;
 
     const skippedResultIds = new Set<string>();
