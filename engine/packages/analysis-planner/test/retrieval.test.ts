@@ -98,6 +98,38 @@ describe("retrieveResources", () => {
     expect(prepared("arena return").same).toBeGreaterThan(0);
   });
 
+  it("preserves dense-reference BM25 scores with sparse postings, Unicode and duplicate IDs", () => {
+    // Frozen from the pre-index, full-document-scan scorer; do not regenerate
+    // expectations from the optimized scorer under test.
+    const docs = [
+      { id: "same", text: "arena reset arena player score" },
+      { id: "other", text: "score world loading tick" },
+      { id: "same", text: "state persistence 重大 inventory" },
+      { id: "last", text: "minecraft ナビゲーション world state" },
+      { id: "empty", text: "" },
+      { id: "other", text: "player state arena" },
+    ];
+    const scorer = prepareTextDocumentScorer(docs);
+    const cases: readonly [string, Readonly<Record<string, number>>][] = [
+      ["arena player", { other: 1, same: 0.9782417292157339 }],
+      ["world state", {
+        last: 1, other: 0.4522917024736386, same: 0.4023453795010897,
+      }],
+      ["重大 persistence", { same: 1 }],
+      ["minecraft ナビゲーション", { last: 1 }],
+      ["unmatched", {}],
+      ["", {}],
+      ["arena arena score", { other: 0.5111211115486302, same: 1 }],
+      ["player state arena world", {
+        last: 0.5567977839099212, other: 1,
+        same: 0.22402501567260294,
+      }],
+    ];
+    for (const [query, expected] of cases) {
+      expect(scorer(query)).toEqual(expected);
+    }
+  });
+
   it("keeps routing structural and authority signals explicit", () => {
     const results = retrieveResources(resources, edges, {
       text: "inventory reconnect lifecycle",

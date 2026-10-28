@@ -911,6 +911,34 @@ describe("selected-map Knowledge consumption (read-only)", () => {
       item.editionCheck === "NOT_EVALUATED")).toBe(true);
   });
 
+  it("rejects one-term coincidences and missing source provenance after preselection", () => {
+    const lookup = deriveAuditModelKnowledgeLookup(
+      intent,
+      "Why is arena cleanup missing inventory reset?",
+      ["mechanic:arena-cleanup"],
+    )!;
+    const distractor = {
+      ...catalog.facts[0]!, id: "noise.arena-only",
+      subject: "arena", statement: "Arena players can wait.",
+      capabilityTags: [], riskSurfaces: [],
+    };
+    const missingSource = {
+      ...catalog.facts[0]!, id: "noise.missing-provenance",
+      sourceIds: ["source:unavailable"],
+    };
+    const selection = retrieveAuditTaskKnowledge({
+      catalog: { ...catalog, facts: [
+        ...catalog.facts, distractor, missingSource,
+      ] },
+      lookup, intent, edition: "bedrock",
+    });
+    expect(selection.references.map(item => item.knowledgeId))
+      .toEqual(["cleanup.arena-state-reset"]);
+    expect(selection.references.every(item =>
+      item.authority === "RETRIEVED_REFERENCE_NOT_BUG_PROOF"
+    )).toBe(true);
+  });
+
   it("does not retrieve from goal-only/historical-looking prompts without selected artifact grounding", () => {
     const lookup = deriveAuditModelKnowledgeLookup(
       intent, "Maybe a historical arena was faulty.", ["mechanic:missing"],

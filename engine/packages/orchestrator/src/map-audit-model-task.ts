@@ -335,16 +335,28 @@ function prepareAuditTaskKnowledgeIndex(
       item.id, item.domain, item.subject, statement, ...extra,
     ].join(" "),
   }));
+  // Index the same Unicode terms already used by candidate matching. The
+  // lookup contains only entry POSITIONS; it is rebuilt for each audit and
+  // cannot supply new Knowledge facts or cross-map scope.
+  const bodyTerms = documents.map(doc => new Set(
+    doc.text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [],
+  ));
+  const entriesByTerm = new Map<string, number[]>();
+  for (let index = 0; index < bodyTerms.length; index += 1) {
+    for (const term of bodyTerms[index]!) {
+      const matches = entriesByTerm.get(term);
+      if (matches) matches.push(index);
+      else entriesByTerm.set(term, [index]);
+    }
+  }
   return {
     catalog,
     edition,
     sourcesById,
     entries,
     score: prepareTextDocumentScorer(documents),
-    // Exact Unicode token vocabulary from the original candidate filter.
-    bodyTerms: documents.map(doc => new Set(
-      doc.text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [],
-    )),
+    bodyTerms,
+    entriesByTerm,
   };
 }
 
@@ -415,9 +427,25 @@ export function retrieveAuditTaskKnowledge(input: {
     input.preparedKnowledge.edition === edition
       ? input.preparedKnowledge
       : prepareAuditTaskKnowledgeIndex(input.catalog, edition);
-  const { sourcesById, entries, bodyTerms } = prepared;
+  const { sourcesById, entries, bodyTerms, entriesByTerm } = prepared;
   const scores = prepared.score(input.lookup.query);
-  const candidates = entries.flatMap(({ kind, item, statement, extra }, index) => {
+  // Only records sharing the map's authored mechanic vocabulary can pass the
+  // existing >=2 (or >=1) gate. Count matches using the once-built postings
+  // instead of rescanning every unrelated catalog entry for every packet.
+  const mechanicMatchCounts = new Map<number, number>();
+  for (const token of mechanicTokens) {
+    for (const index of entriesByTerm.get(token) ?? []) {
+      mechanicMatchCounts.set(index, (mechanicMatchCounts.get(index) ?? 0) + 1);
+    }
+  }
+  const minimumMatch = mechanicTokens.length >= 2 ? 2 : 1;
+  const candidateIndices = [...mechanicMatchCounts]
+    .filter(([, count]) => count >= minimumMatch)
+    .map(([index]) => index)
+    .sort((a, b) => a - b);
+  const candidates = candidateIndices.flatMap((index) => {
+    const { kind, item, statement } = entries[index]!;
+    if ((scores[item.id] ?? 0) <= 0) return [];
     const sourceIds = item.sourceIds;
     const sources = sourceIds.flatMap((id) => {
       const source = sourcesById.get(id);
@@ -434,11 +462,6 @@ export function retrieveAuditTaskKnowledge(input: {
       bodyTermsForEntry?.has(token));
     const matchedQuestionTerms = questionTerms.filter((token) =>
       bodyTermsForEntry?.has(token));
-    const minimumMatch = mechanicTokens.length >= 2 ? 2 : 1;
-    if (
-      matchedMechanicTerms.length < minimumMatch ||
-      (scores[item.id] ?? 0) <= 0
-    ) return [];
 
     return [{
       record: {

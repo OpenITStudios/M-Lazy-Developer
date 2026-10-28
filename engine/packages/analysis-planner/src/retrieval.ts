@@ -377,20 +377,37 @@ export function prepareTextDocumentScorer(
   });
   const averageLength = prepared.reduce((sum, item) => sum + item.length, 0) /
     Math.max(1, prepared.length);
+  // Build a per-batch read-only inverted index. For sparse map questions,
+  // score only documents containing a query term instead of traversing the
+  // entire Knowledge corpus for every model task. Indices are POSITIONS (not
+  // IDs): repeated document IDs still retain the original last-writer and
+  // maximum-score normalization semantics.
+  const documentsByTerm = new Map<string, number[]>();
+  for (let index = 0; index < prepared.length; index += 1) {
+    for (const word of prepared[index]!.frequency.keys()) {
+      const positions = documentsByTerm.get(word);
+      if (positions) positions.push(index);
+      else documentsByTerm.set(word, [index]);
+    }
+  }
   return (query: string): Readonly<Record<string, number>> => {
     const terms = [...new Set(tokenize(query))];
     if (terms.length === 0 || prepared.length === 0) return {};
     const documentFrequency = new Map<string, number>();
+    const candidatePositions = new Set<number>();
     for (const term of terms) {
-      let count = 0;
-      for (const document of prepared) {
-        if (document.frequency.has(term)) count += 1;
-      }
-      documentFrequency.set(term, count);
+      const positions = documentsByTerm.get(term) ?? [];
+      documentFrequency.set(term, positions.length);
+      for (const position of positions) candidatePositions.add(position);
     }
     const raw = new Map<string, number>();
     let maximum = 0;
-    for (const document of prepared) {
+    // Preserve the original document order and per-document query-term order:
+    // floating point addition, duplicate-ID overwrites and maximum score
+    // must be identical to the full-scan reference implementation.
+    const orderedCandidates = [...candidatePositions].sort((a, b) => a - b);
+    for (const position of orderedCandidates) {
+      const document = prepared[position]!;
       let score = 0;
       for (const term of terms) {
         const tf = document.frequency.get(term) ?? 0;
