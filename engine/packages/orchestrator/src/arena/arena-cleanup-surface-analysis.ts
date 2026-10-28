@@ -100,6 +100,8 @@ export interface ArenaResetCompletionSourceSummary {
   earlyIdlePaths: number;
   /** Same-source start waits for cleanup settlement before countdown. */
   settlementOnlyAdmissions?: number;
+  /** Direct source reset-world requests needing positive baseline evidence. */
+  worldResetRequests?: number;
   observations: readonly ({
     scriptId: string;
   } & NonNullable<ParsedScriptFile["arenaResetCompletionEvidence"]>[number])[];
@@ -899,6 +901,8 @@ export function analyzeArenaCleanupSurfaces(
       item.kind === "idle-before-cleanup-settlement-candidate").length,
     settlementOnlyAdmissions: observations.filter(item =>
       item.kind === "start-admission-on-cleanup-settlement-candidate").length,
+    worldResetRequests: observations.filter(item =>
+      item.kind === "world-baseline-reset-request-candidate").length,
     observations,
   };
 

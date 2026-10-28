@@ -38,6 +38,7 @@ export interface ArenaResetClosureAssessment {
     entityRemoveTerminalizationRisks: number;
     globalRuleConflicts: number;
     baselineRestoreVerificationGaps: number;
+    baselinePositiveProofMissing: number;
     entityPopulationIdentityGaps: number;
     entityMultiplicityContradictions: number;
     ownedPopulationCleanupGaps: number;
@@ -147,6 +148,14 @@ export function assessArenaResetClosure(input: {
       input.worldRules.conflictingGlobalRules,
     baselineRestoreVerificationGaps:
       input.baselineRestore.unresolved,
+    // A direct game/arena world-reset request is positive evidence of
+    // restoration *obligation*, not successful restoration. The generic
+    // mutation ordering proof has no such witness when candidates=0;
+    // absence of findings must not be upgraded to READY/reusable.
+    baselinePositiveProofMissing:
+      (input.cleanup.asyncResetCompletion?.worldResetRequests ?? 0) > 0 &&
+      input.baselineRestore.verified === 0
+        ? 1 : 0,
     entityPopulationIdentityGaps:
       input.entityPopulation.registryAuthorities > 0
         ? input.entityPopulation.unresolvedAuthorities

@@ -18,7 +18,8 @@ export type ScriptArenaResetCompletionKind =
   | "reset-error-swallowed-candidate"
   | "partial-reset-result-candidate"
   | "idle-before-cleanup-settlement-candidate"
-  | "start-admission-on-cleanup-settlement-candidate";
+  | "start-admission-on-cleanup-settlement-candidate"
+  | "world-baseline-reset-request-candidate";
 
 export interface ScriptArenaResetCompletionEvidence {
   readonly kind: ScriptArenaResetCompletionKind;
@@ -528,6 +529,19 @@ export function deriveScriptArenaResetCompletionEvidence(
           node.expression.expression.name.text === "skippedChunks" &&
           ts.isIdentifier(node.expression.expression.expression)) {
         skippedPushes.push(node);
+      }
+      // A world-reset request in an arena/game cleanup path establishes
+      // a baseline restoration obligation, NOT a successful world reset.
+      // Keep source identity: unrelated developer-only startReset callers
+      // and generic Map.resetMap() must not satisfy this ownership gate.
+      if (propertyCall(node, "resetMap") &&
+          ts.isIdentifier(node.expression.expression) &&
+          /(?:reset|arena|world|structure)/i.test(
+            node.expression.expression.text,
+          ) &&
+          /(?:arena|game|block|world)/i.test(methodName)) {
+        emit("world-baseline-reset-request-candidate", node,
+          "Arena/game cleanup requests a world reset; a returned Promise does not by itself verify its block baseline or completed chunk coverage.");
       }
       if (propertyCall(node, "catch") && !ts.isVoidExpression(node.parent)) {
         const callback = node.arguments[0];
