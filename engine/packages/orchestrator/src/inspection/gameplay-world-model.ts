@@ -14,6 +14,9 @@ import type {
   ArenaCleanupSurfaceAnalysis,
 } from "../arena/arena-cleanup-surface-analysis.js";
 import type {
+  ArenaResetClosureAssessment,
+} from "../arena/arena-reset-closure-analysis.js";
+import type {
   ArenaLayoutReconciliation,
 } from "../arena/arena-layout-reconciliation.js";
 import type {
@@ -233,6 +236,11 @@ export interface GameplayWorldModel {
       exactProven: number;
       partial: number;
       unresolved: number;
+      /** Source-only reset/reuse gate; never a Minecraft runtime PASS. */
+      resetClosure?: Pick<
+        ArenaResetClosureAssessment,
+        "status" | "reuseEligibility" | "blockers"
+      >;
       resourceLedger: {
         resources: number;
         complete: number;
@@ -1038,6 +1046,7 @@ export interface GameplayWorldModelSource {
     capacity?: ArenaCapacityExtractionResult;
     lifecycle?: ArenaLifecycleAnalysis;
     cleanupSurfaces?: ArenaCleanupSurfaceAnalysis;
+    resetClosure?: ArenaResetClosureAssessment;
     stateIsolation?: ArenaStateIsolationAnalysis;
     globalState?: ArenaGlobalStateAnalysis;
     stressPlan?: ArenaStressPlan;
@@ -1261,7 +1270,10 @@ export function deriveGameplayWorldModel(
       source.arena.cleanupSurfaces.unresolved > 0 ||
       source.arena.cleanupSurfaces.lifecycle
         .unresolved > 0 ||
-      (source.arena.cleanupSurfaces.ledger?.missing ?? 0) > 0;
+      (source.arena.cleanupSurfaces.ledger?.missing ?? 0) > 0 ||
+      (arenaDetected &&
+        source.arena.resetClosure !== undefined &&
+        source.arena.resetClosure.status !== "complete");
     runtimeSurfaces.push({
       id: "runtime:arena-cleanup",
       label: "Arena cleanup and reuse",
@@ -2012,6 +2024,13 @@ export function deriveGameplayWorldModel(
         unresolved:
           source.arena.cleanupSurfaces
             ?.unresolved ?? 0,
+        ...(source.arena.resetClosure === undefined ? {} : {
+          resetClosure: {
+            status: source.arena.resetClosure.status,
+            reuseEligibility: source.arena.resetClosure.reuseEligibility,
+            blockers: [...source.arena.resetClosure.blockers],
+          },
+        }),
         resourceLedger: {
           resources:
             source.arena.cleanupSurfaces
