@@ -184,6 +184,8 @@ export interface OwnedLootTableSourceRoute {
      */
     readonly sourceEventPaths?: readonly {
       readonly eventId: string;
+      /** Exact authored local trigger sequence from the event root. */
+      readonly eventChain?: readonly string[];
       readonly sourcePath: readonly string[];
       readonly conditioned: boolean;
       /** Built-in source event declaration, not proof it ran on this spawn mode. */
@@ -303,6 +305,9 @@ export function classifyOwnedLootTableSourceRoutes(
     if (supported.length > 0) {
       const witness = supported.map(candidate => ({
         eventId: candidate.viaEvent!,
+        ...(candidate.sourceEventChain?.length &&
+            candidate.sourceEventChain.length > 1
+          ? { eventChain: [...candidate.sourceEventChain] } : {}),
         sourcePath: [...(candidate.sourceEventPath ?? [])],
         conditioned: candidate.sourceConditioned === true,
         spawnHookCandidate: candidate.viaEvent === "minecraft:entity_spawned",

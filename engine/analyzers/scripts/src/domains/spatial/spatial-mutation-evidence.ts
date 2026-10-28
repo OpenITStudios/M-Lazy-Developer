@@ -22,6 +22,9 @@ export interface ScriptSpatialMutationEvidence {
   source: SourceRef;
   position: SafeConfigExpression;
   identifier?: string;
+  /** Exact source of a resolved authored identifier; never runtime spawn proof. */
+  identifierValueSource?: SourceRef;
+  identifierResolution?: "inline-literal" | "unique-module-literal";
   /** Authored teleport options, not observed dimension/arrival evidence. */
   dimensionExpression?: string;
   checkForBlocks?: boolean;
@@ -127,6 +130,112 @@ function literalString(
   return undefined;
 }
 
+/** Resolve ONLY uniquely authored, top-level literal bindings. Generated
+ * script bundles often compile const into var; that spelling alone is not
+ * enough: shadowing, subsequent writes, dynamic evaluation or other bindings
+ * must all prevent source-level identity attribution.
+ *
+ * This does not establish that an execution region is reached or that a
+ * Dimension.spawnEntity request succeeds in Minecraft.
+ */
+function moduleSpawnIdentifiers(
+  file: ts.SourceFile,
+  source: SourceRef,
+): ReadonlyMap<string, {
+  identifier: string; valueSource: SourceRef; declarationEnd: number;
+}> {
+  const candidates = new Map<string, {
+    identifier: string;
+    declaration: ts.VariableDeclaration;
+    valueSource: SourceRef;
+    declarationEnd: number;
+  }>();
+  for (const statement of file.statements) {
+    if (!ts.isVariableStatement(statement) ||
+        (statement.declarationList.flags & ts.NodeFlags.Let) !== 0) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name)) continue;
+      const value = literalString(declaration.initializer);
+      if (value === undefined) continue;
+      candidates.set(declaration.name.text, {
+        identifier: value,
+        declaration,
+        valueSource: nodeSource(file, declaration.initializer!, source),
+        declarationEnd: declaration.getEnd(),
+      });
+    }
+  }
+  if (candidates.size === 0) return new Map();
+  const bindingCounts = new Map<string, number>();
+  const writes = new Set<string>();
+  let dynamicEval = false;
+  const bind = (name: ts.BindingName): void => {
+    if (ts.isIdentifier(name)) {
+      bindingCounts.set(name.text, (bindingCounts.get(name.text) ?? 0) + 1);
+      return;
+    }
+    for (const element of name.elements) {
+      if (ts.isBindingElement(element)) bind(element.name);
+    }
+  };
+  const write = (node: ts.Node): void => {
+    // Assignment destructuring may contain shorthand property nodes rather
+    // than bare identifiers. Conservatively taint every identifier below an
+    // authored assignment target, including nested patterns.
+    if (ts.isIdentifier(node)) writes.add(node.text);
+    else ts.forEachChild(node, write);
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isVariableDeclaration(node) || ts.isParameter(node) ||
+        ts.isBindingElement(node)) {
+      bind(node.name);
+    } else if ((ts.isFunctionDeclaration(node) ||
+                ts.isClassDeclaration(node) ||
+                ts.isFunctionExpression(node) ||
+                ts.isClassExpression(node)) && node.name) {
+      bind(node.name);
+    } else if (ts.isImportClause(node) && node.name) {
+      bind(node.name);
+    } else if (ts.isImportSpecifier(node)) {
+      bind(node.name);
+    } else if (ts.isNamespaceImport(node)) {
+      bind(node.name);
+    }
+    if (ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) {
+      write(node.left);
+    } else if ((ts.isPrefixUnaryExpression(node) ||
+                ts.isPostfixUnaryExpression(node)) &&
+               (node.operator === ts.SyntaxKind.PlusPlusToken ||
+                node.operator === ts.SyntaxKind.MinusMinusToken)) {
+      write(node.operand);
+    } else if (ts.isForOfStatement(node) || ts.isForInStatement(node)) {
+      if (ts.isExpression(node.initializer)) write(node.initializer);
+    } else if (ts.isCallExpression(node) &&
+               ts.isIdentifier(node.expression) &&
+               node.expression.text === "eval") {
+      dynamicEval = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  const result = new Map<string, {
+    identifier: string; valueSource: SourceRef; declarationEnd: number;
+  }>();
+  if (dynamicEval) return result;
+  for (const [name, candidate] of candidates) {
+    if (bindingCounts.get(name) === 1 && !writes.has(name)) {
+      result.set(name, {
+        identifier: candidate.identifier,
+        valueSource: candidate.valueSource,
+        declarationEnd: candidate.declarationEnd,
+      });
+    }
+  }
+  return result;
+}
+
 function expressionAt(
   call: ts.CallExpression,
   index: number,
@@ -179,6 +288,7 @@ export function deriveScriptSpatialMutations(
   );
   const mutations: ScriptSpatialMutationEvidence[] = [];
   const rejected: ScriptSpatialMutationRejection[] = [];
+  const identifiers = moduleSpawnIdentifiers(file, source);
 
   const reject = (
     call: ts.CallExpression,
@@ -234,9 +344,17 @@ export function deriveScriptSpatialMutations(
 
       if (method === "spawnEntity") {
         const position = expressionAt(node, 1);
-        const identifier = literalString(
-          node.arguments[0],
-        );
+        const identifier = literalString(node.arguments[0]);
+        const binding = node.arguments[0] &&
+          ts.isIdentifier(node.arguments[0])
+          ? identifiers.get(node.arguments[0].text)
+          : undefined;
+        const resolved = identifier === undefined ? binding?.identifier : identifier;
+        // Respect declaration order even when a call is inside a function:
+        // a hoisted var may be undefined if executed before initialization.
+        const valueSource = binding && node.arguments[0] &&
+          binding.declarationEnd < node.arguments[0].getStart(file)
+          ? binding.valueSource : undefined;
         if (!position) {
           reject(
             node,
@@ -250,9 +368,15 @@ export function deriveScriptSpatialMutations(
             receiverText,
             source: sourceRef,
             position,
-            ...(identifier === undefined
-              ? {}
-              : { identifier }),
+            ...(identifier !== undefined
+              ? { identifier,
+                  identifierResolution: "inline-literal" as const,
+                  identifierValueSource: nodeSource(file, node.arguments[0]!, source) }
+              : valueSource === undefined
+                ? {}
+                : { identifier: resolved!,
+                    identifierResolution: "unique-module-literal" as const,
+                    identifierValueSource: valueSource }),
             ...(assignedIdentifier(node) === undefined
               ? {}
               : { resultBinding: assignedIdentifier(node)! }),

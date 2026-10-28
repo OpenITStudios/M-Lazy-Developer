@@ -13,14 +13,18 @@ function mergeComponentData(
 }
 
 const MAX_EVENT_PATHS = 64;
+const MAX_TRIGGER_DEPTH = 8;
 interface EventPath {
   groups: readonly string[];
   sourcePaths: readonly string[];
+  eventChain: readonly string[];
   conditioned: boolean;
 }
 
 function enumerateEventPaths(
   program: EntityEventProgram,
+  rootEventId: string,
+  events: Readonly<ParsedEntityDefinition["events"]>,
 ): { paths: EventPath[]; incomplete: boolean } {
   let incomplete = false;
   const bounded = (paths: EventPath[]): EventPath[] => {
@@ -37,6 +41,7 @@ function enumerateEventPaths(
       const applied: EventPath = {
         groups: [...state.groups],
         sourcePaths: [...state.sourcePaths, node.path],
+        eventChain: [...state.eventChain],
         conditioned: state.conditioned ||
           node.filters !== undefined || node.kind === "randomize",
       };
@@ -44,7 +49,29 @@ function enumerateEventPaths(
         const groups = new Set(applied.groups);
         for (const group of node.removeGroups ?? []) groups.delete(group);
         for (const group of node.addGroups ?? []) groups.add(group);
-        results.push({ ...applied, groups: [...groups].sort() });
+        // A local event trigger is a source-authored transition; follow it
+        // after the direct add/remove operation, with branch state intact.
+        // Unknown, cyclic or excessively deep targets must not be credited
+        // as a safe final active-group state.
+        let continuation: EventPath[] = [{
+          ...applied, groups: [...groups].sort(),
+        }];
+        for (const targetId of node.triggerEvents ?? []) {
+          const target = events[targetId]?.program;
+          if (!target || continuation.some(item =>
+            item.eventChain.includes(targetId) ||
+            item.eventChain.length >= MAX_TRIGGER_DEPTH)) {
+            incomplete = true;
+            continuation = [];
+            break;
+          }
+          continuation = walk(target, continuation.map(item => ({
+            ...item,
+            eventChain: [...item.eventChain, targetId],
+          })));
+          if (incomplete || continuation.length === 0) break;
+        }
+        results.push(...continuation);
       } else if (node.kind === "sequence") {
         let next: EventPath[] = [applied];
         for (const step of node.steps ?? []) {
@@ -62,6 +89,7 @@ function enumerateEventPaths(
         results.push({
           groups: [...state.groups],
           sourcePaths: [...state.sourcePaths, node.path + ":filtered-out"],
+          eventChain: [...state.eventChain],
           conditioned: true,
         });
       }
@@ -69,7 +97,9 @@ function enumerateEventPaths(
     }
     return bounded(results);
   };
-  const paths = walk(program, [{ groups: [], sourcePaths: [], conditioned: false }]);
+  const paths = walk(program, [{
+    groups: [], sourcePaths: [], eventChain: [rootEventId], conditioned: false,
+  }]);
   return { paths, incomplete };
 }
 
@@ -98,7 +128,7 @@ export function deriveEntityStateGraph(entity: ParsedEntityDefinition): EntitySt
       staticAnalysisLimits.push(eventId + ": missing structured event semantics");
       continue;
     }
-    const result = enumerateEventPaths(event.program);
+    const result = enumerateEventPaths(event.program, eventId, entity.events);
     if (result.incomplete) {
       staticAnalysisLimits.push(eventId + ": unsupported or bounded event alternatives");
       continue;
@@ -123,6 +153,8 @@ export function deriveEntityStateGraph(entity: ParsedEntityDefinition): EntitySt
         viaEvent: eventId,
         sourceConditioned: path.conditioned,
         sourceEventPath: [...path.sourcePaths],
+        ...(path.eventChain.length > 1
+          ? { sourceEventChain: [...path.eventChain] } : {}),
       });
       pathIndex += 1;
     }
@@ -135,6 +167,7 @@ export function deriveEntityStateGraph(entity: ParsedEntityDefinition): EntitySt
       groups: candidate.activeGroups,
       viaEvent: candidate.viaEvent,
       sourceEventPath: candidate.sourceEventPath,
+      sourceEventChain: candidate.sourceEventChain,
     });
     if (!unique.has(key)) unique.set(key, candidate);
   }

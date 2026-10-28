@@ -71,3 +71,68 @@ describe("script non-block spatial mutation evidence", () => {
     });
   });
 });
+
+
+describe("unique module literal spawn identifiers", () => {
+  it("recognizes generated var and const literal types with exact declaration evidence", () => {
+    const result = deriveScriptSpatialMutations([
+      'var PATHWAY = "demo:pathway";',
+      'const FLAG_POLE = "demo:flag_pole";',
+      'function spawn(dimension, location) {',
+      ' dimension.spawnEntity(PATHWAY, location);',
+      ' dimension.spawnEntity(FLAG_POLE, location);',
+      ' dimension.spawnEntity("demo:direct", location);',
+      '}',
+    ].join("\n"), source);
+    const items = result.mutations.filter(item => item.kind === "entity-spawn");
+    expect(items.map(item => item.identifier)).toEqual([
+      "demo:pathway", "demo:flag_pole", "demo:direct",
+    ]);
+    expect(items.map(item => item.identifierResolution)).toEqual([
+      "unique-module-literal", "unique-module-literal", "inline-literal",
+    ]);
+    expect(items[0]?.identifierValueSource?.range?.lineStart).toBe(1);
+    expect(items[1]?.identifierValueSource?.range?.lineStart).toBe(2);
+  });
+
+  it("rejects let, shadowed, reassigned, destructured, and runtime-derived spawn IDs", () => {
+    const sourceText = [
+      'let mutable = "demo:mutable";',
+      'var changed = "demo:changed";',
+      'changed = getFromPlayer();',
+      'const shadowed = "demo:shadowed";',
+      'function shadow(shadowed) { return shadowed; }',
+      'const objectConfig = { typeId: "demo:object" };',
+      'const destructured = "demo:destructured";',
+      '({ destructured } = getConfig());',
+      'function spawn(dimension, position) {',
+      ' dimension.spawnEntity(mutable, position);',
+      ' dimension.spawnEntity(changed, position);',
+      ' dimension.spawnEntity(shadowed, position);',
+      ' dimension.spawnEntity(objectConfig.typeId, position);',
+      ' dimension.spawnEntity(destructured, position);',
+      ' dimension.spawnEntity(config.typeId, position);',
+      '}',
+    ].join("\n");
+    const extraction = deriveScriptSpatialMutations(sourceText, source);
+    expect(extraction.mutations.filter(item => item.kind === "entity-spawn")
+      .every(item => item.identifier === undefined)).toBe(true);
+  });
+
+  it("does not resolve a hoisted module var used before initialization on the same line", () => {
+    const text = 'dimension.spawnEntity(ID, P); var ID = "demo:late";';
+    const item = deriveScriptSpatialMutations(text, source).mutations[0];
+    expect(item?.kind).toBe("entity-spawn");
+    expect(item?.identifier).toBeUndefined();
+  });
+
+  it("does not infer a constant when another declaration or eval may modify it", () => {
+    const text = [
+      'var ID = "demo:creeper";',
+      'function nested() { const ID = "demo:zombie"; }',
+      'dimension.spawnEntity(ID, P);',
+      'eval("ID = getName()");',
+    ].join("\n");
+    expect(deriveScriptSpatialMutations(text, source).mutations[0]?.identifier).toBeUndefined();
+  });
+});

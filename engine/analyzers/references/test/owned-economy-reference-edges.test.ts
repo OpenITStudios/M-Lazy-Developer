@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { SemanticGraph, type SemanticNode } from "../../../packages/graph/src/index.js";
+import type { SourceRef } from "../../../packages/project-model/src/index.js";
 import { classifyOwnedLootTableSourceRoutes, populateOwnedEconomyReferences } from "../src/populate-owned-economy-references.js";
 import { populateEntityLootTableEdges } from "../src/populate-entity-loot-table-edges.js";
 import { parseEntityDefinition } from "../../entities/src/index.js";
+import { parseScriptFile } from "../../scripts/src/index.js";
 import { matchPublishedVanillaLootSample } from "../src/published-vanilla-loot-samples.js";
 
 const artifactId = "art_frozen";
@@ -292,7 +294,7 @@ describe("source-only entity spawn and settled event group routes", () => {
     expect(graph.allEdges().every(edge => edge.status === "unresolved")).toBe(true);
   });
 
-  it("does not treat an unsupported or deferred trigger as a proven group activation", () => {
+  it("follows declared local event triggers but rejects unsupported activation", () => {
     const graph = new SemanticGraph();
     const entity = node("entity:delayed", "entity", "behavior_packs/a/entities/delayed.json", {});
     const parsed = parseEntityDefinition({
@@ -316,13 +318,107 @@ describe("source-only entity spawn and settled event group routes", () => {
       .find(edge => edge.targetIdentifier === target)!.id)!.rootActivation;
     expect(route("loot_tables/entities/effect.json")).toMatchObject({
       status: "GROUP_ADD_EVENT_DECLARED",
-      sourceEventIds: ["example:activate_later"],
-      sourceEventPaths: [expect.objectContaining({ spawnHookCandidate: false })],
+      sourceEventIds: ["example:activate_later", "minecraft:entity_spawned"],
+      sourceEventPaths: [
+        expect.objectContaining({ eventId: "example:activate_later", spawnHookCandidate: false }),
+        expect.objectContaining({ eventId: "minecraft:entity_spawned", spawnHookCandidate: true,
+          eventChain: ["minecraft:entity_spawned", "example:activate_later"] }),
+      ],
     });
     expect(route("loot_tables/entities/unknown.json")).toEqual({
       scope: "component-group", groupId: "unknown", status: "UNSUPPORTED_EVENT_PROGRAM",
     });
-    // We did not invent execution of the triggered event from its caller.
-    expect(route("loot_tables/entities/effect.json")?.sourceEventIds).not.toContain("minecraft:entity_spawned");
+    // A source-local trigger chain is authored evidence, not proof the native
+    // spawn hook fired or its downstream event executed in a running game.
+    expect(route("loot_tables/entities/effect.json")?.sourceEventPaths?.[1]).toMatchObject({
+      conditioned: false, eventChain: ["minecraft:entity_spawned", "example:activate_later"],
+    });
+  });
+});
+
+
+describe("indirect source event paths for loot group routes", () => {
+  it("retains exact root-to-trigger event provenance without claiming runtime activation", () => {
+    const root = node("entity:recruit", "entity", "behavior_packs/a/entities/recruit.json", {});
+    const table = node("table:armed", "loot_table", "behavior_packs/a/loot_tables/entities/armed.json", { pools: [] });
+    const graph = new SemanticGraph();
+    for (const v of [root, table]) graph.addNode(v);
+    populateOwnedEconomyReferences(graph, [root, table]);
+    graph.addEdge({ from: root.id, type: "REFERENCES", to: table.id,
+      targetIdentifier: "loot_tables/entities/armed.json", status: "resolved",
+      evidence: { source: { ...root.source,
+        jsonPointer: "/minecraft:entity/component_groups/armed/minecraft:equipment/table" } },
+    });
+    graph.addEdge({ from: table.id, type: "REFERENCES",
+      targetIdentifier: "loot_tables/entities/missing.json", status: "unresolved",
+      evidence: { source: { ...table.source, jsonPointer: "/pools/0/entries/0/name" } },
+    });
+    const parsed = parseEntityDefinition({ "minecraft:entity": {
+      description: { identifier: "demo:recruit" },
+      component_groups: { armed: { "minecraft:equipment": { table: "loot_tables/entities/armed.json" } } },
+      events: {
+        "minecraft:entity_spawned": { trigger: "demo:arm" },
+        "demo:arm": { add: { component_groups: ["armed"] } },
+      },
+    } }, root.source);
+    const route = [...classifyOwnedLootTableSourceRoutes(graph, [{ node: root, parsed }]).values()][0];
+    expect(route?.rootActivation?.sourceEventPaths).toEqual([
+      expect.objectContaining({ eventId: "demo:arm", spawnHookCandidate: false }),
+      expect.objectContaining({
+        eventId: "minecraft:entity_spawned",
+        eventChain: ["minecraft:entity_spawned", "demo:arm"],
+        spawnHookCandidate: true,
+      }),
+    ]);
+    expect(route?.proofCeiling).toBe("SOURCE_REFERENCES_ONLY");
+  });
+});
+
+
+describe("typed Dimension source identity from unique JavaScript literal", () => {
+  it("links only exact same-pack typed spawn sites, not lookalike methods or dynamic IDs", () => {
+    const graph = new SemanticGraph();
+    const entity = node("entity:guard", "entity", "behavior_packs/a/entities/guard.json", {});
+    const parsed = parseEntityDefinition({ "minecraft:entity": {
+      description: { identifier: "demo:guard" },
+      components: { "minecraft:loot": { table: "loot_tables/entities/missing.json" } },
+    } }, entity.source);
+    graph.addNode(entity);
+    populateEntityLootTableEdges(graph, [{ node: entity, parsed }], [entity]);
+    const text = [
+      'import { world } from "@minecraft/server";',
+      'var SPAWN_ID = "demo:guard";',
+      'const dimension = world.getDimension("overworld");',
+      'const impostor = { spawnEntity(a, b) {} };',
+      'function spawn(config) {',
+      '  dimension.spawnEntity(SPAWN_ID, { x: 0, y: 64, z: 0 });',
+      '  impostor.spawnEntity(SPAWN_ID, { x: 0, y: 64, z: 0 });',
+      '  dimension.spawnEntity(config.typeId, { x: 0, y: 64, z: 0 });',
+      '}',
+    ].join("\n");
+    const source = { artifactId,
+      relativePath: "behavior_packs/a/scripts/spawn.js" };
+    const script = parseScriptFile("spawn.js", text, source);
+    const sourceKey = (at: SourceRef) => [at.relativePath,
+      at.range?.lineStart ?? 0, at.range?.columnStart ?? 0,
+      at.range?.lineEnd ?? 0, at.range?.columnEnd ?? 0].join(":");
+    const typed = new Set(script.methodCalls.filter(call =>
+      call.method === "spawnEntity" && call.receiverType === "Dimension")
+      .map(call => sourceKey(call.source)));
+    const requests = (script.spatialMutations ?? [])
+      .filter(item => item.kind === "entity-spawn" &&
+        item.identifier !== undefined && typed.has(sourceKey(item.source)))
+      .map(item => ({ entityIdentifier: item.identifier!,
+        source: item.source, executionRegion: item.executionRegion }));
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.entityIdentifier).toBe("demo:guard");
+    expect(requests[0]?.source.range?.lineStart).toBe(6);
+    const routes = classifyOwnedLootTableSourceRoutes(graph,
+      [{ node: entity, parsed }], requests);
+    const unresolved = graph.unresolvedEdges()[0]!;
+    expect(routes.get(unresolved.id)?.sourceSpawnRequests).toEqual([
+      { source: requests[0]!.source, executionRegion: requests[0]!.executionRegion },
+    ]);
+    expect(routes.get(unresolved.id)?.proofCeiling).toBe("SOURCE_REFERENCES_ONLY");
   });
 });

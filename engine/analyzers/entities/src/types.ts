@@ -81,6 +81,8 @@ export interface EntityStateCandidate {
   /** Source-conditional possibility, not an observed runtime state. */
   sourceConditioned?: boolean;
   sourceEventPath?: readonly string[];
+  /** Authored root → local trigger chain, never evidence of delivered events. */
+  sourceEventChain?: readonly string[];
 }
 
 export interface EntityStateGraph {
