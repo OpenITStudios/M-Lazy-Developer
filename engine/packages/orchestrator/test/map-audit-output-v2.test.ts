@@ -1608,6 +1608,96 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("Pemeriksaan belum selesai");
   });
 
+  it("shows every unclassified proof obligation under the same NEED_VALIDATION label", () => {
+    const report = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base,
+        auditObligations: [{
+          id: "source:unknown", source: "detection-gap", stage: "UNDERSTAND",
+          title: "Reset state ownership unclear",
+          reason: "No causal owner found for reset",
+          missingProof: "Authoritative state writer",
+          validationTest: "Trace arena reset through owner writes",
+          validationGroupKey: "reset:owner",
+          subjectIds: ["reset:arena"],
+          componentIds: [],
+          evidenceIds: ["current", "old"],
+        }, {
+          id: "bug:pending", source: "counterproof-search", stage: "PROVE",
+          title: "Counter-proof for reconnect",
+          reason: "A competing guard may prevent the issue",
+          missingProof: "Guard ownership evidence",
+          validationTest: "Trace guard across reconnect",
+          validationGroupKey: "reconnect:guard",
+          subjectIds: [], componentIds: [], evidenceIds: [],
+        }],
+        unresolved: {
+          ...base.unresolved, total: 5,
+          needValidationIds: ["bug:pending", "dm:pending"],
+          auditObligationIds: ["source:unknown", "bug:pending"],
+          unknownSurfaceIds: ["surface:unresolved"],
+          unresolvedSourceLinkIds: ["edge:unknown"],
+        },
+        gameplayClosure: {
+          ...base.gameplayClosure,
+          surfaceInventory: [{
+            id: "surface:unresolved", label: "Unknown shop mechanic",
+            kind: "gameplay", status: "unknown",
+            reason: "Shop effect cannot be traced", boundaries: [],
+          }],
+        },
+      }, intent,
+    });
+    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report).toContain("NEED_VALIDATION — Pemeriksaan yang belum dapat diklasifikasikan (3)");
+    expect(report).toContain("Reset state ownership unclear");
+    expect(report).toContain("No causal owner found for reset");
+    expect(report).toContain("Authoritative state writer");
+    expect(report).toContain("Trace arena reset through owner writes");
+    expect(report).toContain("Unknown shop mechanic");
+    expect(report).toContain("surface:unresolved");
+    expect(report).toContain("edge:unknown");
+    expect(report).toContain("Pemeriksaan tambahan — NEED_VALIDATION");
+    expect(report).toContain("Guard ownership evidence");
+    expect(report).toContain("jenis masalah belum ditentukan");
+    expect(report).toContain("behavior_packs/demo/scripts/active.js:10");
+    expect(report).not.toContain("old-version.js:10");
+    expect(report).not.toContain("Audit Obligation");
+    expect(report).not.toContain("## Safe");
+    expect(report).not.toContain("## NEED_VALIDATION");
+  });
+
+  it("does not hide unknown proof work when both finding categories are empty", () => {
+    const report = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base, bugs: [], designMismatches: [],
+        auditObligations: [{
+          id: "mandatory-checkpoint:C9", source: "scenario-coverage",
+          stage: "EVALUATE", title: "Cross-system check unfinished",
+          reason: "Required interaction has not been accounted",
+          missingProof: "Interaction path",
+          validationTest: "Trace source interaction before deciding outcome",
+          validationGroupKey: "mandatory:C9",
+          subjectIds: [], componentIds: [], evidenceIds: [],
+        }],
+        unresolved: {
+          ...base.unresolved, total: 1,
+          needValidationIds: [], auditObligationIds: ["mandatory-checkpoint:C9"],
+          unknownSurfaceIds: [], unresolvedSourceLinkIds: [],
+        },
+      }, intent,
+    });
+    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report).toContain("## Bug (0 terbukti; 0 perlu validasi)");
+    expect(report).toContain("## Design Mismatch (0 terbukti; 0 perlu validasi)");
+    expect(report).toContain("Cross-system check unfinished");
+    expect(report).toContain("Interaction path");
+    expect(report).toContain("Trace source interaction before deciding outcome");
+    expect(report).toContain("NEED_VALIDATION");
+    expect(report).toContain("Pemeriksaan belum selesai");
+    expect(report).not.toContain("Audit Obligation");
+  });
+
   it("hides Safe in a completely closed audit without hiding proved defects", () => {
     const report = formatSelectedMapAuditFinalReport({
       report: {

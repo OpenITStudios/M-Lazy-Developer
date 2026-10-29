@@ -21,8 +21,10 @@ import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
  * The operator's FINAL summary has two finding categories: Bug and Design
  * Mismatch. PROVEN / NEED_VALIDATION are visible per-finding proof labels;
  * candidates remain unproven until source-scoped proof closes them.
- * SAFE remains internal. Canonical V2 and detailed technical evidence are
- * unchanged by this read-only projection.
+ * SAFE remains internal. All unresolved material uses NEED_VALIDATION as
+ * the sole operator-facing term, including unclassified proof work; canonical
+ * issue status and audit obligations retain distinct internal semantics.
+ * Canonical V2 and detailed technical evidence are unchanged by this view.
  */
 export function formatSelectedMapAuditFinalReport(input: {
   readonly report: MapAuditOutputV2;
@@ -34,6 +36,12 @@ export function formatSelectedMapAuditFinalReport(input: {
     "Belum dirinci dalam bukti audit";
   const evidenceById = new Map(intent.evidence
     .map(item => [item.id, item] as const));
+  const sourceLocatorsFor = (ids: readonly string[]): readonly string[] =>
+    [...new Set(ids.flatMap(id => {
+      const evidence = evidenceById.get(id);
+      return evidence?.scope === "selected-artifact" &&
+        evidence.locator.trim().length > 0 ? [evidence.locator] : [];
+    }))].slice(0, 3);
 
   // Keep independent canonical axes: type (BUG / DESIGN_MISMATCH) and
   // proof status (PROVEN / NEED_VALIDATION). Publish pending hypotheses
@@ -43,10 +51,18 @@ export function formatSelectedMapAuditFinalReport(input: {
     item.issueType === "DESIGN_MISMATCH");
   const pending = [...bugs, ...mismatches].filter(item =>
     item.status === "NEED_VALIDATION");
+  const obligations = report.auditObligations ?? [];
+  const allFindings = [...bugs, ...mismatches];
+  const classifiedIds = new Set(allFindings.map(item => item.id));
   const hasOpenEvidence = pending.length > 0 ||
-    (report.auditObligations?.length ?? 0) > 0 ||
+    obligations.length > 0 ||
     (report.validationTests?.length ?? 0) > 0 ||
     (report.unresolved?.total ?? 0) > 0 ||
+    (report.unresolved?.unknownSurfaceIds?.length ?? 0) > 0 ||
+    (report.unresolved?.unresolvedSourceLinkIds?.length ?? 0) > 0 ||
+    (report.gameplayClosure?.unaccountedSurfaceIds?.length ?? 0) > 0 ||
+    (report.coverage?.records?.some(item =>
+      item.status === "unknown" || item.status === "blocked") ?? false) ||
     report.unresolved?.status !== "CLEAR";
 
   const closed =
@@ -67,11 +83,12 @@ export function formatSelectedMapAuditFinalReport(input: {
 
   const describeIssue = (item: MapAuditOutputV2["bugs"][number]): string[] => {
     const isPending = item.status === "NEED_VALIDATION";
-    const sourceLocators = [...new Set(item.evidenceIds.flatMap(id => {
-      const evidence = evidenceById.get(id);
-      return evidence?.scope === "selected-artifact" &&
-        evidence.locator.trim().length > 0 ? [evidence.locator] : [];
-    }))].slice(0, 3);
+    const sourceLocators = sourceLocatorsFor(item.evidenceIds);
+    // An obligation for the same causal ID may contain an additional
+    // independent proof question. Attach it rather than silently dropping it
+    // or inventing a second issue classification.
+    const extraProof = obligations.filter(obligation =>
+      obligation.id === item.id);
     return [
       "- **" + concise(item.issue) + "** — " +
         (isPending
@@ -99,6 +116,12 @@ export function formatSelectedMapAuditFinalReport(input: {
         ...item.reproduceSteps.slice(0, 8).map((step, index) =>
           "    " + (index + 1) + ". " + concise(step)),
       ] : []),
+      ...extraProof.flatMap(obligation => [
+        "  - Pemeriksaan tambahan — NEED_VALIDATION: " +
+          concise(obligation.reason),
+        "  - Bukti tambahan diperlukan: " + concise(obligation.missingProof),
+        "  - Cara memastikan: " + concise(obligation.validationTest),
+      ]),
     ];
   };
 
@@ -119,19 +142,143 @@ export function formatSelectedMapAuditFinalReport(input: {
   renderGroup("Bug", bugs);
   renderGroup("Design Mismatch", mismatches);
 
-  // Control note never replaces the pending findings shown above.
-  if (!closed) {
-    const count = Math.max(
-      report.unresolved?.total ?? 0,
-      pending.length,
-      report.auditObligations?.length ?? 0,
-      report.validationTests?.length ?? 0,
+  // Every still-material proof question uses ONE operator-facing label,
+  // NEED_VALIDATION. Canonical audit obligations remain a distinct internal
+  // source of truth; neither they nor index-only gaps become invented BUGs.
+  const representedIds = new Set([
+    ...classifiedIds,
+    ...obligations.map(item => item.id),
+    ...obligations.flatMap(item => item.subjectIds),
+  ]);
+  const residual = new Map<string, {
+    readonly id: string;
+    readonly title: string;
+    readonly reason: string;
+    readonly missingProof: string;
+    readonly validationTest: string;
+  }>();
+  const addResidual = (
+    id: string, title: string, reason: string,
+    missingProof: string, validationTest: string,
+  ): void => {
+    if (!id.trim() || representedIds.has(id) || residual.has(id)) return;
+    residual.set(id, { id, title, reason, missingProof, validationTest });
+  };
+
+  // Indexed material unknowns may not yet have a full issue or obligation
+  // record. Keep their exact ID visible rather than relying on a count.
+  for (const id of report.unresolved?.needValidationIds ?? []) {
+    addResidual(id, "Temuan yang belum selesai ditelusuri",
+      "Identitas temuan tercatat tetapi detailnya belum tersedia di laporan.",
+      "Detail temuan dan bukti sesuai versi map terpilih.",
+      "Temukan kembali identitas ini pada hasil pemeriksaan kanonis.");
+  }
+  for (const id of report.unresolved?.auditObligationIds ?? []) {
+    addResidual(id, "Pemeriksaan yang belum terurai",
+      "Identitas pemeriksaan tercatat tetapi detailnya belum tersedia.",
+      "Alasan dan bukti yang diperlukan untuk identitas ini.",
+      "Telusuri pemeriksaan berdasarkan identitas yang tercantum.");
+  }
+  for (const id of report.unresolved?.unknownSurfaceIds ?? []) {
+    const surface = report.gameplayClosure?.surfaceInventory.find(item =>
+      item.id === id);
+    addResidual(id,
+      surface?.label ?? "Mekanik yang belum dipahami",
+      surface?.reason ?? "Mekanik map masih memiliki bukti yang belum lengkap.",
+      "Bukti fungsi, hubungan mekanik dan konsekuensi pada gameplay.",
+      "Telusuri mekanik ini dari pemicu, perubahan state, hingga hasilnya.");
+  }
+  for (const id of report.gameplayClosure?.unaccountedSurfaceIds ?? []) {
+    addResidual(id, "Mekanik yang belum tercakup pemeriksaan",
+      "Bagian map terdeteksi tetapi belum tercakup dalam kesimpulan.",
+      "Tujuan mekanik, pemilik state, alur dan pengaruhnya pada gameplay.",
+      "Telusuri sumber mekanik ini sebelum menentukan status masalah.");
+  }
+  for (const item of report.coverage?.records ?? []) {
+    if (item.status !== "unknown" && item.status !== "blocked") continue;
+    addResidual(item.surface, "Cakupan pemeriksaan belum selesai",
+      item.reason ?? "Bukti cakupan mekanik belum mencukupi.",
+      "Bukti penentu untuk cakupan mekanik ini.",
+      "Lanjutkan pemeriksaan bagian ini sampai ada kesimpulan yang sah.");
+  }
+  for (const id of report.unresolved?.unresolvedSourceLinkIds ?? []) {
+    addResidual(id, "Hubungan eksekusi source belum diketahui",
+      "Target panggilan atau hubungan source belum dapat dipastikan.",
+      "Target dan jalur eksekusi yang benar dari map terpilih.",
+      "Telusuri panggilan dan pemilik eksekusi sebelum menyimpulkan dampaknya.");
+  }
+  for (const group of report.validationTests ?? []) {
+    for (const id of group.findingIds) {
+      addResidual(id, "Pemeriksaan penentu belum selesai",
+        "Rencana validasi tercatat tanpa temuan yang terhubung dalam laporan.",
+        group.missingProof.join("; "),
+        group.assertions.find(item => item.findingId === id)?.test ??
+          group.test);
+    }
+  }
+
+  const unclassified = obligations.filter(item =>
+    !classifiedIds.has(item.id));
+  const additionalCount = unclassified.length + residual.size;
+  if (additionalCount > 0) {
+    out.push(
+      "**NEED_VALIDATION — Pemeriksaan yang belum dapat diklasifikasikan (" +
+        additionalCount + ")**",
+      "Hal berikut masih perlu ditelusuri. Belum ada bukti cukup untuk " +
+        "menyatakannya sebagai Bug atau Design Mismatch.",
     );
+    for (const item of unclassified) {
+      const locations = sourceLocatorsFor(item.evidenceIds);
+      out.push(
+        "- **" + concise(item.title) + "** — NEED_VALIDATION " +
+          "(jenis masalah belum ditentukan)",
+        "  - Alasan: " + concise(item.reason),
+        "  - Bukti yang diperlukan: " + concise(item.missingProof),
+        "  - Cara memeriksa: " + concise(item.validationTest),
+        ...(item.subjectIds.length > 0
+          ? ["  - Bagian terkait: " +
+              item.subjectIds.map(id => concise(id)).join("; ")]
+          : []),
+        ...(locations.length > 0
+          ? ["  - Lokasi bukti: " + locations.map(concise).join("; ")]
+          : []),
+        "  - Referensi: " + concise(item.id),
+      );
+    }
+    for (const item of residual.values()) {
+      out.push(
+        "- **" + concise(item.title) + "** — NEED_VALIDATION " +
+          "(jenis masalah belum ditentukan)",
+        "  - Alasan: " + concise(item.reason),
+        "  - Bukti yang diperlukan: " + concise(item.missingProof),
+        "  - Cara memeriksa: " + concise(item.validationTest),
+        "  - Referensi: " + concise(item.id),
+      );
+    }
+    out.push("");
+  }
+
+  if (!closed || additionalCount > 0) {
+    const distinctOpenIds = new Set([
+      ...pending.map(item => item.id),
+      ...obligations.map(item => item.id),
+      ...residual.keys(),
+    ]);
+    const count = Math.max(report.unresolved?.total ?? 0, distinctOpenIds.size);
     out.push("**Pemeriksaan belum selesai:** " +
       (count > 0
         ? "setidaknya " + count + " hal masih memerlukan penyelesaian bukti."
         : "masih ada tahapan atau bukti audit yang belum ditutup.") +
-      " NEED_VALIDATION di atas adalah dugaan, bukan masalah yang terbukti.");
+      " Semua NEED_VALIDATION adalah hal yang belum terbukti, bukan Bug " +
+      "atau Design Mismatch yang telah dikonfirmasi.");
+    if ((report.control.blockingCheckpointIds?.length ?? 0) > 0) {
+      out.push("**Tahap yang belum selesai:** " +
+        report.control.blockingCheckpointIds.map(concise).join("; "));
+    }
+    if ((report.control.reasons?.length ?? 0) > 0) {
+      out.push("**Alasan pemeriksaan belum selesai:** " +
+        report.control.reasons.map(concise).join("; "));
+    }
   } else {
     out.push("**Pemeriksaan selesai pada cakupan bukti audit ini.** " +
       "Ini tidak menyatakan eksekusi Minecraft yang belum dilakukan.");
