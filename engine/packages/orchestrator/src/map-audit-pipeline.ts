@@ -557,7 +557,9 @@ async function inspectSelectedMapToDemandFixedPoint(
   readonly inspection: InspectArtifactResult;
   readonly reconciliation: AuditDemandReconciliation;
 }> {
-  // Reconcile demand without unpacking the selected map twice.
+  // Reconcile demand without unpacking the selected map twice. A bounded
+  // nonconverged result remains explicit in admission, not an exception
+  // that discards usable selected-map evidence.
   return withPreparedArtifactInspection(
     input.artifactPath,
     async (inspect) => {
@@ -633,15 +635,11 @@ async function inspectSelectedMapToDemandFixedPoint(
           secondInspectionElapsedMs,
         );
 
-      if (!secondReconciliation.stable) {
-        throw new Error(
-          "RIG knowledge demand did not converge after the bounded reconciliation pass. " +
-            "Refusing repeated full-artifact reinspection; unresolved domain(s): " +
-            secondReconciliation.missingDomains.join(", ") +
-            ".",
-        );
-      }
-
+      // Do not discard the second, hash-matched inspection just because a
+      // dynamic knowledge requirement remains unresolved. The canonical
+      // admission gate receives stable=false and blocks review/approval;
+      // source-grounded findings and missing domains remain reportable.
+      // A third broad reinspection would waste work and is not attempted.
       return {
         inspection: secondInspection,
         reconciliation: secondReconciliation,
@@ -669,6 +667,7 @@ function assembleSelectedMapAuditRun(
   const scenario = hidden.scenarioAudit;
   const admission = assessSelectedMapAuditAdmission({
     mandatoryAuditProcedure: procedure,
+    demandReconciliation: reconciliation,
   });
   const auditRevision = deriveSelectedMapAuditRevision({
     identity,

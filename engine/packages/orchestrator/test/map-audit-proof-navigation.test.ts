@@ -106,6 +106,33 @@ describe("map audit proof navigation", () => {
     );
   });
 
+  it("does not treat a candidate static substitution as completed native-runtime evidence", () => {
+    const world = {
+      entities: { definitions: 12 },
+      platformKnowledge: { profileResolved: true },
+      chunks: { tickingAreaAcquires: 0, readinessProbes: 0 },
+    } as unknown as GameplayWorldModel;
+    const unresolved = {
+      ...finding("chunk-simulation"),
+      validationReason: "Native simulation timing remains unresolved.",
+      missingProof: "Native simulation behavior at the relevant client.",
+    };
+    const result = buildAuditProofNavigation(unresolved, world);
+    expect(result.evidenceSubstitutions.map(item => item.id))
+      .toContain("substitution:simulation-ownership");
+    expect(result.runtimeRequired).toBe(true);
+    expect(result.route[0]?.evidencePreference).not.toBe("runtime");
+    expect(result.route.at(-1)?.evidencePreference).toBe("runtime");
+  });
+
+  it("does not classify native-runtime requirement from a suggested test alone", () => {
+    const unresolved = {
+      ...finding("ui-feedback-information"),
+      validationTest: "Observe native client visuals only if source proof remains insufficient.",
+    };
+    expect(buildAuditProofNavigation(unresolved).runtimeRequired).toBe(false);
+  });
+
   it("moves historically relevant knowledge earlier without moving runtime forward", () => {
     const world = {
       entities: {

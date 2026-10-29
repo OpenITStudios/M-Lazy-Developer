@@ -220,6 +220,38 @@ describe("selected-map audit admission", () => {
     expect(result.firstBlockingStage).toBeUndefined();
     expect(result.issues).toEqual([]);
   });
+  it("preserves bounded nonconverged knowledge demand as a FORMALIZE blocker", () => {
+    const closedProcedure = procedure([]);
+    const incomplete = assessSelectedMapAuditAdmission({
+      mandatoryAuditProcedure: closedProcedure,
+      demandReconciliation: {
+        stable: false,
+        passCount: 2,
+        missingDomains: ["state-flow"],
+      },
+    });
+
+    expect(incomplete.status).toBe("BLOCKED");
+    expect(incomplete.firstBlockingStage).toBe("FORMALIZE");
+    expect(incomplete.issues).toEqual([
+      expect.objectContaining({
+        stage: "FORMALIZE",
+        code: "KNOWLEDGE_DEMAND_INCOMPLETE",
+        message: expect.stringContaining("state-flow"),
+      }),
+    ]);
+    expect(canProjectIndependentAuditEvidence(closedProcedure)).toBe(true);
+    expect(canAdmitAuditIssueLanes(incomplete, closedProcedure)).toBe(false);
+    expect(assessSelectedMapAuditAdmission({
+      mandatoryAuditProcedure: closedProcedure,
+      demandReconciliation: {
+        stable: true,
+        passCount: 1,
+        missingDomains: [],
+      },
+    }).status).toBe("READY");
+  });
+
   it("allows evidence projection with PARTIAL Discovery but still blocks review", () => {
     const base = procedure(["A2"]);
     const partial: MandatoryAuditProcedureReceipt = {

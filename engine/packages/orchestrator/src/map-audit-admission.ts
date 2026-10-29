@@ -1,6 +1,9 @@
 import type {
   MandatoryAuditProcedureReceipt,
 } from "./inspection/mandatory-audit-procedure.js";
+import type {
+  AuditDemandReconciliation,
+} from "./map-audit-demand-reconciliation.js";
 
 export type SelectedMapAuditStage =
   | "TARGET"
@@ -29,13 +32,19 @@ export function operatorMapTestStageFor(
 export interface SelectedMapAuditAdmissionInput {
   readonly mandatoryAuditProcedure:
     MandatoryAuditProcedureReceipt | undefined;
+  /** Last bounded inspection's actual knowledge demand, not a second gate. */
+  readonly demandReconciliation?: Pick<
+    AuditDemandReconciliation,
+    "stable" | "missingDomains" | "passCount"
+  >;
 }
 
 export interface SelectedMapAuditAdmissionIssue {
   readonly stage: SelectedMapAuditStage;
   readonly code:
     | "MISSING_PROCEDURE"
-    | "PROCEDURE_BLOCKED";
+    | "PROCEDURE_BLOCKED"
+    | "KNOWLEDGE_DEMAND_INCOMPLETE";
   readonly message: string;
 }
 
@@ -224,6 +233,24 @@ export function assessSelectedMapAuditAdmission(
           " receipt before audit admission.",
       });
     }
+  }
+
+  // A second bounded pass may discover more Knowledge domains than were
+  // analyzed. Preserve that source evidence, but fail closed in the existing
+  // FORMALIZE admission instead of allowing an incomplete run to publish.
+  // This is not a fabricated mandatory checkpoint or a new report category.
+  if (input.demandReconciliation?.stable === false) {
+    const pending = input.demandReconciliation.missingDomains;
+    issues.push({
+      stage: "FORMALIZE",
+      code: "KNOWLEDGE_DEMAND_INCOMPLETE",
+      message:
+        "RIG Knowledge demand is still incomplete after " +
+        input.demandReconciliation.passCount + " bounded inspection passes. " +
+        "Missing analysis domain(s): " +
+        (pending.length > 0 ? pending.join(", ") : "not identified") +
+        ". Preserve the source findings and rerun only after the evidence requirement is resolved.",
+    });
   }
 
   const firstBlockingStage = SELECTED_MAP_AUDIT_STAGE_ORDER.find((stage) =>

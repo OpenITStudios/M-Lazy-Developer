@@ -181,7 +181,14 @@ async function main(): Promise<void> {
     process.stdout.write(output);
   }
   if (resolvedAudit.mapAuditReport.control.status === "BLOCKED") {
-    process.exitCode = 1;
+    // The report was already written to stdout. Exit 2 means a complete,
+    // valid audit result with unresolved evidence; exit 1 is reserved for
+    // processing errors from main(). Consumers MUST retain stdout on 2.
+    console.error(
+      "AUDIT_INCOMPLETE: evidence-backed report emitted on stdout; " +
+      "some mandatory proof or coverage remains open (exit 2).",
+    );
+    process.exitCode = 2;
   }
 }
 

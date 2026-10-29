@@ -109,12 +109,19 @@ historical `map-audit-output-v2.ts` and `map-audit-pipeline.ts`
 paths, respectively. Those are compatibility re-exports, not new
 execution or proof authorities.
 
-In the optional programmatic output, `--brief` starts with game
-understanding, followed immediately by the **current decision**: supported
-feature candidates, PROVEN/NEED_VALIDATION issue totals, the first
-stage-ordered model task (or its blocking obligation), the source witness
-if available and the stopping rule. The extensive technical source
-hierarchy follows as navigation, not as the lead answer.
+In the optional programmatic CLI, `--brief` renders the final two-category
+Bug / Design Mismatch operator report, including both PROVEN and
+NEED_VALIDATION and individually described pending proof. The technical
+`formatSelectedMapAuditBrief()` is a separate read-only internal view:
+it starts with game understanding, current findings and the source
+navigation / model-task details. Neither view changes audit authority.
+
+A selected map can reach REPORT even when its second bounded RIG Knowledge
+pass remains nonconverged. That partial result MUST have blocked admission,
+the exact missing domains and usable source findings; it can never become
+READY_FOR_REVIEW. The CLI preserves the report on stdout (exit 2 for
+incomplete proof, exit 1 for processing errors). Consumers must not drop
+stdout solely because the audit was incomplete.
 
 During UNDERSTAND, A3–A6 checkpoint model tasks may now carry at
 most four selected-artifact, non-hypothetical Gameplay Intent subjects.
@@ -151,9 +158,9 @@ verification decision.
 
 Use the model handoff's `diagnosisNavigation` as read-only task
 navigation. It exposes at most eight admitted BUG root groups and
-eight unresolved proof groups, each with omitted counts. The
-`--brief` projection can show corresponding counts if supplied
-from the same selected audit. Neither output may advance the
+eight unresolved proof groups, each with omitted counts. The technical
+`formatSelectedMapAuditBrief()` projection can show corresponding counts
+if supplied from the same selected audit. Neither output may advance the
 Defect Resolution Gate, infer runtime behavior, create new causal
 links or substitute for the full Map Audit V2 findings.
 

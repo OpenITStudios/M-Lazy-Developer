@@ -53,8 +53,9 @@ export interface AuditProofNavigation {
    */
   readonly runtimeLastResort: boolean;
   /**
-   * True only when the unresolved claim itself is inherently runtime-native
-   * after available static/formal substitutions are exhausted.
+   * True only for an explicitly runtime-native deciding claim. An available
+   * static/formal substitution is an investigation lead, not a proof receipt.
+   * The route still prioritizes non-runtime proof before the last resort.
    */
   readonly runtimeRequired?: boolean;
 }
@@ -750,14 +751,14 @@ function substitutionCandidates(
 
 function runtimeIsInherentlyRequired(
   finding: NeedValidationAuditIssueProjection,
-  substitutions: readonly AuditEvidenceSubstitution[],
 ): boolean {
-  if (substitutions.length > 0) return false;
-
+  // Do not let a proposed alternative source check suppress an explicit
+  // native-runtime unknown: substitution candidates are NOT executed proof.
+  // Equally, generic instructions mentioning runtime do not by themselves
+  // establish that the missing decision is runtime-native.
   const unresolved = [
     finding.validationReason,
     finding.missingProof,
-    finding.validationTest,
   ].join(" ");
 
   return /(?:native\s+(?:client|engine|render|input|physics|collision|pathfind|simulation)|client[-\s/]*(?:server[-\s/]*)?reconcil|multi[-\s]?client\s+visual|render(?:ing)?\s+(?:visibility|state)|actual\s+(?:pathfind|collision|physics|simulation)|performance\s+manifestation)/i.test(
@@ -870,9 +871,6 @@ export function buildAuditProofNavigation(
       "Once every applicable family criterion is grounded and universal contradiction/translation/scope/evidence/counter-proof criteria are saturated, stop searching and do not request runtime manifestation merely for reassurance.",
     runtimeLastResort: true,
     runtimeRequired:
-      runtimeIsInherentlyRequired(
-        finding,
-        evidenceSubstitutions,
-      ),
+      runtimeIsInherentlyRequired(finding),
   };
 }

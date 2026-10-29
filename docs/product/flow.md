@@ -446,19 +446,23 @@ provider registry or separate pipeline was introduced.
 
 ### What the operator sees first
 
-The existing `--brief` formatter presents **Game Understanding → Immediate
-Decision → Detailed Source Navigation → Findings → Next Investigations**.
-The immediate decision includes confirmed versus unresolved finding
-counts, a bounded set of selected-source mechanic candidates, and the
-first stage-ordered task or obligation. Only when that task actually
-has an admitted developer reference does its question appear; the full
-task section exposes source IDs, counterexamples and provenance.
+The production CLI `--brief` now renders only the **Bug** and
+**Design Mismatch** finding categories, each distinguishing PROVEN from
+NEED_VALIDATION, followed by exact, individually visible incomplete proof
+questions. It provides evidence, reproduction/validation steps and
+conditional Notes without claiming Minecraft execution. The separate
+`formatSelectedMapAuditBrief()` remains a technical source-navigation
+view (**Game Understanding → Immediate Decision → Detailed Source Navigation
+→ Findings → Next Investigations**); it is not the CLI's default `--brief`
+report. Both views are read-only projections of the one canonical V2 output.
 
-This front section is a **read-only projection of existing source evidence**,
-not a new stage, an alternative issue database, a cached decision, or
-proof of successful runtime execution. The detailed source inventory
-remains navigable later; it must not hide the decision or be confused
-with chronological player gameplay.
+An incomplete audit that still has a hash-matched inspection result,
+including a nonconverged second Knowledge-demand pass, must preserve the
+report and block approval rather than discard source findings. CLI stdout
+contains the complete report and **exit 2** denotes incomplete audit proof;
+a processing error has **exit 1** with no successful report guarantee.
+Capture stdout even when exit is 2. There is no third inspection pass or
+automatic inference of missing Minecraft-runtime proof.
 
 ## One source-declared programmatic audit flow (optional; only if executed)
 
