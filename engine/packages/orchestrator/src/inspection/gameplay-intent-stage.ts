@@ -278,8 +278,20 @@ export function buildGameplayIntentModel(
                site.range.lineEnd !== undefined &&
                site.range.columnStart !== undefined &&
                site.range.columnEnd !== undefined)));
+        // The existing parser local-call graph independently owns the
+        // uniquely resolved this.method target. Exact invocation span and
+        // target identity must match before the UI IR witness is admitted.
+        const validMethodHops = forwarded === undefined ||
+          valueHops.every(hop =>
+            hop.kind !== "local-this-method-parameter" ||
+            script.localFunctionCalls.filter(edge =>
+              edge.targetRegion === forwarded.executionRegion &&
+              sameExactCallSource(edge.source, hop.declarationSource) &&
+              edge.targetSource?.artifactId === input.artifactId &&
+              edge.targetSource.relativePath === script.source.relativePath)
+              .length === 1);
         const matchingUiCalls = sourceUiCall === undefined ||
-          !exactCallRegion || !validHops
+          !exactCallRegion || !validHops || !validMethodHops
           ? []
           : (input.semanticIr?.execution.apiCalls ?? []).filter(call =>
             call.receiverType === sourceUiCall.receiverType &&

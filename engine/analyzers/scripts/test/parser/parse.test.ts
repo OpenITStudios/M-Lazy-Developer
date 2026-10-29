@@ -56,6 +56,16 @@ describe("script analyzer", () => {
       'world.sendMessage(forwarded);',
       'function announce(payload) { world.sendMessage(payload); }',
       'announce({ translate: "round.finish" });',
+      'class Arena {',
+      '  static open() { this.showTitle({ rawtext: [{ translate: "arena.prepare" }] }); }',
+      '  static showTitle(payload) {',
+      '    if (false) return;',
+      '    world.sendMessage(payload);',
+      '  }',
+      '}',
+      'class AnotherArena {',
+      '  static showTitle(payload) { world.sendMessage(payload); }',
+      '}',
     ].join("\n"), source);
     const references = new Map((parsed.literalTranslationReferences ?? [])
       .map(item => [item.key, item] as const));
@@ -73,6 +83,16 @@ describe("script analyzer", () => {
     expect(helper?.hops.map(hop => hop.kind)).toEqual([
       "simple-helper-parameter",
     ]);
+    const method = references.get("arena.prepare")?.forwardedUiSendCall;
+    expect(method?.receiverType).toBe("World");
+    expect(method?.executionRegion).toContain("Arena.showTitle@");
+    expect(method?.hops.map(hop => hop.kind)).toEqual([
+      "local-this-method-parameter",
+    ]);
+    expect(parsed.localFunctionCalls.some(edge =>
+      edge.targetRegion === method?.executionRegion &&
+      edge.targetName === "showTitle" &&
+      edge.source.range?.lineStart !== undefined)).toBe(true);
     // Forwarded evidence has an exact source call region, not observed
     // Minecraft activation or a player-visible outcome.
   });
@@ -95,6 +115,23 @@ describe("script analyzer", () => {
       'transform({ translate: "ambiguous.transform" });',
       'function fakeHelper(payload) { fake.sendMessage(payload); }',
       'fakeHelper({ translate: "ambiguous.untyped" });',
+      'class TransformMethod {',
+      '  static show() { this.send({ translate: "ambiguous.method.transform" }); }',
+      '  static send(p) { world.sendMessage(convert(p)); }',
+      '}',
+      'class ReassignMethod {',
+      '  static show() { this.send({ translate: "ambiguous.method.modified" }); }',
+      '  static send(p) { p = "changed"; world.sendMessage(p); }',
+      '}',
+      'class DuplicateMethod {',
+      '  static show() { this.send({ translate: "ambiguous.method.duplicate" }); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '}',
+      'class UntypedMethod {',
+      '  static show() { this.send({ translate: "ambiguous.method.untyped" }); }',
+      '  static send(p) { fake.sendMessage(p); }',
+      '}',
     ].join("\n"), source);
     const references = new Map((parsed.literalTranslationReferences ?? [])
       .map(item => [item.key, item] as const));
@@ -104,7 +141,9 @@ describe("script analyzer", () => {
       "duplicate.first", "duplicate.last", "duplicate.nested",
       "duplicate.visible", "ambiguous.repeat", "ambiguous.mutation",
       "ambiguous.spread", "ambiguous.computed", "ambiguous.transform",
-      "ambiguous.untyped",
+      "ambiguous.untyped", "ambiguous.method.transform",
+      "ambiguous.method.modified", "ambiguous.method.duplicate",
+      "ambiguous.method.untyped",
     ]) {
       const reference = references.get(key);
       expect(reference, "Literal remains indexed for source navigation: " + key)

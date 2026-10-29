@@ -317,9 +317,12 @@ intended-gameplay authority remain separate proof obligations.
 The selected-map parser admits a limited source-only value path from a
 literal `{ translate: "key" }` to a typed UI API call: up to four uniquely
 owned, immutable `const` bindings with one lexical consumption each, static
-object/array containers, and one unique top-level single-statement helper
-that forwards its uniquely named parameter to the FIRST message argument
-of the exact typed UI call. The parser still owns the original literal
+object/array containers, a unique single-statement helper, and one
+uniquely resolved static `this.method(...)` within the same authored class.
+For the class path, the selected formal must occur exactly once in the
+method body as the FIRST argument of an independently typed Minecraft UI
+API call; its class-qualified source region and an exact matching
+`localFunctionCalls` edge are both mandatory. The parser still owns the original literal
 site; the independent canonical Semantic IR verifies the *target* API
 call's own execution region, receiver, method and full source span.
 Each handoff is registered as a separate selected-artifact source witness
@@ -328,8 +331,9 @@ and is retained in the existing Gameplay Contract / model handoff.
 Do not assume that an immutable variable name proves immutable content:
 multiple reads, other uses/mutation, shadowed declarations, computed or
 spread properties, duplicate object keys, dynamically constructed keys,
-nested/async helpers, expression-level transforms, ambiguous call targets
-and unknown typed receivers fail closed. A source-forwarded text value does
+nested/async helpers, non-static or inherited class-method dispatch,
+reassigned or multi-use method parameters, expression-level transforms,
+ambiguous call targets and unknown typed receivers fail closed. A source-forwarded text value does
 NOT establish that a helper ran, message was displayed, locale selected,
 a player/arena owned the recipient, or that any objective/outcome was
 achieved. Source-only evidence must never upgrade design authority or

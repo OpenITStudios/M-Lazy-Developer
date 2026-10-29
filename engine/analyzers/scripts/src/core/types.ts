@@ -419,7 +419,8 @@ export interface ScriptLiteralTranslationReference {
     readonly method: "sendMessage" | "setTitle" | "setActionBar";
     readonly executionRegion: string;
     readonly hops: readonly {
-      readonly kind: "immutable-const-binding" | "simple-helper-parameter";
+      readonly kind: "immutable-const-binding" | "simple-helper-parameter" |
+        "local-this-method-parameter";
       readonly declarationSource: SourceRef;
       readonly consumptionSource: SourceRef;
     }[];

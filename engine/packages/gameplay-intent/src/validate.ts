@@ -127,7 +127,8 @@ export function validateGameplayIntentModel(
         evidence.origin === "source-code" &&
         evidence.locator === hop.consumptionLocator);
       return (hop.kind === "immutable-const-binding" ||
-                hop.kind === "simple-helper-parameter") &&
+                hop.kind === "simple-helper-parameter" ||
+                hop.kind === "local-this-method-parameter") &&
         sameFile(hop.declarationLocator) &&
         sameFile(hop.consumptionLocator) &&
         matches.length === 1;

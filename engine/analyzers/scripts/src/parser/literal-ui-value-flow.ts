@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { sourceMethodRegion } from "../core/control-flow.js";
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
   ScriptLiteralTranslationReference,
@@ -168,6 +169,80 @@ export function createBoundedLiteralUiFlowResolver(
     return ancestor === bodyExpr && inPrimary ? target : undefined;
   };
 
+
+  /**
+   * A uniquely selected static this.method argument -> formal parameter
+   * -> typed UI call. The method may have control flow, but the payload
+   * parameter must be read exactly once as the FIRST UI argument. This is
+   * authored source eligibility, not observed dispatch or player delivery.
+   */
+  const localThisMethodTarget = (
+    caller: ts.CallExpression, index: number,
+  ): Target | undefined => {
+    if (!ts.isPropertyAccessExpression(caller.expression) ||
+        caller.expression.expression.kind !== ts.SyntaxKind.ThisKeyword ||
+        caller.arguments.some(ts.isSpreadElement)) return undefined;
+    let owner: ts.Node | undefined = caller.parent;
+    while (owner && !ts.isMethodDeclaration(owner)) {
+      // A nested function/callback can rebind the this receiver and has
+      // its own execution region. It is not the class source owner.
+      if (ts.isFunctionDeclaration(owner) ||
+          ts.isFunctionExpression(owner) ||
+          ts.isArrowFunction(owner) ||
+          ts.isConstructorDeclaration(owner)) return undefined;
+      owner = owner.parent;
+    }
+    if (!owner || !ts.isMethodDeclaration(owner)) return undefined;
+    const cls = owner.parent;
+    if ((!ts.isClassDeclaration(cls) && !ts.isClassExpression(cls)) ||
+        (cls.heritageClauses?.length ?? 0) !== 0 ||
+        !owner.modifiers?.some(m => m.kind === ts.SyntaxKind.StaticKeyword))
+      return undefined;
+    const methodName = caller.expression.name.text;
+    // Same class only; identical method names elsewhere in a published
+    // bundle have no source identity relationship to this invocation.
+    const matched = cls.members.filter((member): member is ts.MethodDeclaration =>
+      ts.isMethodDeclaration(member) &&
+      (ts.isIdentifier(member.name) || ts.isStringLiteralLike(member.name)) &&
+      member.name.text === methodName &&
+      member.body !== undefined);
+    if (matched.length !== 1) return undefined;
+    const target = matched[0]!;
+    if (target === owner ||
+        !target.modifiers?.some(m => m.kind === ts.SyntaxKind.StaticKeyword) ||
+        target.parameters.length !== caller.arguments.length ||
+        target.parameters.some(p => !ts.isIdentifier(p.name) ||
+          p.initializer !== undefined || p.dotDotDotToken !== undefined))
+      return undefined;
+    const parameter = target.parameters[index]?.name;
+    if (!parameter || !ts.isIdentifier(parameter)) return undefined;
+    const references: ts.Identifier[] = [];
+    const collect = (node: ts.Node): void => {
+      if (ts.isIdentifier(node) && node.text === parameter.text &&
+          isValueIdentifier(node)) references.push(node);
+      ts.forEachChild(node, collect);
+    };
+    collect(target.body!);
+    if (references.length !== 1) return undefined;
+    const use = references[0]!;
+    const targetRegion = sourceMethodRegion(target, file);
+    let resolved: Target | undefined;
+    let matches = 0;
+    const scan = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) && node.arguments[0] === use &&
+          !node.arguments.some(ts.isSpreadElement)) {
+        const typed = typedTarget(node);
+        if (typed && typed.executionRegion === targetRegion) {
+          resolved = typed;
+          matches++;
+        }
+      }
+      ts.forEachChild(node, scan);
+    };
+    scan(target.body!);
+    return matches === 1 ? resolved : undefined;
+  };
+
   /** One immutable lexical binding and exactly one reference. */
   const uniqueConstUse = (
     declaration: ts.VariableDeclaration,
@@ -203,10 +278,14 @@ export function createBoundedLiteralUiFlowResolver(
           if (target) return hops.length > 0 ? { ...target, hops } : undefined;
         }
         if (hops.length >= MAX_TOTAL_HOPS) return undefined;
-        const target = helperTarget(parent, index);
+        const simpleHelper = helperTarget(parent, index);
+        const localMethod = simpleHelper === undefined
+          ? localThisMethodTarget(parent, index) : undefined;
+        const target = simpleHelper ?? localMethod;
         if (!target) return undefined;
         hops.push({
-          kind: "simple-helper-parameter",
+          kind: localMethod === undefined
+            ? "simple-helper-parameter" : "local-this-method-parameter",
           declarationSource: site(parent),
           consumptionSource: target.source,
         });

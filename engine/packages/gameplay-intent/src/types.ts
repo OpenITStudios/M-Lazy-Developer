@@ -131,7 +131,8 @@ export interface GameplayIntentEvidence {
       readonly uiExecutionRegionId?: string;
       readonly valueFlow?: {
         readonly hops: readonly {
-          readonly kind: "immutable-const-binding" | "simple-helper-parameter";
+          readonly kind: "immutable-const-binding" | "simple-helper-parameter" |
+            "local-this-method-parameter";
           readonly declarationLocator: string;
           readonly consumptionLocator: string;
           readonly evidenceId: string;
