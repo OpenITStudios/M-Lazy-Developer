@@ -354,6 +354,31 @@ specific pack/locale, or the intended gameplay objective is correct. The
 canonical Gameplay Contract and model handoff present these source-only
 witnesses without changing APPROVED design, Proof Saturation or PROVEN.
 
+
+## Exact UI-to-gameplay source-step correlation
+
+A source-reachable UI call is not itself a valid dependency on a phase,
+objective, state, or outcome. The canonical Gameplay Intent stage now binds
+candidate UI calls only to exact, already owned Semantic IR state writes,
+authored return outcomes and world-effect attempts in their *same* source
+execution region. Both the UI call and source step need a unique current
+artifact evidence locator, and the subject must cite the exact source-step
+ID. Same file, similar labels, shared function names and shared trace entry
+are not sufficient. Opposite arms of the same fully located authored
+guard exclude a candidate. A return before a later UI call in that function
+is not silently treated as a reachable UI continuation.
+
+The candidate preserves strict lexical before/after source order, source
+step guards, and whether the UI region has a manifest-rooted source path.
+Lexical order and lack of an exact opposite-branch witness are not proof of
+the branch being taken or the operation causing the UI. Phase/goal claims
+without exact IR-step ownership remain unbound. The earlier
+`relatedOutcomeCandidateIds` projection is now restricted to objective or
+outcome subjects with exact source-step correlation, rather than loose
+execution-region membership. Bounded omissions are explicit. All these are
+read-only investigation hints, not new Intent edges, approved objectives,
+player delivery proofs, bug findings or Proof Saturation criteria.
+
 ## Direct selected-source impact path
 
 A canonical authored Intent link whose target is already the final

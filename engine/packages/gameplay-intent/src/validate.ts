@@ -149,6 +149,66 @@ export function validateGameplayIntentModel(
     }
   }
 
+
+  // Exact UI-source gameplay bindings can support investigation, but a
+  // related Intent node must own the literal SAME selected-IR step witness.
+  // A fabricated source step, foreign artifact, name-only match or stray
+  // objective/phase node cannot acquire causal authority from this field.
+  for (const item of model.evidence) {
+    const call = item.literalTranslationUse?.authoredUiSendCall;
+    if (call === undefined) continue;
+    const bindings = call.sourceGameplayStepBindings ?? [];
+    const unique = new Set<string>();
+    for (const binding of bindings) {
+      const identity = [binding.subjectId, binding.sourceStepEvidenceId,
+        binding.sourceStepKind].join("::");
+      const subjects = model.nodes.filter(node =>
+        node.id === binding.subjectId &&
+        node.kind === binding.subjectKind &&
+        node.status !== "hypothesis" &&
+        node.evidenceIds.includes(binding.sourceStepEvidenceId));
+      const evidence = model.evidence.filter(entry =>
+        entry.id === binding.sourceStepEvidenceId &&
+        entry.scope === "selected-artifact" &&
+        entry.origin === "source-code" &&
+        entry.locator === binding.sourceLocator);
+      if (unique.has(identity) || subjects.length !== 1 ||
+          evidence.length !== 1 ||
+          !["state", "phase", "objective", "outcome"]
+            .includes(binding.subjectKind) ||
+          !["state-write", "return-outcome", "world-effect"]
+            .includes(binding.sourceStepKind) ||
+          !["STEP_BEFORE_UI", "UI_BEFORE_STEP"]
+            .includes(binding.lexicalOrder) ||
+          !["ROOTED_UI_REGION_CANDIDATE", "LOCAL_UI_REGION_ONLY"]
+            .includes(binding.entryBasis) ||
+          binding.proof !==
+            "EXACT_SELECTED_SOURCE_STEP_CONTEXT_NOT_GAMEPLAY_CAUSALITY" ||
+          binding.stepGuards.some(guard =>
+            !guard.expression.trim() ||
+            !/:[1-9][0-9]*:[1-9][0-9]*$/.test(guard.locator) ||
+            !["lexical", "precedence"].includes(guard.kind) ||
+            !["true", "false"].includes(guard.branch))) {
+        issues.push({
+          path: "evidence." + item.id +
+            ".literalTranslationUse.authoredUiSendCall.sourceGameplayStepBindings",
+          message: "Gameplay source context requires one exact current-artifact IR step owned by the selected Intent subject, without game causality promotion.",
+        });
+      }
+      unique.add(identity);
+    }
+    if ((call.omittedSourceGameplayStepBindings !== undefined &&
+        (!Number.isSafeInteger(call.omittedSourceGameplayStepBindings) ||
+         call.omittedSourceGameplayStepBindings < 0)) ||
+        (bindings.length > 24)) {
+      issues.push({
+        path: "evidence." + item.id +
+          ".literalTranslationUse.authoredUiSendCall.omittedSourceGameplayStepBindings",
+        message: "Source gameplay context must retain the bounded projection size and omissions.",
+      });
+    }
+  }
+
   // A reported typed UI call must have its own exact current-map source
   // witness, not just a self-referential ID inside the translation literal.
   for (const item of model.evidence) {

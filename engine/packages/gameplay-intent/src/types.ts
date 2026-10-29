@@ -56,6 +56,32 @@ export type GameplayIntentEvidenceScope =
   | "external-reference"
   | "runtime";
 
+
+/**
+ * An exact Semantic IR state/return/world-effect source site owned by a
+ * current Gameplay Intent subject, in the SAME authored execution region
+ * as a typed UI-send call. This is source context, not a causal edge,
+ * an approved objective, game execution, or player delivery.
+ */
+export interface GameplayUiSourceStepBinding {
+  readonly subjectId: string;
+  readonly subjectKind: "state" | "phase" | "objective" | "outcome";
+  readonly sourceStepEvidenceId: string;
+  readonly sourceStepKind: "state-write" | "return-outcome" | "world-effect";
+  readonly sourceLocator: string;
+  /** Lexical source order in a single region is not runtime operation order. */
+  readonly lexicalOrder: "STEP_BEFORE_UI" | "UI_BEFORE_STEP";
+  readonly stepGuards: readonly {
+    readonly kind: "lexical" | "precedence";
+    readonly expression: string;
+    readonly branch: "true" | "false";
+    readonly locator: string;
+  }[];
+  /** This qualifies only the UI region entry, NOT execution of the step. */
+  readonly entryBasis: "ROOTED_UI_REGION_CANDIDATE" | "LOCAL_UI_REGION_ONLY";
+  readonly proof: "EXACT_SELECTED_SOURCE_STEP_CONTEXT_NOT_GAMEPLAY_CAUSALITY";
+}
+
 export interface GameplayIntentEvidence {
   id: string;
   origin: GameplayIntentEvidenceOrigin;
@@ -99,6 +125,11 @@ export interface GameplayIntentEvidence {
       readonly method: "sendMessage" | "setTitle" | "setActionBar";
       readonly proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY";
       readonly receiverInference?: "direct" | "bounded";
+      /** Exact source operations linked to existing Intent subject IDs.
+       * No independent design authority or proof of gameplay causality.
+       */
+      readonly sourceGameplayStepBindings?: readonly GameplayUiSourceStepBinding[];
+      readonly omittedSourceGameplayStepBindings?: number;
       /** Conditions on the typed call site. Not evaluated gameplay guards. */
       readonly callGuards?: readonly {
         readonly kind: "lexical" | "precedence";

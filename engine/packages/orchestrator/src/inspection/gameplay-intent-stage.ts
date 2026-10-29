@@ -16,7 +16,10 @@ import type { SourceRef } from "../../../project-model/src/index.js";
 import type { GameplayResourceTextEntry } from "./gameplay-intent-resource-text.js";
 import { semanticIrExecutionTraces, type SemanticIr } from "../../../semantic-ir/src/index.js";
 import { admitDeterministicUnknownSourceRelations } from "./unknown-source-relation-admission.js";
-import { traceUiSourceActivation } from "./gameplay-ui-source-chain.js";
+import {
+  correlateUiSourceGameplaySteps,
+  traceUiSourceActivation,
+} from "./gameplay-ui-source-chain.js";
 import { eventRegionId, scriptRegionId } from "../diagnosis/semantic-ir-stage.js";
 import { sourceClassMethodRegion } from "../../../../analyzers/scripts/src/index.js";
 import {
@@ -2395,8 +2398,15 @@ export function buildGameplayIntentModel(
     ],
   };
 
+  // Only exact, already selected source operations linked to current
+  // Gameplay Intent subjects may annotate the UI candidate. No new Intent
+  // edge or expected player objective is created by source co-location.
+  const withUiSourceContext = input.semanticIr === undefined
+    ? model : correlateUiSourceGameplaySteps(model, input.semanticIr);
   const completed = input.semanticIr === undefined
-    ? model : admitDeterministicUnknownSourceRelations(model, input.semanticIr);
+    ? withUiSourceContext
+    : admitDeterministicUnknownSourceRelations(
+        withUiSourceContext, input.semanticIr);
   const errors = validateGameplayIntentModel(completed);
   if (errors.length > 0) {
     throw new Error(

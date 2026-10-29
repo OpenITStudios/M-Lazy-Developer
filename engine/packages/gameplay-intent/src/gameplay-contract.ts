@@ -14,6 +14,7 @@ import {
 import type {
   GameplayIntentModel,
   GameplayIntentEvidence,
+  GameplayUiSourceStepBinding,
 } from "./types.js";
 
 
@@ -48,7 +49,13 @@ export interface MapNativePlayerFacingContractCandidate {
   readonly authoredUiSendCalls: readonly NonNullable<
     NonNullable<GameplayIntentEvidence["literalTranslationUse"]>["authoredUiSendCall"]
   >[];
-  /** Merely source-correlated outcome/objective subjects, not causal proof. */
+  /** Only subjects owning an exact typed IR source operation in the UI
+   * execution region. Still not an accepted gameplay causal dependency.
+   */
+  readonly sourceGameplayStepBindings:
+    readonly GameplayUiSourceStepBinding[];
+  readonly omittedSourceGameplayStepBindings: number;
+  /** Outcome/objective source-step subjects, never approved player goals. */
   readonly relatedOutcomeCandidateIds: readonly string[];
   readonly sourceReferenceEvidenceIds: readonly string[];
   readonly sourceRegionIds: readonly string[];
@@ -66,6 +73,8 @@ export interface MapNativePlayerFacingContractCandidate {
     | "SOURCE_GUARD_SATISFIABILITY"
     | "PLAYER_RECEIVER_IDENTITY"
     | "SOURCE_UI_SEND_BINDING"
+    | "SOURCE_GAMEPLAY_STEP_BINDING"
+    | "SOURCE_GAMEPLAY_STEP_BUDGET"
     | "OBJECTIVE_CAUSAL_BINDING"
     | "DUPLICATE_LOCALE_DEFINITION"
     | "SOURCE_REGION_IDENTITY"
@@ -163,9 +172,24 @@ export function reconstructMapNativePlayerFacingContracts(
       return [[call.apiCallEvidenceId, call] as const];
     })).values()].sort((a, b) =>
       a.apiCallEvidenceId.localeCompare(b.apiCallEvidenceId));
-    const outcomes = relatedSubjects.filter(id =>
-      model.nodes.some(node => node.id === id &&
-        (node.kind === "objective" || node.kind === "outcome")));
+    const sourceGameplayStepBindings = [...new Map(
+      authoredUiSendCalls.flatMap(call =>
+        (call.sourceGameplayStepBindings ?? []).map(binding => [
+          [binding.subjectId, binding.sourceStepEvidenceId,
+            binding.sourceStepKind].join("::"),
+          binding,
+        ] as const))
+    ).values()].sort((a, b) =>
+      a.subjectId.localeCompare(b.subjectId) ||
+      a.sourceStepEvidenceId.localeCompare(b.sourceStepEvidenceId));
+    const omittedSourceGameplayStepBindings =
+      authoredUiSendCalls.reduce((sum, call) =>
+        sum + (call.omittedSourceGameplayStepBindings ?? 0), 0);
+    const outcomes = [...new Set(sourceGameplayStepBindings
+      .filter(binding =>
+        binding.subjectKind === "objective" ||
+        binding.subjectKind === "outcome")
+      .map(binding => binding.subjectId))].sort();
     const sameLocaleDefinitionCount =
       sameLocaleCounts.get(countKey(key, locale)) ?? 0;
     const unresolved: MapNativePlayerFacingContractCandidate["unresolved"][number][] = [
@@ -189,14 +213,22 @@ export function reconstructMapNativePlayerFacingContracts(
       unresolved.push("DUPLICATE_LOCALE_DEFINITION");
     if (refs.length > 0 && admittedRegionIds.length === 0)
       unresolved.push("SOURCE_REGION_IDENTITY");
-    if (relatedSubjects.length === 0)
+    if (relatedSubjects.length === 0 &&
+        sourceGameplayStepBindings.length === 0)
       unresolved.push("GAMEPLAY_SUBJECT_ASSOCIATION");
+    if (authoredUiSendCalls.length > 0 &&
+        sourceGameplayStepBindings.length === 0)
+      unresolved.push("SOURCE_GAMEPLAY_STEP_BINDING");
+    if (omittedSourceGameplayStepBindings > 0)
+      unresolved.push("SOURCE_GAMEPLAY_STEP_BUDGET");
     return {
       textEvidenceId: item.id,
       key, locale,
       ...(item.playerFacingText?.pack === undefined ? {} :
         { pack: item.playerFacingText.pack }),
       authoredUiSendCalls,
+      sourceGameplayStepBindings,
+      omittedSourceGameplayStepBindings,
       relatedOutcomeCandidateIds: outcomes,
       sourceStatus: authoredUiSendCalls.length > 0
         ? "EXACT_AUTHORED_UI_SEND_ATTEMPT" as const
@@ -212,6 +244,8 @@ export function reconstructMapNativePlayerFacingContracts(
       evidenceIds: [...new Set([
         item.id, ...refs.map(ref => ref.id), ...admittedRegionIds,
         ...authoredUiSendCalls.map(call => call.apiCallEvidenceId),
+        ...sourceGameplayStepBindings.map(binding =>
+          binding.sourceStepEvidenceId),
       ])].sort(),
       unresolved,
       authority: "SELECTED_MAP_SOURCE_CANDIDATE_NOT_APPROVED_DESIGN_OR_RUNTIME_PROOF" as const,
@@ -318,8 +352,10 @@ export function buildGameplayContract(
     implementationEvidenceIds: designChallenge.implementationEvidenceIds,
     playerFacingClaimEvidenceIds: designChallenge.playerFacingEvidenceIds,
     mapNativePlayerFacingCandidates: reconstructMapNativePlayerFacingContracts(model)
-      .filter(candidate => candidate.relatedIntentSubjectIds.some(id =>
-        subjects.has(id))),
+      .filter(candidate =>
+        candidate.relatedIntentSubjectIds.some(id => subjects.has(id)) ||
+        candidate.sourceGameplayStepBindings.some(binding =>
+          subjects.has(binding.subjectId))),
     designChallenge,
     readiness,
   };
