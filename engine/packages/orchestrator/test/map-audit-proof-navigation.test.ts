@@ -8,6 +8,9 @@ import type {
 import type {
   GameplayWorldModel,
 } from "../src/inspection/gameplay-world-model.js";
+import {
+  deriveAuditModelTaskPackets,
+} from "../src/map-audit-model-task.js";
 
 function finding(
   failureDomain: NeedValidationAuditIssueProjection["failureDomain"],
@@ -87,6 +90,47 @@ describe("map audit proof navigation", () => {
     expect(result.route[0]?.question).toContain("scope, guard");
     expect(result.route[1]?.order).toBe(2);
     expect(result.route.at(-1)?.evidencePreference).toBe("runtime");
+  });
+
+  it("feeds only current unresolved proof claims to the active model handoff", () => {
+    const pending = {
+      ...finding("progression-wave-objective"),
+      missingProofCriteria: [
+        { id: "failing-path-reachable", scope: "family" as const,
+          description: "Show the exact reachable failure path." },
+        { id: "counter-proof-cleared", scope: "universal" as const,
+          description: "Exhaust the current guard/scope search." },
+      ],
+      missingCounterProofDimensions: ["scope"] as const,
+    };
+    const navigation = buildAuditProofNavigation(pending);
+    const tasks = deriveAuditModelTaskPackets({
+      admission: { firstBlockingStage: undefined },
+      procedure: {},
+      graph: {},
+      defectResolution: {},
+      auditRevision: "revision:selected",
+      world: {},
+      intent: {
+        id: "intent:selected", artifactId: "selected",
+        evidence: [{
+          id: "e:test", scope: "selected-artifact", origin: "source-code",
+          locator: "behavior_packs/demo/scripts/active.js:8:2",
+          summary: "Source witness",
+        }],
+        nodes: [], edges: [], invariants: [], unknowns: [],
+      },
+      needValidationFindings: [{ ...pending, proofNavigation: navigation }],
+      auditObligations: [],
+    } as any);
+    const task = tasks.find(item => item.kind === "PROOF_NAVIGATION");
+    expect(task?.missingClaims).toEqual(navigation.missingClaims);
+    expect(task?.familyProofCriteria).toEqual([
+      "failing-path-reachable: Show the exact reachable failure path.",
+    ]);
+    expect(task?.navigationRoute?.[0]?.knowledgeDomain).toBe("counter-proof");
+    expect(task?.evidenceIds).toEqual(["e:test"]);
+    expect(task?.unresolvedEvidenceIds).toEqual([]);
   });
 
   it("keeps explicit zero family gaps empty rather than requesting unrelated proofs", () => {

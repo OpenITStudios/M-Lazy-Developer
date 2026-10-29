@@ -141,9 +141,11 @@ export function projectNeedValidationAuditIssues(
             const matched = currentCounterProof.dimensionReceipts.filter(item =>
               item.dimension === dimension
             );
+            const witness = matched[0];
             return matched.length !== 1 ||
-              matched[0]?.exhaustiveWithinScope !== true ||
-              matched[0].evidenceIds.length === 0;
+              witness === undefined ||
+              witness.exhaustiveWithinScope !== true ||
+              witness.evidenceIds.length === 0;
           });
       // Reuse the exact link-sourced evidence set used for issue taxonomy.
       return [{
