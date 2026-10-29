@@ -261,7 +261,7 @@ baselineReusableForAllReplicas
 
 ## Human-facing report completeness
 
-**Operator-facing final summary versus technical evidence:** The compact three-category operator view (`Bug`, `Design Mismatch`, `Safe`) is a read-only projection of proven issues and explicitly safe, closed vital gameplay domains. PROVEN/NEED_VALIDATION are internal proof decisions, not final result categories. A pending issue remains individually visible in the canonical structured V2 and detailed technical brief; the compact view uses a clear non-category `Pemeriksaan belum selesai` notice and MUST NOT call a pending claim Bug, Design Mismatch or Safe. Full technical output retains all material findings below. The compact view may not hide audit incompleteness or claim Safe from mere non-detection.
+**Operator-facing final summary versus technical evidence:** The final operator report contains only `Bug` and `Design Mismatch` categories. Within both, every scoped `PROVEN` and `NEED_VALIDATION` finding must remain individually visible with its status; pending candidates are not asserted as confirmed. Pending findings include the suspected issue, expected/indicated actual result, potential impact, source evidence, `validationReason`, `missingProof` and `validationTest`. `SAFE` remains internal-only. A `Pemeriksaan belum selesai` note is a completeness indicator, never a replacement for pending findings. Unclassified Audit Obligations remain in the canonical structured V2 and detailed technical brief, not as invented Bugs. No audit proof gate or canonical schema changes.
 
 The Map Audit Report must render all material findings:
 
@@ -284,7 +284,7 @@ Rules:
 
 ## Status
 
-Every material finding uses exactly one of two public statuses:
+Every material finding uses exactly one of two proof statuses (shown per finding, not as report categories):
 
 - `PROVEN` — contradiction is sufficiently proven from selected-artifact evidence and blocking counter-proof is cleared. Final Blocker / Major / Minor severity is allowed.
 - `NEED_VALIDATION` — the finding remains materially plausible but one specific proof obligation is unresolved. It must include a concise validation reason, the exact missing proof, and one narrow validation test. Final severity is not allowed yet.

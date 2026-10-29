@@ -1520,38 +1520,44 @@ describe("Map Audit Output V2 projection", () => {
 });
 
 
-describe("three-result operator final summary", () => {
-  const currentIntent: any = {
-    evidence: [{
-      id: "ev:current", scope: "selected-artifact", origin: "source-code",
-      locator: "behavior_packs/demo/scripts/active.js:10",
-      summary: "Current authored operation",
-    }, {
-      id: "ev:historical", scope: "external-reference", origin: "historical-diff",
-      locator: "old-version.js:10", summary: "Previous map version",
-    }],
+describe("two-category final report with visible pending findings", () => {
+  const intent: any = {
+    evidence: [
+      { id: "current", scope: "selected-artifact", origin: "source-code",
+        locator: "behavior_packs/demo/scripts/active.js:10" },
+      { id: "old", scope: "external-reference", origin: "historical-diff",
+        locator: "old-version.js:10" },
+    ],
     nodes: [], edges: [], invariants: [], unknowns: [],
   };
-  const bug: any = {
+  const provenBug: any = {
     id: "bug:proven", issueType: "BUG", status: "PROVEN",
     issue: "Progress cannot complete", expected: "Objective completes",
     actual: "Objective stays locked", playerImpact: "Player is stuck",
-    evidenceIds: ["ev:current", "ev:historical"], reproduceSteps: [],
+    evidenceIds: ["current", "old"],
+    reproduceSteps: ["Start game", "Attempt to complete objective"],
   };
-  const mismatch: any = {
-    ...bug, id: "design:proven", issueType: "DESIGN_MISMATCH",
-    issue: "Capacity differs from declared design",
-    expected: "Six simultaneous players", actual: "Two supported players",
+  const pendingBug: any = {
+    ...provenBug, id: "bug:pending", status: "NEED_VALIDATION",
+    issue: "Possible reconnect reset issue",
+    validationReason: "Reconnect ownership ambiguous",
+    missingProof: "One deciding observation",
+    validationTest: "Reconnect during reset and inspect owner state",
   };
-  const pending: any = {
-    ...bug, id: "bug:pending", issue: "Possible reconnect reset issue",
-    status: "NEED_VALIDATION", missingProof: "One deciding observation",
+  const provenMismatch: any = {
+    ...provenBug, id: "dm:proven", issueType: "DESIGN_MISMATCH",
+    issue: "Capacity differs from design",
+    expected: "Six simultaneous players", actual: "Two players supported",
   };
-  const baseReport: any = {
+  const pendingMismatch: any = {
+    ...pendingBug, id: "dm:pending", issueType: "DESIGN_MISMATCH",
+    issue: "Possible reset design mismatch",
+  };
+  const base: any = {
     mapVersion: "1.0.0",
     evidenceScope: { selectedArtifact: "demo.mcworld" },
-    bugs: [bug, pending],
-    designMismatches: [mismatch],
+    bugs: [provenBug, pendingBug],
+    designMismatches: [provenMismatch, pendingMismatch],
     control: { status: "BLOCKED", currentStage: "PROVE" },
     coverage: { disposition: "incomplete" },
     gameplayClosure: { status: "PARTIAL" },
@@ -1564,28 +1570,48 @@ describe("three-result operator final summary", () => {
     }},
   };
 
-  it("shows only confirmed Bug/Design Mismatch and never calls open work Safe", () => {
-    const report = formatSelectedMapAuditFinalReport({
-      report: baseReport, intent: currentIntent,
-    });
-    expect(report.match(/^## /gm)).toHaveLength(3);
-    expect(report).toContain("## Bug (1)");
-    expect(report).toContain("## Design Mismatch (1)");
-    expect(report).toContain("## Safe (0)");
-    expect(report).toContain("Seharusnya: Six simultaneous players");
-    expect(report).toContain("Yang terjadi: Two supported players");
+  it("retains every unproven candidate with deciding proof under its issue type", () => {
+    const report = formatSelectedMapAuditFinalReport({ report: base, intent });
+    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report).toContain("## Bug (1 terbukti; 1 perlu validasi)");
+    expect(report).toContain("## Design Mismatch (1 terbukti; 1 perlu validasi)");
+    expect(report).toContain("Possible reconnect reset issue");
+    expect(report).toContain("Possible reset design mismatch");
+    expect(report).toContain("NEED_VALIDATION (dugaan, belum terbukti)");
+    expect(report).toContain("PROVEN (terbukti)");
+    expect(report).toContain("One deciding observation");
+    expect(report).toContain("Reconnect during reset and inspect owner state");
+    expect(report).toContain("Potensi dampak");
+    expect(report).toContain("Panduan uji (bukan klaim sudah dijalankan)");
     expect(report).toContain("behavior_packs/demo/scripts/active.js:10");
     expect(report).not.toContain("old-version.js:10");
-    expect(report).not.toContain("Possible reconnect reset issue");
-    expect(report).not.toContain("NEED_VALIDATION");
-    expect(report).not.toContain("PROVEN");
+    expect(report).not.toContain("## Safe");
+    expect(report).not.toContain("Masuk dan kesiapan pemain");
     expect(report).toContain("Pemeriksaan belum selesai");
   });
 
-  it("fails closed when header says ready but an unresolved issue still exists", () => {
+  it("keeps pending findings visible despite a misleading closed header", () => {
     const report = formatSelectedMapAuditFinalReport({
       report: {
-        ...baseReport,
+        ...base, control: { status: "READY_FOR_REVIEW" },
+        coverage: { disposition: "accounted" },
+        gameplayClosure: { status: "CLOSED" },
+        unresolved: { status: "CLEAR", total: 0 },
+        qualityGates: { vitalGameplay: {
+          status: "CLOSED",
+          domains: [{ domain: "ENTRY_ADMISSION", status: "UNDERSTOOD_PROVEN_SAFE" }],
+        }},
+      }, intent,
+    });
+    expect(report).toContain("Possible reconnect reset issue");
+    expect(report).toContain("Possible reset design mismatch");
+    expect(report).toContain("Pemeriksaan belum selesai");
+  });
+
+  it("hides Safe in a completely closed audit without hiding proved defects", () => {
+    const report = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base, bugs: [provenBug], designMismatches: [provenMismatch],
         control: { status: "READY_FOR_REVIEW" },
         coverage: { disposition: "accounted" },
         gameplayClosure: { status: "CLOSED" },
@@ -1594,36 +1620,13 @@ describe("three-result operator final summary", () => {
           status: "CLOSED",
           domains: [{ domain: "ENTRY_ADMISSION", status: "UNDERSTOOD_PROVEN_SAFE" }],
         }},
-      },
-      intent: currentIntent,
+      }, intent,
     });
-    expect(report).toContain("## Safe (0)");
-    expect(report).toContain("Pemeriksaan belum selesai");
-  });
-
-  it("permits Safe only for domains concluded safe after actual audit closure", () => {
-    const report = formatSelectedMapAuditFinalReport({
-      report: {
-        ...baseReport,
-        bugs: [bug],
-        control: { status: "READY_FOR_REVIEW" },
-        coverage: { disposition: "accounted" },
-        gameplayClosure: { status: "CLOSED" },
-        unresolved: { status: "CLEAR", total: 0 },
-        qualityGates: { vitalGameplay: {
-          status: "CLOSED",
-          domains: [
-            { domain: "ENTRY_ADMISSION", status: "UNDERSTOOD_PROVEN_SAFE" },
-            { domain: "GAME_STATE_PROGRESSION", status: "UNDERSTOOD_WITH_FINDING" },
-            { domain: "MULTI_ARENA_ISOLATION", status: "NOT_APPLICABLE" },
-          ],
-        }},
-      },
-      intent: currentIntent,
-    });
-    expect(report).toContain("## Safe (1)");
-    expect(report).toContain("Masuk dan kesiapan pemain");
-    expect(report).not.toContain("Isolasi antar-arena");
+    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report).toContain("## Bug (1 terbukti; 0 perlu validasi)");
+    expect(report).toContain("## Design Mismatch (1 terbukti; 0 perlu validasi)");
+    expect(report).not.toContain("## Safe");
+    expect(report).not.toContain("Masuk dan kesiapan pemain");
     expect(report).not.toContain("Pemeriksaan belum selesai");
     expect(report).toContain("Pemeriksaan selesai pada cakupan bukti audit ini");
   });
