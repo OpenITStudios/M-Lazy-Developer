@@ -100,6 +100,14 @@ function provenImpactPathFrom(
   scenarioComponentIds: ReadonlySet<string>,
   intent: GameplayIntentModel,
   sourceEvidenceIds: ReadonlySet<string>,
+  /** Optional DIRECT edge already being classified. A one-edge path to a
+   * source-grounded, independently approved player outcome is still a
+   * genuine authored dependency; it must not disappear simply because
+   * there is no second outgoing edge.
+   */
+  directEdge?: GameplayIntentEdge,
+  directImplementationEvidenceIds?: ReadonlySet<string>,
+  evidenceById?: ReadonlyMap<string, GameplayIntentEvidence>,
 ): Pick<GameplayCausalLink, "impactPathComponentIds" | "impactPathEvidenceIds"> {
   const empty = {
     impactPathComponentIds: [],
@@ -110,6 +118,39 @@ function provenImpactPathFrom(
     "outcome",
   ]);
   const byId = new Map(intent.nodes.map((node) => [node.id, node]));
+  if (directEdge !== undefined &&
+      directEdge.to === startId &&
+      directEdge.status === "authored" &&
+      scenarioComponentIds.has(directEdge.from) &&
+      scenarioComponentIds.has(directEdge.to)) {
+    // One authored relation to the terminal node is a COMPLETE direct
+    // path, but only with a current selected-source implementation
+    // witness AND an independent approved player-outcome contract.
+    // Source-only return names, inferred design or foreign version evidence
+    // never establish the intended player-visible impact of this edge.
+    const exactTargets = intent.nodes.filter(node => node.id === startId);
+    const terminal = exactTargets.length === 1 ? exactTargets[0] : undefined;
+    const codeIds = directEdge.evidenceIds.filter(id =>
+      sourceEvidenceIds.has(id) &&
+      directImplementationEvidenceIds?.has(id) === true);
+    const related = [...new Set([
+      ...directEdge.evidenceIds, ...(terminal?.evidenceIds ?? []),
+    ])].map(id => evidenceById?.get(id));
+    const approvedIds = (terminal?.evidenceIds ?? []).filter(id =>
+      isSelectedArtifactApprovedDesignEvidence(evidenceById?.get(id)));
+    if (terminal?.status === "authored" &&
+        terminalKinds.has(terminal.kind) &&
+        codeIds.length > 0 &&
+        approvedIds.length > 0 &&
+        hasIndependentApprovedDesignEvidence(related)) {
+      return {
+        impactPathComponentIds: [directEdge.from, startId],
+        impactPathEvidenceIds: [...new Set([
+          ...codeIds, ...approvedIds,
+        ])].sort(),
+      };
+    }
+  }
   const queue: { nodeIds: string[]; evidenceIds: string[] }[] = [{
     nodeIds: [startId], evidenceIds: [],
   }];
@@ -3193,6 +3234,13 @@ export function compileGameplayScenarioGraph(
   const sourceEvidenceIds = new Set(input.intent.evidence
     .filter(record => record.scope === "selected-artifact")
     .map(record => record.id));
+  // Distinguish actual selected-artifact implementation sites from
+  // approved design declarations and unverified presentation wording.
+  const directImplementationEvidenceIds = new Set(input.intent.evidence
+    .filter(record =>
+      record.scope === "selected-artifact" &&
+      (record.origin === "source-code" || record.origin === "command"))
+    .map(record => record.id));
   const selectedSourceEvidenceLocators = new Map(input.intent.evidence
     .filter((record) =>
       record.scope === "selected-artifact" &&
@@ -3608,6 +3656,7 @@ export function compileGameplayScenarioGraph(
       if (!componentIds.has(edge.from) || !componentIds.has(edge.to)) continue;
       const impactPath = provenImpactPathFrom(
         edge.to, allowed, input.intent, sourceEvidenceIds,
+        edge, directImplementationEvidenceIds, purposeEvidenceById,
       );
       const causalStatus = edgeStatus(edge, sourceEvidenceIds);
       const guardWitnessIds = authoredGuardWitnessesByEdge.get(edge.id) ?? [];

@@ -130,6 +130,99 @@ describe("cross-region source handoff tracing", () => {
       item.edgeId === "edge:unknown")).toBe(false);
   });
 
+  it("keeps directly authored objective impact evidence without inventing runtime success", () => {
+    const implementation = {
+      id: "source:open", origin: "source-code" as const,
+      scope: "selected-artifact" as const, locator: "scripts/mode.ts:8:2",
+      summary: "Exact authored mechanism-to-outcome relation",
+    };
+    const outcomeSource = {
+      id: "source:outcome", origin: "source-code" as const,
+      scope: "selected-artifact" as const, locator: "scripts/mode.ts:10:2",
+      summary: "Exact authored outcome site",
+    };
+    const approved = {
+      id: "design:objective", origin: "game-design-spec" as const,
+      scope: "selected-artifact" as const, designStatus: "approved" as const,
+      locator: "design/approved.json#/player-objective",
+      summary: "Approved selected-world player outcome",
+    };
+    const base = {
+      schemaVersion: 1 as const, id: "intent:direct-impact",
+      artifactId: "selected",
+      evidence: [implementation, outcomeSource, approved],
+      nodes: [{
+        id: "mechanic:action", kind: "mechanic" as const,
+        label: "Unknown action", status: "authored" as const,
+        evidenceIds: ["source:open"],
+      }, {
+        id: "outcome:result", kind: "outcome" as const,
+        label: "Open objective", status: "authored" as const,
+        evidenceIds: ["source:outcome", "design:objective"],
+        description: "Open the selected-world objective",
+      }],
+      edges: [{
+        id: "relation:direct", kind: "produces" as const,
+        from: "mechanic:action", to: "outcome:result",
+        status: "authored" as const, evidenceIds: ["source:open"],
+      }],
+      invariants: [], unknowns: [],
+    };
+    const world = {
+      arenas: { detected: false, cleanup: { resourceLedger: { resources: 0 } } },
+      chunks: { tickingAreaAcquires: 0, tickingAreaReadinessStates: 0,
+        capacityUncheckedLeases: 0 },
+      entities: { definitions: 0 },
+      combat: { hurtHandlers: 0, deathHandlers: 0, damageApplications: 0 },
+      inventory: { regions: 0, grantRegions: 0 },
+      structures: { loads: 0, runtimeLogicLoads: 0 },
+      economy: { sourceKinds: [] },
+      worldRules: { writes: 0, manualEntitySpawnPaths: 0 },
+      playerCapabilities: { gamemodeWrites: 0, abilityWrites: 0,
+        commandPermissionWrites: 0, privilegedGuardReferences: 0,
+        protectionDefinitions: 0 },
+      capabilityExposure: { exposed: 0, potentiallyExposed: 0, unresolved: 0 },
+      clientReconciliation: { predictedMutationCancellations: 0 },
+      spatial: { resolvedScriptEffects: 0, structurePlacements: 0,
+        authority: { configured: false } },
+    } as unknown as import("../../src/inspection/gameplay-world-model.js").GameplayWorldModel;
+    const compile = (intent: typeof base) =>
+      compileGameplayScenarioGraph({
+        intent: intent as import("../../../gameplay-intent/src/index.js").GameplayIntentModel,
+        world,
+        preset: { scenarios: [] } as unknown as
+          import("../../../diagnostic-reasoning/src/index.js").GameplayAuditScenarioPreset,
+      });
+    const directLink = (intent: typeof base) =>
+      compile(intent).causalLinks.find(item =>
+        item.scenarioId === "scenario:mechanic:action" &&
+        item.fromComponentId === "mechanic:action" &&
+        item.toComponentId === "outcome:result");
+    const link = directLink(base);
+    expect(link?.status).toBe("PROVEN");
+    expect(link?.impactPathComponentIds).toEqual([
+      "mechanic:action", "outcome:result",
+    ]);
+    expect(link?.impactPathEvidenceIds).toEqual([
+      "design:objective", "source:open",
+    ]);
+    // No independent approved design, or no current implementation site:
+    // neither a name nor a design assertion alone grants impact proof.
+    const draft = directLink({ ...base, evidence: [
+      implementation, outcomeSource, { ...approved, designStatus: "draft" as const },
+    ] });
+    expect(draft?.impactPathComponentIds).toEqual([]);
+    const external = directLink({ ...base, evidence: [
+      { ...implementation, scope: "external-reference" as const },
+      outcomeSource, approved,
+    ] });
+    expect(external?.impactPathComponentIds).toEqual([]);
+    const designOnly = directLink({ ...base, edges: [{
+      ...base.edges[0]!, evidenceIds: ["design:objective"],
+    }] });
+    expect(designOnly?.impactPathComponentIds).toEqual([]);
+  });
+
   it("keeps an orphan state mutation as source evidence without supporting a mechanic or journey", () => {
     const ir = sample();
     const intent = {

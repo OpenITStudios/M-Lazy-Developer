@@ -272,6 +272,22 @@ For each relevant interaction examine guard, scope, exclusion, owner, generation
 
 Do not generate a Cartesian product of unrelated systems.
 
+## Direct selected-source impact path
+
+A canonical authored Intent link whose target is already the final
+objective/outcome must not lose its one-edge impact path merely because
+there is no further outgoing gameplay relation. The existing Scenario
+Compiler now recognizes this **direct authored dependency** only when
+the link has exact selected-artifact source-code/command evidence AND the
+terminal node has independently approved current-artifact design evidence.
+Its impact-path proof records both the original source relation and the
+approved destination, never a guessed mechanic name, reused earlier map,
+draft/translation cue or self-asserted expected behavior. This is
+source-grounded relevance of a dependency to a player objective, NOT proof
+that the action executed, a state write committed, the Minecraft effect
+succeeded, or the player experienced a bug. All PROVE counter-proof,
+reachability, family-specific evidence and native-runtime ceilings remain.
+
 ## Effective-delivery proof
 
 Configured or theoretical capacity is not deliverable capacity.
