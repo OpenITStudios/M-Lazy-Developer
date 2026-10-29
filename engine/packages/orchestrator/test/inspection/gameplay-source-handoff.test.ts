@@ -228,6 +228,14 @@ describe("cross-region source handoff tracing", () => {
       },
     ] });
     expect(sameSiteDesign?.impactPathComponentIds).toEqual([]);
+    const structuralOnly = directLink({ ...base, edges: [{
+      ...base.edges[0]!, kind: "owns",
+    }] });
+    expect(structuralOnly?.impactPathComponentIds).toEqual([]);
+    const inferredOnly = directLink({ ...base, edges: [{
+      ...base.edges[0]!, status: "inferred",
+    }] });
+    expect(inferredOnly?.impactPathComponentIds).toEqual([]);
   });
 
   it("keeps an orphan state mutation as source evidence without supporting a mechanic or journey", () => {

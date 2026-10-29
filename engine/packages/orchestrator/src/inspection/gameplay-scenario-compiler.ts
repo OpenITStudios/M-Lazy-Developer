@@ -118,7 +118,12 @@ function provenImpactPathFrom(
     "outcome",
   ]);
   const byId = new Map(intent.nodes.map((node) => [node.id, node]));
+  const impactKinds = new Set<GameplayIntentEdge["kind"]>([
+    "produces", "transitions-to", "recovers-to",
+    "wins-by", "loses-by", "requires",
+  ]);
   if (directEdge !== undefined &&
+      impactKinds.has(directEdge.kind) &&
       directEdge.to === startId &&
       directEdge.status === "authored" &&
       scenarioComponentIds.has(directEdge.from) &&
@@ -155,10 +160,6 @@ function provenImpactPathFrom(
     nodeIds: [startId], evidenceIds: [],
   }];
   const visited = new Set<string>([startId]);
-  const impactKinds = new Set<GameplayIntentEdge["kind"]>([
-    "produces", "transitions-to", "recovers-to",
-    "wins-by", "loses-by", "requires",
-  ]);
 
   for (let i = 0; i < queue.length; i += 1) {
     const path = queue[i]!;
