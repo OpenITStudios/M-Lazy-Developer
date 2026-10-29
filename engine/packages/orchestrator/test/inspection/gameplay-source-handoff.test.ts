@@ -238,6 +238,115 @@ describe("cross-region source handoff tracing", () => {
     expect(inferredOnly?.impactPathComponentIds).toEqual([]);
   });
 
+  it("requires selected-source causal edges and approved terminal authority across every multi-step path", () => {
+    const selected = "selected";
+    const source = (id: string, locator: string) => ({
+      id, origin: "source-code" as const,
+      scope: "selected-artifact" as const, locator,
+      summary: "Exact authored source site",
+    });
+    const design = {
+      id: "design:approved", origin: "game-design-spec" as const,
+      scope: "selected-artifact" as const,
+      designStatus: "approved" as const,
+      locator: "design/game.json#/objective", summary: "Approved outcome",
+    };
+    const base: import("../../../gameplay-intent/src/index.js").GameplayIntentModel = {
+      schemaVersion: 1, id: "intent:chain", artifactId: selected,
+      evidence: [
+        source("source:start", "scripts/game.ts:5:1"),
+        source("source:finish", "scripts/game.ts:11:1"),
+        source("source:alternate", "scripts/game.ts:9:1"),
+        design,
+      ],
+      nodes: [{
+        id: "mechanic:trigger", kind: "mechanic", label: "Trigger",
+        status: "authored", evidenceIds: ["source:start"],
+      }, {
+        id: "state:armed", kind: "state", label: "Armed",
+        status: "authored", evidenceIds: ["source:start"],
+      }, {
+        id: "outcome:aaa", kind: "outcome", label: "Unapproved response",
+        status: "authored", evidenceIds: ["source:alternate"],
+      }, {
+        id: "outcome:result", kind: "outcome", label: "Approved result",
+        status: "authored", evidenceIds: ["source:finish", design.id],
+      }],
+      edges: [{
+        id: "relation:trigger-state", from: "mechanic:trigger",
+        to: "state:armed", kind: "produces", status: "authored",
+        evidenceIds: ["source:start"],
+      }, {
+        id: "relation:state-unapproved", from: "state:armed",
+        to: "outcome:aaa", kind: "produces", status: "authored",
+        evidenceIds: ["source:alternate"],
+      }, {
+        id: "relation:state-result", from: "state:armed",
+        to: "outcome:result", kind: "produces", status: "authored",
+        evidenceIds: ["source:finish"],
+      }],
+      invariants: [], unknowns: [],
+    };
+    const world = {
+      arenas: { detected: false, cleanup: { resourceLedger: { resources: 0 } } },
+      chunks: { tickingAreaAcquires: 0, tickingAreaReadinessStates: 0,
+        capacityUncheckedLeases: 0 },
+      entities: { definitions: 0 },
+      combat: { hurtHandlers: 0, deathHandlers: 0, damageApplications: 0 },
+      inventory: { regions: 0, grantRegions: 0 },
+      structures: { loads: 0, runtimeLogicLoads: 0 },
+      economy: { sourceKinds: [] },
+      worldRules: { writes: 0, manualEntitySpawnPaths: 0 },
+      playerCapabilities: { gamemodeWrites: 0, abilityWrites: 0,
+        commandPermissionWrites: 0, privilegedGuardReferences: 0,
+        protectionDefinitions: 0 },
+      capabilityExposure: { exposed: 0, potentiallyExposed: 0, unresolved: 0 },
+      clientReconciliation: { predictedMutationCancellations: 0 },
+      spatial: { resolvedScriptEffects: 0, structurePlacements: 0,
+        authority: { configured: false } },
+    } as unknown as import("../../src/inspection/gameplay-world-model.js").GameplayWorldModel;
+    const compile = (intent: import("../../../gameplay-intent/src/index.js").GameplayIntentModel) =>
+      compileGameplayScenarioGraph({
+        intent, world,
+        preset: { scenarios: [] } as unknown as
+          import("../../../diagnostic-reasoning/src/index.js").GameplayAuditScenarioPreset,
+      });
+    const firstLink = (intent: import("../../../gameplay-intent/src/index.js").GameplayIntentModel) =>
+      compile(intent).causalLinks.find(link =>
+        link.scenarioId === "scenario:mechanic:trigger" &&
+        link.fromComponentId === "mechanic:trigger" &&
+        link.toComponentId === "state:armed");
+    const grounded = firstLink(base);
+    expect(grounded?.impactPathComponentIds).toEqual([
+      "mechanic:trigger", "state:armed", "outcome:result",
+    ]);
+    expect(grounded?.impactPathEvidenceIds).toEqual([
+      "design:approved", "source:finish", "source:start",
+    ]);
+
+    // The alphabetically first terminal is not an independent rule.
+    // A later valid branch must remain discoverable without borrowing it.
+    const noApproval = firstLink({ ...base, evidence: [
+      ...base.evidence.filter(item => item.id !== design.id),
+    ] });
+    expect(noApproval?.impactPathComponentIds).toEqual([]);
+    const designOnlyHop = firstLink({ ...base, edges: base.edges.map(edge =>
+      edge.id === "relation:state-result"
+        ? { ...edge, evidenceIds: [design.id] } : edge),
+    });
+    expect(designOnlyHop?.impactPathComponentIds).toEqual([]);
+    const inferredFirstHop = firstLink({ ...base, edges: base.edges.map(edge =>
+      edge.id === "relation:trigger-state"
+        ? { ...edge, status: "inferred" as const } : edge),
+    });
+    expect(inferredFirstHop?.impactPathComponentIds).toEqual([]);
+    const structuralFirstHop = firstLink({ ...base, edges: base.edges.map(edge =>
+      edge.id === "relation:trigger-state"
+        ? { ...edge, kind: "owns" as const } : edge),
+    });
+    expect(structuralFirstHop?.impactPathComponentIds).toEqual([]);
+  });
+
   it("keeps an orphan state mutation as source evidence without supporting a mechanic or journey", () => {
     const ir = sample();
     const intent = {

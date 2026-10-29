@@ -272,6 +272,24 @@ For each relevant interaction examine guard, scope, exclusion, owner, generation
 
 Do not generate a Cartesian product of unrelated systems.
 
+## Selected-source causal impact path
+
+Both a directly authored gameplay link and a longer directed path through
+state/phase/mechanic subjects use the **same source-impact rule**. Every
+traversed causal relation must be authored and supported by its own selected
+map source-code/command implementation witness; a design specification,
+translated label, inferred edge or structural owns/scoped-to association
+cannot substitute for any causal hop. The terminal objective/outcome must
+have an independently located APPROVED current-map design witness.
+When the shortest candidate terminates in a source-only or draft outcome,
+continue checking other bounded authored paths rather than falsely
+declaring that unrelated terminal PROVEN. Traversal is bounded and
+cycle-safe; missing complete evidence remains an explicit proof gap.
+A source-backed authored path is impact **relevance**, never proof of
+player triggering, operation success, guard satisfiability or a confirmed
+Bug. The same canonical source proof, Counter-Proof and Proof Saturation
+still govern both direct and multi-hop causal links.
+
 ## Direct selected-source impact path
 
 A canonical authored Intent link whose target is already the final
