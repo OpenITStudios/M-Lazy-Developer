@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
+const readinessGate = fileURLToPath(new URL("./check-case-ready.mjs", import.meta.url));
+
 const scorer = fileURLToPath(new URL("./score-benchmark.mjs", import.meta.url));
 const expectationValidator = fileURLToPath(
   new URL("./validate-expectation.mjs", import.meta.url),
@@ -324,5 +326,48 @@ test("legacy reduced-fixture metric normalization is unchanged", () => {
       "AGGREGATE_INPUT_ONLY_NOT_CURRENT_FULL_MAP_EVIDENCE");
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("reduced-fixture readiness accepts real bytes and rejects self-consistent forged metadata", () => {
+  // Existing acceptance corpus remains evaluable without touching its oracle.
+  const valid = spawnSync(process.execPath, [
+    readinessGate,
+    "engine/reliability/corpus/acceptance.json",
+    "acc_terminal_priority_table",
+  ], { encoding: "utf8" });
+  assert.equal(valid.status, 0, valid.stderr);
+
+  const dir = mkdtempSync(join(tmpdir(), "m-bedrock-fixture-identity-"));
+  try {
+    const fingerprint = "f".repeat(64);
+    const expectationPath = join(dir, "fixture-hash-gate.json");
+    const manifestPath = join(dir, "corpus.json");
+    writeFileSync(expectationPath, JSON.stringify({
+      schemaVersion: 1, id: "fixture-hash-gate", lane: "acceptance",
+      artifact: { label: "Integrity-negative fixture", sha256: fingerprint },
+      target: { edition: "bedrock", minecraftVersion: "1.26.0" },
+      expected: { disposition: "designed-behavior" },
+      provenance: { frozenBeforeRun: true, source: "independent fixture review" },
+    }));
+    writeFileSync(manifestPath, JSON.stringify({
+      schemaVersion: 1, lane: "acceptance",
+      policy: { blindEvaluationRequired: true, mayInformDetectorDevelopment: false },
+      cases: [{
+        id: "fixture-hash-gate", status: "ready",
+        sourceRef: "engine/fixtures/acceptance/result-transaction/terminal-priority-table.ts",
+        readiness: {
+          minimizedFixture: "present", artifactFingerprint: fingerprint,
+          frozenExpectation: expectationPath,
+        },
+      }],
+    }));
+    const rejected = spawnSync(process.execPath, [
+      readinessGate, manifestPath, "fixture-hash-gate",
+    ], { encoding: "utf8" });
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /reduced fixture SHA-256 mismatch/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

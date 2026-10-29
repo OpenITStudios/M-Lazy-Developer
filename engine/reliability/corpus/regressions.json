@@ -519,7 +519,8 @@
     },
     {
       "id": "reg_objective_authority_single_declared",
-      "status": "ready",
+      "status": "blocked",
+      "note": "Blocked at source SHA 696be29a2abe861fb333533c3a348511b69ba20d: fixture byte SHA-256 6f19e2d98f5d1834f7168db8d69d352e11ac453e783eca2a86ad1dd8b424f817 differs from frozen fingerprint aa183de77c56db5c0d3af35c307c5ab3470198de4581f581750da45f9f6b41c0. Preserve the original expectation; independently reconcile fixture history before re-approving. Not scored.",
       "sourceRef": "engine/fixtures/regressions/state-authority/objective-single-authority.json",
       "readiness": {
         "minimizedFixture": "present",
@@ -534,7 +535,8 @@
     },
     {
       "id": "reg_objective_authority_split_brain",
-      "status": "ready",
+      "status": "blocked",
+      "note": "Blocked at source SHA 696be29a2abe861fb333533c3a348511b69ba20d: fixture byte SHA-256 fb49890d601857252b818ec08156fa8505705cfe8c96d0777a9e17c7f3ceda05 differs from frozen fingerprint e18a07d3535298a6a3244b2e27ebfbcba3e6ef3c85308d9f9329fd098f97bc97. Preserve the original expectation; independently reconcile fixture history before re-approving. Not scored.",
       "sourceRef": "engine/fixtures/regressions/state-authority/objective-split-authority.json",
       "readiness": {
         "minimizedFixture": "present",

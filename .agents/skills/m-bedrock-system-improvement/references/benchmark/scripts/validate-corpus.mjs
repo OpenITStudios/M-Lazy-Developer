@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { reducedFixtureIdentityIssues } from "./reduced-fixture-identity.mjs";
 
 const manifests = [
   "engine/reliability/corpus/calibration.json",
@@ -65,6 +66,14 @@ for (const manifestPath of manifests) {
       errors.push(
         `${manifestPath}: ready case ${item.id} still missing ${missing.join(", ")}`,
       );
+    }
+    // Manifest-level "ready" for a reduced fixture requires its actual
+    // repository file bytes to match the frozen fingerprint. External maps
+    // remain declarative until independently retrieved and hashed.
+    if (item.status === "ready") {
+      for (const issue of reducedFixtureIdentityIssues(item)) {
+        errors.push(`${manifestPath}: ${item.id}: ${issue}`);
+      }
     }
 
     if (

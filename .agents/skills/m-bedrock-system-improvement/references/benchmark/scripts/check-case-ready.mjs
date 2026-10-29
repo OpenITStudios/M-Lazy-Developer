@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { reducedFixtureIdentityIssues } from "./reduced-fixture-identity.mjs";
 
 const [manifestPath, caseId] = process.argv.slice(2);
 if (!manifestPath || !caseId) {
@@ -23,6 +24,9 @@ for (const [key, value] of Object.entries(readiness)) {
     errors.push(`${key} is missing`);
   }
 }
+// Promotion checks the same actual reduced-source bytes as corpus validation.
+// A forged or stale manifest+expectation pair cannot authorize "ready".
+errors.push(...reducedFixtureIdentityIssues(item));
 
 // Completeness of metadata is not readiness. Validate the frozen contract
 // through the existing canonical expectation validator, without creating

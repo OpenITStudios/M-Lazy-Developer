@@ -94,6 +94,13 @@ A candidate without approved expectations or artifact identity is not benchmark 
 
 ## Readiness states
 
+Reduced-fixture `ready` cases are checked against the **actual repository
+fixture-file SHA-256** in both the corpus validator and the case-promotion gate.
+A mismatched frozen fingerprint blocks the case; do not rewrite frozen
+expectations to match changed source. For external `.mcworld` cases, matching
+manifest metadata is not proof that the archive was retrieved or executed.
+Such artifact identity still requires an independent byte-level verification.
+
 ```text
 candidate  known source exists, but scoring prerequisites are incomplete
 ready      artifact identity + frozen expectation are complete
