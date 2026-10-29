@@ -151,6 +151,12 @@ export interface AuditModelSourceInvestigation {
       "SOURCE_ROOT_TRACE" | "DISCONNECTED_SOURCE_REGION" | "UNKNOWN";
     readonly steps: ReadonlyArray<GameplaySourceFlowCandidate["sourceSteps"][number]>;
     readonly omittedSteps: number;
+    /** Already accepted exact source pairs; do not ask AI to rediscover
+     * them or treat them as an inferred player objective.
+     */
+    readonly reviewedSourceRelationships?: NonNullable<
+      GameplayScenarioGraph["reviewedSourceRelationships"]
+    >;
     /** Branch membership describes authored source syntax, not feasibility. */
     readonly branchContexts: readonly {
       readonly expression: string;
@@ -1052,6 +1058,14 @@ function deriveSourceInvestigation(
       sourceTraceStatus: flow.sourceTraceStatus ?? "UNKNOWN",
       steps,
       omittedSteps: matchedSteps.length - steps.length,
+      ...((graph.reviewedSourceRelationships ?? [])
+        .filter(relation => relation.unknownId === unknown.id &&
+          relation.sourceEntryRegionId === flow.entryRegionId)
+        .length === 0 ? {} : {
+          reviewedSourceRelationships: (graph.reviewedSourceRelationships ?? [])
+            .filter(relation => relation.unknownId === unknown.id &&
+              relation.sourceEntryRegionId === flow.entryRegionId),
+        }),
       ...(gameplayEvidenceInquiry === undefined ? {} : {
         gameplayEvidenceInquiry,
         candidateJourneyIds: journeyLeads.slice(0, 3).map(item => item.id),
@@ -1182,6 +1196,12 @@ export function reviewAuditModelSourceInterpretation(
     throw new Error("Source interpretation lacks a unique selected unknown.");
   }
   const entry = entries[0]!;
+  if (entry.reviewedSourceRelationships?.some(relation =>
+    relation.sourceClaim === proposal.sourceClaim &&
+    relation.fromStepId === proposal.fromStepId &&
+    relation.toStepId === proposal.toStepId)) {
+    throw new Error("Source relationship already admitted; investigate remaining gameplay meaning instead.");
+  }
   const from = entry.steps.filter(step =>
     step.id === proposal.fromStepId &&
     step.source.artifactId === selectedArtifactId);
@@ -1291,6 +1311,11 @@ function obligationPackets(
       stage: obligation.stage,
       goal: obligation.title,
       decisionNeeded: obligation.reason +
+        (sourceInvestigation?.entries.some(entry =>
+          (entry.reviewedSourceRelationships?.length ?? 0) > 0)
+          ? " Exact typed source relationships are already reviewed. " +
+            "Investigate remaining player intent, scope and outcome; do not " +
+            "repeat these source-pair hypotheses or claim gameplay proof." : "") +
         (omittedUnknownEvidenceCount === 0 ? "" :
           " The bounded source view omits " + omittedUnknownEvidenceCount +
           " additional selected-artifact operations; the canonical Intent unknowns retain them."),

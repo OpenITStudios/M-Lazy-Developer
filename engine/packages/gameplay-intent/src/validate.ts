@@ -221,6 +221,35 @@ export function validateGameplayIntentModel(
   }
 
   for (const unknown of model.unknowns) {
+    const sourceRelationKeys = new Set<string>();
+    for (const relation of unknown.sourceRelations ?? []) {
+      const key = [relation.sourceClaim, relation.fromStepId, relation.toStepId].join("\u0000");
+      const pair = [relation.fromStepId, relation.toStepId];
+      const evidence = [...new Set(relation.evidenceIds)].sort();
+      if (sourceRelationKeys.has(key) ||
+          !unknown.sourceEntryRegionId?.trim() ||
+          relation.proofBoundary !==
+            "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF" ||
+          !([
+            "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+            "SOURCE_EFFECT_RETURN_CANDIDATE",
+          ] as readonly string[]).includes(relation.sourceClaim) ||
+          pair.some(id => !id?.trim() ||
+            !unknown.evidenceIds?.includes(id) ||
+            model.evidence.filter(item => item.id === id &&
+              item.origin === "source-code" &&
+              item.scope === "selected-artifact" &&
+              item.locator.trim().length > 0).length !== 1) ||
+          pair[0] === pair[1] ||
+          evidence.length !== 2 ||
+          !pair.every(id => evidence.includes(id))) {
+        issues.push({
+          path: "unknowns." + unknown.id + ".sourceRelations",
+          message: "Reviewed source relation needs distinct, selected-source-owned operation evidence and a unique unknown entry.",
+        });
+      }
+      sourceRelationKeys.add(key);
+    }
     for (const subjectId of unknown.blockedSubjectIds) {
       if (!nodeIds.has(subjectId)) {
         issues.push({

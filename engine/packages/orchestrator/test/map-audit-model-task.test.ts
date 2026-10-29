@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { GameplayIntentModel } from "../../../packages/gameplay-intent/src/index.js";
+import {
+  projectReviewedSourceRelationships,
+} from "../src/inspection/gameplay-scenario-compiler.js";
 import type { MandatoryAuditCheckpointReceipt } from "../src/inspection/mandatory-audit-procedure.js";
 import {
   deriveAuditModelKnowledgeLookup,
@@ -214,6 +217,54 @@ describe("source-scoped UNDERSTAND checkpoint navigation", () => {
   });
 });
 
+
+describe("reviewed unknown source relations in the canonical scenario projection", () => {
+  it("preserves exact selected-source relation but never manufactures a causal link", () => {
+    const selected = "map:selected";
+    const intent = {
+      artifactId: selected,
+      evidence: [
+        { id: "op:write", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/alpha.js:4:2" },
+        { id: "effect:open", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/alpha.js:6:2" },
+      ],
+      unknowns: [{
+        id: "unknown:alpha",
+        sourceEntryRegionId: "exec:alpha",
+        evidenceIds: ["op:write", "effect:open"],
+        sourceRelations: [{
+          sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+          fromStepId: "op:write", toStepId: "effect:open",
+          evidenceIds: ["effect:open", "op:write"],
+          proofBoundary: "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+        }],
+      }],
+    } as unknown as GameplayIntentModel;
+    const rooted = {
+      entryRegionId: "exec:alpha", sourceTraceStatus: "SOURCE_ROOT_TRACE",
+      sourceSteps: [
+        { id: "op:write", source: { artifactId: selected } },
+        { id: "effect:open", source: { artifactId: selected } },
+      ],
+    } as any;
+    expect(projectReviewedSourceRelationships(intent, [rooted])).toMatchObject([{
+      unknownId: "unknown:alpha",
+      sourceEntryRegionId: "exec:alpha",
+      sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+      evidenceIds: ["effect:open", "op:write"],
+    }]);
+    expect(projectReviewedSourceRelationships(intent, [{
+      ...rooted, sourceTraceStatus: "DISCONNECTED_SOURCE_REGION",
+    }])).toEqual([]);
+    expect(projectReviewedSourceRelationships(intent, [{
+      ...rooted,
+      sourceSteps: rooted.sourceSteps.map((step: any) =>
+        ({ ...step, source: { artifactId: "previous-map" } })),
+    }])).toEqual([]);
+    expect(projectReviewedSourceRelationships(intent, [rooted, rooted])).toEqual([]);
+  });
+});
 
 describe("unfamiliar source gameplay evidence handoff", () => {
   it("attaches only exact selected-world operations to an existing UNDERSTAND unknown obligation", () => {

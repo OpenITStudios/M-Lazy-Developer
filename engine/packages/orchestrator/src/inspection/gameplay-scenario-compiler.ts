@@ -3123,6 +3123,50 @@ export function reconstructAuthoredJourneyCandidates(
   };
 }
 
+/** Re-project admitted Gameplay Intent source relationships only while their
+ * exact operation sites still exist in one selected-artifact IR source flow.
+ * This is navigation for unknown mechanics, not an authored causal link.
+ */
+export function projectReviewedSourceRelationships(
+  intent: GameplayIntentModel,
+  flows: readonly GameplaySourceFlowCandidate[],
+): NonNullable<GameplayScenarioGraph["reviewedSourceRelationships"]> {
+  if (!intent.artifactId?.trim()) return [];
+  const byEntry = new Map<string, GameplaySourceFlowCandidate[]>();
+  for (const flow of flows) {
+    const previous = byEntry.get(flow.entryRegionId) ?? [];
+    previous.push(flow);
+    byEntry.set(flow.entryRegionId, previous);
+  }
+  const sourceEvidence = new Map(intent.evidence
+    .filter(item => item.origin === "source-code" &&
+      item.scope === "selected-artifact" && item.locator.trim())
+    .map(item => [item.id, item] as const));
+  return intent.unknowns.flatMap(unknown => {
+    if (!unknown.sourceEntryRegionId) return [];
+    return (unknown.sourceRelations ?? []).flatMap(relation => {
+      const pair = [relation.fromStepId, relation.toStepId];
+      if (pair.some(id =>
+        !unknown.evidenceIds?.includes(id) || !sourceEvidence.has(id))) return [];
+      // Multiple source-flow owners would make the authored entry ambiguous.
+      const eligible = (byEntry.get(unknown.sourceEntryRegionId!) ?? [])
+        .filter(flow => flow.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
+          pair.every(id => flow.sourceSteps.filter(step =>
+            step.id === id &&
+            step.source.artifactId === intent.artifactId).length === 1));
+      if (eligible.length !== 1) return [];
+      return [{
+        ...relation,
+        unknownId: unknown.id,
+        sourceEntryRegionId: unknown.sourceEntryRegionId!,
+      }];
+    });
+  }).sort((a,b) => a.unknownId.localeCompare(b.unknownId) ||
+    a.sourceClaim.localeCompare(b.sourceClaim) ||
+    a.fromStepId.localeCompare(b.fromStepId) ||
+    a.toStepId.localeCompare(b.toStepId));
+}
+
 export function compileGameplayScenarioGraph(
   input: {
     readonly intent: GameplayIntentModel;
@@ -3751,6 +3795,8 @@ export function compileGameplayScenarioGraph(
       receipts: knowledgeReceipts,
     },
     sourceFlowCandidates: observedSourceFlows,
+    reviewedSourceRelationships: projectReviewedSourceRelationships(
+      input.intent, observedSourceFlows),
     mechanicReconstructions,
     gameplayJourneyCandidates: journey.candidates,
     gameplayJourneyTruncated: journey.truncated,

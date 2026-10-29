@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assessGameplayIntentGrounding,
   deriveUnknownGameplayEvidenceInquiry,
+  admitReviewedUnknownSourceRelations,
   assessGameplayRouteObservation,
   evaluateGameplayOutcomeAdmissibility,
   evaluateGameplayPolicyPredicate,
@@ -76,6 +77,51 @@ const model: GameplayIntentModel = {
 describe("gameplay intent", () => {
   it("validates evidence-grounded graph references", () => {
     expect(validateGameplayIntentModel(model)).toEqual([]);
+  });
+
+  it("adopts only exact reviewed source relations without creating a gameplay mechanic", () => {
+    const unknownModel: GameplayIntentModel = {
+      ...model, artifactId: "map:selected",
+      evidence: [
+        { id: "op:write", origin: "source-code", scope: "selected-artifact",
+          locator: "behavior_packs/demo/scripts/main.js:10:4", summary: "write site" },
+        { id: "effect:gate", origin: "source-code", scope: "selected-artifact",
+          locator: "behavior_packs/demo/scripts/main.js:12:4", summary: "effect site" },
+        { id: "op:foreign", origin: "historical-diff", scope: "external-reference",
+          locator: "old/scripts/main.js:10:4", summary: "old map" },
+      ],
+      nodes: [], edges: [], invariants: [],
+      unknowns: [{
+        id: "unknown:entry", question: "What is this unknown gameplay action?",
+        blockedSubjectIds: [], sourceEntryRegionId: "exec:entry",
+        evidenceIds: ["op:write", "effect:gate"],
+      }],
+    };
+    const proposal = {
+      unknownId: "unknown:entry",
+      sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" as const,
+      fromStepId: "op:write", toStepId: "effect:gate",
+      sourceRelationEvidenceIds: ["effect:gate", "op:write"],
+    };
+    const accepted = admitReviewedUnknownSourceRelations(unknownModel, [proposal]);
+    expect(validateGameplayIntentModel(accepted)).toEqual([]);
+    expect(accepted.nodes).toEqual([]);
+    expect(accepted.edges).toEqual([]);
+    expect(accepted.unknowns[0]?.question).toBe(unknownModel.unknowns[0]?.question);
+    expect(accepted.unknowns[0]?.sourceRelations).toMatchObject([{
+      sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+      proofBoundary: "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+      evidenceIds: ["effect:gate", "op:write"],
+    }]);
+    expect(() => admitReviewedUnknownSourceRelations(accepted, [proposal]))
+      .toThrow(/already reviewed/);
+    expect(() => admitReviewedUnknownSourceRelations(unknownModel, [{
+      ...proposal, fromStepId: "op:foreign",
+      sourceRelationEvidenceIds: ["op:foreign", "effect:gate"],
+    }])).toThrow(/unowned, non-source or ambiguous/);
+    expect(() => admitReviewedUnknownSourceRelations(unknownModel, [{
+      ...proposal, unknownId: "unknown:other",
+    }])).toThrow(/unowned, non-source or ambiguous/);
   });
 
   it("reports grounded subjects when no open intent question blocks them", () => {

@@ -7,6 +7,32 @@ import {
 } from "../src/map-audit-user-intent.js";
 
 describe("selected-map audit revision freshness", () => {
+  it("invalidates stale model responses when reviewed unknown source scope changes", () => {
+    const base: any = {
+      identity: { artifactId: "map:selected", artifactFingerprint: "sha" },
+      admission: { status: "BLOCKED", issues: [] },
+      procedure: { status: "PARTIAL", checkpoints: [], blockingCheckpointIds: [] },
+      graph: {
+        scenarios: [], components: [], causalLinks: [],
+        knowledgeRequirements: [], knowledgeReceipts: [],
+        reviewedSourceRelationships: [],
+      },
+      defectResolution: { resolutions: [] },
+    };
+    const first = deriveSelectedMapAuditRevision(base);
+    const second = deriveSelectedMapAuditRevision({
+      ...base,
+      graph: { ...base.graph, reviewedSourceRelationships: [{
+        unknownId: "unknown:alpha", sourceEntryRegionId: "exec:alpha",
+        sourceClaim: "SOURCE_EFFECT_RETURN_CANDIDATE",
+        fromStepId: "effect:one", toStepId: "return:one",
+        evidenceIds: ["effect:one", "return:one"],
+        proofBoundary: "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+      }] },
+    });
+    expect(second).not.toBe(first);
+  });
+
   it("changes when family proof changes", () => {
     const base: any = {
       identity: {

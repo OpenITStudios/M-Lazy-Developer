@@ -345,6 +345,15 @@ export interface GameplayScenarioGraph {
    * entries, scenario closure evidence, or authored player journey.
    */
   readonly sourceFlowCandidates?: readonly GameplaySourceFlowCandidate[];
+  /** One read-only projection of current Gameplay Intent's reviewed typed
+   * source sites. Not causal links, mechanics, design, or execution proof.
+   */
+  readonly reviewedSourceRelationships?: readonly (
+    NonNullable<GameplayIntentModel["unknowns"][number]["sourceRelations"]>[number] & {
+      readonly unknownId: string;
+      readonly sourceEntryRegionId: string;
+    }
+  )[];
   /** Evidence-first classified features, without manufacturing mechanic names. */
   readonly mechanicReconstructions?: readonly GameplayMechanicReconstruction[];
   /** Directed Intent relations, not an inferred chronological game session. */

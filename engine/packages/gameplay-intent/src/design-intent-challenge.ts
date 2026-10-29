@@ -2,6 +2,7 @@ import type {
   GameplayIntentEvidence,
   GameplayIntentModel,
   GameplayIntentStatus,
+  type GameplayIntentSourceRelation,
 } from "./types.js";
 
 export type DesignIntentChallengeDisposition =
@@ -158,6 +159,81 @@ export function challengeDesignIntent(
     reasons: [
       "No selected-artifact evidence with validated provenance supports an implementation or design conclusion.",
     ],
+  };
+}
+
+/** Admit only typed operation pairs already positively reviewed against
+ * this exact selected-artifact source. Caller must establish the typed
+ * SourceEffectSlice relationship; the model cannot attest that by prose.
+ * Do not add gameplay nodes, edges, invariants, or delete an unknown.
+ */
+export function admitReviewedUnknownSourceRelations(
+  model: GameplayIntentModel,
+  reviewed: readonly {
+    readonly unknownId: string;
+    readonly fromStepId: string;
+    readonly toStepId: string;
+    readonly sourceClaim: GameplayIntentSourceRelation["sourceClaim"];
+    readonly sourceRelationEvidenceIds: readonly string[];
+  }[],
+): GameplayIntentModel {
+  if (reviewed.length === 0) return model;
+  if (!model.artifactId?.trim()) {
+    throw new Error("Reviewed source relationships require one selected artifact.");
+  }
+  const evidenceById = new Map(model.evidence.map(item => [item.id, item] as const));
+  const updates = new Map<string, GameplayIntentSourceRelation[]>();
+  for (const item of reviewed) {
+    const owners = model.unknowns.filter(unknown => unknown.id === item.unknownId);
+    const owner = owners[0];
+    const ids = [item.fromStepId, item.toStepId];
+    const owned = new Set(owner?.evidenceIds ?? []);
+    const uniqueEvidence = [...new Set(item.sourceRelationEvidenceIds)].sort();
+    if (owners.length !== 1 || !owner?.sourceEntryRegionId?.trim() ||
+        ids.some(id => !id?.trim() || !owned.has(id) ||
+          evidenceById.get(id)?.scope !== "selected-artifact" ||
+          evidenceById.get(id)?.origin !== "source-code" ||
+          !evidenceById.get(id)?.locator.trim()) ||
+        ids[0] === ids[1] ||
+        uniqueEvidence.length !== 2 ||
+        !ids.every(id => uniqueEvidence.includes(id)) ||
+        !([
+          "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+          "SOURCE_EFFECT_RETURN_CANDIDATE",
+        ] as readonly string[]).includes(item.sourceClaim)) {
+      throw new Error("Reviewed source relationship cites unowned, non-source or ambiguous operation sites.");
+    }
+    const existing = [...(owner.sourceRelations ?? []), ...(updates.get(owner.id) ?? [])];
+    if (existing.some(relation =>
+      relation.sourceClaim === item.sourceClaim &&
+      relation.fromStepId === item.fromStepId &&
+      relation.toStepId === item.toStepId)) {
+      throw new Error("Source relationship was already reviewed for this selected-map unknown.");
+    }
+    updates.set(owner.id, [
+      ...(updates.get(owner.id) ?? []),
+      {
+        sourceClaim: item.sourceClaim,
+        fromStepId: item.fromStepId,
+        toStepId: item.toStepId,
+        evidenceIds: uniqueEvidence,
+        proofBoundary: "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+      },
+    ]);
+  }
+  return {
+    ...model,
+    unknowns: model.unknowns.map(unknown => {
+      const additions = updates.get(unknown.id);
+      if (additions === undefined) return unknown;
+      return {
+        ...unknown,
+        sourceRelations: [...(unknown.sourceRelations ?? []), ...additions]
+          .sort((a,b) => a.sourceClaim.localeCompare(b.sourceClaim) ||
+            a.fromStepId.localeCompare(b.fromStepId) ||
+            a.toStepId.localeCompare(b.toStepId)),
+      };
+    }),
   };
 }
 

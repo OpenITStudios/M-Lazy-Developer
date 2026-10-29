@@ -226,6 +226,19 @@ export interface GameplayIntentInvariant {
   evidenceIds: readonly string[];
 }
 
+/** A reviewed, typed relation between TWO exact selected-source sites.
+ * This is source syntax only; it is not a gameplay edge or runtime witness.
+ */
+export interface GameplayIntentSourceRelation {
+  readonly sourceClaim:
+    | "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE"
+    | "SOURCE_EFFECT_RETURN_CANDIDATE";
+  readonly fromStepId: string;
+  readonly toStepId: string;
+  readonly evidenceIds: readonly string[];
+  readonly proofBoundary: "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF";
+}
+
 export interface GameplayIntentUnknown {
   id: string;
   question: string;
@@ -236,6 +249,10 @@ export interface GameplayIntentUnknown {
    * It is not a mechanic, runtime event, or proof the entry actually ran.
    */
   sourceEntryRegionId?: string;
+  /** Positive typed source relationships, without resolving this unknown's
+   * independent design, player-flow or native runtime obligations.
+   */
+  sourceRelations?: readonly GameplayIntentSourceRelation[];
 }
 
 export interface GameplayIntentModel {

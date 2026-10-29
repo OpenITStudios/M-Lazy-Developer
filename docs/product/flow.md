@@ -139,6 +139,21 @@ Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inv
 
 For unclassified material source behavior, the existing UNDERSTAND Audit Obligation can carry a bounded, selected-artifact Semantic IR source slice inside its model task: exact operation identities, authored branch membership, resolved source handoffs, and explicitly unmatched or omitted evidence. This is an **investigation aid**, not a newly inferred mechanic, an alternative Gameplay Intent authority, an executed path, or permission to close a checkpoint. A source-grounded interpretation is a hypothesis until the canonical semantic owner and proof gates re-evaluate it; absent evidence remains UNKNOWN.
 
+**Adaptive source-understanding continuation:** A current-revision UNDERSTAND
+model response can now carry a positively matched typed source relation
+(guard/write/effect or effect/return) back into the SAME selected-artifact
+Gameplay Intent unknown. Only exact owned operation IDs and a source-rooted,
+non-truncated candidate ingress are eligible; the model's proposed gameplay
+meaning is never admitted. The Scenario Graph re-projects the relation only
+when both selected-source operations still exist at the same exact authored
+entry. Model tasks can then distinguish already-reviewed source pairs from
+the still-unknown player objective, ownership, activation, or outcome.
+The canonical audit revision changes when this new source fact enters the
+graph; prior model responses become stale. Independent design, player-flow
+reachability, full proof saturation and native runtime remain required for
+any stronger claim. No new gameplay node/edge, issue status, proof authority,
+audit stage or second report is created.
+
 For a material unknown with two precisely identified source operations, a ChatGPT model may submit one bounded SAME_AUTHORED_BRANCH_CANDIDATE through the existing selected-map model-response admission. The shared Semantic IR source owner can refute that specific direct branch-co-occurrence claim if the operations reside on opposite exclusive true/false arms of one source-located condition; otherwise the proposed relationship remains UNKNOWN. This is an ephemeral review on the existing model task only: it is discarded when the canonical audit is rebuilt and can never redefine Gameplay Intent, close checkpoints, promote issues, or assert runtime execution.
 
 The canonical Gameplay Architecture already builds `SourceEffectSlice` records for source-local guard reads/value handoffs, possible effect ingress and source-ordered return candidates. Reuse only the same selected-artifact, same unknown/source-entry slices in the bounded UNDERSTAND model task; never rebuild slices or turn nearby same-named variables into relationships. For two exact selected-source steps, model suggestions `SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE` and `SOURCE_EFFECT_RETURN_CANDIDATE` may be reviewed against these typed candidate records. A matching source relation remains a **source-only candidate**; nonmatching/incomplete relations remain UNKNOWN, and neither supplies game-design authority, runtime proof or a BUG.

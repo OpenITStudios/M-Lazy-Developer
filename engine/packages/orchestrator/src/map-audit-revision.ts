@@ -74,6 +74,11 @@ export function deriveSelectedMapAuditRevision(input: {
       causalLinks: input.graph.causalLinks,
       knowledgeRequirements: input.graph.knowledgeRequirements,
       knowledgeReceipts: input.graph.knowledgeReceipts,
+      // Admission of a previously unknown typed source relation changes
+      // what the next model task is allowed to assume or investigate.
+      // Source relations are navigation only, but response freshness must
+      // still be bound to the newly known source scope.
+      reviewedSourceRelationships: input.graph.reviewedSourceRelationships ?? [],
     },
     // PROVE tasks and publication also depend on the gate's routing lists,
     // status and issues. Resolution objects alone do not bind that context.

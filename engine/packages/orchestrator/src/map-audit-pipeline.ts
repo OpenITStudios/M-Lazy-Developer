@@ -1,4 +1,9 @@
 import { performance } from "node:perf_hooks";
+import {
+  admitReviewedUnknownSourceRelations,
+  type GameplayIntentModel,
+  type GameplayIntentSourceRelation,
+} from "../../gameplay-intent/src/index.js";
 import type {
   KnowledgeCatalog,
 } from "../../knowledge/src/index.js";
@@ -1063,12 +1068,33 @@ export function resolveSelectedMapAudit(
       "Refusing stale audit resolution: model/result revision does not match the current SelectedMapAuditRun.",
     );
   }
-  const inspection = input.audit.inspection;
+  return rebuildSelectedMapAudit(
+    input.audit,
+    input.audit.inspection.gameplayIntent.model,
+    input.resolutions,
+    input.runtimeProbeTranscript,
+    input.knowledgeCatalog,
+    input.developerPractice,
+  );
+}
+
+/** One current-artifact rebuild for canonical defect or source-understanding
+ * continuations. Never copy model prose into the selected-map semantic model.
+ */
+function rebuildSelectedMapAudit(
+  audit: SelectedMapAuditRun,
+  intent: GameplayIntentModel,
+  resolutions: readonly GameplayDefectResolution[],
+  runtimeProbeTranscript?: RuntimeProbeTranscript,
+  knowledgeCatalog?: KnowledgeCatalog,
+  developerPractice?: DeveloperPracticeReferenceData,
+): SelectedMapAuditRun {
+  const inspection = audit.inspection;
   const hidden = refreshHiddenGameplayDefectsForWorld(
     inspection.hiddenGameplayDefects,
     inspection.gameplayWorld,
-    inspection.gameplayIntent.model,
-    input.resolutions,
+    intent,
+    resolutions,
   );
   const mandatoryAuditProcedure =
     deriveMandatoryAuditProcedureReceipt({
@@ -1078,7 +1104,7 @@ export function resolveSelectedMapAudit(
       discovery:
         inspection.gameplayDiscoveryClosure,
       world: inspection.gameplayWorld,
-      intent: inspection.gameplayIntent.model,
+      intent,
       semanticIr: inspection.semanticIrModel,
       boundaries:
         inspection.gameplayBoundaries,
@@ -1088,20 +1114,24 @@ export function resolveSelectedMapAudit(
     });
   const updatedInspection: InspectArtifactResult = {
     ...inspection,
+    gameplayIntent: {
+      ...inspection.gameplayIntent,
+      model: intent,
+    },
     hiddenGameplayDefects: hidden,
     mandatoryAuditProcedure,
   };
   const nextAudit = assembleSelectedMapAuditRun(
     updatedInspection,
-    input.audit.demandReconciliation,
-    input.audit.userIntent,
-    input.runtimeProbeTranscript,
-    input.knowledgeCatalog,
-    input.developerPractice,
+    audit.demandReconciliation,
+    audit.userIntent,
+    runtimeProbeTranscript,
+    knowledgeCatalog,
+    developerPractice,
   );
   const previousReasoning = Object.fromEntries([
-    ...input.audit.mapAuditReport.bugs,
-    ...input.audit.mapAuditReport.designMismatches,
+    ...audit.mapAuditReport.bugs,
+    ...audit.mapAuditReport.designMismatches,
   ].flatMap((finding) =>
     finding.reasoning
       ? [[finding.id, finding.reasoning] as const]
@@ -1170,6 +1200,13 @@ export function applySelectedMapAuditModelResponses(input: {
     const tasks = new Map(audit.modelTaskPackets.map(task => [task.id, task] as const));
     const reviewsByTask = new Map<string,
       ReturnType<typeof reviewAuditModelSourceInterpretation>[]>();
+    const acceptedSourcePairs: {
+      readonly unknownId: string;
+      readonly fromStepId: string;
+      readonly toStepId: string;
+      readonly sourceClaim: GameplayIntentSourceRelation["sourceClaim"];
+      readonly sourceRelationEvidenceIds: readonly string[];
+    }[] = [];
     const seen = new Set<string>();
     for (const proposal of interpretations) {
       if (!proposal || typeof proposal !== "object") {
@@ -1186,15 +1223,62 @@ export function applySelectedMapAuditModelResponses(input: {
       seen.add(key);
       const review = reviewAuditModelSourceInterpretation(
         task, proposal, audit.identity.artifactId);
+      // Only a positive typed relation from a source-rooted, current
+      // SourceEffectSlice may re-enter Gameplay Intent; a missing ingress,
+      // truncated interpretation or a same-branch absence-of-refutation
+      // cannot become independent semantic evidence.
+      const entry = task.sourceInvestigation?.entries.find(item =>
+        item.unknownId === proposal.unknownId);
+      const effect = entry?.effectPaths?.find(item =>
+        proposal.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE"
+          ? item.effectId === proposal.toStepId &&
+            item.sourceLocalStateValueHandoffs.some(handoff =>
+              handoff.writeOperationId === proposal.fromStepId &&
+              item.guardStateReadIds.includes(handoff.guardReadOperationId))
+          : proposal.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE"
+            ? item.effectId === proposal.fromStepId &&
+              item.candidateOutcomeIds.includes(proposal.toStepId)
+            : false);
+      if (review.disposition === "SOURCE_RELATION_CANDIDATE" &&
+          review.sourceRelationEvidenceIds?.length === 2 &&
+          entry?.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
+          effect?.evidenceStatus === "CANDIDATE_INGRESS" &&
+          (proposal.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" ||
+           proposal.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE")) {
+        acceptedSourcePairs.push({
+          unknownId: review.unknownId,
+          fromStepId: review.fromStepId,
+          toStepId: review.toStepId,
+          sourceClaim: proposal.sourceClaim,
+          sourceRelationEvidenceIds: review.sourceRelationEvidenceIds,
+        });
+      }
       reviewsByTask.set(task.id, [
         ...(reviewsByTask.get(task.id) ?? []), review,
       ]);
     }
-    // Ephemeral model-task projection only. Intent, scenario, issues, stage
-    // admission and MapAuditOutputV2 retain their original authorities.
+    // A review with no admitted typed relation remains an ephemeral,
+    // non-authoritative diagnostic exactly as before. A POSITIVE source
+    // relation is instead projected through the existing canonical Intent
+    // and Scenario Graph without inventing nodes, objectives or proof.
+    const refinedIntent = acceptedSourcePairs.length === 0
+      ? audit.inspection.gameplayIntent.model
+      : admitReviewedUnknownSourceRelations(
+          audit.inspection.gameplayIntent.model, acceptedSourcePairs);
+    const continued = refinedIntent === audit.inspection.gameplayIntent.model
+      ? audit
+      : rebuildSelectedMapAudit(
+          audit,
+          refinedIntent,
+          audit.inspection.hiddenGameplayDefects.scenarioAudit
+            .defectResolution.resolutions,
+          input.runtimeProbeTranscript,
+          input.knowledgeCatalog,
+          input.developerPractice,
+        );
     return {
-      ...audit,
-      modelTaskPackets: audit.modelTaskPackets.map(task => {
+      ...continued,
+      modelTaskPackets: continued.modelTaskPackets.map(task => {
         const { sourceInterpretationReviews: _prior, ...canonicalTask } = task;
         const reviews = reviewsByTask.get(task.id);
         return reviews === undefined ? canonicalTask : {
