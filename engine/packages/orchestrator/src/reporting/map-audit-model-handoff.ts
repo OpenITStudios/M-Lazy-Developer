@@ -3,7 +3,11 @@
  * Canonical audit admission and response mutations remain in map-audit-pipeline.ts.
  */
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
-import type { GameplayIntentEvidence } from "../../../gameplay-intent/src/index.js";
+import {
+  reconstructMapNativePlayerFacingContracts,
+  type MapNativePlayerFacingContractCandidate,
+  type GameplayIntentEvidence,
+} from "../../../gameplay-intent/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
 import {
   semanticIrSourceWriteContinuations,
@@ -43,6 +47,10 @@ export interface SelectedMapAuditModelHandoff {
       readonly key: string;
       readonly text: string;
       readonly sourceLocator: string;
+      /** Exact selected-map source correlation and remaining proof gaps.
+       * This is navigation evidence, not an approved player objective.
+       */
+      readonly contractCandidate?: MapNativePlayerFacingContractCandidate;
       /** Exact key match to authored script `{ translate: "key" }` sites.
        * Neither a recorded key nor a matching translation proves the text
        * was displayed, the owning call fired or the chosen pack/locale.
@@ -112,7 +120,7 @@ export interface SelectedMapAuditModelHandoff {
       readonly sourceReferenceStatus:
         "EXACT_LITERAL_TRANSLATE_SOURCE_REFERENCE" |
         "NO_LITERAL_TRANSLATE_REFERENCE_FOUND";
-      /** One key may be authored by both behavior and resource packs. */
+      /** All selected locale definitions for this key, across languages. */
       readonly matchingLocaleDefinitionCount: number;
       readonly proof: "LITERAL_SELECTED_SOURCE_COPY_NOT_GAME_DESIGN";
     }[];
@@ -515,6 +523,11 @@ export function projectSelectedMapAuditModelHandoff(
       .includes(link.status))
     .map((link) => link.id));
   const features = audit.mapAuditReport.gameplayStructure?.features ?? [];
+  const mapNativeContractByEvidenceId = new Map(
+    reconstructMapNativePlayerFacingContracts(
+      audit.inspection.gameplayIntent.model,
+    ).map(candidate => [candidate.textEvidenceId, candidate] as const),
+  );
   const allCopy = audit.inspection.gameplayIntent.model.evidence
     .filter(item =>
       item.scope === "selected-artifact" &&
@@ -665,6 +678,9 @@ export function projectSelectedMapAuditModelHandoff(
       key: item.playerFacingText!.key,
       text: item.playerFacingText!.text,
       sourceLocator: item.locator,
+      ...(mapNativeContractByEvidenceId.has(item.id)
+        ? { contractCandidate: mapNativeContractByEvidenceId.get(item.id)! }
+        : {}),
       literalTranslationReferences:
         (refsByKey.get(item.playerFacingText!.key) ?? []).slice(0, 5)
           .map(ref => {

@@ -295,6 +295,23 @@ player triggering, operation success, guard satisfiability or a confirmed
 Bug. The same canonical source proof, Counter-Proof and Proof Saturation
 still govern both direct and multi-hop causal links.
 
+## Selected-map-native player-facing contract candidates
+
+Reconstruct source cues from actual selected-artifact locale lines and exact
+literal source translation references. An exact execution-region association
+may link the cue to classified Intent subjects only when the independently
+selected-source region evidence exists at the same script file. Distinct
+locales for one key are **not** conflicting definitions; repeated definitions
+of the same key *within* one locale remain explicit pack/override ambiguity.
+
+This reconstruction is a read-only projection of the canonical Gameplay Intent
+evidence and is exposed through Gameplay Contract and the existing model
+handoff. It cannot invent an objective or invariant, upgrade a dialogue/locale
+cue into APPROVED design, establish that text was displayed, clear material
+unknowns, or directly satisfy impact/reachability/counter-proof criteria.
+Player activation, delivered UI, effective resource-pack selection and
+intended-gameplay authority remain separate proof obligations.
+
 ## Direct selected-source impact path
 
 A canonical authored Intent link whose target is already the final
