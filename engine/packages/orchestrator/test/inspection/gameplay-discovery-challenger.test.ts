@@ -157,6 +157,28 @@ describe("gameplay discovery challenger", () => {
     expect(result.map((item) => item.kind)).toContain(
       "unowned-state-operation",
     );
+    // An invalid duplicate IR identity is still represented exactly once,
+    // with the first source owner retained and no gameplay proof invented.
+    const duplicateIr = {
+      ...ir,
+      state: {
+        ...ir.state,
+        operations: [
+          ...ir.state.operations,
+          { ...ir.state.operations[0], surfaceId: "state:other-owner" },
+        ],
+      },
+    } as unknown as SemanticIr;
+    const duplicate = challengeGameplayDiscovery({
+      semanticIr: duplicateIr,
+      intent: emptyIntent,
+      graph: emptyGraph,
+    });
+    expect(duplicate.filter((item) => item.id ===
+      "discovery-challenge:state:op:grant")).toHaveLength(1);
+    expect(duplicate.find((item) => item.id ===
+      "discovery-challenge:state:op:grant")?.subjectId)
+      .toBe("state:inventory-grant");
   });
 
   it("surfaces unresolved execution edges instead of silently accepting partial understanding", () => {
@@ -1109,7 +1131,7 @@ describe("gameplay discovery challenger", () => {
       });
       expect(result.filter((item) => item.kind === "unowned-state-operation")
         .map((item) => item.evidenceIds[0]), locator + " / " + artifactId)
-        .toEqual(["op:grant", "op:clear"]);
+        .toEqual(["op:clear", "op:grant"]);
     }
     // The same evidence ID in two records must never select the last
     // source, even when both are claimed to come from the selected map.
@@ -1124,7 +1146,7 @@ describe("gameplay discovery challenger", () => {
     });
     expect(duplicateSource.filter((item) => item.kind === "unowned-state-operation")
       .map((item) => item.evidenceIds[0]))
-      .toEqual(["op:grant", "op:clear"]);
+      .toEqual(["op:clear", "op:grant"]);
 
     // Duplicate scenario or causal-link identities cannot silently
     // establish that a selected source operation has one gameplay owner.
@@ -1155,7 +1177,7 @@ describe("gameplay discovery challenger", () => {
       });
       expect(result.filter(item => item.kind === "unowned-state-operation")
         .map(item => item.evidenceIds[0]))
-        .toEqual(["op:grant", "op:clear"]);
+        .toEqual(["op:clear", "op:grant"]);
     }
   });
 });

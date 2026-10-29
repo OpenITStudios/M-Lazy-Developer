@@ -294,12 +294,16 @@ export function challengeGameplayDiscovery(input: {
     }
   }
 
+  // Retain the first exact evidence identity in linear time. Large maps may
+  // produce thousands of source challenges; quadratic findIndex scans would
+  // repeatedly traverse that entire proof backlog. Preserve the canonical
+  // stable ID ordering and never drop an independently named challenge.
+  const seen = new Set<string>();
   return output
-    .filter(
-      (item, index, all) =>
-        all.findIndex(
-          (candidate) => candidate.id === item.id,
-        ) === index,
-    )
+    .filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    })
     .sort((a, b) => a.id.localeCompare(b.id));
 }
