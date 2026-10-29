@@ -1299,6 +1299,16 @@ function obligationPackets(
       ? EMPTY_TASK_IDS
       : unique([...obligation.evidenceIds, ...selectedUnknownEvidenceIds]);
     const evidence = evidenceContext(evidenceIds, intent, lookupIndex);
+    const selectedEntries = new Set(
+      sourceInvestigation?.entries.map(entry => entry.unknownId) ?? []);
+    const exactSourceQuestions = (obligation.sourceProofRequirements ?? [])
+      .filter(item => selectedEntries.has(item.unknownId))
+      .flatMap(item => item.missingClaims.map(claim =>
+        item.unknownId + ": " + claim)).slice(0, 12);
+    const omittedSourceRequirements =
+      (obligation.omittedSourceProofRequirements ?? 0) +
+      (obligation.sourceProofRequirements ?? [])
+        .filter(item => !selectedEntries.has(item.unknownId)).length;
 
     return {
       schemaVersion: 1 as const,
@@ -1311,6 +1321,13 @@ function obligationPackets(
       stage: obligation.stage,
       goal: obligation.title,
       decisionNeeded: obligation.reason +
+        (exactSourceQuestions.length > 0
+          ? " Investigate only the source-specific missing claims " +
+            "listed in this task; they do not prove gameplay by themselves."
+          : "") +
+        (omittedSourceRequirements > 0
+          ? " " + omittedSourceRequirements + " additional unknown source " +
+            "identities remain outside this bounded task view." : "") +
         (sourceInvestigation?.entries.some(entry =>
           (entry.reviewedSourceRelationships?.length ?? 0) > 0)
           ? " Exact typed source relationships are already reviewed. " +
@@ -1333,9 +1350,9 @@ function obligationPackets(
       unresolvedObligationIds: [
         obligation.id,
       ],
-      missingClaims: [
-        obligation.missingProof,
-      ],
+      missingClaims: exactSourceQuestions.length > 0
+        ? exactSourceQuestions
+        : [obligation.missingProof],
       allowedOutputs: OBLIGATION_ALLOWED_OUTPUTS,
       forbiddenActions: OBLIGATION_FORBIDDEN_ACTIONS,
       stopCondition:

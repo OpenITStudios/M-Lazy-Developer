@@ -1,4 +1,5 @@
 import type {
+  GameplayIntentModel,
   GameplayModelClosureResult,
 } from "../../gameplay-intent/src/index.js";
 import type {
@@ -59,6 +60,15 @@ export type AuditObligationSource =
   | "user-reported-symptom"
   | "user-input-unmapped";
 
+/** Current selected-source questions for an unknown gameplay entry.
+ * These questions are a derived investigation plan, not semantic proof.
+ */
+export interface AuditUnknownSourceProofRequirement {
+  readonly unknownId: string;
+  readonly sourceEvidenceIds: readonly string[];
+  readonly missingClaims: readonly string[];
+}
+
 export interface AuditObligation {
   readonly id: string;
   readonly source: AuditObligationSource;
@@ -76,6 +86,11 @@ export interface AuditObligation {
   readonly subjectIds: readonly string[];
   readonly componentIds: readonly string[];
   readonly evidenceIds: readonly string[];
+  /** Bounded source-specific questions rather than a blanket request to
+   * reconstruct every map's gameplay. Not a second proof authority.
+   */
+  readonly sourceProofRequirements?: readonly AuditUnknownSourceProofRequirement[];
+  readonly omittedSourceProofRequirements?: number;
 }
 
 // The projection creates tens of thousands of mostly empty evidence/subject
@@ -952,8 +967,133 @@ function mandatoryCrossSystemCoverageObligations(
   })];
 }
 
+/**
+ * Derive next-source-proof questions from the CURRENT map, not from its
+ * genre or a universal list of mechanics. Already reviewed typed pairs
+ * narrow the question; they do not prove guards, ownership, player impact
+ * or intended gameplay. A source root is a candidate entry, never execution.
+ */
+function unknownSourceProofRequirements(
+  graph: GameplayScenarioGraph,
+  intent: GameplayIntentModel | undefined,
+  unknownIds: readonly string[],
+): readonly AuditUnknownSourceProofRequirement[] {
+  if (!intent?.artifactId) return [];
+  const currentEvidence = new Set(intent.evidence.filter(item =>
+    item.origin === "source-code" &&
+    item.scope === "selected-artifact" &&
+    item.locator.trim().length > 0).map(item => item.id));
+  const byUnknown = new Map<string, GameplayIntentModel["unknowns"][number][]>();
+  for (const unknown of intent.unknowns) {
+    const owners = byUnknown.get(unknown.id) ?? [];
+    owners.push(unknown);
+    byUnknown.set(unknown.id, owners);
+  }
+  const byEntry = new Map<string, NonNullable<GameplayScenarioGraph["sourceFlowCandidates"]>>();
+  for (const flow of graph.sourceFlowCandidates ?? []) {
+    const matches = byEntry.get(flow.entryRegionId) ?? [];
+    byEntry.set(flow.entryRegionId, [...matches, flow]);
+  }
+
+  return [...new Set(unknownIds)].sort().map(unknownId => {
+    const owners = byUnknown.get(unknownId) ?? [];
+    const unknown = owners.length === 1 ? owners[0] : undefined;
+    const owned = new Set((unknown?.evidenceIds ?? []).filter(id =>
+      currentEvidence.has(id)));
+    const entries = unknown?.sourceEntryRegionId === undefined ? [] :
+      (byEntry.get(unknown.sourceEntryRegionId) ?? [])
+        .filter(flow => flow.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
+          flow.sourceSteps.some(step =>
+            owned.has(step.id) && step.source.artifactId === intent.artifactId));
+    const source = entries.length === 1 ? entries[0] : undefined;
+    const steps = source?.sourceSteps.filter(step =>
+      owned.has(step.id) &&
+      step.source.artifactId === intent.artifactId) ?? [];
+    const sourceEvidenceIds = unique(steps.map(step => step.id)).slice(0, 16);
+    const reviewed = (graph.reviewedSourceRelationships ?? []).filter(item =>
+      item.unknownId === unknownId &&
+      item.sourceEntryRegionId === unknown?.sourceEntryRegionId &&
+      unknown?.sourceRelations?.some(relation =>
+        relation.sourceClaim === item.sourceClaim &&
+        relation.fromStepId === item.fromStepId &&
+        relation.toStepId === item.toStepId) &&
+      [item.fromStepId, item.toStepId].every(id =>
+        sourceEvidenceIds.includes(id)));
+    const missing: string[] = [];
+    if (source === undefined) {
+      missing.push("Buktikan satu entry source terhubung dan tidak ambigu untuk " +
+        unknownId + "; hubungan di file atau nama yang mirip belum cukup.");
+    } else {
+      const ids = (kind: typeof steps[number]["kind"], operations?: readonly string[]) =>
+        unique(steps.filter(step => step.kind === kind &&
+          (operations === undefined || operations.includes(step.operation ?? "")))
+          .map(step => step.id)).slice(0, 4);
+      const writes = ids("state", ["write", "clear", "delete"]);
+      const resources = ids("resource-action");
+      const effects = ids("world-effect");
+      const returns = ids("return");
+      // All questions below are triggered by typed operations in the
+      // selected source. Never use a map name, filename or genre as a rule.
+      if (source.unresolvedExecutionEdgeIds.length > 0) {
+        missing.push("Tentukan target pemanggilan source yang masih ambigu: " +
+          source.unresolvedExecutionEdgeIds.slice(0, 3).join(", ") + ".");
+      }
+      const recognized = new Set(reviewed.map(item =>
+        item.fromStepId + "\u0000" + item.toStepId));
+      for (const relation of reviewed.slice(0, 4)) {
+        if (relation.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE") {
+          missing.push("Hubungan source " + relation.fromStepId +
+            " → " + relation.toStepId + " sudah dicatat. Buktikan kelayakan " +
+            "guard, pemilik state dan penerima efek pada sesi pemain yang sama.");
+        } else {
+          missing.push("Hubungan efek " + relation.fromStepId +
+            " → hasil fungsi " + relation.toStepId + " sudah dicatat. " +
+            "Buktikan kapan hasil itu dicapai dan apakah memengaruhi hasil gameplay pemain.");
+        }
+      }
+      if (writes.length > 0) {
+        missing.push("Telusuri pemilik, scope pemain/arena/sesi dan reset " +
+          "untuk operasi state " + writes.join(", ") + ".");
+      }
+      if (resources.length > 0) {
+        missing.push("Periksa siklus acquire/use/release pada operasi resource " +
+          resources.join(", ") + ", termasuk jalur gagal dan keluar.");
+      }
+      if (effects.length > 0) {
+        missing.push("Buktikan guard, target dan jangkauan efek dunia " +
+          effects.join(", ") + " pada entry source ini.");
+      }
+      if (returns.length > 0 &&
+          !reviewed.some(item =>
+            item.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE")) {
+        missing.push("Tentukan hubungan hasil fungsi " + returns.join(", ") +
+          " dengan efek sebelumnya dan kondisi hasil pemain.");
+      }
+      if (reviewed.length === 0 &&
+          steps.length > 1 &&
+          ![...recognized].length) {
+        missing.push("Cari hubungan langsung antara operasi source " +
+          sourceEvidenceIds.slice(0, 4).join(", ") +
+          "; jangan menganggap urutan source sebagai urutan gameplay.");
+      }
+    }
+    // Even a complete technical source relation does not establish the
+    // independent player objective or expected game design.
+    missing.push("Tetapkan tujuan dan expected outcome mekanik " + unknownId +
+      " dari bukti desain/presentasi map yang benar-benar berlaku, lalu " +
+      "hubungkan ke jalur pemain; jangan gunakan interpretasi AI sebagai bukti.");
+    return {
+      unknownId,
+      sourceEvidenceIds,
+      missingClaims: [...new Set(missing)].slice(0, 9),
+    };
+  });
+}
+
 export function deriveAuditObligations(input: {
   readonly graph: GameplayScenarioGraph;
+  /** Source-only per-map understanding, never a model-proposed design rule. */
+  readonly intent?: GameplayIntentModel;
   readonly mandatoryAuditProcedure?: MandatoryAuditProcedureReceipt;
   readonly defectResolution: GameplayDefectResolutionGate;
   readonly gameplayWorld: GameplayWorldModel;
@@ -1017,19 +1157,42 @@ export function deriveAuditObligations(input: {
     }));
   }
   if (input.discovery && input.discovery.gameplayIntentUnknownIds.length > 0) {
+    const allUnknownIds = unique(input.discovery.gameplayIntentUnknownIds);
+    const requirements = unknownSourceProofRequirements(
+      input.graph, input.intent, allUnknownIds);
+    // Keep one existing UNDERSTAND obligation, all original unknown IDs and
+    // an explicit omitted count; do not emit hundreds of micro tasks.
+    const visible = requirements.slice(0, 4);
+    const omitted = Math.max(0, requirements.length - visible.length);
+    const sourceQuestions = visible.flatMap(item =>
+      item.missingClaims.slice(0, 3).map(question =>
+        item.unknownId + ": " + question));
+    const summary = sourceQuestions.length > 0
+      ? sourceQuestions.join(" ") +
+        (omitted > 0
+          ? " " + omitted + " unknown lain tetap memerlukan pembuktian; " +
+            "semua identitas dicatat dalam bagian terkait." : "")
+      : "Exact source-grounded mechanic and scenario ownership for every unknown.";
     items.push(normalize({
       id: "uninterpreted-gameplay-intent",
       source: "gameplay-closure",
       stage: "UNDERSTAND",
       title: "Reconcile unclassified material gameplay",
-      reason: String(input.discovery.gameplayIntentUnknownIds.length) +
-        " gameplay intent unknown(s) remain unresolved.",
-      missingProof: "Exact source-grounded mechanic and scenario ownership for every unknown.",
-      validationTest: "Reconstruct the effects and mechanics for each unresolved intent identity.",
+      reason: String(allUnknownIds.length) +
+        " gameplay intent unknown(s) remain unresolved. " +
+        "Known source relations are not player-purpose or runtime proof.",
+      missingProof: summary,
+      validationTest: sourceQuestions.length > 0
+        ? "Periksa hubungan operasi yang belum terbukti pada entry source " +
+          "terpilih; cocokkan guard, state, efek dan outcome dengan desain " +
+          "map, lalu evaluasi ulang pemeriksaan kanonis."
+        : "Reconstruct the effects and mechanics for each unresolved intent identity.",
       validationGroupKey: "understand:gameplay-intent-unknowns",
-      subjectIds: input.discovery.gameplayIntentUnknownIds,
+      subjectIds: allUnknownIds,
       componentIds: [],
-      evidenceIds: [],
+      evidenceIds: visible.flatMap(item => item.sourceEvidenceIds),
+      ...(visible.length > 0 ? { sourceProofRequirements: visible } : {}),
+      ...(omitted > 0 ? { omittedSourceProofRequirements: omitted } : {}),
     }));
   }
 

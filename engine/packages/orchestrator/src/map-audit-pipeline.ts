@@ -296,6 +296,7 @@ function deriveSelectedMapAuditControl(input: {
     InspectArtifactResult["mandatoryAuditProcedure"];
   readonly scenario:
     InspectArtifactResult["hiddenGameplayDefects"]["scenarioAudit"];
+  readonly gameplayIntent: InspectArtifactResult["gameplayIntent"]["model"];
   readonly capabilityDelivery:
     InspectArtifactResult["hiddenGameplayDefects"]["capabilityDelivery"];
   readonly negativeSpace:
@@ -375,6 +376,7 @@ function deriveSelectedMapAuditControl(input: {
   const auditObligations = evidenceProjectionAuthorized
     ? deriveAuditObligations({
         graph: input.scenario.graph,
+        intent: input.gameplayIntent,
         mandatoryAuditProcedure: input.procedure,
         defectResolution: input.scenario.defectResolution,
         gameplayWorld: input.gameplayWorld,
@@ -695,6 +697,7 @@ function assembleSelectedMapAuditRun(
     admission,
     procedure,
     scenario,
+    gameplayIntent: inspection.gameplayIntent.model,
     capabilityDelivery:
       hidden.capabilityDelivery,
     negativeSpace:

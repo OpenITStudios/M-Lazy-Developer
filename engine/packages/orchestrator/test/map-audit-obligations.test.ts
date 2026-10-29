@@ -73,6 +73,101 @@ const closed = {
 } as any;
 
 describe("audit obligations versus gameplay findings", () => {
+  it("derives map-specific unknown proof requirements from reviewed source facts", () => {
+    const selected = "map:current";
+    const intent = {
+      artifactId: selected,
+      evidence: [
+        { id: "state:write", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/logic.js:9:1" },
+        { id: "world:effect", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/logic.js:11:1" },
+      ],
+      unknowns: [{
+        id: "unknown:mechanic", question: "What is the player's objective?",
+        sourceEntryRegionId: "entry:mechanic",
+        evidenceIds: ["state:write", "world:effect"],
+        sourceRelations: [{
+          sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+          fromStepId: "state:write", toStepId: "world:effect",
+        }],
+      }],
+    } as any;
+    const graph = {
+      ...baseGraph("PROVEN"),
+      reviewedSourceRelationships: [{
+        unknownId: "unknown:mechanic",
+        sourceEntryRegionId: "entry:mechanic",
+        sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+        fromStepId: "state:write", toStepId: "world:effect",
+        evidenceIds: ["state:write", "world:effect"],
+      }],
+      sourceFlowCandidates: [{
+        id: "flow:mechanic", entryRegionId: "entry:mechanic",
+        sourceTraceStatus: "SOURCE_ROOT_TRACE",
+        unresolvedExecutionEdgeIds: [],
+        sourceSteps: [
+          { id: "state:write", kind: "state", operation: "write",
+            source: { artifactId: selected } },
+          { id: "world:effect", kind: "world-effect",
+            source: { artifactId: selected } },
+        ],
+      }],
+    } as any;
+    const obligations = deriveAuditObligations({
+      graph, intent,
+      discovery: {
+        gameplayIntentUnknownIds: ["unknown:mechanic"],
+        semanticUnderstandingGapPaths: [], semanticUnderstandingGaps: 0,
+      } as any,
+      defectResolution: {
+        status: "READY_FOR_PROPOSED_BUG_SET",
+        resolutions: [], confirmedDefectReadyIds: [],
+        counterProofSearchRequiredIds: [],
+      } as any,
+      gameplayWorld: {
+        arenas: { detected: false, isolation: { observations: [] }, replicaProof: [] },
+        platformKnowledge: { claims: [] }, surfaceDiscovery: { surfaceIds: [] },
+      } as any,
+      gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
+      temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+    });
+    const obligation = obligations.find(item =>
+      item.id === "uninterpreted-gameplay-intent");
+    expect(obligation?.sourceProofRequirements?.[0]?.missingClaims)
+      .toEqual(expect.arrayContaining([
+        expect.stringContaining("state:write"),
+        expect.stringContaining("world:effect"),
+        expect.stringContaining("sesi pemain yang sama"),
+      ]));
+    expect(obligation?.evidenceIds).toEqual(["state:write", "world:effect"]);
+    expect(obligation?.subjectIds).toContain("unknown:mechanic");
+    expect(obligation?.missingProof).toContain("tujuan");
+    expect(obligation?.reason).toContain("remain unresolved");
+    expect(obligations.some(item => item.id === "unknown:mechanic")).toBe(false);
+
+    const unrooted = deriveAuditObligations({
+      graph: { ...graph, sourceFlowCandidates: [{
+        ...graph.sourceFlowCandidates[0],
+        sourceTraceStatus: "DISCONNECTED_SOURCE_REGION",
+      }] }, intent,
+      discovery: { gameplayIntentUnknownIds: ["unknown:mechanic"],
+        semanticUnderstandingGapPaths: [], semanticUnderstandingGaps: 0 } as any,
+      defectResolution: { status: "READY_FOR_PROPOSED_BUG_SET", resolutions: [] } as any,
+      gameplayWorld: {
+        arenas: { detected: false, isolation: { observations: [] }, replicaProof: [] },
+        platformKnowledge: { claims: [] }, surfaceDiscovery: { surfaceIds: [] },
+      } as any,
+      gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
+      temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+    }).find(item => item.id === "uninterpreted-gameplay-intent");
+    expect(unrooted?.sourceProofRequirements?.[0]?.sourceEvidenceIds).toEqual([]);
+    expect(unrooted?.missingProof).toContain("Buktikan satu entry source");
+  });
+
+  it("keeps first source ownership and both proof edges with ambiguous duplicate IDs", () => {
   it("keeps first source ownership and both proof edges with ambiguous duplicate IDs", () => {
     const graph = baseGraph("DETECTION_GAP");
     graph.causalLinks.push({

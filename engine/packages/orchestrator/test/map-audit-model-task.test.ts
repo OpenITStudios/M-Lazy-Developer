@@ -269,6 +269,73 @@ describe("reviewed unknown source relations in the canonical scenario projection
   });
 });
 
+describe("map-adaptive proof handoff", () => {
+  it("forwards source-specific pending questions to the existing UNDERSTAND task", () => {
+    const intent = {
+      artifactId: "map:current",
+      evidence: [
+        { id: "state:write", origin: "source-code",
+          scope: "selected-artifact", locator: "scripts/logic.js:9:1",
+          summary: "current state change" },
+        { id: "world:effect", origin: "source-code",
+          scope: "selected-artifact", locator: "scripts/logic.js:11:1",
+          summary: "current world effect" },
+      ],
+      nodes: [], edges: [], invariants: [],
+      unknowns: [{ id: "unknown:mechanic", question: "Unknown mechanism",
+        blockedSubjectIds: [], sourceEntryRegionId: "entry:mechanic",
+        evidenceIds: ["state:write", "world:effect"] }],
+    } as any;
+    const sourceFlow = {
+      id: "flow:mechanic", entryRegionId: "entry:mechanic",
+      sourceTraceStatus: "SOURCE_ROOT_TRACE",
+      entryKind: "script-function",
+      sourceSteps: [
+        { id: "state:write", kind: "state", operation: "write",
+          source: { artifactId: "map:current" } },
+        { id: "world:effect", kind: "world-effect",
+          source: { artifactId: "map:current" } },
+      ],
+      branchPoints: [], sourceHandoffs: [],
+      unresolvedExecutionEdgeIds: [],
+    };
+    const tasks = deriveAuditModelTaskPackets({
+      admission: { firstBlockingStage: "UNDERSTAND" },
+      procedure: { checkpoints: [] },
+      graph: { sourceFlowCandidates: [sourceFlow],
+        reviewedSourceRelationships: [], causalLinks: [] },
+      defectResolution: {}, auditRevision: "revision:selected",
+      intent, world: {},
+      auditObligations: [{
+        id: "uninterpreted-gameplay-intent", source: "gameplay-closure",
+        stage: "UNDERSTAND", title: "Understand selected source",
+        reason: "One source mechanism unresolved",
+        missingProof: "Generic fallback", validationTest: "Inspect source",
+        validationGroupKey: "understand:gameplay-intent-unknowns",
+        subjectIds: ["unknown:mechanic"], componentIds: [],
+        evidenceIds: ["state:write", "world:effect"],
+        sourceProofRequirements: [{
+          unknownId: "unknown:mechanic",
+          sourceEvidenceIds: ["state:write", "world:effect"],
+          missingClaims: [
+            "Buktikan actor/sesi untuk state:write.",
+            "Verifikasi target world:effect.",
+          ],
+        }],
+      }],
+    } as any);
+    const task = tasks.find(item =>
+      item.id === "task:audit-obligation:uninterpreted-gameplay-intent");
+    expect(task?.missingClaims).toEqual([
+      "unknown:mechanic: Buktikan actor/sesi untuk state:write.",
+      "unknown:mechanic: Verifikasi target world:effect.",
+    ]);
+    expect(task?.missingClaims).not.toContain("Generic fallback");
+    expect(task?.evidenceIds).toEqual(["state:write", "world:effect"]);
+    expect(task?.kind).toBe("AUDIT_OBLIGATION");
+  });
+});
+
 describe("unfamiliar source gameplay evidence handoff", () => {
   it("attaches only exact selected-world operations to an existing UNDERSTAND unknown obligation", () => {
     const intent: GameplayIntentModel = {
