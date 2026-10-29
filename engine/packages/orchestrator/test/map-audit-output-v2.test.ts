@@ -1826,7 +1826,7 @@ describe("two-category final report with visible pending findings", () => {
     expect(output).toContain("Knowledge applicability unknown");
     expect(output).toContain("Unowned source operation 0");
     expect(output).not.toContain("Unowned source operation 219");
-    expect(output.match(/NEED_VALIDATION \\(jenis masalah belum ditentukan\\)/g))
+    expect(output.match(/NEED_VALIDATION \(jenis masalah belum ditentukan\)/g))
       .toHaveLength(12);
     expect(output).toContain("Rincian yang tidak ditampilkan: 210");
     expect(output).toContain("discovery-challenge: 220");
