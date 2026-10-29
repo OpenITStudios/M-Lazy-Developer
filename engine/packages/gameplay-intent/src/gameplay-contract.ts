@@ -244,6 +244,8 @@ export function reconstructMapNativePlayerFacingContracts(
       evidenceIds: [...new Set([
         item.id, ...refs.map(ref => ref.id), ...admittedRegionIds,
         ...authoredUiSendCalls.map(call => call.apiCallEvidenceId),
+        ...authoredUiSendCalls.flatMap(call =>
+          (call.valueFlow?.hops ?? []).map(hop => hop.evidenceId)),
         ...sourceGameplayStepBindings.map(binding =>
           binding.sourceStepEvidenceId),
       ])].sort(),

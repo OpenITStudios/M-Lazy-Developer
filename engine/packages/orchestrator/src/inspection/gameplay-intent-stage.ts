@@ -168,7 +168,7 @@ export function buildGameplayIntentModel(
   // unclassified source-flow inspection further below.
   const observedExecution = input.semanticIr === undefined
     ? undefined : semanticIrExecutionTraces(input.semanticIr);
-  const uiSourcePathByRegion =
+  const uiSourcePathByCallId =
     new Map<string, ReturnType<typeof traceUiSourceActivation>>();
 
   // Reuse the canonical Gameplay Intent evidence owner. A literal player
@@ -256,13 +256,35 @@ export function buildGameplayIntentModel(
         // A translate key is not a UI-send witness unless the parser proves
         // direct argument containment AND the IR contains exactly the typed
         // Minecraft API call at that same full AST source span and region.
-        const sourceUiCall = use.directUiSendCall;
-        const matchingUiCalls = sourceUiCall === undefined || !exactRegion
+        const forwarded = use.forwardedUiSendCall;
+        const sourceUiCall = use.directUiSendCall ?? forwarded;
+        const callRegionId = forwarded === undefined
+          ? regionId : scriptRegionId(script.source, forwarded.executionRegion);
+        const callRegion = irRegions.get(callRegionId);
+        // Both the original literal region and the actual API call region
+        // must have independent same-file IR ownership.
+        const exactCallRegion = exactRegion && callRegion !== undefined &&
+          callRegion.ownerId === script.identifier &&
+          callRegion.source?.artifactId === input.artifactId &&
+          callRegion.source.relativePath === use.source.relativePath;
+        const valueHops = forwarded?.hops ?? [];
+        const validHops = forwarded === undefined ||
+          (valueHops.length > 0 && valueHops.length <= 5 &&
+           valueHops.every(hop =>
+             [hop.declarationSource, hop.consumptionSource].every(site =>
+               site.artifactId === input.artifactId &&
+               site.relativePath === script.source.relativePath &&
+               site.range?.lineStart !== undefined &&
+               site.range.lineEnd !== undefined &&
+               site.range.columnStart !== undefined &&
+               site.range.columnEnd !== undefined)));
+        const matchingUiCalls = sourceUiCall === undefined ||
+          !exactCallRegion || !validHops
           ? []
           : (input.semanticIr?.execution.apiCalls ?? []).filter(call =>
             call.receiverType === sourceUiCall.receiverType &&
             call.method === sourceUiCall.method &&
-            call.executionRegionId === regionId &&
+            call.executionRegionId === callRegionId &&
             sameExactCallSource(call.source, sourceUiCall.source) &&
             call.source.artifactId === input.artifactId);
         const authoredUiCall = matchingUiCalls.length === 1
@@ -287,22 +309,45 @@ export function buildGameplayIntentModel(
         const activation = authoredUiCall === undefined ||
           input.semanticIr === undefined || observedExecution === undefined ||
           input.artifactId === undefined
-          ? undefined : uiSourcePathByRegion.get(regionId) ??
+          ? undefined : uiSourcePathByCallId.get(authoredUiCall.id) ??
             traceUiSourceActivation(input.semanticIr,
               observedExecution.traces, authoredUiCall, input.artifactId);
-        if (activation !== undefined) uiSourcePathByRegion.set(regionId, activation);
+        if (activation !== undefined && authoredUiCall !== undefined)
+          uiSourcePathByCallId.set(authoredUiCall.id, activation);
         if (authoredUiCall !== undefined) {
           evidence.set(authoredUiCall.id, {
             id: authoredUiCall.id,
             origin: "source-code",
             scope: "selected-artifact",
             locator: sourceLocator(authoredUiCall.source),
-            summary: "Exact translation argument in a typed authored " +
-              authoredUiCall.receiverType + "." + authoredUiCall.method +
-              "() call. Source attempt only; player display, activation " +
+            summary: (forwarded === undefined
+              ? "Exact direct translation argument"
+              : "Bounded exact source literal forwarding") +
+              " into typed authored " + authoredUiCall.receiverType + "." +
+              authoredUiCall.method + "() call. Player display, activation " +
               "and locale selection NOT PROVEN.",
           });
         }
+        // Each forwarded binding is independently traceable to an exact
+        // selected-source site; none can serve as player/UI runtime proof.
+        const handoffEvidence = authoredUiCall === undefined ? [] :
+          valueHops.map((hop, index) => {
+            const declarationLocator = sourceLocator(hop.declarationSource);
+            const consumptionLocator = sourceLocator(hop.consumptionSource);
+            const evidenceId = "literal-ui-value-handoff:" +
+              encodeURIComponent(input.artifactId + ":" + locator + ":" +
+                authoredUiCall.id + ":" + index + ":" +
+                declarationLocator + "->" + consumptionLocator);
+            evidence.set(evidenceId, {
+              id: evidenceId, origin: "source-code",
+              scope: "selected-artifact", locator: consumptionLocator,
+              summary: "Bounded source " + hop.kind + " transfer from " +
+                declarationLocator + "; runtime execution and UI delivery UNKNOWN.",
+            });
+            return {
+              kind: hop.kind, declarationLocator, consumptionLocator, evidenceId,
+            };
+          });
         const id = "literal-translation-use:" + encodeURIComponent(
           input.artifactId + ":" + locator + ":" + use.key);
         evidence.set(id, {
@@ -328,6 +373,13 @@ export function buildGameplayIntentModel(
                 method: authoredUiCall.method as
                   "sendMessage" | "setTitle" | "setActionBar",
                 receiverInference: authoredUiCall.inference,
+                ...(forwarded === undefined ? {} : {
+                  uiExecutionRegionId: callRegionId,
+                  valueFlow: {
+                    hops: handoffEvidence,
+                    proof: "BOUNDED_SOURCE_LITERAL_FORWARDING_NOT_UI_DELIVERY" as const,
+                  },
+                }),
                 ...(callGuards.length === 0 ? {} : { callGuards }),
                 ...(activation === undefined ? {} : { sourceActivation: activation }),
                 proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY" as const,

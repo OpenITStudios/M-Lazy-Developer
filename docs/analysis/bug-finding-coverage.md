@@ -312,6 +312,30 @@ unknowns, or directly satisfy impact/reachability/counter-proof criteria.
 Player activation, delivered UI, effective resource-pack selection and
 intended-gameplay authority remain separate proof obligations.
 
+## Bounded literal-value forwarding into typed UI calls
+
+The selected-map parser admits a limited source-only value path from a
+literal `{ translate: "key" }` to a typed UI API call: up to four uniquely
+owned, immutable `const` bindings with one lexical consumption each, static
+object/array containers, and one unique top-level single-statement helper
+that forwards its uniquely named parameter to the FIRST message argument
+of the exact typed UI call. The parser still owns the original literal
+site; the independent canonical Semantic IR verifies the *target* API
+call's own execution region, receiver, method and full source span.
+Each handoff is registered as a separate selected-artifact source witness
+and is retained in the existing Gameplay Contract / model handoff.
+
+Do not assume that an immutable variable name proves immutable content:
+multiple reads, other uses/mutation, shadowed declarations, computed or
+spread properties, duplicate object keys, dynamically constructed keys,
+nested/async helpers, expression-level transforms, ambiguous call targets
+and unknown typed receivers fail closed. A source-forwarded text value does
+NOT establish that a helper ran, message was displayed, locale selected,
+a player/arena owned the recipient, or that any objective/outcome was
+achieved. Source-only evidence must never upgrade design authority or
+close Proof Saturation / final PROVEN thresholds. Frozen calibration and
+blind acceptance expectations remain unchanged.
+
 ## Exact source UI-send attempts and map-native player contracts
 
 The parser admits a literal translation's UI-send attempt only when its

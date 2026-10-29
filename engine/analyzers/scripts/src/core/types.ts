@@ -409,6 +409,21 @@ export interface ScriptLiteralTranslationReference {
     readonly receiverType: "Player" | "World" | "ScreenDisplay";
     readonly method: "sendMessage" | "setTitle" | "setActionBar";
   };
+  /** A uniquely forwarded literal through immutable const and/or a single
+   * statement helper to the parser-confirmed UI API call. This is source
+   * evidence, not execution or proof that a player saw the message.
+   */
+  readonly forwardedUiSendCall?: {
+    readonly source: SourceRef;
+    readonly receiverType: "Player" | "World" | "ScreenDisplay";
+    readonly method: "sendMessage" | "setTitle" | "setActionBar";
+    readonly executionRegion: string;
+    readonly hops: readonly {
+      readonly kind: "immutable-const-binding" | "simple-helper-parameter";
+      readonly declarationSource: SourceRef;
+      readonly consumptionSource: SourceRef;
+    }[];
+  };
   /** Exact conditions enclosing the literal object expression, not the
    * later UI API call, receiver identity, or successful presentation. */
   readonly lexicalGuards?: readonly ScriptLexicalGuard[];

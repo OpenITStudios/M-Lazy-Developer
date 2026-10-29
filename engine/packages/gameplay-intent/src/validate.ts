@@ -108,6 +108,45 @@ export function validateGameplayIntentModel(
     }
   }
 
+  // Exact literal forwarding may cross source execution regions but never
+  // cross selected-artifact files or borrow another handoff's code site.
+  for (const item of model.evidence) {
+    const call = item.literalTranslationUse?.authoredUiSendCall;
+    if (call === undefined) continue;
+    const flow = call.valueFlow;
+    const sourceFile = item.locator.replace(/:[1-9][0-9]*:[1-9][0-9]*$/, "");
+    const sameFile = (locator: string): boolean =>
+      locator.startsWith(sourceFile + ":") &&
+      /:[1-9][0-9]*:[1-9][0-9]*$/.test(locator);
+    const validRegion = call.uiExecutionRegionId?.startsWith(
+      "exec:script:" + encodeURIComponent(sourceFile) + ":");
+    const validHops = flow?.hops.every(hop => {
+      const matches = model.evidence.filter(evidence =>
+        evidence.id === hop.evidenceId &&
+        evidence.scope === "selected-artifact" &&
+        evidence.origin === "source-code" &&
+        evidence.locator === hop.consumptionLocator);
+      return (hop.kind === "immutable-const-binding" ||
+                hop.kind === "simple-helper-parameter") &&
+        sameFile(hop.declarationLocator) &&
+        sameFile(hop.consumptionLocator) &&
+        matches.length === 1;
+    }) ?? true;
+    if ((flow === undefined && call.uiExecutionRegionId !== undefined) ||
+        (flow !== undefined &&
+         (flow.proof !== "BOUNDED_SOURCE_LITERAL_FORWARDING_NOT_UI_DELIVERY" ||
+          !validRegion || flow.hops.length === 0 ||
+          flow.hops.length > 5 || !validHops ||
+          new Set(flow.hops.map(hop => hop.evidenceId)).size !==
+            flow.hops.length))) {
+      issues.push({
+        path: "evidence." + item.id +
+          ".literalTranslationUse.authoredUiSendCall.valueFlow",
+        message: "Bounded UI value forwarding requires unique, exact current-artifact code witnesses at every handoff; not runtime delivery proof.",
+      });
+    }
+  }
+
   // A source-root trace is never a proof of actual callback firing. Reject
   // malformed or promoted guard/path declarations while retaining old
   // source-only fixture contracts that do not carry these optional fields.

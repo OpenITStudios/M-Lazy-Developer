@@ -44,6 +44,7 @@ import type {
   ScriptSpatialTransformUse,
   ScriptSpatialContextOffsetSeries,
 } from "../core/types.js";
+import { createBoundedLiteralUiFlowResolver } from "./literal-ui-value-flow.js";
 import {
   inferScriptMethodCalls,
   inferScriptPropertyAccesses,
@@ -2801,6 +2802,11 @@ export function parseScriptFile(
   const entityEventTriggers: ScriptEntityEventTrigger[] = [];
   const commandLiterals: ScriptCommandLiteral[] = [];
   const literalTranslationReferences: ScriptLiteralTranslationReference[] = [];
+  const forwardedUiSendCallForTranslation = createBoundedLiteralUiFlowResolver(
+    file, methodCalls,
+    node => lineSource(file, node, source),
+    node => localExecutionRegionId(node, file),
+  );
   const authoredPropertyMutations: ScriptAuthoredPropertyMutation[] = [];
   const unresolvedReceiverCalls: ScriptUnresolvedReceiverCall[] = [];
   const lifecycleMemberExposures = inferScriptLifecycleMemberExposures(
@@ -3091,14 +3097,17 @@ export function parseScriptFile(
         node.name.text === "translate" &&
         ts.isStringLiteralLike(node.initializer) &&
         node.initializer.text.trim()) {
+      const directUiSendCall = directUiSendCallForTranslation(node);
+      const forwardedUiSendCall = directUiSendCall === undefined
+        ? forwardedUiSendCallForTranslation(node) : undefined;
       literalTranslationReferences.push({
         key: node.initializer.text,
         source: lineSource(file, node.initializer, source),
         executionRegion: localExecutionRegionId(node, file),
         syntax: "translate-object-literal",
-        ...(directUiSendCallForTranslation(node) === undefined ? {} : {
-          directUiSendCall: directUiSendCallForTranslation(node),
-        }),
+        ...(directUiSendCall === undefined ? {} : { directUiSendCall }),
+        ...(forwardedUiSendCall === undefined
+          ? {} : { forwardedUiSendCall }),
         lexicalGuards: lexicalBranchGuards(node, file, source),
         precedenceGuards: precedingEarlyExitGuards(node, file, source),
       });

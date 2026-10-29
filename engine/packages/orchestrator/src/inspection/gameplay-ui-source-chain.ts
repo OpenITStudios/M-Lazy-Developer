@@ -278,7 +278,9 @@ export function correlateUiSourceGameplaySteps(
         originalCall === undefined || use?.executionRegionId === undefined)
       return item;
     const call = apiById.get(originalCall.apiCallEvidenceId);
-    if (!call || call.executionRegionId !== use.executionRegionId ||
+    const actualCallRegion = originalCall.uiExecutionRegionId ??
+      use.executionRegionId;
+    if (!call || call.executionRegionId !== actualCallRegion ||
         call.source.artifactId !== artifactId ||
         siteLocator(call.source) !== originalCall.sourceLocator ||
         selectedEvidence.get(call.id)?.locator !== originalCall.sourceLocator)

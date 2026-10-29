@@ -125,6 +125,19 @@ export interface GameplayIntentEvidence {
       readonly method: "sendMessage" | "setTitle" | "setActionBar";
       readonly proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY";
       readonly receiverInference?: "direct" | "bounded";
+      /** Actual exact typed UI call region may differ from the literal's
+       * region when a module constant/local helper forwards its value.
+       */
+      readonly uiExecutionRegionId?: string;
+      readonly valueFlow?: {
+        readonly hops: readonly {
+          readonly kind: "immutable-const-binding" | "simple-helper-parameter";
+          readonly declarationLocator: string;
+          readonly consumptionLocator: string;
+          readonly evidenceId: string;
+        }[];
+        readonly proof: "BOUNDED_SOURCE_LITERAL_FORWARDING_NOT_UI_DELIVERY";
+      };
       /** Exact source operations linked to existing Intent subject IDs.
        * No independent design authority or proof of gameplay causality.
        */
