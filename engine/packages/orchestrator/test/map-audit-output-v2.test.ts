@@ -1776,6 +1776,67 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).not.toContain("Audit Obligation");
   });
 
+  it("bounds large unclassified proof output without losing distinct source families or C9", () => {
+    const obligations = [
+      ...Array.from({ length: 220 }, (_, index) => ({
+        id: "discovery-challenge:" + index,
+        source: "discovery-challenge",
+        stage: "UNDERSTAND",
+        title: "Unowned source operation " + index,
+        reason: "Selected-source owner is not established",
+        missingProof: "Exact selected-source gameplay relation",
+        validationTest: "Review authored effect and downstream consequence",
+        validationGroupKey: "source:" + index,
+        subjectIds: ["source:" + index],
+        componentIds: [],
+        evidenceIds: [],
+      })),
+      {
+        id: "knowledge-gap:one", source: "knowledge-gap",
+        stage: "FORMALIZE", title: "Knowledge applicability unknown",
+        reason: "Selected game version remains unresolved",
+        missingProof: "Exact edition and API applicability",
+        validationTest: "Reconcile the selected artifact runtime profile",
+        validationGroupKey: "knowledge:one",
+        subjectIds: [], componentIds: [], evidenceIds: [],
+      },
+      {
+        id: "mandatory-checkpoint:C9", source: "scenario-coverage",
+        stage: "EVALUATE", title: "Cross-system evidence checkpoint",
+        reason: "C9 proof has not closed",
+        missingProof: "A bounded cross-system scenario",
+        validationTest: "Trace both system owners and transitions",
+        validationGroupKey: "mandatory:C9",
+        subjectIds: [], componentIds: [], evidenceIds: [],
+      },
+    ];
+    const oversized = {
+      ...base,
+      bugs: [], designMismatches: [],
+      auditObligations: obligations,
+      unresolved: { status: "HAS_UNRESOLVED", total: 222,
+        auditObligationIds: obligations.map(item => item.id) },
+    };
+    const output = formatSelectedMapAuditFinalReport({
+      report: oversized as any, intent,
+    });
+    expect(output.match(/^## /gm)).toHaveLength(2);
+    expect(output).toContain("Catatan pemeriksaan belum selesai (222 NEED_VALIDATION");
+    expect(output).toContain("Cross-system evidence checkpoint");
+    expect(output).toContain("Knowledge applicability unknown");
+    expect(output).toContain("Unowned source operation 0");
+    expect(output).not.toContain("Unowned source operation 219");
+    expect(output.match(/NEED_VALIDATION \\(jenis masalah belum ditentukan\\)/g))
+      .toHaveLength(12);
+    expect(output).toContain("Rincian yang tidak ditampilkan: 210");
+    expect(output).toContain("discovery-challenge: 220");
+    expect(output).toContain("Map Audit Output V2 (auditObligations / unresolved)");
+    expect(oversized.auditObligations).toHaveLength(222);
+    expect(oversized.unresolved.auditObligationIds).toHaveLength(222);
+    expect(output).toContain("Pemeriksaan belum selesai");
+    expect(output).not.toContain("## Safe");
+  });
+
   it("hides Safe in a completely closed audit without hiding proved defects", () => {
     const report = formatSelectedMapAuditFinalReport({
       report: {

@@ -360,6 +360,41 @@ export function formatSelectedMapAuditFinalReport(input: {
   const unclassified = obligations.filter(item =>
     !classifiedIds.has(item.id));
   const additionalCount = unclassified.length + residual.size;
+  // Keep every original obligation and unresolved identity in the canonical
+  // structured V2 result. This human view is bounded to prevent thousands
+  // of individually repeated proof recipes from obscuring admitted findings.
+  // Show diverse source/stage families, not the first 12 IDs from one family.
+  const maxUnclassifiedPreview = 12;
+  const mandatoryC9 = unclassified.find(item =>
+    item.id === "mandatory-checkpoint:C9");
+  const visibleUnclassified = mandatoryC9 === undefined
+    ? [] as typeof unclassified : [mandatoryC9];
+  const byStageSource = new Map<string, {
+    items: typeof unclassified;
+    next: number;
+  }>();
+  for (const item of unclassified) {
+    if (item.id === "mandatory-checkpoint:C9") continue;
+    const key = item.stage + ":" + item.source;
+    const group = byStageSource.get(key) ?? { items: [], next: 0 };
+    group.items.push(item);
+    byStageSource.set(key, group);
+  }
+  let hasNext = true;
+  while (visibleUnclassified.length < maxUnclassifiedPreview && hasNext) {
+    hasNext = false;
+    for (const group of byStageSource.values()) {
+      const item = group.items[group.next];
+      if (item === undefined) continue;
+      visibleUnclassified.push(item);
+      group.next += 1;
+      hasNext = true;
+      if (visibleUnclassified.length >= maxUnclassifiedPreview) break;
+    }
+  }
+  const visibleResidual = [...residual.values()].slice(0, 4);
+  const omittedProofItems =
+    additionalCount - visibleUnclassified.length - visibleResidual.length;
   if (additionalCount > 0) {
     out.push(
       "**Catatan pemeriksaan belum selesai (" + additionalCount +
@@ -367,7 +402,7 @@ export function formatSelectedMapAuditFinalReport(input: {
       "Hal berikut masih perlu ditelusuri. Belum ada bukti cukup untuk " +
         "menyatakannya sebagai Bug atau Design Mismatch.",
     );
-    for (const item of unclassified) {
+    for (const item of visibleUnclassified) {
       const locations = sourceLocatorsFor(item.evidenceIds);
       out.push(
         "- **" + concise(item.title) + "** — NEED_VALIDATION " +
@@ -390,7 +425,7 @@ export function formatSelectedMapAuditFinalReport(input: {
         "  - Referensi: " + concise(item.id),
       );
     }
-    for (const item of residual.values()) {
+    for (const item of visibleResidual) {
       out.push(
         "- **" + concise(item.title) + "** — NEED_VALIDATION " +
           "(jenis masalah belum ditentukan)",
@@ -403,6 +438,26 @@ export function formatSelectedMapAuditFinalReport(input: {
         "  - Notes: Kondisi pemicu belum cukup diketahui untuk " +
           "membuat langkah reproduce gameplay yang andal.",
         "  - Referensi: " + concise(item.id),
+      );
+    }
+    if (omittedProofItems > 0) {
+      const counts = new Map<string, number>();
+      for (const item of unclassified) {
+        counts.set(item.source, (counts.get(item.source) ?? 0) + 1);
+      }
+      const bySource = [...counts.entries()].sort((a, b) =>
+        b[1] - a[1] || a[0].localeCompare(b[0]));
+      out.push(
+        "**Ringkasan kelompok bukti:** " +
+          bySource.slice(0, 6).map(([source, count]) =>
+            source + ": " + count).join("; ") +
+          (bySource.length > 6
+            ? "; +" + (bySource.length - 6) + " kelompok lain." : "."),
+        "**Rincian yang tidak ditampilkan:** " + omittedProofItems +
+          " kewajiban/identitas; semuanya tetap tersimpan dengan ID, " +
+          "alasan dan pemeriksaan penentu dalam Map Audit Output V2 " +
+          "(auditObligations / unresolved). Status tetap NEED_VALIDATION; " +
+          "tidak ada bukti baru atau kesimpulan gameplay dari peringkasan.",
       );
     }
     out.push("");
