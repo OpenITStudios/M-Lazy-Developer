@@ -371,3 +371,58 @@ test("reduced-fixture readiness accepts real bytes and rejects self-consistent f
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("unrepresented JSON and locale claims are unscorable, not invented FNs", () => {
+  const f = fixture();
+  try {
+    f.expectation.expected.claims.push({
+      id: "manifest-only", subject: "Pack manifest declares the script entry",
+      expectedClass: "supported", sourceRefs: ["behavior_packs/demo/manifest.json:12"],
+      proofCeiling: "STATIC VERIFIED",
+    });
+    f.result.fullMapReview.decisions.push({
+      claimId: "manifest-only", observedClass: "unknown",
+      reason: "Canonical SourceFlow has no manifest source site to adjudicate.",
+      observedEvidenceIds: [],
+    });
+    f.result.resultClass = "evidence-insufficient";
+    const done = f.run();
+    assert.equal(done.status, 0, done.stderr);
+    const parsed = JSON.parse(done.stdout);
+    assert.deepEqual(parsed.fullMapProof.unscorableClaimIds, ["manifest-only"]);
+    assert.equal(parsed.fullMapProof.scoredClaims, 3);
+    assert.equal(parsed.fullMapProof.reviewedClaims, 4);
+    assert.equal(parsed.metrics.fn, 0);
+    assert.equal(parsed.metrics.recall, 1);
+    assert.equal(parsed.fullMapProof.correctUnknown, 1);
+    // A reviewer cannot declare a positive or TN without real owned SourceFlow evidence.
+    f.result.fullMapReview.decisions.at(-1).observedClass = "supported";
+    f.result.fullMapReview.decisions.at(-1).observedEvidenceIds = ["src:verified-state"];
+    assert.notEqual(f.run().status, 0);
+  } finally { f.cleanup(); }
+});
+
+test("missing executable source-step is still a false negative, not unscorable", () => {
+  const f = fixture();
+  try {
+    f.expectation.expected.claims.push({
+      id: "missing-script", subject: "A script source operation missed by detector",
+      expectedClass: "supported", sourceRefs: ["scripts/main.js:999"],
+      proofCeiling: "STATIC VERIFIED",
+    });
+    f.result.fullMapReview.decisions.push({
+      claimId: "missing-script", observedClass: "unknown",
+      reason: "The source operation is not present in the selected report.",
+      observedEvidenceIds: [],
+    });
+    f.result.metrics.fn = 1;
+    f.result.metrics.unknown = 2;
+    f.result.resultClass = "false-negative";
+    const done = f.run();
+    assert.equal(done.status, 0, done.stderr);
+    const parsed = JSON.parse(done.stdout);
+    assert.deepEqual(parsed.fullMapProof.unscorableClaimIds, []);
+    assert.equal(parsed.metrics.fn, 1);
+    assert.equal(parsed.fullMapProof.scoredClaims, 4);
+  } finally { f.cleanup(); }
+});

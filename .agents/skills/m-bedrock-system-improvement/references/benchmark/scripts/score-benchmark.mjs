@@ -194,6 +194,23 @@ function adjudicateFullMapClaims(result) {
       sourceOverlapsLocator(steps[0], locator) &&
       uniquelyIdentifiesSourceSite(locator));
   };
+  // Full-map source-step scoring covers authored executable source and any
+  // other file format that actually has a canonical SourceFlow witness.
+  // A JSON/locale/world claim with no such witness is NOT a detector FN:
+  // this scorer currently has no claim-owned evidence surface to judge it.
+  // Conversely, a missing source-step for an executable script remains an
+  // in-scope miss, not an excuse to shrink the denominator.
+  const sourceStepScoreable = (claim) => {
+    const locators = claim.sourceRefs.map(parseLocator);
+    if (locators.some(locator => locator === undefined)) {
+      throw new Error("Frozen full-map claim contains an invalid source locator.");
+    }
+    return locators.some(locator =>
+      /\.(?:[cm]?[jt]sx?|mcfunction)$/i.test(locator.path) ||
+      (sourceSitesByPath.get(locator.path) ?? []).some(source =>
+        sourceOverlapsLocator(source, locator)));
+  };
+  const unscorableClaimIds = [];
   const counts = { tp: 0, tn: 0, fp: 0, fn: 0, unknown: 0 };
   let correctUnknown = 0;
   let insufficient = 0;
@@ -207,6 +224,16 @@ function adjudicateFullMapClaims(result) {
       throw new Error("Full-map adjudication lacks one unique frozen claim, observed class, reason or evidence array.");
     }
     reviewed.add(decision.claimId);
+    if (!sourceStepScoreable(claim)) {
+      // An unsupported evidence modality must remain explicit, not become a
+      // false negative, a fabricated true negative or a map-wide PASS.
+      if (decision.observedClass !== "unknown" ||
+          decision.observedEvidenceIds.length !== 0) {
+        throw new Error("Unrepresentable full-map source claim cannot be decided by SourceFlow evidence.");
+      }
+      unscorableClaimIds.push(claim.id);
+      continue;
+    }
     // Reviewers can still interpret semantics, but no decided claim may
     // borrow an unrelated report ID. Negative claims also require scoped
     // counter-evidence; an unsupported "rejected" label is not a TN.
@@ -246,7 +273,8 @@ function adjudicateFullMapClaims(result) {
   // metrics.unknown is an orthogonal abstention count, not a disjoint bucket.
   const expectedClass = counts.fp > 0 ? "false-positive" :
     counts.fn > 0 ? "false-negative" :
-    insufficient > 0 ? "evidence-insufficient" : "pass";
+    insufficient > 0 || unscorableClaimIds.length > 0
+      ? "evidence-insufficient" : "pass";
   if (result.resultClass !== expectedClass) {
     throw new Error("Full-map resultClass must agree with per-claim evidence: " + expectedClass);
   }
@@ -257,6 +285,9 @@ function adjudicateFullMapClaims(result) {
       artifactSha256: sha,
       expectationId: expectation.id,
       reviewedClaims: claims.length,
+      scoredClaims: claims.length - unscorableClaimIds.length,
+      unscorableClaimIds: unscorableClaimIds.sort(),
+      unscorableBasis: "NO_CANONICAL_SOURCE_FLOW_WITNESS_FOR_NON_SCRIPT_LOCATOR",
       correctUnknown,
       insufficient,
       reviewer: review.reviewedBy,

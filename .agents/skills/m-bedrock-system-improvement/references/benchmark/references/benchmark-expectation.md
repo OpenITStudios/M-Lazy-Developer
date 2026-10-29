@@ -116,11 +116,28 @@ This **source-site correlation is necessary but not sufficient** for semantic
 correctness: a reviewer must still explain how that authored operation proves
 the particular claim. The scorer verifies the receipt's source identity and
 recomputes counts, not the meaning of Minecraft gameplay automatically.
-Claims based on NBT, entity JSON or whole-map absence that have no matching
-canonical source-step representation remain UNKNOWN / not source-step scoreable
-at the current P5 proof ceiling; do not invent a script locator or modify
-the approved oracle to manufacture an eligible decision. Aggregate TP/TN/FP/FN/unknown
-must equal the per-claim adjudications; entered counts never authorize scores.
+The current full-map scorer measures **canonical SourceFlow source steps**, not
+every evidence modality. A claim whose frozen locators are all outside executable
+script/function source and lack a matching canonical SourceFlow site (for example,
+an independently reviewed manifest, locale string, or NBT source) is
+**UNSCORABLE**, not an automatic detector false negative. Its reviewer decision
+must remain `unknown` with no claimed source-step evidence. Such cases are
+listed in `fullMapProof.unscorableClaimIds`, excluded from TP/TN/FP/FN and the
+scored denominator, and prevent a whole-review `pass` classification.
+`reviewedClaims` includes every frozen claim, while `scoredClaims` counts
+only those within this source-step measurement scope. This exclusion is **not**
+correct UNKNOWN/abstention and does not prove the underlying gameplay claim.
+
+A missing executable JavaScript/TypeScript/`.mcfunction` source relation
+remains in scope: if a frozen supported operation is not found, record the
+source-grounded false negative rather than hiding it as UNSCORABLE. A non-script
+source with a real claim-owned SourceFlow step remains scoreable. Unambiguous
+source sites and independently reviewed semantics are required for decided
+positive **and** negative claims. Invalid source locators fail closed.
+Do not invent a script locator, alter a frozen oracle to gain eligibility, or
+present the partial source-step score as complete map understanding.
+Aggregate TP/TN/FP/FN/unknown must agree with the per-claim in-scope
+adjudications; entered counts never authorize scores.
 
 The scorer rejects missing/mismatched archive SHA-256; malformed or unfrozen
 canonical audit receipts; edition/version mismatch, unknown configured
