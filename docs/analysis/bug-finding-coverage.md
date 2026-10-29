@@ -346,6 +346,29 @@ achieved. Source-only evidence must never upgrade design authority or
 close Proof Saturation / final PROVEN thresholds. Frozen calibration and
 blind acceptance expectations remain unchanged.
 
+### Bounded UI literal source acceptance — October 29, 2026
+
+The within-file literal-to-typed-UI source feature has a bounded source
+acceptance receipt; it does **not** have end-to-end or Minecraft-runtime
+acceptance. Direct analysis of four SHA-256-verified calibration archives
+found 4 same-class UI value forwarding candidates in Composite out of 81
+literal translation sites across 62 scripts. All four candidates have
+exact source coordinates and locale keys present in the original archive.
+The exact GitHub value-flow module blob
+`86c93d772a6d80eb680af5184b66dcd51bd0bde7` passed a strict isolated
+stub-import type check and 19/19 positive/negative AST scenarios.
+
+**Proof separation:** the selected-map receiver inference was executed
+from a portable October 25 repository snapshot with the canonical
+class-method region correction; it was **not** the full current HEAD
+parser/IR/Gameplay Intent execution. No `runSelectedMapAudit()`, Minecraft
+runtime, effective pack selection or change in `PROVEN` was measured.
+This is a source-calibration acceptance record, not a scorable frozen
+benchmark or a substitute for complete selected-map runtime evidence.
+Do not extend the source detector solely to inflate candidate counts.
+The specific evidence and missing proof remain recorded at
+`engine/reliability/history/audit-runs/evaluations/2026-10-29-ui-literal-source-acceptance.json`.
+
 ## Exact source UI-send attempts and map-native player contracts
 
 The parser admits a literal translation's UI-send attempt only when its

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_SHA256_ARCHIVE_SOURCE_AST_AND_EXACT_MODULE_ACCEPTANCE",
+  "status": "SOURCE_ACCEPTED_WITH_BOUNDED_SCOPE_NOT_CANONICAL_ENGINE_PASS",
+  "observedDate": "2026-10-29",
+  "repository": "OpenITStudios/M-Lazy-Developer",
+  "sourceBranch": "Local",
+  "sourceCommit": "4c15d743bdaf50876bb9f92ac78f00158ceab9a7",
+  "module": {
+    "path": "engine/analyzers/scripts/src/parser/literal-ui-value-flow.ts",
+    "verifiedGitBlob": "86c93d772a6d80eb680af5184b66dcd51bd0bde7",
+    "isolatedStrictTypecheck": "PASS_WITH_STUB_IMPORTS",
+    "actualModuleAstScenarios": {
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "receiverWitnesstype": "SYNTHETIC_IN_TEST_CASES"
+    }
+  },
+  "method": {
+    "archives": "Directly SHA256 hashed and read-only extracted from original .mcworld files",
+    "sourceParser": "TypeScript 5.8.3 AST",
+    "receiverInference": "Existing portable source at commit 65782ce2ec2ec81ccd04441d455ebd893fcdf545 with the exact class-region correction applied in a scratch copy only",
+    "fullCurrentHeadReceiverInference": false,
+    "fullCurrentHeadParseScriptFile": false,
+    "fullCurrentHeadSemanticIr": false,
+    "fullCurrentHeadGameplayIntent": false,
+    "selectedMapAudit": false,
+    "minecraftRuntime": false
+  },
+  "results": [
+    {
+      "caseId": "blitzbuild",
+      "sha256": "d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504",
+      "scripts": 44,
+      "parsedStaticTranslate": 2,
+      "typedUISites": 3,
+      "forwarded": 0
+    },
+    {
+      "caseId": "cal-defense-challenge-1-1-5",
+      "sha256": "eb554476d26b7b9de949628d8efe00f12beb95669f6c424a2eb754b52d39f45c",
+      "scripts": 8,
+      "parsedStaticTranslate": 34,
+      "typedUISites": 6,
+      "forwarded": 0
+    },
+    {
+      "caseId": "cal-composite-challenge-1-1-17",
+      "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+      "scripts": 9,
+      "parsedStaticTranslate": 45,
+      "typedUISites": 11,
+      "forwarded": 4,
+      "witness": {
+        "relativePath": "behavior_packs/BP/scripts/chunks/chunk-7YEVMDUW.js",
+        "apiMethod": "ScreenDisplay.setTitle",
+        "apiLine": 27791,
+        "targetRegion": "function:GameManager2.runTitlerawToArena@27776:3",
+        "literalKeys": [
+          [
+            "daigon.emoji.game",
+            27736
+          ],
+          [
+            "daigon.emoji.clock",
+            27748
+          ],
+          [
+            "daigon.emoji.retry",
+            27753
+          ],
+          [
+            "daigon.hud.attempt",
+            27755
+          ]
+        ],
+        "localeFiles": [
+          "behavior_packs/BP/texts/en_US.lang",
+          "resource_packs/RP/texts/en_US.lang"
+        ],
+        "deliveredUI": "NOT_OBSERVED",
+        "actualLocaleSelection": "UNKNOWN"
+      }
+    },
+    {
+      "caseId": "cal-beach-bedwars-1-1-0",
+      "sha256": "97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8",
+      "scripts": 1,
+      "parsedStaticTranslate": 0,
+      "typedUISites": 0,
+      "forwarded": 0
+    }
+  ],
+  "totals": {
+    "maps": 4,
+    "scripts": 62,
+    "parseDiagnostics": 0,
+    "literalTranslateSites": 81,
+    "typedUiMethodCallSites": 20,
+    "forwardedSourceCandidates": 4
+  },
+  "proofCeiling": "DIRECT_CALIBRATION_SOURCE_ONLY_NOT_PLAYER_DELIVERY_NOT_GAMEPLAY_OR_BUG_PROOF",
+  "unknowns": [
+    "full-current-HEAD production parser/IR/Intent execution",
+    "player receiver and guard satisfaction in Minecraft",
+    "effective resource pack/locale",
+    "actual player-visible UI",
+    "PROVEN/NEED_VALIDATION delta"
+  ],
+  "preservation": {
+    "mapBinaryCommitted": false,
+    "sourceScriptsCommitted": false,
+    "frozenCorpusChanged": false,
+    "proofThresholdsChanged": false
+  },
+  "decision": "Stop additional speculative detector extensions for this bounded source feature. Independent latest-head integrated engine/runtime acceptance is a separate evidence question."
+}
