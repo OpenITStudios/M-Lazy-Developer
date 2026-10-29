@@ -31,7 +31,23 @@ describe("Map Audit Output V2 projection", () => {
           invariants: [],
         },
       },
-      hiddenGameplayDefects: { classification: undefined },
+      hiddenGameplayDefects: {
+        classification: undefined,
+        scenarioAudit: {
+          graph: {
+            causalLinks: [
+              { id: "link:proven", scenarioId: "scenario:1",
+                status: "CONTRADICTED",
+                reason: "The completion transition retains blocked state",
+                evidenceIds: ["e:objective"] },
+              { id: "link:unresolved", scenarioId: "scenario:1",
+                status: "CONTRADICTED",
+                reason: "The completion path may retain a blocked state",
+                evidenceIds: ["e:objective"] },
+            ],
+          },
+        },
+      },
       gameplayWorld: {
         arenas: {
           detected: false,
@@ -193,6 +209,10 @@ describe("Map Audit Output V2 projection", () => {
     const report = projectMapAuditOutputV2(projectionInput);
     expect(report.bugs[0]?.knowledgeRequirementIds).toEqual(["knowledge:state-flow"]);
     expect(report.bugs[1]?.knowledgeRequirementIds).toEqual(["knowledge:chunk-simulation"]);
+    expect(report.bugs[0]?.scenarioLabel).toBe("objective");
+    expect(report.bugs[0]?.affectedScope).toBe("objective:1");
+    expect(report.bugs[0]?.causalExplanation).toContain("completion transition retains");
+    expect(report.bugs[1]?.causalExplanation).toContain("may retain a blocked state");
     const mismatchReport = projectMapAuditOutputV2({
       ...projectionInput,
       issueLanes: {
@@ -1590,6 +1610,56 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("Pemeriksaan belum selesai");
   });
 
+  it("includes grounded explanation, readable reproduce, retest and conditional Notes", () => {
+    const report = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base, bugs: [
+          { ...provenBug, scenarioLabel: "objective completion",
+            affectedScope: "arena 1",
+            causalExplanation: "Reset handler clears the objective before settlement",
+            reproduceSteps: ["Start the objective", "Complete it",
+              "Observe whether: Objective stays locked"] },
+          { ...pendingBug, scenarioLabel: "reconnect",
+            affectedScope: "player recovery",
+            causalExplanation: "Possible stale writer overlaps reconnect",
+            proofNavigation: { runtimeRequired: true } },
+        ],
+      }, intent,
+    });
+    expect(report).toContain("Analisis penyebab (bukti source): Reset handler clears");
+    expect(report).toContain("Indikasi penyebab (belum terbukti): Possible stale writer");
+    expect(report).toContain("Mekanik/fase: objective completion");
+    expect(report).toContain("Bagian terdampak: arena 1");
+    expect(report).toContain("Cara reproduce (panduan tester, belum dijalankan)");
+    expect(report).toContain("1. Gunakan map dan versi yang tercantum");
+    expect(report).toContain("Start the objective");
+    expect(report).not.toContain("Observe whether: Objective stays locked");
+    expect(report).toContain("Retest setelah perbaikan");
+    expect(report).toContain("Arah perbaikan");
+    expect(report).toContain("Hasil yang mendukung dugaan");
+    expect(report).toContain("Hasil yang tidak mendukung dugaan");
+    expect(report).toContain("Notes:");
+    expect(report).toContain("Hasil Minecraft langsung masih diperlukan");
+    expect(report).not.toContain("## Safe");
+  });
+
+  it("distinguishes source-first pending proof and refuses to invent missing triggers", () => {
+    const report = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base, bugs: [{ ...pendingBug, reproduceSteps: [],
+          causalExplanation: undefined,
+          proofNavigation: { runtimeRequired: false } }],
+        designMismatches: [],
+      }, intent,
+    });
+    expect(report).toContain("Cara membuktikan (pemeriksaan source, bukan playtest)");
+    expect(report).toContain("Pemicu belum cukup rinci");
+    expect(report).toContain("Reproduksi belum memiliki pemicu yang cukup spesifik");
+    expect(report).toContain("Penyebab teknis belum dibuktikan");
+    expect(report).toContain("Hasil yang tidak mendukung dugaan");
+    expect(report).not.toContain("## Safe");
+  });
+
   it("keeps pending findings visible despite a misleading closed header", () => {
     const report = formatSelectedMapAuditFinalReport({
       report: {
@@ -1649,7 +1719,7 @@ describe("two-category final report with visible pending findings", () => {
       }, intent,
     });
     expect(report.match(/^## /gm)).toHaveLength(2);
-    expect(report).toContain("NEED_VALIDATION — Pemeriksaan yang belum dapat diklasifikasikan (3)");
+    expect(report).toContain("Catatan pemeriksaan belum selesai (3 NEED_VALIDATION belum terklasifikasi");
     expect(report).toContain("Reset state ownership unclear");
     expect(report).toContain("No causal owner found for reset");
     expect(report).toContain("Authoritative state writer");

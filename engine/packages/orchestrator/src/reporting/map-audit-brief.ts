@@ -82,46 +82,124 @@ export function formatSelectedMapAuditFinalReport(input: {
   ];
 
   const describeIssue = (item: MapAuditOutputV2["bugs"][number]): string[] => {
-    const isPending = item.status === "NEED_VALIDATION";
-    const sourceLocators = sourceLocatorsFor(item.evidenceIds);
-    // An obligation for the same causal ID may contain an additional
-    // independent proof question. Attach it rather than silently dropping it
-    // or inventing a second issue classification.
-    const extraProof = obligations.filter(obligation =>
-      obligation.id === item.id);
+    const pendingProof = item.status === "NEED_VALIDATION";
+    const locations = sourceLocatorsFor(item.evidenceIds);
+    const evidence = locations.length > 0
+      ? locations.map(concise).join("; ")
+      : item.evidenceIds.length > 0
+        ? item.evidenceIds.slice(0, 3).map(concise).join("; ")
+        : "Lokasi bukti belum tercatat";
+    const relatedProof = obligations.filter(obligation => obligation.id === item.id);
+
+    // The legacy producer's 'Observe whether:' step is an assertion, not
+    // a player action. Never claim a made-up setup or executed playtest.
+    const actions = item.reproduceSteps.map(step => step.trim())
+      .filter(step => step.length > 0 && !/^Observe whether\s*:/i.test(step));
+    const sourceFirst = pendingProof && item.proofNavigation?.runtimeRequired === false;
+    const needsRuntime = pendingProof && item.proofNavigation?.runtimeRequired === true;
+    const steps: string[] = sourceFirst
+      ? [
+        "Cari source atau bukti pada map yang dipilih: " + evidence + ".",
+        ...(actions.length > 0
+          ? ["Periksa apakah pemicu berikut dapat dijangkau: " +
+            actions.map(concise).join("; ") + "."]
+          : ["Pemicu belum cukup rinci; telusuri asalnya sebelum membuat langkah gameplay."]),
+        "Periksa apakah jalur tersebut memang dapat menghasilkan: " +
+          concise(item.actual) + ".",
+        "Cari juga pengaman atau jalur alternatif yang mungkin mencegahnya.",
+      ]
+      : [
+        "Gunakan map dan versi yang tercantum pada bagian atas laporan.",
+        ...(item.scenarioLabel?.trim()
+          ? ["Siapkan fase/mekanik: " + concise(item.scenarioLabel) + "."]
+          : []),
+        ...(actions.length > 0
+          ? actions.map(concise)
+          : ["Pemicu khusus belum diketahui; jangan mengarang aksi. " +
+            "Kumpulkan kondisi awal dan langkah pemicu terlebih dahulu."]),
+        "Amati hasil pada bagian terkait" +
+          (item.affectedScope?.trim()
+            ? " (" + concise(item.affectedScope) + ")" : "") + ".",
+        "Bandingkan hasil dengan kondisi yang seharusnya: " +
+          concise(item.expected) + ".",
+      ];
+    const notes: string[] = [];
+    if (needsRuntime) {
+      notes.push("Hasil Minecraft langsung masih diperlukan untuk memutuskan bagian ini.");
+    } else if (sourceFirst) {
+      notes.push("Pemeriksaan source perlu dituntaskan sebelum meminta playtest.");
+    }
+    if (actions.length === 0) {
+      notes.push("Reproduksi belum memiliki pemicu yang cukup spesifik. " +
+        "Jangan menyimpulkan dari percobaan yang tidak memenuhi kondisi awal.");
+    }
+    if (!item.causalExplanation?.trim()) {
+      notes.push("Penyebab teknis belum dibuktikan dari satu jalur source yang " +
+        "terikat; jangan mengarang akar masalah.");
+    }
+    if (item.informationMismatch) {
+      notes.push("Periksa juga informasi yang dilihat pemain, bukan hanya " +
+        "perubahan state internal.");
+    }
+
     return [
       "- **" + concise(item.issue) + "** — " +
-        (isPending
+        (pendingProof
           ? "**NEED_VALIDATION (dugaan, belum terbukti)**"
           : "**PROVEN (terbukti)**"),
+      ...(item.scenarioLabel?.trim()
+        ? ["  - Mekanik/fase: " + concise(item.scenarioLabel)] : []),
+      ...(item.affectedScope?.trim()
+        ? ["  - Bagian terdampak: " + concise(item.affectedScope)] : []),
+      "  - Masalah: " + concise(item.issue),
+      ...(item.causalExplanation?.trim() ? [
+        "  - " + (pendingProof
+          ? "Indikasi penyebab (belum terbukti): "
+          : "Analisis penyebab (bukti source): ") +
+          concise(item.causalExplanation),
+      ] : []),
       "  - Seharusnya: " + concise(item.expected),
-      (isPending
-        ? "  - Indikasi yang perlu dibuktikan: "
-        : "  - Yang ditunjukkan bukti: ") + concise(item.actual),
-      (isPending ? "  - Potensi dampak: " : "  - Dampak: ") +
+      (pendingProof ? "  - Kondisi yang dicurigai: "
+        : "  - Kondisi yang ditunjukkan bukti: ") + concise(item.actual),
+      (pendingProof ? "  - Potensi dampak: " : "  - Dampak: ") +
         concise(item.playerImpact),
-      ...(sourceLocators.length > 0
-        ? ["  - Lokasi bukti: " + sourceLocators.map(concise).join("; ")]
-        : ["  - ID bukti: " +
-            (item.evidenceIds.length
-              ? item.evidenceIds.slice(0, 3).map(concise).join("; ")
-              : "Belum tercantum")]),
-      ...(isPending ? [
+      "  - Lokasi/ID bukti: " + evidence,
+      ...(pendingProof ? [
         "  - Mengapa belum terbukti: " + concise(item.validationReason),
-        "  - Bukti yang masih diperlukan: " + concise(item.missingProof),
+        "  - Bukti yang diperlukan: " + concise(item.missingProof),
+      ] : []),
+      "  - " + (sourceFirst
+        ? "Cara membuktikan (pemeriksaan source, bukan playtest):"
+        : pendingProof
+          ? "Cara membuktikan (panduan tester, belum dijalankan):"
+          : "Cara reproduce (panduan tester, belum dijalankan):"),
+      ...steps.map((step, index) => "    " + (index + 1) + ". " + step),
+      ...(pendingProof ? [
+        "  - Hasil yang mendukung dugaan: " + concise(item.actual),
+        "  - Hasil yang tidak mendukung dugaan: " + concise(item.expected) +
+          " (tidak otomatis berarti Safe).",
         "  - Pemeriksaan penentu: " + concise(item.validationTest),
-      ] : []),
-      ...(item.reproduceSteps.length > 0 ? [
-        "  - Panduan uji (bukan klaim sudah dijalankan):",
-        ...item.reproduceSteps.slice(0, 8).map((step, index) =>
-          "    " + (index + 1) + ". " + concise(step)),
-      ] : []),
-      ...extraProof.flatMap(obligation => [
-        "  - Pemeriksaan tambahan — NEED_VALIDATION: " +
-          concise(obligation.reason),
+        "  - Keputusan: status NEED_VALIDATION tetap berlaku sampai " +
+          "bukti penentu benar-benar selesai diperiksa.",
+      ] : [
+        "  - Tanda masalah terulang: " + concise(item.actual),
+        "  - Retest setelah perbaikan: ulangi langkah yang sama; hasil harus " +
+          concise(item.expected) + " dan kondisi bermasalah tidak berulang.",
+        "  - Arah perbaikan: telusuri lokasi bukti" +
+          (item.causalExplanation?.trim()
+            ? " dan penyebab yang dijelaskan di atas" : "") +
+          "; sesuaikan mekanik hingga " + concise(item.expected) +
+          ". Detail perubahan code tetap memerlukan review developer.",
+      ]),
+      ...relatedProof.flatMap(obligation => [
+        "  - Pemeriksaan tambahan — NEED_VALIDATION: " + concise(obligation.reason),
         "  - Bukti tambahan diperlukan: " + concise(obligation.missingProof),
         "  - Cara memastikan: " + concise(obligation.validationTest),
       ]),
+      ...(notes.length > 0 ? [
+        "  - Notes:",
+        ...notes.map(note => "    - " + note),
+      ] : []),
     ];
   };
 
@@ -222,8 +300,8 @@ export function formatSelectedMapAuditFinalReport(input: {
   const additionalCount = unclassified.length + residual.size;
   if (additionalCount > 0) {
     out.push(
-      "**NEED_VALIDATION — Pemeriksaan yang belum dapat diklasifikasikan (" +
-        additionalCount + ")**",
+      "**Catatan pemeriksaan belum selesai (" + additionalCount +
+        " NEED_VALIDATION belum terklasifikasi; bukan kategori baru)**",
       "Hal berikut masih perlu ditelusuri. Belum ada bukti cukup untuk " +
         "menyatakannya sebagai Bug atau Design Mismatch.",
     );
@@ -234,7 +312,12 @@ export function formatSelectedMapAuditFinalReport(input: {
           "(jenis masalah belum ditentukan)",
         "  - Alasan: " + concise(item.reason),
         "  - Bukti yang diperlukan: " + concise(item.missingProof),
-        "  - Cara memeriksa: " + concise(item.validationTest),
+        "  - Cara membuktikan:",
+        "    1. Temukan bagian yang terdampak dari referensi dan bukti.",
+        "    2. Periksa masalah pada bagian Alasan.",
+        "    3. Kumpulkan bukti: " + concise(item.missingProof),
+        "    4. Lakukan pemeriksaan penentu: " + concise(item.validationTest),
+        "    5. Catat hasil; tentukan jenis masalah hanya setelah bukti cukup.",
         ...(item.subjectIds.length > 0
           ? ["  - Bagian terkait: " +
               item.subjectIds.map(id => concise(id)).join("; ")]
@@ -251,7 +334,12 @@ export function formatSelectedMapAuditFinalReport(input: {
           "(jenis masalah belum ditentukan)",
         "  - Alasan: " + concise(item.reason),
         "  - Bukti yang diperlukan: " + concise(item.missingProof),
-        "  - Cara memeriksa: " + concise(item.validationTest),
+        "  - Cara membuktikan:",
+        "    1. Temukan bagian yang dicatat oleh ID di bawah.",
+        "    2. Kumpulkan bukti: " + concise(item.missingProof),
+        "    3. Pemeriksaan penentu: " + concise(item.validationTest),
+        "  - Notes: Kondisi pemicu belum cukup diketahui untuk " +
+          "membuat langkah reproduce gameplay yang andal.",
         "  - Referensi: " + concise(item.id),
       );
     }

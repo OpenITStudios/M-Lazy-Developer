@@ -387,6 +387,21 @@
           "playerImpact": {
             "type": "string"
           },
+          "scenarioLabel": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Selected-artifact scenario context; not game execution proof."
+          },
+          "affectedScope": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Affected scope from the admitted gameplay finding."
+          },
+          "causalExplanation": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Current-artifact causal-link reason admitted only with exact scenario and evidence match."
+          },
           "reproduceSteps": {
             "type": "array",
             "items": {
@@ -1071,6 +1086,21 @@
           },
           "playerImpact": {
             "type": "string"
+          },
+          "scenarioLabel": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Selected-artifact scenario context; not game execution proof."
+          },
+          "affectedScope": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Affected scope from the admitted gameplay finding."
+          },
+          "causalExplanation": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Current-artifact causal-link reason admitted only with exact scenario and evidence match."
           },
           "reproduceSteps": {
             "type": "array",

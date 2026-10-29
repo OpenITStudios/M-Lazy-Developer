@@ -33,6 +33,7 @@ import type {
 import type { SourceRef } from "../../project-model/src/index.js";
 import type {
   GameplayArchitectureNavigation,
+  GameplayCausalLink,
 } from "./inspection/gameplay-scenario-model.js";
 import type {
   AuditUserIntentEnvelope,
@@ -75,6 +76,11 @@ export interface MapAuditOutputV2Finding {
   readonly playerFacingEvidenceIds: readonly string[];
   readonly issue: string;
   readonly playerImpact: string;
+  /** Current selected-map context; never invented test preconditions. */
+  readonly scenarioLabel?: string;
+  readonly affectedScope?: string;
+  /** Reason from this exact contradicted source-evidenced causal link. */
+  readonly causalExplanation?: string;
   readonly reproduceSteps: readonly string[];
   readonly expected: string;
   readonly actual: string;
@@ -412,6 +418,7 @@ function outcomeFor(
 function projectFinding(
   finding: AuditIssueProjection,
   reasoningByCausalLinkId?: Readonly<Record<string, MapAuditOutputV2FindingReasoning>>,
+  causalExplanation?: string,
 ): MapAuditOutputV2Finding {
   const base = {
     id: finding.causalLinkId,
@@ -427,6 +434,12 @@ function projectFinding(
       [...finding.playerFacingEvidenceIds],
     issue: finding.gameplayConsequence,
     playerImpact: finding.gameplayConsequence,
+    ...(finding.scenarioLabel.trim()
+      ? { scenarioLabel: finding.scenarioLabel.trim() } : {}),
+    ...(finding.affectedScope.trim()
+      ? { affectedScope: finding.affectedScope.trim() } : {}),
+    ...(causalExplanation?.trim()
+      ? { causalExplanation: causalExplanation.trim() } : {}),
     reproduceSteps: [
       finding.gameplayTrigger,
       "Observe whether: " + finding.actualOutcome,
@@ -604,6 +617,23 @@ export function projectMapAuditOutputV2(input: {
     ...input.issueLanes.BUG,
     ...input.issueLanes.DESIGN_MISMATCH,
   ];
+  // A cause is not a model guess: require the uniquely scoped current
+  // CONTRADICTED link and evidence bound to the same finding.
+  const linksById = new Map<string, GameplayCausalLink[]>();
+  for (const link of input.inspection.hiddenGameplayDefects.scenarioAudit?.graph.causalLinks ?? []) {
+    const group = linksById.get(link.id) ?? [];
+    group.push(link);
+    linksById.set(link.id, group);
+  }
+  const causeFor = (finding: AuditIssueProjection): string | undefined => {
+    const group = linksById.get(finding.causalLinkId);
+    if (group?.length !== 1) return undefined;
+    const link = group[0]!;
+    if (link.status !== "CONTRADICTED" ||
+        link.scenarioId !== finding.scenarioId ||
+        !link.evidenceIds.some(id => finding.evidenceIds.includes(id))) return undefined;
+    return link.reason.trim() || undefined;
+  };
   const needValidationIds = allFindings
     .filter((finding) =>
       finding.status === "NEED_VALIDATION"
@@ -833,11 +863,11 @@ export function projectMapAuditOutputV2(input: {
       notes: closure.reasons.join(" "),
     },
     bugs:
-      input.issueLanes.BUG.map((finding) => projectFinding(finding, input.reasoningByCausalLinkId)),
+      input.issueLanes.BUG.map((finding) =>
+        projectFinding(finding, input.reasoningByCausalLinkId, causeFor(finding))),
     designMismatches:
-      input.issueLanes.DESIGN_MISMATCH.map(
-        (finding) => projectFinding(finding, input.reasoningByCausalLinkId),
-      ),
+      input.issueLanes.DESIGN_MISMATCH.map((finding) =>
+        projectFinding(finding, input.reasoningByCausalLinkId, causeFor(finding))),
     auditObligations:
       [...(input.auditObligations ?? [])],
     validationTests:
