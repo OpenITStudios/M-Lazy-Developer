@@ -285,6 +285,11 @@ When the shortest candidate terminates in a source-only or draft outcome,
 continue checking other bounded authored paths rather than falsely
 declaring that unrelated terminal PROVEN. Traversal is bounded and
 cycle-safe; missing complete evidence remains an explicit proof gap.
+Causal link status and each impact hop now share the same selected-source
+implementation witness rule. A selected-artifact design/text evidence ID does
+not independently grant a causal link PROVEN. Impact search prunes branches
+without an authored, independently approved terminal before exploring the
+bounded, cycle-safe alternatives; a budget limit never proves absence.
 A source-backed authored path is impact **relevance**, never proof of
 player triggering, operation success, guard satisfiability or a confirmed
 Bug. The same canonical source proof, Counter-Proof and Proof Saturation

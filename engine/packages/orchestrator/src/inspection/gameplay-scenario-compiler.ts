@@ -41,6 +41,7 @@ import {
   reconcileSourceGuardedStateTransitions,
   type SourceGuardedStateTransitionCandidate,
 } from "../../../behavior-model/src/index.js";
+import { authoredIntentEdgeStatus, provenImpactPathFrom } from "./gameplay-impact-path.js";
 
 const SCENARIO_NODE_KINDS = new Set([
   "mechanic",
@@ -79,145 +80,6 @@ function technicalRoleForNode(
   return node.kind + ": " + node.label;
 }
 
-function edgeStatus(
-  edge: GameplayIntentEdge,
-  sourceEvidenceIds: ReadonlySet<string>,
-): GameplayCausalLink["status"] {
-  // Inferred dependencies or dangling evidence IDs are never causal proof.
-  return edge.status === "authored" &&
-    edge.evidenceIds.some(id => sourceEvidenceIds.has(id))
-      ? "PROVEN"
-      : "DETECTION_GAP";
-}
-
-/**
- * Only authored relations with selected-artifact evidence can close an
- * objective/outcome impact path. Keep the exact traversed edges and their
- * proof IDs together so an inferred parallel relation cannot supply proof.
- */
-function provenImpactPathFrom(
-  startId: string,
-  scenarioComponentIds: ReadonlySet<string>,
-  intent: GameplayIntentModel,
-  sourceEvidenceIds: ReadonlySet<string>,
-  /** The current Intent edge, when inspecting an authored dependency.
-   * Runtime-domain edges have no authored first step to assume.
-   */
-  directEdge?: GameplayIntentEdge,
-  directImplementationEvidenceIds?: ReadonlySet<string>,
-  evidenceById?: ReadonlyMap<string, GameplayIntentEvidence>,
-): Pick<GameplayCausalLink, "impactPathComponentIds" | "impactPathEvidenceIds"> {
-  const empty = {
-    impactPathComponentIds: [],
-    impactPathEvidenceIds: [],
-  };
-  const impactKinds = new Set<GameplayIntentEdge["kind"]>([
-    "produces", "transitions-to", "recovers-to",
-    "wins-by", "loses-by", "requires",
-  ]);
-  const terminalKinds = new Set<GameplayIntentNode["kind"]>([
-    "objective", "outcome",
-  ]);
-
-  // Both direct and multi-edge impact require actual selected-source
-  // implementation evidence on EVERY directed authored relation. An
-  // approved design declaration or dialogue is not an executed source edge.
-  const sourceIdsFor = (edge: GameplayIntentEdge): readonly string[] =>
-    edge.status !== "authored" || !impactKinds.has(edge.kind)
-      ? []
-      : [...new Set(edge.evidenceIds.filter(id =>
-          sourceEvidenceIds.has(id) &&
-          directImplementationEvidenceIds?.has(id) === true &&
-          (evidenceById?.get(id)?.locator.trim().length ?? 0) > 0,
-        ))].sort();
-
-  type ImpactPath = {
-    readonly componentIds: readonly string[];
-    readonly implementationIds: readonly string[];
-  };
-  let pending: ImpactPath[];
-  if (directEdge === undefined) {
-    if (!scenarioComponentIds.has(startId)) return empty;
-    pending = [{ componentIds: [startId], implementationIds: [] }];
-  } else {
-    // A downstream path cannot repair an unsupported starting dependency.
-    // Structural, inferred, foreign or design-only source edges have no
-    // causal impact authority even when their target has later outcomes.
-    const sourceIds = sourceIdsFor(directEdge);
-    if (directEdge.to !== startId ||
-        !scenarioComponentIds.has(directEdge.from) ||
-        !scenarioComponentIds.has(directEdge.to) ||
-        directEdge.from === directEdge.to ||
-        sourceIds.length === 0) return empty;
-    pending = [{
-      componentIds: [directEdge.from, startId],
-      implementationIds: sourceIds,
-    }];
-  }
-
-  // Index the existing authored Intent path once for this scope. Bounded
-  // per-path traversal preserves alternatives through a shared outcome:
-  // the first nearby return/terminal may have NO independent design proof.
-  const byFrom = new Map<string, GameplayIntentEdge[]>();
-  for (const edge of intent.edges) {
-    if (!scenarioComponentIds.has(edge.from) ||
-        !scenarioComponentIds.has(edge.to) ||
-        sourceIdsFor(edge).length === 0) continue;
-    const entries = byFrom.get(edge.from) ?? [];
-    entries.push(edge);
-    byFrom.set(edge.from, entries);
-  }
-  for (const entries of byFrom.values()) {
-    entries.sort((a, b) => a.to.localeCompare(b.to) ||
-      a.id.localeCompare(b.id));
-  }
-
-  const MAX_SOURCE_PATHS = 256;
-  const MAX_SOURCE_HOPS = 12;
-  for (let cursor = 0; cursor < pending.length &&
-       cursor < MAX_SOURCE_PATHS; cursor += 1) {
-    const path = pending[cursor]!;
-    const currentId = path.componentIds[path.componentIds.length - 1]!;
-    const terminals = intent.nodes.filter(node => node.id === currentId);
-    const terminal = terminals.length === 1 ? terminals[0] : undefined;
-    if (path.componentIds.length > 1 &&
-        terminal?.status === "authored" &&
-        terminalKinds.has(terminal.kind) &&
-        path.implementationIds.length > 0) {
-      const approvedIds = (terminal.evidenceIds ?? []).filter(id =>
-        isSelectedArtifactApprovedDesignEvidence(evidenceById?.get(id)));
-      const witnesses = [...new Set([
-        ...path.implementationIds, ...approvedIds,
-      ])].map(id => evidenceById?.get(id));
-      if (approvedIds.length > 0 &&
-          hasIndependentApprovedDesignEvidence(witnesses)) {
-        return {
-          impactPathComponentIds: [...path.componentIds],
-          impactPathEvidenceIds: [...new Set([
-            ...path.implementationIds, ...approvedIds,
-          ])].sort(),
-        };
-      }
-    }
-    if (path.componentIds.length >= MAX_SOURCE_HOPS) continue;
-    for (const next of byFrom.get(currentId) ?? []) {
-      if (path.componentIds.includes(next.to) ||
-          pending.length >= MAX_SOURCE_PATHS) continue;
-      pending.push({
-        componentIds: [...path.componentIds, next.to],
-        implementationIds: [
-          ...new Set([...path.implementationIds, ...sourceIdsFor(next)]),
-        ].sort(),
-      });
-    }
-  }
-
-  // No independent current-map gameplay impact witness in the bounded
-  // authored source paths. This is an unresolved proof gap, not a safe-map
-  // claim or an invitation to invent a player-visible effect.
-  return empty;
-}
-
 /**
  * Proof dimensions require source-bound evidence IDs from their real owner.
  * Runtime component IDs, derived labels and summary counts are navigation,
@@ -236,6 +98,7 @@ function provenImpactPathFrom(
 function authoredOutcomeGuardWitnessesByEdge(
   intent: GameplayIntentModel,
   selectedEvidenceIds: ReadonlySet<string>,
+  implementationEvidenceIds: ReadonlySet<string>,
 ): ReadonlyMap<string, readonly string[]> {
   const nodeById = new Map(intent.nodes.map((node) => [node.id, node]));
   const evidenceById = new Map(intent.evidence
@@ -274,7 +137,7 @@ function authoredOutcomeGuardWitnessesByEdge(
     const policy = nodeById.get(edge.to);
     if (!policy?.policyPredicate ||
         policy.policyPredicate.kind === "unknown" ||
-        edgeStatus(edge, selectedEvidenceIds) !== "PROVEN") continue;
+        authoredIntentEdgeStatus(edge, selectedEvidenceIds, implementationEvidenceIds, evidenceById) !== "PROVEN") continue;
     const coverage = coverageBySubject.get(outcomeId) ?? [];
     if (coverage.length !== 1 ||
         coverage[0]!.id !== "inv:admissible-policy:" + outcomeId ||
@@ -3275,7 +3138,7 @@ export function compileGameplayScenarioGraph(
     )
     .map((record) => [record.id, record.locator] as const));
   const authoredGuardWitnessesByEdge = authoredOutcomeGuardWitnessesByEdge(
-    input.intent, sourceEvidenceIds,
+    input.intent, sourceEvidenceIds, directImplementationEvidenceIds,
   );
   const playerCounts = presetPlayerCounts(input.preset);
   // A classified name-only declaration is not an observed gameplay flow.
@@ -3685,7 +3548,9 @@ export function compileGameplayScenarioGraph(
         edge.to, allowed, input.intent, sourceEvidenceIds,
         edge, directImplementationEvidenceIds, purposeEvidenceById,
       );
-      const causalStatus = edgeStatus(edge, sourceEvidenceIds);
+      const causalStatus = authoredIntentEdgeStatus(
+          edge, sourceEvidenceIds, directImplementationEvidenceIds, purposeEvidenceById,
+        );
       const guardWitnessIds = authoredGuardWitnessesByEdge.get(edge.id) ?? [];
       causalLinks.push({
         id: "edge:" + scenario.id + ":" + edge.id,
