@@ -80,6 +80,7 @@ import {
   type ReadyAuditIssueProjection,
 } from "./map-audit-issue-projection.js";
 import {
+  mergePendingFamilyProof,
   sourceBoundAuditEvidenceIds,
 } from "./map-audit-proof-saturation.js";
 import {
@@ -270,6 +271,11 @@ export interface SelectedMapAuditModelResponseBatch {
   readonly auditRevision: string;
   readonly resolutions: readonly {
     readonly taskId: string;
+    /** Full canonical resolution, or a PROOF_NAVIGATION continuation with
+     * only causalLinkId, disposition, optional scenarioId and familyProof.
+     * The latter is merged against the same current-revision causal source
+     * and accepted only for demonstrably still-missing family criteria.
+     */
     readonly resolution: GameplayDefectResolution;
   }[];
   /** Non-authoritative source investigation, not a defect resolution. */
@@ -1320,7 +1326,26 @@ export function applySelectedMapAuditModelResponses(input: {
         );
       }
     }
-    candidateResolutions.set(link.id, resolution);
+    const prior = candidateResolutions.get(link.id);
+    // A bounded AI task may prove just ONE missing family criterion.
+    // Do not overwrite earlier verified translation, counter-proof or family
+    // evidence when the response intentionally contains only that delta.
+    // Full resolution replacements retain their existing behavior and
+    // canonical validation below; no second evidence store is created.
+    const incrementalFamilyOnly =
+      task.kind === "PROOF_NAVIGATION" &&
+      prior?.disposition === "CONFIRMED_DEFECT_READY" &&
+      resolution.disposition === "CONFIRMED_DEFECT_READY" &&
+      resolution.familyProof !== undefined &&
+      Object.keys(resolution).every(key =>
+        key === "causalLinkId" || key === "scenarioId" ||
+        key === "disposition" || key === "familyProof");
+    candidateResolutions.set(
+      link.id,
+      incrementalFamilyOnly && prior !== undefined
+        ? mergePendingFamilyProof(graph, prior, resolution)
+        : resolution,
+    );
   }
 
   const candidate = [...candidateResolutions.values()];

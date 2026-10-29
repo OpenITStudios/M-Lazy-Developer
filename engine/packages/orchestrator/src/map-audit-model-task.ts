@@ -1569,6 +1569,8 @@ export function deriveAuditModelTaskPackets(input: {
             "formal contradiction proof",
             "evidence substitution that removes runtime need",
             "PROVEN-ready causal resolution",
+            "incremental familyProof with only still-missing criterion IDs, " +
+              "exact current-source evidence, and unchanged confirmed disposition",
             ...(navigation.runtimeRequired === true
               ? [
                   "exactly one narrow runtime proof request after earlier routes are exhausted",

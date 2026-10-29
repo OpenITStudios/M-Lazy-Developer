@@ -128,6 +128,10 @@ describe("map audit proof navigation", () => {
     expect(task?.familyProofCriteria).toEqual([
       "failing-path-reachable: Show the exact reachable failure path.",
     ]);
+    expect(task?.allowedOutputs).toContain(
+      "incremental familyProof with only still-missing criterion IDs, " +
+      "exact current-source evidence, and unchanged confirmed disposition",
+    );
     expect(task?.navigationRoute?.[0]?.knowledgeDomain).toBe("counter-proof");
     expect(task?.evidenceIds).toEqual(["e:test"]);
     expect(task?.unresolvedEvidenceIds).toEqual([]);

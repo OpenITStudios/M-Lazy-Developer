@@ -8,6 +8,7 @@ import {
   counterProofSearchIsGraphGrounded,
   familyCounterProofDimensionsForCriterion,
   type GameplayDefectResolution,
+  type FamilyProofCriterionReceipt,
 } from "./inspection/gameplay-defect-resolution.js";
 import {
   uniqueGameplayCausalLinkScope,
@@ -564,4 +565,114 @@ export function assessReadyResolutionSaturation(
         ? "Universal and family-specific proof are saturated. Stop searching; runtime manifestation is unnecessary unless a separate irreducible runtime claim exists."
         : "Continue only on missing universal/family proof criteria. Do not broaden search into already-satisfied dimensions.",
   };
+}
+
+
+/**
+ * Admit one incremental family-proof reply for a confirmation-ready causal
+ * link. The existing audit revision, task, and exact graph scope must already
+ * have been checked by the caller. This is NOT an evidence source: PROVE must
+ * find the submitted criterion's witness in the canonical current graph.
+ *
+ * Only previously unsatisfied family criteria can be updated. Source-bound
+ * confirmed claims and canonical counter-proof receipts are preserved, never
+ * replaced by a short model reply. Return a full existing resolution so the
+ * regular resolveSelectedMapAudit / Proof Saturation path decides the result.
+ */
+export function mergePendingFamilyProof(
+  graph: GameplayScenarioGraph,
+  previous: GameplayDefectResolution,
+  update: GameplayDefectResolution,
+): GameplayDefectResolution {
+  const owned = uniqueGameplayCausalLinkScope(graph, previous.causalLinkId);
+  const receipt = update.familyProof;
+  if (owned === undefined ||
+      owned.link.status !== "CONTRADICTED" ||
+      previous.scenarioId !== owned.scenario.id ||
+      previous.disposition !== "CONFIRMED_DEFECT_READY" ||
+      update.causalLinkId !== previous.causalLinkId ||
+      update.disposition !== "CONFIRMED_DEFECT_READY" ||
+      (update.scenarioId !== undefined &&
+       update.scenarioId !== owned.scenario.id) ||
+      receipt === undefined) {
+    throw new Error(
+      "Incremental family proof requires one current, confirmation-ready " +
+      "causal link and its matching selected-map scenario.",
+    );
+  }
+
+  const before = assessReadyResolutionSaturation(graph, previous);
+  const existing = previous.familyProof;
+  if (before.missingUniversalCriteriaIds.includes("family-proof-receipt-valid") ||
+      receipt.schemaVersion !== 1 ||
+      receipt.policy !== "family-proof-receipt" ||
+      receipt.failureDomain !== before.failureDomain ||
+      (existing !== undefined &&
+        (existing.schemaVersion !== 1 ||
+         existing.policy !== "family-proof-receipt" ||
+         existing.failureDomain !== before.failureDomain)) ||
+      !Array.isArray(receipt.criteria) ||
+      receipt.criteria.length === 0 ||
+      receipt.criteria.some(item =>
+        item === null ||
+        typeof item !== "object" ||
+        typeof item.id !== "string" ||
+        !Array.isArray(item.evidenceIds))) {
+    throw new Error(
+      "Incremental family proof has no valid current-domain proof receipt.",
+    );
+  }
+
+  const pending = new Set(before.missingFamilyCriteriaIds);
+  const seen = new Set<string>();
+  for (const item of receipt.criteria) {
+    if (!pending.has(item.id) || seen.has(item.id)) {
+      throw new Error(
+        "Incremental family proof may update only unique, still-missing " +
+        "criterion IDs for this causal link: " + item.id,
+      );
+    }
+    seen.add(item.id);
+  }
+
+  const additions = new Map<string, FamilyProofCriterionReceipt>(
+    receipt.criteria.map(item => [item.id, item]),
+  );
+  const retained = (existing?.criteria ?? [])
+    .filter(item => !additions.has(item.id));
+  const merged: GameplayDefectResolution = {
+    ...previous,
+    familyProof: {
+      schemaVersion: 1,
+      policy: "family-proof-receipt",
+      failureDomain: before.failureDomain,
+      criteria: [...retained, ...receipt.criteria]
+        .sort((a, b) => a.id.localeCompare(b.id)),
+    },
+  };
+
+  // The same current source graph independently rechecks allowed evidence,
+  // family-specific semantics, counter-proof, and all previously proven work.
+  // An AI assertion without a decisive witness makes no progress and cannot
+  // be persisted as if it closed a proof obligation.
+  const after = assessReadyResolutionSaturation(graph, merged);
+  const gained = receipt.criteria.some(item =>
+    after.familyCriteria.some(criterion =>
+      criterion.id === item.id && criterion.satisfied));
+  const lost = [
+    ...before.universalCriteria.filter(item => item.satisfied),
+    ...before.familyCriteria.filter(item => item.satisfied),
+  ].some(item =>
+    ![...after.universalCriteria, ...after.familyCriteria]
+      .some(next => next.id === item.id && next.satisfied));
+  if (!gained ||
+      lost ||
+      after.missingUniversalCriteriaIds.includes("family-proof-receipt-valid")) {
+    throw new Error(
+      "Incremental family proof adds no admissible missing criterion or " +
+      "would invalidate already established proof for this source scope.",
+    );
+  }
+
+  return merged;
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assessReadyResolutionSaturation,
+  mergePendingFamilyProof,
   sourceBoundAuditEvidenceIds,
 } from "../src/map-audit-proof-saturation.js";
 import { automaticCounterProofSearch } from "../src/inspection/gameplay-defect-resolution.js";
@@ -131,6 +132,94 @@ function witnessedWave() {
 }
 
 describe("map audit proof saturation", () => {
+  it("merges only one newly grounded family criterion and re-saturates the existing source", () => {
+    const { scenario, complete } = witnessedWave();
+    const previous = {
+      ...complete,
+      familyProof: {
+        ...complete.familyProof,
+        criteria: complete.familyProof.criteria.filter(item =>
+          item.id !== "failing-path-reachable"),
+      },
+    };
+    const first = assessReadyResolutionSaturation(scenario, previous as any);
+    expect(first.missingFamilyCriteriaIds).toContain("failing-path-reachable");
+    const incoming = {
+      causalLinkId: "l1",
+      scenarioId: "s1",
+      disposition: "CONFIRMED_DEFECT_READY" as const,
+      familyProof: {
+        schemaVersion: 1 as const,
+        policy: "family-proof-receipt" as const,
+        failureDomain: "progression-wave-objective",
+        criteria: [{
+          id: "failing-path-reachable", satisfied: true,
+          evidenceIds: ["source:contradiction"],
+        }],
+      },
+    };
+    const merged = mergePendingFamilyProof(
+      scenario, previous as any, incoming,
+    );
+    expect(merged.gameplayTrigger).toBe(previous.gameplayTrigger);
+    expect(merged.counterProofSearch).toEqual(previous.counterProofSearch);
+    expect(merged.familyProof?.criteria.map(item => item.id)).toEqual([
+      "completion-dependency-grounded",
+      "failing-path-reachable",
+      "reconciliation-exhausted",
+    ]);
+    expect(assessReadyResolutionSaturation(scenario, merged).saturated)
+      .toBe(true);
+    expect(assessReadyResolutionSaturation(scenario, previous as any).saturated)
+      .toBe(false);
+  });
+
+  it("refuses foreign, already-satisfied, stale or useless incremental proof", () => {
+    const { scenario, complete } = witnessedWave();
+    const prior = {
+      ...complete,
+      familyProof: {
+        ...complete.familyProof,
+        criteria: complete.familyProof.criteria.filter(item =>
+          item.id !== "failing-path-reachable"),
+      },
+    };
+    const partial = {
+      causalLinkId: "l1", scenarioId: "s1",
+      disposition: "CONFIRMED_DEFECT_READY" as const,
+      familyProof: {
+        schemaVersion: 1 as const, policy: "family-proof-receipt" as const,
+        failureDomain: "progression-wave-objective",
+        criteria: [{ id: "failing-path-reachable", satisfied: true,
+          evidenceIds: ["source:foreign"] }],
+      },
+    };
+    expect(() => mergePendingFamilyProof(scenario, prior as any, partial))
+      .toThrow(/no admissible missing criterion/);
+    expect(() => mergePendingFamilyProof(scenario, prior as any, {
+      ...partial, scenarioId: "s2",
+    })).toThrow(/matching selected-map scenario/);
+    expect(() => mergePendingFamilyProof(scenario, prior as any, {
+      ...partial, familyProof: { ...partial.familyProof,
+        failureDomain: "inventory-economy" },
+    })).toThrow(/current-domain proof receipt/);
+    expect(() => mergePendingFamilyProof(scenario, complete as any, {
+      ...partial, familyProof: { ...partial.familyProof,
+        criteria: [{ id: "completion-dependency-grounded",
+          satisfied: true, evidenceIds: ["source:contradiction"] }] },
+    })).toThrow(/still-missing/);
+    const duplicate = {
+      ...scenario,
+      causalLinks: [...scenario.causalLinks,
+        { ...scenario.causalLinks[0]! }],
+    };
+    expect(() => mergePendingFamilyProof(duplicate, prior as any, {
+      ...partial, familyProof: { ...partial.familyProof,
+        criteria: [{ id: "failing-path-reachable",
+          satisfied: true, evidenceIds: ["source:contradiction"] }] },
+    })).toThrow(/confirmation-ready causal link/);
+  });
+
   it("keeps unrelated same-scenario evidence outside the causal target and report", () => {
     const { scenario, complete } = witnessedWave();
     scenario.causalLinks.push({

@@ -156,6 +156,21 @@ be resent for reassurance. The existing current-revision model-response
 gate and canonical PROVE owner alone may close a gap after source evidence
 changes or a validated resolution is supplied.
 
+## Incremental current-revision family proof
+
+Within the existing PROOF_NAVIGATION response gate, the model may return
+only the single still-missing family-proof criterion with an exact owned
+source witness instead of resending the full prior confirmed resolution.
+The PROVE owner validates the receipt against the exact causal link and
+current audit revision, merges it with previous admitted proof, and
+re-saturates through the normal selected-map resolution continuation.
+The existing response batch still requires artifact ID, fingerprint, task
+ID, revision, causalLinkId and disposition. Full resolution proposals
+retain the previous replacement behavior. Never accept an evidence-free
+claim as newly satisfied, silently override completed criteria or admit a
+neighboring map/source witness. This optimizes model tokens but cannot
+resolve a genuine source or native-runtime proof gap by itself.
+
 ## Batch C — diagnosis consolidation without new authority
 
 The canonical flow already distinguishes `PROVEN` from

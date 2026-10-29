@@ -597,6 +597,22 @@ final Bug/Design Mismatch categories. Do not broaden AI to entire maps,
 rerun already-proven dimensions, or silently convert blocked source work
 into a Minecraft playtest.
 
+## Incremental source-bound proof continuation
+
+The existing PROOF_NAVIGATION model task can return one complete current
+FamilyProofReceipt or a proof-only resolution with causalLinkId, unchanged
+CONFIRMED_DEFECT_READY disposition, optional matching scenarioId and a
+familyProof containing *only* the missing family criteria. The canonical
+source/PROVE owner merges those criteria with the current resolution; it
+does not overwrite earlier valid translation, search or family witnesses.
+Each new criterion must be missing on the current audit revision and
+must independently become satisfied from source-scoped evidence. Duplicate,
+foreign, unsupported or unproductive replies are rejected. The normal
+resolveSelectedMapAudit continuation then re-derives admission, proof
+saturation, PROVEN/NEED_VALIDATION and the report from the same selected
+artifact. Never merge across revisions, infer source evidence from AI
+text, or claim that source revalidation equals live Minecraft execution.
+
 ## Runtime-last rule
 
 Runtime verification is only for behavior static/package/formal reasoning cannot decide, such as native pathfinding/collision, actual simulation, client/server ordering, multi-client visual divergence, rendering/input, or performance manifestation.
