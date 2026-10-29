@@ -120,6 +120,7 @@ describe("Map Audit Output V2 projection", () => {
     };
 
     const projectionInput: Parameters<typeof projectMapAuditOutputV2>[0] = {
+      auditRevision: "b".repeat(64),
       inspection,
       identity: {
         artifactId: "artifact:1",
@@ -207,6 +208,13 @@ describe("Map Audit Output V2 projection", () => {
       },
     };
     const report = projectMapAuditOutputV2(projectionInput);
+    expect(report.auditRevision).toBe("b".repeat(64));
+    expect(() => projectMapAuditOutputV2({
+      ...projectionInput, auditRevision: "stale-revision",
+    })).toThrow(/Invalid selected-map audit revision/);
+    expect(projectMapAuditOutputV2({
+      ...projectionInput, auditRevision: undefined,
+    })).not.toHaveProperty("auditRevision");
     expect(report.bugs[0]?.knowledgeRequirementIds).toEqual(["knowledge:state-flow"]);
     expect(report.bugs[1]?.knowledgeRequirementIds).toEqual(["knowledge:chunk-simulation"]);
     expect(report.bugs[0]?.scenarioLabel).toBe("objective");

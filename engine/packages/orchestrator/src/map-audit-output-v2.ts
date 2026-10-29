@@ -137,6 +137,11 @@ export interface MapAuditOutputV2 {
    * Optional for legacy V2 data, not an attestation of executable Git commit.
    */
   readonly artifactFingerprint?: string;
+  /** Canonical decision/proof revision for joining report and model handoff.
+   * Optional for legacy V2 data; always emitted by runSelectedMapAudit().
+   * This is NOT an attestation of TypeScript execution or Minecraft runtime.
+   */
+  readonly auditRevision?: string;
   /** Configured audit target, not a verified Minecraft runtime platform. */
   readonly auditTarget?: {
     readonly edition: "bedrock" | "education" | "unknown";
@@ -493,6 +498,8 @@ function projectFinding(
 export function projectMapAuditOutputV2(input: {
   readonly inspection: InspectArtifactResult;
   readonly identity: SelectedMapAuditIdentity;
+  /** Derived by the canonical selected-map audit, not a caller proof claim. */
+  readonly auditRevision?: string;
   readonly issueLanes: {
     readonly BUG: readonly AuditIssueProjection[];
     readonly DESIGN_MISMATCH:
@@ -509,6 +516,10 @@ export function projectMapAuditOutputV2(input: {
   readonly gameplayStructure?: GameplayArchitectureNavigation["gameplayStructure"];
   readonly reasoningByCausalLinkId?: Readonly<Record<string, MapAuditOutputV2FindingReasoning>>;
 }): MapAuditOutputV2 {
+  if (input.auditRevision !== undefined &&
+      !/^[a-f0-9]{64}$/.test(input.auditRevision)) {
+    throw new Error("Invalid selected-map audit revision; expected SHA-256.");
+  }
   const model =
     input.inspection.gameplayIntent.model;
   const nodes = new Map(
@@ -757,6 +768,9 @@ export function projectMapAuditOutputV2(input: {
     schemaVersion: 2,
     artifactId: input.identity.artifactId,
     artifactFingerprint: input.identity.artifactFingerprint,
+    ...(input.auditRevision === undefined
+      ? {}
+      : { auditRevision: input.auditRevision }),
     auditTarget: {
       edition: input.inspection.targetCompatibility?.edition ?? "unknown",
       ...(input.inspection.targetCompatibility?.version === undefined

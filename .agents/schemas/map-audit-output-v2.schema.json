@@ -35,6 +35,11 @@
       "pattern": "^[a-f0-9]{64}$",
       "description": "Selected archive SHA-256; optional for legacy V2, benchmark freeze requires it."
     },
+    "auditRevision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Current canonical decision/proof revision SHA-256; optional for legacy V2, not an attestation of engine or Minecraft execution."
+    },
     "auditTarget": {
       "type": "object",
       "required": [

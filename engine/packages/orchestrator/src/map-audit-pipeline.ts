@@ -920,6 +920,7 @@ function assembleSelectedMapAuditRun(
 
   const mapAuditReport =
     projectMapAuditOutputV2({
+      auditRevision,
       gameplayStructure: gameplayArchitecture.gameplayStructure,
       inspection,
       identity,

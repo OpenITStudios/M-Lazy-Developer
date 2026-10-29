@@ -237,6 +237,8 @@ function expectReconstructionContract(
     .toBe(result.identity.artifactFingerprint);
   expect(result.mapAuditReport.artifactFingerprint)
     .toBe(result.inspection.fingerprint);
+  expect(result.mapAuditReport.auditRevision)
+    .toBe(result.auditRevision);
   expect(result.mapAuditReport.artifactFingerprint)
     .toMatch(/^[a-f0-9]{64}$/);
   const passes = result.demandReconciliation.sourceIndexPasses;
@@ -637,6 +639,8 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expectReconstructionContract(audit);
       const intent = audit.inspection.gameplayIntent.model;
       const handoff = projectSelectedMapAuditModelHandoff(audit);
+      expect(handoff.auditRevision).toBe(audit.mapAuditReport.auditRevision);
+      expect(handoff.artifactFingerprint).toBe(audit.mapAuditReport.artifactFingerprint);
       const cues = handoff.gameUnderstanding.playerFacingTextCues;
       const welcome = cues.find(item => item.key === "welcome.guide")
         ?.contractCandidate;
