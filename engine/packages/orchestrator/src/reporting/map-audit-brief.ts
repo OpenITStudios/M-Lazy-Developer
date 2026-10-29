@@ -15,6 +15,138 @@ import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import type { ReadyAuditCandidateGroup } from "../map-audit-candidate-grouping.js";
 import type { AuditValidationTestGroup } from "../map-audit-validation-plan.js";
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
+import type { VitalGameplayDomain } from "../map-audit-vital-closure.js";
+
+
+/**
+ * The operator's FINAL summary has exactly three result categories.
+ * Canonical MapAuditOutputV2 and the detailed audit brief retain all pending
+ * proofs, unknowns, source navigation, and model tasks without alteration.
+ *
+ * A pending finding cannot become a BUG or DESIGN_MISMATCH, and absence of
+ * findings cannot become SAFE. SAFE is projected solely from the canonical
+ * vital-domain proof conclusion after the whole audit has closed.
+ */
+export function formatSelectedMapAuditFinalReport(input: {
+  readonly report: MapAuditOutputV2;
+  readonly intent: GameplayIntentModel;
+}): string {
+  const { report, intent } = input;
+  const concise = (value: string): string =>
+    value.replace(/\s+/g, " ").trim().slice(0, 240) || "Belum ditentukan";
+  const evidenceById = new Map(intent.evidence
+    .map(item => [item.id, item] as const));
+
+  // These are distinct canonical axes: issueType and evidence status.
+  // Never display NEED_VALIDATION as a final verdict or silently suppress its
+  // incompleteness. Raw V2 and the diagnostic brief still retain each item.
+  const bugs = report.bugs.filter(item =>
+    item.issueType === "BUG" && item.status === "PROVEN");
+  const mismatches = report.designMismatches.filter(item =>
+    item.issueType === "DESIGN_MISMATCH" && item.status === "PROVEN");
+  const pending = [...report.bugs, ...report.designMismatches].filter(item =>
+    item.status === "NEED_VALIDATION");
+  const hasOpenEvidence = pending.length > 0 ||
+    (report.auditObligations?.length ?? 0) > 0 ||
+    (report.validationTests?.length ?? 0) > 0 ||
+    (report.unresolved?.total ?? 0) > 0 ||
+    report.unresolved?.status !== "CLEAR";
+
+  const closed =
+    !hasOpenEvidence &&
+    report.control.status === "READY_FOR_REVIEW" &&
+    report.coverage?.disposition === "accounted" &&
+    report.gameplayClosure?.status === "CLOSED" &&
+    report.honesty?.status === "PASS" &&
+    report.unresolved?.status === "CLEAR" &&
+    report.unresolved?.total === 0 &&
+    report.qualityGates?.vitalGameplay?.status === "CLOSED";
+
+  const safeDomains = closed
+    ? report.qualityGates.vitalGameplay.domains.filter(domain =>
+        domain.status === "UNDERSTOOD_PROVEN_SAFE")
+    : [];
+
+  const safeNames: Record<VitalGameplayDomain, string> = {
+    ENTRY_ADMISSION: "Masuk dan kesiapan pemain",
+    GAME_STATE_PROGRESSION: "State dan progres permainan",
+    MULTI_ARENA_ISOLATION: "Isolasi antar-arena",
+    CONNECTION_RECOVERY: "Pemulihan koneksi pemain",
+    INVENTORY_PLAYER_CAPABILITY: "Inventaris dan kemampuan pemain",
+    WORLD_RESET_INTEGRITY: "Reset dan pemulihan world",
+    SCORE_RESULT_INTEGRITY: "Skor dan hasil permainan",
+    PLAYER_FACING_INFORMATION: "Informasi yang ditampilkan kepada pemain",
+  };
+
+  const out = [
+    "# Hasil Pemeriksaan Map",
+    "",
+    "**Map:** " + concise(report.evidenceScope.selectedArtifact),
+    "**Versi:** " + concise(report.mapVersion),
+    "",
+  ];
+  const describeIssue = (item: MapAuditOutputV2["bugs"][number]): string[] => {
+    const sourceLocators = [...new Set(item.evidenceIds.flatMap(id => {
+      const evidence = evidenceById.get(id);
+      return evidence?.scope === "selected-artifact" &&
+        evidence.locator.trim().length > 0 ? [evidence.locator] : [];
+    }))].slice(0, 3);
+    return [
+      "- **" + concise(item.issue) + "**",
+      "  - Seharusnya: " + concise(item.expected),
+      "  - Yang terjadi: " + concise(item.actual),
+      "  - Dampak: " + concise(item.playerImpact),
+      ...(sourceLocators.length > 0
+        ? ["  - Lokasi bukti: " + sourceLocators.map(concise).join("; ")]
+        : ["  - ID bukti: " +
+            (item.evidenceIds.length
+              ? item.evidenceIds.slice(0, 3).map(concise).join("; ")
+              : "Tidak tercantum dalam proyeksi sumber")]),
+    ];
+  };
+  out.push("## Bug (" + bugs.length + ")");
+  if (bugs.length === 0) {
+    out.push("Belum ada Bug yang terbukti dari bukti saat ini.");
+  } else {
+    for (const finding of bugs) out.push(...describeIssue(finding));
+  }
+  out.push("", "## Design Mismatch (" + mismatches.length + ")");
+  if (mismatches.length === 0) {
+    out.push("Belum ada ketidaksesuaian desain yang terbukti.");
+  } else {
+    for (const finding of mismatches) out.push(...describeIssue(finding));
+  }
+  out.push("", "## Safe (" + safeDomains.length + ")");
+  if (safeDomains.length === 0) {
+    out.push(closed
+      ? "Tidak ada domain yang memiliki kesimpulan Safe secara terpisah."
+      : "Belum ada area yang boleh dinyatakan Safe sebelum pemeriksaan ditutup.");
+  } else {
+    for (const domain of safeDomains) {
+      out.push("- **" + safeNames[domain.domain] +
+        "** — telah dinyatakan aman dalam cakupan audit yang ditutup.");
+    }
+  }
+
+  // Completeness belongs to the audit, not to a fourth finding category.
+  if (!closed) {
+    const count = Math.max(
+      report.unresolved?.total ?? 0,
+      pending.length,
+      report.auditObligations?.length ?? 0,
+      report.validationTests?.length ?? 0,
+    );
+    out.push("", "**Pemeriksaan belum selesai:** " +
+      (count > 0
+        ? "setidaknya " + count + " hal masih memerlukan penyelesaian bukti."
+        : "masih ada tahapan atau bukti audit yang belum ditutup.") +
+      " Hal ini belum dikategorikan sebagai Bug, Design Mismatch, atau Safe.");
+  } else {
+    out.push("", "**Pemeriksaan selesai pada cakupan bukti audit ini.** " +
+      "Kesimpulan Safe tidak menyatakan eksekusi Minecraft yang tidak dilakukan.");
+  }
+  return out.join("\n") + "\n";
+}
 
 /**
  * Human-facing read-only view of the canonical MapAuditOutputV2.

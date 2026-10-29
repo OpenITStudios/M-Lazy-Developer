@@ -859,4 +859,4 @@ export function projectMapAuditOutputV2(input: {
  * belongs exclusively to the read-only reporting view; this re-export does
  * not introduce an alternative Map Audit report/proof authority.
  */
-export { formatSelectedMapAuditBrief } from "./reporting/map-audit-brief.js";
+export { formatSelectedMapAuditBrief, formatSelectedMapAuditFinalReport } from "./reporting/map-audit-brief.js";

@@ -7,7 +7,7 @@ import {
   runSelectedMapAudit,
   applySelectedMapAuditModelResponses,
   projectSelectedMapAuditModelHandoff,
-  formatSelectedMapAuditBrief,
+  formatSelectedMapAuditFinalReport,
   type InspectTargetProfile,
   type SelectedMapAuditModelResponseBatch,
   type SelectedMapAuditRuntimeTarget,
@@ -167,20 +167,9 @@ async function main(): Promise<void> {
         compact ? undefined : 2,
       ) + "\n"
     : brief
-      ? formatSelectedMapAuditBrief({
+      ? formatSelectedMapAuditFinalReport({
           report: resolvedAudit.mapAuditReport,
           intent: resolvedAudit.inspection.gameplayIntent.model,
-          architecture: resolvedAudit.gameplayArchitecture,
-          waveStages: resolvedAudit.inspection.authoredWaveStages,
-          gameplayCatalog: resolvedAudit.inspection.authoredGameplayCatalog,
-          contentCollections: resolvedAudit.inspection.authoredContentCollections,
-          ...(resolvedAudit.inspection.playerSessionLifecycle === undefined
-            ? {} : { playerSessionLifecycle: resolvedAudit.inspection.playerSessionLifecycle }),
-          ...(resolvedAudit.inspection.scriptSourceMapNavigation === undefined
-            ? {} : { scriptSourceMapNavigation: resolvedAudit.inspection.scriptSourceMapNavigation }),
-          modelTaskPackets: resolvedAudit.modelTaskPackets,
-          candidateGroups: resolvedAudit.candidateGroups,
-          validationTests: resolvedAudit.validationTests,
         })
       : JSON.stringify(resolvedAudit.mapAuditReport, null, compact ? undefined : 2) + "\n";
   // Transport only: decompression yields the exact same canonical JSON

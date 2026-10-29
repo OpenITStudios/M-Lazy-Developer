@@ -261,6 +261,8 @@ baselineReusableForAllReplicas
 
 ## Human-facing report completeness
 
+**Operator-facing final summary versus technical evidence:** The compact three-category operator view (`Bug`, `Design Mismatch`, `Safe`) is a read-only projection of proven issues and explicitly safe, closed vital gameplay domains. PROVEN/NEED_VALIDATION are internal proof decisions, not final result categories. A pending issue remains individually visible in the canonical structured V2 and detailed technical brief; the compact view uses a clear non-category `Pemeriksaan belum selesai` notice and MUST NOT call a pending claim Bug, Design Mismatch or Safe. Full technical output retains all material findings below. The compact view may not hide audit incompleteness or claim Safe from mere non-detection.
+
 The Map Audit Report must render all material findings:
 
 ```text
