@@ -317,6 +317,9 @@ describe("map-adaptive proof handoff", () => {
         sourceProofRequirements: [{
           unknownId: "unknown:mechanic",
           sourceEvidenceIds: ["state:write", "world:effect"],
+          sourceResolvedClaims: [
+            "CFG source membuktikan state:write mencapai pembacaan guard read:guard pada world:effect, bukan hasil runtime.",
+          ],
           missingClaims: [
             "Buktikan actor/sesi untuk state:write.",
             "Verifikasi target world:effect.",
@@ -329,6 +332,9 @@ describe("map-adaptive proof handoff", () => {
     expect(task?.missingClaims).toEqual([
       "unknown:mechanic: Buktikan actor/sesi untuk state:write.",
       "unknown:mechanic: Verifikasi target world:effect.",
+    ]);
+    expect(task?.provenClaims).toEqual([
+      expect.stringContaining("read:guard"),
     ]);
     expect(task?.missingClaims).not.toContain("Generic fallback");
     expect(task?.evidenceIds).toEqual(["state:write", "world:effect"]);

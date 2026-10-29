@@ -116,6 +116,22 @@ describe("audit obligations versus gameplay findings", () => {
     } as any;
     const obligations = deriveAuditObligations({
       graph, intent,
+      sourceEffectContext: [{
+        unknownId: "unknown:mechanic",
+        entryRegionId: "entry:mechanic",
+        effectPaths: [{
+          effectId: "world:effect", evidenceStatus: "CANDIDATE_INGRESS",
+          matchingIngress: [{ executionEdgeIds: [] }],
+          guardStateReadIds: ["read:guard"],
+          sourceLocalStateValueHandoffs: [{
+            guardReadOperationId: "read:guard",
+            writeOperationId: "state:write",
+            origin: "SOURCE_LOCAL",
+            sourceReachingProof:
+              "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE",
+          }],
+        }],
+      }] as any,
       discovery: {
         gameplayIntentUnknownIds: ["unknown:mechanic"],
         semanticUnderstandingGapPaths: [], semanticUnderstandingGaps: 0,
@@ -141,6 +157,9 @@ describe("audit obligations versus gameplay findings", () => {
         expect.stringContaining("world:effect"),
         expect.stringContaining("sesi pemain yang sama"),
       ]));
+    expect(obligation?.sourceProofRequirements?.[0]?.sourceResolvedClaims)
+      .toEqual([expect.stringContaining("read:guard")]);
+    expect(obligation?.reason).toContain("Source-CFG proof already established");
     expect(obligation?.evidenceIds).toEqual(["state:write", "world:effect"]);
     expect(obligation?.subjectIds).toContain("unknown:mechanic");
     expect(obligation?.missingProof).toContain("tujuan");

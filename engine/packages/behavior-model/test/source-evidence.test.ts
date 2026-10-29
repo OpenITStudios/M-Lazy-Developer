@@ -73,6 +73,93 @@ const ir = (): SemanticIr => ({
 });
 
 describe("source-observed state/outcome reconciliation", () => {
+  it("marks unique world-property CFG reaching definitions only when the modeled path is complete", () => {
+    const codeBlock = src(1);
+    const site = (statementIndex: number) => ({
+      block: codeBlock, statementIndex, directCall: true,
+      stableWorldReceiver: true,
+    });
+    const controlFlow = {
+      executionRegionId: region,
+      entryId: "cfg:entry",
+      nodes: [
+        { id: "cfg:entry", kind: "entry" as const },
+        { id: "cfg:write", kind: "statement" as const, site: site(0) },
+        { id: "cfg:read", kind: "statement" as const, site: site(1) },
+        { id: "cfg:effect", kind: "statement" as const, site: site(2) },
+      ],
+      edges: [
+        { from: "cfg:entry", to: "cfg:write" },
+        { from: "cfg:write", to: "cfg:read" },
+        { from: "cfg:read", to: "cfg:effect" },
+      ],
+    };
+    const selected: SemanticIr = {
+      schemaVersion: 1,
+      execution: {
+        regions: [{ id: region, kind: "script-module", ownerId: "round",
+          label: "module", source: src(1) }],
+        edges: [], controlFlow: [controlFlow],
+        worldEffects: [{
+          id: "effect:gate", executionRegionId: region,
+          kind: "block-mutation", mechanism: "script-api",
+          targetLabel: "gate", precision: "typed-method",
+          source: src(10), lexicalGuards: [guard("true", 8)],
+        }],
+      },
+      state: {
+        surfaces: [{ id: "state:phase", ref: {
+          kind: "dynamic-property", key: "phase" } }],
+        operations: [{
+          id: "write:ready", executionRegionId: region,
+          surfaceId: "state:phase", operation: "write",
+          targetHint: "world", source: src(5),
+          sourceSequence: site(0),
+          writtenValue: { kind: "literal", value: "ready",
+            scalarKind: "string" },
+        }, {
+          id: "read:guard", executionRegionId: region,
+          surfaceId: "state:phase", operation: "read",
+          targetHint: "world", source: src(8),
+          sourceSequence: site(1),
+        }],
+        authorityBindings: [],
+      },
+      temporal: { relations: [] },
+    };
+    const handoffs = (value: SemanticIr) => deriveSourceEffectSlices(value)
+      .find(item => item.effectId === "effect:gate")
+      ?.sourceLocalStateValueHandoffs ?? [];
+    expect(handoffs(selected)).toEqual([
+      expect.objectContaining({
+        writeOperationId: "write:ready",
+        guardReadOperationId: "read:guard",
+        origin: "SOURCE_LOCAL",
+        sourceReachingProof:
+          "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE",
+      }),
+    ]);
+    const opaqueFlow = { ...controlFlow,
+      nodes: [
+        ...controlFlow.nodes.slice(0, 2),
+        { id: "cfg:unknown", kind: "opaque" as const },
+        ...controlFlow.nodes.slice(2),
+      ],
+      edges: [
+        { from: "cfg:entry", to: "cfg:write" },
+        { from: "cfg:write", to: "cfg:unknown" },
+        { from: "cfg:unknown", to: "cfg:read" },
+        { from: "cfg:read", to: "cfg:effect" },
+      ],
+    };
+    const ambiguous = { ...selected, execution: {
+      ...selected.execution, controlFlow: [opaqueFlow],
+    }};
+    expect(handoffs(ambiguous).some(item =>
+      item.sourceReachingProof !== undefined)).toBe(false);
+  });
+
+
   it("marks exact internal event-bus dispatch as a source boundary, not live delivery", () => {
     const root="exec:script:entry", save="exec:script:save",
       cb="exec:script:callback";

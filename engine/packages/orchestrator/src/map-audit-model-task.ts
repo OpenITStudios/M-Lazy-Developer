@@ -1305,6 +1305,10 @@ function obligationPackets(
       .filter(item => selectedEntries.has(item.unknownId))
       .flatMap(item => item.missingClaims.map(claim =>
         item.unknownId + ": " + claim)).slice(0, 12);
+    const verifiedSourceClaims = (obligation.sourceProofRequirements ?? [])
+      .filter(item => selectedEntries.has(item.unknownId))
+      .flatMap(item => (item.sourceResolvedClaims ?? []).map(claim =>
+        item.unknownId + ": " + claim)).slice(0, 6);
     const omittedSourceRequirements =
       (obligation.omittedSourceProofRequirements ?? 0) +
       (obligation.sourceProofRequirements ?? [])
@@ -1350,6 +1354,8 @@ function obligationPackets(
       unresolvedObligationIds: [
         obligation.id,
       ],
+      ...(verifiedSourceClaims.length === 0
+        ? {} : { provenClaims: verifiedSourceClaims }),
       missingClaims: exactSourceQuestions.length > 0
         ? exactSourceQuestions
         : [obligation.missingProof],

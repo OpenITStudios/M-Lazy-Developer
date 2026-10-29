@@ -297,6 +297,8 @@ function deriveSelectedMapAuditControl(input: {
   readonly scenario:
     InspectArtifactResult["hiddenGameplayDefects"]["scenarioAudit"];
   readonly gameplayIntent: InspectArtifactResult["gameplayIntent"]["model"];
+  readonly sourceEffectContext?: GameplayArchitectureNavigation[
+    "gameplayStructure"]["uninterpretedSourceFlows"];
   readonly capabilityDelivery:
     InspectArtifactResult["hiddenGameplayDefects"]["capabilityDelivery"];
   readonly negativeSpace:
@@ -377,6 +379,8 @@ function deriveSelectedMapAuditControl(input: {
     ? deriveAuditObligations({
         graph: input.scenario.graph,
         intent: input.gameplayIntent,
+        ...(input.sourceEffectContext === undefined ? {} :
+          { sourceEffectContext: input.sourceEffectContext }),
         mandatoryAuditProcedure: input.procedure,
         defectResolution: input.scenario.defectResolution,
         gameplayWorld: input.gameplayWorld,
@@ -693,50 +697,6 @@ function assembleSelectedMapAuditRun(
     defectResolution: scenario.defectResolution,
     ...(userIntent === undefined ? {} : { userIntent }),
   });
-  const control = deriveSelectedMapAuditControl({
-    admission,
-    procedure,
-    scenario,
-    gameplayIntent: inspection.gameplayIntent.model,
-    capabilityDelivery:
-      hidden.capabilityDelivery,
-    negativeSpace:
-      hidden.negativeSpace,
-    temporalRisks:
-      hidden.temporalRisks,
-    gameplayClosure:
-      inspection.gameplayWorld.gameplayClosure,
-    gameplayWorld:
-      inspection.gameplayWorld,
-    discovery: inspection.gameplayDiscoveryClosure,
-    discoveryChallenges:
-      hidden.discoveryChallenges,
-    sharedResourceSignals:
-      hidden.sharedResourceOwnership.signals,
-    compoundBoundaries:
-      hidden.compoundBoundaries,
-    accumulationGrowth:
-      hidden.accumulationGrowth,
-    capabilityExposure:
-      inspection.capabilityExposure,
-    ...(userIntent === undefined ? {} : { userIntent }),
-  });
-  const needValidationFindings = [
-    ...control.issueLanes.BUG,
-    ...control.issueLanes.DESIGN_MISMATCH,
-  ].filter(
-    (item): item is NeedValidationAuditIssueProjection =>
-      item.status === "NEED_VALIDATION",
-  );
-  // Only a resolved, conflict-free edition can filter Knowledge candidates.
-  // Matching edition does NOT prove game version/API/experiment applicability.
-  const edition = inspection.targetCompatibility.edition;
-  const knowledgeEdition =
-    inspection.knowledgeRuntime.profileResolved &&
-    inspection.knowledgeRuntime.profileConflicts.length === 0 &&
-    (edition === "bedrock" || edition === "education")
-      ? edition
-      : undefined;
   // One derived navigation for the run and the operator-facing audit output.
   // No second mechanic extractor or persisted game model.
   const gameplayArchitecture =
@@ -849,6 +809,52 @@ function assembleSelectedMapAuditRun(
               inspection.gameplayWorld.arenas.perArenaPlayerCapacity }),
       });
 
+  const control = deriveSelectedMapAuditControl({
+    admission,
+    procedure,
+    scenario,
+    gameplayIntent: inspection.gameplayIntent.model,
+    sourceEffectContext:
+      gameplayArchitecture.gameplayStructure.uninterpretedSourceFlows,
+    capabilityDelivery:
+      hidden.capabilityDelivery,
+    negativeSpace:
+      hidden.negativeSpace,
+    temporalRisks:
+      hidden.temporalRisks,
+    gameplayClosure:
+      inspection.gameplayWorld.gameplayClosure,
+    gameplayWorld:
+      inspection.gameplayWorld,
+    discovery: inspection.gameplayDiscoveryClosure,
+    discoveryChallenges:
+      hidden.discoveryChallenges,
+    sharedResourceSignals:
+      hidden.sharedResourceOwnership.signals,
+    compoundBoundaries:
+      hidden.compoundBoundaries,
+    accumulationGrowth:
+      hidden.accumulationGrowth,
+    capabilityExposure:
+      inspection.capabilityExposure,
+    ...(userIntent === undefined ? {} : { userIntent }),
+  });
+  const needValidationFindings = [
+    ...control.issueLanes.BUG,
+    ...control.issueLanes.DESIGN_MISMATCH,
+  ].filter(
+    (item): item is NeedValidationAuditIssueProjection =>
+      item.status === "NEED_VALIDATION",
+  );
+  // Only a resolved, conflict-free edition can filter Knowledge candidates.
+  // Matching edition does NOT prove game version/API/experiment applicability.
+  const edition = inspection.targetCompatibility.edition;
+  const knowledgeEdition =
+    inspection.knowledgeRuntime.profileResolved &&
+    inspection.knowledgeRuntime.profileConflicts.length === 0 &&
+    (edition === "bedrock" || edition === "education")
+      ? edition
+      : undefined;
   const freshModelTaskPackets = deriveAuditModelTaskPackets({
     admission,
     procedure,

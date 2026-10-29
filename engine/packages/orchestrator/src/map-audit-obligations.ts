@@ -8,6 +8,7 @@ import type {
   TemporalInteractionRisk,
 } from "../../diagnostic-reasoning/src/index.js";
 import type {
+  GameplayArchitectureNavigation,
   GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
 import {
@@ -67,6 +68,10 @@ export interface AuditUnknownSourceProofRequirement {
   readonly unknownId: string;
   readonly sourceEvidenceIds: readonly string[];
   readonly missingClaims: readonly string[];
+  /** Already-decided source CFG facts only. Must never count as gameplay,
+   * guard feasibility, expected behavior or runtime proof.
+   */
+  readonly sourceResolvedClaims?: readonly string[];
 }
 
 export interface AuditObligation {
@@ -977,6 +982,7 @@ function unknownSourceProofRequirements(
   graph: GameplayScenarioGraph,
   intent: GameplayIntentModel | undefined,
   unknownIds: readonly string[],
+  sourceEffects?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"],
 ): readonly AuditUnknownSourceProofRequirement[] {
   if (!intent?.artifactId) return [];
   const currentEvidence = new Set(intent.evidence.filter(item =>
@@ -1024,6 +1030,36 @@ function unknownSourceProofRequirements(
         relation.toStepId === item.toStepId) &&
       [item.fromStepId, item.toStepId].every(id =>
         allExactIds.has(id)));
+    // A positive CFG reaching-definition conclusion must come from the
+    // current selected-artifact Behavior Model source slice, not an AI
+    // assertion, an identifier resemblance or an unrelated sibling flow.
+    const sourceSlices = (sourceEffects ?? []).filter(item =>
+      item.unknownId === unknownId &&
+      item.entryRegionId === unknown?.sourceEntryRegionId);
+    const sourceResolvedClaims = source !== undefined &&
+        sourceSlices.length === 1
+      ? unique(sourceSlices[0]!.effectPaths.flatMap(effect =>
+          effect.evidenceStatus !== "CANDIDATE_INGRESS" ||
+          effect.matchingIngress.length === 0 ||
+          !allExactIds.has(effect.effectId) ? [] :
+          effect.sourceLocalStateValueHandoffs.flatMap(handoff =>
+            handoff.origin !== "SOURCE_LOCAL" ||
+            handoff.sourceReachingProof !==
+              "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE" ||
+            !effect.guardStateReadIds.includes(handoff.guardReadOperationId) ||
+            !allExactIds.has(handoff.writeOperationId) ||
+            !reviewed.some(relation =>
+              relation.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" &&
+              relation.fromStepId === handoff.writeOperationId &&
+              relation.toStepId === effect.effectId)
+            ? [] : [
+              "CFG source memastikan satu penulis state " +
+              handoff.writeOperationId + " mencapai pembacaan guard " +
+              handoff.guardReadOperationId + " pada efek " +
+              effect.effectId + " dalam scope source ini; " +
+              "nilai runtime dan identitas sesi belum terbukti.",
+            ])
+        )).slice(0, 4) : [];
     // Intended gameplay is always a separate authority from source syntax.
     // Lead with this decisive unknown so bounded summaries never omit it.
     const missing: string[] = [
@@ -1088,6 +1124,8 @@ function unknownSourceProofRequirements(
       unknownId,
       sourceEvidenceIds,
       missingClaims: [...new Set(missing)].slice(0, 9),
+      ...(sourceResolvedClaims.length === 0
+        ? {} : { sourceResolvedClaims }),
     };
   });
 }
@@ -1096,6 +1134,10 @@ export function deriveAuditObligations(input: {
   readonly graph: GameplayScenarioGraph;
   /** Source-only per-map understanding, never a model-proposed design rule. */
   readonly intent?: GameplayIntentModel;
+  /** Reuse existing Gameplay Architecture's source-effect slices, not a
+   * second source analyzer or arbitrary model-generated proof receipt.
+   */
+  readonly sourceEffectContext?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"];
   readonly mandatoryAuditProcedure?: MandatoryAuditProcedureReceipt;
   readonly defectResolution: GameplayDefectResolutionGate;
   readonly gameplayWorld: GameplayWorldModel;
@@ -1161,7 +1203,7 @@ export function deriveAuditObligations(input: {
   if (input.discovery && input.discovery.gameplayIntentUnknownIds.length > 0) {
     const allUnknownIds = unique(input.discovery.gameplayIntentUnknownIds);
     const requirements = unknownSourceProofRequirements(
-      input.graph, input.intent, allUnknownIds);
+      input.graph, input.intent, allUnknownIds, input.sourceEffectContext);
     // Prioritize entries with actual selected-source witnesses rather than
     // arbitrary unknown names. Keep ALL unknown IDs and omission counts.
     const prioritized = [...requirements].sort((a, b) =>
@@ -1174,6 +1216,9 @@ export function deriveAuditObligations(input: {
     const sourceQuestions = visible.flatMap(item =>
       item.missingClaims.slice(0, 4).map(question =>
         item.unknownId + ": " + question));
+    const sourceKnown = visible.flatMap(item =>
+      (item.sourceResolvedClaims ?? []).slice(0, 2).map(claim =>
+        item.unknownId + ": " + claim)).slice(0, 4);
     const summary = sourceQuestions.length > 0
       ? sourceQuestions.join(" ") +
         (omitted > 0
@@ -1187,7 +1232,10 @@ export function deriveAuditObligations(input: {
       title: "Reconcile unclassified material gameplay",
       reason: String(allUnknownIds.length) +
         " gameplay intent unknown(s) remain unresolved. " +
-        "Known source relations are not player-purpose or runtime proof.",
+        "Known source relations are not player-purpose or runtime proof." +
+        (sourceKnown.length === 0 ? "" :
+          " Source-CFG proof already established (source only): " +
+            sourceKnown.join(" ")),
       missingProof: summary,
       validationTest: sourceQuestions.length > 0
         ? "Periksa hubungan operasi yang belum terbukti pada entry source " +

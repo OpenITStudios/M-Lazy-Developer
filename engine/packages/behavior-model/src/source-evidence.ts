@@ -488,6 +488,12 @@ export interface SourceStateValueHandoff {
   readonly authoredValue: string;
   readonly scalarKind: "string" | "number" | "boolean";
   readonly origin: "SOURCE_LOCAL" | "SYNCHRONOUS_CALLER";
+  /** An exact single-definer CFG witness, NOT a live value, guard truth,
+   * alias equivalence or per-player/session runtime ownership. Omitted if
+   * CFG resolution is UNKNOWN, TRUNCATED or has alternative definitions.
+   */
+  readonly sourceReachingProof?:
+    "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE";
 }
 
 /**
@@ -1196,6 +1202,9 @@ export function deriveSourceEffectSlices(
       read.executionRegionId === effect.region &&
       guards.some(guard => sourceRangeContains(guard.source, read.source)));
     const guardStateReadIds = [...new Set(guardStateReads.map(read => read.id))].sort();
+    const reachingByRead = new Map(guardStateReads.map(read => [
+      read.id, reconcileWorldStateReachingDefinitions(ir, read),
+    ] as const));
     // Strict same-source/surface context: unknown wildcard keys and
     // unspecified or differently spelled receivers cannot establish even
     // this limited candidate prior-definition association.
@@ -1211,7 +1220,7 @@ export function deriveSourceEffectSlices(
         !mutuallyExclusiveGuards(write, read));
       // Forward branch/join facts can eliminate a non-reaching candidate.
       // Without complete CFG/source identity, retain conservative candidates.
-      const reaching = reconcileWorldStateReachingDefinitions(ir, read);
+      const reaching = reachingByRead.get(read.id)!;
       return (reaching.status === "COMPLETE"
         ? candidates.filter(write => reaching.writeIds.includes(write.id))
         : retainSourceSequentialWriteCandidates(read.sourceSequence, candidates))
@@ -1242,6 +1251,13 @@ export function deriveSourceEffectSlices(
           authoredValue: literal.value,
           scalarKind: literal.scalarKind,
           origin,
+          ...(origin === "SOURCE_LOCAL" &&
+            reachingByRead.get(read.id)?.status === "COMPLETE" &&
+            reachingByRead.get(read.id)?.writeIds.length === 1 &&
+            reachingByRead.get(read.id)?.writeIds[0] === write.id
+            ? { sourceReachingProof:
+                "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE" as const }
+            : {}),
         }];
       })).sort((a, b) =>
         a.guardReadOperationId.localeCompare(b.guardReadOperationId) ||
