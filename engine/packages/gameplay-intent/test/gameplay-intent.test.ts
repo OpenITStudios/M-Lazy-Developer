@@ -115,6 +115,16 @@ describe("gameplay intent", () => {
     }]);
     expect(() => admitReviewedUnknownSourceRelations(accepted, [proposal]))
       .toThrow(/already reviewed/);
+    const invalid = {
+      ...accepted,
+      unknowns: [{ ...accepted.unknowns[0]!,
+        sourceRelations: [
+          ...(accepted.unknowns[0]!.sourceRelations ?? []),
+          ...(accepted.unknowns[0]!.sourceRelations ?? []),
+        ] }],
+    };
+    expect(validateGameplayIntentModel(invalid).some(issue =>
+      issue.path.includes("sourceRelations"))).toBe(true);
     expect(() => admitReviewedUnknownSourceRelations(unknownModel, [{
       ...proposal, fromStepId: "op:foreign",
       sourceRelationEvidenceIds: ["op:foreign", "effect:gate"],

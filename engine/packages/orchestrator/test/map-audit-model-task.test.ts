@@ -263,6 +263,9 @@ describe("reviewed unknown source relations in the canonical scenario projection
         ({ ...step, source: { artifactId: "previous-map" } })),
     }])).toEqual([]);
     expect(projectReviewedSourceRelationships(intent, [rooted, rooted])).toEqual([]);
+    expect(projectReviewedSourceRelationships({
+      ...intent, artifactId: "another-map",
+    }, [rooted])).toEqual([]);
   });
 });
 

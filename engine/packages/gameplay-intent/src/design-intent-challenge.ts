@@ -2,7 +2,7 @@ import type {
   GameplayIntentEvidence,
   GameplayIntentModel,
   GameplayIntentStatus,
-  type GameplayIntentSourceRelation,
+  GameplayIntentSourceRelation,
 } from "./types.js";
 
 export type DesignIntentChallengeDisposition =

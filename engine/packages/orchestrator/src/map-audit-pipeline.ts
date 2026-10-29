@@ -42,6 +42,9 @@ import {
   uniqueGameplayCausalLinkScope,
   type GameplayArchitectureNavigation,
 } from "./inspection/gameplay-scenario-model.js";
+import {
+  projectReviewedSourceRelationships,
+} from "./inspection/gameplay-scenario-compiler.js";
 import type {
   InspectionEngineeringAnalysis,
 } from "./inspection/engineering-analysis-stage.js";
@@ -1265,7 +1268,25 @@ export function applySelectedMapAuditModelResponses(input: {
       ? audit.inspection.gameplayIntent.model
       : admitReviewedUnknownSourceRelations(
           audit.inspection.gameplayIntent.model, acceptedSourcePairs);
-    const continued = refinedIntent === audit.inspection.gameplayIntent.model
+    // The same canonical Scenario compiler must still find ONE rooted,
+    // selected-source owner for every proposed source pair. Otherwise the
+    // review remains advisory and the unchanged audit keeps its unknown.
+    // Never write a relation that disappears from graph/revision authority.
+    const projected = acceptedSourcePairs.length === 0
+      ? []
+      : projectReviewedSourceRelationships(
+          refinedIntent,
+          audit.inspection.hiddenGameplayDefects.scenarioAudit.graph
+            .sourceFlowCandidates ?? [],
+        );
+    const allCurrentSourcePairs = acceptedSourcePairs.every(pair =>
+      projected.some(item =>
+        item.unknownId === pair.unknownId &&
+        item.sourceClaim === pair.sourceClaim &&
+        item.fromStepId === pair.fromStepId &&
+        item.toStepId === pair.toStepId));
+    const continued = refinedIntent === audit.inspection.gameplayIntent.model ||
+        !allCurrentSourcePairs
       ? audit
       : rebuildSelectedMapAudit(
           audit,
