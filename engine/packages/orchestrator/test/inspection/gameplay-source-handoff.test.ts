@@ -3,6 +3,7 @@ import { sourceFlowCandidates, compileGameplayScenarioGraph } from "../../src/in
 import { buildInspectionSemanticIr } from "../../src/diagnosis/semantic-ir-stage.js";
 import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
+import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js";
 
 const origin = { artifactId: "selected", relativePath: "scripts/start.ts" };
 const target = { artifactId: "selected", relativePath: "scripts/round.ts" };
@@ -186,14 +187,14 @@ describe("cross-region source handoff tracing", () => {
       spatial: { resolvedScriptEffects: 0, structurePlacements: 0,
         authority: { configured: false } },
     } as unknown as import("../../src/inspection/gameplay-world-model.js").GameplayWorldModel;
-    const compile = (intent: typeof base) =>
+    const compile = (intent: GameplayIntentModel) =>
       compileGameplayScenarioGraph({
-        intent: intent as import("../../../gameplay-intent/src/index.js").GameplayIntentModel,
+        intent,
         world,
         preset: { scenarios: [] } as unknown as
           import("../../../diagnostic-reasoning/src/index.js").GameplayAuditScenarioPreset,
       });
-    const directLink = (intent: typeof base) =>
+    const directLink = (intent: GameplayIntentModel) =>
       compile(intent).causalLinks.find(item =>
         item.scenarioId === "scenario:mechanic:action" &&
         item.fromComponentId === "mechanic:action" &&
@@ -221,6 +222,12 @@ describe("cross-region source handoff tracing", () => {
       ...base.edges[0]!, evidenceIds: ["design:objective"],
     }] });
     expect(designOnly?.impactPathComponentIds).toEqual([]);
+    const sameSiteDesign = directLink({ ...base, evidence: [
+      implementation, outcomeSource, {
+        ...approved, locator: implementation.locator,
+      },
+    ] });
+    expect(sameSiteDesign?.impactPathComponentIds).toEqual([]);
   });
 
   it("keeps an orphan state mutation as source evidence without supporting a mechanic or journey", () => {
