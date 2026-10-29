@@ -367,6 +367,10 @@ export async function inspectDirectory(
     supplementalSignals:
       gameplaySurfaceSignals,
     playerFacingTextCues: gameplayResourceText.playerFacingCues,
+    selectedPackAttachments: packs.map(pack => ({
+      root: pack.root,
+      worldAttachment: pack.worldAttachment ?? "unknown",
+    })),
     // This inventory is generated from selected archive bytes before source
     // interpretation. Supplemental hints may NOT authorize their own path.
     selectedSourceInventoryPaths: files.map(file => file.relativePath),

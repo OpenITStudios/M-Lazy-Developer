@@ -3013,6 +3013,74 @@ export function parseScriptFile(
     })),
   ];
 
+
+  /**
+   * Recognize only JSON-like, DIRECT authored UI API arguments.
+   * \`{translate:key}\` in an unrelated local variable or nested function
+   * is not a send call. The receiver and complete source span are checked
+   * against the parser's existing typed method-call owner; no method-name
+   * regex, dynamic evaluation or guessed argument flow.
+   */
+  const directUiSendCallForTranslation = (
+    property: ts.PropertyAssignment,
+  ): ScriptLiteralTranslationReference["directUiSendCall"] => {
+    const exactSite = (left: SourceRef, right: SourceRef): boolean => {
+      const a = left.range, b = right.range;
+      return left.artifactId === right.artifactId &&
+        left.relativePath === right.relativePath &&
+        a?.lineStart !== undefined && b?.lineStart !== undefined &&
+        a.lineEnd !== undefined && b.lineEnd !== undefined &&
+        a.columnStart !== undefined && b.columnStart !== undefined &&
+        a.columnEnd !== undefined && b.columnEnd !== undefined &&
+        a.lineStart === b.lineStart && a.lineEnd === b.lineEnd &&
+        a.columnStart === b.columnStart && a.columnEnd === b.columnEnd;
+    };
+    let current: ts.Node = property;
+    while (current.parent) {
+      const parent = current.parent;
+      if (ts.isCallExpression(parent)) {
+        if (!parent.arguments.some(argument => argument === current)) return undefined;
+        const site = lineSource(file, parent, source);
+        const matches = methodCalls.filter(call => exactSite(call.source, site) &&
+          (((call.receiverType === "Player" || call.receiverType === "World") &&
+              call.method === "sendMessage") ||
+           (call.receiverType === "ScreenDisplay" &&
+              (call.method === "setTitle" || call.method === "setActionBar"))));
+        if (matches.length !== 1) return undefined;
+        const match = matches[0]!;
+        if ((match.receiverType === "Player" || match.receiverType === "World") &&
+            match.method === "sendMessage")
+          return { source: site, receiverType: match.receiverType, method: "sendMessage" };
+        if (match.receiverType === "ScreenDisplay" &&
+            (match.method === "setTitle" || match.method === "setActionBar"))
+          return { source: site, receiverType: "ScreenDisplay", method: match.method };
+        return undefined;
+      }
+      if (ts.isObjectLiteralExpression(parent)) {
+        // Spread/accessor/computed property may replace the effective text.
+        if (parent.properties.some(member =>
+          !ts.isPropertyAssignment(member) ||
+          !(ts.isIdentifier(member.name) || ts.isStringLiteralLike(member.name))))
+          return undefined;
+      } else if (ts.isPropertyAssignment(parent)) {
+        if (!(ts.isIdentifier(parent.name) || ts.isStringLiteralLike(parent.name)))
+          return undefined;
+      } else if (ts.isArrayLiteralExpression(parent)) {
+        if (parent.elements.some(element => ts.isSpreadElement(element)))
+          return undefined;
+      } else if (!(ts.isParenthesizedExpression(parent) ||
+                   ts.isAsExpression(parent) ||
+                   ts.isTypeAssertionExpression(parent) ||
+                   ts.isSatisfiesExpression(parent))) {
+        // Any helper invocation, variable binding, callback, spread or
+        // expression operator requires a separate data-flow proof.
+        return undefined;
+      }
+      current = parent;
+    }
+    return undefined;
+  };
+
   const visit = (node: ts.Node): void => {
     // Only a literal `translate` PROPERTY in a parsed object. A key found
     // in a string/comment, a dynamically computed key, or an unrelated
@@ -3028,6 +3096,9 @@ export function parseScriptFile(
         source: lineSource(file, node.initializer, source),
         executionRegion: localExecutionRegionId(node, file),
         syntax: "translate-object-literal",
+        ...(directUiSendCallForTranslation(node) === undefined ? {} : {
+          directUiSendCall: directUiSendCallForTranslation(node),
+        }),
         lexicalGuards: lexicalBranchGuards(node, file, source),
         precedenceGuards: precedingEarlyExitGuards(node, file, source),
       });

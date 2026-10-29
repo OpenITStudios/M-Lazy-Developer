@@ -399,6 +399,16 @@ export interface ScriptLiteralTranslationReference {
   readonly source: SourceRef;
   readonly executionRegion: string;
   readonly syntax: "translate-object-literal";
+  /** A typed Minecraft UI call whose argument directly contains this
+   * static JSON-like translation object. Parser source proof only; aliases,
+   * arbitrary computations, receiver uncertainty and actual UI delivery
+   * are NOT admitted.
+   */
+  readonly directUiSendCall?: {
+    readonly source: SourceRef;
+    readonly receiverType: "Player" | "World" | "ScreenDisplay";
+    readonly method: "sendMessage" | "setTitle" | "setActionBar";
+  };
   /** Exact conditions enclosing the literal object expression, not the
    * later UI API call, receiver identity, or successful presentation. */
   readonly lexicalGuards?: readonly ScriptLexicalGuard[];

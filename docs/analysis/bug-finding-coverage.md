@@ -312,6 +312,29 @@ unknowns, or directly satisfy impact/reachability/counter-proof criteria.
 Player activation, delivered UI, effective resource-pack selection and
 intended-gameplay authority remain separate proof obligations.
 
+## Exact source UI-send attempts and map-native player contracts
+
+The parser admits a literal translation's UI-send attempt only when its
+JSON-like `{ translate: "key" }` object is directly contained in the argument
+of a uniquely typed Player/World `sendMessage` or ScreenDisplay `setTitle` /
+`setActionBar` AST call. Variable aliases, nested helper invocations, dynamic
+expressions, untyped same-named calls, object spreads and unrelated same-function
+API calls do not supply that edge. The Gameplay Intent Stage independently
+matches the COMPLETE parser call source span, receiver, method and execution
+region to ONE current-artifact Semantic IR API call before recording its ID.
+A call site is an authored SEND ATTEMPT only; it is not player execution,
+message delivery, selected locale, visible UI, a Game Design rule or gameplay
+impact.
+
+Selected .lang evidence may carry the unique world-pack-list attachment
+declaration already collected in inspection. A not-listed or unknown pack
+is explicitly flagged; `listed` is only source eligibility, never evidence
+of the effective client resource-pack order or locale. Exact source-region
+co-membership with an objective/outcome is a navigation candidate, not a
+causal or approved game rule. The canonical Gameplay Contract and model handoff
+expose these immutable evidence IDs and remaining obligations without altering
+Bug/Design Mismatch decisions, Proof Saturation or status thresholds.
+
 ## Direct selected-source impact path
 
 A canonical authored Intent link whose target is already the final

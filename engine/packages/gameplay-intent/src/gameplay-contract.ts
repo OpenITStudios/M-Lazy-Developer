@@ -31,8 +31,24 @@ export interface MapNativePlayerFacingContractCandidate {
   readonly sourceStatus:
     | "COPY_ONLY"
     | "EXACT_SOURCE_KEY_REFERENCE"
-    | "EXACT_SOURCE_REGION_CORRELATION";
+    | "EXACT_SOURCE_REGION_CORRELATION"
+    | "EXACT_AUTHORED_UI_SEND_ATTEMPT";
   readonly sameLocaleDefinitionCount: number;
+  /** Manifest/world pack-list attachment evidence, not client resource-pack
+   * priority or locale choice.
+   */
+  readonly pack?: {
+    readonly root: string;
+    readonly worldAttachment: "listed" | "not-listed" | "unknown";
+  };
+  readonly authoredUiSendCalls: readonly {
+    readonly apiCallEvidenceId: string;
+    readonly sourceLocator: string;
+    readonly receiverType: "Player" | "World" | "ScreenDisplay";
+    readonly method: "sendMessage" | "setTitle" | "setActionBar";
+  }[];
+  /** Merely source-correlated outcome/objective subjects, not causal proof. */
+  readonly relatedOutcomeCandidateIds: readonly string[];
   readonly sourceReferenceEvidenceIds: readonly string[];
   readonly sourceRegionIds: readonly string[];
   /** Source-region co-membership, not gameplay purpose or execution proof. */
@@ -43,6 +59,10 @@ export interface MapNativePlayerFacingContractCandidate {
     | "PLAYER_ACTIVATION"
     | "INTENDED_GAMEPLAY"
     | "PACK_LOCALE_SELECTION"
+    | "PACK_ATTACHMENT_UNKNOWN"
+    | "PACK_NOT_LISTED"
+    | "SOURCE_UI_SEND_BINDING"
+    | "OBJECTIVE_CAUSAL_BINDING"
     | "DUPLICATE_LOCALE_DEFINITION"
     | "SOURCE_REGION_IDENTITY"
     | "GAMEPLAY_SUBJECT_ASSOCIATION"
@@ -129,12 +149,36 @@ export function reconstructMapNativePlayerFacingContracts(
     }))].sort();
     const relatedSubjects = [...new Set(admittedRegionIds.flatMap(id =>
       [...(subjectsByRegion.get(id) ?? [])]))].sort();
+    const authoredUiSendCalls = [...new Map(refs.flatMap(ref => {
+      const call = ref.literalTranslationUse?.authoredUiSendCall;
+      if (call === undefined) return [];
+      const evidence = evidenceById.get(call.apiCallEvidenceId);
+      if (evidence?.scope !== "selected-artifact" ||
+          evidence.origin !== "source-code" ||
+          evidence.locator !== call.sourceLocator) return [];
+      return [[call.apiCallEvidenceId, {
+        apiCallEvidenceId: call.apiCallEvidenceId,
+        sourceLocator: call.sourceLocator,
+        receiverType: call.receiverType,
+        method: call.method,
+      }] as const];
+    })).values()].sort((a, b) =>
+      a.apiCallEvidenceId.localeCompare(b.apiCallEvidenceId));
+    const outcomes = relatedSubjects.filter(id =>
+      model.nodes.some(node => node.id === id &&
+        (node.kind === "objective" || node.kind === "outcome")));
     const sameLocaleDefinitionCount =
       sameLocaleCounts.get(countKey(key, locale)) ?? 0;
     const unresolved: MapNativePlayerFacingContractCandidate["unresolved"][number][] = [
       "PLAYER_DELIVERY", "PLAYER_ACTIVATION", "INTENDED_GAMEPLAY",
-      "PACK_LOCALE_SELECTION",
+      "PACK_LOCALE_SELECTION", "OBJECTIVE_CAUSAL_BINDING",
     ];
+    if (item.playerFacingText?.pack?.worldAttachment === "not-listed")
+      unresolved.push("PACK_NOT_LISTED");
+    if (item.playerFacingText?.pack?.worldAttachment !== "listed" &&
+        item.playerFacingText?.pack?.worldAttachment !== "not-listed")
+      unresolved.push("PACK_ATTACHMENT_UNKNOWN");
+    if (authoredUiSendCalls.length === 0) unresolved.push("SOURCE_UI_SEND_BINDING");
     if (sameLocaleDefinitionCount > 1)
       unresolved.push("DUPLICATE_LOCALE_DEFINITION");
     if (refs.length > 0 && admittedRegionIds.length === 0)
@@ -144,7 +188,13 @@ export function reconstructMapNativePlayerFacingContracts(
     return {
       textEvidenceId: item.id,
       key, locale,
-      sourceStatus: admittedRegionIds.length > 0
+      ...(item.playerFacingText?.pack === undefined ? {} :
+        { pack: item.playerFacingText.pack }),
+      authoredUiSendCalls,
+      relatedOutcomeCandidateIds: outcomes,
+      sourceStatus: authoredUiSendCalls.length > 0
+        ? "EXACT_AUTHORED_UI_SEND_ATTEMPT" as const
+        : admittedRegionIds.length > 0
         ? "EXACT_SOURCE_REGION_CORRELATION" as const
         : refs.length > 0
           ? "EXACT_SOURCE_KEY_REFERENCE" as const
@@ -155,6 +205,7 @@ export function reconstructMapNativePlayerFacingContracts(
       relatedIntentSubjectIds: relatedSubjects,
       evidenceIds: [...new Set([
         item.id, ...refs.map(ref => ref.id), ...admittedRegionIds,
+        ...authoredUiSendCalls.map(call => call.apiCallEvidenceId),
       ])].sort(),
       unresolved,
       authority: "SELECTED_MAP_SOURCE_CANDIDATE_NOT_APPROVED_DESIGN_OR_RUNTIME_PROOF" as const,

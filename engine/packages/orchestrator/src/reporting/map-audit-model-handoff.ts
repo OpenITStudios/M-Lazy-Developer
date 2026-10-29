@@ -47,8 +47,9 @@ export interface SelectedMapAuditModelHandoff {
       readonly key: string;
       readonly text: string;
       readonly sourceLocator: string;
-      /** Exact selected-map source correlation and remaining proof gaps.
-       * This is navigation evidence, not an approved player objective.
+      /** Exact selected-map source correlation, selected-pack attachment
+       * and typed authored UI-send attempt when source-proven. This does
+       * not imply delivered UI, effective locale or approved objectives.
        */
       readonly contractCandidate?: MapNativePlayerFacingContractCandidate;
       /** Exact key match to authored script `{ translate: "key" }` sites.

@@ -61,7 +61,13 @@ export function validateGameplayIntentModel(
          evidence.scope !== "selected-artifact" ||
          !evidence.playerFacingText.key.trim() ||
          !evidence.playerFacingText.text.trim() ||
-         !/^.+#L[1-9][0-9]*$/.test(evidence.locator))) {
+         !/^.+#L[1-9][0-9]*$/.test(evidence.locator) ||
+         (evidence.playerFacingText.pack !== undefined &&
+           (!evidence.playerFacingText.pack.root.trim() ||
+            !evidence.locator.replaceAll("\\", "/").startsWith(
+              evidence.playerFacingText.pack.root.replaceAll("\\", "/").replace(/\/$/, "") + "/") ||
+            !["listed", "not-listed", "unknown"].includes(
+              evidence.playerFacingText.pack.worldAttachment))))) {
       issues.push({
         path: "evidence." + evidence.id + ".playerFacingText",
         message: "Literal player-facing copy must be a line-located selected-artifact translation, never approved design.",
@@ -76,6 +82,19 @@ export function validateGameplayIntentModel(
          !evidence.literalTranslationUse.key.trim() ||
          !evidence.literalTranslationUse.executionRegion.trim() ||
          evidence.literalTranslationUse.syntax !== "translate-object-literal" ||
+         (evidence.literalTranslationUse.authoredUiSendCall !== undefined &&
+           (evidence.literalTranslationUse.executionRegionId === undefined ||
+            !evidence.literalTranslationUse.authoredUiSendCall.apiCallEvidenceId.startsWith("api-call:") ||
+            !/:[1-9][0-9]*:[1-9][0-9]*$/.test(
+              evidence.literalTranslationUse.authoredUiSendCall.sourceLocator) ||
+            evidence.literalTranslationUse.authoredUiSendCall.proof !==
+              "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY" ||
+            !((["Player", "World"].includes(
+              evidence.literalTranslationUse.authoredUiSendCall.receiverType) &&
+              evidence.literalTranslationUse.authoredUiSendCall.method === "sendMessage") ||
+              (evidence.literalTranslationUse.authoredUiSendCall.receiverType === "ScreenDisplay" &&
+               ["setTitle", "setActionBar"].includes(
+                 evidence.literalTranslationUse.authoredUiSendCall.method))))) ||
          (evidence.literalTranslationUse.executionRegionId !== undefined &&
           !evidence.literalTranslationUse.executionRegionId.startsWith("exec:script:")) ||
          evidence.literalTranslationUse.sourceConditions?.some(condition =>
@@ -85,6 +104,24 @@ export function validateGameplayIntentModel(
       issues.push({
         path: "evidence." + evidence.id + ".literalTranslationUse",
         message: "A script translation reference must have an exact selected-artifact literal source site; it is not player-facing gameplay proof.",
+      });
+    }
+  }
+
+  // A reported typed UI call must have its own exact current-map source
+  // witness, not just a self-referential ID inside the translation literal.
+  for (const item of model.evidence) {
+    const witness = item.literalTranslationUse?.authoredUiSendCall;
+    if (witness === undefined) continue;
+    const matches = model.evidence.filter(candidate =>
+      candidate.id === witness.apiCallEvidenceId &&
+      candidate.origin === "source-code" &&
+      candidate.scope === "selected-artifact" &&
+      candidate.locator === witness.sourceLocator);
+    if (matches.length !== 1) {
+      issues.push({
+        path: "evidence." + item.id + ".literalTranslationUse.authoredUiSendCall",
+        message: "Typed UI send attempt requires a unique source evidence site in this selected artifact.",
       });
     }
   }

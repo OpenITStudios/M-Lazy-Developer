@@ -74,6 +74,11 @@ export interface GameplayIntentEvidence {
   playerFacingText?: {
     readonly key: string;
     readonly text: string;
+    /** Current-world pack-list declaration, not effective client selection. */
+    readonly pack?: {
+      readonly root: string;
+      readonly worldAttachment: "listed" | "not-listed" | "unknown";
+    };
   };
   /** Literal source `translate` property referring to a selected .lang
    * key. This independent code site does not certify UI delivery or which
@@ -83,6 +88,17 @@ export interface GameplayIntentEvidence {
     readonly key: string;
     readonly syntax: "translate-object-literal";
     readonly executionRegion: string;
+    /** Exact AST translation argument -> typed Semantic IR UI call site.
+     * The API is authored but may never run; effective display/locale
+     * and designed gameplay are independent unresolved obligations.
+     */
+    readonly authoredUiSendCall?: {
+      readonly apiCallEvidenceId: string;
+      readonly sourceLocator: string;
+      readonly receiverType: "Player" | "World" | "ScreenDisplay";
+      readonly method: "sendMessage" | "setTitle" | "setActionBar";
+      readonly proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY";
+    };
     /** Only when the exact canonical IR script region was found; absence
      * is an explicit source-graph identity gap, not proof of dead code. */
     readonly executionRegionId?: string;

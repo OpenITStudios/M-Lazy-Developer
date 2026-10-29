@@ -44,6 +44,11 @@ export interface GameplayIntentStageInput {
   supplementalSignals?: readonly GameplayIntentSignal[];
   /** Literal current-world .lang text: source cue, never keyword-inferred intent. */
   playerFacingTextCues?: readonly GameplayResourceTextEntry[];
+  /** Selected world pack-list attachment declarations, not client activation. */
+  selectedPackAttachments?: readonly {
+    root: string;
+    worldAttachment?: "listed" | "not-listed" | "unknown";
+  }[];
   /**
    * Authoritative physical file inventory from the SAME selected artifact,
    * supplied by inspectDirectory. Supplemental signals are candidates and
@@ -168,12 +173,25 @@ export function buildGameplayIntentModel(
       const locator = cue.relativePath + "#L" + cue.line;
       const id = "player-facing-copy:" + encodeURIComponent(
         input.artifactId + ":" + locator + ":" + cue.key);
+      const owners = (input.selectedPackAttachments ?? []).filter(pack => {
+        const root = pack.root.replaceAll("\\", "/").replace(/\/$/, "");
+        return cue.relativePath.replaceAll("\\", "/").startsWith(root + "/");
+      });
+      const pack = owners.length === 1 ? owners[0] : undefined;
       evidence.set(id, {
         id, origin: "translation", scope: "selected-artifact",
         locator,
         summary: "Literal .lang presentation (" + cue.key +
           "); visibility, player objective and intended gameplay NOT PROVEN.",
-        playerFacingText: { key: cue.key, text: cue.text },
+        playerFacingText: {
+          key: cue.key, text: cue.text,
+          ...(pack === undefined ? {} : {
+            pack: {
+              root: pack.root,
+              worldAttachment: pack.worldAttachment ?? "unknown",
+            },
+          }),
+        },
       });
     }
   }
@@ -225,6 +243,32 @@ export function buildGameplayIntentModel(
             branch: guard.branch,
             sourceLocator: sourceLocator(guard.source),
           }));
+        // A translate key is not a UI-send witness unless the parser proves
+        // direct argument containment AND the IR contains exactly the typed
+        // Minecraft API call at that same full AST source span and region.
+        const sourceUiCall = use.directUiSendCall;
+        const matchingUiCalls = sourceUiCall === undefined || !exactRegion
+          ? []
+          : (input.semanticIr?.execution.apiCalls ?? []).filter(call =>
+            call.receiverType === sourceUiCall.receiverType &&
+            call.method === sourceUiCall.method &&
+            call.executionRegionId === regionId &&
+            sameExactCallSource(call.source, sourceUiCall.source) &&
+            call.source.artifactId === input.artifactId);
+        const authoredUiCall = matchingUiCalls.length === 1
+          ? matchingUiCalls[0] : undefined;
+        if (authoredUiCall !== undefined) {
+          evidence.set(authoredUiCall.id, {
+            id: authoredUiCall.id,
+            origin: "source-code",
+            scope: "selected-artifact",
+            locator: sourceLocator(authoredUiCall.source),
+            summary: "Exact translation argument in a typed authored " +
+              authoredUiCall.receiverType + "." + authoredUiCall.method +
+              "() call. Source attempt only; player display, activation " +
+              "and locale selection NOT PROVEN.",
+          });
+        }
         const id = "literal-translation-use:" + encodeURIComponent(
           input.artifactId + ":" + locator + ":" + use.key);
         evidence.set(id, {
@@ -241,6 +285,17 @@ export function buildGameplayIntentModel(
             syntax: use.syntax,
             executionRegion: use.executionRegion,
             ...(exactRegion ? { executionRegionId: regionId } : {}),
+            ...(authoredUiCall === undefined ? {} : {
+              authoredUiSendCall: {
+                apiCallEvidenceId: authoredUiCall.id,
+                sourceLocator: sourceLocator(authoredUiCall.source),
+                receiverType: authoredUiCall.receiverType as
+                  "Player" | "World" | "ScreenDisplay",
+                method: authoredUiCall.method as
+                  "sendMessage" | "setTitle" | "setActionBar",
+                proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY" as const,
+              },
+            }),
             ...(sourceConditions.length ? { sourceConditions } : {}),
           },
         });
