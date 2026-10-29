@@ -140,10 +140,14 @@ Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inv
 For unclassified material source behavior, the existing UNDERSTAND Audit Obligation can carry a bounded, selected-artifact Semantic IR source slice inside its model task: exact operation identities, authored branch membership, resolved source handoffs, and explicitly unmatched or omitted evidence. This is an **investigation aid**, not a newly inferred mechanic, an alternative Gameplay Intent authority, an executed path, or permission to close a checkpoint. A source-grounded interpretation is a hypothesis until the canonical semantic owner and proof gates re-evaluate it; absent evidence remains UNKNOWN.
 
 **Source CFG proof reuse:** When the existing world dynamic-property
-reaching-definitions owner resolves a guard read to exactly ONE authored
-write under a complete, non-opaque source CFG, the existing Behavior Model
-marks that source-local handoff as a positive static reaching-definition
-fact. No reaching certificate is emitted for multiple possible writers,
+reaching-definitions owner resolves a guard read to exactly ONE possible
+authored writer under a complete, non-opaque source CFG, it additionally
+checks that this exact write **dominates** the read: no modeled source
+control-flow path may bypass the write and still reach the read. The
+existing Behavior Model then marks a positive STATIC source-site
+dominance fact, never a guaranteed successful world mutation. A lone
+MAY-reaching writer with a bypass path cannot earn the certificate.
+No dominance certificate is emitted for multiple possible writers,
 an unknown/opaque CFG, an unstable receiver, foreign source, or truncated
 analysis. The same Gameplay Architecture source effect slice now reaches
 the existing UNDERSTAND Audit Obligation and bounded model task BEFORE

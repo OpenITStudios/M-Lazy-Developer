@@ -136,9 +136,18 @@ describe("source-observed state/outcome reconciliation", () => {
         guardReadOperationId: "read:guard",
         origin: "SOURCE_LOCAL",
         sourceReachingProof:
-          "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE",
+          "DOMINATING_SOURCE_CFG_WRITE_NOT_RUNTIME_COMMIT",
       }),
     ]);
+    // A unique MAY-reaching writer does not dominate the read if an
+    // alternative source branch bypasses it. Do not claim a source proof.
+    const bypass = { ...controlFlow, edges: [
+      ...controlFlow.edges, { from: "cfg:entry", to: "cfg:read" },
+    ] };
+    expect(handoffs({ ...selected, execution: {
+      ...selected.execution, controlFlow: [bypass],
+    } }).some(item => item.sourceReachingProof !== undefined)).toBe(false);
+
     const opaqueFlow = { ...controlFlow,
       nodes: [
         ...controlFlow.nodes.slice(0, 2),

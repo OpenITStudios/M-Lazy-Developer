@@ -488,12 +488,12 @@ export interface SourceStateValueHandoff {
   readonly authoredValue: string;
   readonly scalarKind: "string" | "number" | "boolean";
   readonly origin: "SOURCE_LOCAL" | "SYNCHRONOUS_CALLER";
-  /** An exact single-definer CFG witness, NOT a live value, guard truth,
-   * alias equivalence or per-player/session runtime ownership. Omitted if
-   * CFG resolution is UNKNOWN, TRUNCATED or has alternative definitions.
+  /** Exact single-writer source CFG dominance, not a runtime write commit,
+   * guard truth, alias equivalence or per-player/session ownership.
+   * A sole MAY-reaching writer that can be bypassed is NOT enough.
    */
   readonly sourceReachingProof?:
-    "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE";
+    "DOMINATING_SOURCE_CFG_WRITE_NOT_RUNTIME_COMMIT";
 }
 
 /**
@@ -1252,11 +1252,9 @@ export function deriveSourceEffectSlices(
           scalarKind: literal.scalarKind,
           origin,
           ...(origin === "SOURCE_LOCAL" &&
-            reachingByRead.get(read.id)?.status === "COMPLETE" &&
-            reachingByRead.get(read.id)?.writeIds.length === 1 &&
-            reachingByRead.get(read.id)?.writeIds[0] === write.id
+            reachingByRead.get(read.id)?.uniquelyDominatingWriteId === write.id
             ? { sourceReachingProof:
-                "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE" as const }
+                "DOMINATING_SOURCE_CFG_WRITE_NOT_RUNTIME_COMMIT" as const }
             : {}),
         }];
       })).sort((a, b) =>

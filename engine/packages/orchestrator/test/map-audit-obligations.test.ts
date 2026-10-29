@@ -128,7 +128,7 @@ describe("audit obligations versus gameplay findings", () => {
             writeOperationId: "state:write",
             origin: "SOURCE_LOCAL",
             sourceReachingProof:
-              "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE",
+              "DOMINATING_SOURCE_CFG_WRITE_NOT_RUNTIME_COMMIT",
           }],
         }],
       }] as any,

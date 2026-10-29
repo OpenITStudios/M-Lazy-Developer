@@ -10,7 +10,15 @@ import { propagateReachingDefinitions } from "../../dataflow/src/index.js";
 export function reconcileWorldStateReachingDefinitions(
   ir: SemanticIr,
   read: StateOperation,
-): { readonly status: "COMPLETE" | "UNKNOWN" | "TRUNCATED"; readonly writeIds: readonly string[] } {
+): {
+  readonly status: "COMPLETE" | "UNKNOWN" | "TRUNCATED";
+  readonly writeIds: readonly string[];
+  /** The sole possible writer also lies on every modeled source CFG path
+   * to this guard read. This is a source-site attempt, NOT proof of a live
+   * dynamic-property write, guard truth or per-player/session state.
+   */
+  readonly uniquelyDominatingWriteId?: string;
+} {
   const unknown = () => ({ status: "UNKNOWN" as const, writeIds: [] });
   const flow = ir.execution.controlFlow?.find(item =>
     item.executionRegionId === read.executionRegionId);
@@ -82,8 +90,41 @@ export function reconcileWorldStateReachingDefinitions(
         : {}),
     },
   ] as const));
+  const readNodeId = readNodes[0]!.id;
   const result = propagateReachingDefinitions(
-    flow, readNodes[0]!.id, transfers,
+    flow, readNodeId, transfers,
   );
-  return { status: result.status, writeIds: result.definitionIds };
+  const base = { status: result.status, writeIds: result.definitionIds };
+  if (result.status !== "COMPLETE" ||
+      result.definitionIds.length !== 1) return base;
+
+  // MAY-reaching with one candidate does not imply MUST-reaching:
+  // e.g. if (condition) write(); read() includes a path with NO write.
+  // The write must DOMINATE the read in the exact authored CFG. Check
+  // whether the read is still reachable after removing that writer node.
+  const sourceWriteId = result.definitionIds[0]!;
+  const writerNodes = [...writesAtNode.entries()]
+    .filter(([, ids]) => ids.includes(sourceWriteId))
+    .map(([id]) => id);
+  if (writerNodes.length !== 1) return base;
+  const writerNodeId = writerNodes[0]!;
+  const successors = new Map<string, string[]>();
+  for (const edge of flow.edges) {
+    const to = successors.get(edge.from) ?? [];
+    to.push(edge.to);
+    successors.set(edge.from, to);
+  }
+  const seen = new Set<string>();
+  const pending = [flow.entryId];
+  let cursor = 0;
+  while (cursor < pending.length) {
+    const id = pending[cursor++]!;
+    if (seen.has(id) || id === writerNodeId) continue;
+    if (id === readNodeId) return base;
+    seen.add(id);
+    for (const to of successors.get(id) ?? []) {
+      if (!seen.has(to)) pending.push(to);
+    }
+  }
+  return { ...base, uniquelyDominatingWriteId: sourceWriteId };
 }

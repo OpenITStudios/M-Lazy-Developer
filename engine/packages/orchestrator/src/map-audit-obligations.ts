@@ -1045,7 +1045,7 @@ function unknownSourceProofRequirements(
           effect.sourceLocalStateValueHandoffs.flatMap(handoff =>
             handoff.origin !== "SOURCE_LOCAL" ||
             handoff.sourceReachingProof !==
-              "UNIQUE_SOURCE_CFG_REACHING_DEFINITION_NOT_RUNTIME_VALUE" ||
+              "DOMINATING_SOURCE_CFG_WRITE_NOT_RUNTIME_COMMIT" ||
             !effect.guardStateReadIds.includes(handoff.guardReadOperationId) ||
             !allExactIds.has(handoff.writeOperationId) ||
             !reviewed.some(relation =>
@@ -1053,11 +1053,12 @@ function unknownSourceProofRequirements(
               relation.fromStepId === handoff.writeOperationId &&
               relation.toStepId === effect.effectId)
             ? [] : [
-              "CFG source memastikan satu penulis state " +
-              handoff.writeOperationId + " mencapai pembacaan guard " +
+              "CFG source membuktikan situs tulis " +
+              handoff.writeOperationId + " mendominasi pembacaan guard " +
               handoff.guardReadOperationId + " pada efek " +
-              effect.effectId + " dalam scope source ini; " +
-              "nilai runtime dan identitas sesi belum terbukti.",
+              effect.effectId + "; setiap jalur source yang mencapai " +
+              "pembacaan melewati situs tulis ini, tetapi suksesnya " +
+              "operasi, nilai runtime, dan identitas sesi belum terbukti.",
             ])
         )).slice(0, 4) : [];
     // Intended gameplay is always a separate authority from source syntax.
