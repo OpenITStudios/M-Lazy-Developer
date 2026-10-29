@@ -803,6 +803,20 @@
       }
     },
     {
+      "path": "engine/analyzers/references/test/owned-economy-reference-edges.test.ts",
+      "lane": "development",
+      "owner": "engine/analyzers/references",
+      "review": "source-reviewed",
+      "triage": {
+        "basis": "path-and-directory-only",
+        "owner": "engine/analyzers/references",
+        "riskHint": "medium",
+        "action": "read-assertions-before-decision"
+      },
+      "recommendation": "keep",
+      "rationale": "Source-reviewed assertions cover same-pack loot/recipe resolution, conditional entity event activation, exact script spawn provenance, and negative dynamic/cross-pack cases without promoting authored references into runtime proof."
+    },
+    {
       "path": "engine/analyzers/references/test/resolve.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/references",
