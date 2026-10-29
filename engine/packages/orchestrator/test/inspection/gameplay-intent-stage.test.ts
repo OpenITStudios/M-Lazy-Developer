@@ -197,6 +197,60 @@ describe("gameplay intent stage", () => {
   });
 
 
+  it("captures exact source effect/return relations before AI without inventing gameplay", () => {
+    const artifactId = "map:unclassified";
+    const relativePath = "behavior_packs/demo/scripts/mode.js";
+    const site = (line: number) => ({
+      artifactId, relativePath,
+      range: { lineStart: line, lineEnd: line, columnStart: 2, columnEnd: 24 },
+    });
+    const ir: any = {
+      schemaVersion: 1,
+      execution: {
+        regions: [{ id: "entry:unclassified", ownerId: "mode",
+          label: "mode", kind: "script-module", source: site(1) }],
+        edges: [],
+        outcomes: [{ id: "return:accepted",
+          executionRegionId: "entry:unclassified",
+          propertyName: "result", value: "accepted", source: site(8) }],
+        worldEffects: [{ id: "effect:gate",
+          executionRegionId: "entry:unclassified",
+          kind: "block-mutation", mechanism: "script-api",
+          targetLabel: "gate", precision: "typed-method", source: site(5) }],
+      },
+      state: { surfaces: [], operations: [], resourceActions: [],
+        authorityBindings: [] },
+      temporal: { relations: [] },
+    };
+    const compile = (semanticIr: any) => buildGameplayIntentModel({
+      id: "intent:unclassified", artifactId,
+      parsedScripts: [], semanticIr,
+    });
+    const intent = compile(ir);
+    const unknown = intent.unknowns.find(item =>
+      item.sourceEntryRegionId === "entry:unclassified" &&
+      item.evidenceIds?.includes("effect:gate"));
+    expect(unknown?.sourceRelations).toEqual([{
+      sourceClaim: "SOURCE_EFFECT_RETURN_CANDIDATE",
+      fromStepId: "effect:gate", toStepId: "return:accepted",
+      evidenceIds: ["effect:gate", "return:accepted"],
+      proofBoundary: "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+    }]);
+    expect(intent.nodes.some(item => item.kind === "mechanic")).toBe(false);
+    expect(intent.edges.some(item => item.kind === "wins-by")).toBe(false);
+    // Uncalled helpers and another map's byte-identical source cannot
+    // establish the current selected-artifact entry/operation relation.
+    const disconnected = compile({ ...ir, execution: { ...ir.execution,
+      regions: [{ ...ir.execution.regions[0], kind: "script-function" }] } });
+    expect(disconnected.unknowns.flatMap(item => item.sourceRelations ?? []))
+      .toEqual([]);
+    const foreign = compile({ ...ir, execution: { ...ir.execution,
+      worldEffects: [{ ...ir.execution.worldEffects[0],
+        source: { ...site(5), artifactId: "old-world" } }] } });
+    expect(foreign.unknowns.flatMap(item => item.sourceRelations ?? []))
+      .toEqual([]);
+  });
+
   it("keeps unnamed source clear/delete effects as located unknowns, not invented mechanics", () => {
     const selected = "artifact:unknown";
     const source = {

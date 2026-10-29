@@ -15,6 +15,7 @@ import type {
 import type { SourceRef } from "../../../project-model/src/index.js";
 import type { GameplayResourceTextEntry } from "./gameplay-intent-resource-text.js";
 import { semanticIrExecutionTraces, type SemanticIr } from "../../../semantic-ir/src/index.js";
+import { admitDeterministicUnknownSourceRelations } from "./unknown-source-relation-admission.js";
 import { eventRegionId, scriptRegionId } from "../diagnosis/semantic-ir-stage.js";
 import { sourceClassMethodRegion } from "../../../../analyzers/scripts/src/index.js";
 import {
@@ -2304,7 +2305,9 @@ export function buildGameplayIntentModel(
     ],
   };
 
-  const errors = validateGameplayIntentModel(model);
+  const completed = input.semanticIr === undefined
+    ? model : admitDeterministicUnknownSourceRelations(model, input.semanticIr);
+  const errors = validateGameplayIntentModel(completed);
   if (errors.length > 0) {
     throw new Error(
       "Gameplay Intent Model failed validation: " +
@@ -2314,5 +2317,5 @@ export function buildGameplayIntentModel(
     );
   }
 
-  return model;
+  return completed;
 }

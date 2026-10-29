@@ -139,6 +139,17 @@ Technical domains (entity, scoreboard, Script API, ticking, NBT, structures, inv
 
 For unclassified material source behavior, the existing UNDERSTAND Audit Obligation can carry a bounded, selected-artifact Semantic IR source slice inside its model task: exact operation identities, authored branch membership, resolved source handoffs, and explicitly unmatched or omitted evidence. This is an **investigation aid**, not a newly inferred mechanic, an alternative Gameplay Intent authority, an executed path, or permission to close a checkpoint. A source-grounded interpretation is a hypothesis until the canonical semantic owner and proof gates re-evaluate it; absent evidence remains UNKNOWN.
 
+**Automatic source-only relationship completion:** The selected map's first
+Gameplay Intent pass now reuses exact Semantic IR entry sites and the existing
+Behavior Model effect/guard/value/return relationships. Typed, uniquely
+rooted, current-artifact source pairs with nontruncated candidate ingress
+are admitted into the existing unknown-source relation owner without
+a redundant AI proposal. This records authored source syntax, not executed
+gameplay, player objective, session ownership, proven BUG, or native-runtime
+observation. Missing, foreign and disconnected relationships remain unknown.
+The source-pair budget is bounded per entry; remaining game-design and
+causal proof still belong to existing UNDERSTAND/PROVE gates.
+
 **Adaptive source-specific proof requirements:** The existing
 `uninterpreted-gameplay-intent` Audit Obligation and its current model task
 now derive their unresolved investigation questions from source-owned
