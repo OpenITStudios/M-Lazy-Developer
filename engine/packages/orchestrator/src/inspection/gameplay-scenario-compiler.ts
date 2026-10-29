@@ -250,14 +250,23 @@ export function dimensionEvidenceForRuntimeComponent(
       // One proven replica must not certify geometry when a sibling replica
       // has unexamined blocks or is absent from the declared arena count.
       const replicas = world.arenas.replicaProof;
-      const expected = world.arenas.count === undefined
-        ? 0 : Math.max(1, world.arenas.count - 1);
+      const expected = world.arenas.count !== undefined &&
+        Number.isInteger(world.arenas.count) &&
+        world.arenas.count > 1
+          ? world.arenas.count - 1 : 0;
+      // Count alone can be spoofed by two receipts for the same replica.
+      // Only independent arena identities with their own canonical proof
+      // marker may close the physical dimension.
+      const uniqueReplicas = new Set(replicas.map(item => item.arenaId));
       const fullyCompared = scenarioLabel === "arena-replica-integrity" &&
         expected > 0 &&
         replicas.length === expected &&
+        uniqueReplicas.size === expected &&
         replicas.every(item =>
+          item.arenaId.length > 0 &&
+          item.arenaId !== world.arenas.replicaBaselineId &&
           item.unresolvedBlocks === 0 &&
-          item.evidenceIds.length > 0 &&
+          item.evidenceIds.includes("arena-replica-proof:" + item.arenaId) &&
           ((item.status === "complete-proof" &&
             item.mismatchCount === 0) ||
            (item.status === "diverged" &&

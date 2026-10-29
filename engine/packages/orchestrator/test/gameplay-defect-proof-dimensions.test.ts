@@ -139,9 +139,52 @@ describe("gameplay defect proof dimensions", () => {
           { ...world.arenas.replicaProof[1]!, unresolvedBlocks: 1 },
         ],
       },
-    } as GameplayWorldModel;
+    } as unknown as GameplayWorldModel;
     expect(dimensionEvidenceForRuntimeComponent(
       "runtime:arena-replica-integrity", partial, [], new Map(),
+      "arena-replica-integrity",
+    )).toEqual({});
+
+    const duplicate = {
+      ...world,
+      arenas: {
+        ...world.arenas,
+        replicaProof: [
+          world.arenas.replicaProof[0]!,
+          { ...world.arenas.replicaProof[1]!, arenaId: "arena-2" },
+        ],
+      },
+    } as unknown as GameplayWorldModel;
+    expect(dimensionEvidenceForRuntimeComponent(
+      "runtime:arena-replica-integrity", duplicate, [], new Map(),
+      "arena-replica-integrity",
+    )).toEqual({});
+
+    const sharedReceipt = {
+      ...world,
+      arenas: {
+        ...world.arenas,
+        replicaProof: [
+          world.arenas.replicaProof[0]!,
+          { ...world.arenas.replicaProof[1]!,
+            evidenceIds: ["arena-replica-proof:arena-2"] },
+        ],
+      },
+    } as unknown as GameplayWorldModel;
+    expect(dimensionEvidenceForRuntimeComponent(
+      "runtime:arena-replica-integrity", sharedReceipt, [], new Map(),
+      "arena-replica-integrity",
+    )).toEqual({});
+
+    const missingReplica = {
+      ...world,
+      arenas: {
+        ...world.arenas,
+        count: 4,
+      },
+    } as GameplayWorldModel;
+    expect(dimensionEvidenceForRuntimeComponent(
+      "runtime:arena-replica-integrity", missingReplica, [], new Map(),
       "arena-replica-integrity",
     )).toEqual({});
     expect(dimensionEvidenceForRuntimeComponent(
