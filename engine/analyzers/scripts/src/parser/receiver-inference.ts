@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { sourceMethodRegion } from "../core/control-flow.js";
 import type { SourceRef } from "../../../../packages/project-model/src/index.js";
 import type {
   ScriptApiReceiverType,
@@ -557,6 +558,14 @@ function executionRegionId(
             artifactId: "",
             relativePath: file.fileName,
           }).range?.lineStart;
+    }
+    // Typed API calls inside class methods must use the same
+    // position-qualified source region as parseScriptFile and Semantic IR.
+    // Nearest nested callbacks still retain their own callback region.
+    if (ts.isMethodDeclaration(current) &&
+        (ts.isIdentifier(current.name) ||
+         ts.isStringLiteralLike(current.name))) {
+      return sourceMethodRegion(current, file);
     }
     if (
       ts.isArrowFunction(current) ||

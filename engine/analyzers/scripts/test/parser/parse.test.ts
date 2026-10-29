@@ -66,6 +66,10 @@ describe("script analyzer", () => {
       'class AnotherArena {',
       '  static showTitle(payload) { world.sendMessage(payload); }',
       '}',
+      'const SourceExpressionArena = class {',
+      '  static open() { this.showTitle({ translate: "arena.class.expression" }); }',
+      '  static showTitle(payload) { world.sendMessage(payload); }',
+      '};',
     ].join("\n"), source);
     const references = new Map((parsed.literalTranslationReferences ?? [])
       .map(item => [item.key, item] as const));
@@ -93,6 +97,24 @@ describe("script analyzer", () => {
       edge.targetRegion === method?.executionRegion &&
       edge.targetName === "showTitle" &&
       edge.source.range?.lineStart !== undefined)).toBe(true);
+    // The typed API witness and literal-value-forwarding witness must share
+    // the SAME canonical position-qualified class method region.
+    const methodApiCalls = parsed.methodCalls.filter(call =>
+      call.receiverType === "World" &&
+      call.method === "sendMessage" &&
+      call.source.range?.lineStart === 11);
+    expect(methodApiCalls).toHaveLength(1);
+    expect(methodApiCalls[0]?.executionRegion).toBe(method?.executionRegion);
+    const classExpression = references.get("arena.class.expression")
+      ?.forwardedUiSendCall;
+    expect(classExpression?.executionRegion)
+      .toContain("SourceExpressionArena.showTitle@");
+    expect(parsed.methodCalls.some(call =>
+      call.receiverType === "World" &&
+      call.method === "sendMessage" &&
+      call.source.range?.lineStart === 19 &&
+      call.executionRegion === classExpression?.executionRegion))
+      .toBe(true);
     // Forwarded evidence has an exact source call region, not observed
     // Minecraft activation or a player-visible outcome.
   });

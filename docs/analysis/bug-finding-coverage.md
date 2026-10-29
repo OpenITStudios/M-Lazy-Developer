@@ -322,7 +322,10 @@ uniquely resolved static `this.method(...)` within the same authored class.
 For the class path, the selected formal must occur exactly once in the
 method body as the FIRST argument of an independently typed Minecraft UI
 API call; its class-qualified source region and an exact matching
-`localFunctionCalls` edge are both mandatory. The parser still owns the original literal
+`localFunctionCalls` edge are both mandatory. Canonical receiver inference
+now uses `sourceMethodRegion` for typed API calls authored inside class
+methods, including named class expressions; nested callbacks still own
+their separate execution regions. The parser still owns the original literal
 site; the independent canonical Semantic IR verifies the *target* API
 call's own execution region, receiver, method and full source span.
 Each handoff is registered as a separate selected-artifact source witness
