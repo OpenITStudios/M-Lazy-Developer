@@ -154,6 +154,29 @@ describe("script analyzer", () => {
       '  static show() { this.send({ translate: "ambiguous.method.untyped" }); }',
       '  static send(p) { fake.sendMessage(p); }',
       '}',
+      'const anonymousClasses = [class {',
+      '  static open() { this.send({ translate: "ambiguous.method.anonymous" }); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '}];',
+      'class OverwrittenMethod {',
+      '  static open() { this.send = () => {}; this.send({ translate: "ambiguous.method.overwritten" }); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '}',
+      'class ExternalMutation {',
+      '  static open() { this.send({ translate: "ambiguous.method.external" }); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '}',
+      'ExternalMutation.send = () => {};',
+      'class ObjectMutation {',
+      '  static open() { this.send({ translate: "ambiguous.method.assign" }); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '}',
+      'Object.assign(ObjectMutation, { send() {} });',
+      'class ComputedMember {',
+      '  static open() { this.send({ translate: "ambiguous.method.computed" }); }',
+      '  static send(p) { world.sendMessage(p); }',
+      '  static [key] = () => {};',
+      '}',
     ].join("\n"), source);
     const references = new Map((parsed.literalTranslationReferences ?? [])
       .map(item => [item.key, item] as const));
@@ -165,7 +188,9 @@ describe("script analyzer", () => {
       "ambiguous.spread", "ambiguous.computed", "ambiguous.transform",
       "ambiguous.untyped", "ambiguous.method.transform",
       "ambiguous.method.modified", "ambiguous.method.duplicate",
-      "ambiguous.method.untyped",
+      "ambiguous.method.untyped", "ambiguous.method.anonymous",
+      "ambiguous.method.overwritten", "ambiguous.method.external",
+      "ambiguous.method.assign", "ambiguous.method.computed",
     ]) {
       const reference = references.get(key);
       expect(reference, "Literal remains indexed for source navigation: " + key)

@@ -27,6 +27,36 @@ export function createBoundedLiteralUiFlowResolver(
 ): (property: ts.PropertyAssignment) => Forwarded | undefined {
   const identifiers = new Map<string, ts.Identifier[]>();
   const helpers = new Map<string, ts.FunctionDeclaration[]>();
+  // Scan explicit member replacements once, even on large published bundles.
+  // A rewritten target does not prove that the original UI method ran.
+  const classMemberWrites = new WeakMap<
+    ts.ClassDeclaration | ts.ClassExpression, Set<string>
+  >();
+  const namedMemberWrites = new Map<string, Set<string>>();
+  const noteWrite = (target: ts.Node): void => {
+    if (!ts.isPropertyAccessExpression(target) &&
+        !ts.isElementAccessExpression(target)) return;
+    const name = ts.isPropertyAccessExpression(target)
+      ? target.name.text
+      : ts.isStringLiteralLike(target.argumentExpression)
+        ? target.argumentExpression.text : "*";
+    const receiver = target.expression;
+    if (ts.isIdentifier(receiver)) {
+      const names = namedMemberWrites.get(receiver.text) ?? new Set<string>();
+      names.add(name);
+      namedMemberWrites.set(receiver.text, names);
+    } else if (receiver.kind === ts.SyntaxKind.ThisKeyword) {
+      let current: ts.Node | undefined = target.parent;
+      while (current && !ts.isClassDeclaration(current) &&
+             !ts.isClassExpression(current)) current = current.parent;
+      if (current && (ts.isClassDeclaration(current) ||
+                      ts.isClassExpression(current))) {
+        const names = classMemberWrites.get(current) ?? new Set<string>();
+        names.add(name);
+        classMemberWrites.set(current, names);
+      }
+    }
+  };
   const isValueIdentifier = (node: ts.Identifier): boolean => {
     const parent = node.parent;
     return !(ts.isPropertyAccessExpression(parent) && parent.name === node) &&
@@ -35,6 +65,45 @@ export function createBoundedLiteralUiFlowResolver(
       !(ts.isPropertySignature(parent) && parent.name === node);
   };
   const visit = (node: ts.Node): void => {
+    if (ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment)
+      noteWrite(node.left);
+    if (ts.isDeleteExpression(node)) noteWrite(node.expression);
+    if ((ts.isPrefixUnaryExpression(node) ||
+         ts.isPostfixUnaryExpression(node)) &&
+        (node.operator === ts.SyntaxKind.PlusPlusToken ||
+         node.operator === ts.SyntaxKind.MinusMinusToken))
+      noteWrite(node.operand);
+    if (ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        ((node.expression.expression.text === "Object" &&
+          ["assign", "defineProperty", "defineProperties", "setPrototypeOf"]
+            .includes(node.expression.name.text)) ||
+         (node.expression.expression.text === "Reflect" &&
+          ["set", "defineProperty"].includes(node.expression.name.text)))) {
+      const target = node.arguments[0];
+      if (target && (ts.isIdentifier(target) ||
+                     target.kind === ts.SyntaxKind.ThisKeyword)) {
+        // Unknown owner-wide mutation can replace the declared method.
+        if (ts.isIdentifier(target)) {
+          const names = namedMemberWrites.get(target.text) ?? new Set<string>();
+          names.add("*");
+          namedMemberWrites.set(target.text, names);
+        } else {
+          let current: ts.Node | undefined = node.parent;
+          while (current && !ts.isClassDeclaration(current) &&
+                 !ts.isClassExpression(current)) current = current.parent;
+          if (current && (ts.isClassDeclaration(current) ||
+                          ts.isClassExpression(current))) {
+            const names = classMemberWrites.get(current) ?? new Set<string>();
+            names.add("*");
+            classMemberWrites.set(current, names);
+          }
+        }
+      }
+    }
     if (ts.isIdentifier(node) && isValueIdentifier(node)) {
       const refs = identifiers.get(node.text) ?? [];
       refs.push(node);
@@ -199,15 +268,35 @@ export function createBoundedLiteralUiFlowResolver(
         !owner.modifiers?.some(m => m.kind === ts.SyntaxKind.StaticKeyword))
       return undefined;
     const methodName = caller.expression.name.text;
-    // Same class only; identical method names elsewhere in a published
-    // bundle have no source identity relationship to this invocation.
-    const matched = cls.members.filter((member): member is ts.MethodDeclaration =>
-      ts.isMethodDeclaration(member) &&
-      (ts.isIdentifier(member.name) || ts.isStringLiteralLike(member.name)) &&
-      member.name.text === methodName &&
-      member.body !== undefined);
-    if (matched.length !== 1) return undefined;
-    const target = matched[0]!;
+    // A static field, accessor, computed declaration, or duplicate method
+    // can replace a single spelled method. Never choose a guessed target.
+    const declarations = cls.members.filter(member =>
+      (ts.isMethodDeclaration(member) ||
+       ts.isPropertyDeclaration(member) ||
+       ts.isGetAccessorDeclaration(member) ||
+       ts.isSetAccessorDeclaration(member)) &&
+      (ts.isComputedPropertyName(member.name) ||
+       ((ts.isIdentifier(member.name) ||
+         ts.isStringLiteralLike(member.name)) &&
+        member.name.text === methodName)));
+    if (declarations.length !== 1 ||
+        !ts.isMethodDeclaration(declarations[0]) ||
+        !declarations[0].body) return undefined;
+    const target = declarations[0];
+    const classNames = new Set<string>();
+    if (cls.name) classNames.add(cls.name.text);
+    if (ts.isVariableDeclaration(cls.parent) &&
+        ts.isIdentifier(cls.parent.name)) classNames.add(cls.parent.name.text);
+    const locallyWritten = classMemberWrites.get(cls);
+    if (locallyWritten?.has(methodName) || locallyWritten?.has("*") ||
+        [...classNames].some(name => {
+          const writes = namedMemberWrites.get(name);
+          return writes?.has(methodName) || writes?.has("*");
+        })) return undefined;
+    // Anonymous class expressions without a uniquely position-qualified
+    // owner can share "function:show" with an unrelated class in one file.
+    const targetRegion = sourceMethodRegion(target, file);
+    if (!/^function:[^@]+@\d+:\d+$/.test(targetRegion)) return undefined;
     if (target === owner ||
         !target.modifiers?.some(m => m.kind === ts.SyntaxKind.StaticKeyword) ||
         target.parameters.length !== caller.arguments.length ||
@@ -225,7 +314,6 @@ export function createBoundedLiteralUiFlowResolver(
     collect(target.body!);
     if (references.length !== 1) return undefined;
     const use = references[0]!;
-    const targetRegion = sourceMethodRegion(target, file);
     let resolved: Target | undefined;
     let matches = 0;
     const scan = (node: ts.Node): void => {

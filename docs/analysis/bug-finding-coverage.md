@@ -335,6 +335,9 @@ Do not assume that an immutable variable name proves immutable content:
 multiple reads, other uses/mutation, shadowed declarations, computed or
 spread properties, duplicate object keys, dynamically constructed keys,
 nested/async helpers, non-static or inherited class-method dispatch,
+anonymous classes without position-qualified source identity, method
+properties explicitly replaced through same-file assignment, delete or
+owner-level mutation, competing static member/accessor/computed declarations,
 reassigned or multi-use method parameters, expression-level transforms,
 ambiguous call targets and unknown typed receivers fail closed. A source-forwarded text value does
 NOT establish that a helper ran, message was displayed, locale selected,
