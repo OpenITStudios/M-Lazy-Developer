@@ -989,10 +989,12 @@ function unknownSourceProofRequirements(
     owners.push(unknown);
     byUnknown.set(unknown.id, owners);
   }
-  const byEntry = new Map<string, NonNullable<GameplayScenarioGraph["sourceFlowCandidates"]>>();
+  const byEntry = new Map<string,
+    NonNullable<GameplayScenarioGraph["sourceFlowCandidates"]>[number][]>();
   for (const flow of graph.sourceFlowCandidates ?? []) {
     const matches = byEntry.get(flow.entryRegionId) ?? [];
-    byEntry.set(flow.entryRegionId, [...matches, flow]);
+    matches.push(flow);
+    byEntry.set(flow.entryRegionId, matches);
   }
 
   return [...new Set(unknownIds)].sort().map(unknownId => {
@@ -1009,6 +1011,9 @@ function unknownSourceProofRequirements(
     const steps = source?.sourceSteps.filter(step =>
       owned.has(step.id) &&
       step.source.artifactId === intent.artifactId) ?? [];
+    // Bounded display IDs cannot decide whether a later source-pair
+    // witness exists. Check the complete current selected-entry scope.
+    const allExactIds = new Set(steps.map(step => step.id));
     const sourceEvidenceIds = unique(steps.map(step => step.id)).slice(0, 16);
     const reviewed = (graph.reviewedSourceRelationships ?? []).filter(item =>
       item.unknownId === unknownId &&
@@ -1018,8 +1023,14 @@ function unknownSourceProofRequirements(
         relation.fromStepId === item.fromStepId &&
         relation.toStepId === item.toStepId) &&
       [item.fromStepId, item.toStepId].every(id =>
-        sourceEvidenceIds.includes(id)));
-    const missing: string[] = [];
+        allExactIds.has(id)));
+    // Intended gameplay is always a separate authority from source syntax.
+    // Lead with this decisive unknown so bounded summaries never omit it.
+    const missing: string[] = [
+      "Tetapkan tujuan dan expected outcome mekanik " + unknownId +
+        " dari bukti desain/presentasi map yang benar-benar berlaku, lalu " +
+        "hubungkan ke jalur pemain; jangan gunakan interpretasi AI sebagai bukti.",
+    ];
     if (source === undefined) {
       missing.push("Buktikan satu entry source terhubung dan tidak ambigu untuk " +
         unknownId + "; hubungan di file atau nama yang mirip belum cukup.");
@@ -1038,8 +1049,6 @@ function unknownSourceProofRequirements(
         missing.push("Tentukan target pemanggilan source yang masih ambigu: " +
           source.unresolvedExecutionEdgeIds.slice(0, 3).join(", ") + ".");
       }
-      const recognized = new Set(reviewed.map(item =>
-        item.fromStepId + "\u0000" + item.toStepId));
       for (const relation of reviewed.slice(0, 4)) {
         if (relation.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE") {
           missing.push("Hubungan source " + relation.fromStepId +
@@ -1069,19 +1078,12 @@ function unknownSourceProofRequirements(
         missing.push("Tentukan hubungan hasil fungsi " + returns.join(", ") +
           " dengan efek sebelumnya dan kondisi hasil pemain.");
       }
-      if (reviewed.length === 0 &&
-          steps.length > 1 &&
-          ![...recognized].length) {
+      if (reviewed.length === 0 && steps.length > 1) {
         missing.push("Cari hubungan langsung antara operasi source " +
           sourceEvidenceIds.slice(0, 4).join(", ") +
           "; jangan menganggap urutan source sebagai urutan gameplay.");
       }
     }
-    // Even a complete technical source relation does not establish the
-    // independent player objective or expected game design.
-    missing.push("Tetapkan tujuan dan expected outcome mekanik " + unknownId +
-      " dari bukti desain/presentasi map yang benar-benar berlaku, lalu " +
-      "hubungkan ke jalur pemain; jangan gunakan interpretasi AI sebagai bukti.");
     return {
       unknownId,
       sourceEvidenceIds,
@@ -1160,12 +1162,17 @@ export function deriveAuditObligations(input: {
     const allUnknownIds = unique(input.discovery.gameplayIntentUnknownIds);
     const requirements = unknownSourceProofRequirements(
       input.graph, input.intent, allUnknownIds);
+    // Prioritize entries with actual selected-source witnesses rather than
+    // arbitrary unknown names. Keep ALL unknown IDs and omission counts.
+    const prioritized = [...requirements].sort((a, b) =>
+      b.sourceEvidenceIds.length - a.sourceEvidenceIds.length ||
+      a.unknownId.localeCompare(b.unknownId));
     // Keep one existing UNDERSTAND obligation, all original unknown IDs and
     // an explicit omitted count; do not emit hundreds of micro tasks.
-    const visible = requirements.slice(0, 4);
+    const visible = prioritized.slice(0, 4);
     const omitted = Math.max(0, requirements.length - visible.length);
     const sourceQuestions = visible.flatMap(item =>
-      item.missingClaims.slice(0, 3).map(question =>
+      item.missingClaims.slice(0, 4).map(question =>
         item.unknownId + ": " + question));
     const summary = sourceQuestions.length > 0
       ? sourceQuestions.join(" ") +

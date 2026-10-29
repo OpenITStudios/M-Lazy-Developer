@@ -168,7 +168,6 @@ describe("audit obligations versus gameplay findings", () => {
   });
 
   it("keeps first source ownership and both proof edges with ambiguous duplicate IDs", () => {
-  it("keeps first source ownership and both proof edges with ambiguous duplicate IDs", () => {
     const graph = baseGraph("DETECTION_GAP");
     graph.causalLinks.push({
       ...graph.causalLinks[0],
