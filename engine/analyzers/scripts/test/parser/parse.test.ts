@@ -47,6 +47,75 @@ describe("script analyzer", () => {
     expect(refs.some(item => item.key === "dynamicKey")).toBe(false);
   });
 
+
+  it("binds uniquely forwarded const and one-statement helper translations to typed UI call sites", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'const message = { translate: "round.start" };',
+      'const forwarded = message;',
+      'world.sendMessage(forwarded);',
+      'function announce(payload) { world.sendMessage(payload); }',
+      'announce({ translate: "round.finish" });',
+    ].join("\n"), source);
+    const references = new Map((parsed.literalTranslationReferences ?? [])
+      .map(item => [item.key, item] as const));
+    const constant = references.get("round.start")?.forwardedUiSendCall;
+    expect(constant?.method).toBe("sendMessage");
+    expect(constant?.receiverType).toBe("World");
+    expect(constant?.executionRegion).toBe("module");
+    expect(constant?.hops.map(hop => hop.kind)).toEqual([
+      "immutable-const-binding", "immutable-const-binding",
+    ]);
+    const helper = references.get("round.finish")?.forwardedUiSendCall;
+    expect(helper?.method).toBe("sendMessage");
+    expect(helper?.receiverType).toBe("World");
+    expect(helper?.executionRegion).toBe("function:announce");
+    expect(helper?.hops.map(hop => hop.kind)).toEqual([
+      "simple-helper-parameter",
+    ]);
+    // Forwarded evidence has an exact source call region, not observed
+    // Minecraft activation or a player-visible outcome.
+  });
+
+  it("rejects overwritten, repeated, mutated, spread and untyped UI text source paths", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'world.sendMessage({ translate: "unique.direct" });',
+      'world.sendMessage({ translate: "duplicate.first", translate: "duplicate.last" });',
+      'world.sendMessage({ rawtext: [{ translate: "duplicate.nested" }], rawtext: [{ translate: "duplicate.visible" }] });',
+      'const repeated = { translate: "ambiguous.repeat" };',
+      'world.sendMessage(repeated); world.sendMessage(repeated);',
+      'const mutableObject = { translate: "ambiguous.mutation" };',
+      'mutableObject.translate = "changed"; world.sendMessage(mutableObject);',
+      'const spread = { translate: "ambiguous.spread" };',
+      'world.sendMessage({ ...spread });',
+      'const computed = { translate: "ambiguous.computed", [unknown]: 1 };',
+      'world.sendMessage(computed);',
+      'function transform(payload) { return world.sendMessage(convert(payload)); }',
+      'transform({ translate: "ambiguous.transform" });',
+      'function fakeHelper(payload) { fake.sendMessage(payload); }',
+      'fakeHelper({ translate: "ambiguous.untyped" });',
+    ].join("\n"), source);
+    const references = new Map((parsed.literalTranslationReferences ?? [])
+      .map(item => [item.key, item] as const));
+    expect(references.get("unique.direct")?.directUiSendCall?.method)
+      .toBe("sendMessage");
+    for (const key of [
+      "duplicate.first", "duplicate.last", "duplicate.nested",
+      "duplicate.visible", "ambiguous.repeat", "ambiguous.mutation",
+      "ambiguous.spread", "ambiguous.computed", "ambiguous.transform",
+      "ambiguous.untyped",
+    ]) {
+      const reference = references.get(key);
+      expect(reference, "Literal remains indexed for source navigation: " + key)
+        .toBeDefined();
+      expect(reference?.directUiSendCall, key).toBeUndefined();
+      expect(reference?.forwardedUiSendCall, key).toBeUndefined();
+    }
+    // Rejecting a direct send association does NOT delete source text or
+    // claim that the map failed to deliver a message at runtime.
+  });
+
   it("retains exact source-branch context around a literal translation, not inferred UI execution", () => {
     const parsed = parseScriptFile("scripts/guarded", [
       "function showWelcome(ready) {",

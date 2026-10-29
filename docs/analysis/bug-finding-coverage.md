@@ -342,8 +342,11 @@ The parser admits a literal translation's UI-send attempt only when its
 JSON-like `{ translate: "key" }` object is directly contained in the argument
 of a uniquely typed Player/World `sendMessage` or ScreenDisplay `setTitle` /
 `setActionBar` AST call. Variable aliases, nested helper invocations, dynamic
-expressions, untyped same-named calls, object spreads and unrelated same-function
-API calls do not supply that edge. The Gameplay Intent Stage independently
+expressions, untyped same-named calls, object spreads, duplicate property
+names (including duplicate nested `rawtext` containers), and unrelated
+same-function API calls do not supply that edge. A later duplicate object
+member could overwrite the supposedly delivered translation; both direct
+and forwarded source adapters must therefore reject the ambiguous object. The Gameplay Intent Stage independently
 matches the COMPLETE parser call source span, receiver, method and execution
 region to ONE current-artifact Semantic IR API call before recording its ID.
 A call site is an authored SEND ATTEMPT only; it is not player execution,

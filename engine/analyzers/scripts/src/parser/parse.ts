@@ -3063,11 +3063,19 @@ export function parseScriptFile(
         return undefined;
       }
       if (ts.isObjectLiteralExpression(parent)) {
-        // Spread/accessor/computed property may replace the effective text.
-        if (parent.properties.some(member =>
-          !ts.isPropertyAssignment(member) ||
-          !(ts.isIdentifier(member.name) || ts.isStringLiteralLike(member.name))))
-          return undefined;
+        // A later identical property overwrites the earlier payload. Reject
+        // the entire source path, not just the first translation definition.
+        // Keep direct and forwarded literal admission consistent: spreads,
+        // getters, computed names and ambiguous duplicate keys are not
+        // reliable evidence of the value supplied to the typed UI call.
+        const keys = new Set<string>();
+        for (const member of parent.properties) {
+          if (!ts.isPropertyAssignment(member) ||
+              !(ts.isIdentifier(member.name) ||
+                ts.isStringLiteralLike(member.name)) ||
+              keys.has(member.name.text)) return undefined;
+          keys.add(member.name.text);
+        }
       } else if (ts.isPropertyAssignment(parent)) {
         if (!(ts.isIdentifier(parent.name) || ts.isStringLiteralLike(parent.name)))
           return undefined;
