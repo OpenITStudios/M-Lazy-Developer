@@ -613,6 +613,25 @@ saturation, PROVEN/NEED_VALIDATION and the report from the same selected
 artifact. Never merge across revisions, infer source evidence from AI
 text, or claim that source revalidation equals live Minecraft execution.
 
+## Positive source witnesses without proof inflation
+
+The current selected-artifact Scenario Graph now reuses completed arena
+replica comparisons as bounded `geometry` witnesses, including positive
+physical divergence. It requires all declared replicas to be compared
+without unresolved blocks and never promotes a partial sibling or unknown
+arena count into exhaustive geometry evidence. The player-capability
+scenario likewise reuses the existing analyzer's **source-reachable,
+confirmed `exposed`** status as an `activation` witness only when its
+source evidence matches the full selected-map file identity. A merely
+potential exposure, an absent trigger, a foreign file of the same name,
+or an unrelated gameplay scenario cannot supply activation.
+
+These are inputs to the SAME canonical counter-proof/PROVE engine, not
+direct PROVEN verdicts. Guard, source/commit scope, ownership, cleanup,
+generation, player impact and any remaining universal/family criteria
+must still be proven separately. No label, global count or filename
+substring grants a witness; native runtime effects remain unobserved.
+
 ## Runtime-last rule
 
 Runtime verification is only for behavior static/package/formal reasoning cannot decide, such as native pathfinding/collision, actual simulation, client/server ordering, multi-client visual divergence, rendering/input, or performance manifestation.

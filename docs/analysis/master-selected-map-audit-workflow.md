@@ -156,6 +156,21 @@ be resent for reassurance. The existing current-revision model-response
 gate and canonical PROVE owner alone may close a gap after source evidence
 changes or a validated resolution is supplied.
 
+## Deterministic analyzer witnesses into the existing PROVE graph
+
+The physical arena replica comparator can admit `geometry` evidence
+for completed identical and completed diverged replicas, not merely
+the successful zero-mismatch case. All configured replicas require
+complete comparison before their combined geometry dimension is treated
+as accounted. The selected-source capability exposure evaluator supplies
+`activation` evidence only for the dedicated player-capability scenario
+when it independently reports confirmed source-reachable exposure and
+its exact file identity matches that scenario. These source facts are
+bound to existing Gameplay Causal Links; they do not establish guard,
+scope, ownership, cleanup, player outcome or native runtime delivery.
+The existing graph-based counter-proof, saturation, admission and report
+owners must still decide every remaining proof criterion.
+
 ## Incremental current-revision family proof
 
 Within the existing PROOF_NAVIGATION response gate, the model may return

@@ -229,22 +229,41 @@ function authoredOutcomeGuardWitnessesByEdge(
   return byEdge;
 }
 
-function dimensionEvidenceForRuntimeComponent(
+/** Reuse exact existing analyzer receipts as source-bound dimension witnesses.
+ * A successful candidate probe or general file association cannot prove
+ * guard, modeled scope, generation, ownership or cleanup exhaustion.
+ * This producer only states the narrow dimensions its analyzer has already
+ * decided; the canonical counter-proof owner still checks all other ones.
+ */
+export function dimensionEvidenceForRuntimeComponent(
   componentId: string,
   world: GameplayWorldModel,
   sourceLocators: readonly string[],
   selectedSourceEvidenceLocators: ReadonlyMap<string, string>,
+  scenarioLabel?: string,
 ): GameplayCausalLink["dimensionEvidence"] {
   const unique = (ids: readonly string[]) => [...new Set(ids)].sort();
   switch (componentId) {
     case "runtime:arena-replica-integrity": {
-      const geometry = unique(world.arenas.replicaProof
-        .filter((item) =>
-          item.status === "complete-proof" &&
-          item.mismatchCount === 0 &&
-          item.unresolvedBlocks === 0
-        )
-        .flatMap((item) => item.evidenceIds));
+      // A native/voxel mismatch is POSITIVE geometry evidence just as an
+      // exact clean comparator is. Both must have finished comparisons.
+      // One proven replica must not certify geometry when a sibling replica
+      // has unexamined blocks or is absent from the declared arena count.
+      const replicas = world.arenas.replicaProof;
+      const expected = world.arenas.count === undefined
+        ? 0 : Math.max(1, world.arenas.count - 1);
+      const fullyCompared = scenarioLabel === "arena-replica-integrity" &&
+        expected > 0 &&
+        replicas.length === expected &&
+        replicas.every(item =>
+          item.unresolvedBlocks === 0 &&
+          item.evidenceIds.length > 0 &&
+          ((item.status === "complete-proof" &&
+            item.mismatchCount === 0) ||
+           (item.status === "diverged" &&
+            item.mismatchCount > 0)));
+      const geometry = fullyCompared ? unique(replicas.flatMap(item =>
+        item.evidenceIds)) : [];
       return geometry.length > 0 ? { geometry } : {};
     }
     case "runtime:player-capability": {
@@ -256,22 +275,42 @@ function dimensionEvidenceForRuntimeComponent(
       // scenario. Match full selected-source file identities (not basenames
       // or similar labels), then preserve only the matched witness IDs.
       const scopedFiles = new Set(sourceLocators.map(sourceFileIdentity));
-      const capability = scopedFiles.size === 0 ? [] : unique(
-        world.capabilityExposure.exposures
-          .filter((item) =>
-            (item.status === "blocked" &&
-              item.resolutionBasis === "release-disabled") ||
-            (item.status === "guarded" &&
-              item.resolutionBasis === "active-authorization-guard")
-          )
-          .flatMap((item) => item.evidenceIds.filter((id) => {
+      const scoped = scopedFiles.size === 0 ? [] :
+        world.capabilityExposure.exposures.map(item => ({
+          item,
+          witnesses: item.evidenceIds.filter(id => {
+            // The full map-relative file identity must agree with an
+            // existing selected-artifact Intent locator. Similar basename
+            // or external reference alone cannot identify this capability.
             const source = selectedSourceEvidenceLocators.get(id) ??
               (id.includes("/") || id.includes("\\") ? id : undefined);
             return source !== undefined &&
               scopedFiles.has(sourceFileIdentity(source));
-          }))
-      );
-      return capability.length > 0 ? { capability } : {};
+          }),
+        })).filter(record => record.witnesses.length > 0);
+      const capability = unique(scoped
+        .filter(({ item }) =>
+          (item.status === "blocked" &&
+            item.resolutionBasis === "release-disabled") ||
+          (item.status === "guarded" &&
+            item.resolutionBasis === "active-authorization-guard"))
+        .flatMap(record => record.witnesses));
+      // The existing exposure evaluator already established actual
+      // source-side prerequisite reachability, or a trigger requiring no
+      // prerequisite. Its "exposed" disposition is the authority for
+      // activation, NOT for missing guard, player outcome or live execution.
+      // Restrict this to the dedicated player-capability scenario.
+      const activation = scenarioLabel === "player-capability-integrity"
+        ? unique(scoped.filter(({ item }) =>
+            item.status === "exposed" &&
+            (item.prerequisiteReachability === "reachable" ||
+             item.prerequisiteReachability === "not-required"))
+          .flatMap(record => record.witnesses))
+        : [];
+      return {
+        ...(capability.length > 0 ? { capability } : {}),
+        ...(activation.length > 0 ? { activation } : {}),
+      };
     }
     default:
       return {};
@@ -3665,6 +3704,7 @@ export function compileGameplayScenarioGraph(
             input.world,
             sourceLocators,
             selectedSourceEvidenceLocators,
+            scenario.label,
           ),
         ...runtimeEdgeState(
           component.id,

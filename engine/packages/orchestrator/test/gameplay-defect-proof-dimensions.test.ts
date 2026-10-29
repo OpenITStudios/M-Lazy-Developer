@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { assessGameplayDefectResolutionGate, automaticCounterProofSearch, requiredCounterProofDimensions } from "../src/inspection/gameplay-defect-resolution.js";
+import { dimensionEvidenceForRuntimeComponent } from "../src/inspection/gameplay-scenario-compiler.js";
+import type { GameplayWorldModel } from "../src/inspection/gameplay-world-model.js";
 
 function graph(componentIds: readonly string[], domain?: string) {
   return {
@@ -93,6 +95,122 @@ describe("gameplay defect proof dimensions", () => {
     );
     expect(search.searchedDimensions).not.toContain("geometry");
     expect(search.exhaustiveWithinScope).toBe(false);
+  });
+
+  it("passes fully compared physical replica divergence into geometry proof without granting scope", () => {
+    const world = {
+      arenas: {
+        count: 3,
+        replicaProof: [
+          { arenaId: "arena-2", status: "complete-proof",
+            mismatchCount: 0, unresolvedBlocks: 0,
+            evidenceIds: ["arena-replica-proof:arena-2"] },
+          { arenaId: "arena-3", status: "diverged",
+            mismatchCount: 2, unresolvedBlocks: 0,
+            evidenceIds: ["arena-replica-proof:arena-3"] },
+        ],
+      },
+    } as unknown as GameplayWorldModel;
+    const dimensions = dimensionEvidenceForRuntimeComponent(
+      "runtime:arena-replica-integrity", world, [], new Map(),
+      "arena-replica-integrity",
+    );
+    expect(dimensions).toEqual({
+      geometry: [
+        "arena-replica-proof:arena-2",
+        "arena-replica-proof:arena-3",
+      ],
+    });
+    const value = graph(["runtime:arena-replica-integrity"]);
+    value.causalLinks[0].dimensionEvidence = dimensions;
+    const check = automaticCounterProofSearch(
+      value, value.causalLinks[0], value.scenarios[0],
+    );
+    expect(check.searchedDimensions).toContain("geometry");
+    expect(check.exhaustiveWithinScope).toBe(false);
+    expect(check.searchedDimensions).not.toContain("scope");
+
+    const partial = {
+      ...world,
+      arenas: {
+        ...world.arenas,
+        replicaProof: [
+          world.arenas.replicaProof[0],
+          { ...world.arenas.replicaProof[1]!, unresolvedBlocks: 1 },
+        ],
+      },
+    } as GameplayWorldModel;
+    expect(dimensionEvidenceForRuntimeComponent(
+      "runtime:arena-replica-integrity", partial, [], new Map(),
+      "arena-replica-integrity",
+    )).toEqual({});
+    expect(dimensionEvidenceForRuntimeComponent(
+      "runtime:arena-replica-integrity", world, [], new Map(),
+      "arena-capacity-plus-one",
+    )).toEqual({});
+  });
+
+  it("uses only source-correlated, source-reachable capability exposure for activation", () => {
+    const world = {
+      capabilityExposure: {
+        exposures: [
+          { capabilityId: "dev:skip", status: "exposed",
+            prerequisiteReachability: "reachable",
+            evidenceIds: ["e:current"] },
+          { capabilityId: "dev:unknown", status: "potentially-exposed",
+            prerequisiteReachability: "unknown",
+            evidenceIds: ["e:other"] },
+          { capabilityId: "dev:inactive", status: "blocked",
+            resolutionBasis: "trigger-absent",
+            prerequisiteReachability: "unreachable",
+            evidenceIds: ["e:current"] },
+          { capabilityId: "dev:active", status: "guarded",
+            resolutionBasis: "active-authorization-guard",
+            prerequisiteReachability: "not-required",
+            evidenceIds: ["e:current"] },
+          { capabilityId: "dev:foreign", status: "exposed",
+            prerequisiteReachability: "reachable",
+            evidenceIds: ["e:foreign"] },
+        ],
+      },
+    } as unknown as GameplayWorldModel;
+    const locatorById = new Map([
+      ["e:current", "behavior_packs/demo/scripts/dev.js:12:4"],
+      ["e:other", "behavior_packs/demo/scripts/unknown.js:13:1"],
+      ["e:foreign", "behavior_packs/another/scripts/dev.js:12:4"],
+    ]);
+    const proof = dimensionEvidenceForRuntimeComponent(
+      "runtime:player-capability", world,
+      ["behavior_packs/demo/scripts/dev.js:5:1"], locatorById,
+      "player-capability-integrity",
+    );
+    expect(proof).toEqual({
+      capability: ["e:current"],
+      activation: ["e:current"],
+    });
+    expect(Object.keys(proof)).not.toContain("guard");
+    expect(Object.keys(proof)).not.toContain("scope");
+    expect(Object.keys(proof)).not.toContain("cleanup");
+    expect(Object.keys(proof)).not.toContain("owner");
+    const value = graph(["runtime:player-capability"]);
+    value.causalLinks[0].dimensionEvidence = proof;
+    const search = automaticCounterProofSearch(
+      value, value.causalLinks[0], value.scenarios[0],
+    );
+    expect(search.searchedDimensions).toContain("activation");
+    expect(search.exhaustiveWithinScope).toBe(false);
+
+    expect(dimensionEvidenceForRuntimeComponent(
+      "runtime:player-capability", world,
+      ["behavior_packs/unrelated/scripts/dev.js:5:1"], locatorById,
+      "player-capability-integrity",
+    )).toEqual({});
+    const otherScenario = dimensionEvidenceForRuntimeComponent(
+      "runtime:player-capability", world,
+      ["behavior_packs/demo/scripts/dev.js:5:1"], locatorById,
+      "unrelated-gameplay",
+    );
+    expect(otherScenario).toEqual({ capability: ["e:current"] });
   });
 
   it("keeps genuine dimension-tagged geometry evidence available", () => {
