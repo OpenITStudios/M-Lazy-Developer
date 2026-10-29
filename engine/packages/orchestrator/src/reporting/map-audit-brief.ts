@@ -9,13 +9,51 @@ import type {
   ScriptAuthoredGameplayEntry,
   ScriptAuthoredContentCollection,
 } from "../../../../analyzers/scripts/src/index.js";
-import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js";
+import {
+  reconstructMapNativePlayerFacingContracts,
+  type GameplayIntentModel,
+} from "../../../gameplay-intent/src/index.js";
 import type { GameplayArchitectureNavigation } from "../inspection/gameplay-scenario-model.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import type { ReadyAuditCandidateGroup } from "../map-audit-candidate-grouping.js";
 import type { AuditValidationTestGroup } from "../map-audit-validation-plan.js";
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
 
+
+/**
+ * Read-only operator projection of existing selected-map Gameplay Contract.
+ * This is not a second parser, gameplay graph, or bug/proof decision.
+ * Duplicate locale definitions share a source call; show that attempt once
+ * per exact [translation key, API evidence ID], without guessing the locale.
+ */
+function authoredUiMessageRoutes(model: GameplayIntentModel): readonly {
+  readonly key: string;
+  readonly receiverType: string;
+  readonly method: string;
+  readonly sourceLocator: string;
+  readonly handoffs: number;
+}[] {
+  const unique = new Map<string, {
+    key: string; receiverType: string; method: string;
+    sourceLocator: string; handoffs: number;
+  }>();
+  for (const candidate of reconstructMapNativePlayerFacingContracts(model)) {
+    if (candidate.sourceStatus !== "EXACT_AUTHORED_UI_SEND_ATTEMPT") continue;
+    for (const call of candidate.authoredUiSendCalls) {
+      const key = JSON.stringify([candidate.key, call.apiCallEvidenceId]);
+      if (unique.has(key)) continue;
+      unique.set(key, {
+        key: candidate.key, receiverType: call.receiverType,
+        method: call.method, sourceLocator: call.sourceLocator,
+        handoffs: call.valueFlow?.hops.length ?? 0,
+      });
+    }
+  }
+  return [...unique.values()].sort((a, b) =>
+    a.key.localeCompare(b.key) ||
+    a.sourceLocator.localeCompare(b.sourceLocator) ||
+    a.method.localeCompare(b.method));
+}
 
 /**
  * The operator's FINAL summary has two finding categories: Bug and Design
@@ -80,6 +118,30 @@ export function formatSelectedMapAuditFinalReport(input: {
     "**Map:** " + concise(report.evidenceScope.selectedArtifact),
     "**Versi:** " + concise(report.mapVersion), "",
   ];
+  // Explain the same source evidence already present in Gameplay Intent and
+  // the model handoff. A typed send is NOT evidence of an observed message,
+  // a real player/arena binding, an approved objective, or a new Bug.
+  const sourceUiRoutes = authoredUiMessageRoutes(intent);
+  if (sourceUiRoutes.length > 0) {
+    out.push(
+      "## Hubungan Pesan dan Kode (INDIKASI SOURCE)",
+      "Kode map menunjukkan tempat pesan *mungkin dikirim*. " +
+        "Ini belum membuktikan pesan tampil kepada pemain atau mekaniknya berhasil.",
+      ...sourceUiRoutes.slice(0, 6).map(route =>
+        "- " + concise(route.key) + ": " + route.receiverType + "." +
+        route.method + "() pada " + concise(route.sourceLocator) +
+        (route.handoffs
+          ? " (melewati " + route.handoffs + " penerusan nilai)."
+          : " (argumen langsung).")),
+      ...(sourceUiRoutes.length > 6
+        ? ["Jalur tambahan tidak ditampilkan: " +
+          (sourceUiRoutes.length - 6) + "."]
+        : []),
+      "**Masih perlu dibuktikan:** pemicu, kondisi permainan, penerima, " +
+        "pemilihan bahasa/pack, dan apakah pesan benar-benar ditampilkan.",
+      "",
+    );
+  }
 
   const describeIssue = (item: MapAuditOutputV2["bugs"][number]): string[] => {
     const pendingProof = item.status === "NEED_VALIDATION";
@@ -726,6 +788,26 @@ export function formatSelectedMapAuditBrief(input: {
         (rankedText.length - 6) + ".",
     );
     out.push("");
+  }
+  // The same canonical source/UI contract consumed by the model handoff is
+  // projected in the human brief. Never convert these links into BUG or
+  // runtime PASS, and never infer a flow from a translation key alone.
+  const uiRoutes = authoredUiMessageRoutes(intent);
+  if (uiRoutes.length > 0) {
+    out.push(
+      "### Message-to-UI code links (SOURCE ONLY)",
+      "Exact authored UI call candidates, NOT observed player messages " +
+        "or verified gameplay outcomes.",
+      ...uiRoutes.slice(0, 6).map(route =>
+        "- " + concise(route.key) + " -> " + route.receiverType + "." +
+          route.method + "() @ " + concise(route.sourceLocator) +
+          "; value handoffs: " + route.handoffs +
+          "; delivery, player, guard and effective locale UNKNOWN."),
+      ...(uiRoutes.length > 6
+        ? ["Additional source UI links omitted: " + (uiRoutes.length - 6)]
+        : []),
+      "",
+    );
   }
   // A compact decision appears BEFORE the potentially large authored
   // source inventory. It projects existing report and task data only:

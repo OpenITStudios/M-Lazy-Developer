@@ -24,14 +24,18 @@ import {
   deriveAuditModelTaskPackets,
   retrieveAuditTaskKnowledge,
 } from "../src/map-audit-model-task.js";
-import { formatSelectedMapAuditBrief } from "../src/map-audit-output-v2.js";
+import {
+  formatSelectedMapAuditBrief,
+  formatSelectedMapAuditFinalReport,
+} from "../src/map-audit-output-v2.js";
 
 /**
  * Synthetic authoring styles, not production game maps or runtime evidence.
  * Exercise the real .mcworld -> single selected-map audit -> operator output,
  * without a second extractor, a private map, or genre-specific expectations.
  */
-type Case = "dialogue" | "animation" | "ambiguous-target" | "authored-content";
+type Case = "dialogue" | "animation" | "ambiguous-target" |
+  "authored-content" | "ui-source-flow";
 
 async function syntheticMcworld(kind: Case): Promise<{
   archive: string;
@@ -52,7 +56,7 @@ async function syntheticMcworld(kind: Case): Promise<{
     },
     modules: [
       { type: "data", uuid: moduleUuid, version: [1, 0, 0] },
-      ...(kind === "authored-content" ? [{
+      ...((kind === "authored-content" || kind === "ui-source-flow") ? [{
         type: "script",
         language: "javascript",
         entry: "scripts/main.js",
@@ -73,7 +77,7 @@ async function syntheticMcworld(kind: Case): Promise<{
         ? "setblock 1 64 1 stone\n"
         : "scoreboard players set @p session 1\ntp @p 5 70 5\n",
     );
-    if (kind === "authored-content") {
+    if (kind === "authored-content" || kind === "ui-source-flow") {
       // Generic .lang copy is NOT an automatic objective. These three
       // syntaxes mirror real, contrasting selected worlds: a building guide,
       // a team-victory announcement and a multi-mode party explanation.
@@ -105,6 +109,21 @@ async function syntheticMcworld(kind: Case): Promise<{
         'const partyIntro = { translate: "daigon.welcome.line2" };',
         'const caption = "daigon.ui.winner.red";',
         'const dynamic = { translate: runtimeLocaleKey };',
+        ...(kind === "ui-source-flow" ? [
+          'import { world } from "@minecraft/server";',
+          // A unique immutable const directly forwarded to a typed API.
+          'world.sendMessage(welcome);',
+          // Same-class static method handoff to a distinct typed UI call.
+          'class ArenaUi {',
+          '  static start() {',
+          '    this.publish({ rawtext: [{ translate: "daigon.welcome.line2" }] });',
+          '  }',
+          '  static publish(text) { world.sendMessage(text); }',
+          '}',
+          // A spread leaves only navigation evidence; no typed UI bind.
+          'const opaque = { translate: "daigon.ui.winner.red" };',
+          'world.sendMessage({ ...opaque });',
+        ] : []),
       ].join("\n"));
     }
     const packs = [{
@@ -611,6 +630,59 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       await fixture.cleanup();
     }
   });
+  it("connects exact map translation source through typed UI and the SAME operator report", async () => {
+    const fixture = await syntheticMcworld("ui-source-flow");
+    try {
+      const audit = await runSelectedMapAudit({ artifactPath: fixture.archive });
+      expectReconstructionContract(audit);
+      const intent = audit.inspection.gameplayIntent.model;
+      const handoff = projectSelectedMapAuditModelHandoff(audit);
+      const cues = handoff.gameUnderstanding.playerFacingTextCues;
+      const welcome = cues.find(item => item.key === "welcome.guide")
+        ?.contractCandidate;
+      const party = cues.find(item => item.key === "daigon.welcome.line2")
+        ?.contractCandidate;
+      const opaque = cues.find(item => item.key === "daigon.ui.winner.red")
+        ?.contractCandidate;
+
+      expect(welcome?.sourceStatus).toBe("EXACT_AUTHORED_UI_SEND_ATTEMPT");
+      expect(welcome?.authoredUiSendCalls).toEqual(expect.arrayContaining([
+        expect.objectContaining({receiverType: "World", method: "sendMessage"}),
+      ]));
+      expect(welcome?.authoredUiSendCalls[0]?.valueFlow?.hops
+        .some(hop => hop.kind === "immutable-const-binding")).toBe(true);
+      expect(party?.sourceStatus).toBe("EXACT_AUTHORED_UI_SEND_ATTEMPT");
+      expect(party?.authoredUiSendCalls.some(call =>
+        call.receiverType === "World" && call.method === "sendMessage" &&
+        call.valueFlow?.hops.some(hop =>
+          hop.kind === "local-this-method-parameter"))).toBe(true);
+      expect(opaque?.sourceStatus).not.toBe("EXACT_AUTHORED_UI_SEND_ATTEMPT");
+      for (const candidate of [welcome, party]) {
+        expect(candidate?.authority).toBe(
+          "SELECTED_MAP_SOURCE_CANDIDATE_NOT_APPROVED_DESIGN_OR_RUNTIME_PROOF");
+        expect(candidate?.unresolved).toContain("PLAYER_DELIVERY");
+        expect(candidate?.unresolved).toContain("INTENDED_GAMEPLAY");
+      }
+      const operator = formatSelectedMapAuditFinalReport({
+        report: audit.mapAuditReport, intent,
+      });
+      const brief = formatSelectedMapAuditBrief({
+        report: audit.mapAuditReport, intent,
+        modelTaskPackets: audit.modelTaskPackets,
+      });
+      expect(operator).toContain("## Hubungan Pesan dan Kode (INDIKASI SOURCE)");
+      expect(operator).toContain("World.sendMessage()");
+      expect(operator).toContain("daigon.welcome.line2");
+      expect(operator).toContain("Masih perlu dibuktikan");
+      expect(brief).toContain("### Message-to-UI code links (SOURCE ONLY)");
+      expect(brief).toContain("value handoffs: 1");
+      // Source copy is not a tested win rule or a proven defect.
+      expect(audit.mapAuditReport.gameDesign.objective).not.toContain("RED WINS");
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   it("retains three independent authored source-content styles in the bounded model handoff", async () => {
     const fixture = await syntheticMcworld("authored-content");
     try {

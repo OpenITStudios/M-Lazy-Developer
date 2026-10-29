@@ -125,6 +125,19 @@ for the independent source/lock contract.
 
 The product succeeds when a reviewer can explain **what the selected map is designed to do**, identify **where its implementation conflicts with that design**, and give the developer **actionable, source-grounded findings**. The number of checkers, passed validation gates, graph edges, diagnostic candidates, or tests is not a measure of that success.
 
+**One integrated message-to-gameplay evidence route.** Selected map scripts
+are parsed into exact translation references and typed UI calls; Semantic IR
+independently anchors the same code locations and execution regions;
+Gameplay Intent retains the source handoffs, candidate subject context and
+all missing runtime/design proof; Gameplay Contract reconstructs selected
+text-to-UI source candidates; the existing model handoff AND operator report
+project that SAME read-only contract. The operator sees where a message
+*may* be sent in the authored code and what is still unknown, without
+having to inspect separate parser receipts. Message source links are not a
+new finding category, a declared objective/win condition, or an executed
+Minecraft display. The canonical `runSelectedMapAudit()` entrypoint and
+its existing Bug/Design Mismatch proof gates remain authoritative.
+
 **Final user-visible finding categories are exactly Bug and Design Mismatch.** Each category shows both `PROVEN` findings and `NEED_VALIDATION` candidates, clearly labeled and separately counted. A pending entry is explicitly **unproven**; it includes expected versus indicated actual behavior, potential impact, current selected-artifact evidence, the exact remaining proof and a narrow deciding validation instruction. Do not assign final confirmed severity to pending issues. `SAFE` remains internal and is not rendered as a category. An incomplete audit adds a concise **Pemeriksaan belum selesai** note, never replacing or hiding individual pending findings. **NEED_VALIDATION is the sole user-facing name for any still-material undecided proof work**, including previously unclassified audit obligations and indexed unknown source/surface identities. Unclassified work appears as an individually actionable continuation beneath the two issue categories, marked "jenis masalah belum ditentukan" rather than falsely labeled BUG or DESIGN_MISMATCH; any overlapping canonical issue/obligation proof is attached to its one finding. The internal Audit Obligation remains a distinct evidence/coverage owner, not a public label or extra finding status. The CLI `--brief` uses this two-category operator view without changing the canonical MapAuditOutputV2 schema, proof gate or detailed technical brief.
 
 The useful operator-facing result, whether from a bounded ChatGPT source review or a genuinely executed programmatic audit, has three parts drawn from the same selected-artifact evidence:
