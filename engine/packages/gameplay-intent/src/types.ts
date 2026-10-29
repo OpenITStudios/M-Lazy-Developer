@@ -98,6 +98,37 @@ export interface GameplayIntentEvidence {
       readonly receiverType: "Player" | "World" | "ScreenDisplay";
       readonly method: "sendMessage" | "setTitle" | "setActionBar";
       readonly proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY";
+      readonly receiverInference?: "direct" | "bounded";
+      /** Conditions on the typed call site. Not evaluated gameplay guards. */
+      readonly callGuards?: readonly {
+        readonly kind: "lexical" | "precedence";
+        readonly expression: string;
+        readonly branch: "true" | "false";
+        readonly locator: string;
+      }[];
+      /** Alternative entrypoint paths stay separate, including their
+       * source-edge guards. They do NOT establish runtime activation.
+       */
+      readonly sourceActivation?: {
+        readonly status:
+          | "MANIFEST_SOURCE_ROOTS_UNVERIFIED"
+          | "SOURCE_ROOTED_PATH_CANDIDATE"
+          | "NO_ADMITTED_SOURCE_ROOT_PATH"
+          | "SOURCE_PATH_SEARCH_BOUNDED";
+        readonly sourcePaths: readonly {
+          readonly entryRegionId: string;
+          readonly executionEdgeIds: readonly string[];
+          readonly edgeGuards: readonly {
+            readonly edgeId: string;
+            readonly kind: "lexical" | "precedence";
+            readonly expression: string;
+            readonly branch: "true" | "false";
+            readonly locator: string;
+          }[];
+        }[];
+        readonly unresolvedEntryCandidates: number;
+        readonly proof: "SOURCE_ROOTED_IR_PATH_NOT_RUNTIME_EXECUTION";
+      };
     };
     /** Only when the exact canonical IR script region was found; absence
      * is an explicit source-graph identity gap, not proof of dead code. */

@@ -108,6 +108,47 @@ export function validateGameplayIntentModel(
     }
   }
 
+  // A source-root trace is never a proof of actual callback firing. Reject
+  // malformed or promoted guard/path declarations while retaining old
+  // source-only fixture contracts that do not carry these optional fields.
+  for (const item of model.evidence) {
+    const call = item.literalTranslationUse?.authoredUiSendCall;
+    if (call === undefined) continue;
+    const guardsValid = (call.callGuards ?? []).every(guard =>
+      guard.expression.trim().length > 0 &&
+      /:[1-9][0-9]*:[1-9][0-9]*$/.test(guard.locator) &&
+      (guard.kind === "lexical" || guard.kind === "precedence") &&
+      (guard.branch === "true" || guard.branch === "false"));
+    const activation = call.sourceActivation;
+    const activationValid = activation === undefined ||
+      (activation.proof === "SOURCE_ROOTED_IR_PATH_NOT_RUNTIME_EXECUTION" &&
+       ["MANIFEST_SOURCE_ROOTS_UNVERIFIED", "SOURCE_ROOTED_PATH_CANDIDATE",
+        "NO_ADMITTED_SOURCE_ROOT_PATH", "SOURCE_PATH_SEARCH_BOUNDED"]
+         .includes(activation.status) &&
+       Number.isSafeInteger(activation.unresolvedEntryCandidates) &&
+       activation.unresolvedEntryCandidates >= 0 &&
+       (activation.status === "SOURCE_ROOTED_PATH_CANDIDATE") ===
+         (activation.sourcePaths.length > 0) &&
+       activation.sourcePaths.every(path =>
+         path.entryRegionId.trim().length > 0 &&
+         path.executionEdgeIds.every(id => id.trim().length > 0) &&
+         path.edgeGuards.every(guard =>
+           path.executionEdgeIds.includes(guard.edgeId) &&
+           guard.expression.trim().length > 0 &&
+           /:[1-9][0-9]*:[1-9][0-9]*$/.test(guard.locator) &&
+           (guard.kind === "lexical" || guard.kind === "precedence") &&
+           (guard.branch === "true" || guard.branch === "false"))));
+    if (!guardsValid || !activationValid ||
+        (call.receiverInference !== undefined &&
+         call.receiverInference !== "direct" &&
+         call.receiverInference !== "bounded")) {
+      issues.push({
+        path: "evidence." + item.id + ".literalTranslationUse.authoredUiSendCall",
+        message: "Source UI call guards and entry paths must be exact, bounded and explicitly non-runtime evidence.",
+      });
+    }
+  }
+
   // A reported typed UI call must have its own exact current-map source
   // witness, not just a self-referential ID inside the translation literal.
   for (const item of model.evidence) {

@@ -13,6 +13,7 @@ import {
 } from "./design-intent-challenge.js";
 import type {
   GameplayIntentModel,
+  GameplayIntentEvidence,
 } from "./types.js";
 
 
@@ -41,12 +42,12 @@ export interface MapNativePlayerFacingContractCandidate {
     readonly root: string;
     readonly worldAttachment: "listed" | "not-listed" | "unknown";
   };
-  readonly authoredUiSendCalls: readonly {
-    readonly apiCallEvidenceId: string;
-    readonly sourceLocator: string;
-    readonly receiverType: "Player" | "World" | "ScreenDisplay";
-    readonly method: "sendMessage" | "setTitle" | "setActionBar";
-  }[];
+  /** Reuse the canonical typed Intent witness without reshaping its
+   * guard/entrypoint records into a competing report-only authority.
+   */
+  readonly authoredUiSendCalls: readonly NonNullable<
+    NonNullable<GameplayIntentEvidence["literalTranslationUse"]>["authoredUiSendCall"]
+  >[];
   /** Merely source-correlated outcome/objective subjects, not causal proof. */
   readonly relatedOutcomeCandidateIds: readonly string[];
   readonly sourceReferenceEvidenceIds: readonly string[];
@@ -61,6 +62,9 @@ export interface MapNativePlayerFacingContractCandidate {
     | "PACK_LOCALE_SELECTION"
     | "PACK_ATTACHMENT_UNKNOWN"
     | "PACK_NOT_LISTED"
+    | "SOURCE_ENTRY_PATH"
+    | "SOURCE_GUARD_SATISFIABILITY"
+    | "PLAYER_RECEIVER_IDENTITY"
     | "SOURCE_UI_SEND_BINDING"
     | "OBJECTIVE_CAUSAL_BINDING"
     | "DUPLICATE_LOCALE_DEFINITION"
@@ -156,12 +160,7 @@ export function reconstructMapNativePlayerFacingContracts(
       if (evidence?.scope !== "selected-artifact" ||
           evidence.origin !== "source-code" ||
           evidence.locator !== call.sourceLocator) return [];
-      return [[call.apiCallEvidenceId, {
-        apiCallEvidenceId: call.apiCallEvidenceId,
-        sourceLocator: call.sourceLocator,
-        receiverType: call.receiverType,
-        method: call.method,
-      }] as const];
+      return [[call.apiCallEvidenceId, call] as const];
     })).values()].sort((a, b) =>
       a.apiCallEvidenceId.localeCompare(b.apiCallEvidenceId));
     const outcomes = relatedSubjects.filter(id =>
@@ -179,6 +178,13 @@ export function reconstructMapNativePlayerFacingContracts(
         item.playerFacingText?.pack?.worldAttachment !== "not-listed")
       unresolved.push("PACK_ATTACHMENT_UNKNOWN");
     if (authoredUiSendCalls.length === 0) unresolved.push("SOURCE_UI_SEND_BINDING");
+    if (authoredUiSendCalls.some(call =>
+      call.sourceActivation?.status !== "SOURCE_ROOTED_PATH_CANDIDATE"))
+      unresolved.push("SOURCE_ENTRY_PATH");
+    // Static receiver typing is not a player/session/arena binding; source
+    // guards have not been evaluated against any live state.
+    if (authoredUiSendCalls.length > 0)
+      unresolved.push("SOURCE_GUARD_SATISFIABILITY", "PLAYER_RECEIVER_IDENTITY");
     if (sameLocaleDefinitionCount > 1)
       unresolved.push("DUPLICATE_LOCALE_DEFINITION");
     if (refs.length > 0 && admittedRegionIds.length === 0)

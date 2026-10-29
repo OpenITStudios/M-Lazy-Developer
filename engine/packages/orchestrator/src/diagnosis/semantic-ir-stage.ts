@@ -723,6 +723,7 @@ export function buildInspectionSemanticIr(
         inference: call.inference,
         source: call.source,
         executionRegionId: regionId,
+        ...irGuardEvidence(call.lexicalGuards, call.precedenceGuards),
       });
     }
 

@@ -340,6 +340,11 @@ export interface AuthoredScriptApiCall {
   readonly inference: "direct" | "bounded";
   readonly source: SourceRef;
   readonly executionRegionId: string;
+  /** Guard sites attached to this exact parser-typed API call.
+   * Source syntax only: no runtime guard evaluation or UI delivery.
+   */
+  readonly lexicalGuards?: readonly AuthoredBranchGuard[];
+  readonly precedenceGuards?: readonly AuthoredBranchGuard[];
 }
 
 /** Parser-typed read of the Bedrock game tick counter. It only establishes

@@ -335,6 +335,25 @@ causal or approved game rule. The canonical Gameplay Contract and model handoff
 expose these immutable evidence IDs and remaining obligations without altering
 Bug/Design Mismatch decisions, Proof Saturation or status thresholds.
 
+## Source-guarded UI entry paths
+
+The canonical typed Semantic IR API call preserves exact lexical and
+precedence guard source sites of that call. Authored guard syntax is not
+proof that the guard was satisfied in play. UI source-path navigation reuses
+canonical `semanticIrExecutionTraces()` entrypoint eligibility and bounded,
+cycle-safe directed, source-located resolved IR edges. Each entry candidate
+retains its own contiguous edge chain and branch guards; conditions of
+different alternative chains must never be merged into a single proof.
+
+A source path is admitted only when the selected map has resolved
+manifest-attached script roots. Missing manifest authority, disconnected
+source paths and bounded exploration remain distinct explicit gaps.
+Selected-source path eligibility does not prove that an event fires, a guard
+passes, a particular player/arena receives the UI, the client selects a
+specific pack/locale, or the intended gameplay objective is correct. The
+canonical Gameplay Contract and model handoff present these source-only
+witnesses without changing APPROVED design, Proof Saturation or PROVEN.
+
 ## Direct selected-source impact path
 
 A canonical authored Intent link whose target is already the final

@@ -16,6 +16,7 @@ import type { SourceRef } from "../../../project-model/src/index.js";
 import type { GameplayResourceTextEntry } from "./gameplay-intent-resource-text.js";
 import { semanticIrExecutionTraces, type SemanticIr } from "../../../semantic-ir/src/index.js";
 import { admitDeterministicUnknownSourceRelations } from "./unknown-source-relation-admission.js";
+import { traceUiSourceActivation } from "./gameplay-ui-source-chain.js";
 import { eventRegionId, scriptRegionId } from "../diagnosis/semantic-ir-stage.js";
 import { sourceClassMethodRegion } from "../../../../analyzers/scripts/src/index.js";
 import {
@@ -160,6 +161,12 @@ export function buildGameplayIntentModel(
   const edges = new Map<string, GameplayIntentEdge>();
   const invariants = new Map<string, GameplayIntentInvariant>();
   const intentUnknowns: GameplayIntentModel["unknowns"][number][] = [];
+  // Compute canonical trace eligibility once, also reused by the existing
+  // unclassified source-flow inspection further below.
+  const observedExecution = input.semanticIr === undefined
+    ? undefined : semanticIrExecutionTraces(input.semanticIr);
+  const uiSourcePathByRegion =
+    new Map<string, ReturnType<typeof traceUiSourceActivation>>();
 
   // Reuse the canonical Gameplay Intent evidence owner. A literal player
   // instruction is useful discovery evidence, but does not create a
@@ -257,6 +264,30 @@ export function buildGameplayIntentModel(
             call.source.artifactId === input.artifactId);
         const authoredUiCall = matchingUiCalls.length === 1
           ? matchingUiCalls[0] : undefined;
+        const callGuards = authoredUiCall === undefined ? [] : [
+          ...(authoredUiCall.lexicalGuards ?? []).map(guard => ({
+            kind: "lexical" as const, guard,
+          })),
+          ...(authoredUiCall.precedenceGuards ?? []).map(guard => ({
+            kind: "precedence" as const, guard,
+          })),
+        ].filter(({ guard }) =>
+          guard.source.artifactId === input.artifactId &&
+          guard.source.range?.lineStart !== undefined &&
+          guard.source.range.columnStart !== undefined &&
+          guard.source.range.lineEnd !== undefined &&
+          guard.source.range.columnEnd !== undefined)
+          .map(({ kind, guard }) => ({
+            kind, expression: guard.expression, branch: guard.branch,
+            locator: sourceLocator(guard.source),
+          }));
+        const activation = authoredUiCall === undefined ||
+          input.semanticIr === undefined || observedExecution === undefined ||
+          input.artifactId === undefined
+          ? undefined : uiSourcePathByRegion.get(regionId) ??
+            traceUiSourceActivation(input.semanticIr,
+              observedExecution.traces, authoredUiCall, input.artifactId);
+        if (activation !== undefined) uiSourcePathByRegion.set(regionId, activation);
         if (authoredUiCall !== undefined) {
           evidence.set(authoredUiCall.id, {
             id: authoredUiCall.id,
@@ -293,6 +324,9 @@ export function buildGameplayIntentModel(
                   "Player" | "World" | "ScreenDisplay",
                 method: authoredUiCall.method as
                   "sendMessage" | "setTitle" | "setActionBar",
+                receiverInference: authoredUiCall.inference,
+                ...(callGuards.length === 0 ? {} : { callGuards }),
+                ...(activation === undefined ? {} : { sourceActivation: activation }),
                 proof: "EXACT_SOURCE_ARGUMENT_TO_TYPED_UI_CALL_NOT_DELIVERY" as const,
               },
             }),
@@ -1277,7 +1311,8 @@ export function buildGameplayIntentModel(
       .flatMap(node => node.evidenceIds).concat(
         [...edges.values()].flatMap(edge => edge.evidenceIds),
       ));
-    const observedExecution = semanticIrExecutionTraces(input.semanticIr);
+    const sourceTraces = observedExecution ??
+      semanticIrExecutionTraces(input.semanticIr);
     const byRegion = new Map<string, string[]>();
     for (const operation of input.semanticIr.state.operations) {
       // A clear/delete is just as material as a write for an unknown
@@ -1303,7 +1338,7 @@ export function buildGameplayIntentModel(
       byRegion.set(effect.executionRegionId, ids);
     }
     const candidates = [
-      ...observedExecution.traces.map(trace => ({
+      ...sourceTraces.traces.map(trace => ({
         identity: trace.entryRegionId,
         ids: [
           ...trace.stateOperationIds.filter(id =>
@@ -1315,7 +1350,7 @@ export function buildGameplayIntentModel(
           ...(trace.worldEffectIds ?? []),
         ],
       })),
-      ...observedExecution.regionsOutsideTraces.map(regionId => ({
+      ...sourceTraces.regionsOutsideTraces.map(regionId => ({
         identity: regionId,
         ids: byRegion.get(regionId) ?? [],
       })),
