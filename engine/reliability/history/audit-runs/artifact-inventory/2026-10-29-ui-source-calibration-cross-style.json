@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "CHATGPT_DIRECT_SELECTED_ARCHIVE_ZIP_AND_STANDALONE_TYPESCRIPT_AST_INSPECTION",
+  "status": "SOURCE_CALIBRATION_OBSERVED_UNSCORABLE",
+  "observedOn": "2026-10-29",
+  "repositoryBaseline": "477d4e96379db5bb6e2b083bf9e5fed530db2015",
+  "corpusManifest": "engine/reliability/corpus/calibration.json",
+  "caseCount": 4,
+  "execution": {
+    "actor": "ChatGPT container",
+    "zipInspection": "Python zipfile and hashlib.sha256 over the downloaded original archive bytes",
+    "syntaxInspection": "Node.js v22.16.0 and TypeScript v5.8.3 createSourceFile AST",
+    "artifactBinding": "SHA256_VERIFIED_AGAINST_FROZEN_CALIBRATION_MANIFEST",
+    "parsing": "Readonly JavaScript/TypeScript under scripts/ folders; no map ZIP extracted back to the original; case-specific scratch copies only",
+    "engineAudit": "NOT_EXECUTED",
+    "sourceRepositoryTypeScript": "NOT_EXECUTED",
+    "minecraftImportOrGameplay": "NOT_OBSERVED"
+  },
+  "methodology": {
+    "caseSelection": "Four calibration (development-visible), differently packaged Minecraft map archives with stored external artifact IDs and known SHA-256. No acceptance/holdout cases were inspected.",
+    "literalTranslate": "AST PropertyAssignment named translate with StringLiteralLike initializer (including no-substitution template strings); no UI reachability inferred.",
+    "dynamicTranslate": "AST PropertyAssignment named translate without a StringLiteralLike initializer; dynamic template/other values never resolved or treated as literal.",
+    "directUiCallArgumentSyntax": "Walk only through static object/array literal containment and syntactic TS wrappers to a direct CallExpression argument of a property access whose spelling is sendMessage/setTitle/setActionBar. Reject spread, helper invocation, variable indirection and unsupported expression forms. Name-only match: receiver typing, actual UI delivery, activation and gameplay semantics are NOT verified.",
+    "indirectLiteralTranslateObjects": "Static literal translate objects not satisfying that direct argument syntax; may be definitions, inert constants, rawtext builders or helper inputs. Do NOT count as missed delivered UI.",
+    "uiMethodNameCallSites": "AST call expression whose callee property is named sendMessage/setTitle/setActionBar. Receiver may not be Minecraft typed and an authored call is not execution.",
+    "localeDefinitionEntries": "Sum of nonempty, noncomment key=value lines as last distinct keys per physical .lang file, across all locale files; neither unique winning key nor effective resource-pack selection.",
+    "manifestEntry": "Every inspected archive contained declared script main entry and world BP/RP list records; declaration is not runtime initialization.",
+    "metricsMeaning": "Counts are an independent structural source census, NOT canonical engine output, semantic TP/FP/FN/TN, detection recall, PROVEN findings, or a before/after benchmark delta."
+  },
+  "maps": [
+    {
+      "caseId": "blitzbuild",
+      "sourceShape": "MODULAR_SOURCE",
+      "selectedArtifact": {
+        "file": "BlitzBuild-v1.0.2.mcworld",
+        "sha256": "d3a7082af1c2e5f8ded862f801eaa3880f02beb323280648a243d31e574e5504",
+        "bytes": 2885752
+      },
+      "sourceInventory": {
+        "archiveEntries": 143,
+        "scriptFiles": 44,
+        "scriptParseDiagnostics": 0,
+        "localizedFiles": 2,
+        "localeDefinitionEntries": 18
+      },
+      "authoredSourceSyntax": {
+        "staticLiteralTranslateObjects": 2,
+        "dynamicTranslateObjects": 8,
+        "directUiCallArgumentSyntax": 2,
+        "indirectLiteralTranslateObjects": 0,
+        "uiMethodNameCallSites": 44
+      },
+      "note": "Direct literal UI argument syntax exists; future typed IR and runtime verification remain independent."
+    },
+    {
+      "caseId": "cal-defense-challenge-1-1-5",
+      "sourceShape": "COMPILED_CHUNKED_SOURCE",
+      "selectedArtifact": {
+        "file": "Defense Challenge v1.1.5.mcworld",
+        "sha256": "eb554476d26b7b9de949628d8efe00f12beb95669f6c424a2eb754b52d39f45c",
+        "bytes": 24032943
+      },
+      "sourceInventory": {
+        "archiveEntries": 529,
+        "scriptFiles": 8,
+        "scriptParseDiagnostics": 0,
+        "localizedFiles": 2,
+        "localeDefinitionEntries": 122
+      },
+      "authoredSourceSyntax": {
+        "staticLiteralTranslateObjects": 34,
+        "dynamicTranslateObjects": 4,
+        "directUiCallArgumentSyntax": 1,
+        "indirectLiteralTranslateObjects": 33,
+        "uiMethodNameCallSites": 170
+      },
+      "note": "Many literal translation values belong to presentation builders/helper calls or static palettes, not direct typed API call arguments."
+    },
+    {
+      "caseId": "cal-composite-challenge-1-1-17",
+      "sourceShape": "COMPILED_CHUNKED_SOURCE_WITH_PRESENTATION_BUILDERS",
+      "selectedArtifact": {
+        "file": "Daigon Composite v1.1.17.mcworld",
+        "sha256": "aab3f0b8de9d1d35274b8eae6cfb84aa8cc2b743454c891e78fbb47c6f1515c4",
+        "bytes": 20424962
+      },
+      "sourceInventory": {
+        "archiveEntries": 543,
+        "scriptFiles": 9,
+        "scriptParseDiagnostics": 0,
+        "localizedFiles": 2,
+        "localeDefinitionEntries": 110
+      },
+      "authoredSourceSyntax": {
+        "staticLiteralTranslateObjects": 45,
+        "dynamicTranslateObjects": 6,
+        "directUiCallArgumentSyntax": 0,
+        "indirectLiteralTranslateObjects": 45,
+        "uiMethodNameCallSites": 282
+      },
+      "note": "No direct literal UI argument syntax among the observed static translate objects; substantial authored constants and helper-based presentation values remain unbound."
+    },
+    {
+      "caseId": "cal-beach-bedwars-1-1-0",
+      "sourceShape": "SINGLE_BUNDLED_MINIFIED_SOURCE_WITH_DYNAMIC_TRANSLATION_KEY",
+      "selectedArtifact": {
+        "file": "Beach Bedwars v1.1.0.mcworld",
+        "sha256": "97b4b143d674b37763501c82d63ba2f7ba0602d44e71f30cde6e5a23a08979c8",
+        "bytes": 2976518
+      },
+      "sourceInventory": {
+        "archiveEntries": 142,
+        "scriptFiles": 1,
+        "scriptParseDiagnostics": 0,
+        "localizedFiles": 1,
+        "localeDefinitionEntries": 70
+      },
+      "authoredSourceSyntax": {
+        "staticLiteralTranslateObjects": 0,
+        "dynamicTranslateObjects": 1,
+        "directUiCallArgumentSyntax": 0,
+        "indirectLiteralTranslateObjects": 0,
+        "uiMethodNameCallSites": 47
+      },
+      "note": "Dynamic template translation key is not a static literal and cannot be resolved by matching a fixed locale key."
+    }
+  ],
+  "totals": {
+    "archiveEntries": 1357,
+    "scriptFiles": 62,
+    "scriptParseDiagnostics": 0,
+    "localeFiles": 7,
+    "localeDefinitionEntries": 320,
+    "staticLiteralTranslateObjects": 81,
+    "dynamicTranslateObjects": 19,
+    "directUiCallArgumentSyntax": 3,
+    "indirectLiteralTranslateObjects": 78,
+    "uiMethodNameCallSites": 543
+  },
+  "findings": {
+    "firstEvidence": "The direct-literal-only UI-send witness recognizes one narrow source form; modular, chunked helper/palette, and bundled dynamic-key sources have materially different source structures.",
+    "recommendedNextSourceOwner": "engine/analyzers/scripts/src/parser/parse.ts plus existing Semantic IR source identity and Gameplay Intent adapter, not a detector based on game names or UI wording.",
+    "safeNextDevelopment": "Add bounded, unambiguous, provenance-preserving literal value/argument forwarding for exact constants and helper handoffs; retain explicit UNKNOWN for dynamic keys, branch ambiguity, mutated aliases, and untyped receivers. Avoid turning helper proximity into authenticated delivery or approved design.",
+    "benchmarkDecision": "No canonical exact-head runSelectedMapAudit result or independently adjudicated full-map output was executed, therefore PROVEN/NEED_VALIDATION delta and TP/FP/FN/TN denominators are UNSCORABLE. Frozen expectations and acceptance cases remain unchanged.",
+    "knownGoodProtection": "Language copy, palette constants, source API calls and prepared script entrypoints do not prove player victory, live message delivery, Minecraft execution or absence of bugs."
+  },
+  "limitations": [
+    "Counts of AST syntax are not results returned by the M-Lazy-Developer gameplay parser or selected-map audit entrypoint.",
+    "A direct method-spelling match lacks receiver resolution; do not present it as a proven Minecraft Script API call.",
+    "No runtime package selection, event firing, guard satisfaction, player identity or Minecraft gameplay observation.",
+    "Archive source structure and frozen corpus expectation ID do not automatically create a scorable full-map benchmark.",
+    "Private map binaries, raw scripts and locale texts are not committed in this record; only SHA-bound aggregate counts."
+  ]
+}
