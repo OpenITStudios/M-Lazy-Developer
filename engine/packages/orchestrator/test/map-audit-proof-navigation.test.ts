@@ -61,6 +61,47 @@ describe("map audit proof navigation", () => {
     ]);
   });
 
+  it("routes only unsatisfied criteria and exact missing counter-proof dimensions", () => {
+    const unresolved = {
+      ...finding("progression-wave-objective"),
+      missingProofCriteria: [
+        { id: "counter-proof-cleared", scope: "universal" as const,
+          description: "Search every exact blocking guard before promotion." },
+        { id: "failing-path-reachable", scope: "family" as const,
+          description: "Prove the failure path is independently reachable." },
+      ],
+      missingCounterProofDimensions: ["scope", "guard"] as const,
+    };
+    const result = buildAuditProofNavigation(unresolved);
+    expect(result.missingClaims).toEqual([
+      "UNIVERSAL counter-proof-cleared: Search every exact blocking guard before promotion.",
+      "FAMILY failing-path-reachable: Prove the failure path is independently reachable.",
+    ]);
+    expect(result.familyProofCriteria).toEqual([
+      "failing-path-reachable: Prove the failure path is independently reachable.",
+    ]);
+    expect(result.route[0]).toMatchObject({
+      order: 1, knowledgeDomain: "counter-proof",
+      evidencePreference: "selected-artifact",
+    });
+    expect(result.route[0]?.question).toContain("scope, guard");
+    expect(result.route[1]?.order).toBe(2);
+    expect(result.route.at(-1)?.evidencePreference).toBe("runtime");
+  });
+
+  it("keeps explicit zero family gaps empty rather than requesting unrelated proofs", () => {
+    const unresolved = {
+      ...finding("progression-wave-objective"),
+      missingProofCriteria: [
+        { id: "required-knowledge-satisfied", scope: "universal" as const,
+          description: "One selected-map Knowledge receipt remains missing." },
+      ],
+    };
+    const result = buildAuditProofNavigation(unresolved);
+    expect(result.familyProofCriteria).toEqual([]);
+    expect(result.missingClaims).toHaveLength(1);
+  });
+
   it("marks explicitly native client reconciliation residue as runtime-required", () => {
     const item = {
       ...finding("ui-feedback-information"),

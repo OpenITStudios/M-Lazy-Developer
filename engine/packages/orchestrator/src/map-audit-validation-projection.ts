@@ -2,8 +2,10 @@ import {
   uniqueGameplayCausalLinkScope,
   type GameplayScenarioGraph,
 } from "./inspection/gameplay-scenario-model.js";
-import type {
-  GameplayDefectResolutionGate,
+import {
+  automaticCounterProofSearch,
+  requiredCounterProofDimensions,
+  type GameplayDefectResolutionGate,
 } from "./inspection/gameplay-defect-resolution.js";
 import type {
   GameplayCapabilityDeliveryAssessment,
@@ -110,12 +112,39 @@ export function projectNeedValidationAuditIssues(
         );
       }
 
-      const missingCriteria = [
-        ...saturation.missingUniversalCriteriaIds,
-        ...saturation.missingFamilyCriteriaIds,
+      const missingProofCriteria = [
+        ...saturation.universalCriteria.filter(item => !item.satisfied)
+          .map(item => ({
+            id: item.id, description: item.description,
+            scope: "universal" as const,
+          })),
+        ...saturation.familyCriteria.filter(item => !item.satisfied)
+          .map(item => ({
+            id: item.id, description: item.description,
+            scope: "family" as const,
+          })),
       ];
+      const missingCriteria = missingProofCriteria.map(item => item.id);
       const counterProofPending = saturation.missingUniversalCriteriaIds
         .includes("counter-proof-cleared");
+      // The graph, not the model or a text search, owns what exact
+      // counter-proof dimensions remain. Recompute only if that criterion
+      // is incomplete; a stale or externally supplied search receipt is not
+      // evidence of exhausted dimensions.
+      const currentCounterProof = counterProofPending
+        ? automaticCounterProofSearch(graph, link, scenario)
+        : undefined;
+      const missingCounterProofDimensions = currentCounterProof === undefined
+        ? []
+        : requiredCounterProofDimensions(graph, link, scenario)
+          .filter(dimension => {
+            const matched = currentCounterProof.dimensionReceipts.filter(item =>
+              item.dimension === dimension
+            );
+            return matched.length !== 1 ||
+              matched[0]?.exhaustiveWithinScope !== true ||
+              matched[0].evidenceIds.length === 0;
+          });
       // Reuse the exact link-sourced evidence set used for issue taxonomy.
       return [{
         status: "NEED_VALIDATION" as const,
@@ -151,6 +180,10 @@ export function projectNeedValidationAuditIssues(
         ...(link.knowledgeRequirementIds.length
           ? { knowledgeRequirementIds: [...new Set(link.knowledgeRequirementIds)].sort() }
           : {}),
+        missingProofCriteria,
+        ...(missingCounterProofDimensions.length > 0
+          ? { missingCounterProofDimensions }
+          : {}),
         validationReason: counterProofPending
           ? "A source-grounded contradiction has been translated, but the canonical counter-proof search is incomplete or disputed; a confirmed gameplay defect is not established."
           : "The gameplay contradiction is translated and bounded counter-proof is cleared, but minimum sufficient proof remains unsatisfied.",
@@ -161,11 +194,18 @@ export function projectNeedValidationAuditIssues(
               "."
             : "Minimum sufficient proof remains incomplete.",
         validationTest: counterProofPending
-          ? "Resolve the canonical source-scoped counter-proof and only the other missing proof criteria for '" +
-            scenario.label + "'. Do not treat an unverified guard as cleared."
+          ? "Resolve the canonical source-scoped counter-proof for '" +
+            scenario.label + "'." +
+            (missingCounterProofDimensions.length > 0
+              ? " Collect exact, exhaustive source witnesses for missing dimension(s): " +
+                missingCounterProofDimensions.join(", ") + "."
+              : " Canonical dimension witnesses exist, but the current proof receipt is incomplete, disputed or stale; reconcile it against the source graph.") +
+            " Then resolve only the remaining missing criteria: " +
+            missingCriteria.filter(id => id !== "counter-proof-cleared").join(", ") +
+            ". Never treat an unverified guard as cleared."
           : "Resolve only the unsatisfied proof criteria for '" +
-            scenario.label +
-            "'. Do not broaden testing or request runtime evidence for already-satisfied dimensions.",
+            scenario.label + "': " + missingCriteria.join(", ") +
+            ". Do not request new runtime evidence for already-satisfied dimensions.",
         validationGroupKey:
           scenario.id +
           ":" +

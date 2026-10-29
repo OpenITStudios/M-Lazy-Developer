@@ -7,6 +7,7 @@ import {
 } from "./inspection/gameplay-scenario-knowledge.js";
 import {
   capabilityDeliveryMatchesScope,
+  type CounterProofSearchDimension,
   type GameplayDefectResolutionGate,
 } from "./inspection/gameplay-defect-resolution.js";
 import {
@@ -56,6 +57,18 @@ export interface NeedValidationAuditIssueProjection
   readonly validationReason: string;
   readonly missingProof: string;
   readonly validationTest: string;
+  /** Exact unsatisfied criteria from the canonical saturation owner.
+   * Missing proof remains missing; this is an investigation index only.
+   */
+  readonly missingProofCriteria?: readonly {
+    readonly id: string;
+    readonly description: string;
+    readonly scope: "universal" | "family";
+  }[];
+  /** Only canonical graph-scope counter-proof dimensions still without an
+   * exhaustive source-bound witness; never runtime or missing-bug proof.
+   */
+  readonly missingCounterProofDimensions?: readonly CounterProofSearchDimension[];
   readonly proofNavigation?: import("./map-audit-proof-navigation.js").AuditProofNavigation;
   /**
    * Stable consolidation key. Multiple unresolved findings with the same key

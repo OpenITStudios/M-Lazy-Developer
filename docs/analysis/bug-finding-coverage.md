@@ -581,6 +581,22 @@ Absence claims require enumeration of possible authoritative owners and implemen
 
 Timing-sensitive claims must explicitly prove event ordering and stale/new ownership.
 
+## Proof-gap-first automatic resolution
+
+At each PROVE attempt, the existing saturation owner must expose the exact
+**unsatisfied universal and family criteria** on the current causal link.
+The existing NEED_VALIDATION projection carries those criterion IDs and
+descriptions, plus exact canonical counter-proof dimensions that lack an
+exhaustive source witness. The source-first Proof Navigation and existing
+model-task handoff consume this list rather than requiring every family
+criterion to be re-investigated. Any matching source/Knowledge/formal
+evidence must still be admitted through the unchanged source-bound proof
+and counter-proof rules; describing or searching a gap is not proof.
+Keep fixed source identity, preserve current MapAuditOutputV2 and the two
+final Bug/Design Mismatch categories. Do not broaden AI to entire maps,
+rerun already-proven dimensions, or silently convert blocked source work
+into a Minecraft playtest.
+
 ## Runtime-last rule
 
 Runtime verification is only for behavior static/package/formal reasoning cannot decide, such as native pathfinding/collision, actual simulation, client/server ordering, multi-client visual divergence, rendering/input, or performance manifestation.

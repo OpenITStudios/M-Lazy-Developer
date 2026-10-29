@@ -808,6 +808,17 @@ describe("map audit issue projection", () => {
       "Resolve the canonical source-scoped counter-proof",
     );
     expect(pending?.missingProof).toContain("counter-proof-cleared");
+    expect(pending?.missingProofCriteria).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "counter-proof-cleared",
+        scope: "universal",
+        description: expect.stringContaining("counter-proof"),
+      }),
+    ]));
+    expect(pending?.missingCounterProofDimensions).toContain("scope");
+    expect(pending?.validationTest).toContain(
+      "missing dimension(s): scope",
+    );
   });
 
   it("keeps confirmation NEED_VALIDATION until family proof receipt is complete", () => {
@@ -848,6 +859,15 @@ describe("map audit issue projection", () => {
           "link:progression",
       )?.missingProof,
     ).toMatch(/reconciliation-exhausted/i);
+    expect(unresolved.find(item =>
+      item.causalLinkId === "link:progression"
+    )?.missingProofCriteria).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "reconciliation-exhausted",
+        scope: "family",
+        description: expect.stringContaining("reconciliation"),
+      }),
+    ]));
   });
 
   it("refuses PROVEN projection when minimum proof saturation is incomplete", () => {

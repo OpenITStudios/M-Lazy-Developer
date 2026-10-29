@@ -142,6 +142,20 @@ inference. No generic developer skill, test fixture, manifest version,
 or probe result can establish gameplay Expected/Actual by itself.
 Missing typed evidence means abstain, not guess.
 
+## Proof-gap-first resolution (existing PROVE owners)
+
+A confirmation-ready causal link that does not yet meet minimum proof
+saturation exposes the exact remaining criterion IDs, criterion
+descriptions, and unclosed canonical counter-proof dimensions. The same
+existing Proof Navigation/model handoff prioritizes these gaps in
+selected-artifact/cross-domain/formal order, then runtime only for a
+genuinely native undecided claim. This is a smaller investigation packet,
+not new AI authority: no criterion becomes PROVEN from narrative or a
+proposed source substitution. Already-satisfied family proof must not
+be resent for reassurance. The existing current-revision model-response
+gate and canonical PROVE owner alone may close a gap after source evidence
+changes or a validated resolution is supplied.
+
 ## Batch C — diagnosis consolidation without new authority
 
 The canonical flow already distinguishes `PROVEN` from

@@ -831,6 +831,25 @@ export function buildAuditProofNavigation(
       ...step,
     }),
   );
+  const required = finding.missingProofCriteria;
+  const missingClaims = required === undefined
+    ? [finding.missingProof]
+    : required.map(item =>
+      item.scope.toUpperCase() + " " + item.id + ": " + item.description);
+  const missingDimensions = finding.missingCounterProofDimensions ?? [];
+  const exactCounterProofStep: readonly AuditProofNavigationStep[] =
+    missingDimensions.length === 0 ? [] : [{
+      order: 1,
+      knowledgeDomain: "counter-proof",
+      question:
+        "Which source-bound witness exhausts the exact " +
+        missingDimensions.join(", ") + " dimension(s) for this causal link?",
+      purpose:
+        "Search only the missing dimensions for a reachable guard, " +
+        "scope or blocking alternative; attach one exact proof receipt " +
+        "or keep the dimension unresolved.",
+      evidencePreference: "selected-artifact",
+    }];
   const historicalSearchHints =
     world === undefined
       ? []
@@ -849,24 +868,30 @@ export function buildAuditProofNavigation(
     recipeId: recipe.id,
     proofGoal: recipe.goal,
     provenClaims,
-    missingClaims: [
-      finding.missingProof,
-    ],
-    route:
-      reprioritizeRouteWithHistoricalHints(
+    missingClaims,
+    route: [
+      ...exactCounterProofStep,
+      ...reprioritizeRouteWithHistoricalHints(
         baseRoute,
         historicalSearchHints,
       ),
+    ].map((step, index) => ({
+      ...step,
+      order: index + 1,
+    })),
     evidenceSubstitutions,
     historicalSearchHints,
     historyPressure:
       historicalSearchPressure(
         historicalSearchHints,
       ),
-    familyProofCriteria:
-      proofSaturationFamilyCriteria(
-        finding.failureDomain,
-      ),
+    // Submit only still-unsatisfied family claims to the AI handoff.
+    // Older manually supplied findings without criterion detail retain
+    // their safe domain recipe as a fallback.
+    familyProofCriteria: required === undefined
+      ? proofSaturationFamilyCriteria(finding.failureDomain)
+      : required.filter(item => item.scope === "family")
+        .map(item => item.id + ": " + item.description),
     proofStopRule:
       "Once every applicable family criterion is grounded and universal contradiction/translation/scope/evidence/counter-proof criteria are saturated, stop searching and do not request runtime manifestation merely for reassurance.",
     runtimeLastResort: true,
