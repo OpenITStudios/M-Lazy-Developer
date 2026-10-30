@@ -142,6 +142,36 @@ describe("canonical repository import discovery", () => {
       const combined = plan("--integration", fixture, catalog);
       expect(combined.status).toBe(0);
       expect(combined.stdout).toContain("connected tests: 3; selected tests: 4");
+      const git = (...argv) => spawnSync("git", argv, { cwd, encoding: "utf8" });
+      expect(git("init", "-q").status).toBe(0);
+      expect(git("add", catalog).status).toBe(0);
+      expect(git("-c", "user.name=Fixture", "-c",
+        "user.email=fixture@example.invalid", "commit", "-qm", "baseline").status).toBe(0);
+      const pinned = git("rev-parse", "HEAD").stdout.trim();
+      expect(pinned).toMatch(/^[a-f0-9]{40}$/);
+      writeFileSync(join(cwd, catalog), JSON.stringify({
+        schemaVersion: 1, sources: [], facts: [
+          { id: "fact.one", changed: true }, { id: "fact.two" },
+        ],
+      }));
+      const precise = plan("--base-sha", pinned, catalog);
+      expect(precise.status).toBe(0);
+      expect(precise.stdout).toContain("comparison pinned-baseline");
+      expect(precise.stdout).toContain("impacted knowledge claims 1");
+      expect(precise.stdout).toContain("connected tests: 1; selected tests: 1");
+      expect(precise.stdout).toContain("test/fact.test.ts");
+      expect(precise.stdout).not.toContain("test/other-proof.test.ts");
+      expect(precise.stdout).toContain("Test selection planning:");
+      writeFileSync(join(cwd, catalog), JSON.stringify({
+        schemaVersion: 1, sources: [], facts: [{ id: "fact.two" }],
+      }));
+      const deleted = plan("--base-sha", pinned, catalog);
+      expect(deleted.status).toBe(0);
+      expect(deleted.stdout).toContain("impacted knowledge claims 1");
+      expect(deleted.stdout).toContain("test/fact.test.ts");
+      const invalidRef = plan("--base-sha", "bad", catalog);
+      expect(invalidRef.status).toBe(2);
+      expect(invalidRef.stderr).toContain("40-character");
       const unlinked = plan("engine/fixtures/regressions/unused.json", catalog);
       expect(unlinked.status).toBe(2);
       expect(unlinked.stderr).toContain("No statically connected test for fixture");

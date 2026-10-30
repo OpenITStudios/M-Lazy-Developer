@@ -1,6 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, extname, relative, resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
+import { performance } from "node:perf_hooks";
 
 // Normal development checks whole user-facing paths, not every micro regression.
 // Deep regression suites remain available with --full; --focus targets a repair.
@@ -67,11 +69,60 @@ function loadInventory() {
   }
   return data.tests;
 }
+
+function catalogClaims(catalog, path) {
+  if (catalog?.schemaVersion !== 1 || !Array.isArray(catalog.facts) ||
+      (catalog.relations !== undefined && !Array.isArray(catalog.relations))) {
+    throw new Error("Unrecognized knowledge catalog contract: " + path);
+  }
+  const claims = new Map();
+  for (const [kind, entries] of [
+    ["fact", catalog.facts], ["relation", catalog.relations ?? []],
+  ]) {
+    for (const claim of entries) {
+      if (typeof claim?.id !== "string" || !claim.id.trim() ||
+          claims.has(claim.id)) {
+        throw new Error("Invalid or duplicate knowledge claim in " + path);
+      }
+      claims.set(claim.id, { kind, claim });
+    }
+  }
+  if (!claims.size) {
+    throw new Error("Empty knowledge catalog cannot be narrowly mapped: " + path);
+  }
+  return claims;
+}
+function changedCatalogClaimIds(path, catalog, baseSha) {
+  const current = catalogClaims(catalog, path);
+  if (baseSha === undefined) return undefined;
+  const historical = spawnSync("git", ["show", baseSha + ":" + path], {
+    cwd: process.cwd(), encoding: "utf8", maxBuffer: 8 * 1024 * 1024,
+    timeout: 10000, shell: false, windowsHide: true,
+  });
+  if (historical.error || historical.status !== 0) {
+    throw new Error("Cannot verify pinned knowledge baseline " + baseSha +
+      " for " + path + ". Use conservative path-only selection.");
+  }
+  let previous;
+  try { previous = JSON.parse(historical.stdout); }
+  catch { throw new Error("Pinned knowledge baseline is invalid JSON: " + path); }
+  const before = catalogClaims(previous, path);
+  const union = new Set([...before.keys(), ...current.keys()]);
+  const withoutClaims = value => Object.fromEntries(Object.entries(value)
+    .filter(([key]) => key !== "facts" && key !== "relations"));
+  const metadataChanged = !isDeepStrictEqual(
+    withoutClaims(previous), withoutClaims(catalog));
+  const selected = [...union].filter(id => metadataChanged ||
+    !isDeepStrictEqual(before.get(id), current.get(id)));
+  // No-delta path input is not proof that other dependency inputs stayed valid.
+  return selected.length ? selected : [...union];
+}
+
 /** Static import impact is an execution *selection*, never proof that
  * dynamic file loads, runtime behavior or every possible regression passed.
  * Use the existing AST reader and only source files in the current checkout.
  */
-function selectAffectedTests(inventory, changedPaths, integrate, importSpecifiers) {
+function selectAffectedTests(inventory, changedPaths, integrate, importSpecifiers, baseSha) {
   const roots = [".agents", "apps", "engine", "tooling"];
   const ignored = new Set(["node_modules", ".git", "dist", ".svelte-kit"]);
   const extensions = [".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"];
@@ -122,6 +173,7 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
     }
   }
   const registeredProofTests = new Set();
+  let impactedKnowledgeClaims = 0;
   if (knowledgeChanged.length) {
     const registryPath = resolve("engine/reliability/catalogs/knowledge-detector-bindings.json");
     if (!existsSync(registryPath)) {
@@ -134,6 +186,7 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
     }
     const inventoryPaths = new Set(inventory.map(item => item.path));
     const knownIds = new Set();
+    const proofsByKnowledgeId = new Map();
     for (const binding of registry.bindings) {
       if (typeof binding.knowledgeId !== "string" ||
           !binding.knowledgeId.trim() || knownIds.has(binding.knowledgeId) ||
@@ -141,30 +194,42 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
         throw new Error("Invalid or duplicate knowledge-detector binding.");
       }
       knownIds.add(binding.knowledgeId);
+      proofsByKnowledgeId.set(binding.knowledgeId, binding.proofPaths);
       for (const proof of binding.proofPaths) {
         if (typeof proof !== "string" || !inventoryPaths.has(proof)) {
           throw new Error("Knowledge proof absent from test inventory: " +
             String(proof) + ". Repair bindings before narrowing tests.");
         }
-        registeredProofTests.add(proof);
       }
     }
     for (const path of knowledgeChanged) {
       const catalog = JSON.parse(readFileSync(resolve(path), "utf8"));
-      if (catalog.schemaVersion !== 1 || !Array.isArray(catalog.facts) ||
-          (catalog.relations !== undefined && !Array.isArray(catalog.relations))) {
-        throw new Error("Unrecognized knowledge catalog contract: " + path);
-      }
-      const claims = [...catalog.facts, ...(catalog.relations ?? [])];
-      if (!claims.length) {
-        throw new Error("Empty knowledge catalog cannot be narrowly mapped: " + path);
-      }
-      const unbound = claims.filter(claim =>
-        typeof claim?.id !== "string" || !knownIds.has(claim.id));
+      const currentClaims = catalogClaims(catalog, path);
+      const unbound = [...currentClaims.keys()].filter(id => !knownIds.has(id));
       if (unbound.length) {
         throw new Error("Knowledge catalog has " + unbound.length +
           " unbound claim(s): " + path +
           ". Review bindings and select broader proof.");
+      }
+      const changedIds = changedCatalogClaimIds(path, catalog, baseSha);
+      if (changedIds === undefined) {
+        // A path-only request cannot reconstruct removed IDs.
+        for (const binding of registry.bindings) {
+          for (const proof of binding.proofPaths) registeredProofTests.add(proof);
+        }
+        impactedKnowledgeClaims = knownIds.size;
+      } else {
+        const missing = changedIds.filter(id => !knownIds.has(id));
+        if (missing.length) {
+          throw new Error("Baseline knowledge claim(s) lack current bindings: " +
+            missing.join(", ") + ". Cannot narrow checks safely.");
+        }
+        impactedKnowledgeClaims += changedIds.length;
+        for (const id of changedIds) {
+          for (const proof of proofsByKnowledgeId.get(id)) {
+            registeredProofTests.add(proof);
+          }
+        }
       }
     }
   }
@@ -242,6 +307,8 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
   return {
     changed, selected, connected: connected.length, traced: affected.size,
     knowledgeCatalogs: knowledgeChanged.length,
+    knowledgeComparison: baseSha === undefined ? "path-only" : "pinned-baseline",
+    impactedKnowledgeClaims,
     registeredProofTests: registeredProofTests.size,
     fixtureResources: fixtureResources.length,
   };
@@ -270,20 +337,39 @@ if (mode === "--acceptance" && args.length <= 1) {
   }
   process.exit(0);
 } else if (mode === "--affected" && args.length > 1) {
-  const flags = new Set(args.slice(1).filter(value => value.startsWith("--")));
-  if ([...flags].some(value => !["--integration", "--plan"].includes(value))) {
-    console.error("Unknown --affected option; use --integration and/or --plan.");
-    process.exit(2);
+  const flags = new Set();
+  const changed = [];
+  let baseSha;
+  for (let i = 1; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === "--integration" || arg === "--plan") {
+      if (flags.has(arg)) {
+        console.error("Duplicate --affected option: " + arg);
+        process.exit(2);
+      }
+      flags.add(arg);
+    } else if (arg === "--base-sha") {
+      const value = args[++i];
+      if (baseSha !== undefined || !/^[a-f0-9]{40}$/.test(value ?? "")) {
+        console.error("--base-sha requires one exact 40-character Git commit SHA.");
+        process.exit(2);
+      }
+      baseSha = value;
+    } else if (arg.startsWith("--")) {
+      console.error("Unknown --affected option: " + arg);
+      process.exit(2);
+    } else changed.push(arg);
   }
-  const changed = args.slice(1).filter(value => !value.startsWith("--"));
   if (changed.length === 0) {
     console.error("--affected needs changed repository source paths from the exact revision.");
     process.exit(2);
   }
   try {
+    const startedAt = performance.now();
     const { importSpecifiers } = await import("./source-import-specifiers.mjs");
     const result = selectAffectedTests(loadInventory(), changed,
-      flags.has("--integration"), importSpecifiers);
+      flags.has("--integration"), importSpecifiers, baseSha);
+    const selectionElapsedMs = Math.max(0, performance.now() - startedAt);
     selectedNative = result.selected.filter(item => nativeFiles.includes(item.path))
       .map(item => item.path);
     vitestFiles = result.selected.filter(item => !nativeFiles.includes(item.path))
@@ -291,6 +377,8 @@ if (mode === "--acceptance" && args.length <= 1) {
     console.log("Static source/data impact only; dynamic inputs and runtime proof are not certified.");
     if (result.knowledgeCatalogs || result.fixtureResources) {
       console.log("Data selection: knowledge catalogs " + result.knowledgeCatalogs +
+        "; comparison " + result.knowledgeComparison +
+        "; impacted knowledge claims " + result.impactedKnowledgeClaims +
         "; registered proof tests " + result.registeredProofTests +
         "; statically linked fixture resources " + result.fixtureResources + ".");
     }
@@ -298,6 +386,8 @@ if (mode === "--acceptance" && args.length <= 1) {
       "; connected tests: " + result.connected +
       "; selected tests: " + result.selected.length +
       "; affected source modules: " + result.traced + ".");
+    console.log("Test selection planning: " + selectionElapsedMs.toFixed(1) +
+      " ms (inventory, source scan and impact graph; not test execution).");
     if (flags.has("--plan")) {
       for (const file of result.selected) console.log(file.lane + ": " + file.path);
       process.exit(0); // A plan is not a test PASS.
@@ -318,7 +408,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] changed/source-or-bound-data ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 
