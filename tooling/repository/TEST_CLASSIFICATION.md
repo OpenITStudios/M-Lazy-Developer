@@ -10,7 +10,7 @@ down from **687**. There are
 66 original paths removed cumulatively, and
 2 family test files introduced in the earlier batch (none in the latest).
 
-The cumulative reduction of 64 physical files **does not mean 57 test cases were eliminated**.
+The cumulative reduction of 64 physical files **does not represent deletion of test cases**.
 The merged sources preserve the original `describe/it` bodies, with
 **244 it()/test() call sites** and **458 expect() call sites**
 across the 91 source files represented by the 27
@@ -123,6 +123,57 @@ In particular, `engine/analyzers/topology/test/regression-flow.test.ts`
 remains a distinct **regression** test instead of being absorbed
 into a **development**-lane topology file.
 The 458 knowledge-to-proof declarations remain intact after earlier proof-path redirects. Phase B removed no referenced `proofPaths` (including the retained loot-table test); declaration count is not proof that assertions ran.
+
+### Phase C — Semantic redundancy review (source-only)
+
+Reference: `Local` commit `3f28fbfb3a22d4432a5a27b693d971b98a2c92c1`, 623 registered test files.
+All **151 files** with primary functional area `audit-diagnosis` were read
+for named cases, imported source consumers, assertion-call counts and
+owner/lane routing. This is a **candidate screen**, not exhaustive
+assertion-by-assertion equivalence proof or executed Vitest.
+
+| Audit / Diagnosis lane | Files |
+| --- | ---: |
+| `development` | 90 |
+| `regression` | 42 |
+| `acceptance` | 17 |
+| `safety` | 1 |
+| `runtime` | 1 |
+| **Total screened** | **151** |
+
+**Decision:** zero test files, test cases or assertion calls were approved
+for semantic deletion during Phase C. Shared topic, helper import, output
+label or failure severity is insufficient to prove two cases redundant.
+No case pair yet has demonstrated equivalence of **actual input, called
+production consumer, expected assertions and negative-control/proof boundary**.
+This is a conservative *no approved deletion* decision, not a claim that
+every case is globally unique.
+
+| Compared family | Why existing cases remain distinct |
+| --- | --- |
+| `invariant-mining` vs `invariant-mining-advanced` | Minimum support and historical counterproof differ from distinct-state, multi-source and Minecraft-version staleness checks, despite two shared production imports |
+| `blindspot-tasks` vs `operator-effectiveness` | Survivor-to-task conversion differs from multi-campaign aggregation and search-budget policy, despite one shared production import |
+| `causal-analysis`, `causal-incident-analysis`, `first-wrong-transition` | Dependency synthesis, incident grouping and first temporal violation have different consumers and required evidence |
+| `map-audit-admission`, `map-audit-honesty`, `map-audit-proof-saturation` | Stage admission, residue integrity and family proof saturation protect different acceptance boundaries |
+
+**Execution-cost distinction:** `tooling/repository/run-tests.mjs`
+selects 10 Vitest suites and one native `node:test` file for the normal
+`--acceptance` path. Exactly four of those Vitest files currently have
+primary area `audit-diagnosis`. `--focus` and `--affected` provide bounded
+selection; `--full` is explicitly comprehensive. The 623-file inventory
+is therefore **not** equivalent to 623 files executed on every normal
+development run. The actual execution-time benefit of file consolidation
+has **not been measured**.
+
+**Next admissible deletion:** require pinned current and proposed case
+bodies, exact producer/consumer comparison, same required negative
+controls, and proof that deleting the candidate leaves no unique
+behavior or source-to-knowledge proof uncovered. Preserve regression,
+safety, acceptance and runtime boundaries and do not add a replacement
+microtest, runner, registry or automatic CI. When the evidence is
+insufficient, retain the case. The known lobby/team-selection and
+logout→cleanup→rejoin coverage gaps remain separate questions.
+TypeScript, Vitest, `runSelectedMapAudit()` and Minecraft were **NOT EXECUTED**.
 
 ### Upstream developers / Skills Probe
 
