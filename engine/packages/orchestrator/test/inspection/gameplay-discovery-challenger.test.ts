@@ -295,43 +295,42 @@ describe("gameplay discovery challenger", () => {
       .some(item => item.subjectId === "region:external")).toBe(true);
   });
 
-  it("does not admit hypothetical intent as exact Semantic IR ownership", () => {
-    const ir = {
-      schemaVersion: 1,
-      execution: { regions: [{ id: "region:hypothesis", kind: "script-module",
-        ownerId: "scripts/main", label: "module", source: { artifactId: "a", relativePath: "scripts/main.js" } }], edges: [] },
-      state: { surfaces: [], operations: [], authorityBindings: [] },
-      temporal: { relations: [] },
-    } as unknown as SemanticIr;
-    const proposed = intentFixture({ ...emptyIntent, nodes: [{
-      id: "intent:proposed", status: "hypothesis",
-      evidenceIds: ["region:hypothesis"],
-    }] });
-    const findings = challengeGameplayDiscovery({ semanticIr: ir, intent: proposed, graph: emptyGraph });
-    expect(findings.map(item => item.subjectId)).toContain("region:hypothesis");
-    const authored = intentFixture({ ...proposed, evidence: [{ id: "region:hypothesis", scope: "selected-artifact", origin: "source-code", locator: "scripts/main.js", summary: "exact region" }], nodes: [{
-      ...proposed.nodes[0]!, status: "authored",
-    }] });
-    const admitted = challengeGameplayDiscovery({ semanticIr: ir, intent: authored, graph: emptyGraph });
-    expect(admitted.some(item => item.subjectId === "region:hypothesis")).toBe(true);
-  });
-
-  it("does not admit inferred intent as a proven Semantic IR owner", () => {
-    const ir = {
-      schemaVersion: 1,
-      execution: { regions: [{ id: "region:inferred", kind: "script-module",
-        ownerId: "scripts/main", label: "module", source: { artifactId: "a", relativePath: "scripts/main.js" } }], edges: [] },
-      state: { surfaces: [], operations: [], authorityBindings: [] },
-      temporal: { relations: [] },
-    } as unknown as SemanticIr;
-    const intent = intentFixture({ ...emptyIntent, nodes: [{
-      id: "intent:inferred", status: "inferred", evidenceIds: ["region:inferred"],
-    }] });
-    expect(challengeGameplayDiscovery({ semanticIr: ir, intent, graph: emptyGraph })
-      .some(item => item.subjectId === "region:inferred")).toBe(true);
-    const authored = intentFixture({ ...intent, evidence: [{ id: "region:inferred", scope: "selected-artifact", origin: "source-code", locator: "scripts/main.js", summary: "exact region" }], nodes: [{ ...intent.nodes[0]!, status: "authored" }] });
-    expect(challengeGameplayDiscovery({ semanticIr: ir, intent: authored, graph: emptyGraph })
-      .some(item => item.subjectId === "region:inferred")).toBe(true);
+  it("keeps hypothetical and inferred intent unowned even with a matching authored source", () => {
+    const observed = (["hypothesis", "inferred"] as const).map(status => {
+      const id = "region:" + status;
+      const ir = {
+        schemaVersion: 1,
+        execution: { regions: [{
+          id, kind: "script-module", ownerId: "scripts/main", label: "module",
+          source: { artifactId: "a", relativePath: "scripts/main.js" },
+        }], edges: [] },
+        state: { surfaces: [], operations: [], authorityBindings: [] },
+        temporal: { relations: [] },
+      } as unknown as SemanticIr;
+      const intent = intentFixture({ ...emptyIntent, nodes: [{
+        id: status === "hypothesis" ? "intent:proposed" : "intent:inferred",
+        status, evidenceIds: [id],
+      }] });
+      const unownedWithoutProof = challengeGameplayDiscovery({
+        semanticIr: ir, intent, graph: emptyGraph,
+      }).some(item => item.subjectId === id);
+      const authored = intentFixture({
+        ...intent,
+        evidence: [{
+          id, scope: "selected-artifact", origin: "source-code",
+          locator: "scripts/main.js", summary: "exact region",
+        }],
+        nodes: [{ ...intent.nodes[0]!, status: "authored" }],
+      });
+      const unownedWithoutScenario = challengeGameplayDiscovery({
+        semanticIr: ir, intent: authored, graph: emptyGraph,
+      }).some(item => item.subjectId === id);
+      return { status, unownedWithoutProof, unownedWithoutScenario };
+    });
+    expect(observed).toEqual([
+      { status: "hypothesis", unownedWithoutProof: true, unownedWithoutScenario: true },
+      { status: "inferred", unownedWithoutProof: true, unownedWithoutScenario: true },
+    ]);
   });
 
   it("does not admit component membership or unproven causal links as Semantic IR ownership", () => {

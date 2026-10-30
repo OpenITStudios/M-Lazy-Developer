@@ -150,91 +150,58 @@ describe(
         });
     });
 
-    it("proves matched actor identity from spawn through guarded death reconciliation", () => {
-      const source = [
-        "let remainingEnemies = 0;",
-        "world.afterEvents.entityDie.subscribe((event) => {",
-        "  if (event.deadEntity.typeId === 'demo:enemy') {",
-        "    decrementRemaining();",
-        "  }",
-        "});",
-        "function spawnEnemy(dimension) {",
-        "  dimension.spawnEntity('demo:enemy', { x: 0, y: 0, z: 0 });",
-        "  remainingEnemies++;",
-        "}",
-        "function decrementRemaining() { remainingEnemies--; }",
-        "function maybeAdvance() {",
-        "  if (remainingEnemies === 0) nextWave();",
-        "}",
-      ].join("\n");
-
-      const result =
-        analyzeProgressionActorAccounting([
-          parsed(source),
-        ]);
-
-      expect(
-        result
-          .reconciledFromMatchedActorLifecycle,
-      ).toBe(1);
-      expect(result.counters[0])
-        .toMatchObject({
-          actorIdentityStatus: "matched",
-          spawnLinkedActorIdentifiers: [
-            "demo:enemy",
-          ],
-          lifecycleActorIdentifiers: [
-            "demo:enemy",
-          ],
-          matchedActorIdentifiers: [
-            "demo:enemy",
-          ],
-          spawnQuantityStatus:
-            "matched",
-          status:
-            "reconciled-from-matched-actor-lifecycle",
-        });
-    });
-
-    it("proves actor identity mismatch when growth and death reconciliation target different entity types", () => {
-      const source = [
-        "let remainingEnemies = 0;",
-        "world.afterEvents.entityDie.subscribe((event) => {",
-        "  if (event.deadEntity.typeId === 'demo:other') {",
-        "    decrementRemaining();",
-        "  }",
-        "});",
-        "function spawnEnemy(dimension) {",
-        "  dimension.spawnEntity('demo:enemy', { x: 0, y: 0, z: 0 });",
-        "  remainingEnemies++;",
-        "}",
-        "function decrementRemaining() { remainingEnemies--; }",
-        "function maybeAdvance() {",
-        "  if (remainingEnemies === 0) nextWave();",
-        "}",
-      ].join("\n");
-
-      const result =
-        analyzeProgressionActorAccounting([
-          parsed(source),
-        ]);
-
-      expect(
-        result.provenActorIdentityMismatch,
-      ).toBe(1);
-      expect(result.counters[0])
-        .toMatchObject({
-          actorIdentityStatus: "mismatch",
-          spawnLinkedActorIdentifiers: [
-            "demo:enemy",
-          ],
-          lifecycleActorIdentifiers: [
-            "demo:other",
-          ],
+    it("compares matched and mismatched actor identity at the death boundary", () => {
+      const observed = (["demo:enemy", "demo:other"] as const).map(deadType => {
+        const source = [
+          "let remainingEnemies = 0;",
+          "world.afterEvents.entityDie.subscribe((event) => {",
+          "  if (event.deadEntity.typeId === '" + deadType + "') {",
+          "    decrementRemaining();",
+          "  }",
+          "});",
+          "function spawnEnemy(dimension) {",
+          "  dimension.spawnEntity('demo:enemy', { x: 0, y: 0, z: 0 });",
+          "  remainingEnemies++;",
+          "}",
+          "function decrementRemaining() { remainingEnemies--; }",
+          "function maybeAdvance() {",
+          "  if (remainingEnemies === 0) nextWave();",
+          "}",
+        ].join("\n");
+        const result = analyzeProgressionActorAccounting([parsed(source)]);
+        const counter = result.counters[0];
+        return {
+          deadType,
+          count: deadType === "demo:enemy"
+            ? result.reconciledFromMatchedActorLifecycle
+            : result.provenActorIdentityMismatch,
+          actorIdentityStatus: counter?.actorIdentityStatus,
+          spawnLinkedActorIdentifiers: counter?.spawnLinkedActorIdentifiers,
+          lifecycleActorIdentifiers: counter?.lifecycleActorIdentifiers,
+          matchedActorIdentifiers: counter?.matchedActorIdentifiers,
+          status: counter?.status,
+          ...(deadType === "demo:enemy" ? {
+            spawnQuantityStatus: counter?.spawnQuantityStatus,
+          } : {}),
+        };
+      });
+      expect(observed).toEqual([
+        {
+          deadType: "demo:enemy", count: 1, actorIdentityStatus: "matched",
+          spawnLinkedActorIdentifiers: ["demo:enemy"],
+          lifecycleActorIdentifiers: ["demo:enemy"],
+          matchedActorIdentifiers: ["demo:enemy"],
+          status: "reconciled-from-matched-actor-lifecycle",
+          spawnQuantityStatus: "matched",
+        },
+        {
+          deadType: "demo:other", count: 1, actorIdentityStatus: "mismatch",
+          spawnLinkedActorIdentifiers: ["demo:enemy"],
+          lifecycleActorIdentifiers: ["demo:other"],
           matchedActorIdentifiers: [],
-          status:
-            "actor-identity-mismatch",
-        });
+          status: "actor-identity-mismatch",
+        },
+      ]);
     });
 
     it("proves deterministic spawn quantity mismatch against actor counter growth", () => {
@@ -1303,86 +1270,43 @@ describe(
       ).toBe("unresolved");
     });
 
-    it("proves duplicate next-wave ownership under one completion gate", () => {
-      const source = [
-        "let remainingEnemies = 0;",
-        "function maybeAdvance() {",
-        "  if (remainingEnemies === 0) {",
-        "    nextWave();",
-        "    nextWave();",
-        "  }",
-        "}",
-      ].join("\n");
-      const input = parsed(source);
-      const advances =
-        deriveScriptProgressionAdvanceEvidence(
-          source,
-          input.parsed.source,
+    it("compares single and duplicated next-wave calls under one completion gate", () => {
+      const observed = ([1, 2] as const).map(calls => {
+        const source = [
+          "let remainingEnemies = 0;",
+          "function maybeAdvance() {",
+          "  if (remainingEnemies === 0) {",
+          ...Array.from({ length: calls }, () => "    nextWave();"),
+          "  }",
+          "}",
+        ].join("\n");
+        const input = parsed(source);
+        const advances = deriveScriptProgressionAdvanceEvidence(
+          source, input.parsed.source,
         );
-
-      const result =
-        analyzeProgressionActorAccounting(
-          [input],
-          [],
-          [],
-          undefined,
-          [],
-          [],
-          [],
-          [],
-          advances,
+        const result = analyzeProgressionActorAccounting(
+          [input], [], [], undefined, [], [], [], [], advances,
         );
-
-      expect(
-        result.duplicateProgressionAdvances,
-      ).toBe(1);
-      expect(
-        result.progressionAdvances[0],
-      ).toMatchObject({
-        counterId:
-          "remainingEnemies",
-        effectTarget: "nextWave",
-        calls: 2,
-        status: "duplicate",
+        const proof = result.progressionAdvances[0];
+        return {
+          calls,
+          duplicateProgressionAdvances: result.duplicateProgressionAdvances,
+          status: proof?.status,
+          ...(calls === 2 ? {
+            counterId: proof?.counterId,
+            effectTarget: proof?.effectTarget,
+            observedCalls: proof?.calls,
+          } : {}),
+        };
       });
-    });
-
-    it("accepts one next-wave invocation for one completion gate", () => {
-      const source = [
-        "let remainingEnemies = 0;",
-        "function maybeAdvance() {",
-        "  if (remainingEnemies === 0) {",
-        "    nextWave();",
-        "  }",
-        "}",
-      ].join("\n");
-      const input = parsed(source);
-      const advances =
-        deriveScriptProgressionAdvanceEvidence(
-          source,
-          input.parsed.source,
-        );
-
-      const result =
-        analyzeProgressionActorAccounting(
-          [input],
-          [],
-          [],
-          undefined,
-          [],
-          [],
-          [],
-          [],
-          advances,
-        );
-
-      expect(
-        result.duplicateProgressionAdvances,
-      ).toBe(0);
-      expect(
-        result.progressionAdvances[0]
-          ?.status,
-      ).toBe("single");
+      expect(observed).toEqual([
+        { calls: 1, duplicateProgressionAdvances: 0, status: "single" },
+        {
+          calls: 2, duplicateProgressionAdvances: 1, status: "duplicate",
+          counterId: "remainingEnemies", effectTarget: "nextWave",
+          observedCalls: 2,
+        },
+      ]);
     });
 
     it("proves an authored active-reachable state-machine dead-end", () => {
@@ -2079,71 +2003,47 @@ describe(
       });
     });
 
-    it("proves a generation-bound entity registry as authoritative population ownership", () => {
-      const source = [
-        "function spawn(dimension, arena) {",
-        "  const enemy = dimension.spawnEntity('demo:enemy', { x: 0, y: 0, z: 0 });",
-        "  arena.enemyRegistryByGeneration.get(arena.generation).add(enemy.id);",
-        "}",
-        "world.afterEvents.entityDie.subscribe((event) => {",
-        "  const arena = currentArena(event.deadEntity);",
-        "  arena.enemyRegistryByGeneration.get(arena.generation).delete(event.deadEntity.id);",
-        "});",
-        "function maybeAdvance(arena) {",
-        "  if (arena.enemyRegistryByGeneration.get(arena.generation).size === 0) nextWave();",
-        "}",
-      ].join("\n");
-
-      const result =
-        analyzeProgressionActorAccounting([
-          parsed(source),
-        ]);
-
-      expect(
-        result.generationBoundRegistryAuthorities,
-      ).toBe(1);
-      expect(
-        result.registryAuthorityAssessments[0],
-      ).toMatchObject({
-        status:
-          "generation-bound-authoritative",
-        generationBound: true,
-        actorIdentifiers: [
-          "demo:enemy",
-        ],
-        materializePaths: 1,
-        lifecycleReleasePaths: 1,
-        completionChecks: 1,
+    it("compares generation-bound and unversioned population registries", () => {
+      const observed = ([
+        ["arena.enemyRegistryByGeneration.get(arena.generation)",
+          "generationBoundRegistryAuthorities"],
+        ["arena.enemies", "unboundRegistryAuthorities"],
+      ] as const).map(([member, metric]) => {
+        const source = [
+          "function spawn(dimension, arena) {",
+          "  const enemy = dimension.spawnEntity('demo:enemy', { x: 0, y: 0, z: 0 });",
+          "  " + member + ".add(enemy.id);",
+          "}",
+          "world.afterEvents.entityDie.subscribe((event) => {",
+          "  const arena = currentArena(event.deadEntity);",
+          "  " + member + ".delete(event.deadEntity.id);",
+          "});",
+          "function maybeAdvance(arena) {",
+          "  if (" + member + ".size === 0) nextWave();",
+          "}",
+        ].join("\n");
+        const result = analyzeProgressionActorAccounting([parsed(source)]);
+        const proof = result.registryAuthorityAssessments[0];
+        return {
+          metric, count: result[metric], status: proof?.status,
+          ...(metric === "generationBoundRegistryAuthorities" ? {
+            generationBound: proof?.generationBound,
+            actorIdentifiers: proof?.actorIdentifiers,
+            materializePaths: proof?.materializePaths,
+            lifecycleReleasePaths: proof?.lifecycleReleasePaths,
+            completionChecks: proof?.completionChecks,
+          } : {}),
+        };
       });
-    });
-
-    it("keeps a complete but unversioned entity registry explicitly generation-unbound", () => {
-      const source = [
-        "function spawn(dimension, arena) {",
-        "  const enemy = dimension.spawnEntity('demo:enemy', { x: 0, y: 0, z: 0 });",
-        "  arena.enemies.add(enemy.id);",
-        "}",
-        "world.afterEvents.entityDie.subscribe((event) => {",
-        "  const arena = currentArena(event.deadEntity);",
-        "  arena.enemies.delete(event.deadEntity.id);",
-        "});",
-        "function maybeAdvance(arena) {",
-        "  if (arena.enemies.size === 0) nextWave();",
-        "}",
-      ].join("\n");
-
-      const result =
-        analyzeProgressionActorAccounting([
-          parsed(source),
-        ]);
-
-      expect(
-        result.unboundRegistryAuthorities,
-      ).toBe(1);
-      expect(
-        result.registryAuthorityAssessments[0]
-          ?.status,
-      ).toBe("generation-unbound");
+      expect(observed).toEqual([
+        {
+          metric: "generationBoundRegistryAuthorities", count: 1,
+          status: "generation-bound-authoritative", generationBound: true,
+          actorIdentifiers: ["demo:enemy"], materializePaths: 1,
+          lifecycleReleasePaths: 1, completionChecks: 1,
+        },
+        { metric: "unboundRegistryAuthorities", count: 1, status: "generation-unbound" },
+      ]);
     });
 
     it("keeps deferred actor materialization unresolved when population is not reserved before scheduling", () => {
