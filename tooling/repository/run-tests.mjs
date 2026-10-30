@@ -56,7 +56,17 @@ function loadInventory() {
   const validReviews = new Set([
     "pending-semantic-review", "case-inventory-reviewed", "source-reviewed",
   ]);
-  const validAreas = new Set(["map-database","map-content","lobby-pre-match","player-session","arena-match","player-state-persistence","combat-entities","inventory-economy","world-interaction","gameplay-scripting","gameplay-interpretation","audit-diagnosis","runtime-telemetry","repair-preservation","reporting","platform-compatibility","engineering-tooling"]);
+  if (!Array.isArray(data.functionalAreaTaxonomy?.areas) ||
+      new Set(data.functionalAreaTaxonomy.areas).size !== data.functionalAreaTaxonomy.areas.length) {
+    throw new Error("Invalid functional area taxonomy");
+  }
+  const validAreas = new Set(data.functionalAreaTaxonomy.areas);
+  const featureCatalog = data.featureCatalog;
+  if (!featureCatalog || typeof featureCatalog !== "object" ||
+      Array.isArray(featureCatalog) || Object.keys(featureCatalog).length === 0) {
+    throw new Error("Missing canonical test feature catalog");
+  }
+  const validFeatures = new Set(Object.keys(featureCatalog));
   const validRecommendations = new Set([
     "keep", "keep-provisional", "merge-candidate", "defer", "obsolete",
   ]);
@@ -69,7 +79,14 @@ function loadInventory() {
         !item.path.startsWith(item.owner + "/") ||
         !validReviews.has(item.review) ||
         !validAreas.has(item.functionalArea) ||
+        typeof item.featureId !== "string" ||
+        !validFeatures.has(item.featureId) ||
+        featureCatalog[item.featureId]?.area !== item.functionalArea ||
+        typeof featureCatalog[item.featureId]?.label !== "string" ||
+        !featureCatalog[item.featureId].label.trim() ||
+        !["source-case-inspected", "path-provisional"].includes(item.featureMappingBasis) ||
         !Array.isArray(item.mechanicTags) ||
+        new Set(item.mechanicTags).size !== item.mechanicTags.length ||
         item.mechanicTags.some(tag => typeof tag !== "string" ||
           !/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)*$/.test(tag)) ||
         !["path-provisional", "source-case-inspected"].includes(item.mechanicMappingBasis) ||
@@ -85,6 +102,11 @@ function loadInventory() {
         String(item?.path));
     }
     paths.add(item.path);
+  }
+  const unusedFeatures = [...validFeatures].filter(
+    feature => !data.tests.some(item => item.featureId === feature));
+  if (unusedFeatures.length) {
+    throw new Error("Unreferenced test feature(s): " + unusedFeatures.join(", "));
   }
   const discovered = new Set(discoverSourceTests());
   const missing = [...discovered].filter(path => !paths.has(path));
@@ -364,8 +386,9 @@ if (mode === "--acceptance" && args.length <= 1) {
   const matching = registeredTests.filter((item) => item.lane === args[1]).map((item) => item.path);
   selectedNative = matching.filter((path) => nativeFiles.includes(path));
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
- } else if (mode === "--list-areas" && args.length === 1) {
-  for (const area of registeredTests.reduce((items, test) => items.add(test.functionalArea), new Set())) {
+} else if (mode === "--list-areas" && args.length === 1) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  for (const area of inventory.functionalAreaTaxonomy.areas) {
     console.log(area + ": " + registeredTests.filter(test => test.functionalArea === area).length + " files (provisional)");
   }
   process.exit(0);
@@ -375,10 +398,25 @@ if (mode === "--acceptance" && args.length <= 1) {
     process.exit(2);
   }
   for (const test of registeredTests.filter(item => item.functionalArea === args[1])) {
-    console.log(test.path + (test.mechanicTags.length ? " [" + test.mechanicTags.join(", ") + "]" : ""));
+    console.log(test.featureId + "  " + test.path + (test.mechanicTags.length ? " [" + test.mechanicTags.join(", ") + "]" : "") + " (" + test.featureMappingBasis + ")");
   }
   process.exit(0);
- } else if (mode === "--list-mechanics" && args.length === 1) {
+ } else if (mode === "--list-features" && args.length === 1) {
+  const catalog = JSON.parse(readFileSync(inventoryPath, "utf8")).featureCatalog;
+  for (const [feature, spec] of Object.entries(catalog).sort(([a], [b]) => a.localeCompare(b))) {
+    console.log(feature + ": " + registeredTests.filter(test => test.featureId === feature).length +
+      " files [" + spec.area + "] " + spec.label);
+  }
+  process.exit(0);
+} else if (mode === "--show-feature" && args.length === 2) {
+  const matches = registeredTests.filter(test => test.featureId === args[1]);
+  if (!matches.length) {
+    console.error("Unknown/unmapped feature: " + args[1]);
+    process.exit(2);
+  }
+  for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
+  process.exit(0);
+} else if (mode === "--list-mechanics" && args.length === 1) {
   const counts = new Map();
   for (const test of registeredTests) {
     for (const tag of test.mechanicTags) {
@@ -395,7 +433,7 @@ if (mode === "--acceptance" && args.length <= 1) {
     console.error("Unknown/unmapped mechanic tag: " + args[1]);
     process.exit(2);
   }
-  for (const test of matches) console.log(test.path + " [" + test.functionalArea + "]");
+  for (const test of matches) console.log(test.path + " [" + test.featureId + "; " + test.featureMappingBasis + "]");
   process.exit(0);
 } else if (mode === "--list-lanes" && args.length === 1) {
   const tests = registeredTests;
@@ -476,7 +514,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-mechanics | --show-mechanic tag | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 
