@@ -1751,32 +1751,18 @@
       "rationale": "Presentation, golden or projection cases; candidate grouping by one canonical report consumer, preserving exact assertions before any merge."
     },
     {
-      "path": "engine/packages/bug-report/test/golden-client-document.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "merge-candidate",
-      "rationale": "Presentation, golden or projection cases; candidate grouping by one canonical report consumer, preserving exact assertions before any merge."
-    },
-    {
       "path": "engine/packages/bug-report/test/golden-tester-report.test.ts",
       "lane": "regression",
       "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
+      "review": "source-reviewed",
       "triage": {
         "basis": "path-and-directory-only",
         "owner": "engine/packages/bug-report",
         "riskHint": "low",
         "action": "read-assertions-before-decision"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Presentation, golden or projection cases; candidate grouping by one canonical report consumer, preserving exact assertions before any merge."
+      "recommendation": "keep",
+      "rationale": "Consolidated shared golden tester-report and derived client-document fixture coverage; retains schema/readiness/copy, severity ordering, deterministic projection and review assertions."
     },
     {
       "path": "engine/packages/bug-report/test/grouping.test.ts",
@@ -7273,32 +7259,8 @@
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
       "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/domains/validation/final-runtime-experiments.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/domains/validation/ordering-entity-world.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/domains/validation/state-system-validation-experiments.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Descriptor/definition-shape test with shared experiment family validation; compare with consolidated catalog acceptance before merging."
+      "recommendation": "keep",
+      "rationale": "Consolidated four source-reviewed validation experiment definitions into one file: retains all original family validity, observability-only, mutation-risk and stimulus assertions; Minecraft runtime remains not executed."
     },
     {
       "path": "engine/packages/runtime-lab/test/experiment/catalog.test.ts",

@@ -1,15 +1,15 @@
 # Test classification (provisional)
 
-Current `Local` inventory: **691 existing test files** after consolidating the source-reviewed causal comparison and causal retest files into one behavior-level suite. The comparison, regression-priority and negative-improvement assertions remain covered; the new integrated test is authored but **NOT EXECUTED**. One redundant test file was removed without changing production causal owners. The previous 692-file inventory is preserved by Git history.
+Current `Local` inventory: **687 existing test files** after source-reviewed consolidation of causal comparison/retest, four runtime-lab validation definition suites into one, and the two shared-fixture golden report suites into one. All existing test cases/assertions from those suites remain in the retained files. No production behavior changed in these consolidations. New consolidated suites are authored but **NOT EXECUTED**; prior inventories remain in Git history.
 
-This is a **path/name-derived execution routing inventory**, not proof that any test ran, is redundant, or is safe to remove. Review metadata currently records 232 `source-reviewed`, 159 `case-inventory-reviewed`, and 300 `pending-semantic-review` entries. A review label describes source triage, never a PASS. A file may guard several behaviors; its single lane is a provisional execution route, not an exclusive risk assessment.
+This is a **path/name-derived execution routing inventory**, not proof that any test ran, is redundant, or is safe to remove. Review metadata currently records 230 `source-reviewed`, 157 `case-inventory-reviewed`, and 300 `pending-semantic-review` entries. A review label describes source triage, never a PASS. A file may guard several behaviors; its single lane is a provisional execution route, not an exclusive risk assessment.
 
 | Execution lane | Files | Intended use |
 | --- | ---: | --- |
 | safety | 54 | Authorization, preservation and mutation safety; run when related trust boundaries change |
 | acceptance | 26 | Integrated workflows; run when behavior is stabilized or materially changed |
-| runtime | 84 | Runtime/telemetry/harness contracts; not equivalent to live Minecraft proof |
-| regression | 68 | Golden/history/failure-family regression; targeted or pre-release |
+| runtime | 81 | Runtime/telemetry/harness contracts; not equivalent to live Minecraft proof |
+| regression | 67 | Golden/history/failure-family regression; targeted or pre-release |
 | development | 459 | Evolving component contracts; only when relevant to the changed owner |
 
 `tooling/repository/test-inventory.json` is the single generated routing list. It does not confer any PASS/FAIL verdict. Avoid adding test files solely to meet coverage quotas. Leave automatic CI disabled.
