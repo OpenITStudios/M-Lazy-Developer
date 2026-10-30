@@ -1028,7 +1028,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-repeated-run-runtime-compiler.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts"
       ]
     },
     {
@@ -5006,7 +5006,7 @@
         "engine/packages/orchestrator/src/inspection/gameplay-scenario-compiler.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-voxel-proof.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts"
       ]
     },
     {

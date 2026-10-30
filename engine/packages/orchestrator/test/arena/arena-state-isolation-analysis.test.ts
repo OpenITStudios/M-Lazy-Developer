@@ -1,7 +1,361 @@
+// Source-preserving consolidation: original test cases remain in isolated lexical blocks.
 import { describe, expect, it } from "vitest";
+import { parseMcFunction } from "../../../../analyzers/functions/src/index.js";
 import { parseScriptFile, deriveCrossFileCallEdges } from "../../../../analyzers/scripts/src/index.js";
+import { analyzeArenaGlobalState } from "../../src/arena/arena-global-state-analysis.js";
+import { compileArenaGlobalStateRuntime } from "../../src/arena/arena-global-state-runtime-compiler.js";
+import { compileArenaInterleavingAnalysis } from "../../src/arena/arena-interleaving-analysis.js";
+import { buildMultiplayerStressMatrix } from "../../../reliability/src/index.js";
+import { compileArenaInterleavingPortfolio } from "../../src/arena/arena-interleaving-portfolio.js";
 import { analyzeArenaStateIsolation } from "../../src/arena/arena-state-isolation-analysis.js";
 
+// Consolidated suite from engine/packages/orchestrator/test/arena/arena-global-state-analysis.test.ts
+{
+describe("arena global state analysis", () => {
+  it("recognizes paired lease evidence for arena-scoped gamerule mutation", () => {
+    const script = parseScriptFile(
+      "main",
+      [
+        "function start(arena) {",
+        "  arena.players.add(player);",
+        "  acquireGlobalLease('gamerule:pvp', arena);",
+        "  dimension.runCommand('gamerule pvp false');",
+        "  auditGlobalLease('gamerule:pvp');",
+        "}",
+        "function cleanup(arena) {",
+        "  releaseGlobalLease('gamerule:pvp', arena);",
+        "}",
+      ].join("\n"),
+      {
+        artifactId: "fixture",
+        relativePath: "scripts/main.ts",
+      },
+    );
+
+    const result =
+      analyzeArenaGlobalState(
+        [],
+        [script],
+      );
+
+    expect(result.arenaScopedMutations)
+      .toBe(1);
+    expect(result.pairedLeaseEvidence)
+      .toBe(1);
+    expect(result.unauditedArenaMutations)
+      .toBe(0);
+  });
+
+  it("proves an arena-scoped gamerule mutation is unleased when no global ownership path exists", () => {
+    const script = parseScriptFile(
+      "main",
+      [
+        "function start(arena) {",
+        "  arena.players.add(player);",
+        "  dimension.runCommand('gamerule pvp false');",
+        "}",
+      ].join("\n"),
+      {
+        artifactId: "fixture",
+        relativePath: "scripts/main.ts",
+      },
+    );
+
+    const result =
+      analyzeArenaGlobalState(
+        [],
+        [script],
+      );
+
+    expect(result.arenaScopedMutations)
+      .toBe(1);
+    expect(result.unleasedArenaMutations)
+      .toBe(1);
+    expect(result.assessments[0]?.status)
+      .toBe("unleased");
+  });
+
+  it("keeps mcfunction global mutation unscoped without invented arena ownership", () => {
+    const fn = parseMcFunction(
+      "setup",
+      "gamerule pvp false",
+      {
+        artifactId: "fixture",
+        relativePath:
+          "functions/setup.mcfunction",
+      },
+    );
+
+    const result =
+      analyzeArenaGlobalState(
+        [fn],
+        [],
+      );
+
+    expect(result.unscopedMutations)
+      .toBe(1);
+    expect(result.unleasedArenaMutations)
+      .toBe(0);
+  });
+});
+}
+
+// Consolidated suite from engine/packages/orchestrator/test/arena/arena-global-state-runtime-compiler.test.ts
+{
+describe("arena global state runtime compiler", () => {
+  it("compiles a paired static lease into a two-arena race experiment", () => {
+    const result =
+      compileArenaGlobalStateRuntime({
+        analysis: {
+          mutations: [],
+          assessments: [{
+            mutationId: "m1",
+            resource: "gamerule:pvp",
+            status:
+              "paired-lease-evidence",
+            acquireEvidence: 1,
+            releaseEvidence: 1,
+            restoreEvidence: 1,
+            auditEvidence: 1,
+            audited: true,
+            reasons: [],
+          }],
+          arenaScopedMutations: 1,
+          pairedLeaseEvidence: 1,
+          partialLeaseEvidence: 0,
+          unleasedArenaMutations: 0,
+          unscopedMutations: 0,
+          unauditedArenaMutations: 0,
+        },
+        arenaIds: [
+          "arena-1",
+          "arena-2",
+        ],
+        arenaGenerations: {
+          "arena-1": 1,
+          "arena-2": 2,
+        },
+        targetProfileFingerprint:
+          "target",
+        fixtureFingerprint:
+          "fixture",
+        objectiveId: "qa",
+        participant: "result",
+        baselineValues: {
+          "gamerule:pvp": "true",
+        },
+        firstValues: {
+          "gamerule:pvp": "false",
+        },
+        secondValues: {
+          "gamerule:pvp": "true",
+        },
+      });
+
+    expect(result.runtimeReady)
+      .toHaveLength(1);
+    expect(result.experiments[0]?.id)
+      .toBe(
+        "worldstate-lease-race:gamerule:pvp",
+      );
+  });
+
+  it("keeps missing static lease evidence as a static defect", () => {
+    const result =
+      compileArenaGlobalStateRuntime({
+        analysis: {
+          mutations: [],
+          assessments: [{
+            mutationId: "m1",
+            resource: "weather",
+            status: "unleased",
+            acquireEvidence: 0,
+            releaseEvidence: 0,
+            restoreEvidence: 0,
+            auditEvidence: 0,
+            audited: false,
+            reasons: [],
+          }],
+          arenaScopedMutations: 1,
+          pairedLeaseEvidence: 0,
+          partialLeaseEvidence: 0,
+          unleasedArenaMutations: 1,
+          unscopedMutations: 0,
+          unauditedArenaMutations: 1,
+        },
+        arenaIds: [
+          "arena-1",
+          "arena-2",
+        ],
+        arenaGenerations: {},
+        targetProfileFingerprint:
+          "target",
+        fixtureFingerprint:
+          "fixture",
+        objectiveId: "qa",
+        participant: "result",
+      });
+
+    expect(result.staticDefects)
+      .toHaveLength(1);
+    expect(result.runtimeReady)
+      .toEqual([]);
+  });
+});
+}
+
+// Consolidated suite from engine/packages/orchestrator/test/arena/arena-interleaving-analysis.test.ts
+{
+describe("arena interleaving analysis", () => {
+  it("compiles reconnect stress into generation-aware bounded schedules", () => {
+    const result = compileArenaInterleavingAnalysis({
+      scenario: {
+        id: "reconnect",
+        kind: "reconnect-after-disconnect",
+        arenaIds: ["arena-1"],
+        playerIds: ["p1"],
+        invariants: [
+          "arena.connection-generation-invalidates-stale-work",
+        ],
+        purpose: "Reconnect under a new generation.",
+      },
+      arenaGenerations: {
+        "arena-1": 4,
+      },
+      subjects: {
+        p1: {
+          playerId: "p1",
+          arenaId: "arena-1",
+          arenaGeneration: 4,
+          connectionGeneration: 7,
+          participationGeneration: 3,
+          lifeGeneration: 2,
+        },
+      },
+      maxSchedules: 16,
+    });
+
+    expect(result.status).toBe("analyzed");
+    expect(result.analysis?.generatedSchedules)
+      .toBeGreaterThan(0);
+    expect(
+      result.analysis?.generationDependencyPairs,
+    ).toBeGreaterThan(0);
+  });
+
+  it("requires explicit generation identity instead of inventing it", () => {
+    const result = compileArenaInterleavingAnalysis({
+      scenario: {
+        id: "disconnect",
+        kind: "disconnect-during-active",
+        arenaIds: ["arena-1"],
+        playerIds: ["p1"],
+        invariants: [],
+        purpose: "Disconnect during active play.",
+      },
+      arenaGenerations: {
+        "arena-1": 2,
+      },
+    });
+
+    expect(result.status).toBe(
+      "insufficient-identity",
+    );
+    expect(result.analysis).toBeUndefined();
+  });
+
+  it("models cleanup/start overlap across two arenas", () => {
+    const result = compileArenaInterleavingAnalysis({
+      scenario: {
+        id: "overlap",
+        kind: "cleanup-start-overlap",
+        arenaIds: ["arena-a", "arena-b"],
+        playerIds: [],
+        invariants: [
+          "arena.cleanup-scope-isolation",
+        ],
+        purpose: "Overlap cleanup and start.",
+      },
+      arenaGenerations: {
+        "arena-a": 8,
+        "arena-b": 3,
+      },
+      maxSchedules: 32,
+    });
+
+    expect(result.status).toBe("analyzed");
+    expect(
+      result.analysis?.schedules.some(
+        (schedule) =>
+          schedule.riskReasons.includes(
+            "cross-arena-overlap",
+          ),
+      ),
+    ).toBe(true);
+  });
+});
+}
+
+// Consolidated suite from engine/packages/orchestrator/test/arena/arena-interleaving-portfolio.test.ts
+{
+describe("arena interleaving portfolio", () => {
+  it("reuses the canonical stress matrix without creating a second scenario catalog", () => {
+    const matrix = buildMultiplayerStressMatrix({
+      arenaIds: ["arena-1", "arena-2"],
+      playersPerArena: 2,
+    });
+
+    const subjects = Object.fromEntries(
+      matrix.scenarios
+        .flatMap((scenario) => scenario.playerIds)
+        .filter(
+          (value, index, array) =>
+            array.indexOf(value) === index,
+        )
+        .map((playerId) => {
+          const arenaId =
+            playerId.split(":player-")[0] ??
+            "arena-1";
+          return [
+            playerId,
+            {
+              playerId,
+              arenaId,
+              arenaGeneration: 1,
+              connectionGeneration: 1,
+              participationGeneration: 1,
+              lifeGeneration: 1,
+            },
+          ];
+        }),
+    );
+
+    const result =
+      compileArenaInterleavingPortfolio({
+        matrix,
+        arenaGenerations: {
+          "arena-1": 1,
+          "arena-2": 1,
+        },
+        subjects,
+        maxSchedulesPerScenario: 16,
+      });
+
+    expect(result.scenarios).toBe(
+      matrix.scenarios.length,
+    );
+    expect(result.analyzed).toBeGreaterThan(0);
+    expect(
+      result.analyzed +
+        result.insufficientIdentity +
+        result.unsupported,
+    ).toBe(result.scenarios);
+  });
+});
+}
+
+// Consolidated suite from engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts
+{
 describe("arena state isolation analysis", () => {
   it("marks world dynamic properties as requiring partition proof inside arena flow", () => {
     const script = parseScriptFile(
@@ -1150,3 +1504,4 @@ describe("P3 bounded local helper and const alias source ownership", () => {
     expect(state?.reason).not.toContain("arena parameter arena reaches target");
   });
 });
+}

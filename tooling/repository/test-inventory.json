@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "ccacc266ef2691b33da2a68821429d768b63784f",
-  "classification": "569 physical source test files across five source-preserving consolidation batches (687 original). Fifth batch: 47 Development files consolidated into 17 existing suites, 30 paths retired, 173 case and 362 expect call sites preserved; executable equivalence NOT VERIFIED.",
+  "sourceCommit": "983ba5a77dfdb48b0e14bff3765231871e963086",
+  "classification": "498 physical source test files after six source-preserving consolidation batches (687 original). Latest batch merges 93 original same-owner same-feature test suites into 22 suites; 86 old paths retired and 15 destinations created. Case bodies and it()/expect() call sites preserved; executable equivalence NOT VERIFIED.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -2263,21 +2263,22 @@
       }
     },
     {
-      "path": "engine/packages/bug-report/test/confirmation-v2.test.ts",
+      "path": "engine/packages/bug-report/test/confirmation.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Confirms selected-artifact mismatch and explicitly rejects risk-only, version-only or unqualified evidence.",
+      "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/bug-report",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
+      "recommendation": "keep-provisional",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
+      "featureId": "report.confirmation",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -2297,44 +2298,6 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.presentation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/create-v2.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/decision.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -2376,177 +2339,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/bug-report/test/migrate.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/normalize.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/parse.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/persistence.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/preview.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Display, calibration or preset behavior: keep available for targeted changes; not an unconditional default acceptance check.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/project-confirmed-defect.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "source-preserving-family-consolidation",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "verify-selected-suite-and-dependency-consumers",
-        "sourceBlobSha": "c6c18f2594f0d44ce77d73bc782801665124d32d"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Consolidated 2 source test files as one family suite; 14 it()/test() sites and 26 expect() sites retained by static source comparison. Execution/equivalence pending.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "report.confirmation",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
-        "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/bug-report/test/engineering-analysis-projection.test.ts",
-            "blobSha": "74efd0fe31c2d91cdcca9e0c0c1fe7743b292025"
-          },
-          {
-            "path": "engine/packages/bug-report/test/project-confirmed-defect.test.ts",
-            "blobSha": "82fa54ab85252091601beb752714212db680fc7d"
-          }
-        ],
-        "originalTestCallSites": 14,
-        "originalExpectCallSites": 26,
-        "mergedSourceBlobSha": "c6c18f2594f0d44ce77d73bc782801665124d32d",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/bug-report/test/promote-v2.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/reconcile-current.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Preserves canonical fixed state, version authority and stable bug identity during refresh.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/bug-report/test/repair-unit-ownership.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
@@ -2566,60 +2358,22 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/bug-report/test/report-readiness.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Tester-ready output requires observable trigger and AI issue source support.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/resolve-confirmed-defect-group.test.ts",
+      "path": "engine/packages/bug-report/test/schema.test.ts",
       "lane": "development",
       "owner": "engine/packages/bug-report",
       "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
       "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
+      "triage": {
+        "owner": "engine/packages/bug-report",
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
+      },
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/review.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
+      "featureId": "report.schema",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -2640,63 +2394,6 @@
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.findings",
       "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/serialize.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/bug-report/test/v2.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/bug-report",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "source-preserving-family-consolidation",
-        "owner": "engine/packages/bug-report",
-        "riskHint": "low",
-        "action": "verify-selected-suite-and-dependency-consumers",
-        "sourceBlobSha": "094e720994aa532b6e86ec69c01558e5fc8516d7"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Consolidated 2 source test files as one family suite; 7 it()/test() sites and 19 expect() sites retained by static source comparison. Execution/equivalence pending.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "report.schema",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
-        "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/bug-report/test/schema-runtime-parity.test.ts",
-            "blobSha": "f685b14a4f4120faf86187296bac384cf104881b"
-          },
-          {
-            "path": "engine/packages/bug-report/test/v2.test.ts",
-            "blobSha": "7a2d4eed7449a351e6e782b2cbe633bd45ec21d6"
-          }
-        ],
-        "originalTestCallSites": 7,
-        "originalExpectCallSites": 19,
-        "mergedSourceBlobSha": "094e720994aa532b6e86ec69c01558e5fc8516d7",
-        "execution": "NOT_EXECUTED"
-      }
     },
     {
       "path": "engine/packages/compatibility/test/edition-capabilities.test.ts",
@@ -3848,44 +3545,25 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/arena/arena-block-entity-proof.test.ts",
+      "path": "engine/packages/orchestrator/test/arena/arena-capacity-stress.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "map-content",
-      "mechanicTags": [
-        "map.structure"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "map.structure-proof",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-capacity-extraction.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "arena-match",
       "mechanicTags": [
         "arena.capacity"
       ],
-      "mechanicMappingBasis": "source-case-inspected",
+      "mechanicMappingBasis": "path-provisional",
       "featureId": "arena.capacity-stress",
-      "featureMappingBasis": "source-case-inspected"
+      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
@@ -3968,46 +3646,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/arena/arena-global-state-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.isolation"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.state-isolation",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-global-state-runtime-compiler.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.isolation"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.state-isolation",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
       "path": "engine/packages/orchestrator/test/arena/arena-golden-corpus.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
@@ -4050,46 +3688,6 @@
         "mergedSourceBlobSha": "00484464be31879294f6120f0e97e375c0b3ef45",
         "execution": "NOT_EXECUTED"
       }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-interleaving-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.isolation"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.state-isolation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-interleaving-portfolio.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Canonical stress matrix and portfolio scenario accounting; retain for portfolio changes.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "retain-for-targeted-validation"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.isolation"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.state-isolation",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/orchestrator/test/arena/arena-last-mile-audit.test.ts",
@@ -4169,11 +3767,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "arena-match",
       "mechanicTags": [
@@ -4182,102 +3781,22 @@
         "arena.ready-gate",
         "arena.start"
       ],
-      "mechanicMappingBasis": "source-case-inspected",
+      "mechanicMappingBasis": "path-provisional",
       "featureId": "arena.lifecycle",
-      "featureMappingBasis": "source-case-inspected"
+      "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/arena/arena-lifecycle-diagnostics.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Medium unresolved versus minor partial lifecycle coverage severity is distinct.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.cleanup-reset",
-        "arena.lifecycle"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.lifecycle",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-proof-conclusion.test.ts",
+      "path": "engine/packages/orchestrator/test/arena/arena-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.proof-gates"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.proof-gates",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-proof-coverage.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Mutable volume subtraction, partial coverage ratios and empty proof volume refusal.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.proof-gates"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.proof-gates",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-proof-execution-plan.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.proof-gates"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.proof-gates",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-proof-reuse.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "arena-match",
       "mechanicTags": [
@@ -4328,26 +3847,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/arena/arena-repeated-run-runtime-compiler.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.lifecycle"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.lifecycle",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
       "path": "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -4393,112 +3892,34 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "arena-match",
       "mechanicTags": [
         "arena.isolation",
         "scoreboard.arena-isolation"
       ],
-      "mechanicMappingBasis": "source-case-inspected",
+      "mechanicMappingBasis": "path-provisional",
       "featureId": "arena.state-isolation",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-stress-plan.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.capacity"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.capacity-stress",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-stress-runtime-compiler.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.capacity"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.capacity-stress",
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/arena/arena-structure-instance-proof.test.ts",
+      "path": "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "map-content",
-      "mechanicTags": [
-        "map.structure"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "map.structure-proof",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-tick-state-proof.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.lifecycle"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.lifecycle",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena/arena-voxel-proof.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard arena scope, capacity, lifecycle, source ownership, physical proof, or unknown evidence refusal. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "map-content",
       "mechanicTags": [
@@ -4587,85 +4008,14 @@
       "path": "engine/packages/orchestrator/test/diagnosis/causal-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Distinct causal chain synthesis verifies confidence ceiling, corroboration provenance, and observed-vs-projected outcomes.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.causal-diagnosis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/causal-comparison.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Consolidated source-reviewed comparison → causal retest behavior: original delta/label assertions plus real positive ordering, negative improvement and candidate-label checks; no separate mock-only suite.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.causal-diagnosis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/causal-incident-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Incident grouping/ranking preserves independent scope and evidence-strength ordering.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.causal-diagnosis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/causal-link-evidence-construction.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Conflicting or foreign-artifact runtime observations remain UNKNOWN rather than becoming causal proof.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.causal-diagnosis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/causal-link-hypothesis-construction.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Validates knowledge-to-predicate construction but no independent negative or runtime authority case; candidate for integration consolidation after consumer comparison.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "retain-for-targeted-validation"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
@@ -4979,24 +4329,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/diagnosis/first-wrong-transition.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Comparable stream ordering, incomparable streams and incomplete evidence protect causal proof honesty.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.causal-diagnosis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/diagnosis/invariant-registry.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -5206,97 +4538,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-binding-load.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Validated binding registry and malformed-registry rejection.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-bundle.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "45684578d92a999c348f9d8a70c778af00405710"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-evidence.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "73b74cb23e3c28da7df7df5a4f53cbb540887c1d"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-load.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "4d710f56ad8410868338e050667da3719d56f923"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-replay.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "5a17bc3adbdb8a68ebe4d034700f12b2af12428b"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -5769,53 +5022,14 @@
       "path": "engine/packages/orchestrator/test/inspection/chunk-lifecycle-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Exercises lease acquire/release, capacity checks, readiness, and unreachable cleanup; key resource safety boundary.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "world-interaction",
-      "mechanicTags": [
-        "map.chunk"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "world.chunk-lifecycle",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/chunk-lifecycle-diagnostics.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Prevents runtime failure claims from source-only risks and handles lease leak versus absent observability.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "world-interaction",
-      "mechanicTags": [
-        "map.chunk"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "world.chunk-lifecycle",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/chunk-readiness-runtime-classification.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Separates player loader and ticking-area intervention; fails closed on contrast mismatch.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "world-interaction",
       "mechanicTags": [
@@ -8180,59 +7394,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/reliability/portfolio-release-history.test.ts",
+      "path": "engine/packages/orchestrator/test/reliability/portfolio-release-history-and-report.test.ts",
       "lane": "regression",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b31d809029ba2ae4bf2bf9faf5ba24e378886f75"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.reliability",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reliability/portfolio-release-intelligence.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "416081799652a11b5e76d88298ab7b45cecfdf6e"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.reliability",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reliability/portfolio-release-report.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "d3a29d2def13756e4544404c34f40630c35f7506"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -8994,32 +8167,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reporting/map-audit-finding-reasoning.test.ts",
-      "lane": "acceptance",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -9487,37 +8641,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/workflow/decision-ledger-recording.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/workflow/decision-ledger.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -9525,56 +8660,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/workflow/engineering-review-invalidation.test.ts",
+      "path": "engine/packages/orchestrator/test/workflow/engineering-review.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "high",
-        "action": "retain-for-targeted-validation"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "defer",
-      "rationale": "Basis drift, superseded decisions and stale validation reasons are narrower than priority/projection tests; keep separate for change-targeted execution rather than broaden selection.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/workflow/engineering-review-priority.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/workflow/engineering-review-projection.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -10209,19 +9306,18 @@
       }
     },
     {
-      "path": "engine/packages/reliability-search/test/invariant/invariant-coverage-confidence.test.ts",
+      "path": "engine/packages/reliability-search/test/invariant/invariant-evaluation.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/reliability-search",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "44f71ada73e3c5db5b49d213a4928cabc04b737e"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -10229,37 +9325,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/reliability-search/test/invariant/invariant-falsification.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Requires adversarial mutation evidence before invariant promotion.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/reliability-search",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/invariant/invariant-mining-advanced.test.ts",
+      "path": "engine/packages/reliability-search/test/minimization/minimization.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/reliability-search",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "e52176924c1e74f1ecc62977e44d6eb7266de265"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "medium",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -10267,134 +9344,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/reliability-search/test/invariant/invariant-mining.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/reliability-search",
-        "riskHint": "high",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Requires support and counterevidence checks before inferring invariants.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/invariant/invariant-refinement.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/reliability-search",
-        "riskHint": "high",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Historical invariant qualification requires diversity, contradiction and update revalidation.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/minimization/logic-counterexample-minimizer.test.ts",
+      "path": "engine/packages/reliability-search/test/mutation/mutation-analysis.test.ts",
       "lane": "regression",
       "owner": "engine/packages/reliability-search",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/reliability-search",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "344ec95960d323815238b3df3ef50216d9910e4f"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/minimization/minimizers.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/reliability-search",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Source/scenario/graph counterexample minimization is bounded optimization; retain for relevant minimizer changes.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/mutation/extended-mutations.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/reliability-search",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "59641e11643d0e201f23b5467632af0f1a906dad"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/mutation/mutation.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/reliability-search",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "96268282b2c5e9e3b081259b790883e555d3fb85"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/reliability-search/test/mutation/operator-effectiveness.test.ts",
-      "lane": "regression",
-      "owner": "engine/packages/reliability-search",
-      "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Tracks kill/survival pressure for mutation selection; projection-only optimization, not direct proof.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/reliability-search",
-        "action": "retain-for-targeted-validation"
-      },
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -11484,70 +10445,17 @@
       }
     },
     {
-      "path": "engine/packages/runtime-lab/test/host/bedrock-action-registry.test.ts",
+      "path": "engine/packages/runtime-lab/test/host/bedrock-host-capabilities.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Registry identity, required action set and signatures prevent arbitrary capability admission.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.host",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/host/bedrock-capabilities.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Announced capability registry must match canonical contract.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.host",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/host/bedrock-harness-capability-parity.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "One canonical registry parity assertion; preserve but may be consolidated with action capability contract after consumer review.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "retain-for-targeted-validation"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.host",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/host/bedrock-host.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Read-only probe, stimulus acknowledgment, profile drift and live-only mutation restrictions.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "source-body-preservation-no-executable-proof",
+        "riskHint": "low",
+        "action": "validate-merged-suite-on-affected-change"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
@@ -11786,157 +10694,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/telemetry/test/bedrock/bedrock-bridge.test.ts",
+      "path": "engine/packages/telemetry/test/bedrock/bedrock-telemetry.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/telemetry",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "d943d73bc8283f44c17e2df358f1588823f4b194"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/bedrock/bedrock-kit.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "15b0ba2b1eefc67d937dc36db58f380c771720c2"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/bedrock/bedrock-lifecycle.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "f4ab8be5b7b0b0114600a00592a75eea15d493c6"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/bedrock/bedrock-runtime.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "0ea07dc68a9af9d2ce6269923c31db300916c0e4"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/bedrock/kit.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "6a4103ae5d176b1e8f8ac3268741523d70413215"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/core/budget.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Limits per-tick event pressure and records loss rather than hiding evidence gaps.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/core/emitter.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Preserves monotonic stream sequence, event scope, unique identity and bounded buffers.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/core/frame-collector.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "9e707e63c3bae7a44733d0db2b1dbd220682aba1"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -11962,74 +10731,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/telemetry/test/core/guards.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Detects duplicate start and stale generation callbacks.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/telemetry",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/core/priority-buffer.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Protects critical evidence retention under pressure and dropped-event accounting.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/telemetry",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/core/profile.test.ts",
+      "path": "engine/packages/telemetry/test/core/telemetry-core.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/telemetry",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "db52e23e8e8f3c556b01225a82a5a34c6675a18b"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/core/scheduler.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Retains events and errors on failed transport; idempotent lifecycle.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -12143,19 +10856,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/telemetry/test/observation/monitors.test.ts",
+      "path": "engine/packages/telemetry/test/observation/telemetry-observation.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/telemetry",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "1d581ce75f98f6b34c9000fa4025a9bbed074b4c"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -12163,133 +10875,18 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/telemetry/test/observation/observers.test.ts",
+      "path": "engine/packages/telemetry/test/probes/runtime-probes.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/telemetry",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/telemetry",
+        "basis": "source-body-preservation-no-executable-proof",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "a604ef41635cf4bd7f2603990e2d306d85652930"
+        "action": "validate-merged-suite-on-affected-change"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/probes/active-probe.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "badf24e5a23c1fe28551548363642ae119f8b772"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/probes/probe-responder.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Unknown host responses, exceptions and invalid tick remain UNKNOWN instead of forged observations.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/telemetry",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/probes/probes.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "8edc0b6ecc1f172351a416b919e8854b4c07b6b3"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/probes/runtime-probe-bundle-runner.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/telemetry",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "05a850e2f0a2adf91b2fee749404b425a196818c"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/probes/runtime-probe-executor.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Backend unknown/errors remain UNKNOWN, not fabricated runtime observations.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/telemetry",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/telemetry/test/probes/runtime-probe-session.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/telemetry",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Preserves transcript identity, bounded history and rejected invalid buffers.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/telemetry",
-        "action": "revisit-on-relevant-source-change"
-      },
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -14543,14 +13140,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "ccacc266ef2691b33da2a68821429d768b63784f",
+    "parentCommit": "983ba5a77dfdb48b0e14bff3765231871e963086",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 569,
-    "groups": 55,
-    "removedPaths": 120,
-    "addedPaths": 2,
+    "sourceFilesAfter": 498,
+    "groups": 77,
+    "removedPaths": 206,
+    "addedPaths": 17,
     "deletedAssertionsProven": 0,
-    "proof": "source-body-identity-and-callsite-parity_ONLY_NOT_VITEST",
-    "open": "Exact TypeScript/Vitest merged-suite isolation and affected-selection cost, runSelectedMapAudit and Minecraft NOT EXECUTED"
+    "proof": "source-body-and-callsite-parity_ONLY_NOT_TYPESCRIPT_VITEST",
+    "open": "Merged-file TypeScript/Vitest suite isolation, actual test execution cost, exact map audit and Minecraft gameplay NOT EXECUTED"
   }
 }

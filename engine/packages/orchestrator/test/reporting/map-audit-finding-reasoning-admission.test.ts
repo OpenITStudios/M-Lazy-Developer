@@ -1,5 +1,46 @@
+// Source-preserving consolidation: original test cases remain in isolated lexical blocks.
 import { describe, expect, it } from "vitest";
+import { projectMapAuditFindingReasoning } from "../../src/reporting/map-audit-finding-reasoning.js";
 import { admitMapAuditFindingReasoning } from "../../src/reporting/map-audit-finding-reasoning-admission.js";
+
+// Consolidated suite from engine/packages/orchestrator/test/reporting/map-audit-finding-reasoning.test.ts
+{
+describe("map audit finding reasoning projection", () => {
+  it("projects evidence chain and minimal validation without changing proof status", () => {
+    const result = projectMapAuditFindingReasoning({
+      projection: {
+        reportClassification: "LIKELY BUG",
+        diagnosticDisposition: "confirmed-defect",
+        proofConfidence: "high",
+        reasons: [],
+      },
+      assessment: {
+        hypothesisId:"h",disposition:"supported",
+        supportingEvidenceIds:["static:a","runtime:b"],
+        eliminatingEvidenceIds:[],
+        missingRequiredPredicates:["target-ready"],reasons:[],
+        domains:["runtime","static"],corroborationCount:2,
+        confidence:"high",nextPredicate:"target-ready",
+      },
+      probe: {
+        hypothesisId:"h",predicate:"target-ready",probeId:"chunk-ready",
+        disposition:"probe-selected",
+      },
+    });
+    expect(result).toMatchObject({
+      reportClassification:"LIKELY BUG",
+      diagnosticDisposition:"confirmed-defect",
+      proofConfidence:"high",
+      evidenceChain:["runtime:b","static:a"],
+      unresolvedPredicates:["target-ready"],
+      recommendedReadOnlyProbeId:"chunk-ready",
+    });
+  });
+});
+}
+
+// Consolidated suite from engine/packages/orchestrator/test/reporting/map-audit-finding-reasoning-admission.test.ts
+{
 const finding:any={causalLinkId:"link:1",status:"NEED_VALIDATION",issueType:"BUG",evidenceIds:["e:1"]};
 describe("map audit reasoning admission",()=>{
  it("admits only evidence-linked causal reasoning",()=>{
@@ -90,3 +131,4 @@ describe("reasoning classification follows the audit issue lane", () => {
       .toContain("A PROVEN BUG audit finding requires PROVEN BUG reasoning classification.");
   });
 });
+}

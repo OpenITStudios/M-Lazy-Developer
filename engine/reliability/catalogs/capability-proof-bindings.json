@@ -166,7 +166,7 @@
       "capabilityId": "domain.physical-containment",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/arena/arena-voxel-proof.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -272,7 +272,7 @@
       "capabilityId": "runtime.chunks",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/inspection/chunk-readiness-runtime-classification.test.ts"
+        "engine/packages/orchestrator/test/inspection/chunk-lifecycle-analysis.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
