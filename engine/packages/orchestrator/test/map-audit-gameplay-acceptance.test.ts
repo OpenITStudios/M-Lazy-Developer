@@ -249,7 +249,15 @@ function expectReconstructionContract(
     Number.isFinite(step.elapsedMs) &&
     step.elapsedMs >= 0 &&
     Number.isFinite(step.inspectionElapsedMs) &&
-    step.inspectionElapsedMs! >= step.elapsedMs
+    step.inspectionElapsedMs! >= step.elapsedMs &&
+    Number.isFinite(step.workingCopyElapsedMs) &&
+    step.workingCopyElapsedMs! >= 0 &&
+    Number.isFinite(step.nativeWorldDbElapsedMs) &&
+    step.nativeWorldDbElapsedMs! >= 0 &&
+    (index === 0
+      ? Number.isFinite(step.archivePreparationElapsedMs) &&
+        step.archivePreparationElapsedMs! >= 0
+      : step.archivePreparationElapsedMs === undefined)
   )).toBe(true);
   if (passes?.length === 2 && passes[0]?.snapshotReusable) {
     expect(passes[1]?.action).toBe("REUSED");

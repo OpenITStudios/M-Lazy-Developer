@@ -1,4 +1,5 @@
 import { mkdtemp, mkdir, cp, rm, readFile } from "node:fs/promises";
+import { performance } from "node:perf_hooks";
 import { join } from "node:path";
 import { serialize, deserialize } from "node:v8";
 import { tmpdir } from "node:os";
@@ -64,6 +65,12 @@ export interface InspectArtifactResult extends InspectDirectoryResult {
   fingerprint: string;
   archiveEntries: number;
   levelName?: string;
+  /** Measured per-invocation process durations, never gameplay proof. */
+  readonly inspectionTiming?: {
+    readonly archivePreparationElapsedMs: number;
+    readonly workingCopyElapsedMs: number;
+    readonly nativeWorldDbElapsedMs: number;
+  };
 }
 
 interface PreparedArtifactSource {
@@ -71,6 +78,7 @@ interface PreparedArtifactSource {
   readonly sourceRoot: string;
   readonly fingerprint: string;
   readonly inventory: ZipInventoryResult;
+  readonly archivePreparationElapsedMs: number;
   readonly sourceInventoryReuse: InspectionFileInventoryReuse;
   /** Immutable, ephemeral source-only native summary. A second RIG pass
    * deserializes an independent object rather than holding two large live
@@ -151,8 +159,11 @@ async function inspectPreparedArtifact(
   try {
     const inventory = prepared.inventory;
     // Native LevelDB readers can create files; each pass has its own copy.
+    const copyStartedAt = performance.now();
     await cp(prepared.sourceRoot, workingRoot, { recursive: true });
+    const workingCopyElapsedMs = Math.max(0, performance.now() - copyStartedAt);
 
+    const nativeStartedAt = performance.now();
     // Native DB summary is determined by selected source bytes, not by
     // RIG knowledge demand. Do not cache FAILED reads: retry them on pass 2.
     const nativeWorldDb = prepared.nativeWorldDbSnapshot === undefined
@@ -168,6 +179,7 @@ async function inspectPreparedArtifact(
         delete prepared.nativeWorldDbSnapshot;
       }
     }
+    const nativeWorldDbElapsedMs = Math.max(0, performance.now() - nativeStartedAt);
     const result = await inspectDirectory(
       workingRoot,
       artifactId,
@@ -1139,6 +1151,11 @@ async function inspectPreparedArtifact(
         ? {}
         : { levelName }),
       ...result,
+      inspectionTiming: {
+        archivePreparationElapsedMs: prepared.archivePreparationElapsedMs,
+        workingCopyElapsedMs,
+        nativeWorldDbElapsedMs,
+      },
       releaseIdentity:
         finalReleaseIdentity,
       gameplayWorld: finalGameplayWorld,
@@ -1185,6 +1202,7 @@ export async function withPreparedArtifactInspection<T>(
   expectedArtifactFingerprint?: string,
   mapClassificationHint?: MapClassificationRoutingHint,
 ): Promise<T> {
+  const archiveStartedAt = performance.now();
   const fingerprint = await sha256File(path);
   assertExpectedArchiveFingerprint(fingerprint, expectedArtifactFingerprint);
   if (mapClassificationHint !== undefined) {
@@ -1202,8 +1220,10 @@ export async function withPreparedArtifactInspection<T>(
         "Selected .mcworld changed during archive extraction; resolve the current artifact again.",
       );
     }
+    const archivePreparationElapsedMs = Math.max(0, performance.now() - archiveStartedAt);
     const prepared: PreparedArtifactSource = {
       sessionRoot, sourceRoot, fingerprint, inventory,
+      archivePreparationElapsedMs,
       sourceInventoryReuse: {
         artifactId: artifactIdFromFingerprint(fingerprint),
         sourceFingerprint: fingerprint,

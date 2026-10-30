@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { performance } from "node:perf_hooks";
 import { resolve } from "node:path";
 import { createGzip } from "node:zlib";
 import { Readable } from "node:stream";
@@ -37,6 +38,7 @@ async function main(): Promise<void> {
   let handoff = false;
   let compact = false;
   let gzip = false;
+  let timings = false;
   let handoffOffset = 0;
   let offsetSupplied = false;
   let responsesPath: string | undefined;
@@ -50,6 +52,11 @@ async function main(): Promise<void> {
         throw new Error("--developer-practice may only be supplied once");
       }
       legacyDeveloperPracticeFlagSeen = true;
+      continue;
+    }
+    if (argument === "--timings") {
+      if (timings) throw new Error("--timings may only be supplied once");
+      timings = true;
       continue;
     }
     if (argument === "--gzip") {
@@ -116,7 +123,7 @@ async function main(): Promise<void> {
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--compact] [--gzip] [--handoff-offset N] [--responses model.json] [target options]");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--compact] [--gzip] [--timings] [--handoff-offset N] [--responses model.json] [target options]");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -136,6 +143,7 @@ async function main(): Promise<void> {
   const developerPractice = JSON.parse(await readFile(
     resolve("experiments/developer-practice-signals.json"), "utf8",
   )) as NonNullable<SelectedMapAuditInput["developerPractice"]>;
+  const auditStartedAt = performance.now();
   const audit = await runSelectedMapAudit({
     artifactPath: resolve(input),
     ...(expectedArtifactFingerprint === undefined
@@ -146,6 +154,7 @@ async function main(): Promise<void> {
     developerPractice,
     telemetry: [],
   });
+  const auditCallElapsedMs = Math.max(0, performance.now() - auditStartedAt);
   // Responses are not proof. The canonical resolution gate validates all
   // artifact/revision/task/evidence references before any report projection.
   const resolvedAudit = responsesPath === undefined
@@ -160,6 +169,30 @@ async function main(): Promise<void> {
         knowledgeCatalog: knowledge,
         developerPractice,
       });
+  if (timings) {
+    // Side-channel measurement only. Preserve the canonical Map Audit JSON,
+    // brief and handoff bytes, their admission, and existing exit semantics.
+    const steps = resolvedAudit.demandReconciliation.sourceIndexPasses ?? [];
+    process.stderr.write("AUDIT_TIMINGS " + JSON.stringify({
+      policy: "selected-map-audit-timing-observations",
+      artifactFingerprint: resolvedAudit.identity.artifactFingerprint,
+      auditRevision: resolvedAudit.auditRevision,
+      auditCallElapsedMs,
+      steps: steps.map(step => ({
+        pass: step.pass,
+        sourceIndexAction: step.action,
+        sourceIndexElapsedMs: step.elapsedMs,
+        inspectionElapsedMs: step.inspectionElapsedMs,
+        ...(step.archivePreparationElapsedMs === undefined ? {} : {
+          archivePreparationElapsedMs: step.archivePreparationElapsedMs,
+        }),
+        workingCopyElapsedMs: step.workingCopyElapsedMs,
+        nativeWorldDbElapsedMs: step.nativeWorldDbElapsedMs,
+        sourceParseFailures: step.parseFailures,
+      })),
+      scope: "wall-clock process observations, not Minecraft runtime proof or speedup",
+    }) + "\n");
+  }
   const output = handoff
     ? JSON.stringify(
         projectSelectedMapAuditModelHandoff(resolvedAudit, handoffOffset),

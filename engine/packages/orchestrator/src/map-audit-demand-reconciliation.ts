@@ -15,13 +15,17 @@ export interface AuditDemandReconciliation {
   /** Actual per-pass observations, not audit authorization or speedup proof.
    * inspectionElapsedMs covers one prepared inspection (working copy, DB,
    * source indexing and downstream analysis); it excludes initial ZIP
-   * extraction and final Map Audit report assembly.
+   * extraction and final Map Audit report assembly. archive preparation
+   * is reported on pass 1 only, never double-counted on pass 2.
    */
   readonly sourceIndexPasses?: readonly (NonNullable<
     InspectArtifactResult["sourceIndexWork"]
   > & {
     readonly pass: number;
     readonly inspectionElapsedMs?: number;
+    readonly archivePreparationElapsedMs?: number;
+    readonly workingCopyElapsedMs?: number;
+    readonly nativeWorldDbElapsedMs?: number;
   })[];
 }
 
@@ -58,6 +62,14 @@ export function reconcileSelectedMapAuditDemand(
       pass: passCount,
       ...inspection.sourceIndexWork,
       ...(inspectionElapsedMs === undefined ? {} : { inspectionElapsedMs }),
+      ...(inspection.inspectionTiming === undefined ? {} : {
+        ...(passCount !== 1 ? {} : {
+          archivePreparationElapsedMs:
+            inspection.inspectionTiming.archivePreparationElapsedMs,
+        }),
+        workingCopyElapsedMs: inspection.inspectionTiming.workingCopyElapsedMs,
+        nativeWorldDbElapsedMs: inspection.inspectionTiming.nativeWorldDbElapsedMs,
+      }),
     }]),
   ];
   return {

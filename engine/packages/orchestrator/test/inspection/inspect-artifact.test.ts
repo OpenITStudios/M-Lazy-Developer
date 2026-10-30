@@ -169,6 +169,15 @@ describe("inspectArtifact", () => {
           parseFailures: 0,
         });
         for (const pass of [initial, expanded]) {
+          expect(pass.inspectionTiming).toBeDefined();
+          for (const key of [
+            "archivePreparationElapsedMs",
+            "workingCopyElapsedMs",
+            "nativeWorldDbElapsedMs",
+          ] as const) {
+            expect(Number.isFinite(pass.inspectionTiming?.[key])).toBe(true);
+            expect(pass.inspectionTiming?.[key]).toBeGreaterThanOrEqual(0);
+          }
           expect(pass.sourceIndexWork?.elapsedMs).toBeGreaterThanOrEqual(0);
           expect(Number.isFinite(pass.sourceIndexWork?.elapsedMs)).toBe(true);
           expect(pass.sourceIndexWork?.indexedFiles)

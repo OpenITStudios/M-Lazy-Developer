@@ -114,6 +114,10 @@ Minecraft import/open   → only if directly supported by current ChatGPT tools;
 gameplay/runtime        → actual live execution evidence, otherwise UNKNOWN
 ```
 
+### Audit timing diagnosis (same production entrypoint)
+
+The existing selected-map audit now records actual per-invocation wall-clock durations for initial ZIP fingerprint/extraction, each prepared working-copy copy, each LevelDB read or snapshot reuse, and source indexing (parsed versus reused), with full per-pass inspection elapsed time already reported by the canonical demand-reconciliation owner. These measurements are **observations**, not a guarantee that the game was executed or that a speedup occurred. The optional `npm run audit -- <selected.mcworld> --brief --timings` appends one `AUDIT_TIMINGS` JSON line to standard error. This keeps the canonical JSON/brief/handoff standard output, audit revision, report admission and exit status unchanged; no second report/cache/CI workflow is introduced. Report assembly is not included in `inspectionElapsedMs`; the separate `auditCallElapsedMs` covers the full `runSelectedMapAudit()` call only. Archive preparation is counted once and not multiplied by the number of reconciliation passes. A native LevelDB failure remains an incomplete scan even if its elapsed time is measured.
+
 ### One-run risk-based test selection (no new CI)
 
 The existing `tooling/repository/run-tests.mjs` remains the **single test runner**; AI chooses its smallest defensible test set from exact GitHub `Local` source changes and the present risk. The full `test-inventory.json` still owns all five lanes and every source test, even when only a subset is executed. When actual repo code and dependencies are available to ChatGPT, use:
