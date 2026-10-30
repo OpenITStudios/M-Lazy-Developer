@@ -108,154 +108,86 @@ describe("map engineering workflow projection", () => {
     });
   });
 
-  it("keeps understanding partial while selected-artifact semantics are unresolved", () => {
-    const source = {
-      ...baseSource(),
-      unresolvedReferences: 2,
-    } as any;
 
-    const workflow =
-      buildMapEngineeringWorkflow(source);
-
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "understand",
-      )?.status,
-    ).toBe("partial");
-    expect(
-      workflow.attention.unresolvedReferences,
-    ).toBe(2);
-  });
-
-  it("blocks understanding and release while discovery closure is OPEN", () => {
-    const source = {
-      ...baseSource(),
-      gameplayDiscoveryClosure: {
-        ...baseSource().gameplayDiscoveryClosure,
-        status: "OPEN",
-        sourceCoverageComplete: false,
-        sourceParseFailures: 1,
+  it("checks the six stage-gating conditions in one decision matrix", () => {
+    const base = baseSource();
+    const cases = [
+      {
+        label: "unresolved references",
+        input: { ...base, unresolvedReferences: 2 },
+        stages: { understand: "partial" },
+        attention: { unresolvedReferences: 2 },
       },
-    } as any;
-
-    const workflow =
-      buildMapEngineeringWorkflow(source);
-
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "understand",
-      )?.status,
-    ).toBe("blocked");
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "release",
-      )?.status,
-    ).toBe("blocked");
-  });
-
-  it("blocks understanding and release while gameplay closure is OPEN", () => {
-    const source = {
-      ...baseSource(),
-      gameplaySemantic: {
-        ...baseSource().gameplaySemantic,
-        gameplayClosure: {
-          ...baseSource().gameplaySemantic.gameplayClosure,
-          status: "OPEN",
-          unaccountedSurfaceIds: ["runtime:arena-capacity"],
-          stateModelComplete: false,
-        },
+      {
+        label: "discovery closure OPEN",
+        input: { ...base, gameplayDiscoveryClosure: {
+          ...base.gameplayDiscoveryClosure, status: "OPEN",
+          sourceCoverageComplete: false, sourceParseFailures: 1,
+        } },
+        stages: { understand: "blocked", release: "blocked" },
+        attention: {},
       },
-    } as any;
-
-    const workflow = buildMapEngineeringWorkflow(source);
-
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "understand",
-      )?.status,
-    ).toBe("blocked");
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "release",
-      )?.status,
-    ).toBe("blocked");
-  });
-
-  it("keeps diagnosis partial while high-risk hidden defects remain", () => {
-    const source = {
-      ...baseSource(),
-      hiddenGameplayDefects: {
-        attention: {
-          ...baseSource().hiddenGameplayDefects.attention,
-          designAnomalies: 1,
-        },
+      {
+        label: "gameplay model closure OPEN",
+        input: { ...base, gameplaySemantic: {
+          ...base.gameplaySemantic, gameplayClosure: {
+            ...base.gameplaySemantic.gameplayClosure,
+            status: "OPEN", unaccountedSurfaceIds: ["runtime:arena-capacity"],
+            stateModelComplete: false,
+          },
+        } },
+        stages: { understand: "blocked", release: "blocked" },
+        attention: {},
       },
-    } as any;
-
-    const workflow =
-      buildMapEngineeringWorkflow(source);
-
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "diagnose",
-      )?.status,
-    ).toBe("partial");
-    expect(
-      workflow.attention.hiddenDefectRisks,
-    ).toBe(1);
-  });
-
-  it("blocks release while a sensitive capability is exposed", () => {
-    const source = {
-      ...baseSource(),
-      capabilityExposure: {
-        exposures: [{
-          capabilityId: "capability:restricted-action",
-          capabilityLabel: "Restricted Action",
-          status: "exposed",
-          prerequisiteReachability: "reachable",
-          impact: "progression",
-          reasons: [],
-          evidenceIds: [],
-        }],
-        exposed: 1,
-        potentiallyExposed: 0,
-        releaseBlocking: 1,
-        unresolved: 0,
+      {
+        label: "hidden design anomaly",
+        input: { ...base, hiddenGameplayDefects: { attention: {
+          ...base.hiddenGameplayDefects.attention, designAnomalies: 1,
+        } } },
+        stages: { diagnose: "partial" },
+        attention: { hiddenDefectRisks: 1 },
       },
-    } as any;
+      {
+        label: "reachable sensitive capability",
+        input: { ...base, capabilityExposure: {
+          exposures: [{
+            capabilityId: "capability:restricted-action",
+            capabilityLabel: "Restricted Action", status: "exposed",
+            prerequisiteReachability: "reachable", impact: "progression",
+            reasons: [], evidenceIds: [],
+          }],
+          exposed: 1, potentiallyExposed: 0, releaseBlocking: 1, unresolved: 0,
+        } },
+        stages: { release: "blocked" },
+        attention: { capabilityExposureRisks: 1 },
+      },
+      {
+        label: "critical diagnostic",
+        input: { ...base, diagnostics: [{
+          id: "critical", code: "ARENA_VOXEL_DIVERGENCE",
+          severity: "critical", message: "voxel divergence",
+        }] },
+        stages: { release: "blocked" },
+        attention: {},
+      },
+    ] as const;
 
-    const workflow =
-      buildMapEngineeringWorkflow(source);
-
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "release",
-      )?.status,
-    ).toBe("blocked");
-    expect(
-      workflow.attention.capabilityExposureRisks,
-    ).toBe(1);
+    const observed = cases.map(({ label, input, stages, attention }) => {
+      const workflow = buildMapEngineeringWorkflow(input);
+      return {
+        label,
+        stages: Object.keys(stages).map(id => [
+          id, workflow.stages.find(stage => stage.id === id)?.status,
+        ]),
+        attention: Object.keys(attention).map(key => [
+          key, workflow.attention[key as keyof typeof workflow.attention],
+        ]),
+      };
+    });
+    const expected = cases.map(({ label, stages, attention }) => ({
+      label, stages: Object.entries(stages), attention: Object.entries(attention),
+    }));
+    expect(observed).toEqual(expected);
   });
 
-  it("keeps release blocked while critical diagnostics remain", () => {
-    const source = {
-      ...baseSource(),
-      diagnostics: [{
-        id: "critical",
-        code: "ARENA_VOXEL_DIVERGENCE",
-        severity: "critical",
-        message: "voxel divergence",
-      }],
-    } as any;
-
-    const workflow =
-      buildMapEngineeringWorkflow(source);
-
-    expect(
-      workflow.stages.find(
-        (item) => item.id === "release",
-      )?.status,
-    ).toBe("blocked");
-  });
 });
