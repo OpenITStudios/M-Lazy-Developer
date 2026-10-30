@@ -117,8 +117,12 @@ function loadInventory() {
       Object.keys(exampleOwners).some(id => !Object.hasOwn(exampleDetails, id))) {
     throw new Error("Invalid pinned Probe E/G example index");
   }
+  const exampleSlugs = new Set();
   for (const [id, example] of Object.entries(exampleDetails)) {
-    if (!example || typeof example.pattern !== "string" ||
+    if (!example || typeof example.label !== "string" || !example.label.trim() ||
+        typeof example.slug !== "string" ||
+        !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(example.slug) ||
+        typeof example.pattern !== "string" ||
         !example.pattern.trim() ||
         !["PASS", "pending"].includes(example.status) ||
         ![null, "PASS", "pending"].includes(example.nodeStatus) ||
@@ -129,6 +133,10 @@ function loadInventory() {
           !/^P[0-9]{2,3}(?:[A-Z][A-Z0-9]*)?$/.test(pid))) {
       throw new Error("Invalid upstream example source details: " + id);
     }
+    if (exampleSlugs.has(example.slug)) {
+      throw new Error("Duplicate descriptive reference topic: " + example.slug);
+    }
+    exampleSlugs.add(example.slug);
   }
   for (const [featureId, spec] of Object.entries(featureCatalog)) {
     const link = spec?.upstream;
@@ -502,14 +510,10 @@ if (mode === "--acceptance" && args.length <= 1) {
   for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
   process.exit(0);
 } else if (mode === "--list-test-groups" && args.length === 1) {
-  // Native Developer Skills and independent Skills Probe are reference
-  // taxonomies; the existing inventory remains the only M-Lazy test owner.
+  // Show human-readable topics first; E/G/P source identities remain in
+  // the canonical inventory only for provenance and legacy lookups.
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
   const links = test => data.featureCatalog[test.featureId].upstream;
-  const matched = (field, id) => registeredTests.filter(test =>
-    links(test)[field].includes(id));
-  const developer = data.upstreamCategoryCrosswalk.developer;
-  const probe = data.upstreamCategoryCrosswalk.probe;
   const topical = registeredTests.filter(test =>
     links(test).relation === "TOPIC_REFERENCE_ONLY");
   const internal = registeredTests.filter(test =>
@@ -517,73 +521,28 @@ if (mode === "--acceptance" && args.length <= 1) {
   if (topical.length + internal.length !== registeredTests.length) {
     throw new Error("Unclassified upstream topic relationship");
   }
-  const sourceExampleProbeIds = [...new Set(Object.values(probe.exampleDetails)
-    .flatMap(example => example.probeIds))];
-  const mappedProbeIds = [...new Set(Object.values(data.featureCatalog)
-    .flatMap(feature => feature.upstream.probeIds))];
-  const allProbeIds = [...new Set([...sourceExampleProbeIds, ...mappedProbeIds])]
-    .sort();
-  const memberships = developer.skills.reduce((sum, skill) =>
-    sum + matched("skills", skill).length, 0);
-  console.log("M-Lazy canonical inventory: " + registeredTests.length +
-    " unique source test files; no tests executed.");
-  console.log("Two pinned v0.30.0 ZIP taxonomies: Developer " +
-    developer.archiveSha256 + "; Probe " + probe.archiveSha256 + ".");
-  console.log("Topic-related: " + topical.length +
-    " unique; internal-only: " + internal.length +
-    " unique; skill memberships: " + memberships +
-    " (nonexclusive, not executable proof).");
-  console.log("Probe source example P-IDs: " + sourceExampleProbeIds.length +
-    "; M-Lazy topic-mapped P-IDs: " + mappedProbeIds.length +
-    "; union: " + allProbeIds.length + " (not all mapped).");
-
-  console.log("\nDEVELOPER SKILLS — source-topic relationships only");
-  for (const skill of developer.skills) {
-    const modules = Object.entries(developer.moduleOwners)
-      .filter(([, owners]) => owners.includes(skill))
-      .map(([name]) => name);
-    const examples = Object.entries(probe.exampleOwners)
-      .filter(([, owner]) => owner === skill)
-      .map(([id]) => id);
-    console.log(skill + ": " + matched("skills", skill).length +
-      " related files; modules=" + (modules.join(",") || "none") +
-      "; upstream examples=" + (examples.join(",") || "none"));
+  console.log("M-Lazy test navigation — descriptive topics; NO TESTS EXECUTED.");
+  console.log("Registered source test files: " + registeredTests.length +
+    "; related to publisher topics: " + topical.length +
+    "; M-Lazy internal-only: " + internal.length + ".");
+  console.log("Actual M-Lazy categories: --list-areas or --list-features.");
+  console.log("\nEXTERNAL REFERENCE TOPICS — similarities, NOT test coverage");
+  for (const [sourceId, example] of Object.entries(
+    data.upstreamCategoryCrosswalk.probe.exampleDetails)) {
+    const count = registeredTests.filter(test =>
+      links(test).probeExamples.includes(sourceId)).length;
+    console.log(example.label + ": " + count + " related M-Lazy source files" +
+      (count ? "" : " (no direct topic mapping)") +
+      "; view: --show-test-group topic/" + example.slug);
   }
-  console.log("\nNATIVE MODULES — source requires edges, not imported M-Lazy modules");
-  for (const [name, owners] of Object.entries(developer.moduleOwners)
-    .sort(([a], [b]) => a.localeCompare(b))) {
-    console.log(name + ": " + matched("modules", name).length +
-      " related files; publisher skill=" + owners.join(",") +
-      "; requires=" + (developer.moduleRequires[name].join(",") || "none") +
-      (name === developer.externalModule ? " [EXTERNAL SOURCE]" : ""));
-  }
-  console.log("\nSKILLS PROBE E/G — UPSTREAM INDEX STATUS, NOT M-LAZY RESULTS");
-  for (const [id, skill] of Object.entries(probe.exampleOwners)
-    .sort(([a], [b]) => a.localeCompare(b))) {
-    const example = probe.exampleDetails[id];
-    console.log(id + ": " + matched("probeExamples", id).length +
-      " related M-Lazy files; source skill=" + skill +
-      "; source example status=" + example.status +
-      "; source nodeStatus=" + (example.nodeStatus ?? "not-reported") +
-      "; source engineStatus=" + (example.engineStatus ?? "not-reported") +
-      "; P-IDs=" + (example.probeIds.join(",") || "none"));
-  }
-  console.log("\nPROBE P-IDs — 52 E/G source identities plus other mapped topics");
-  for (const id of allProbeIds) {
-    const owners = Object.entries(probe.exampleDetails)
-      .filter(([, example]) => example.probeIds.includes(id))
-      .map(([example]) => example);
-    console.log(id + ": " + matched("probeIds", id).length +
-      " topic-related M-Lazy files; source example=" +
-      (owners.join(",") || "not in E/G index"));
-  }
-  console.log("\nM-LAZY INTERNAL ONLY — independent checker test ownership");
+  console.log("\nM-LAZY INTERNAL-ONLY AREAS — no publisher equivalent");
   for (const area of data.functionalAreaTaxonomy.areas) {
     const count = internal.filter(test => test.functionalArea === area).length;
-    if (count) console.log(area + ": " + count + " files");
+    if (count) console.log(area.replaceAll("-", " ") + ": " + count +
+      " M-Lazy source files; view: --show-test-group internal/" + area);
   }
-  console.log("\nDrill down: --show-test-group skill/<id> | module/<id> | " +
-    "example/<E/G-id> | probe/<P-id> | internal[/<area>].");
+  console.log("\nOriginal upstream E/G/P identifiers remain available only " +
+    "as technical reference selectors (example/<id> and probe/<id>).");
 } else if (mode === "--show-test-group" && args.length === 2) {
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
   const links = test => data.featureCatalog[test.featureId].upstream;
@@ -598,7 +557,19 @@ if (mode === "--acceptance" && args.length <= 1) {
   const mappedProbeIds = new Set(Object.values(data.featureCatalog)
     .flatMap(feature => feature.upstream.probeIds));
   let matches;
-  if (kind === "skill" && developer.skills.includes(id)) {
+  let groupName = raw;
+  const topicSource = Object.entries(probe.exampleDetails)
+    .find(([, example]) => example.slug === id)?.[0];
+  if (kind === "topic" && topicSource) {
+    const example = probe.exampleDetails[topicSource];
+    matches = registeredTests.filter(test =>
+      links(test).probeExamples.includes(topicSource));
+    groupName = example.label;
+    console.log("EXTERNAL REFERENCE TOPIC: " + groupName +
+      "; source pattern=" + example.pattern);
+    console.log("This is a thematic mapping, NOT evidence of matching " +
+      "assertions or observed Minecraft behavior.");
+  } else if (kind === "skill" && developer.skills.includes(id)) {
     matches = registeredTests.filter(test => links(test).skills.includes(id));
     const modules = Object.entries(developer.moduleOwners)
       .filter(([, owners]) => owners.includes(id)).map(([name]) => name);
@@ -619,9 +590,11 @@ if (mode === "--acceptance" && args.length <= 1) {
     matches = registeredTests.filter(test =>
       links(test).probeExamples.includes(id));
     const example = probe.exampleDetails[id];
-    console.log("UPSTREAM E/G SOURCE " + id +
-      "; skill=" + probe.exampleOwners[id] +
-      "; pattern=" + example.pattern);
+    groupName = example.label;
+    console.log("EXTERNAL REFERENCE TOPIC " + example.label +
+      "; source pattern=" + example.pattern);
+    console.log("Original publisher source ID=" + id +
+      "; source skill=" + probe.exampleOwners[id]);
     console.log("UPSTREAM INDEX ONLY: example status=" + example.status +
       "; nodeStatus=" + (example.nodeStatus ?? "not-reported") +
       "; engineStatus=" + (example.engineStatus ?? "not-reported") +
@@ -635,9 +608,13 @@ if (mode === "--acceptance" && args.length <= 1) {
     const owners = Object.entries(probe.exampleDetails)
       .filter(([, example]) => example.probeIds.includes(id))
       .map(([exampleId]) => exampleId);
-    console.log("PROBE SOURCE ID " + id +
-      "; E/G source index=" + (owners.join(",") || "not listed") +
-      "; topic-related M-Lazy files=" + matches.length);
+    const sourceNames = owners.map(owner => probe.exampleDetails[owner].label);
+    groupName = sourceNames.length === 1 ?
+      sourceNames[0] + " (source subcase)" : "External source subcase";
+    console.log("REFERENCE SUBCASE: " + groupName +
+      "; original publisher ID=" + id +
+      "; source topics=" + (sourceNames.join(", ") || "other Probe reference") +
+      "; related M-Lazy files=" + matches.length);
     console.log("Same-index example grouping does NOT imply a matching " +
       "individual executable M-Lazy test case.");
   } else if (kind === "internal" &&
@@ -647,7 +624,8 @@ if (mode === "--acceptance" && args.length <= 1) {
       (!id || test.functionalArea === id));
   } else {
     console.error("Unknown test group: " + raw +
-      ". Use --list-test-groups for documented native identities.");
+      ". Use --list-test-groups for named topics; original source IDs " +
+      "are for technical lookup only.");
     process.exit(2);
   }
   const sorted = matches.slice().sort((a, b) =>
@@ -655,7 +633,7 @@ if (mode === "--acceptance" && args.length <= 1) {
     a.featureId.localeCompare(b.featureId) ||
     lanes.indexOf(a.lane) - lanes.indexOf(b.lane) ||
     a.path.localeCompare(b.path));
-  console.log("GROUP " + raw + ": " + sorted.length +
+  console.log("GROUP " + groupName + ": " + sorted.length +
     " unique M-Lazy source test files; TOPIC NAVIGATION ONLY.");
   console.log("No selected-map proof, external Probe PASS or gameplay " +
     "execution implied.");
@@ -713,23 +691,35 @@ if (mode === "--acceptance" && args.length <= 1) {
   process.exit(0);
 } else if (mode === "--list-probe-examples" && args.length === 1) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
-  const examples = inventory.upstreamCategoryCrosswalk.probe.exampleOwners;
-  for (const example of Object.keys(examples).sort()) {
+  const examples = inventory.upstreamCategoryCrosswalk.probe.exampleDetails;
+  for (const [sourceId, example] of Object.entries(examples)) {
     const count = registeredTests.filter(test =>
-      inventory.featureCatalog[test.featureId].upstream.probeExamples.includes(example)).length;
-    console.log(example + ": " + count + " comparable test themes; skill=" + examples[example] + " [NOT PROBE EXECUTION]");
+      inventory.featureCatalog[test.featureId].upstream.probeExamples.includes(sourceId)).length;
+    console.log(example.label + ": " + count + " related M-Lazy files" +
+      (count ? "" : " (no direct topic mapping)") +
+      "; view: --show-probe-example " + example.slug +
+      " [EXTERNAL REFERENCE ONLY]");
   }
   process.exit(0);
 } else if (mode === "--show-probe-example" && args.length === 2) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
-  if (!(args[1] in inventory.upstreamCategoryCrosswalk.probe.exampleOwners)) {
-    console.error("Unknown indexed Skills Probe example: " + args[1]);
+  const entries = Object.entries(inventory.upstreamCategoryCrosswalk.probe.exampleDetails);
+  const selected = entries.find(([sourceId, example]) =>
+    sourceId === args[1] || example.slug === args[1]);
+  if (!selected) {
+    console.error("Unknown external reference topic. Use --list-probe-examples.");
     process.exit(2);
   }
+  const [sourceId, example] = selected;
   const matched = registeredTests.filter(test =>
-    inventory.featureCatalog[test.featureId].upstream.probeExamples.includes(args[1]));
-  if (!matched.length) console.log("No directly comparable M-Lazy-Developer test theme mapped.");
-  for (const test of matched) console.log(test.featureId + "  " + test.path + " [PROBE ANALOGY ONLY]");
+    inventory.featureCatalog[test.featureId].upstream.probeExamples.includes(sourceId));
+  console.log(example.label + ": " + matched.length +
+    " thematically related M-Lazy test files (NOT test execution).");
+  if (!matched.length) {
+    console.log("No direct topic mapping. This does not establish that a feature is missing.");
+  }
+  for (const test of matched) console.log(test.featureId + "  " +
+    test.path + " [REFERENCE ONLY]");
   process.exit(0);
 } else if (mode === "--list-mechanics" && args.length === 1) {
   const counts = new Map();

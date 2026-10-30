@@ -283,47 +283,50 @@ not equivalent to M-Lazy's world LevelDB/NBT parser.
 | `testing` | 32 | `bedrock-script-optimization` | — |
 | `time` | 18 | `bedrock-game-time` | `logging`, `database` |
 
-#### Skills Probe E/G examples (independent ZIP docs/examples/index.json)
+#### Named external reference topics (not M-Lazy test IDs)
 
-Each row identifies an **analogy for investigation**, not an executed
-M-Lazy test, a matching fixture, a runtime result, or a release gate.
-Source index SHA-256:
-`5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630`.
-The upstream index separately reports `status`, `nodeStatus` and
-`engineStatus`; these are **not projected as M-Lazy PASS/FAIL**.
-The E/G index reports **3 overall PASS** and **11 pending**
-source example rows, at their **original upstream revision and target**.
-A row's overall status is not a verdict for its whole family or
-for any M-Lazy test. For example, E3's new engine checks are pending;
-E9's PASS is a naming-only result, and E7's source PASS concerns
-its scoped game-results example.
+The original publisher uses codes such as `E7`, `G5`, `P53`, and
+`P53END` as **source identifiers**. They are not gameplay feature names,
+M-Lazy test identities, or execution receipts. M-Lazy navigation displays
+descriptive labels first; the original source IDs are retained only to
+trace independently pinned references without breaking historical links.
 
-| E/G | Developer Skill | Actual ZIP source pattern | Upstream `status` / `nodeStatus` / `engineStatus` | Upstream P-IDs | M-Lazy topic-related files |
-| --- | --- | --- | --- | --- | ---: |
-| `E1` | `bedrock-script-optimization` | Two-arena state, persistence, transitions and bounded apply caches | `pending` / `PASS` / `pending` | `P52` | 19 |
-| `E2` | `bedrock-entity-lifecycle` | Player-keyed state cleanup and spawn invalidation | `pending` / `PASS` / `pending` | `P53`, `P53END` | 6 |
-| `E3` | `bedrock-entity-creation` | Negative-model offset (E3) and placement reconciliation on unequal surfaces (E3b) | `PASS` / `PASS` / `pending` | `P38`, `P54`, `P54R`, `P54END` | 8 |
-| `E4` | `bedrock-debug-profiling` | Diagnostics capture and agent evidence procedure | `pending` / `PASS` / `pending` | `P41`, `P46`, `P50` | 67 |
-| `E5` | `bedrock-forms` | Stable skinned ActionForm and ModalForm with plain fallback | `pending` / `PASS` / `pending` | `P55`, `P05` | 2 |
-| `E6` | `bedrock-onscreen-display` | Localized title-channel quest card and item label | `pending` / `PASS` / `pending` | `P56`, `P56S`, `P56P`, `P56C`, `P56I`, `P56L`, `P56X` | 2 |
-| `E7` | `bedrock-game-results` | Small game-results adapter and historical size stress export | `PASS` / `PASS` / `PASS` | `P51`, `P35` The E/G index in the exact source ZIP contains **52 unique upstream P-IDs**,
-including qualified IDs such as `P53END`, `P54R` and `P57A0`.
-The existing M-Lazy `featureCatalog[featureId].upstream.probeIds`
-contains **36 distinct TOPIC tags**; only **13** names overlap.
-Thus **39** E/G source P-IDs have no file-level topical tag, while
-**23** M-Lazy topic tags come from other Probe references
-outside the E/G example index. The union contains **75 P-IDs**.
-Neither set is a test-case coverage census. Do not copy upstream
-PASS/PENDING into M-Lazy status, and do not automatically map a child
-subcase to every file related to its parent E/G example.
+| Descriptive topic | External source focus | M-Lazy topic-related files | Upstream status / Node / engine | Original source ID (technical) |
+| --- | --- | ---: | --- | --- |
+| **Arena State & Performance** | Two-arena state, persistence, transitions, and bounded caches | 19 | pending / PASS / pending | `E1` |
+| **Player Lifecycle & Cleanup** | Player-keyed state cleanup and spawn invalidation | 6 | pending / PASS / pending | `E2` |
+| **Entity Model Placement** | Model offsets and placement across uneven surfaces | 8 | PASS / PASS / pending | `E3` |
+| **Diagnostics & Profiling** | Diagnostic capture, profiling, and evidence procedures | 67 | pending / PASS / pending | `E4` |
+| **Player Forms & Fallback** | Styled player forms with plain fallback | 2 | pending / PASS / pending | `E5` |
+| **On-Screen Text & Localization** | Localized title-channel cards and item labels | 2 | pending / PASS / pending | `E6` |
+| **Game Results & Export** | Game-results adapter and historical size-stress export | 0 | PASS / PASS / PASS | `E7` |
+| **Text Glyphs & Display Sizing** | Glyph audit and display-size comparison | 0 | pending / PASS / pending | `E8` |
+| **Project Naming** | Project name and slug naming conventions | 3 | PASS / not reported / not reported | `E9` |
+| **Custom Blocks & Items** | Version-2 custom blocks and items | 4 | pending / PASS / pending | `G1` |
+| **Confirmation & Paginated Menus** | Confirmation and paginated choice forms | 2 | pending / PASS / pending | `G2` |
+| **Player Sound & Captions** | Per-player sound previews and captions | 0 | pending / PASS / pending | `G3` |
+| **Teleport & Interrupted Travel** | Teleport fades and interrupted portal travel | 1 | pending / PASS / pending | `G4` |
+| **Game Timer & Countdown** | Persistent per-player countdown | 15 | pending / PASS / pending | `G5` |
 
-For clarity: E3 has a narrow upstream example `PASS` but its newer
-`engineStatus` is still `pending`; E7 reports a source-index engine
-`PASS` for a bounded game-results example with **zero** mapped
-M-Lazy topic files; E9 is a naming-only `PASS` with no separate Node
-or engine verdict. `G3/P60` (sound) and many `E8/P57*` (glyphs)
-have **zero** M-Lazy topic matches, which alone does not establish
-missing implementation or failed testing.
+**Evidence boundary:** the source index has 3 overall `PASS` and
+11 `pending` examples, scoped to the upstream revision and target.
+These historical source statuses do **not** mean that M-Lazy or a selected
+Minecraft world was tested. In particular, **Entity Model Placement**
+has upstream engine checks pending, **Game Results & Export** has a
+bounded upstream result with no directly mapped M-Lazy test file,
+and **Project Naming** has only a naming-level upstream PASS.
+Zero mapped files means no exact **topic reference mapping**, not that
+the Minecraft feature is unsupported or has failed.
+
+For technical provenance, the source index contains **52 distinct P-IDs**;
+the M-Lazy feature catalog contains **36 topic P-ID tags**;
+**13** IDs overlap, giving a **75-ID union**.
+No child subcase is automatically mapped to all parent-topic tests.
+The original ID lists and status triplets remain in the canonical
+`test-inventory.json` `upstreamCategoryCrosswalk.probe.exampleDetails`.
+Only that metadata is the source-identity authority. The human-readable
+labels are presentation aliases, not a new runner, new test group,
+or proof of gameplay coverage.
 
 #### M-Lazy internal-only capabilities (no publisher equivalent)
 
@@ -346,29 +349,26 @@ proof/admission checks remain under their **internal canonical owners**.
 Do not mistake Daigon `bedrock-game-results` or publisher
 `bedrock-data-persistence` for equivalent engine features.
 
-#### Read-only group navigation in the existing test runner
+#### Read-only navigation using descriptive names
 
 ```text
 node tooling/repository/run-tests.mjs --list-test-groups
-node tooling/repository/run-tests.mjs --show-test-group skill/bedrock-entity-lifecycle
-node tooling/repository/run-tests.mjs --show-test-group module/database
-node tooling/repository/run-tests.mjs --show-test-group module/teleport
-node tooling/repository/run-tests.mjs --show-test-group example/E2
-node tooling/repository/run-tests.mjs --show-test-group probe/P53
-node tooling/repository/run-tests.mjs --show-test-group probe/P53END
-node tooling/repository/run-tests.mjs --show-test-group probe/P54R
-node tooling/repository/run-tests.mjs --show-test-group probe/P60
+node tooling/repository/run-tests.mjs --show-test-group topic/player-lifecycle-cleanup
+node tooling/repository/run-tests.mjs --show-test-group topic/entity-model-placement
+node tooling/repository/run-tests.mjs --show-test-group topic/game-results-export
+node tooling/repository/run-tests.mjs --show-test-group topic/player-sound-captions
+node tooling/repository/run-tests.mjs --show-test-group topic/game-timer-countdown
 node tooling/repository/run-tests.mjs --show-test-group internal/audit-diagnosis
 ```
 
-The `--list-test-groups` and `--show-test-group` operations navigate
-**the same 623 registered paths** in area → feature → execution-lane → file
-order. Their parent-group view now also exposes the source-pinned
-`requires` edges, example status triplets and the **75-ID union** with
-explicit zero mappings. They do not invoke Vitest, Minecraft, skills,
-or the upstream Probe, and cannot promote a topical reference or historical
-UPSTREAM result to executed M-Lazy proof. Existing execution-selection
-commands and CI policy remain unchanged.
+`--list-test-groups` displays **names** and topical match counts by default.
+The individual topic selectors above retrieve the same inventory files
+without executing tests. To inspect native publisher source identity when
+needed, the existing advanced `example/E2`, `probe/P53END`,
+`skill/bedrock-entity-lifecycle`, and `module/teleport` selectors
+remain compatible; they are not recommended user-facing names.
+Execution selection (`--focus`, `--affected`, `--lane`,
+`--acceptance`, `--full`) and CI policy remain unchanged.
 
 **Source version boundaries:** the v0.30.0 ZIP-derived test crosswalk
 in this inventory is independent of the earlier reviewed
@@ -393,7 +393,7 @@ node tooling/repository/run-tests.mjs --list-upstream-skills
 node tooling/repository/run-tests.mjs --show-upstream-skill bedrock-data-persistence
 node tooling/repository/run-tests.mjs --show-upstream-module database
 node tooling/repository/run-tests.mjs --list-probe-examples
-node tooling/repository/run-tests.mjs --show-probe-example G4
+node tooling/repository/run-tests.mjs --show-probe-example teleport-interrupted-travel
 ```
 
 These commands read the registered paths and do not start Vitest.

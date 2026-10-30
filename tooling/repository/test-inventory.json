@@ -14769,6 +14769,8 @@
       "exampleIndexSha256": "5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630",
       "exampleDetails": {
         "E1": {
+          "label": "Arena State & Performance",
+          "slug": "arena-state-performance",
           "pattern": "Two-arena state, persistence, transitions and bounded apply caches",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14778,6 +14780,8 @@
           ]
         },
         "E2": {
+          "label": "Player Lifecycle & Cleanup",
+          "slug": "player-lifecycle-cleanup",
           "pattern": "Player-keyed state cleanup and spawn invalidation",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14788,6 +14792,8 @@
           ]
         },
         "E3": {
+          "label": "Entity Model Placement",
+          "slug": "entity-model-placement",
           "pattern": "Negative-model offset (E3) and placement reconciliation on unequal surfaces (E3b)",
           "status": "PASS",
           "nodeStatus": "PASS",
@@ -14800,6 +14806,8 @@
           ]
         },
         "E4": {
+          "label": "Diagnostics & Profiling",
+          "slug": "diagnostics-profiling",
           "pattern": "Diagnostics capture and agent evidence procedure",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14811,6 +14819,8 @@
           ]
         },
         "E5": {
+          "label": "Player Forms & Fallback",
+          "slug": "player-forms-fallback",
           "pattern": "Stable skinned ActionForm and ModalForm with plain fallback",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14821,6 +14831,8 @@
           ]
         },
         "E6": {
+          "label": "On-Screen Text & Localization",
+          "slug": "on-screen-text-localization",
           "pattern": "Localized title-channel quest card and item label",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14836,6 +14848,8 @@
           ]
         },
         "E7": {
+          "label": "Game Results & Export",
+          "slug": "game-results-export",
           "pattern": "Small game-results adapter and historical size stress export",
           "status": "PASS",
           "nodeStatus": "PASS",
@@ -14846,6 +14860,8 @@
           ]
         },
         "E8": {
+          "label": "Text Glyphs & Display Sizing",
+          "slug": "text-glyphs-display-sizing",
           "pattern": "Static glyph audit and E6/E7 page size comparison (32px/16px)",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14880,6 +14896,8 @@
           ]
         },
         "E9": {
+          "label": "Project Naming",
+          "slug": "project-naming",
           "pattern": "Project name and slug naming example",
           "status": "PASS",
           "nodeStatus": null,
@@ -14887,6 +14905,8 @@
           "probeIds": []
         },
         "G1": {
+          "label": "Custom Blocks & Items",
+          "slug": "custom-blocks-items",
           "pattern": "V2 blocks and items",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14896,6 +14916,8 @@
           ]
         },
         "G2": {
+          "label": "Confirmation & Paginated Menus",
+          "slug": "confirmation-paginated-menus",
           "pattern": "Confirmation and paginated choices",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14905,6 +14927,8 @@
           ]
         },
         "G3": {
+          "label": "Player Sound & Captions",
+          "slug": "player-sound-captions",
           "pattern": "Per-player sound previews and captions",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14914,6 +14938,8 @@
           ]
         },
         "G4": {
+          "label": "Teleport & Interrupted Travel",
+          "slug": "teleport-interrupted-travel",
           "pattern": "Fade and interrupted portal travel",
           "status": "pending",
           "nodeStatus": "PASS",
@@ -14923,6 +14949,8 @@
           ]
         },
         "G5": {
+          "label": "Game Timer & Countdown",
+          "slug": "game-timer-countdown",
           "pattern": "Persistent player countdown",
           "status": "pending",
           "nodeStatus": "PASS",
