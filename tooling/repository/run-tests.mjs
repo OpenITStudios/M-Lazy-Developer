@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, extname, relative, resolve } from "node:path";
 
 // Normal development checks whole user-facing paths, not every micro regression.
 // Deep regression suites remain available with --full; --focus targets a repair.
@@ -67,6 +67,94 @@ function loadInventory() {
   }
   return data.tests;
 }
+/** Static import impact is an execution *selection*, never proof that
+ * dynamic file loads, runtime behavior or every possible regression passed.
+ * Use the existing AST reader and only source files in the current checkout.
+ */
+function selectAffectedTests(inventory, changedPaths, integrate, importSpecifiers) {
+  const roots = [".agents", "apps", "engine", "tooling"];
+  const ignored = new Set(["node_modules", ".git", "dist", ".svelte-kit"]);
+  const extensions = [".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"];
+  const sourceFiles = [];
+  function walk(dir, insideTests = false) {
+    if (!existsSync(dir)) return;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = dir + "/" + entry.name;
+      if (entry.isDirectory()) {
+        if (ignored.has(entry.name) ||
+            (entry.name === "coverage" && !insideTests)) continue;
+        walk(path, insideTests || ["test", "tests", "__tests__"].includes(entry.name));
+      } else if (entry.isFile() && extensions.includes(extname(entry.name))) {
+        sourceFiles.push(path);
+      }
+    }
+  }
+  for (const root of roots) walk(root);
+  const available = new Set(sourceFiles);
+  const changed = [...new Set(changedPaths.map(raw => {
+    const path = raw.replaceAll("\\", "/").replace(/^(\.\/)+/, "");
+    if (!path || path.startsWith("/") || /^[A-Za-z]:/.test(path) ||
+        path.split("/").includes("..") || path.includes("\0") ||
+        !roots.includes(path.split("/")[0]) || !available.has(path)) {
+      throw new Error("Affected source is absent/unmappable: " + raw +
+        ". Select explicit --focus/--lane, or --full for uncertain impact.");
+    }
+    return path;
+  }))].sort();
+
+  const importers = new Map();
+  const resolveSource = (from, specifier) => {
+    if (!specifier.startsWith(".")) return undefined;
+    const target = relative(process.cwd(),
+      resolve(dirname(resolve(from)), specifier)).replaceAll("\\", "/");
+    if (!target || target === ".." || target.startsWith("../")) return undefined;
+    const ext = extname(target);
+    let candidates;
+    if (extensions.includes(ext)) {
+      candidates = [target];
+      if (ext === ".js" || ext === ".mjs" || ext === ".cjs") {
+        const stem = target.slice(0, -ext.length);
+        candidates.push(...(ext === ".mjs" ? [stem + ".mts"]
+          : ext === ".cjs" ? [stem + ".cts"]
+          : [stem + ".ts", stem + ".tsx", stem + ".mts", stem + ".cts"]));
+      }
+    } else if (!ext) {
+      candidates = [target,
+        ...extensions.map(extension => target + extension),
+        ...extensions.map(extension => target + "/index" + extension)];
+    } else return undefined;
+    return candidates.find(candidate => available.has(candidate));
+  };
+  for (const source of sourceFiles) {
+    for (const { specifier } of importSpecifiers(source,
+      readFileSync(resolve(source), "utf8"))) {
+      const target = resolveSource(source, specifier);
+      if (target === undefined) continue;
+      const from = importers.get(target);
+      if (from !== undefined) from.add(source);
+      else importers.set(target, new Set([source]));
+    }
+  }
+  const affected = new Set(changed);
+  const queue = [...changed];
+  for (let i = 0; i < queue.length; i += 1) {
+    for (const importer of importers.get(queue[i]) ?? []) {
+      if (affected.has(importer)) continue;
+      affected.add(importer);
+      queue.push(importer);
+    }
+  }
+  const connected = inventory.filter(item => affected.has(item.path));
+  if (connected.length === 0) {
+    throw new Error("No statically connected test for changed source. " +
+      "Do not treat zero selected tests as verified coverage; " +
+      "use explicit --focus/--lane, or --full for uncertain impact.");
+  }
+  const selected = inventory.filter(item => affected.has(item.path) ||
+    (integrate && item.lane === "acceptance"));
+  return { changed, selected, connected: connected.length, traced: affected.size };
+}
+
 const args = process.argv.slice(2);
 const mode = args[0] ?? "--acceptance";
 
@@ -89,6 +177,38 @@ if (mode === "--acceptance" && args.length <= 1) {
     console.log(lane + ": " + tests.filter((item) => item.lane === lane).length + " files (provisional)");
   }
   process.exit(0);
+} else if (mode === "--affected" && args.length > 1) {
+  const flags = new Set(args.slice(1).filter(value => value.startsWith("--")));
+  if ([...flags].some(value => !["--integration", "--plan"].includes(value))) {
+    console.error("Unknown --affected option; use --integration and/or --plan.");
+    process.exit(2);
+  }
+  const changed = args.slice(1).filter(value => !value.startsWith("--"));
+  if (changed.length === 0) {
+    console.error("--affected needs changed repository source paths from the exact revision.");
+    process.exit(2);
+  }
+  try {
+    const { importSpecifiers } = await import("./source-import-specifiers.mjs");
+    const result = selectAffectedTests(loadInventory(), changed,
+      flags.has("--integration"), importSpecifiers);
+    selectedNative = result.selected.filter(item => nativeFiles.includes(item.path))
+      .map(item => item.path);
+    vitestFiles = result.selected.filter(item => !nativeFiles.includes(item.path))
+      .map(item => item.path);
+    console.log("Static source-import impact only; runtime/dynamic inputs are not certified.");
+    console.log("Changed source: " + result.changed.length +
+      "; connected tests: " + result.connected +
+      "; selected tests: " + result.selected.length +
+      "; affected source modules: " + result.traced + ".");
+    if (flags.has("--plan")) {
+      for (const file of result.selected) console.log(file.lane + ": " + file.path);
+      process.exit(0); // A plan is not a test PASS.
+    }
+  } catch (error) {
+    console.error("Affected test selection failed: " + error.message);
+    process.exit(2);
+  }
 } else if (mode === "--focus" && args.length > 1) {
   const requested = [...new Set(args.slice(1).map((file) => file.replaceAll("\\", "/")))];
   for (const file of requested) {
@@ -101,7 +221,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] changed/source.ts ...]");
   process.exit(2);
 }
 

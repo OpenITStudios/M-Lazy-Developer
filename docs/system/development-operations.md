@@ -114,6 +114,16 @@ Minecraft import/open   → only if directly supported by current ChatGPT tools;
 gameplay/runtime        → actual live execution evidence, otherwise UNKNOWN
 ```
 
+### One-run risk-based test selection (no new CI)
+
+The existing `tooling/repository/run-tests.mjs` remains the **single test runner**; AI chooses its smallest defensible test set from exact GitHub `Local` source changes and the present risk. The full `test-inventory.json` still owns all five lanes and every source test, even when only a subset is executed. When actual repo code and dependencies are available to ChatGPT, use:
+
+- **Development:** `--affected --plan <changed/source.ts ...>` gives a read-only list of statically connected tests, following import/export edges (including type-only, transitive and barrel references). Remove `--plan` to execute that set; `--focus <test...>` remains available for a source-specific test chosen with stronger evidence.
+- **Integration:** `--affected --integration [--plan] <changed/source.ts ...>` retains those tests and adds the entire existing acceptance lane. It includes safety tests reachable through the source-import graph. If permissions, destructive mutation, serialization, runtime integration or other dynamic coupling makes that graph insufficient, AI additionally selects the existing safety/runtime/regression lane or full suite as warranted.
+- **Release:** `--full` runs every discoverable test (Vitest plus the existing native tests). The broader repository and target-map proof requirements remain separate. A narrowed check is never claimed as complete test-suite or gameplay coverage.
+
+`--affected` accepts only existing repository TypeScript/JavaScript source paths. Missing/deleted source, docs/config/JSON changes and edits without any statically connected test **fail closed**: do not report zero tests as a PASS; perform an explicit source/consumer review and select `--focus`, a lane, or `--full` as needed. Its source-import graph cannot infer data-driven, dynamic or native Minecraft dependencies. `--plan` prints selection only, **not** an executed test receipt. The selection never modifies test inventory, source coverage, frozen expectations or disabled CI. These commands are optional implementation routes in ChatGPT when an exact-head executable context really exists; never require the user's PC, local npm or Work.
+
 Remote source completion and executable validation are different proof levels. Evidence-context labels such as `LOCAL_ARTIFACT`, `LOCAL_MINECRAFT`, and `LIVE_MINECRAFT` describe required proof capabilities, **not** instructions to use the user's PC. Missing executable evidence must remain an explicit proof ceiling, never a requirement for local-PC access, npm installation, local data, or user-operated testing.
 
 ## Distribution boundary
