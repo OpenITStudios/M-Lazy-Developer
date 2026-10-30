@@ -188,6 +188,9 @@ async function main(): Promise<void> {
         pass: step.pass,
         sourceIndexAction: step.action,
         sourceIndexElapsedMs: step.elapsedMs,
+        ...(step.structureParseWork === undefined ? {} : {
+          structureParseWork: step.structureParseWork,
+        }),
         inspectionElapsedMs: step.inspectionElapsedMs,
         ...(step.archivePreparationElapsedMs === undefined ? {} : {
           archivePreparationElapsedMs: step.archivePreparationElapsedMs,

@@ -29,6 +29,12 @@ describe("inspection source index coverage", () => {
       expect(result.coverage.parseFailures.map(item => item.kind)).toContain("structure");
       expect(result.graph.findByKind("structure")).toHaveLength(0);
       expect(result.parsedStructureModels).toHaveLength(0);
+      expect(result.structureParseWork?.attemptedFiles).toBe(1);
+      expect(result.structureParseWork?.sourceBytes).toBe(
+        Buffer.byteLength("not an NBT structure"),
+      );
+      expect(Number.isFinite(result.structureParseWork?.elapsedMs)).toBe(true);
+      expect(result.structureParseWork!.elapsedMs).toBeGreaterThanOrEqual(0);
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 

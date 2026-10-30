@@ -229,6 +229,11 @@ export async function inspectDirectory(
     parseFailures: sourceIndex.coverage.parseFailures.length,
     snapshotReusable: sourceInventoryReuse !== undefined &&
       parsedSourceIndexSnapshots.has(sourceInventoryReuse),
+    // Rehydration is not fresh parsing. Never repeat old parse timing.
+    ...(sourceSnapshot !== undefined ||
+      sourceIndex.structureParseWork === undefined
+      ? {}
+      : { structureParseWork: sourceIndex.structureParseWork }),
   };
   const {
     graph,

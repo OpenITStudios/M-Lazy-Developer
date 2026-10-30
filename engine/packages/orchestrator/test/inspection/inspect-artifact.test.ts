@@ -89,6 +89,11 @@ describe("inspectArtifact", () => {
       snapshotReusable: false,
     });
     expect(result.sourceIndexWork?.parseFailures).toBeGreaterThan(0);
+    expect(result.sourceIndexWork?.structureParseWork?.attemptedFiles).toBe(1);
+    expect(result.sourceIndexWork?.structureParseWork?.sourceBytes)
+      .toBe(Buffer.byteLength("opaque-fixture"));
+    expect(result.sourceIndexWork?.structureParseWork?.elapsedMs)
+      .toBeGreaterThanOrEqual(0);
     expect(result.packs[0]?.type).toBe("behavior_pack");
     expect(result.functions).toBe(1);
     // The fixture contains a malformed physical .mcstructure. Inventory it,
@@ -168,6 +173,9 @@ describe("inspectArtifact", () => {
           snapshotReusable: true,
           parseFailures: 0,
         });
+        // A reused source index must not report stale structure parsing.
+        expect(initial.sourceIndexWork?.structureParseWork).toBeUndefined();
+        expect(expanded.sourceIndexWork?.structureParseWork).toBeUndefined();
         for (const pass of [initial, expanded]) {
           expect(pass.inspectionTiming).toBeDefined();
           for (const key of [

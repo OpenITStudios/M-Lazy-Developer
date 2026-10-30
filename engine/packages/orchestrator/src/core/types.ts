@@ -154,6 +154,14 @@ export interface InspectDirectoryResult {
     readonly parseFailures: number;
     /** Eligible for a second pass in this one fingerprint-bound inspection. */
     readonly snapshotReusable: boolean;
+    /** Source read, NBT decode and structure semantics on cold parse only.
+     * Missing on reused passes and on archives with no structures.
+     */
+    readonly structureParseWork?: {
+      readonly attemptedFiles: number;
+      readonly sourceBytes: number;
+      readonly elapsedMs: number;
+    };
   };
   packs: InspectedPack[];
   functions: number;

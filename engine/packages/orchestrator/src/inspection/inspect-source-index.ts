@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { performance } from "node:perf_hooks";
 import { join, posix } from "node:path";
 import {
   FUNCTION_PARSER_REVISION,
@@ -173,6 +174,12 @@ export interface InspectionSourceIndex {
     queuedTickPositions: number;
   }>;
   parsedStructures: number;
+  /** Cold, source-local read/decode/semantic cost; not game runtime. */
+  structureParseWork?: {
+    readonly attemptedFiles: number;
+    readonly sourceBytes: number;
+    readonly elapsedMs: number;
+  };
   tickFunctionRegistrations: InspectionTickFunctionRegistration[];
   diagnostics: DiagnosticFinding[];
   coverage: InspectionSourceCoverage;
@@ -321,6 +328,9 @@ export async function indexInspectionSources(
   const relevantPaths: string[] = [];
   let indexedFiles = 0;
   let parsedStructures = 0;
+  const structureParseWork = {
+    attemptedFiles: 0, sourceBytes: 0, elapsedMs: 0,
+  };
   const tickFunctionRegistrations: InspectionTickFunctionRegistration[] = [];
 
   for (const file of files) {
@@ -824,11 +834,16 @@ export async function indexInspectionSources(
         relativePath: file.relativePath,
       },
     };
+    // Include failed attempts and all structure-local semantics/diagnostics.
+    // Do not change parser ownership, error handling or physical evidence.
+    const structureStartedAt = performance.now();
+    structureParseWork.attemptedFiles += 1;
     try {
-      // readFile returns Buffer (already Uint8Array). The NBT parser owns
-      // its required preservation copy; avoid a redundant transport copy.
+      // Buffer is already Uint8Array; preserve zero extra transport copies.
+      const structureBytes = await readFile(join(root, file.relativePath));
+      structureParseWork.sourceBytes += structureBytes.byteLength;
       const structure = await parseMcStructure(
-        await readFile(join(root, file.relativePath)),
+        structureBytes,
         file.relativePath,
         // This source-only scope immediately makes a separately owned typed
         // footprint projection. No caller mutates/retains the raw NBT index
@@ -918,6 +933,10 @@ export async function indexInspectionSources(
           error,
         ),
       );
+    } finally {
+      structureParseWork.elapsedMs += Math.max(
+        0, performance.now() - structureStartedAt,
+      );
     }
   }
 
@@ -961,6 +980,7 @@ export async function indexInspectionSources(
     parsedDialogueDocuments,
     parsedStructureModels,
     parsedStructures,
+    ...(structureParseWork.attemptedFiles === 0 ? {} : { structureParseWork }),
     tickFunctionRegistrations,
     diagnostics,
     coverage: {
