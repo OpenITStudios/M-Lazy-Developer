@@ -93,6 +93,43 @@ function loadInventory() {
       throw new Error("Invalid Probe example identity: " + exampleId);
     }
   }
+  // Metadata below preserves native identities from the two pinned
+  // upstream ZIPs. It never certifies M-Lazy or Minecraft test execution.
+  const moduleRequires = upstream.developer.moduleRequires;
+  if (!moduleRequires || typeof moduleRequires !== "object" ||
+      Object.keys(moduleRequires).length !== Object.keys(moduleOwners).length ||
+      Object.keys(moduleOwners).some(name =>
+        !Object.hasOwn(moduleRequires, name))) {
+    throw new Error("Invalid native module dependency index");
+  }
+  for (const [name, dependencies] of Object.entries(moduleRequires)) {
+    if (!Array.isArray(dependencies) ||
+        new Set(dependencies).size !== dependencies.length ||
+        dependencies.some(dependency =>
+          dependency === name || !Object.hasOwn(moduleOwners, dependency))) {
+      throw new Error("Invalid upstream module requires: " + name);
+    }
+  }
+  const exampleDetails = upstream.probe.exampleDetails;
+  if (!/^[a-f0-9]{64}$/.test(upstream.probe.exampleIndexSha256 || "") ||
+      !exampleDetails || typeof exampleDetails !== "object" ||
+      Object.keys(exampleDetails).length !== Object.keys(exampleOwners).length ||
+      Object.keys(exampleOwners).some(id => !Object.hasOwn(exampleDetails, id))) {
+    throw new Error("Invalid pinned Probe E/G example index");
+  }
+  for (const [id, example] of Object.entries(exampleDetails)) {
+    if (!example || typeof example.pattern !== "string" ||
+        !example.pattern.trim() ||
+        !["PASS", "pending"].includes(example.status) ||
+        ![null, "PASS", "pending"].includes(example.nodeStatus) ||
+        ![null, "PASS", "pending"].includes(example.engineStatus) ||
+        !Array.isArray(example.probeIds) ||
+        new Set(example.probeIds).size !== example.probeIds.length ||
+        example.probeIds.some(pid =>
+          !/^P[0-9]{2,3}(?:[A-Z][A-Z0-9]*)?$/.test(pid))) {
+      throw new Error("Invalid upstream example source details: " + id);
+    }
+  }
   for (const [featureId, spec] of Object.entries(featureCatalog)) {
     const link = spec?.upstream;
     if (!link || !["TOPIC_REFERENCE_ONLY", "LAZY_INTERNAL_ONLY"].includes(link.relation) ||
@@ -107,7 +144,7 @@ function loadInventory() {
           !moduleOwners[module].some(owner => link.skills.includes(owner))) ||
         link.probeExamples.some(example => !exampleOwners[example] ||
           !link.skills.includes(exampleOwners[example])) ||
-        link.probeIds.some(id => !/^P[0-9]{2,3}$/.test(id)) ||
+        link.probeIds.some(id => !/^P[0-9]{2,3}(?:[A-Z][A-Z0-9]*)?$/.test(id)) ||
         (link.relation === "LAZY_INTERNAL_ONLY" &&
           (link.skills.length || link.modules.length ||
            link.probeExamples.length || link.probeIds.length)) ||
@@ -465,13 +502,14 @@ if (mode === "--acceptance" && args.length <= 1) {
   for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
   process.exit(0);
 } else if (mode === "--list-test-groups" && args.length === 1) {
-  // ZIP-aligned source navigation, derived from the existing inventory.
-  // Related topics, Probe IDs and historical upstream statuses are not
-  // executable tests or evidence of a selected Minecraft map.
+  // Native Developer Skills and independent Skills Probe are reference
+  // taxonomies; the existing inventory remains the only M-Lazy test owner.
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
   const links = test => data.featureCatalog[test.featureId].upstream;
   const matched = (field, id) => registeredTests.filter(test =>
     links(test)[field].includes(id));
+  const developer = data.upstreamCategoryCrosswalk.developer;
+  const probe = data.upstreamCategoryCrosswalk.probe;
   const topical = registeredTests.filter(test =>
     links(test).relation === "TOPIC_REFERENCE_ONLY");
   const internal = registeredTests.filter(test =>
@@ -479,21 +517,27 @@ if (mode === "--acceptance" && args.length <= 1) {
   if (topical.length + internal.length !== registeredTests.length) {
     throw new Error("Unclassified upstream topic relationship");
   }
-  const developer = data.upstreamCategoryCrosswalk.developer;
-  const probe = data.upstreamCategoryCrosswalk.probe;
+  const sourceExampleProbeIds = [...new Set(Object.values(probe.exampleDetails)
+    .flatMap(example => example.probeIds))];
+  const mappedProbeIds = [...new Set(Object.values(data.featureCatalog)
+    .flatMap(feature => feature.upstream.probeIds))];
+  const allProbeIds = [...new Set([...sourceExampleProbeIds, ...mappedProbeIds])]
+    .sort();
   const memberships = developer.skills.reduce((sum, skill) =>
     sum + matched("skills", skill).length, 0);
-  console.log("Canonical M-Lazy test inventory: " + registeredTests.length +
-    " unique test files; no tests are executed by this command.");
-  console.log("Two independent user ZIP taxonomies: developer " +
-    developer.version + " (" + developer.archiveSha256 + "), Probe (" +
-    probe.archiveSha256 + ").");
+  console.log("M-Lazy canonical inventory: " + registeredTests.length +
+    " unique source test files; no tests executed.");
+  console.log("Two pinned v0.30.0 ZIP taxonomies: Developer " +
+    developer.archiveSha256 + "; Probe " + probe.archiveSha256 + ".");
   console.log("Topic-related: " + topical.length +
     " unique; internal-only: " + internal.length +
     " unique; skill memberships: " + memberships +
-    " (nonexclusive, never evidence of tested upstream functionality).");
+    " (nonexclusive, not executable proof).");
+  console.log("Probe source example P-IDs: " + sourceExampleProbeIds.length +
+    "; M-Lazy topic-mapped P-IDs: " + mappedProbeIds.length +
+    "; union: " + allProbeIds.length + " (not all mapped).");
 
-  console.log("\nDEVELOPER SKILLS — publisher topic references, NOT installed skills");
+  console.log("\nDEVELOPER SKILLS — source-topic relationships only");
   for (const skill of developer.skills) {
     const modules = Object.entries(developer.moduleOwners)
       .filter(([, owners]) => owners.includes(skill))
@@ -503,34 +547,43 @@ if (mode === "--acceptance" && args.length <= 1) {
       .map(([id]) => id);
     console.log(skill + ": " + matched("skills", skill).length +
       " related files; modules=" + (modules.join(",") || "none") +
-      "; Probe examples=" + (examples.join(",") || "none"));
+      "; upstream examples=" + (examples.join(",") || "none"));
   }
-  console.log("\nDEVELOPER MODULES — native publisher vocabulary, NOT M-Lazy code owners");
-  for (const [moduleName, owners] of Object.entries(developer.moduleOwners)
+  console.log("\nNATIVE MODULES — source requires edges, not imported M-Lazy modules");
+  for (const [name, owners] of Object.entries(developer.moduleOwners)
     .sort(([a], [b]) => a.localeCompare(b))) {
-    console.log(moduleName + ": " + matched("modules", moduleName).length +
-      " related files; publisher skill=" + owners.join(","));
+    console.log(name + ": " + matched("modules", name).length +
+      " related files; publisher skill=" + owners.join(",") +
+      "; requires=" + (developer.moduleRequires[name].join(",") || "none") +
+      (name === developer.externalModule ? " [EXTERNAL SOURCE]" : ""));
   }
-  console.log("\nSKILLS PROBE E/G EXAMPLES — analogy only, NOT an executed Probe PASS");
+  console.log("\nSKILLS PROBE E/G — UPSTREAM INDEX STATUS, NOT M-LAZY RESULTS");
   for (const [id, skill] of Object.entries(probe.exampleOwners)
     .sort(([a], [b]) => a.localeCompare(b))) {
+    const example = probe.exampleDetails[id];
     console.log(id + ": " + matched("probeExamples", id).length +
-      " related files; source skill=" + skill);
+      " related M-Lazy files; source skill=" + skill +
+      "; source example status=" + example.status +
+      "; source nodeStatus=" + (example.nodeStatus ?? "not-reported") +
+      "; source engineStatus=" + (example.engineStatus ?? "not-reported") +
+      "; P-IDs=" + (example.probeIds.join(",") || "none"));
   }
-  console.log("\nSKILLS PROBE P-IDS — navigational tags only, NOT executed scenarios");
-  const ids = [...new Set(Object.values(data.featureCatalog)
-    .flatMap(feature => feature.upstream.probeIds))].sort();
-  for (const id of ids) {
+  console.log("\nPROBE P-IDs — 52 E/G source identities plus other mapped topics");
+  for (const id of allProbeIds) {
+    const owners = Object.entries(probe.exampleDetails)
+      .filter(([, example]) => example.probeIds.includes(id))
+      .map(([example]) => example);
     console.log(id + ": " + matched("probeIds", id).length +
-      " related files");
+      " topic-related M-Lazy files; source example=" +
+      (owners.join(",") || "not in E/G index"));
   }
-  console.log("\nM-LAZY INTERNAL ONLY — independent checker capabilities");
+  console.log("\nM-LAZY INTERNAL ONLY — independent checker test ownership");
   for (const area of data.functionalAreaTaxonomy.areas) {
     const count = internal.filter(test => test.functionalArea === area).length;
     if (count) console.log(area + ": " + count + " files");
   }
   console.log("\nDrill down: --show-test-group skill/<id> | module/<id> | " +
-    "example/<E/G-id> | probe/<P-id> | internal[/<functional-area>].");
+    "example/<E/G-id> | probe/<P-id> | internal[/<area>].");
 } else if (mode === "--show-test-group" && args.length === 2) {
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
   const links = test => data.featureCatalog[test.featureId].upstream;
@@ -540,38 +593,75 @@ if (mode === "--acceptance" && args.length <= 1) {
   const slash = raw.indexOf("/");
   const kind = slash < 0 ? raw : raw.slice(0, slash);
   const id = slash < 0 ? "" : raw.slice(slash + 1);
+  const sourceExampleProbeIds = new Set(Object.values(probe.exampleDetails)
+    .flatMap(example => example.probeIds));
+  const mappedProbeIds = new Set(Object.values(data.featureCatalog)
+    .flatMap(feature => feature.upstream.probeIds));
   let matches;
   if (kind === "skill" && developer.skills.includes(id)) {
     matches = registeredTests.filter(test => links(test).skills.includes(id));
+    const modules = Object.entries(developer.moduleOwners)
+      .filter(([, owners]) => owners.includes(id)).map(([name]) => name);
+    const examples = Object.entries(probe.exampleOwners)
+      .filter(([, skill]) => skill === id).map(([name]) => name);
+    console.log("PUBLISHER SKILL " + id + "; native modules=" +
+      (modules.join(",") || "none") +
+      "; source E/G examples=" + (examples.join(",") || "none"));
   } else if (kind === "module" && Object.hasOwn(developer.moduleOwners, id)) {
     matches = registeredTests.filter(test => links(test).modules.includes(id));
+    console.log("PUBLISHER MODULE " + id + "; requires=" +
+      (developer.moduleRequires[id].join(",") || "none") +
+      "; skill owner=" + developer.moduleOwners[id].join(",") +
+      (id === developer.externalModule ? "; EXTERNAL SOURCE" : ""));
+    console.log("Dependency modules are source references; their M-Lazy files " +
+      "are NOT automatically included in this module group.");
   } else if (kind === "example" && Object.hasOwn(probe.exampleOwners, id)) {
-    matches = registeredTests.filter(test => links(test).probeExamples.includes(id));
-  } else if (kind === "probe" && /^P[0-9]{2,3}[A-Z0-9]*$/.test(id)) {
-    matches = registeredTests.filter(test => links(test).probeIds.includes(id));
+    matches = registeredTests.filter(test =>
+      links(test).probeExamples.includes(id));
+    const example = probe.exampleDetails[id];
+    console.log("UPSTREAM E/G SOURCE " + id +
+      "; skill=" + probe.exampleOwners[id] +
+      "; pattern=" + example.pattern);
+    console.log("UPSTREAM INDEX ONLY: example status=" + example.status +
+      "; nodeStatus=" + (example.nodeStatus ?? "not-reported") +
+      "; engineStatus=" + (example.engineStatus ?? "not-reported") +
+      "; P-IDs=" + (example.probeIds.join(",") || "none"));
+    console.log("These upstream source statuses do NOT indicate M-Lazy " +
+      "test results or selected-map behavior.");
+  } else if (kind === "probe" &&
+      (sourceExampleProbeIds.has(id) || mappedProbeIds.has(id))) {
+    matches = registeredTests.filter(test =>
+      links(test).probeIds.includes(id));
+    const owners = Object.entries(probe.exampleDetails)
+      .filter(([, example]) => example.probeIds.includes(id))
+      .map(([exampleId]) => exampleId);
+    console.log("PROBE SOURCE ID " + id +
+      "; E/G source index=" + (owners.join(",") || "not listed") +
+      "; topic-related M-Lazy files=" + matches.length);
+    console.log("Same-index example grouping does NOT imply a matching " +
+      "individual executable M-Lazy test case.");
   } else if (kind === "internal" &&
-    (!id || data.functionalAreaTaxonomy.areas.includes(id))) {
+      (!id || data.functionalAreaTaxonomy.areas.includes(id))) {
     matches = registeredTests.filter(test =>
       links(test).relation === "LAZY_INTERNAL_ONLY" &&
       (!id || test.functionalArea === id));
   } else {
     console.error("Unknown test group: " + raw +
-      ". Use --list-test-groups for native skills/modules/examples and " +
-      "existing group names.");
+      ". Use --list-test-groups for documented native identities.");
     process.exit(2);
   }
-  // Exactly one file row per matching path; area/feature/lane are
-  // independent axes and not separate upstream execution work lanes.
   const sorted = matches.slice().sort((a, b) =>
     a.functionalArea.localeCompare(b.functionalArea) ||
     a.featureId.localeCompare(b.featureId) ||
     lanes.indexOf(a.lane) - lanes.indexOf(b.lane) ||
     a.path.localeCompare(b.path));
   console.log("GROUP " + raw + ": " + sorted.length +
-    " unique M-Lazy source test files; SOURCE TOPIC NAVIGATION ONLY.");
-  console.log("No selected-map assertion, external Probe PASS or runtime execution implied.");
+    " unique M-Lazy source test files; TOPIC NAVIGATION ONLY.");
+  console.log("No selected-map proof, external Probe PASS or gameplay " +
+    "execution implied.");
   if (!sorted.length) {
-    console.log("No mapped topic in this inventory. This is NOT proof of a capability gap.");
+    console.log("No matching topic binding; this alone cannot prove " +
+      "an untested or unsupported feature.");
   }
   let area = "", feature = "", lane = "";
   for (const item of sorted) {

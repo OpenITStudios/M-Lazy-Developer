@@ -14704,7 +14704,43 @@
           "bedrock-game-time"
         ]
       },
-      "externalModule": "database"
+      "externalModule": "database",
+      "moduleRequires": {
+        "analytics": [
+          "database",
+          "logging",
+          "time"
+        ],
+        "coords": [],
+        "database": [],
+        "display": [
+          "logging"
+        ],
+        "entities": [
+          "logging"
+        ],
+        "forms": [
+          "logging"
+        ],
+        "game-results": [],
+        "items": [
+          "logging"
+        ],
+        "logging": [],
+        "profiling": [],
+        "sound": [
+          "logging"
+        ],
+        "teleport": [
+          "logging",
+          "forms"
+        ],
+        "testing": [],
+        "time": [
+          "logging",
+          "database"
+        ]
+      }
     },
     "probe": {
       "skillsLockTag": "v0.30.0",
@@ -14729,7 +14765,174 @@
       },
       "targetClient": "Minecraft Education 26.32",
       "matchedPublisherSkillFolderHashes": 24,
-      "matchedInstalledModuleLockFiles": true
+      "matchedInstalledModuleLockFiles": true,
+      "exampleIndexSha256": "5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630",
+      "exampleDetails": {
+        "E1": {
+          "pattern": "Two-arena state, persistence, transitions and bounded apply caches",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P52"
+          ]
+        },
+        "E2": {
+          "pattern": "Player-keyed state cleanup and spawn invalidation",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P53",
+            "P53END"
+          ]
+        },
+        "E3": {
+          "pattern": "Negative-model offset (E3) and placement reconciliation on unequal surfaces (E3b)",
+          "status": "PASS",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P38",
+            "P54",
+            "P54R",
+            "P54END"
+          ]
+        },
+        "E4": {
+          "pattern": "Diagnostics capture and agent evidence procedure",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P41",
+            "P46",
+            "P50"
+          ]
+        },
+        "E5": {
+          "pattern": "Stable skinned ActionForm and ModalForm with plain fallback",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P55",
+            "P05"
+          ]
+        },
+        "E6": {
+          "pattern": "Localized title-channel quest card and item label",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P56",
+            "P56S",
+            "P56P",
+            "P56C",
+            "P56I",
+            "P56L",
+            "P56X"
+          ]
+        },
+        "E7": {
+          "pattern": "Small game-results adapter and historical size stress export",
+          "status": "PASS",
+          "nodeStatus": "PASS",
+          "engineStatus": "PASS",
+          "probeIds": [
+            "P51",
+            "P35"
+          ]
+        },
+        "E8": {
+          "pattern": "Static glyph audit and E6/E7 page size comparison (32px/16px)",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P57",
+            "P57F",
+            "P57A0",
+            "P57A1",
+            "P57A2",
+            "P57A3",
+            "P57A4",
+            "P57A5",
+            "P57A6",
+            "P57A7",
+            "P57T0",
+            "P57T1",
+            "P57T2",
+            "P57T3",
+            "P57T4",
+            "P57T5",
+            "P57T6",
+            "P57T7",
+            "P57N0",
+            "P57N1",
+            "P57N2",
+            "P57N3",
+            "P57N4",
+            "P57N5",
+            "P57N6",
+            "P57N7"
+          ]
+        },
+        "E9": {
+          "pattern": "Project name and slug naming example",
+          "status": "PASS",
+          "nodeStatus": null,
+          "engineStatus": null,
+          "probeIds": []
+        },
+        "G1": {
+          "pattern": "V2 blocks and items",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P58"
+          ]
+        },
+        "G2": {
+          "pattern": "Confirmation and paginated choices",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P59"
+          ]
+        },
+        "G3": {
+          "pattern": "Per-player sound previews and captions",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P60"
+          ]
+        },
+        "G4": {
+          "pattern": "Fade and interrupted portal travel",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P61"
+          ]
+        },
+        "G5": {
+          "pattern": "Persistent player countdown",
+          "status": "pending",
+          "nodeStatus": "PASS",
+          "engineStatus": "pending",
+          "probeIds": [
+            "P62"
+          ]
+        }
+      },
+      "statusScope": "UPSTREAM_SOURCE_INDEX_ONLY_EXAMPLE_STATUS_NODE_STATUS_ENGINE_STATUS_NOT_M_LAZY_TEST_OR_GAME_PROOF"
     },
     "canonicalReviewedSourceLock": "skills/bedrock/source-lock.json",
     "canonicalCuratedInterpretations": "experiments/developer-practice-signals.json",

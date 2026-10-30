@@ -266,22 +266,22 @@ The module names are **publisher names**, not M-Lazy package identities.
 In particular, upstream `database` is a separately owned state store,
 not equivalent to M-Lazy's world LevelDB/NBT parser.
 
-| Native module | Related source files | Developer Skill owner(s) |
-| --- | ---: | --- |
-| `analytics` | 4 | `bedrock-analytics` |
-| `coords` | 27 | `bedrock-coordinates` |
-| `database` | 33 | `bedrock-data-persistence` |
-| `display` | 2 | `bedrock-onscreen-display` |
-| `entities` | 35 | `bedrock-entity-lifecycle`, `bedrock-entity-creation` |
-| `forms` | 3 | `bedrock-forms` |
-| `game-results` | 0 | `bedrock-game-results` |
-| `items` | 9 | `bedrock-data-persistence` |
-| `logging` | 69 | `bedrock-debug-logging` |
-| `profiling` | 67 | `bedrock-debug-profiling` |
-| `sound` | 0 | `bedrock-sound` |
-| `teleport` | 1 | `bedrock-teleport` |
-| `testing` | 32 | `bedrock-script-optimization` |
-| `time` | 18 | `bedrock-game-time` |
+| Native module | Related source files | Developer Skill owner(s) | Native `requires` dependencies |
+| --- | ---: | --- | --- |
+| `analytics` | 4 | `bedrock-analytics` | `database`, `logging`, `time` |
+| `coords` | 27 | `bedrock-coordinates` | — |
+| `database` | 33 | `bedrock-data-persistence` | — (external source) |
+| `display` | 2 | `bedrock-onscreen-display` | `logging` |
+| `entities` | 35 | `bedrock-entity-lifecycle`, `bedrock-entity-creation` | `logging` |
+| `forms` | 3 | `bedrock-forms` | `logging` |
+| `game-results` | 0 | `bedrock-game-results` | — |
+| `items` | 9 | `bedrock-data-persistence` | `logging` |
+| `logging` | 69 | `bedrock-debug-logging` | — |
+| `profiling` | 67 | `bedrock-debug-profiling` | — |
+| `sound` | 0 | `bedrock-sound` | `logging` |
+| `teleport` | 1 | `bedrock-teleport` | `logging`, `forms` |
+| `testing` | 32 | `bedrock-script-optimization` | — |
+| `time` | 18 | `bedrock-game-time` | `logging`, `database` |
 
 #### Skills Probe E/G examples (independent ZIP docs/examples/index.json)
 
@@ -291,31 +291,39 @@ Source index SHA-256:
 `5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630`.
 The upstream index separately reports `status`, `nodeStatus` and
 `engineStatus`; these are **not projected as M-Lazy PASS/FAIL**.
-For example, E3 records a narrow historical PASS with newer engine
-checks pending, and E9's PASS is a naming-only result.
+The E/G index reports **3 overall PASS** and **11 pending**
+source example rows, at their **original upstream revision and target**.
+A row's overall status is not a verdict for its whole family or
+for any M-Lazy test. For example, E3's new engine checks are pending;
+E9's PASS is a naming-only result, and E7's source PASS concerns
+its scoped game-results example.
 
-| Probe example | Developer Skill | ZIP source pattern (condensed) | Related M-Lazy files |
-| --- | --- | --- | ---: |
-| `E1` | `bedrock-script-optimization` | Two-arena state, persistence, transitions and bounded apply caches | 19 |
-| `E2` | `bedrock-entity-lifecycle` | Player-keyed state cleanup and spawn invalidation | 6 |
-| `E3` | `bedrock-entity-creation` | Model offset and placement reconciliation on unequal surfaces | 8 |
-| `E4` | `bedrock-debug-profiling` | Diagnostics capture and agent evidence procedure | 67 |
-| `E5` | `bedrock-forms` | Skinned ActionForm and ModalForm with plain fallback | 2 |
-| `E6` | `bedrock-onscreen-display` | Localized title-channel quest card and item label | 2 |
-| `E7` | `bedrock-game-results` | Game-results adapter and historical size-stress export | 0 |
-| `E8` | `bedrock-text-glyphs` | Static glyph audit and E6/E7 size comparison | 0 |
-| `E9` | `bedrock-release-export` | Project name and slug naming | 3 |
-| `G1` | `bedrock-content` | V2 blocks and items | 4 |
-| `G2` | `bedrock-forms` | Confirmation and paginated choices | 2 |
-| `G3` | `bedrock-sound` | Per-player sound previews and captions | 0 |
-| `G4` | `bedrock-teleport` | Fade and interrupted portal travel | 1 |
-| `G5` | `bedrock-game-time` | Persistent player countdown | 15 |
+| E/G | Developer Skill | Actual ZIP source pattern | Upstream `status` / `nodeStatus` / `engineStatus` | Upstream P-IDs | M-Lazy topic-related files |
+| --- | --- | --- | --- | --- | ---: |
+| `E1` | `bedrock-script-optimization` | Two-arena state, persistence, transitions and bounded apply caches | `pending` / `PASS` / `pending` | `P52` | 19 |
+| `E2` | `bedrock-entity-lifecycle` | Player-keyed state cleanup and spawn invalidation | `pending` / `PASS` / `pending` | `P53`, `P53END` | 6 |
+| `E3` | `bedrock-entity-creation` | Negative-model offset (E3) and placement reconciliation on unequal surfaces (E3b) | `PASS` / `PASS` / `pending` | `P38`, `P54`, `P54R`, `P54END` | 8 |
+| `E4` | `bedrock-debug-profiling` | Diagnostics capture and agent evidence procedure | `pending` / `PASS` / `pending` | `P41`, `P46`, `P50` | 67 |
+| `E5` | `bedrock-forms` | Stable skinned ActionForm and ModalForm with plain fallback | `pending` / `PASS` / `pending` | `P55`, `P05` | 2 |
+| `E6` | `bedrock-onscreen-display` | Localized title-channel quest card and item label | `pending` / `PASS` / `pending` | `P56`, `P56S`, `P56P`, `P56C`, `P56I`, `P56L`, `P56X` | 2 |
+| `E7` | `bedrock-game-results` | Small game-results adapter and historical size stress export | `PASS` / `PASS` / `PASS` | `P51`, `P35` The E/G index in the exact source ZIP contains **52 unique upstream P-IDs**,
+including qualified IDs such as `P53END`, `P54R` and `P57A0`.
+The existing M-Lazy `featureCatalog[featureId].upstream.probeIds`
+contains **36 distinct TOPIC tags**; only **13** names overlap.
+Thus **39** E/G source P-IDs have no file-level topical tag, while
+**23** M-Lazy topic tags come from other Probe references
+outside the E/G example index. The union contains **75 P-IDs**.
+Neither set is a test-case coverage census. Do not copy upstream
+PASS/PENDING into M-Lazy status, and do not automatically map a child
+subcase to every file related to its parent E/G example.
 
-The existing `featureCatalog[featureId].upstream.probeIds` also enables
-**36** individual P-ID topic lookups (for example P52, P53,
-P54, P61, P62). P-IDs are neither M-Lazy test IDs nor observed engine
-sessions. Some P-IDs in the ZIP have no M-Lazy topic mapping, which
-must remain explicit rather than inventing coverage.
+For clarity: E3 has a narrow upstream example `PASS` but its newer
+`engineStatus` is still `pending`; E7 reports a source-index engine
+`PASS` for a bounded game-results example with **zero** mapped
+M-Lazy topic files; E9 is a naming-only `PASS` with no separate Node
+or engine verdict. `G3/P60` (sound) and many `E8/P57*` (glyphs)
+have **zero** M-Lazy topic matches, which alone does not establish
+missing implementation or failed testing.
 
 #### M-Lazy internal-only capabilities (no publisher equivalent)
 
@@ -344,16 +352,23 @@ Do not mistake Daigon `bedrock-game-results` or publisher
 node tooling/repository/run-tests.mjs --list-test-groups
 node tooling/repository/run-tests.mjs --show-test-group skill/bedrock-entity-lifecycle
 node tooling/repository/run-tests.mjs --show-test-group module/database
+node tooling/repository/run-tests.mjs --show-test-group module/teleport
 node tooling/repository/run-tests.mjs --show-test-group example/E2
 node tooling/repository/run-tests.mjs --show-test-group probe/P53
+node tooling/repository/run-tests.mjs --show-test-group probe/P53END
+node tooling/repository/run-tests.mjs --show-test-group probe/P54R
+node tooling/repository/run-tests.mjs --show-test-group probe/P60
 node tooling/repository/run-tests.mjs --show-test-group internal/audit-diagnosis
 ```
 
-The `--list-test-groups` and `--show-test-group` operations only navigate
-the **same registered paths** in area → feature → execution-lane → file
-order. They do not invoke Vitest, Minecraft, skills, or upstream Probe,
-and they cannot promote a source-reference relationship to observed
-coverage. Existing selection commands and CI policy remain unchanged.
+The `--list-test-groups` and `--show-test-group` operations navigate
+**the same 623 registered paths** in area → feature → execution-lane → file
+order. Their parent-group view now also exposes the source-pinned
+`requires` edges, example status triplets and the **75-ID union** with
+explicit zero mappings. They do not invoke Vitest, Minecraft, skills,
+or the upstream Probe, and cannot promote a topical reference or historical
+UPSTREAM result to executed M-Lazy proof. Existing execution-selection
+commands and CI policy remain unchanged.
 
 **Source version boundaries:** the v0.30.0 ZIP-derived test crosswalk
 in this inventory is independent of the earlier reviewed
