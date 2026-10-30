@@ -75,7 +75,9 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
   const roots = [".agents", "apps", "engine", "tooling"];
   const ignored = new Set(["node_modules", ".git", "dist", ".svelte-kit"]);
   const extensions = [".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"];
+  const resourceExtensions = new Set([".json", ".mcfunction"]);
   const sourceFiles = [];
+  const resourceFiles = [];
   function walk(dir, insideTests = false) {
     if (!existsSync(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -84,13 +86,15 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
         if (ignored.has(entry.name) ||
             (entry.name === "coverage" && !insideTests)) continue;
         walk(path, insideTests || ["test", "tests", "__tests__"].includes(entry.name));
-      } else if (entry.isFile() && extensions.includes(extname(entry.name))) {
-        sourceFiles.push(path);
+      } else if (entry.isFile()) {
+        const extension = extname(entry.name);
+        if (extensions.includes(extension)) sourceFiles.push(path);
+        else if (resourceExtensions.has(extension)) resourceFiles.push(path);
       }
     }
   }
   for (const root of roots) walk(root);
-  const available = new Set(sourceFiles);
+  const available = new Set([...sourceFiles, ...resourceFiles]);
   const changed = [...new Set(changedPaths.map(raw => {
     const path = raw.replaceAll("\\", "/").replace(/^(\.\/)+/, "");
     if (!path || path.startsWith("/") || /^[A-Za-z]:/.test(path) ||
@@ -102,6 +106,69 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
     return path;
   }))].sort();
 
+  // This is test selection, not a proof of knowledge consumption. A path-only
+  // request has no old catalog ID set: use every existing declared proof test
+  // so removed knowledge claims are not silently omitted.
+  const knowledgeChanged = changed.filter(path => path.endsWith(".json") &&
+    (path.startsWith("engine/knowledge/") ||
+      path.startsWith("engine/contracts/engineering/catalogs/")));
+  const fixtureResources = changed.filter(path =>
+    resourceFiles.includes(path) && path.startsWith("engine/fixtures/"));
+  for (const path of changed.filter(path => resourceFiles.includes(path))) {
+    if (!(knowledgeChanged.includes(path) || fixtureResources.includes(path)) ||
+        path.endsWith("/ownership.json")) {
+      throw new Error("Unsupported data impact: " + path +
+        ". Use explicit --focus/--lane or --full after source review.");
+    }
+  }
+  const registeredProofTests = new Set();
+  if (knowledgeChanged.length) {
+    const registryPath = resolve("engine/reliability/catalogs/knowledge-detector-bindings.json");
+    if (!existsSync(registryPath)) {
+      throw new Error("Missing knowledge-detector bindings; cannot map knowledge impact.");
+    }
+    const registry = JSON.parse(readFileSync(registryPath, "utf8"));
+    if (registry.schemaVersion !== 1 || !Array.isArray(registry.bindings) ||
+        registry.bindings.length === 0) {
+      throw new Error("Invalid knowledge-detector bindings; cannot map knowledge impact.");
+    }
+    const inventoryPaths = new Set(inventory.map(item => item.path));
+    const knownIds = new Set();
+    for (const binding of registry.bindings) {
+      if (typeof binding.knowledgeId !== "string" ||
+          !binding.knowledgeId.trim() || knownIds.has(binding.knowledgeId) ||
+          !Array.isArray(binding.proofPaths) || !binding.proofPaths.length) {
+        throw new Error("Invalid or duplicate knowledge-detector binding.");
+      }
+      knownIds.add(binding.knowledgeId);
+      for (const proof of binding.proofPaths) {
+        if (typeof proof !== "string" || !inventoryPaths.has(proof)) {
+          throw new Error("Knowledge proof absent from test inventory: " +
+            String(proof) + ". Repair bindings before narrowing tests.");
+        }
+        registeredProofTests.add(proof);
+      }
+    }
+    for (const path of knowledgeChanged) {
+      const catalog = JSON.parse(readFileSync(resolve(path), "utf8"));
+      if (catalog.schemaVersion !== 1 || !Array.isArray(catalog.facts) ||
+          (catalog.relations !== undefined && !Array.isArray(catalog.relations))) {
+        throw new Error("Unrecognized knowledge catalog contract: " + path);
+      }
+      const claims = [...catalog.facts, ...(catalog.relations ?? [])];
+      if (!claims.length) {
+        throw new Error("Empty knowledge catalog cannot be narrowly mapped: " + path);
+      }
+      const unbound = claims.filter(claim =>
+        typeof claim?.id !== "string" || !knownIds.has(claim.id));
+      if (unbound.length) {
+        throw new Error("Knowledge catalog has " + unbound.length +
+          " unbound claim(s): " + path +
+          ". Review bindings and select broader proof.");
+      }
+    }
+  }
+
   const importers = new Map();
   const resolveSource = (from, specifier) => {
     if (!specifier.startsWith(".")) return undefined;
@@ -110,7 +177,7 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
     if (!target || target === ".." || target.startsWith("../")) return undefined;
     const ext = extname(target);
     let candidates;
-    if (extensions.includes(ext)) {
+    if (extensions.includes(ext) || resourceExtensions.has(ext)) {
       candidates = [target];
       if (ext === ".js" || ext === ".mjs" || ext === ".cjs") {
         const stem = target.slice(0, -ext.length);
@@ -127,7 +194,7 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
   };
   for (const source of sourceFiles) {
     for (const { specifier } of importSpecifiers(source,
-      readFileSync(resolve(source), "utf8"))) {
+      readFileSync(resolve(source), "utf8"), true)) {
       const target = resolveSource(source, specifier);
       if (target === undefined) continue;
       const from = importers.get(target);
@@ -144,15 +211,40 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
       queue.push(importer);
     }
   }
-  const connected = inventory.filter(item => affected.has(item.path));
+  // A mapped catalog must not disguise an unmapped fixture in mixed edits.
+  const inventoryPaths = new Set(inventory.map(item => item.path));
+  for (const fixture of fixtureResources) {
+    const seen = new Set([fixture]);
+    const pending = [fixture];
+    for (let i = 0; i < pending.length; i += 1) {
+      for (const importer of importers.get(pending[i]) ?? []) {
+        if (!seen.has(importer)) {
+          seen.add(importer);
+          pending.push(importer);
+        }
+      }
+    }
+    if (![...seen].some(path => inventoryPaths.has(path))) {
+      throw new Error("No statically connected test for fixture: " + fixture +
+        ". Dynamic loads require explicit --focus/--lane or --full.");
+    }
+  }
+  const connected = inventory.filter(item =>
+    affected.has(item.path) || registeredProofTests.has(item.path));
   if (connected.length === 0) {
     throw new Error("No statically connected test for changed source. " +
       "Do not treat zero selected tests as verified coverage; " +
       "use explicit --focus/--lane, or --full for uncertain impact.");
   }
   const selected = inventory.filter(item => affected.has(item.path) ||
+    registeredProofTests.has(item.path) ||
     (integrate && item.lane === "acceptance"));
-  return { changed, selected, connected: connected.length, traced: affected.size };
+  return {
+    changed, selected, connected: connected.length, traced: affected.size,
+    knowledgeCatalogs: knowledgeChanged.length,
+    registeredProofTests: registeredProofTests.size,
+    fixtureResources: fixtureResources.length,
+  };
 }
 
 const args = process.argv.slice(2);
@@ -196,7 +288,12 @@ if (mode === "--acceptance" && args.length <= 1) {
       .map(item => item.path);
     vitestFiles = result.selected.filter(item => !nativeFiles.includes(item.path))
       .map(item => item.path);
-    console.log("Static source-import impact only; runtime/dynamic inputs are not certified.");
+    console.log("Static source/data impact only; dynamic inputs and runtime proof are not certified.");
+    if (result.knowledgeCatalogs || result.fixtureResources) {
+      console.log("Data selection: knowledge catalogs " + result.knowledgeCatalogs +
+        "; registered proof tests " + result.registeredProofTests +
+        "; statically linked fixture resources " + result.fixtureResources + ".");
+    }
     console.log("Changed source: " + result.changed.length +
       "; connected tests: " + result.connected +
       "; selected tests: " + result.selected.length +
@@ -221,7 +318,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] changed/source.ts ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 

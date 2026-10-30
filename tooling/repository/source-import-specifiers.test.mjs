@@ -87,6 +87,79 @@ describe("canonical repository import discovery", () => {
     }
   });
 
+
+  it("routes explicitly bound catalogs and fixture data while rejecting unbound inputs", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "lazy-data-impact-"));
+    const runner = fileURLToPath(new URL("./run-tests.mjs", import.meta.url));
+    try {
+      for (const root of [".agents", "apps", "engine", "tooling"]) {
+        mkdirSync(join(cwd, root), { recursive: true });
+      }
+      const fixture = "engine/fixtures/regressions/source-state.json";
+      const catalog = "engine/knowledge/platform/rules.json";
+      const sources = {
+        [fixture]: JSON.stringify({ scenario: "synthetic" }),
+        [catalog]: JSON.stringify({
+          schemaVersion: 1, sources: [], facts: [{ id: "fact.one" }, { id: "fact.two" }],
+        }),
+        "engine/packages/demo/test/fixture.test.ts":
+          'const file = new URL("../../../fixtures/regressions/source-state.json", import.meta.url);',
+        "engine/packages/demo/test/fact.test.ts": "export const fact = true;",
+        "engine/packages/demo/test/other-proof.test.ts": "export const other = true;",
+        "engine/packages/demo/test/acceptance.test.ts": "export const check = true;",
+        "engine/fixtures/regressions/unused.json": "{}",
+      };
+      for (const [path, content] of Object.entries(sources)) {
+        const destination = join(cwd, path);
+        mkdirSync(dirname(destination), { recursive: true });
+        writeFileSync(destination, content);
+      }
+      const tests = [
+        { path: "engine/packages/demo/test/fixture.test.ts", lane: "development" },
+        { path: "engine/packages/demo/test/fact.test.ts", lane: "safety" },
+        { path: "engine/packages/demo/test/other-proof.test.ts", lane: "regression" },
+        { path: "engine/packages/demo/test/acceptance.test.ts", lane: "acceptance" },
+      ];
+      const inventory = join(cwd, "tooling/repository/test-inventory.json");
+      mkdirSync(dirname(inventory), { recursive: true });
+      writeFileSync(inventory, JSON.stringify({ tests }));
+      const bindings = join(cwd,
+        "engine/reliability/catalogs/knowledge-detector-bindings.json");
+      mkdirSync(dirname(bindings), { recursive: true });
+      writeFileSync(bindings, JSON.stringify({
+        schemaVersion: 1,
+        bindings: [
+          { knowledgeId: "fact.one", proofPaths: ["engine/packages/demo/test/fact.test.ts"] },
+          { knowledgeId: "fact.two", proofPaths: ["engine/packages/demo/test/other-proof.test.ts"] },
+        ],
+      }));
+      const plan = (...args) => spawnSync(process.execPath,
+        [runner, "--affected", "--plan", ...args], { cwd, encoding: "utf8" });
+      const knowledge = plan(catalog);
+      expect(knowledge.status).toBe(0);
+      expect(knowledge.stdout).toContain("registered proof tests 2");
+      expect(knowledge.stdout).toContain("connected tests: 2; selected tests: 2");
+      const combined = plan("--integration", fixture, catalog);
+      expect(combined.status).toBe(0);
+      expect(combined.stdout).toContain("connected tests: 3; selected tests: 4");
+      const unlinked = plan("engine/fixtures/regressions/unused.json", catalog);
+      expect(unlinked.status).toBe(2);
+      expect(unlinked.stderr).toContain("No statically connected test for fixture");
+      writeFileSync(join(cwd, catalog), JSON.stringify({
+        schemaVersion: 1, sources: [], facts: [{ id: "unbound" }],
+      }));
+      const unsupported = plan(catalog);
+      expect(unsupported.status).toBe(2);
+      expect(unsupported.stderr).toContain("unbound claim");
+      const localResource = 'new URL("./asset.json", import.meta.url);';
+      expect(importSpecifiers("file.ts", localResource)).toEqual([]);
+      expect(importSpecifiers("file.ts", localResource, true))
+        .toEqual([{ specifier: "./asset.json", runtime: true }]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   it("does not report named type-only re-exports as runtime dependencies", () => {
     const imports = importSpecifiers(
       "file.ts",

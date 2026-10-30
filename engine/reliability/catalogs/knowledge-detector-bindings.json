@@ -1028,7 +1028,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-repeated-run-validation.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-repeated-run-runtime-compiler.test.ts"
       ]
     },
     {
@@ -1480,8 +1480,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1492,8 +1492,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1504,8 +1504,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1516,8 +1516,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1528,8 +1528,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1540,8 +1540,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1552,8 +1552,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -1564,8 +1564,8 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
     {
@@ -4080,10 +4080,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4096,10 +4095,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4112,10 +4110,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4127,8 +4124,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4141,8 +4137,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4156,10 +4151,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4171,8 +4165,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4186,10 +4179,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4202,10 +4194,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4218,10 +4209,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4234,10 +4224,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4250,10 +4239,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4265,8 +4253,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4279,8 +4266,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4294,10 +4280,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4310,10 +4295,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4325,8 +4309,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4339,8 +4322,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4354,10 +4336,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4369,8 +4350,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4384,10 +4364,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4400,10 +4379,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4416,10 +4394,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4432,10 +4409,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4448,10 +4424,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4463,8 +4438,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
         "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
       ]
     },
@@ -4478,10 +4452,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4494,10 +4467,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4510,10 +4482,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4526,10 +4497,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4542,10 +4512,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
@@ -4558,10 +4527,9 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/packages/compatibility/test/script-method-matrix.test.ts",
-        "engine/packages/compatibility/test/script-event-matrix.test.ts",
-        "engine/packages/compatibility/test/script-return-contract-matrix.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
+        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
       ]
     },
     {
