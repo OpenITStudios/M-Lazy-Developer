@@ -56,6 +56,7 @@ function loadInventory() {
   const validReviews = new Set([
     "pending-semantic-review", "case-inventory-reviewed", "source-reviewed",
   ]);
+  const validAreas = new Set(["map-database","map-content","lobby-pre-match","player-session","arena-match","player-state-persistence","combat-entities","inventory-economy","world-interaction","gameplay-scripting","gameplay-interpretation","audit-diagnosis","runtime-telemetry","repair-preservation","reporting","platform-compatibility","engineering-tooling"]);
   const validRecommendations = new Set([
     "keep", "keep-provisional", "merge-candidate", "defer", "obsolete",
   ]);
@@ -67,6 +68,11 @@ function loadInventory() {
         !lanes.includes(item.lane) || typeof item.owner !== "string" ||
         !item.path.startsWith(item.owner + "/") ||
         !validReviews.has(item.review) ||
+        !validAreas.has(item.functionalArea) ||
+        !Array.isArray(item.mechanicTags) ||
+        item.mechanicTags.some(tag => typeof tag !== "string" ||
+          !/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)*$/.test(tag)) ||
+        !["path-provisional", "source-case-inspected"].includes(item.mechanicMappingBasis) ||
         !validRecommendations.has(item.recommendation) ||
         typeof item.rationale !== "string" || !item.rationale.trim() ||
         !item.triage || item.triage.owner !== item.owner ||
@@ -358,6 +364,39 @@ if (mode === "--acceptance" && args.length <= 1) {
   const matching = registeredTests.filter((item) => item.lane === args[1]).map((item) => item.path);
   selectedNative = matching.filter((path) => nativeFiles.includes(path));
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
+ } else if (mode === "--list-areas" && args.length === 1) {
+  for (const area of registeredTests.reduce((items, test) => items.add(test.functionalArea), new Set())) {
+    console.log(area + ": " + registeredTests.filter(test => test.functionalArea === area).length + " files (provisional)");
+  }
+  process.exit(0);
+} else if (mode === "--show-area" && args.length === 2) {
+  if (!registeredTests.some(test => test.functionalArea === args[1])) {
+    console.error("Unknown/empty functional area: " + args[1]);
+    process.exit(2);
+  }
+  for (const test of registeredTests.filter(item => item.functionalArea === args[1])) {
+    console.log(test.path + (test.mechanicTags.length ? " [" + test.mechanicTags.join(", ") + "]" : ""));
+  }
+  process.exit(0);
+ } else if (mode === "--list-mechanics" && args.length === 1) {
+  const counts = new Map();
+  for (const test of registeredTests) {
+    for (const tag of test.mechanicTags) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+  for (const [tag, count] of [...counts].sort(([a], [b]) => a.localeCompare(b))) {
+    console.log(tag + ": " + count + " files (provisional)");
+  }
+  process.exit(0);
+} else if (mode === "--show-mechanic" && args.length === 2) {
+  const matches = registeredTests.filter(test => test.mechanicTags.includes(args[1]));
+  if (!matches.length) {
+    console.error("Unknown/unmapped mechanic tag: " + args[1]);
+    process.exit(2);
+  }
+  for (const test of matches) console.log(test.path + " [" + test.functionalArea + "]");
+  process.exit(0);
 } else if (mode === "--list-lanes" && args.length === 1) {
   const tests = registeredTests;
   for (const lane of lanes) {
@@ -437,7 +476,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-mechanics | --show-mechanic tag | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 
