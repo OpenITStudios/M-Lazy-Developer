@@ -29,11 +29,16 @@ const lanes = ["safety", "acceptance", "runtime", "regression", "development"];
 // silently disappear from lane-based execution without changing full Vitest.
 function discoverSourceTests() {
   const tests = [];
-  const ignored = new Set(["node_modules", ".git", "dist", "coverage", ".svelte-kit"]);
+  const ignored = new Set(["node_modules", ".git", "dist", ".svelte-kit"]);
   function walk(dir) {
+    // Source test families may legitimately be named test/coverage. Ignore
+    // generated coverage reports, but never hide source tests from inventory.
+    const insideTestTree = dir.split("/").some(segment =>
+      segment === "test" || segment === "tests");
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = dir + "/" + entry.name;
-      if (entry.isDirectory() && !ignored.has(entry.name)) walk(path);
+      if (entry.isDirectory() && !ignored.has(entry.name) &&
+          (entry.name !== "coverage" || insideTestTree)) walk(path);
       else if (entry.isFile() && /\.test\.(ts|tsx|js|mjs|cjs)$/.test(entry.name)) tests.push(path);
     }
   }
