@@ -8,6 +8,7 @@ import {
   groupRuntimeEvidenceByScope,
   runtimeScopeContains,
   type RuntimeEvidenceRecord,
+  type RuntimeScope,
   type RuntimeEvidenceSnapshot,
 } from "../../../../packages/project-model/src/index.js";
 import { mergeRuntimeEvidenceRecords } from "./runtime-evidence-merge.js";
@@ -42,16 +43,72 @@ export interface KnowledgeRuntimeDiagnosticInput {
   snapshot: RuntimeEvidenceSnapshot;
 }
 
+// This index is local to one immutable runtime-evidence snapshot. It only
+// narrows candidates: runtimeScopeContains remains the semantic authority,
+// including fields added to RuntimeScope after this indexed subset.
+const INDEXED_SCOPE_FIELDS = [
+  "arenaId", "arenaGeneration", "playerKey", "connectionGeneration",
+  "lifeGeneration", "participationGeneration", "entityKey",
+  "entityGeneration", "operationId", "subsystemGeneration",
+  "bootGeneration",
+] as const satisfies readonly (keyof RuntimeScope)[];
+
+type RuntimeEvidenceScopeIndex = ReadonlyMap<
+  keyof RuntimeScope,
+  ReadonlyMap<string | number, readonly RuntimeEvidenceRecord[]>
+>;
+
+function indexRuntimeEvidenceByScopeFields(
+  records: readonly RuntimeEvidenceRecord[],
+): RuntimeEvidenceScopeIndex {
+  const index = new Map<
+    keyof RuntimeScope,
+    Map<string | number, RuntimeEvidenceRecord[]>
+  >();
+  for (const record of records) {
+    if (record.scope === undefined) continue;
+    for (const field of INDEXED_SCOPE_FIELDS) {
+      const value = record.scope[field];
+      if (value === undefined) continue;
+      let values = index.get(field);
+      if (values === undefined) {
+        values = new Map();
+        index.set(field, values);
+      }
+      const bucket = values.get(value);
+      if (bucket) bucket.push(record);
+      else values.set(value, [record]);
+    }
+  }
+  return index;
+}
+
 function causalEvidenceRecordsForScope(
   allRecords: readonly RuntimeEvidenceRecord[],
   scopedRecords: readonly RuntimeEvidenceRecord[],
+  index: RuntimeEvidenceScopeIndex,
 ): readonly RuntimeEvidenceRecord[] {
   const baseScope = scopedRecords.find(
     (record) => record.scope !== undefined,
   )?.scope;
   if (!baseScope) return scopedRecords;
 
-  return allRecords.filter((record) =>
+  // A record matching every scope dimension must match ANY indexed dimension.
+  // Choose the smallest bucket and apply the original full matcher; bucket
+  // insertion order is the original record order, preserving provenance.
+  let candidates: readonly RuntimeEvidenceRecord[] | undefined;
+  for (const field of INDEXED_SCOPE_FIELDS) {
+    const expected = baseScope[field];
+    if (expected === undefined) continue;
+    const bucket = index.get(field)?.get(expected);
+    if (bucket === undefined) return [];
+    if (candidates === undefined || bucket.length < candidates.length) {
+      candidates = bucket;
+    }
+  }
+  // Empty-but-present scope matches every record WITH a scope. Retain the
+  // original scan in that rare case instead of inventing global evidence.
+  return (candidates ?? allRecords).filter((record) =>
     runtimeScopeContains(record.scope, baseScope)
   );
 }
@@ -60,6 +117,7 @@ export function knowledgeRuntimeDiagnostics(
   input: KnowledgeRuntimeDiagnosticInput,
 ): DiagnosticFinding[] {
   const findings: DiagnosticFinding[] = [];
+  const scopeIndex = indexRuntimeEvidenceByScopeFields(input.snapshot.records);
 
   for (const [scopeKey, records] of groupRuntimeEvidenceByScope(input.snapshot)) {
     const {
@@ -71,6 +129,7 @@ export function knowledgeRuntimeDiagnostics(
     const causalRecords = causalEvidenceRecordsForScope(
       input.snapshot.records,
       records,
+      scopeIndex,
     );
     const presentPredicates = [...new Set(
       causalRecords

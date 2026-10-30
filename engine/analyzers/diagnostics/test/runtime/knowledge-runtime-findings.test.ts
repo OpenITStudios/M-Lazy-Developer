@@ -157,4 +157,53 @@ describe("knowledge runtime diagnostics", () => {
     ]);
   });
 
+  it("keeps scoped causal provenance isolated while allowing broader scope evidence", () => {
+    const record = (
+      predicate: string,
+      state: "present" | "absent",
+      scope?: { arenaId?: string; playerKey?: string; operationId?: string },
+    ) => ({
+      predicate, state, confidence: "observed" as const,
+      ...(scope === undefined ? {} : { scope }),
+    });
+    const findings = knowledgeRuntimeDiagnostics({
+      catalog,
+      profile: { edition: "bedrock" },
+      snapshot: {
+        schemaVersion: 1,
+        records: [
+          record("committed", "present", { arenaId: "alpha" }),
+          record("verified", "absent", { arenaId: "alpha", playerKey: "p" }),
+          record("verified", "present", { arenaId: "alpha", playerKey: "q" }),
+          record("alpha-child", "present", { arenaId: "alpha", playerKey: "q" }),
+          record("committed", "present", { arenaId: "beta", playerKey: "p" }),
+          record("verified", "absent", { arenaId: "beta", playerKey: "p" }),
+          record("beta-only", "present", { arenaId: "beta", playerKey: "p" }),
+          record("committed", "present", { operationId: "other" }),
+          record("operation-only", "present", { operationId: "other" }),
+          record("unscoped-only", "present"),
+          record("committed", "present", {}),
+        ],
+      },
+    });
+    const fromScope = (scope: Record<string, unknown>) =>
+      findings.find(item =>
+        JSON.stringify(item.data?.runtimeScope) === JSON.stringify(scope));
+    expect(fromScope({ arenaId: "alpha" })?.data?.presentPredicates)
+      .toEqual(["alpha-child", "committed", "verified"]);
+    expect(fromScope({ arenaId: "beta", playerKey: "p" })?.data?.presentPredicates)
+      .toEqual(["beta-only", "committed"]);
+    expect(fromScope({ operationId: "other" })?.data?.presentPredicates)
+      .toEqual(["committed", "operation-only"]);
+    // A present-but-empty scope keeps the legacy all-scoped evidence
+    // interpretation; an absent scope must never join a scoped claim.
+    expect(fromScope({})?.data?.presentPredicates)
+      .toEqual(["alpha-child", "beta-only", "committed", "operation-only", "verified"]);
+    expect(findings.some(item =>
+      item.data?.presentPredicates?.includes("unscoped-only")))
+      .toBe(false);
+    expect(fromScope({ arenaId: "beta", playerKey: "p" })?.code)
+      .toBe("KNOWLEDGE_RELATION_VIOLATION");
+  });
+
 });
