@@ -1804,7 +1804,7 @@ export function deriveAuditModelTaskPackets(input: {
         ...scopedSourceLocators,
       ]);
       const preciseSourceSite = (locator: string): boolean =>
-        /(?:#[/]\\S+|#L[1-9]\\d*(?:-L?[1-9]\\d*)?(?::[1-9]\\d*)?|:[1-9]\\d*(?::[1-9]\\d*)?)$/.test(locator);
+        /(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator);
       const scopedSites = scopedSourceLocators.filter(preciseSourceSite);
       const allSites = candidateSourceLocators.filter(preciseSourceSite);
       const referenceSourceLocators =
