@@ -13589,465 +13589,1788 @@
   "featureCatalog": {
     "arena.admission-authority": {
       "area": "arena-match",
-      "label": "Arena joining, membership and authority evidence"
+      "label": "Arena joining, membership and authority evidence",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "testing"
+        ],
+        "probeExamples": [
+          "E1"
+        ],
+        "probeIds": [
+          "P52"
+        ]
+      }
     },
     "arena.capacity-stress": {
       "area": "arena-match",
-      "label": "Arena capacity and stress scenarios"
+      "label": "Arena capacity and stress scenarios",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-script-optimization",
+          "bedrock-testing-policy"
+        ],
+        "modules": [
+          "testing"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "arena.cleanup-reset": {
       "area": "arena-match",
-      "label": "Arena cleanup, reset and reuse"
+      "label": "Arena cleanup, reset and reuse",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-lifecycle",
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "entities",
+          "testing"
+        ],
+        "probeExamples": [
+          "E2"
+        ],
+        "probeIds": [
+          "P53"
+        ]
+      }
     },
     "arena.entity-population": {
       "area": "arena-match",
-      "label": "Arena entity population and spawns"
+      "label": "Arena entity population and spawns",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-creation",
+          "bedrock-entity-lifecycle"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [
+          "E2",
+          "E3"
+        ],
+        "probeIds": [
+          "P38",
+          "P53",
+          "P54"
+        ]
+      }
     },
     "arena.golden-baselines": {
       "area": "arena-match",
-      "label": "Arena golden baseline and corpus"
+      "label": "Arena golden baseline and corpus",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "arena.layout-replicas": {
       "area": "arena-match",
-      "label": "Arena layout, region and replica identity"
+      "label": "Arena layout, region and replica identity",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-coordinates"
+        ],
+        "modules": [
+          "coords"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "arena.lifecycle": {
       "area": "arena-match",
-      "label": "Match termination and lifecycle"
+      "label": "Match termination and lifecycle",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence",
+          "bedrock-game-time"
+        ],
+        "modules": [
+          "database",
+          "time"
+        ],
+        "probeExamples": [
+          "G5"
+        ],
+        "probeIds": [
+          "P32",
+          "P33",
+          "P62"
+        ]
+      }
     },
     "arena.proof-gates": {
       "area": "arena-match",
-      "label": "Arena proof and admission gates"
+      "label": "Arena proof and admission gates",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "arena.repair-strategy": {
       "area": "arena-match",
-      "label": "Arena repair constraints and planning"
+      "label": "Arena repair constraints and planning",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "arena.start-ownership": {
       "area": "arena-match",
-      "label": "Match start ownership and admission"
+      "label": "Match start ownership and admission",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-game-time",
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "testing",
+          "time"
+        ],
+        "probeExamples": [
+          "E1"
+        ],
+        "probeIds": [
+          "P52"
+        ]
+      }
     },
     "arena.state-isolation": {
       "area": "arena-match",
-      "label": "Multi-arena global/shared state isolation"
+      "label": "Multi-arena global/shared state isolation",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence",
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "database",
+          "testing"
+        ],
+        "probeExamples": [
+          "E1"
+        ],
+        "probeIds": [
+          "P52"
+        ]
+      }
     },
     "audit.causal-diagnosis": {
       "area": "audit-diagnosis",
-      "label": "Causal/cross-domain diagnosis"
+      "label": "Causal/cross-domain diagnosis",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.change-comparison": {
       "area": "audit-diagnosis",
-      "label": "Version-aware map comparisons"
+      "label": "Version-aware map comparisons",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.defect-analysis": {
       "area": "audit-diagnosis",
-      "label": "Defect diagnostics and classification"
+      "label": "Defect diagnostics and classification",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.diagnosis-execution": {
       "area": "audit-diagnosis",
-      "label": "Diagnostic pipeline execution and configuration"
+      "label": "Diagnostic pipeline execution and configuration",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.diagnostic-vocabulary": {
       "area": "audit-diagnosis",
-      "label": "Diagnostic code/definition contracts"
+      "label": "Diagnostic code/definition contracts",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.end-to-end": {
       "area": "audit-diagnosis",
-      "label": "Source-level audit integration"
+      "label": "Source-level audit integration",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.evidence-integrity": {
       "area": "audit-diagnosis",
-      "label": "Evidence recovery, consistency and traceability"
+      "label": "Evidence recovery, consistency and traceability",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.falsification-search": {
       "area": "audit-diagnosis",
-      "label": "Bounded search, mutation and counterexamples"
+      "label": "Bounded search, mutation and counterexamples",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-testing-policy"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.invariants": {
       "area": "audit-diagnosis",
-      "label": "Invariant and contradiction solving"
+      "label": "Invariant and contradiction solving",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.multiplayer-validation": {
       "area": "audit-diagnosis",
-      "label": "Mixed-state multiplayer audit scenarios"
+      "label": "Mixed-state multiplayer audit scenarios",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.proof-control": {
       "area": "audit-diagnosis",
-      "label": "Audit proof and honest admission"
+      "label": "Audit proof and honest admission",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.reliability": {
       "area": "audit-diagnosis",
-      "label": "Regression knowledge, retest and release assurance"
+      "label": "Regression knowledge, retest and release assurance",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-testing-policy"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.report-admission": {
       "area": "audit-diagnosis",
-      "label": "Evidence-to-issue admission"
+      "label": "Evidence-to-issue admission",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.rule-evaluation": {
       "area": "audit-diagnosis",
-      "label": "Diagnostic rules and reasoning infrastructure"
+      "label": "Diagnostic rules and reasoning infrastructure",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.semantic-analysis": {
       "area": "audit-diagnosis",
-      "label": "Semantic IR, state and dataflow"
+      "label": "Semantic IR, state and dataflow",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.source-inspection": {
       "area": "audit-diagnosis",
-      "label": "Map source inspection and analysis"
+      "label": "Map source inspection and analysis",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.task-context": {
       "area": "audit-diagnosis",
-      "label": "Audit model tasks and context retrieval"
+      "label": "Audit model tasks and context retrieval",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "audit.workflow": {
       "area": "audit-diagnosis",
-      "label": "Audit plans, workflow and decisions"
+      "label": "Audit plans, workflow and decisions",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "combat.damage": {
       "area": "combat-entities",
-      "label": "Damage, attack, terminal combat"
+      "label": "Damage, attack, terminal combat",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content",
+          "bedrock-entity-creation",
+          "bedrock-entity-lifecycle"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P07",
+          "P08",
+          "P15",
+          "P19",
+          "P21"
+        ]
+      }
     },
     "combat.revive": {
       "area": "combat-entities",
-      "label": "Downed and revival lifecycle"
+      "label": "Downed and revival lifecycle",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-lifecycle"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "database.leveldb": {
       "area": "map-database",
-      "label": "LevelDB actor, metadata, keys, entities, and chunks"
+      "label": "LevelDB actor, metadata, keys, entities, and chunks",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "database.nbt": {
       "area": "map-database",
-      "label": "NBT preservation"
+      "label": "NBT preservation",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "database.world-db": {
       "area": "map-database",
-      "label": "World DB source, comparisons, and runtime evidence boundary"
+      "label": "World DB source, comparisons, and runtime evidence boundary",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "economy.progression": {
       "area": "inventory-economy",
-      "label": "Progression and counters"
+      "label": "Progression and counters",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-analytics"
+        ],
+        "modules": [
+          "analytics"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "economy.rewards": {
       "area": "inventory-economy",
-      "label": "Rewards and durability of delivery"
+      "label": "Rewards and durability of delivery",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "database",
+          "items"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "economy.transactions": {
       "area": "inventory-economy",
-      "label": "Currency and economy transactions"
+      "label": "Currency and economy transactions",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "database",
+          "items"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "entity.behavior": {
       "area": "combat-entities",
-      "label": "Entity AI stack, behavior and mounts"
+      "label": "Entity AI stack, behavior and mounts",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content",
+          "bedrock-entity-creation"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [
+          "E3"
+        ],
+        "probeIds": [
+          "P30",
+          "P38",
+          "P54"
+        ]
+      }
     },
     "entity.evidence": {
       "area": "combat-entities",
-      "label": "Entity source and knowledge evidence"
+      "label": "Entity source and knowledge evidence",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-creation"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "entity.loot": {
       "area": "combat-entities",
-      "label": "Entity loot and item tables"
+      "label": "Entity loot and item tables",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content",
+          "bedrock-entity-creation"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "entity.navigation": {
       "area": "combat-entities",
-      "label": "Entity navigation and path reachability"
+      "label": "Entity navigation and path reachability",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-creation",
+          "bedrock-entity-lifecycle"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "entity.spawn-population": {
       "area": "combat-entities",
-      "label": "Entity spawning and population"
+      "label": "Entity spawning and population",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-creation",
+          "bedrock-entity-lifecycle"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [
+          "E2",
+          "E3"
+        ],
+        "probeIds": [
+          "P06",
+          "P53",
+          "P54"
+        ]
+      }
     },
     "entity.targeting": {
       "area": "combat-entities",
-      "label": "Target selection and sensor logic"
+      "label": "Target selection and sensor logic",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-creation"
+        ],
+        "modules": [
+          "entities"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P08",
+          "P15"
+        ]
+      }
     },
     "gameplay.calibration": {
       "area": "gameplay-interpretation",
-      "label": "Gameplay calibration cases"
+      "label": "Gameplay calibration cases",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.closure": {
       "area": "gameplay-interpretation",
-      "label": "Gameplay closure and defect proof"
+      "label": "Gameplay closure and defect proof",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.discovery": {
       "area": "gameplay-interpretation",
-      "label": "Gameplay source discovery and fingerprints"
+      "label": "Gameplay source discovery and fingerprints",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.intent": {
       "area": "gameplay-interpretation",
-      "label": "Authored game intent and authority"
+      "label": "Authored game intent and authority",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.knowledge": {
       "area": "gameplay-interpretation",
-      "label": "Knowledge claims and authored context"
+      "label": "Knowledge claims and authored context",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.reachability": {
       "area": "gameplay-interpretation",
-      "label": "Gameplay route and reachability"
+      "label": "Gameplay route and reachability",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-coordinates"
+        ],
+        "modules": [
+          "coords"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.scenarios": {
       "area": "gameplay-interpretation",
-      "label": "Game mechanics and scenario reconstruction"
+      "label": "Game mechanics and scenario reconstruction",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "gameplay.semantic-model": {
       "area": "gameplay-interpretation",
-      "label": "Game architecture, behavioral and world semantic models"
+      "label": "Game architecture, behavioral and world semantic models",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "inventory.lifecycle": {
       "area": "inventory-economy",
-      "label": "Item ownership and inventory lifecycle"
+      "label": "Item ownership and inventory lifecycle",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "items"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P20"
+        ]
+      }
     },
     "map.archive": {
       "area": "map-content",
-      "label": "World archive transport and integrity"
+      "label": "World archive transport and integrity",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-release-export"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "map.blocks": {
       "area": "map-content",
-      "label": "Minecraft blocks and permissions"
+      "label": "Minecraft blocks and permissions",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [
+          "G1"
+        ],
+        "probeIds": [
+          "P13",
+          "P20",
+          "P31",
+          "P58"
+        ]
+      }
     },
     "map.manifest": {
       "area": "map-content",
-      "label": "Manifest pack identities and modules"
+      "label": "Manifest pack identities and modules",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content",
+          "bedrock-version-targeting"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "map.resource-pack": {
       "area": "map-content",
-      "label": "Resource pack and animations"
+      "label": "Resource pack and animations",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "map.source-index": {
       "area": "map-content",
-      "label": "Map source indexing and artifact inspection"
+      "label": "Map source indexing and artifact inspection",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "map.structure-proof": {
       "area": "map-content",
-      "label": "Structure source/voxel evidence"
+      "label": "Structure source/voxel evidence",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "map.structures": {
       "area": "map-content",
-      "label": "MCStructure parsing and placement"
+      "label": "MCStructure parsing and placement",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content",
+          "bedrock-coordinates"
+        ],
+        "modules": [
+          "coords"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "map.topology": {
       "area": "map-content",
-      "label": "World topology and arena regions"
+      "label": "World topology and arena regions",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-coordinates"
+        ],
+        "modules": [
+          "coords"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "platform.editions": {
       "area": "platform-compatibility",
-      "label": "Education/Bedrock capability differences"
+      "label": "Education/Bedrock capability differences",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-version-targeting"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "platform.script-api": {
       "area": "platform-compatibility",
-      "label": "Minecraft scripting API compatibility"
+      "label": "Minecraft scripting API compatibility",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-version-targeting"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "player.client-lifecycle": {
       "area": "player-session",
-      "label": "Live client lifecycle contracts"
+      "label": "Live client lifecycle contracts",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "player.generation-guard": {
       "area": "player-session",
-      "label": "Session generation safety"
+      "label": "Session generation safety",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-entity-lifecycle",
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "entities",
+          "testing"
+        ],
+        "probeExamples": [
+          "E2"
+        ],
+        "probeIds": [
+          "P53"
+        ]
+      }
     },
     "player.inventory-restoration": {
       "area": "player-session",
-      "label": "Inventory restoration at session boundaries"
+      "label": "Inventory restoration at session boundaries",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "database",
+          "items"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "player.join-spawn-leave": {
       "area": "player-session",
-      "label": "Player join, spawn, leave lifecycle"
+      "label": "Player join, spawn, leave lifecycle",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-analytics",
+          "bedrock-game-time"
+        ],
+        "modules": [
+          "analytics",
+          "time"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P03"
+        ]
+      }
     },
     "player.persistence-analysis": {
       "area": "player-state-persistence",
-      "label": "Persistence source analysis"
+      "label": "Persistence source analysis",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "database"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P02",
+          "P03"
+        ]
+      }
     },
     "player.persistence-diagnosis": {
       "area": "player-state-persistence",
-      "label": "Persistence diagnostic evidence"
+      "label": "Persistence diagnostic evidence",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "database"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "player.persistence-repair": {
       "area": "player-state-persistence",
-      "label": "Persistent state repair and idempotency"
+      "label": "Persistent state repair and idempotency",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence",
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "database",
+          "testing"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "player.reconnect-sessions": {
       "area": "player-session",
-      "label": "Multiplayer join/reconnect session modeling and experiments"
+      "label": "Multiplayer join/reconnect session modeling and experiments",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-analytics",
+          "bedrock-data-persistence"
+        ],
+        "modules": [
+          "analytics",
+          "database"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P03"
+        ]
+      }
     },
     "player.state-recovery": {
       "area": "player-state-persistence",
-      "label": "State reconciliation and recovery"
+      "label": "State reconciliation and recovery",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-data-persistence",
+          "bedrock-game-time"
+        ],
+        "modules": [
+          "database",
+          "time"
+        ],
+        "probeExamples": [
+          "G5"
+        ],
+        "probeIds": [
+          "P62"
+        ]
+      }
     },
     "repair.authorization": {
       "area": "repair-preservation",
-      "label": "Repair permission and preconditions"
+      "label": "Repair permission and preconditions",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.integration": {
       "area": "repair-preservation",
-      "label": "Repair pipeline integration"
+      "label": "Repair pipeline integration",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.lifecycle": {
       "area": "repair-preservation",
-      "label": "Repair lifecycle and incident closure"
+      "label": "Repair lifecycle and incident closure",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.mutations": {
       "area": "repair-preservation",
-      "label": "Authorized mutations and source transforms"
+      "label": "Authorized mutations and source transforms",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.preservation": {
       "area": "repair-preservation",
-      "label": "Unchanged behavior preservation and invariants"
+      "label": "Unchanged behavior preservation and invariants",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.release": {
       "area": "repair-preservation",
-      "label": "Repair package staging and release gate"
+      "label": "Repair package staging and release gate",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.strategies": {
       "area": "repair-preservation",
-      "label": "Repair option selection and realization"
+      "label": "Repair option selection and realization",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "repair.verification": {
       "area": "repair-preservation",
-      "label": "Repair proof and verification"
+      "label": "Repair proof and verification",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.confirmation": {
       "area": "reporting",
-      "label": "Report confirmation and admission"
+      "label": "Report confirmation and admission",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.findings": {
       "area": "reporting",
-      "label": "Finding classification, explanation and projection"
+      "label": "Finding classification, explanation and projection",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.golden": {
       "area": "reporting",
-      "label": "Golden report fixtures and format"
+      "label": "Golden report fixtures and format",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.presentation": {
       "area": "reporting",
-      "label": "Human-facing report documents"
+      "label": "Human-facing report documents",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.schema": {
       "area": "reporting",
-      "label": "Report schema and serialization"
+      "label": "Report schema and serialization",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.tracker": {
       "area": "reporting",
-      "label": "Tester/developer tracker documents"
+      "label": "Tester/developer tracker documents",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "report.ui": {
       "area": "reporting",
-      "label": "Bug report UI and GitHub handoff"
+      "label": "Bug report UI and GitHub handoff",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "runtime.differential": {
       "area": "runtime-telemetry",
-      "label": "Cross-version runtime comparisons"
+      "label": "Cross-version runtime comparisons",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-version-targeting"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "runtime.evidence": {
       "area": "runtime-telemetry",
-      "label": "Runtime evidence authority, state, adapters, and validation"
+      "label": "Runtime evidence authority, state, adapters, and validation",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-debug-logging",
+          "bedrock-debug-profiling"
+        ],
+        "modules": [
+          "logging",
+          "profiling"
+        ],
+        "probeExamples": [
+          "E4"
+        ],
+        "probeIds": [
+          "P17",
+          "P18",
+          "P41",
+          "P46"
+        ]
+      }
     },
     "runtime.experiments": {
       "area": "runtime-telemetry",
-      "label": "Runtime experiments and scenario contracts"
+      "label": "Runtime experiments and scenario contracts",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-testing-policy"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "runtime.host": {
       "area": "runtime-telemetry",
-      "label": "Runtime host, action and capabilities"
+      "label": "Runtime host, action and capabilities",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-testing-policy"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "runtime.multiplayer": {
       "area": "runtime-telemetry",
-      "label": "Concurrent client runtime experimentation"
+      "label": "Concurrent client runtime experimentation",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-script-optimization"
+        ],
+        "modules": [
+          "testing"
+        ],
+        "probeExamples": [
+          "E1"
+        ],
+        "probeIds": [
+          "P52"
+        ]
+      }
     },
     "runtime.probes": {
       "area": "runtime-telemetry",
-      "label": "Runtime probes and evidence"
+      "label": "Runtime probes and evidence",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-debug-logging",
+          "bedrock-debug-profiling"
+        ],
+        "modules": [
+          "logging",
+          "profiling"
+        ],
+        "probeExamples": [
+          "E4"
+        ],
+        "probeIds": [
+          "P17",
+          "P18",
+          "P41",
+          "P46"
+        ]
+      }
     },
     "runtime.profiles": {
       "area": "runtime-telemetry",
-      "label": "Runtime/target profile metadata"
+      "label": "Runtime/target profile metadata",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-version-targeting"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "runtime.telemetry": {
       "area": "runtime-telemetry",
-      "label": "Telemetry, buffers and observations"
+      "label": "Telemetry, buffers and observations",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-debug-logging",
+          "bedrock-debug-profiling"
+        ],
+        "modules": [
+          "logging",
+          "profiling"
+        ],
+        "probeExamples": [
+          "E4"
+        ],
+        "probeIds": [
+          "P18",
+          "P41",
+          "P46"
+        ]
+      }
     },
     "script.api-compatibility": {
       "area": "gameplay-scripting",
-      "label": "Script API signatures and compatibility diagnostics"
+      "label": "Script API signatures and compatibility diagnostics",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-version-targeting"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "script.commands": {
       "area": "gameplay-scripting",
-      "label": "Minecraft command interpretation"
+      "label": "Minecraft command interpretation",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": [
+          "P09"
+        ]
+      }
     },
     "script.config": {
       "area": "gameplay-scripting",
-      "label": "Typed script config parsing"
+      "label": "Typed script config parsing",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "script.control-flow": {
       "area": "gameplay-scripting",
-      "label": "Script control flow and call evidence"
+      "label": "Script control flow and call evidence",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "script.dialogue": {
       "area": "gameplay-scripting",
-      "label": "NPC dialogue semantics"
+      "label": "NPC dialogue semantics",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": [
+          "P09"
+        ]
+      }
     },
     "script.mcfunctions": {
       "area": "gameplay-scripting",
-      "label": "mcfunction parsing and ownership"
+      "label": "mcfunction parsing and ownership",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": [
+          "P09"
+        ]
+      }
     },
     "script.runtime-evidence": {
       "area": "gameplay-scripting",
-      "label": "Script runtime observation contracts"
+      "label": "Script runtime observation contracts",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-debug-logging"
+        ],
+        "modules": [
+          "logging"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P18"
+        ]
+      }
     },
     "script.scheduler": {
       "area": "gameplay-scripting",
-      "label": "Scheduling and event ordering"
+      "label": "Scheduling and event ordering",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-game-time"
+        ],
+        "modules": [
+          "time"
+        ],
+        "probeExamples": [
+          "G5"
+        ],
+        "probeIds": [
+          "P32",
+          "P33",
+          "P62"
+        ]
+      }
     },
     "script.source-model": {
       "area": "gameplay-scripting",
-      "label": "Script source and parser models"
+      "label": "Script source and parser models",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "tooling.decisions": {
       "area": "engineering-tooling",
-      "label": "Decision and invariant registry"
+      "label": "Decision and invariant registry",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-agent-team"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "tooling.efficiency": {
       "area": "engineering-tooling",
-      "label": "Development and test efficiency"
+      "label": "Development and test efficiency",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-script-optimization",
+          "bedrock-testing-policy"
+        ],
+        "modules": [
+          "testing"
+        ],
+        "probeExamples": [
+          "E1"
+        ],
+        "probeIds": [
+          "P52"
+        ]
+      }
     },
     "tooling.graph": {
       "area": "engineering-tooling",
-      "label": "Repository ownership and graph"
+      "label": "Repository ownership and graph",
+      "upstream": {
+        "relation": "LAZY_INTERNAL_ONLY",
+        "skills": [],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "tooling.projects": {
       "area": "engineering-tooling",
-      "label": "Project workspace and publication"
+      "label": "Project workspace and publication",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-project-setup"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "tooling.release": {
       "area": "engineering-tooling",
-      "label": "Release and published package identity"
+      "label": "Release and published package identity",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-release-export"
+        ],
+        "modules": [],
+        "probeExamples": [
+          "E9"
+        ],
+        "probeIds": []
+      }
     },
     "tooling.repository": {
       "area": "engineering-tooling",
-      "label": "Repository structure and build/test workflow"
+      "label": "Repository structure and build/test workflow",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-git-workflow"
+        ],
+        "modules": [],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "world.blocks-rules": {
       "area": "world-interaction",
-      "label": "Interactive blocks, hazards, world rules"
+      "label": "Interactive blocks, hazards, world rules",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-content"
+        ],
+        "modules": [],
+        "probeExamples": [
+          "G1"
+        ],
+        "probeIds": [
+          "P13",
+          "P20",
+          "P31",
+          "P58"
+        ]
+      }
     },
     "world.chunk-lifecycle": {
       "area": "world-interaction",
-      "label": "Chunk loading, readiness and leases"
+      "label": "Chunk loading, readiness and leases",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-camera",
+          "bedrock-coordinates"
+        ],
+        "modules": [
+          "coords"
+        ],
+        "probeExamples": [],
+        "probeIds": [
+          "P25",
+          "P26",
+          "P27"
+        ]
+      }
     },
     "world.cinematic-feedback": {
       "area": "world-interaction",
-      "label": "Camera, title and UI feedback"
+      "label": "Camera, title and UI feedback",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-camera",
+          "bedrock-onscreen-display"
+        ],
+        "modules": [
+          "display"
+        ],
+        "probeExamples": [
+          "E6"
+        ],
+        "probeIds": [
+          "P10",
+          "P14",
+          "P29",
+          "P56"
+        ]
+      }
     },
     "world.player-interaction": {
       "area": "world-interaction",
-      "label": "Player interactions, forms and inputs"
+      "label": "Player interactions, forms and inputs",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-forms"
+        ],
+        "modules": [
+          "forms"
+        ],
+        "probeExamples": [
+          "E5",
+          "G2"
+        ],
+        "probeIds": [
+          "P05",
+          "P55",
+          "P59"
+        ]
+      }
     },
     "world.spatial-authority": {
       "area": "world-interaction",
-      "label": "Spatial mutation and world boundaries"
+      "label": "Spatial mutation and world boundaries",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-coordinates"
+        ],
+        "modules": [
+          "coords"
+        ],
+        "probeExamples": [],
+        "probeIds": []
+      }
     },
     "world.teleport": {
       "area": "world-interaction",
-      "label": "Teleport result and transaction handling"
+      "label": "Teleport result and transaction handling",
+      "upstream": {
+        "relation": "TOPIC_REFERENCE_ONLY",
+        "skills": [
+          "bedrock-coordinates",
+          "bedrock-forms",
+          "bedrock-teleport"
+        ],
+        "modules": [
+          "coords",
+          "forms",
+          "teleport"
+        ],
+        "probeExamples": [
+          "G4"
+        ],
+        "probeIds": [
+          "P10",
+          "P61"
+        ]
+      }
     }
   },
   "featureMappingPolicy": "Feature and mechanic tags are navigation, not runtime or end-to-end proof. A source-case-inspected label means case names/important assertions were read on a pinned source commit, not complete semantic equivalence. Path-provisional rows are not certified by source review.",
-  "featureMappingReviewedAtCommit": "2dcfa66b52dfabdbf06e612f597be1c9880ba84d"
+  "featureMappingReviewedAtCommit": "2dcfa66b52dfabdbf06e612f597be1c9880ba84d",
+  "upstreamCategoryCrosswalk": {
+    "schemaVersion": 1,
+    "authority": "UNTRUSTED_ZIP_TAXONOMY_REFERENCE_NOT_ACTIVE_SKILLS_OR_GAMEPLAY_PROOF",
+    "developer": {
+      "manifest": "minecraft-bedrock-agent-skills/skills.json",
+      "version": "v0.30.0",
+      "archiveSha256": "5e4608858cd824d9f5476a6d89242084db6b6d80ce61fa0b5e4b0c079669f0d8",
+      "skills": [
+        "bedrock-agent-team",
+        "bedrock-analytics",
+        "bedrock-camera",
+        "bedrock-content",
+        "bedrock-coordinates",
+        "bedrock-data-persistence",
+        "bedrock-debug-logging",
+        "bedrock-debug-profiling",
+        "bedrock-entity-creation",
+        "bedrock-entity-lifecycle",
+        "bedrock-forms",
+        "bedrock-game-results",
+        "bedrock-game-time",
+        "bedrock-git-workflow",
+        "bedrock-onscreen-display",
+        "bedrock-player-attached-particles",
+        "bedrock-project-setup",
+        "bedrock-release-export",
+        "bedrock-script-optimization",
+        "bedrock-sound",
+        "bedrock-teleport",
+        "bedrock-testing-policy",
+        "bedrock-text-glyphs",
+        "bedrock-version-targeting"
+      ],
+      "moduleOwners": {
+        "analytics": [
+          "bedrock-analytics"
+        ],
+        "coords": [
+          "bedrock-coordinates"
+        ],
+        "database": [
+          "bedrock-data-persistence"
+        ],
+        "display": [
+          "bedrock-onscreen-display"
+        ],
+        "entities": [
+          "bedrock-entity-lifecycle",
+          "bedrock-entity-creation"
+        ],
+        "forms": [
+          "bedrock-forms"
+        ],
+        "game-results": [
+          "bedrock-game-results"
+        ],
+        "items": [
+          "bedrock-data-persistence"
+        ],
+        "logging": [
+          "bedrock-debug-logging"
+        ],
+        "profiling": [
+          "bedrock-debug-profiling"
+        ],
+        "sound": [
+          "bedrock-sound"
+        ],
+        "teleport": [
+          "bedrock-teleport"
+        ],
+        "testing": [
+          "bedrock-script-optimization"
+        ],
+        "time": [
+          "bedrock-game-time"
+        ]
+      },
+      "externalModule": "database"
+    },
+    "probe": {
+      "skillsLockTag": "v0.30.0",
+      "skillsLockCommit": "a0f17e6d27c5bb3bf16ecab44a249b7e3bd192fb",
+      "archiveSha256": "89ec46832abb7fbb1215ec5e460275f18b4071ce5ca1d4c3cb3a7f052077f5d5",
+      "exampleIndex": "docs/examples/index.json",
+      "exampleOwners": {
+        "E1": "bedrock-script-optimization",
+        "E2": "bedrock-entity-lifecycle",
+        "E3": "bedrock-entity-creation",
+        "E4": "bedrock-debug-profiling",
+        "E5": "bedrock-forms",
+        "E6": "bedrock-onscreen-display",
+        "E7": "bedrock-game-results",
+        "E8": "bedrock-text-glyphs",
+        "E9": "bedrock-release-export",
+        "G1": "bedrock-content",
+        "G2": "bedrock-forms",
+        "G3": "bedrock-sound",
+        "G4": "bedrock-teleport",
+        "G5": "bedrock-game-time"
+      },
+      "targetClient": "Minecraft Education 26.32",
+      "matchedPublisherSkillFolderHashes": 24,
+      "matchedInstalledModuleLockFiles": true
+    },
+    "canonicalReviewedSourceLock": "skills/bedrock/source-lock.json",
+    "canonicalCuratedInterpretations": "experiments/developer-practice-signals.json",
+    "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
+  }
 }

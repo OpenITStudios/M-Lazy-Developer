@@ -67,6 +67,54 @@ function loadInventory() {
     throw new Error("Missing canonical test feature catalog");
   }
   const validFeatures = new Set(Object.keys(featureCatalog));
+  const upstream = data.upstreamCategoryCrosswalk;
+  if (upstream?.schemaVersion !== 1 ||
+      !Array.isArray(upstream.developer?.skills) ||
+      !upstream.developer?.moduleOwners ||
+      !upstream.probe?.exampleOwners ||
+      !/^[a-f0-9]{64}$/.test(upstream.developer.archiveSha256 || "") ||
+      !/^[a-f0-9]{64}$/.test(upstream.probe.archiveSha256 || "")) {
+    throw new Error("Missing or malformed upstream taxonomy crosswalk");
+  }
+  const skillSet = new Set(upstream.developer.skills);
+  const moduleOwners = upstream.developer.moduleOwners;
+  const exampleOwners = upstream.probe.exampleOwners;
+  if (skillSet.size !== upstream.developer.skills.length) {
+    throw new Error("Duplicate upstream skill identities");
+  }
+  for (const [moduleName, owners] of Object.entries(moduleOwners)) {
+    if (!moduleName || !Array.isArray(owners) || !owners.length ||
+        owners.some(owner => !skillSet.has(owner))) {
+      throw new Error("Invalid upstream module ownership: " + moduleName);
+    }
+  }
+  for (const [exampleId, owner] of Object.entries(exampleOwners)) {
+    if (!/^([EG])[0-9]+$/.test(exampleId) || !skillSet.has(owner)) {
+      throw new Error("Invalid Probe example identity: " + exampleId);
+    }
+  }
+  for (const [featureId, spec] of Object.entries(featureCatalog)) {
+    const link = spec?.upstream;
+    if (!link || !["TOPIC_REFERENCE_ONLY", "LAZY_INTERNAL_ONLY"].includes(link.relation) ||
+        !Array.isArray(link.skills) || !Array.isArray(link.modules) ||
+        !Array.isArray(link.probeExamples) || !Array.isArray(link.probeIds) ||
+        new Set(link.skills).size !== link.skills.length ||
+        new Set(link.modules).size !== link.modules.length ||
+        new Set(link.probeExamples).size !== link.probeExamples.length ||
+        new Set(link.probeIds).size !== link.probeIds.length ||
+        link.skills.some(skill => !skillSet.has(skill)) ||
+        link.modules.some(module => !Array.isArray(moduleOwners[module]) ||
+          !moduleOwners[module].some(owner => link.skills.includes(owner))) ||
+        link.probeExamples.some(example => !exampleOwners[example] ||
+          !link.skills.includes(exampleOwners[example])) ||
+        link.probeIds.some(id => !/^P[0-9]{2,3}$/.test(id)) ||
+        (link.relation === "LAZY_INTERNAL_ONLY" &&
+          (link.skills.length || link.modules.length ||
+           link.probeExamples.length || link.probeIds.length)) ||
+        (link.relation === "TOPIC_REFERENCE_ONLY" && !link.skills.length)) {
+      throw new Error("Invalid upstream link for feature: " + featureId);
+    }
+  }
   const validRecommendations = new Set([
     "keep", "keep-provisional", "merge-candidate", "defer", "obsolete",
   ]);
@@ -416,6 +464,56 @@ if (mode === "--acceptance" && args.length <= 1) {
   }
   for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
   process.exit(0);
+} else if (mode === "--list-upstream-skills" && args.length === 1) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  for (const skill of inventory.upstreamCategoryCrosswalk.developer.skills) {
+    const matched = registeredTests.filter(test =>
+      inventory.featureCatalog[test.featureId].upstream.skills.includes(skill));
+    console.log(skill + ": " + matched.length + " related test files (TOPIC REFERENCE ONLY)");
+  }
+  process.exit(0);
+} else if (mode === "--show-upstream-skill" && args.length === 2) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  if (!inventory.upstreamCategoryCrosswalk.developer.skills.includes(args[1])) {
+    console.error("Unknown native Bedrock skill: " + args[1]);
+    process.exit(2);
+  }
+  const matched = registeredTests.filter(test =>
+    inventory.featureCatalog[test.featureId].upstream.skills.includes(args[1]));
+  if (!matched.length) console.log("No directly related M-Lazy-Developer test theme mapped.");
+  for (const test of matched) console.log(test.featureId + "  " + test.path + " [REFERENCE ONLY]");
+  process.exit(0);
+} else if (mode === "--show-upstream-module" && args.length === 2) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  if (!(args[1] in inventory.upstreamCategoryCrosswalk.developer.moduleOwners)) {
+    console.error("Unknown native Bedrock module: " + args[1]);
+    process.exit(2);
+  }
+  const matched = registeredTests.filter(test =>
+    inventory.featureCatalog[test.featureId].upstream.modules.includes(args[1]));
+  if (!matched.length) console.log("No directly related M-Lazy-Developer test theme mapped.");
+  for (const test of matched) console.log(test.featureId + "  " + test.path + " [REFERENCE ONLY]");
+  process.exit(0);
+} else if (mode === "--list-probe-examples" && args.length === 1) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const examples = inventory.upstreamCategoryCrosswalk.probe.exampleOwners;
+  for (const example of Object.keys(examples).sort()) {
+    const count = registeredTests.filter(test =>
+      inventory.featureCatalog[test.featureId].upstream.probeExamples.includes(example)).length;
+    console.log(example + ": " + count + " comparable test themes; skill=" + examples[example] + " [NOT PROBE EXECUTION]");
+  }
+  process.exit(0);
+} else if (mode === "--show-probe-example" && args.length === 2) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  if (!(args[1] in inventory.upstreamCategoryCrosswalk.probe.exampleOwners)) {
+    console.error("Unknown indexed Skills Probe example: " + args[1]);
+    process.exit(2);
+  }
+  const matched = registeredTests.filter(test =>
+    inventory.featureCatalog[test.featureId].upstream.probeExamples.includes(args[1]));
+  if (!matched.length) console.log("No directly comparable M-Lazy-Developer test theme mapped.");
+  for (const test of matched) console.log(test.featureId + "  " + test.path + " [PROBE ANALOGY ONLY]");
+  process.exit(0);
 } else if (mode === "--list-mechanics" && args.length === 1) {
   const counts = new Map();
   for (const test of registeredTests) {
@@ -514,7 +612,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --list-upstream-skills | --show-upstream-skill skill | --show-upstream-module module | --list-probe-examples | --show-probe-example example | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 

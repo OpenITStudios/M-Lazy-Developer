@@ -357,3 +357,169 @@ eksekusi yang sudah ada (`--lane`, `--focus`, `--affected`,
   Kekosongan mekanik adalah informasi, bukan otorisasi membuat microtests.
   Semua bukti runtime/user map dan Minecraft yang tidak dijalankan tetap
   **NOT EXECUTED / UNKNOWN**.
+
+## Crosswalk kategori: Developer Skills v0.30.0 + Skills Probe v0.30.0
+
+**Sumber dua ZIP yang diberikan pengguna (hanya metadata, hash dan indeks):**
+
+- Publisher `minecraft-bedrock-agent-skills` menyatakan `skills.json` v0.30.0,
+  **24 skill**, **13 modul lokal** di `modules/<name>/module.json`, dan
+  satu modul `database` dari publisher terpisah
+  `achmadawdi/minecraft-bedrock-store`. ZIP SHA-256:
+  `5e4608858cd824d9f5476a6d89242084db6b6d80ce61fa0b5e4b0c079669f0d8`.
+- Probe `skills-probe` memiliki `skills-lock.json` v0.30.0
+  (commit tercatat `a0f17e6d27c5bb3bf16ecab44a249b7e3bd192fb`),
+  `modules-lock.json` untuk 10 modul, `docs/examples/index.json`
+  dengan **14 contoh (E1–E9, G1–G5)**, target Minecraft Education 26.32.
+  ZIP SHA-256:
+  `89ec46832abb7fbb1215ec5e460275f18b4071ce5ca1d4c3cb3a7f052077f5d5`.
+- Verifikasi isi ZIP: hash folder **24/24 skill publisher** cocok dengan
+  `skills-lock.json` dan folder skill Probe terpasang. Seluruh file
+  dalam 10 modul terpasang cocok dengan hash pada `modules-lock.json`;
+  sembilan modul identik dengan file lokal publisher, sedangkan
+  `database` memang berasal dari repository eksternal dan *bukan*
+  bagian dari ZIP publisher.
+- Kedua ZIP ini **lebih baru** daripada sumber yang telah ditinjau
+  dalam `skills/bedrock/source-lock.json` (v0.27.0 dan Probe
+  installed v0.23.0). Penataan kategori ini **tidak mengubah lock
+  referensi itu** atau sumber interpretasi `experiments/developer-practice-signals.json`.
+  Crosswalk ini tidak mengaktifkan SKILL.md, menyalin skrip, menyatakan
+  perilaku Minecraft teruji, atau menetapkan hasil Probe sebagai PASS.
+
+### Prinsip pengelompokan
+
+`featureCatalog[featureId].upstream` menjadi **crosswalk satu sumber**
+di inventaris yang sama dengan 687 file test:
+
+- `TOPIC_REFERENCE_ONLY`: suatu sub-sistem M-Lazy berhubungan secara
+  topik dengan satu/lebih skill/modul publisher dan, bila ada,
+  contoh **E/G** atau kode **Pxx** pada Skills Probe. Hubungan ini
+  *bukan* equivalence test/assertion, implementasi modul upstream,
+  atau pengujian Minecraft.
+- `LAZY_INTERNAL_ONLY`: sub-sistem checker seperti pembacaan LevelDB,
+  source proof, diagnosis, report V2, atau authorized repair tidak
+  memiliki padanan langsung yang valid dalam dua upstream ZIP.
+  Ini **tidak** berarti file test tidak berguna.
+- Semua file tetap memiliki `functionalArea`, `featureId`,
+  `owner`, `lane`, review dan rekomendasi yang sudah ada.
+  **Tidak ada file yang dipindahkan atau dihapus** untuk mengejar taxonomy.
+
+Hasil: **65 dari 115 sub-sistem**
+memiliki referensi topik upstream, mewakili **369 file**;
+**50 sub-sistem** dan
+**318 file** adalah fungsi internal M-Lazy
+tanpa padanan yang diklaim. Keseluruhan **687/687**
+tetap terklasifikasi.
+
+### Matriks pengguna: kategori gameplay dan dua sumber developer
+
+| Kelompok | Fitur M-Lazy | Kaitan skill publisher | Perbedaan/batas bukti |
+| --- | --- | --- | --- |
+| World storage / native DB | `database.leveldb`, `database.world-db` | Internal only | LevelDB is NOT publisher's dynamic-property database module; no module validation inferred |
+| Player persistent state | `player.persistence-analysis`, `player.reconnect-sessions` | `bedrock-data-persistence`, `bedrock-analytics` | Publisher bedrock-data-persistence / external database; P02/P03 compare limited API/identity concerns |
+| Lobby / team selection | `world.player-interaction`, `arena.start-ownership` | `bedrock-forms`, `bedrock-game-time`, `bedrock-script-optimization` | Composed Forms + game-time + display/teleport; no dedicated lobby or team-selection end-to-end suite |
+| Player leave / reconnect | `player.join-spawn-leave`, `player.reconnect-sessions` | `bedrock-analytics`, `bedrock-game-time`, `bedrock-data-persistence` | Player/session contracts only; not live logout/rejoin after server interruption |
+| Arena lifecycle | `arena.lifecycle`, `arena.cleanup-reset` | `bedrock-data-persistence`, `bedrock-game-time`, `bedrock-entity-lifecycle`, `bedrock-script-optimization` | Game time, entity lifecycle, persistent state and optimization; E1/E2/G5 topical comparison |
+| Combat and entities | `combat.damage`, `entity.behavior` | `bedrock-content`, `bedrock-entity-creation`, `bedrock-entity-lifecycle` | Native entity creation/lifecycle/content; P07/P08/P15/P19/P21 damage/sensor probes |
+| Forms / display / HUD | `world.player-interaction`, `world.cinematic-feedback` | `bedrock-forms`, `bedrock-camera`, `bedrock-onscreen-display` | Form E5/G2 versus Display E6; not a complete lobby UI test |
+| Teleport / coordinates | `world.teleport`, `world.spatial-authority` | `bedrock-coordinates`, `bedrock-forms`, `bedrock-teleport` | Teleport G4/P61 and coordinates: analogous checks only |
+| Clock and countdown | `script.scheduler`, `arena.start-ownership` | `bedrock-game-time`, `bedrock-script-optimization` | Game time, G5/P62 persistent countdown; no arbitrary game timer PASS |
+| Game results / analytics | `economy.progression`, `report.findings` | `bedrock-analytics` | Analytics references apply to progression; Bug Report V2 is not Daigon GAME_RESULTS export |
+| Sounds / glyphs / particles | `world.cinematic-feedback`, `map.resource-pack` | `bedrock-camera`, `bedrock-onscreen-display`, `bedrock-content` | No dedicated equivalent E8/G3/P63 test proven for these upstream skills |
+
+Perhatikan khusus kategori **Map Database**: pembacaan
+`database.leveldb`/`database.world-db` adalah *world archive evidence*;
+modul `database` pada publisher menyimpan state melalui store/dynamic
+properties. Keduanya bukan implementasi yang sama. Kategori **Lobby** tetap
+memiliki nol test utama khusus; kemampuan Forms, Display, Time dan Teleport
+hanya bisa mendukung bagian alur dan tidak membuktikan Team Selection atau
+Start secara menyeluruh.
+
+### Indeks 24 skill publisher
+
+Hitungan adalah banyaknya file M-Lazy dengan *topic crosswalk*, bukan
+jumlah suite yang menguji/menjalankan skill tersebut. Satu file dapat
+terkait dengan lebih dari satu skill.
+
+| Skill asal | Test terkait |
+| --- | ---: |
+| `bedrock-agent-team` | 2 |
+| `bedrock-analytics` | 4 |
+| `bedrock-camera` | 12 |
+| `bedrock-content` | 51 |
+| `bedrock-coordinates` | 45 |
+| `bedrock-data-persistence` | 40 |
+| `bedrock-debug-logging` | 71 |
+| `bedrock-debug-profiling` | 69 |
+| `bedrock-entity-creation` | 34 |
+| `bedrock-entity-lifecycle` | 23 |
+| `bedrock-forms` | 3 |
+| `bedrock-game-results` | 0 |
+| `bedrock-game-time` | 18 |
+| `bedrock-git-workflow` | 9 |
+| `bedrock-onscreen-display` | 2 |
+| `bedrock-player-attached-particles` | 0 |
+| `bedrock-project-setup` | 5 |
+| `bedrock-release-export` | 7 |
+| `bedrock-script-optimization` | 32 |
+| `bedrock-sound` | 0 |
+| `bedrock-teleport` | 1 |
+| `bedrock-testing-policy` | 85 |
+| `bedrock-text-glyphs` | 0 |
+| `bedrock-version-targeting` | 22 |
+
+Empat skill yang belum memiliki sub-sistem M-Lazy setara langsung dalam
+crosswalk ini: `bedrock-game-results` (Daigon-specific export),
+`bedrock-player-attached-particles`, `bedrock-sound`,
+`bedrock-text-glyphs`. Tidak boleh dipaksa masuk ke Bug Report V2 atau
+test particle/glyph yang berbeda hanya untuk mengisi jumlah kategori.
+Skill tersebut tetap ada di indeks native publisher.
+
+### Indeks 14 contoh Skills Probe
+
+Kaitan contoh E/G hanya analogi masalah teknis. Status PASS/pending pada
+`docs/examples/index.json` tetap otoritas laporan Probe asal, tidak
+disalin menjadi PASS test M-Lazy.
+
+| Contoh Probe | Skill pemilik di Probe | Test M-Lazy terkait secara topik |
+| --- | --- | ---: |
+| `E1` | `bedrock-script-optimization` | 19 |
+| `E2` | `bedrock-entity-lifecycle` | 6 |
+| `E3` | `bedrock-entity-creation` | 8 |
+| `E4` | `bedrock-debug-profiling` | 69 |
+| `E5` | `bedrock-forms` | 2 |
+| `E6` | `bedrock-onscreen-display` | 2 |
+| `E7` | `bedrock-game-results` | 0 |
+| `E8` | `bedrock-text-glyphs` | 0 |
+| `E9` | `bedrock-release-export` | 3 |
+| `G1` | `bedrock-content` | 4 |
+| `G2` | `bedrock-forms` | 2 |
+| `G3` | `bedrock-sound` | 0 |
+| `G4` | `bedrock-teleport` | 1 |
+| `G5` | `bedrock-game-time` | 15 |
+
+`E7`, `E8`, dan `G3` belum memiliki padanan sub-sistem test
+langsung. Sejumlah Pxx lain tetap berperan sebagai *investigasi referensi*
+pada feature yang relevan; Pxx bukan hasil eksekusi test pada M-Lazy.
+P63 (player-attached particle lifecycle) juga tidak dipromosikan
+menjadi bukti bahwa M-Lazy memvalidasi efek particle di pemain.
+
+### Navigasi referensi dua repo (read-only)
+
+Seluruh perintah masih memakai `tooling/repository/run-tests.mjs`
+yang sudah ada; output hanya daftar file dan sub-sistem:
+
+```text
+node tooling/repository/run-tests.mjs --list-upstream-skills
+node tooling/repository/run-tests.mjs --show-upstream-skill bedrock-data-persistence
+node tooling/repository/run-tests.mjs --show-upstream-module database
+node tooling/repository/run-tests.mjs --show-upstream-skill bedrock-forms
+node tooling/repository/run-tests.mjs --list-probe-examples
+node tooling/repository/run-tests.mjs --show-probe-example G4
+node tooling/repository/run-tests.mjs --show-mechanic player.reconnect
+node tooling/repository/run-tests.mjs --show-feature database.leveldb
+```
+
+Ini **klasifikasi dan pemeriksaan source/ZIP saja**, bukan
+`npm test`, Vitest, Probe engine replay, `runSelectedMapAudit()`,
+atau gameplay Minecraft. CI tetap nonaktif sesuai aturan pengguna.
