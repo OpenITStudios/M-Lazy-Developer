@@ -198,6 +198,37 @@ insufficient, retain the case. The known lobby/team-selection and
 logout→cleanup→rejoin coverage gaps remain separate questions.
 TypeScript, Vitest, `runSelectedMapAudit()` and Minecraft were **NOT EXECUTED**.
 
+
+### Phase D — Assertion-level anti-duplication screening (source-only)
+
+Reference: pinned `Local` parent `e90ea7a52a782b6ca0677c1750dc60d773701881`, **599 source test files**.
+The 103 largest test source files were inspected for literal `it/test`
+declarations and repeated assertion call statements. This screening
+identified about **1,536 syntactic test-declaration matches** and
+**11 candidate groups of repeated assertion statements**. These are
+static search counts, not an executed Vitest test census or proof of
+semantic duplication across all 599 files.
+
+- **One redundant assertion call was removed** from
+  `engine/packages/orchestrator/test/map-audit-gameplay-acceptance.test.ts`:
+  `gameplayFlowBasis` was checked twice against the same unchanged
+  `result.mapAuditReport` field with only read-only observations in
+  between. The earlier assertion and the test case remain intact.
+- The remaining repeated statements protect **distinct transitions or
+  inputs**, including before/after knowledge-catalog changes, differing
+  source-provenance or generation states, Entity.kill vs Player.remove,
+  runtime telemetry reset vs preserved evidence, incomplete vs foreign
+  knowledge receipts, and multiple intentionally distinct negative
+  inputs in loops. Equal expected values are **not** equivalent tests.
+- No unique test case, safety gate, test owner, lane, or source-to-proof
+  binding is deleted. File inventory remains **599**. Source-only
+  verification does not prove same-head Vitest or Minecraft behavior.
+
+**Next decision:** compare exact producer, fixture, assertion and
+negative-control identity before further case deletion. Prefer removing
+a demonstrably repeated check over adding catalog metadata or forcing
+all source test cases under an arbitrary file count.
+
 ### Upstream developers / Skills Probe
 
 The prior reference crosswalk remains part of `featureCatalog`,

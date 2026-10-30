@@ -557,8 +557,6 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(interaction?.grounding).toBe("SOURCE_EVIDENCED");
       expect(result.inspection.gameplayIntent.model.unknowns.some(item =>
         item.blockedSubjectIds.includes(interaction!.id))).toBe(true);
-      expect(result.mapAuditReport.gameplayFlowBasis)
-        .toBe("AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY");
       const reconstructed = result.mapAuditReport.gameplayStructure
         ?.mechanicReconstructions.find(item =>
           item.name === "NPC interaction: Start Challenge");

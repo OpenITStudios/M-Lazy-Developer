@@ -7775,10 +7775,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b168b56f4bb313b8be292d4d216b6027684a9788"
+        "sourceBlobSha": "dd5def4a8e3d26f00b98f9e36afbc6204a5a3a9d"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source case inventory retained. One identical gameplayFlowBasis assertion removed after an earlier check of the unchanged result in the same test case; no distinct scenario or negative control was removed. All other cases remain provisional pending exact runtime verification.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [
         "gameplay.source-to-report"
