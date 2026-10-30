@@ -31,6 +31,10 @@ import type {
 import type {
   GameplayWorldModel,
 } from "./inspection/gameplay-world-model.js";
+import {
+  compareGameplayAnalysisPriority,
+  type GameplayAnalysisPriority,
+} from "./inspection/gameplay-analysis-priority.js";
 import type {
   MandatoryAuditProcedureReceipt,
   MandatoryAuditCheckpointReceipt,
@@ -1533,6 +1537,8 @@ export function deriveAuditModelTaskPackets(input: {
   readonly intent: GameplayIntentModel;
   readonly auditRevision: string;
   readonly world: GameplayWorldModel;
+  /** Current selected-artifact risk, for ordering not proof admission. */
+  readonly analysisPriorities?: readonly GameplayAnalysisPriority[];
   readonly needValidationFindings?: readonly import("./map-audit-issue-projection.js").NeedValidationAuditIssueProjection[];
   readonly auditObligations?: readonly AuditObligation[];
   readonly userIntent?: AuditUserIntentEnvelope;
@@ -1739,6 +1745,36 @@ export function deriveAuditModelTaskPackets(input: {
         };
       });
 
+  // Only exact current-artifact component IDs can rank a proof task.
+  // An unlinked task remains available after linked work; do not infer
+  // component ownership from labels, memories or user-reported symptoms.
+  const bySurface = new Map(
+    (input.analysisPriorities ?? []).map(item => [item.surfaceId, item] as const),
+  );
+  const bestPriority = (
+    componentIds: readonly string[],
+  ): GameplayAnalysisPriority | undefined => {
+    let best: GameplayAnalysisPriority | undefined;
+    for (const id of componentIds) {
+      const item = bySurface.get(id);
+      if (item !== undefined &&
+          (best === undefined || compareGameplayAnalysisPriority(item, best) < 0)) {
+        best = item;
+      }
+    }
+    return best;
+  };
+  const rankedNavigationPackets = navigationPackets.map((packet, index) => ({
+    packet, index, priority: bestPriority(packet.componentIds),
+  })).sort((a, b) => {
+    if (a.priority === undefined) {
+      return b.priority === undefined ? a.index - b.index : 1;
+    }
+    if (b.priority === undefined) return -1;
+    return compareGameplayAnalysisPriority(a.priority, b.priority) ||
+      a.index - b.index;
+  }).map(item => item.packet);
+
   const auditObligationPackets =
     obligationPackets(
       input.auditObligations ?? [],
@@ -1753,7 +1789,7 @@ export function deriveAuditModelTaskPackets(input: {
   const packets =
     stage === undefined
       ? [
-          ...navigationPackets,
+          ...rankedNavigationPackets,
           ...auditObligationPackets,
         ]
       : stage === "PROVE"
@@ -1768,7 +1804,7 @@ export function deriveAuditModelTaskPackets(input: {
             return prove.length > 0
               ? [
                   ...prove,
-                  ...navigationPackets,
+                  ...rankedNavigationPackets,
                   ...auditObligationPackets,
                 ]
               : [
@@ -1778,7 +1814,7 @@ export function deriveAuditModelTaskPackets(input: {
                     input.auditRevision,
                     input.intent,
                   ),
-                  ...navigationPackets,
+                  ...rankedNavigationPackets,
                   ...auditObligationPackets,
                 ];
           })()
@@ -1789,7 +1825,7 @@ export function deriveAuditModelTaskPackets(input: {
               input.auditRevision,
               input.intent,
             ),
-            ...navigationPackets,
+            ...rankedNavigationPackets,
             ...auditObligationPackets,
           ];
 

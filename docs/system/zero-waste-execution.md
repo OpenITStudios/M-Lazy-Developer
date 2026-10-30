@@ -89,6 +89,23 @@ multi-client execution contract
 - Full observation snapshots are targeted-first; dimension-wide entity enumeration is disabled by default.
 - Multi-client orchestration is only a proof-capable runtime path when backed by a real runtime adapter. A fake/test adapter never upgrades proof level.
 
+## Risk-first proof review (same map audit)
+
+Current selected-map `analysisPriorities` now rank critical gameplay impact
+before historical search pressure, reusing one deterministic comparator.
+Only directly matching source component IDs may reorder independent
+`PROOF_NAVIGATION` tasks within their established stage. Unmatched tasks
+remain available in stable order, and mandatory checkpoint/causal producers
+stay ahead. No checkpoint, knowledge or counterproof is treated as closed by
+ranking. The compact 12-item brief presents PROVEN findings first and
+prioritized NEED_VALIDATION tasks next; all original canonical findings and
+obligations remain in the full report and paged handoff.
+
+The change optimizes which already-supported decision appears first, not
+runtime Minecraft test speed or when the engine initially finds a defect.
+Real time-to-first-actionable-finding improvement requires a measured run on
+the exact selected source, not source assertions alone.
+
 ## STOP
 
 When the requested outcome has matching evidence, affected validation is closed, stale proof obligations are resolved, and no blocker remains, stop. Do not continue into unrelated cleanup or architecture expansion.

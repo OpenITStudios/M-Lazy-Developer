@@ -1260,6 +1260,43 @@ describe("Map Audit Output V2 projection", () => {
     expect(brief).toContain("Do not infer a form bug from an unguarded helper alone.");
     expect(brief).toContain("External probe (NOT selected map proof)");
     expect(brief).not.toContain("UPSTREAM_REPORTED_FAIL is a proven map bug");
+
+    // The compact preview cannot bury an admitted PROVEN finding after 12
+    // unproven candidates. Priority affects only what is shown first.
+    const pending = Array.from({ length: 13 }, (_, index) => ({
+      ...report.bugs[0],
+      id: "bug:pending:" + index,
+      issue: "Pending issue " + index,
+    }));
+    const priorityReport: any = {
+      ...report,
+      bugs: pending,
+      designMismatches: [{
+        ...report.bugs[0], id: "design:proven",
+        status: "PROVEN", issueType: "DESIGN_MISMATCH",
+        issue: "Proven design mismatch",
+      }],
+    };
+    const ordered = formatSelectedMapAuditBrief({
+      report: priorityReport,
+      intent: { evidence: [], nodes: [], edges: [],
+        invariants: [], unknowns: [] } as any,
+      modelTaskPackets: [{
+        kind: "PROOF_NAVIGATION", stage: "PROVE",
+        causalLinkId: "bug:pending:12",
+        decisionNeeded: "Resolve the last candidate", goal: "Trace source",
+        stopCondition: "Stop on source proof", evidenceContext: [],
+      } as any],
+    });
+    const preview = ordered.split("## Findings")[1]!
+      .split("## Next Decision")[0]!;
+    expect(preview.indexOf("Proven design mismatch"))
+      .toBeLessThan(preview.indexOf("Pending issue 12"));
+    expect(preview.indexOf("Pending issue 12"))
+      .toBeLessThan(preview.indexOf("Pending issue 0"));
+    expect(preview).toContain("Additional findings omitted: 2");
+    expect(priorityReport.bugs.map((item: any) => item.id))
+      .toEqual(pending.map(item => item.id));
   });
 
   it("exposes unnamed source effect chains to the operator without inventing a game rule", () => {

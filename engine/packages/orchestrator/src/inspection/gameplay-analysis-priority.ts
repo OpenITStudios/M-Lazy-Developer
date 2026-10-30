@@ -149,6 +149,22 @@ export interface GameplayAnalysisPriority
   readonly historyPressure: number;
 }
 
+// One source-owned ordering for navigation and directly linked proof tasks.
+// Historical examples influence search only, never gameplay defect authority.
+const IMPACT_ORDER: Readonly<Record<AuditGameplayCriticality, number>> = {
+  blocker: 3, high: 2, medium: 1, low: 0,
+};
+export function compareGameplayAnalysisPriority(
+  a: GameplayAnalysisPriority,
+  b: GameplayAnalysisPriority,
+): number {
+  return IMPACT_ORDER[b.criticality] - IMPACT_ORDER[a.criticality] ||
+    b.score - a.score ||
+    b.rigDemand - a.rigDemand ||
+    b.historyPressure - a.historyPressure ||
+    a.surfaceId.localeCompare(b.surfaceId);
+}
+
 export function deriveGameplayAnalysisPriorities(
   world: GameplayWorldModel,
   capabilities: CapabilityExposureSummary,
@@ -242,13 +258,5 @@ export function deriveGameplayAnalysisPriorities(
   return [
     ...surfacePriorities,
     ...capabilityPriorities,
-  ].sort(
-    (a, b) =>
-      b.historyPressure - a.historyPressure ||
-      b.rigDemand - a.rigDemand ||
-      b.score - a.score ||
-      a.surfaceId.localeCompare(
-        b.surfaceId,
-      ),
-  );
+  ].sort(compareGameplayAnalysisPriority);
 }

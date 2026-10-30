@@ -867,6 +867,7 @@ function assembleSelectedMapAuditRun(
     intent: inspection.gameplayIntent.model,
     auditRevision,
     world: inspection.gameplayWorld,
+    analysisPriorities: inspection.analysisPriorities,
     ...(userIntent === undefined ? {} : { userIntent }),
     needValidationFindings,
     auditObligations:

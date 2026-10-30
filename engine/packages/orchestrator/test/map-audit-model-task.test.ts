@@ -911,6 +911,64 @@ describe("PROVE model evidence handoff", () => {
 });
 
 
+describe("component-linked risk ordering within the existing proof stage", () => {
+  it("ranks linked navigation by gameplay impact but keeps earlier obligations first", () => {
+    const finding = (id: string, componentId: string) => ({
+      causalLinkId: id, scenarioId: "scenario:source",
+      componentIds: [componentId], subjectIds: [],
+      knowledgeRequirementIds: [], evidenceIds: [],
+      validationReason: "Decide selected-source proof",
+      proofNavigation: {
+        proofGoal: "Resolve the contradiction",
+        provenClaims: [], missingClaims: ["Deciding source witness"],
+        route: [], evidenceSubstitutions: [], historicalSearchHints: [],
+        historyPressure: 0, familyProofCriteria: [],
+        proofStopRule: "Stop on deciding proof",
+        runtimeRequired: false,
+      },
+    });
+    const input = {
+      admission: { firstBlockingStage: undefined },
+      procedure: {},
+      graph: { causalLinks: [], knowledgeRequirements: [] },
+      defectResolution: {}, world: {}, auditRevision: "revision:priority",
+      intent: { schemaVersion: 1, id: "intent:priority",
+        evidence: [], nodes: [], edges: [], invariants: [], unknowns: [] },
+      needValidationFindings: [
+        finding("link:medium", "runtime:structures"),
+        finding("link:high", "runtime:arena"),
+        finding("link:unlinked", "component:unknown"),
+      ],
+      analysisPriorities: [
+        { surfaceId: "runtime:structures", criticality: "medium", score: 4,
+          historyPressure: 20, rigDemand: 0 },
+        { surfaceId: "runtime:arena", criticality: "high", score: 6,
+          historyPressure: 0, rigDemand: 0 },
+      ],
+    } as any;
+    expect(deriveAuditModelTaskPackets(input).map(task => task.causalLinkId))
+      .toEqual(["link:high", "link:medium", "link:unlinked"]);
+    expect(deriveAuditModelTaskPackets({
+      ...input, analysisPriorities: [],
+    }).map(task => task.causalLinkId))
+      .toEqual(["link:medium", "link:high", "link:unlinked"]);
+    const withEarlier = deriveAuditModelTaskPackets({
+      ...input,
+      auditObligations: [{
+        id: "obligation:intent", stage: "UNDERSTAND",
+        title: "Resolve source intent", reason: "Intent incomplete",
+        missingProof: "Authored flow", validationTest: "Trace source",
+        subjectIds: [], componentIds: [], evidenceIds: [],
+      }],
+    });
+    expect(withEarlier[0]?.stage).toBe("UNDERSTAND");
+    expect(withEarlier[0]?.kind).toBe("AUDIT_OBLIGATION");
+    expect(withEarlier.filter(task => task.kind === "PROOF_NAVIGATION")
+      .map(task => task.causalLinkId))
+      .toEqual(["link:high", "link:medium", "link:unlinked"]);
+  });
+});
+
 describe("obligation packet memory ownership", () => {
   it("reuses only immutable empties and proof policy, without merging task identities or evidence", () => {
     const evidence = {

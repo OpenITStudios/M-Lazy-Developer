@@ -4,6 +4,24 @@ import {
 } from "../../src/inspection/gameplay-analysis-priority.js";
 
 describe("gameplay analysis priority", () => {
+  it("prioritizes high-criticality gameplay over a historical lower-impact lead", () => {
+    const priorities = deriveGameplayAnalysisPriorities({
+      gameplayClosure: { surfaces: [
+        { id: "runtime:structures", status: "unknown" },
+      ] },
+      surfaceDiscovery: { surfaceIds: [
+        "runtime:structures", "runtime:arena",
+      ] },
+      arenas: { detected: false },
+      structures: { transitionResidueRisks: 1, transitionResidueUnresolved: 0 },
+    } as any, { exposures: [], releaseBlocking: 0 } as any);
+    expect(priorities.map(item => item.surfaceId)).toEqual([
+      "runtime:arena", "runtime:structures",
+    ]);
+    expect(priorities[1]?.historyPressure).toBeGreaterThan(0);
+  });
+
+
   it("promotes unguarded high-impact developer capability to its own deep priority", () => {
     const priorities = deriveGameplayAnalysisPriorities(
       {

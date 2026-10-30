@@ -593,7 +593,29 @@ export function formatSelectedMapAuditBrief(input: {
   const returnPolicyUnknowns = intent.unknowns
     .filter(item => item.id.startsWith("unknown:outcome-policy-coverage:"))
     .sort((a, b) => a.id.localeCompare(b.id));
-  const findings = [...report.bugs, ...report.designMismatches];
+  // A twelve-item preview should show evidence-complete findings first.
+  // For unresolved findings, use the existing proof-navigation task order.
+  // Canonical issue lanes, proof state and next mandatory stage are unchanged.
+  const proofOrder = new Map(modelTaskPackets.flatMap((task, index) =>
+    task.kind === "PROOF_NAVIGATION" && task.causalLinkId !== undefined
+      ? [[task.causalLinkId, index] as const] : []));
+  const findings = [...report.bugs, ...report.designMismatches]
+    .map((finding, index) => ({ finding, index }))
+    .sort((a, b) => {
+      if (a.finding.status !== b.finding.status) {
+        return a.finding.status === "PROVEN" ? -1 : 1;
+      }
+      if (a.finding.status === "NEED_VALIDATION") {
+        const left = proofOrder.get(a.finding.id);
+        const right = proofOrder.get(b.finding.id);
+        if (left !== undefined || right !== undefined) {
+          if (left === undefined) return 1;
+          if (right === undefined) return -1;
+          if (left !== right) return left - right;
+        }
+      }
+      return a.index - b.index;
+    }).map(item => item.finding);
   const sourceIsolationRules = report.multiArena.isolationRules;
   const unresolvedSourceIsolation = sourceIsolationRules.filter(rule =>
     rule.includes("=partition-proof-required") ||
@@ -956,7 +978,8 @@ export function formatSelectedMapAuditBrief(input: {
     );
   }
   // Actionable gameplay findings and deciding proof precede technical source navigation.
-  out.push("", "## Findings");
+  out.push("", "## Findings",
+    "Preview: PROVEN first; pending findings use source-linked proof-navigation order when available. No new severity or gameplay proof is inferred.");
   if (findings.length === 0) {
     out.push("No published finding; **this does not mean the map is free of bugs**.");
   }
