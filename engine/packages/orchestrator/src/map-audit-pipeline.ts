@@ -940,11 +940,25 @@ function assembleSelectedMapAuditRun(
     ...control.issueLanes.BUG,
     ...control.issueLanes.DESIGN_MISMATCH,
   ];
+  // Build the read-only first-owner lookup once for the current projection.
+  // .find() previously rescanned every resolution per finding. Preserve the
+  // first-match identity (including duplicate IDs) rather than Map's default
+  // last-writer-wins behavior; canonical causal/proof gates still decide
+  // whether the linked resolution is admissible.
+  const firstResolutionByLink = new Map<
+    string,
+    (typeof scenario.defectResolution.resolutions)[number]
+  >();
+  if (allFindings.length > 0) {
+    for (const resolution of scenario.defectResolution.resolutions) {
+      if (!firstResolutionByLink.has(resolution.causalLinkId)) {
+        firstResolutionByLink.set(resolution.causalLinkId, resolution);
+      }
+    }
+  }
   const reasoningByCausalLinkId = Object.fromEntries(
     allFindings.flatMap((finding) => {
-      const resolution = scenario.defectResolution.resolutions.find(
-        (item) => item.causalLinkId === finding.causalLinkId,
-      );
+      const resolution = firstResolutionByLink.get(finding.causalLinkId);
       if (!resolution) return [];
       const receipt = reasonAboutCausalLinkFinding({
         graph: scenario.graph,

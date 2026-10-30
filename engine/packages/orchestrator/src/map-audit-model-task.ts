@@ -1435,19 +1435,19 @@ function provePackets(
   intent: GameplayIntentModel,
   world: GameplayWorldModel,
 ): readonly AuditModelTaskPacket[] {
+  // The causal link already carries its scenario identity. Do not scan the
+  // full scenario list for an unused value on every selected link, and do
+  // not rescan translation IDs to classify every task.
+  const translationIds = new Set(gate.gameplayTranslationRequiredIds);
   const ids = new Set([
-    ...gate.gameplayTranslationRequiredIds,
+    ...translationIds,
     ...gate.counterProofSearchRequiredIds,
   ]);
 
   return graph.causalLinks
     .filter((link) => ids.has(link.id))
     .map((link) => {
-      const scenario = graph.scenarios.find(
-        (item) => item.id === link.scenarioId,
-      );
-      const needsTranslation =
-        gate.gameplayTranslationRequiredIds.includes(link.id);
+      const needsTranslation = translationIds.has(link.id);
       const requirementIds = unique(link.knowledgeRequirementIds);
       // Handoff and proof admission must consume one authoritative evidence
       // boundary. A task cannot lose already sourced dimension witnesses or
