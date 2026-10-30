@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-  "classification": "630 physical source test files; 22 bounded family consolidations from 687 original files across two batches. Original source cases and assertion expressions preserved statically; NOT EXECUTED.",
+  "sourceCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
+  "classification": "623 physical source test files; 27 source-preserving family consolidations from 687 original files across three bounded batches. Original test cases and assertion call sites retained statically; no runtime equivalence or case deletion claimed.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -814,39 +814,35 @@
         "owner": "engine/analyzers/entities",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "5d2ea0932d53cf17a26774e2b6822c3b0934f26d"
+        "sourceBlobSha": "b76e5bedc12e502dbef92e4639ca0403ce7866e8"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source-preserving 2-file family: 2 distinct it/test sites and 4 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "combat-entities",
       "mechanicTags": [
         "entity.loot"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "entity.loot",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/analyzers/entities/test/loot.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/entities",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/analyzers/entities",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "ac25595e90e2caead4f3ca2642fe437ef156855e"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "combat-entities",
-      "mechanicTags": [
-        "entity.loot"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "entity.loot",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
+        "method": "same-owner-same-lane-same-feature-source-preserving-lexical-scope",
+        "sourceFiles": [
+          {
+            "path": "engine/analyzers/entities/test/loot-table.test.ts",
+            "blobSha": "5d2ea0932d53cf17a26774e2b6822c3b0934f26d"
+          },
+          {
+            "path": "engine/analyzers/entities/test/loot.test.ts",
+            "blobSha": "ac25595e90e2caead4f3ca2642fe437ef156855e"
+          }
+        ],
+        "originalTestCallSites": 2,
+        "originalExpectCallSites": 4,
+        "mergedSourceBlobSha": "b76e5bedc12e502dbef92e4639ca0403ce7866e8",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/analyzers/entities/test/mounts.test.ts",
@@ -3240,10 +3236,10 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-for-targeted-validation"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Presentation, golden or projection cases; candidate grouping by one canonical report consumer, preserving exact assertions before any merge.",
+      "recommendation": "defer",
+      "rationale": "Distinct integrated root-cause, constraint, evidence convergence and rendering case; presentation-specific proof is retained for related changes, not merged with finding disposition.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -3259,10 +3255,10 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "low",
-        "action": "read-assertions-before-decision"
+        "action": "revisit-on-relevant-source-change"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Presentation, golden or projection cases; candidate grouping by one canonical report consumer, preserving exact assertions before any merge.",
+      "recommendation": "keep",
+      "rationale": "Three independent classification proof boundaries: proven-confidence threshold, designed/expected distinction, and runtime-proof-required UNKNOWN. No equivalent assertion found in engineering renderer.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -5187,54 +5183,37 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "2bc5d1b9c8699d9f320bf5e723505bfc90f10152"
+        "sourceBlobSha": "8b52181a7f3cc550a916500b34c4b00eb26be942"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source-preserving 3-file family: 11 distinct it/test sites and 24 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-derivation.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Read-only probes must stay incident-scoped and not manufacture bugs.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-planning.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "26ae5dc806d1d6afff62d24734164261ec29ac6a"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
+        "method": "same-owner-same-lane-same-feature-source-preserving-lexical-scope",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-derivation.test.ts",
+            "blobSha": "218765cb7be798e61a3bd802c5a79a20e62bba82"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-planning.test.ts",
+            "blobSha": "26ae5dc806d1d6afff62d24734164261ec29ac6a"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-analysis.test.ts",
+            "blobSha": "2bc5d1b9c8699d9f320bf5e723505bfc90f10152"
+          }
+        ],
+        "originalTestCallSites": 11,
+        "originalExpectCallSites": 24,
+        "mergedSourceBlobSha": "8b52181a7f3cc550a916500b34c4b00eb26be942",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-repair-gate.test.ts",
@@ -6479,10 +6458,10 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "revisit-on-relevant-source-change"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation.",
+      "recommendation": "keep",
+      "rationale": "Targeted movement/navigation/goal stack, duplicate priorities and missing navigation have distinct source conditions; upstream analyzer tests alone do not prove orchestrator classification.",
       "functionalArea": "combat-entities",
       "mechanicTags": [
         "entity.ai-navigation"
@@ -6500,10 +6479,10 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "revisit-on-relevant-source-change"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation.",
+      "recommendation": "keep-provisional",
+      "rationale": "Cross-source event provenance from mcfunction/script/command and literal triggerEvent remains a distinct orchestrator input contract, not equivalent to knowledge prerequisite analysis.",
       "functionalArea": "combat-entities",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -6629,12 +6608,12 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Two boundary extraction/projection cases; compare with integrated gameplay scenarios before consolidation.",
+      "recommendation": "keep",
+      "rationale": "Boundary extraction from resolved configuration and explicit failed/unresolved boundaries are unique to this owner, not duplicated by gameplay discovery/closure.",
       "triage": {
         "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "compare-assertions-before-consolidation"
+        "action": "revisit-on-relevant-source-change"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
@@ -6902,12 +6881,12 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "One broad surface inventory assertion; examine overlap with gameplay discovery closure and integrated inspection before consolidating.",
+      "recommendation": "keep-provisional",
+      "rationale": "Independent runtime-surface inventory is a separate source contract from gameplay discovery completeness and scenario closure; preserve narrow assertion.",
       "triage": {
         "basis": "inherited-review-record",
         "owner": "engine/packages/orchestrator",
-        "action": "compare-assertions-before-consolidation"
+        "action": "revisit-on-relevant-source-change"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
@@ -7604,10 +7583,10 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "revisit-on-relevant-source-change"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Potential overlap with source analyzer or canonical structural evidence tests; requires assertion and consumer-level equivalence before consolidation.",
+      "recommendation": "keep",
+      "rationale": "Exact API symbol match versus module-only overlap and alias handling are distinct compatibility negative controls, not duplicated by broad script usage inventory.",
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -7802,41 +7781,39 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "f7ffa81fe9a811274c48489110e25580de43e080"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Source-preserving 2-file family: 3 distinct it/test sites and 7 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "map-database",
       "mechanicTags": [
         "map.database"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "database.world-db",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/world-db-runtime-evidence.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Disk chunk observations must not become loaded-chunk runtime proof.",
-      "functionalArea": "map-database",
-      "mechanicTags": [
-        "map.database"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "database.world-db",
-      "featureMappingBasis": "source-case-inspected"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
+        "method": "same-owner-same-lane-same-feature-source-preserving-lexical-scope",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/world-db-diff.test.ts",
+            "blobSha": "ab35fff102a9c2898a5a96807bbf64ecebf003a5"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/world-db-runtime-evidence.test.ts",
+            "blobSha": "894bbb4cb967167185bcb1323c872bd65a03b72b"
+          }
+        ],
+        "originalTestCallSites": 3,
+        "originalExpectCallSites": 7,
+        "mergedSourceBlobSha": "f7ffa81fe9a811274c48489110e25580de43e080",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/world-rule-authority-analysis.test.ts",
@@ -9470,19 +9447,43 @@
       "path": "engine/packages/orchestrator/test/reporting/report-confirmation-adapter.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Only selected-artifact intent may confirm runtime contradictions; reference intent is rejected.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Source-preserving 3-file family: 11 distinct it/test sites and 12 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "riskHint": "low",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "d01b3ff15895820abd15bfce8f971e8f1b932d51"
       },
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.confirmation",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
+        "method": "same-owner-same-lane-same-feature-source-preserving-lexical-scope",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/reporting/static-report-confirmation-adapter.test.ts",
+            "blobSha": "a7c3d0181791b01ae0aab242b013c31e106ff918"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/reporting/tester-report-confirmation-adapter.test.ts",
+            "blobSha": "84aa12dc16532dbadc0bd43708a61e3e481090bb"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/reporting/report-confirmation-adapter.test.ts",
+            "blobSha": "b54e946480c39d63da374fe896a77bc66e343fa4"
+          }
+        ],
+        "originalTestCallSites": 11,
+        "originalExpectCallSites": 12,
+        "mergedSourceBlobSha": "d01b3ff15895820abd15bfce8f971e8f1b932d51",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-defect-classification.test.ts",
@@ -9596,44 +9597,6 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reporting/static-report-confirmation-adapter.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reporting/tester-report-confirmation-adapter.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.confirmation",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -9949,10 +9912,10 @@
         "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-for-targeted-validation"
       },
-      "recommendation": "merge-candidate",
-      "rationale": "Potential assertion overlap with adjacent canonical reporting/decision producer; consumer-level equivalence required before consolidation.",
+      "recommendation": "defer",
+      "rationale": "Basis drift, superseded decisions and stale validation reasons are narrower than priority/projection tests; keep separate for change-targeted execution rather than broaden selection.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -12132,37 +12095,39 @@
       "path": "engine/packages/runtime-lab/test/scenario/scenario-execution-gate.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Blocks executor calls unless capability, observation and runtime profile preflight succeed.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Source-preserving 2-file family: 11 distinct it/test sites and 26 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "riskHint": "low",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "896d2d6ee7f3c7ee056487514a0ca07a4d9e115c"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.experiments",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/scenario/scenario-requirements.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Requirements feed execution-gate preflight; candidate integrated scenario preserving missing capabilities, manual QA and parameter mismatch.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "compare-assertions-before-consolidation"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.experiments",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
+        "method": "same-owner-same-lane-same-feature-source-preserving-lexical-scope",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/runtime-lab/test/scenario/scenario-requirements.test.ts",
+            "blobSha": "cbe7d289353558e85a60d21abc26f964e3cfd219"
+          },
+          {
+            "path": "engine/packages/runtime-lab/test/scenario/scenario-execution-gate.test.ts",
+            "blobSha": "4051f137e672831dbacd969ce0340639ac93a4bc"
+          }
+        ],
+        "originalTestCallSites": 11,
+        "originalExpectCallSites": 26,
+        "mergedSourceBlobSha": "896d2d6ee7f3c7ee056487514a0ca07a4d9e115c",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/runtime-profile/test/runtime-profile.test.ts",
@@ -14771,14 +14736,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
+    "parentCommit": "a2da18e707febc89e67ddd2d54fd2cdf3f27261a",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 630,
-    "groups": 22,
-    "removedPaths": 59,
+    "sourceFilesAfter": 623,
+    "groups": 27,
+    "removedPaths": 66,
     "addedPaths": 2,
     "deletedAssertionsProven": 0,
     "proof": "source-text-case-and-expect-count-only_NOT_VITEST",
-    "open": "TypeScript/Vitest, file isolation, runSelectedMapAudit, and Minecraft NOT EXECUTED"
+    "open": "TypeScript/Vitest, merged test-file isolation, runSelectedMapAudit, and Minecraft NOT EXECUTED"
   }
 }
