@@ -1135,7 +1135,7 @@ describe("unclassified source-effect relationship reuse", () => {
         candidateFeatureContextIds: [],
       }],
     }] as any;
-    const tasks = deriveAuditModelTaskPackets({
+    const auditInput: Parameters<typeof deriveAuditModelTaskPackets>[0] = {
       admission: { policy: "selected-map-audit-ordered-admission",
         status: "BLOCKED", firstBlockingStage: "UNDERSTAND", issues: [] },
       procedure: { checkpoints: [] } as any,
@@ -1177,7 +1177,8 @@ describe("unclassified source-effect relationship reuse", () => {
         subjectIds: ["unknown:entry", "unknown:other"],
         componentIds: [], evidenceIds: [],
       }],
-    });
+    };
+    const tasks = deriveAuditModelTaskPackets(auditInput);
     const task = tasks.find(item => item.kind === "AUDIT_OBLIGATION")!;
     const effect = task.sourceInvestigation?.entries[0]?.effectPaths?.[0];
     expect(task.sourceInvestigation?.entries[0]?.effectPaths).toHaveLength(1);
@@ -1216,6 +1217,31 @@ describe("unclassified source-effect relationship reuse", () => {
       },
     }]);
     expect(task.evidenceIds).not.toContain("design:open");
+
+    // Preserve EVERY independently named obligation, but never rescan all
+    // unknowns and source-flow candidates for unrelated operation IDs.
+    const otherObligations = Array.from({ length: 256 }, (_, index) => ({
+      ...auditInput.auditObligations![0]!,
+      id: "discovery-challenge:operation:" + index,
+      source: "discovery-challenge" as const,
+      subjectIds: ["source-operation:" + index],
+      evidenceIds: [],
+    }));
+    const expanded = deriveAuditModelTaskPackets({
+      ...auditInput,
+      auditObligations: [...otherObligations,
+        ...(auditInput.auditObligations ?? [])],
+    });
+    expect(expanded).toHaveLength(otherObligations.length + tasks.length);
+    expect(expanded.slice(0, otherObligations.length).every(item =>
+      item.kind === "AUDIT_OBLIGATION" &&
+      item.sourceInvestigation === undefined)).toBe(true);
+    expect(expanded.at(-1)?.sourceInvestigation)
+      .toEqual(task.sourceInvestigation);
+    expect(expanded.at(-1)?.evidenceIds).toEqual(task.evidenceIds);
+    expect(expanded.at(-1)?.unresolvedObligationIds)
+      .toEqual(task.unresolvedObligationIds);
+
     const propose = (kind: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" |
       "SOURCE_EFFECT_RETURN_CANDIDATE", fromStepId: string, toStepId: string) =>
       reviewAuditModelSourceInterpretation(task, {

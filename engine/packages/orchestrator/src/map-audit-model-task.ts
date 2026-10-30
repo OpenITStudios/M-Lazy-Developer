@@ -930,6 +930,21 @@ function checkpointPackets(
 }
 
 
+/** An ephemeral index for ONE model-task batch; no gameplay/proof authority.
+ * Last writer of duplicate unknown/effect IDs and source-flow ordering are
+ * exactly those of the original per-obligation Map construction.
+ */
+interface SourceInvestigationLookup {
+  readonly unknownById: ReadonlyMap<
+    string, GameplayIntentModel["unknowns"][number]>;
+  readonly effectByUnknown: ReadonlyMap<
+    string,
+    GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"][number]
+  >;
+  readonly flowsByEntry: ReadonlyMap<
+    string, readonly GameplaySourceFlowCandidate[]>;
+}
+
 /** Bind an existing UNDERSTAND obligation to its exact selected-source IR
  * neighborhood. Do not classify methods or infer gameplay from symbols;
  * unmatched paths and omitted sites remain visible, not silently absent.
@@ -939,21 +954,12 @@ function deriveSourceInvestigation(
   intent: GameplayIntentModel,
   graph: GameplayScenarioGraph,
   evidenceById: AuditModelIntentLookup["evidenceById"],
+  lookup: SourceInvestigationLookup,
   sourceEffects?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"],
 ): AuditModelSourceInvestigation | undefined {
   if (obligation.stage !== "UNDERSTAND" ||
       intent.artifactId === undefined) return undefined;
-  const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
-  const effectByUnknown = new Map(
-    (sourceEffects ?? []).map(item => [item.unknownId, item] as const));
-  // Resolve candidate flows by entry once, rather than scanning the entire
-  // scenario graph again for every unknown in a large map.
-  const flowsByEntry = new Map<string, GameplaySourceFlowCandidate[]>();
-  for (const flow of graph.sourceFlowCandidates ?? []) {
-    const flows = flowsByEntry.get(flow.entryRegionId) ?? [];
-    flows.push(flow);
-    flowsByEntry.set(flow.entryRegionId, flows);
-  }
+  const { unknownById, effectByUnknown, flowsByEntry } = lookup;
   const candidates = obligation.subjectIds.flatMap(unknownId => {
     const unknown = unknownById.get(unknownId);
     if (!unknown?.sourceEntryRegionId) return [];
@@ -1291,6 +1297,27 @@ function obligationPackets(
 ): readonly AuditModelTaskPacket[] {
   const unknownById = new Map(intent.unknowns.map(item => [item.id, item]));
   const evidenceById = lookupIndex.evidenceById;
+  // Thousands of Discovery obligations have operation/source IDs, not
+  // Gameplay Intent unknown IDs. Do not repeatedly index the same graph for
+  // those unrelated tasks. Build one immutable source lookup only if a task
+  // has an exact selected-artifact unknown eligible for source investigation.
+  let sourceLookup: SourceInvestigationLookup | undefined;
+  const sourceLookupForBatch = (): SourceInvestigationLookup => {
+    if (sourceLookup !== undefined) return sourceLookup;
+    const flowsByEntry = new Map<string, GameplaySourceFlowCandidate[]>();
+    for (const flow of graph.sourceFlowCandidates ?? []) {
+      const group = flowsByEntry.get(flow.entryRegionId);
+      if (group !== undefined) group.push(flow);
+      else flowsByEntry.set(flow.entryRegionId, [flow]);
+    }
+    sourceLookup = {
+      unknownById,
+      effectByUnknown: new Map(
+        (sourceEffects ?? []).map(item => [item.unknownId, item] as const)),
+      flowsByEntry,
+    };
+    return sourceLookup;
+  };
   return obligations.map((obligation) => {
     // UNDERSTAND obligations may reference exact unknown IDs rather than
     // ordinary model nodes. Preserve those identities while supplying their
@@ -1302,8 +1329,19 @@ function obligationPackets(
           unknownById.get(id)?.evidenceIds ?? []))
         .filter(id => isCurrentArtifactSourceEvidence(evidenceById.get(id)))
       : EMPTY_TASK_IDS;
-    const sourceInvestigation = deriveSourceInvestigation(
-      obligation, intent, graph, evidenceById, sourceEffects);
+    const hasSourceUnknown = obligation.stage === "UNDERSTAND" &&
+      intent.artifactId !== undefined &&
+      obligation.subjectIds.some(id => {
+        const unknown = unknownById.get(id);
+        return Boolean(unknown?.sourceEntryRegionId) &&
+          (unknown?.evidenceIds ?? []).some(evidenceId =>
+            isCurrentArtifactSourceEvidence(evidenceById.get(evidenceId)));
+      });
+    const sourceInvestigation = hasSourceUnknown
+      ? deriveSourceInvestigation(
+          obligation, intent, graph, evidenceById,
+          sourceLookupForBatch(), sourceEffects)
+      : undefined;
     // Prioritize exact material source operations over unrelated unknown IDs.
     // This preserves the one-packet budget and never changes proof admission.
     const prioritizedIds = sourceInvestigation?.entries.flatMap(entry =>
