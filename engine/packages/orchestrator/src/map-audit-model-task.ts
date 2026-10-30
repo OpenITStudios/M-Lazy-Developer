@@ -525,12 +525,28 @@ function prepareAuditTaskKnowledgeIndex(
       else entriesByTerm.set(term, [index]);
     }
   }
+  const bm25 = prepareTextDocumentScorer(documents);
+  // Only exact repeated queries from THIS immutable catalog+edition batch
+  // may reuse numerical BM25 scores. This is never a cross-map proof cache.
+  const scoresByQuery = new Map<string, Readonly<Record<string, number>>>();
+  const score = (query: string): Readonly<Record<string, number>> => {
+    const cached = scoresByQuery.get(query);
+    if (cached !== undefined) return cached;
+    const value = bm25(query);
+    // Prevent per-map memory growth when almost every question is unique.
+    // Eviction affects computation cost only, not the selected evidence.
+    if (scoresByQuery.size >= 512) {
+      scoresByQuery.delete(scoresByQuery.keys().next().value!);
+    }
+    scoresByQuery.set(query, value);
+    return value;
+  };
   return {
     catalog,
     edition,
     sourcesById,
     entries,
-    score: prepareTextDocumentScorer(documents),
+    score,
     bodyTerms,
     entriesByTerm,
   };

@@ -967,6 +967,67 @@ describe("obligation packet memory ownership", () => {
 });
 
 
+describe("one-batch Knowledge query reuse", () => {
+  it("keeps duplicate task queries equivalent and does not reuse results across catalogs", () => {
+    const catalog = {
+      schemaVersion: 1,
+      sources: [{ id: "source:official", title: "Documented inventory behavior",
+        url: "https://learn.microsoft.com/minecraft/creator/",
+        authority: "official", confidence: "documented", retrievedDate: "2026-10-30" }],
+      facts: [{ id: "knowledge:arena-inventory", domain: "inventory",
+        subject: "Arena inventory", statement: "Arena inventory state management",
+        classification: "engine-fact", applicability: { editions: ["bedrock"] },
+        sourceIds: ["source:official"], capabilityTags: ["arena"],
+        riskSurfaces: ["inventory"] }],
+      relations: [],
+    };
+    const obligation = (id: string) => ({
+      id, source: "gameplay-closure", stage: "UNDERSTAND",
+      title: "Resolve inventory source", reason: "Trace arena inventory state",
+      missingProof: "Selected-source inventory state transition",
+      validationTest: "Review exact guard and effect",
+      validationGroupKey: "inventory:state",
+      subjectIds: ["state:inventory"], componentIds: [],
+      evidenceIds: ["ev:inventory"],
+    });
+    const input = {
+      admission: { firstBlockingStage: undefined },
+      procedure: {}, graph: {}, defectResolution: {}, world: {},
+      auditRevision: "revision:knowledge-batch",
+      intent: { schemaVersion: 1, id: "intent:selected", artifactId: "selected",
+        evidence: [{ id: "ev:inventory", origin: "source-code",
+          scope: "selected-artifact",
+          locator: "behavior_packs/BP/scripts/inventory.js:14:4",
+          summary: "Authored inventory state" }],
+        nodes: [{ id: "state:inventory", kind: "state",
+          label: "Arena inventory", status: "authored",
+          evidenceIds: ["ev:inventory"] }],
+        edges: [], invariants: [], unknowns: [] },
+      auditObligations: [obligation("obligation:a"), obligation("obligation:b")],
+      knowledgeCatalog: catalog, knowledgeEdition: "bedrock",
+    } as any;
+    const [first, second] = deriveAuditModelTaskPackets(input);
+    expect(first?.id).not.toBe(second?.id);
+    expect(first?.knowledgeLookup?.query).toBe(second?.knowledgeLookup?.query);
+    expect(first?.retrievedKnowledge?.status).toBe("MATCHED");
+    expect(second?.retrievedKnowledge).toEqual(first?.retrievedKnowledge);
+    expect(first?.retrievedKnowledge?.references.map(item => item.knowledgeId))
+      .toEqual(["knowledge:arena-inventory"]);
+    expect(first?.retrievedKnowledge?.references[0]?.authority)
+      .toBe("RETRIEVED_REFERENCE_NOT_BUG_PROOF");
+
+    const next = deriveAuditModelTaskPackets({ ...input,
+      knowledgeCatalog: { ...catalog, facts: [
+        { ...catalog.facts[0]!, id: "knowledge:replacement" },
+      ] },
+    });
+    expect(next[0]?.retrievedKnowledge?.references.map(item => item.knowledgeId))
+      .toEqual(["knowledge:replacement"]);
+    expect(first?.retrievedKnowledge?.references.map(item => item.knowledgeId))
+      .toEqual(["knowledge:arena-inventory"]);
+  });
+});
+
 describe("unclassified source-effect relationship reuse", () => {
   it("retains exact value guard and source return candidates without inventing gameplay", () => {
     const selected = { artifactId: "selected", relativePath: "scripts/novel.js" };
