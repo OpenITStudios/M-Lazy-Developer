@@ -313,7 +313,7 @@
       "capabilityId": "runtime.record-replay-contract",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/reliability/test/runtime/runtime-session-replay.test.ts"
+        "engine/packages/reliability/test/runtime/runtime-observation.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -385,7 +385,7 @@
       "capabilityId": "source.scripts.dataflow",
       "kind": "unit-contract",
       "paths": [
-        "engine/analyzers/scripts/test/flow/dataflow-capability.test.ts"
+        "engine/analyzers/scripts/test/flow/semantic-flow-witness.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -425,7 +425,7 @@
       "capabilityId": "source.scripts.semantic-flow",
       "kind": "unit-contract",
       "paths": [
-        "engine/analyzers/scripts/test/flow/semantic-flow-bindings.test.ts"
+        "engine/analyzers/scripts/test/flow/semantic-flow-witness.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },

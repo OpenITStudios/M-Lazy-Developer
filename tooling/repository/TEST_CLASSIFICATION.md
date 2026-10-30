@@ -2,25 +2,26 @@
 
 ## Current snapshot (source review only)
 
-Branch `Local`, based on immutable previous HEAD
-`a2da18e707febc89e67ddd2d54fd2cdf3f27261a`.
-The current consolidated inventory is **623 test files**,
-down from **687**. There are
-**27 source-preserving family consolidations**,
-66 original paths removed cumulatively, and
-2 family test files introduced in the earlier batch (none in the latest).
+Branch `Local`, consolidated from pinned source parent
+`e8f4c5ad0451a1b847dd201baf55b7a6b1e335ac`.
+The source inventory is **599 test files**, down from **687**.
+Across four bounded batches, **38 owner-local family consolidations**
+retired 90 obsolete paths and introduced 2 family files (net **88 fewer**).
 
-The cumulative reduction of 64 physical files **does not represent deletion of test cases**.
-The merged sources preserve the original `describe/it` bodies, with
-**244 it()/test() call sites** and **458 expect() call sites**
-across the 91 source files represented by the 27
-merged suites. Those are *static source counts*, not a Vitest PASS.
-Before executing the exact merged code, changes in test-file isolation,
-shared module initialization, or runner scheduling remain **NOT VERIFIED**.
+**This is source-file consolidation, not 88 deleted tests or fewer runtime
+checks.** The latest batch combines **35 original files into 11 retained
+suites** (24 paths retired). It preserves **86 it()/test()** and
+**156 expect()** source call sites across those original files.
+Cumulatively, the 38 retained suites represent 126 source-file inputs,
+with **330 it()/test()** and **614 expect()**
+static call sites preserved. No original case or assertion was approved
+for semantic deletion in this batch.
 
-Each merged inventory row has a `consolidation` source lineage
-with prior path/blob SHA, the preserved call-site counts and the
-new Git blob SHA. Git history retains the original paths and sources.
+Every retained suite records original paths/blobs, merged blob, and exact
+case/assertion counts in `test-inventory.json`. Merging files can alter
+test-file isolation, import initialization and scheduling; **TypeScript,
+Vitest, map audit and Minecraft execution remain NOT EXECUTED**. No
+release-readiness or performance gain is asserted.
 
 ### Current classification
 
@@ -28,23 +29,23 @@ new Git blob SHA. Git history retains the original paths and sources.
 | --- | ---: | --- |
 | `safety` | 48 | Trust boundaries, authorization and preservation |
 | `acceptance` | 26 | Cross-component user-facing behavior |
-| `runtime` | 77 | Harness, telemetry and environment-dependent contracts |
-| `regression` | 60 | Historical, golden and failure-family checks |
-| `development` | 412 | Component-level and evolving behavior checks |
+| `runtime` | 74 | Harness, telemetry and environment-dependent contracts |
+| `regression` | 54 | Historical, golden and failure-family checks |
+| `development` | 397 | Component-level and evolving behavior checks |
 
 | Review status | Files |
 | --- | ---: |
-| `case-inventory-reviewed` | 432 |
-| `source-reviewed` | 191 |
+| `case-inventory-reviewed` | 419 |
+| `source-reviewed` | 180 |
 
 | Retention recommendation | Files |
 | --- | ---: |
-| `keep-provisional` | 415 |
-| `keep` | 174 |
+| `keep-provisional` | 402 |
+| `keep` | 163 |
 | `defer` | 34 |
 | `merge-candidate` | 0 |
 
-All 623 registered paths have one owner, execution lane,
+All 599 registered paths have one owner, execution lane,
 primary `functionalArea`, and one `featureId`. The canonical registry
 remains `tooling/repository/test-inventory.json`. The area/feature
 metadata is navigation only, not proof of gameplay or test uniqueness.
@@ -57,20 +58,20 @@ metadata is navigation only, not proof of gameplay or test uniqueness.
 | `map-content` | 25 | World files, structure, topology and packs |
 | `lobby-pre-match` | 0 | Lobby, team-selection and ready (no dedicated suite) |
 | `player-session` | 6 | Join/leave/reconnect lifecycle |
-| `arena-match` | 53 | Arena lifecycle, capacity and isolation |
+| `arena-match` | 47 | Arena lifecycle, capacity and isolation |
 | `player-state-persistence` | 9 | Player-state storage and recovery |
-| `combat-entities` | 30 | Entity lifecycle, combat and AI/navigation |
+| `combat-entities` | 27 | Entity lifecycle, combat and AI/navigation |
 | `inventory-economy` | 9 | Inventory, rewards and economy |
 | `world-interaction` | 19 | Teleport, world mutation and chunks |
-| `gameplay-scripting` | 36 | Script and command parsing/diagnostics |
+| `gameplay-scripting` | 34 | Script and command parsing/diagnostics |
 | `gameplay-interpretation` | 59 | Authored intent and gameplay reconstruction |
-| `audit-diagnosis` | 151 | Source investigation, causality, proof and reliability |
-| `runtime-telemetry` | 92 | Runtime probes, host actions, telemetry contracts |
+| `audit-diagnosis` | 149 | Source investigation, causality, proof and reliability |
+| `runtime-telemetry` | 83 | Runtime probes, host actions, telemetry contracts |
 | `repair-preservation` | 54 | Authorized repair, invariant preservation |
 | `reporting` | 47 | Bug Report V2, export and client UI |
 | `platform-compatibility` | 3 | Bedrock/Education API/edition differences |
-| `engineering-tooling` | 26 | Repository, project and workflow contracts |
-| **Total** | **623** | 16 populated areas; lobby remains an explicit known gap |
+| `engineering-tooling` | 24 | Repository, project and workflow contracts |
+| **Total** | **599** | 16 populated areas; lobby remains an explicit known gap |
 
 ### Consolidation lineage
 
@@ -103,7 +104,29 @@ metadata is navigation only, not proof of gameplay or test uniqueness.
 | `engine/packages/orchestrator/test/inspection/world-db-diff.test.ts` | 2 → 1 | 3 | 7 |
 | `engine/analyzers/entities/test/loot-table.test.ts` | 2 → 1 | 2 | 4 |
 | `engine/packages/runtime-lab/test/scenario/scenario-execution-gate.test.ts` | 2 → 1 | 11 | 26 |
-| **Total** | **91 → 27** | **244** | **458** |
+| `engine/packages/orchestrator/test/arena/arena-layout-reconciliation.test.ts` | 5 → 1 | 12 | 19 |
+| `engine/packages/orchestrator/test/diagnosis/runtime-evidence-integrity.test.ts` | 5 → 1 | 19 | 32 |
+| `engine/packages/runtime-lab/test/experiment/runner.test.ts` | 4 → 1 | 9 | 15 |
+| `engine/packages/reliability/test/catalog/catalogs.test.ts` | 2 → 1 | 6 | 9 |
+| `engine/packages/reliability/test/catalog/historical-regression-catalog.test.ts` | 2 → 1 | 7 | 13 |
+| `engine/analyzers/scripts/test/flow/semantic-flow-witness.test.ts` | 3 → 1 | 4 | 6 |
+| `engine/packages/orchestrator/test/release/release-identity-analysis.test.ts` | 3 → 1 | 6 | 16 |
+| `engine/analyzers/entities/test/ai-stack.test.ts` | 3 → 1 | 5 | 8 |
+| `engine/packages/reliability/test/runtime/runtime-observation.test.ts` | 3 → 1 | 7 | 15 |
+| `engine/packages/orchestrator/test/arena/arena-golden-corpus.test.ts` | 3 → 1 | 7 | 12 |
+| `engine/analyzers/entities/test/navigation.test.ts` | 2 → 1 | 4 | 11 |
+| **Total** | **126 → 38** | **330** | **614** |
+
+The fourth bounded batch at parent `e8f4c5ad0451a1b847dd201baf55b7a6b1e335ac` combines 35
+same-owner, same-feature, same-lane files into 11 retained suites
+(24 retired paths), without deleting source test cases, safety/acceptance
+tests or negative-control assertions. The selected families cover
+arena layout and golden baselines; runtime evidence; experiment
+lifecycle; catalog loading, writing and history; semantic dataflow;
+release identity; entity behaviors/navigation; and session observations.
+No file with declared hoisted mocks, per-file hooks or relative-path
+isolation dependence was co-located. New merged suites have not
+executed under exact TypeScript/Vitest.
 
 The third batch at `a2da18e707febc89e67ddd2d54fd2cdf3f27261a` consolidates 12 source test files into five owner-local family suites (7 obsolete paths), retaining 38 it()/test() and 73 expect() call sites. No safety/acceptance/regression cases were removed, and one runtime family stays in the runtime lane.
 
@@ -122,7 +145,7 @@ No merge crossed source-owner or execution-lane boundaries.
 In particular, `engine/analyzers/topology/test/regression-flow.test.ts`
 remains a distinct **regression** test instead of being absorbed
 into a **development**-lane topology file.
-The 458 knowledge-to-proof declarations remain intact after earlier proof-path redirects. Phase B removed no referenced `proofPaths` (including the retained loot-table test); declaration count is not proof that assertions ran.
+The 458 knowledge-to-proof declarations remain intact; 7 binding rows were redirected in the latest batch, with no missing retired proof paths. Phase B removed no referenced `proofPaths` (including the retained loot-table test); declaration count is not proof that assertions ran.
 
 ### Phase C — Semantic redundancy review (source-only)
 
@@ -160,8 +183,8 @@ every case is globally unique.
 selects 10 Vitest suites and one native `node:test` file for the normal
 `--acceptance` path. Exactly four of those Vitest files currently have
 primary area `audit-diagnosis`. `--focus` and `--affected` provide bounded
-selection; `--full` is explicitly comprehensive. The 623-file inventory
-is therefore **not** equivalent to 623 files executed on every normal
+selection; `--full` is explicitly comprehensive. The current 599-file inventory
+is therefore **not** equivalent to 599 files executed on every normal
 development run. The actual execution-time benefit of file consolidation
 has **not been measured**.
 
@@ -186,8 +209,8 @@ not an additional test manager:
   original test-report identities.
 - The separate reviewed earlier version locks in
   `skills/bedrock/source-lock.json` were not silently replaced.
-- **321** currently registered file paths have a topic-only upstream
-  relationship; **302** paths are internal checker
+- **301** currently registered file paths have a topic-only upstream
+  relationship; **298** paths are internal checker
   tests. Neither count establishes matching executable proof.
 
 | Useful lookup | Feature | Boundary |
@@ -215,7 +238,7 @@ from the exact two user-provided v0.30.0 ZIPs; **no upstream source was
 installed or executed**.
 
 ```text
-623 physical M-Lazy source test files
+599 physical M-Lazy source test files
   → one primary M-Lazy functional area and feature, with an execution lane
   → native Developer Skill topic(s) / module(s), when relevant
   → independent Skills Probe E/G example(s) and P-ID(s), when relevant
@@ -223,10 +246,10 @@ installed or executed**.
   → existing --focus / --affected / --lane / --acceptance / --full routes
 ```
 
-**Scope:** 321 distinct files have publisher **topic-only**
-relationships; 302 are explicitly `LAZY_INTERNAL_ONLY`.
-Across the 24 Developer Skills, there are 470 **nonexclusive**
-skill memberships, not 470 distinct tests. Each file is counted
+**Scope:** 301 distinct files have publisher **topic-only**
+relationships; 298 are explicitly `LAZY_INTERNAL_ONLY`.
+Across the 24 Developer Skills, there are 441 **nonexclusive**
+skill memberships, not 441 distinct tests (membership may overlap). Each file is counted
 once within its primary M-Lazy area/lane, but it may appear in multiple
 publisher reference lookups. A zero-match skill, module or example is
 **unmapped topical context**, not proof that the checker lacks functionality.
@@ -238,13 +261,13 @@ publisher reference lookups. A zero-match skill, module or example is
 | `bedrock-agent-team` | 2 | — | — |
 | `bedrock-analytics` | 4 | `analytics` | — |
 | `bedrock-camera` | 9 | — | — |
-| `bedrock-content` | 41 | — | `G1` |
-| `bedrock-coordinates` | 27 | `coords` | — |
+| `bedrock-content` | 39 | — | `G1` |
+| `bedrock-coordinates` | 23 | `coords` | — |
 | `bedrock-data-persistence` | 36 | `database`, `items` | — |
-| `bedrock-debug-logging` | 69 | `logging` | — |
-| `bedrock-debug-profiling` | 67 | `profiling` | `E4` |
-| `bedrock-entity-creation` | 30 | `entities` | `E3` |
-| `bedrock-entity-lifecycle` | 20 | `entities` | `E2` |
+| `bedrock-debug-logging` | 63 | `logging` | — |
+| `bedrock-debug-profiling` | 61 | `profiling` | `E4` |
+| `bedrock-entity-creation` | 27 | `entities` | `E3` |
+| `bedrock-entity-lifecycle` | 19 | `entities` | `E2` |
 | `bedrock-forms` | 3 | `forms` | `E5`, `G2` |
 | `bedrock-game-results` | 0 | `game-results` | `E7` |
 | `bedrock-game-time` | 18 | `time` | `G5` |
@@ -252,11 +275,11 @@ publisher reference lookups. A zero-match skill, module or example is
 | `bedrock-onscreen-display` | 2 | `display` | `E6` |
 | `bedrock-player-attached-particles` | 0 | — | — |
 | `bedrock-project-setup` | 5 | — | — |
-| `bedrock-release-export` | 5 | — | `E9` |
+| `bedrock-release-export` | 3 | — | `E9` |
 | `bedrock-script-optimization` | 32 | `testing` | `E1` |
 | `bedrock-sound` | 0 | `sound` | `G3` |
 | `bedrock-teleport` | 1 | `teleport` | `G4` |
-| `bedrock-testing-policy` | 77 | — | — |
+| `bedrock-testing-policy` | 72 | — | — |
 | `bedrock-text-glyphs` | 0 | — | `E8` |
 | `bedrock-version-targeting` | 13 | — | — |
 
@@ -269,15 +292,15 @@ not equivalent to M-Lazy's world LevelDB/NBT parser.
 | Native module | Related source files | Developer Skill owner(s) | Native `requires` dependencies |
 | --- | ---: | --- | --- |
 | `analytics` | 4 | `bedrock-analytics` | `database`, `logging`, `time` |
-| `coords` | 27 | `bedrock-coordinates` | — |
+| `coords` | 23 | `bedrock-coordinates` | — |
 | `database` | 33 | `bedrock-data-persistence` | — (external source) |
 | `display` | 2 | `bedrock-onscreen-display` | `logging` |
-| `entities` | 35 | `bedrock-entity-lifecycle`, `bedrock-entity-creation` | `logging` |
+| `entities` | 32 | `bedrock-entity-lifecycle`, `bedrock-entity-creation` | `logging` |
 | `forms` | 3 | `bedrock-forms` | `logging` |
 | `game-results` | 0 | `bedrock-game-results` | — |
 | `items` | 9 | `bedrock-data-persistence` | `logging` |
-| `logging` | 69 | `bedrock-debug-logging` | — |
-| `profiling` | 67 | `bedrock-debug-profiling` | — |
+| `logging` | 63 | `bedrock-debug-logging` | — |
+| `profiling` | 61 | `bedrock-debug-profiling` | — |
 | `sound` | 0 | `bedrock-sound` | `logging` |
 | `teleport` | 1 | `bedrock-teleport` | `logging`, `forms` |
 | `testing` | 32 | `bedrock-script-optimization` | — |
@@ -295,13 +318,13 @@ trace independently pinned references without breaking historical links.
 | --- | --- | ---: | --- | --- |
 | **Arena State & Performance** | Two-arena state, persistence, transitions, and bounded caches | 19 | pending / PASS / pending | `E1` |
 | **Player Lifecycle & Cleanup** | Player-keyed state cleanup and spawn invalidation | 6 | pending / PASS / pending | `E2` |
-| **Entity Model Placement** | Model offsets and placement across uneven surfaces | 8 | PASS / PASS / pending | `E3` |
-| **Diagnostics & Profiling** | Diagnostic capture, profiling, and evidence procedures | 67 | pending / PASS / pending | `E4` |
+| **Entity Model Placement** | Model offsets and placement across uneven surfaces | 6 | PASS / PASS / pending | `E3` |
+| **Diagnostics & Profiling** | Diagnostic capture, profiling, and evidence procedures | 61 | pending / PASS / pending | `E4` |
 | **Player Forms & Fallback** | Styled player forms with plain fallback | 2 | pending / PASS / pending | `E5` |
 | **On-Screen Text & Localization** | Localized title-channel cards and item labels | 2 | pending / PASS / pending | `E6` |
 | **Game Results & Export** | Game-results adapter and historical size-stress export | 0 | PASS / PASS / PASS | `E7` |
 | **Text Glyphs & Display Sizing** | Glyph audit and display-size comparison | 0 | pending / PASS / pending | `E8` |
-| **Project Naming** | Project name and slug naming conventions | 3 | PASS / not reported / not reported | `E9` |
+| **Project Naming** | Project name and slug naming conventions | 1 | PASS / not reported / not reported | `E9` |
 | **Custom Blocks & Items** | Version-2 custom blocks and items | 4 | pending / PASS / pending | `G1` |
 | **Confirmation & Paginated Menus** | Confirmation and paginated choice forms | 2 | pending / PASS / pending | `G2` |
 | **Player Sound & Captions** | Per-player sound previews and captions | 0 | pending / PASS / pending | `G3` |
@@ -335,14 +358,14 @@ or proof of gameplay coverage.
 | `map-database` | 4 |
 | `map-content` | 5 |
 | `player-session` | 1 |
-| `arena-match` | 16 |
-| `gameplay-scripting` | 16 |
+| `arena-match` | 14 |
+| `gameplay-scripting` | 14 |
 | `gameplay-interpretation` | 55 |
 | `audit-diagnosis` | 102 |
 | `repair-preservation` | 54 |
 | `reporting` | 47 |
 | `engineering-tooling` | 2 |
-| **Total** | **302** |
+| **Total** | **298** |
 
 `report.schema` (Bug Report V2), `database.leveldb` and selected-map
 proof/admission checks remain under their **internal canonical owners**.
@@ -406,7 +429,8 @@ Automatic CI remains disabled.
 The current consolidation reduces test **file fragmentation**
 without knowingly reducing behavior or assertions. It does not certify
 that the suites are fully equivalent under Vitest or Minecraft, and
-does not prove that 623 test files is an optimal number.
+does not prove that 599 files or any arbitrary file target is an optimal number.
+No executed speedup is claimed; this batch did not reduce test-case count.
 Further reduction requires examining assertion duplication,
 dependencies, and actual test-file isolation; **do not blindly combine
 all tests that happen to share a category**.

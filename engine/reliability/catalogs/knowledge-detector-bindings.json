@@ -1771,7 +1771,7 @@
         "engine/analyzers/entities/src/behavior-prerequisites.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts"
+        "engine/analyzers/entities/test/ai-stack.test.ts"
       ]
     },
     {
@@ -1783,7 +1783,7 @@
         "engine/analyzers/entities/src/behavior-prerequisites.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts"
+        "engine/analyzers/entities/test/ai-stack.test.ts"
       ]
     },
     {
@@ -1825,7 +1825,7 @@
         "engine/analyzers/entities/src/behavior-prerequisites.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts"
+        "engine/analyzers/entities/test/ai-stack.test.ts"
       ]
     },
     {
@@ -1857,7 +1857,7 @@
         "engine/analyzers/entities/src/behavior-prerequisites.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts"
+        "engine/analyzers/entities/test/ai-stack.test.ts"
       ]
     },
     {
@@ -2878,7 +2878,7 @@
         "engine/packages/orchestrator/src/inspection/mount-analysis.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/mounts.test.ts"
+        "engine/analyzers/entities/test/ai-stack.test.ts"
       ]
     },
     {
@@ -2889,7 +2889,7 @@
         "engine/packages/orchestrator/src/inspection/mount-analysis.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/mounts.test.ts",
+        "engine/analyzers/entities/test/ai-stack.test.ts",
         "engine/packages/orchestrator/test/inspection/mount-analysis.test.ts"
       ]
     },
@@ -2901,7 +2901,7 @@
         "engine/packages/orchestrator/src/inspection/mount-analysis.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/entities/test/mounts.test.ts",
+        "engine/analyzers/entities/test/ai-stack.test.ts",
         "engine/packages/orchestrator/test/inspection/mount-analysis.test.ts"
       ]
     },
