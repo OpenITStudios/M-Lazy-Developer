@@ -464,6 +464,133 @@ if (mode === "--acceptance" && args.length <= 1) {
   }
   for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
   process.exit(0);
+} else if (mode === "--list-test-groups" && args.length === 1) {
+  // ZIP-aligned source navigation, derived from the existing inventory.
+  // Related topics, Probe IDs and historical upstream statuses are not
+  // executable tests or evidence of a selected Minecraft map.
+  const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const links = test => data.featureCatalog[test.featureId].upstream;
+  const matched = (field, id) => registeredTests.filter(test =>
+    links(test)[field].includes(id));
+  const topical = registeredTests.filter(test =>
+    links(test).relation === "TOPIC_REFERENCE_ONLY");
+  const internal = registeredTests.filter(test =>
+    links(test).relation === "LAZY_INTERNAL_ONLY");
+  if (topical.length + internal.length !== registeredTests.length) {
+    throw new Error("Unclassified upstream topic relationship");
+  }
+  const developer = data.upstreamCategoryCrosswalk.developer;
+  const probe = data.upstreamCategoryCrosswalk.probe;
+  const memberships = developer.skills.reduce((sum, skill) =>
+    sum + matched("skills", skill).length, 0);
+  console.log("Canonical M-Lazy test inventory: " + registeredTests.length +
+    " unique test files; no tests are executed by this command.");
+  console.log("Two independent user ZIP taxonomies: developer " +
+    developer.version + " (" + developer.archiveSha256 + "), Probe (" +
+    probe.archiveSha256 + ").");
+  console.log("Topic-related: " + topical.length +
+    " unique; internal-only: " + internal.length +
+    " unique; skill memberships: " + memberships +
+    " (nonexclusive, never evidence of tested upstream functionality).");
+
+  console.log("\nDEVELOPER SKILLS — publisher topic references, NOT installed skills");
+  for (const skill of developer.skills) {
+    const modules = Object.entries(developer.moduleOwners)
+      .filter(([, owners]) => owners.includes(skill))
+      .map(([name]) => name);
+    const examples = Object.entries(probe.exampleOwners)
+      .filter(([, owner]) => owner === skill)
+      .map(([id]) => id);
+    console.log(skill + ": " + matched("skills", skill).length +
+      " related files; modules=" + (modules.join(",") || "none") +
+      "; Probe examples=" + (examples.join(",") || "none"));
+  }
+  console.log("\nDEVELOPER MODULES — native publisher vocabulary, NOT M-Lazy code owners");
+  for (const [moduleName, owners] of Object.entries(developer.moduleOwners)
+    .sort(([a], [b]) => a.localeCompare(b))) {
+    console.log(moduleName + ": " + matched("modules", moduleName).length +
+      " related files; publisher skill=" + owners.join(","));
+  }
+  console.log("\nSKILLS PROBE E/G EXAMPLES — analogy only, NOT an executed Probe PASS");
+  for (const [id, skill] of Object.entries(probe.exampleOwners)
+    .sort(([a], [b]) => a.localeCompare(b))) {
+    console.log(id + ": " + matched("probeExamples", id).length +
+      " related files; source skill=" + skill);
+  }
+  console.log("\nSKILLS PROBE P-IDS — navigational tags only, NOT executed scenarios");
+  const ids = [...new Set(Object.values(data.featureCatalog)
+    .flatMap(feature => feature.upstream.probeIds))].sort();
+  for (const id of ids) {
+    console.log(id + ": " + matched("probeIds", id).length +
+      " related files");
+  }
+  console.log("\nM-LAZY INTERNAL ONLY — independent checker capabilities");
+  for (const area of data.functionalAreaTaxonomy.areas) {
+    const count = internal.filter(test => test.functionalArea === area).length;
+    if (count) console.log(area + ": " + count + " files");
+  }
+  console.log("\nDrill down: --show-test-group skill/<id> | module/<id> | " +
+    "example/<E/G-id> | probe/<P-id> | internal[/<functional-area>].");
+} else if (mode === "--show-test-group" && args.length === 2) {
+  const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const links = test => data.featureCatalog[test.featureId].upstream;
+  const developer = data.upstreamCategoryCrosswalk.developer;
+  const probe = data.upstreamCategoryCrosswalk.probe;
+  const raw = args[1];
+  const slash = raw.indexOf("/");
+  const kind = slash < 0 ? raw : raw.slice(0, slash);
+  const id = slash < 0 ? "" : raw.slice(slash + 1);
+  let matches;
+  if (kind === "skill" && developer.skills.includes(id)) {
+    matches = registeredTests.filter(test => links(test).skills.includes(id));
+  } else if (kind === "module" && Object.hasOwn(developer.moduleOwners, id)) {
+    matches = registeredTests.filter(test => links(test).modules.includes(id));
+  } else if (kind === "example" && Object.hasOwn(probe.exampleOwners, id)) {
+    matches = registeredTests.filter(test => links(test).probeExamples.includes(id));
+  } else if (kind === "probe" && /^P[0-9]{2,3}[A-Z0-9]*$/.test(id)) {
+    matches = registeredTests.filter(test => links(test).probeIds.includes(id));
+  } else if (kind === "internal" &&
+    (!id || data.functionalAreaTaxonomy.areas.includes(id))) {
+    matches = registeredTests.filter(test =>
+      links(test).relation === "LAZY_INTERNAL_ONLY" &&
+      (!id || test.functionalArea === id));
+  } else {
+    console.error("Unknown test group: " + raw +
+      ". Use --list-test-groups for native skills/modules/examples and " +
+      "existing group names.");
+    process.exit(2);
+  }
+  // Exactly one file row per matching path; area/feature/lane are
+  // independent axes and not separate upstream execution work lanes.
+  const sorted = matches.slice().sort((a, b) =>
+    a.functionalArea.localeCompare(b.functionalArea) ||
+    a.featureId.localeCompare(b.featureId) ||
+    lanes.indexOf(a.lane) - lanes.indexOf(b.lane) ||
+    a.path.localeCompare(b.path));
+  console.log("GROUP " + raw + ": " + sorted.length +
+    " unique M-Lazy source test files; SOURCE TOPIC NAVIGATION ONLY.");
+  console.log("No selected-map assertion, external Probe PASS or runtime execution implied.");
+  if (!sorted.length) {
+    console.log("No mapped topic in this inventory. This is NOT proof of a capability gap.");
+  }
+  let area = "", feature = "", lane = "";
+  for (const item of sorted) {
+    if (area !== item.functionalArea) {
+      area = item.functionalArea; feature = ""; lane = "";
+      console.log("\nAREA " + area);
+    }
+    if (feature !== item.featureId) {
+      feature = item.featureId; lane = "";
+      console.log("  FEATURE " + feature + " — " +
+        data.featureCatalog[feature].label);
+    }
+    if (lane !== item.lane) {
+      lane = item.lane;
+      console.log("    LANE " + lane);
+    }
+    console.log("      " + item.path + " [" + item.review +
+      "; " + item.featureMappingBasis + "]");
+  }
 } else if (mode === "--list-upstream-skills" && args.length === 1) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
   for (const skill of inventory.upstreamCategoryCrosswalk.developer.skills) {
@@ -612,7 +739,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --list-upstream-skills | --show-upstream-skill skill | --show-upstream-module module | --list-probe-examples | --show-probe-example example | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --list-upstream-skills | --show-upstream-skill skill | --show-upstream-module module | --list-probe-examples | --show-probe-example example | --list-test-groups | --show-test-group skill/id|module/id|example/E1|probe/P52|internal[/area] | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 

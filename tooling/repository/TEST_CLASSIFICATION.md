@@ -205,38 +205,164 @@ Do not confuse M-Lazy's actual world LevelDB/NBT reader with the
 publisher's state-persistence `database` module, or Bug Report V2
 with external `bedrock-game-results`.
 
-### Publisher skill index (topic references only)
+### ZIP-aligned test grouping — source taxonomy, NOT new test lanes
 
-| Developer skill | Related M-Lazy test files |
+The inventory's existing `functionalArea`, `featureId`, `lane`, and
+`featureCatalog[featureId].upstream` relationships form one **read-only
+grouping projection**. They do not change physical test directories,
+production ownership or test execution. Native examples below are derived
+from the exact two user-provided v0.30.0 ZIPs; **no upstream source was
+installed or executed**.
+
+```text
+623 physical M-Lazy source test files
+  → one primary M-Lazy functional area and feature, with an execution lane
+  → native Developer Skill topic(s) / module(s), when relevant
+  → independent Skills Probe E/G example(s) and P-ID(s), when relevant
+  → otherwise M-Lazy internal-only checker capability
+  → existing --focus / --affected / --lane / --acceptance / --full routes
+```
+
+**Scope:** 321 distinct files have publisher **topic-only**
+relationships; 302 are explicitly `LAZY_INTERNAL_ONLY`.
+Across the 24 Developer Skills, there are 470 **nonexclusive**
+skill memberships, not 470 distinct tests. Each file is counted
+once within its primary M-Lazy area/lane, but it may appear in multiple
+publisher reference lookups. A zero-match skill, module or example is
+**unmapped topical context**, not proof that the checker lacks functionality.
+
+#### Developer Skills (source ZIP skills.json v0.30.0)
+
+| Developer skill | Related source files | Native module(s) | Probe example(s) |
+| --- | ---: | --- | --- |
+| `bedrock-agent-team` | 2 | — | — |
+| `bedrock-analytics` | 4 | `analytics` | — |
+| `bedrock-camera` | 9 | — | — |
+| `bedrock-content` | 41 | — | `G1` |
+| `bedrock-coordinates` | 27 | `coords` | — |
+| `bedrock-data-persistence` | 36 | `database`, `items` | — |
+| `bedrock-debug-logging` | 69 | `logging` | — |
+| `bedrock-debug-profiling` | 67 | `profiling` | `E4` |
+| `bedrock-entity-creation` | 30 | `entities` | `E3` |
+| `bedrock-entity-lifecycle` | 20 | `entities` | `E2` |
+| `bedrock-forms` | 3 | `forms` | `E5`, `G2` |
+| `bedrock-game-results` | 0 | `game-results` | `E7` |
+| `bedrock-game-time` | 18 | `time` | `G5` |
+| `bedrock-git-workflow` | 9 | — | — |
+| `bedrock-onscreen-display` | 2 | `display` | `E6` |
+| `bedrock-player-attached-particles` | 0 | — | — |
+| `bedrock-project-setup` | 5 | — | — |
+| `bedrock-release-export` | 5 | — | `E9` |
+| `bedrock-script-optimization` | 32 | `testing` | `E1` |
+| `bedrock-sound` | 0 | `sound` | `G3` |
+| `bedrock-teleport` | 1 | `teleport` | `G4` |
+| `bedrock-testing-policy` | 77 | — | — |
+| `bedrock-text-glyphs` | 0 | — | `E8` |
+| `bedrock-version-targeting` | 13 | — | — |
+
+#### Developer modules (source ZIP module.json / modules/README.md)
+
+The module names are **publisher names**, not M-Lazy package identities.
+In particular, upstream `database` is a separately owned state store,
+not equivalent to M-Lazy's world LevelDB/NBT parser.
+
+| Native module | Related source files | Developer Skill owner(s) |
+| --- | ---: | --- |
+| `analytics` | 4 | `bedrock-analytics` |
+| `coords` | 27 | `bedrock-coordinates` |
+| `database` | 33 | `bedrock-data-persistence` |
+| `display` | 2 | `bedrock-onscreen-display` |
+| `entities` | 35 | `bedrock-entity-lifecycle`, `bedrock-entity-creation` |
+| `forms` | 3 | `bedrock-forms` |
+| `game-results` | 0 | `bedrock-game-results` |
+| `items` | 9 | `bedrock-data-persistence` |
+| `logging` | 69 | `bedrock-debug-logging` |
+| `profiling` | 67 | `bedrock-debug-profiling` |
+| `sound` | 0 | `bedrock-sound` |
+| `teleport` | 1 | `bedrock-teleport` |
+| `testing` | 32 | `bedrock-script-optimization` |
+| `time` | 18 | `bedrock-game-time` |
+
+#### Skills Probe E/G examples (independent ZIP docs/examples/index.json)
+
+Each row identifies an **analogy for investigation**, not an executed
+M-Lazy test, a matching fixture, a runtime result, or a release gate.
+Source index SHA-256:
+`5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630`.
+The upstream index separately reports `status`, `nodeStatus` and
+`engineStatus`; these are **not projected as M-Lazy PASS/FAIL**.
+For example, E3 records a narrow historical PASS with newer engine
+checks pending, and E9's PASS is a naming-only result.
+
+| Probe example | Developer Skill | ZIP source pattern (condensed) | Related M-Lazy files |
+| --- | --- | --- | ---: |
+| `E1` | `bedrock-script-optimization` | Two-arena state, persistence, transitions and bounded apply caches | 19 |
+| `E2` | `bedrock-entity-lifecycle` | Player-keyed state cleanup and spawn invalidation | 6 |
+| `E3` | `bedrock-entity-creation` | Model offset and placement reconciliation on unequal surfaces | 8 |
+| `E4` | `bedrock-debug-profiling` | Diagnostics capture and agent evidence procedure | 67 |
+| `E5` | `bedrock-forms` | Skinned ActionForm and ModalForm with plain fallback | 2 |
+| `E6` | `bedrock-onscreen-display` | Localized title-channel quest card and item label | 2 |
+| `E7` | `bedrock-game-results` | Game-results adapter and historical size-stress export | 0 |
+| `E8` | `bedrock-text-glyphs` | Static glyph audit and E6/E7 size comparison | 0 |
+| `E9` | `bedrock-release-export` | Project name and slug naming | 3 |
+| `G1` | `bedrock-content` | V2 blocks and items | 4 |
+| `G2` | `bedrock-forms` | Confirmation and paginated choices | 2 |
+| `G3` | `bedrock-sound` | Per-player sound previews and captions | 0 |
+| `G4` | `bedrock-teleport` | Fade and interrupted portal travel | 1 |
+| `G5` | `bedrock-game-time` | Persistent player countdown | 15 |
+
+The existing `featureCatalog[featureId].upstream.probeIds` also enables
+**36** individual P-ID topic lookups (for example P52, P53,
+P54, P61, P62). P-IDs are neither M-Lazy test IDs nor observed engine
+sessions. Some P-IDs in the ZIP have no M-Lazy topic mapping, which
+must remain explicit rather than inventing coverage.
+
+#### M-Lazy internal-only capabilities (no publisher equivalent)
+
+| Primary functional area | M-Lazy-only test files |
 | --- | ---: |
-| `bedrock-agent-team` | 2 |
-| `bedrock-analytics` | 4 |
-| `bedrock-camera` | 9 |
-| `bedrock-content` | 41 |
-| `bedrock-coordinates` | 27 |
-| `bedrock-data-persistence` | 36 |
-| `bedrock-debug-logging` | 69 |
-| `bedrock-debug-profiling` | 67 |
-| `bedrock-entity-creation` | 30 |
-| `bedrock-entity-lifecycle` | 20 |
-| `bedrock-forms` | 3 |
-| `bedrock-game-results` | 0 |
-| `bedrock-game-time` | 18 |
-| `bedrock-git-workflow` | 9 |
-| `bedrock-onscreen-display` | 2 |
-| `bedrock-player-attached-particles` | 0 |
-| `bedrock-project-setup` | 5 |
-| `bedrock-release-export` | 5 |
-| `bedrock-script-optimization` | 32 |
-| `bedrock-sound` | 0 |
-| `bedrock-teleport` | 1 |
-| `bedrock-testing-policy` | 77 |
-| `bedrock-text-glyphs` | 0 |
-| `bedrock-version-targeting` | 13 |
+| `map-database` | 4 |
+| `map-content` | 5 |
+| `player-session` | 1 |
+| `arena-match` | 16 |
+| `gameplay-scripting` | 16 |
+| `gameplay-interpretation` | 55 |
+| `audit-diagnosis` | 102 |
+| `repair-preservation` | 54 |
+| `reporting` | 47 |
+| `engineering-tooling` | 2 |
+| **Total** | **302** |
 
-Upstream `E7`, `E8`, `G3`, sound, glyph, results and particle
-scenarios do not become tested M-Lazy features merely by a topical
-name match.
+`report.schema` (Bug Report V2), `database.leveldb` and selected-map
+proof/admission checks remain under their **internal canonical owners**.
+Do not mistake Daigon `bedrock-game-results` or publisher
+`bedrock-data-persistence` for equivalent engine features.
+
+#### Read-only group navigation in the existing test runner
+
+```text
+node tooling/repository/run-tests.mjs --list-test-groups
+node tooling/repository/run-tests.mjs --show-test-group skill/bedrock-entity-lifecycle
+node tooling/repository/run-tests.mjs --show-test-group module/database
+node tooling/repository/run-tests.mjs --show-test-group example/E2
+node tooling/repository/run-tests.mjs --show-test-group probe/P53
+node tooling/repository/run-tests.mjs --show-test-group internal/audit-diagnosis
+```
+
+The `--list-test-groups` and `--show-test-group` operations only navigate
+the **same registered paths** in area → feature → execution-lane → file
+order. They do not invoke Vitest, Minecraft, skills, or upstream Probe,
+and they cannot promote a source-reference relationship to observed
+coverage. Existing selection commands and CI policy remain unchanged.
+
+**Source version boundaries:** the v0.30.0 ZIP-derived test crosswalk
+in this inventory is independent of the earlier reviewed
+`skills/bedrock/source-lock.json` and
+`experiments/developer-practice-signals.json` reference snapshots.
+No historic v0.23.0/v0.27.0 source lock or Probe report was silently
+upgraded. A future source refresh must reconcile its own exact locks
+and scoped evidence under the existing owner.
+
 
 ### Source-only navigation without test execution
 
