@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { extractStructureRuntimeContent } from "../src/runtime-content.js";
+import { deriveMcStructureSemantics } from "../src/semantics.js";
 import type { McStructureModel } from "../src/types.js";
 
 describe("mcstructure runtime content", () => {
@@ -52,6 +53,13 @@ describe("mcstructure runtime content", () => {
       }),
     ]);
     expect(result.queuedTickPositions).toBe(1);
+    // Source indexing passes the already-extracted runtime view to semantics;
+    // other callers retain the standalone extraction default.
+    expect(deriveMcStructureSemantics(structure, result))
+      .toEqual(deriveMcStructureSemantics(structure));
+    expect(deriveMcStructureSemantics(structure, {
+      ...result, queuedTickPositions: 3,
+    }).queuedTickPositions).toBe(3);
   });
 
   it("extracts item stacks from structure block-entity containers", () => {

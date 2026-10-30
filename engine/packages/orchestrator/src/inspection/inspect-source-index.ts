@@ -870,7 +870,7 @@ export async function indexInspectionSources(
         ...(structure.size
           ? { size: structure.size }
           : {}),
-        semantics: deriveMcStructureSemantics(structure),
+        semantics: deriveMcStructureSemantics(structure, runtimeContent),
         footprintSource,
         embeddedCommands,
         containerItems:

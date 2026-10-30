@@ -1,4 +1,7 @@
-import type { McStructureModel } from "../../../../adapters/mcstructure/src/index.js";
+import {
+  flatIndexToCoordinate,
+  type McStructureModel,
+} from "../../../../adapters/mcstructure/src/index.js";
 
 export interface StructureVoidCell {
   x: number;
@@ -13,13 +16,6 @@ export interface StructureTransitionResidueAssessment {
   voidCellCount: number;
   samples: readonly StructureVoidCell[];
   reason: string;
-}
-
-function coordinate(index: number, size: { x: number; y: number; z: number }) {
-  const x = index % size.x;
-  const z = Math.floor(index / size.x) % size.z;
-  const y = Math.floor(index / (size.x * size.z));
-  return { x, y, z };
 }
 
 export function assessStructureTransitionResidue(
@@ -60,10 +56,9 @@ export function assessStructureTransitionResidue(
       if (!set.has(layer.indices[index]!)) continue;
       voidCellCount += 1;
       if (samples.length < sampleLimit) {
-        samples.push({
-          ...coordinate(index, structure.size),
-          layer: layer.layer,
-        });
+        const position = flatIndexToCoordinate(index, structure.size);
+        // Invalid dimensions cannot establish an actual voxel position.
+        if (position) samples.push({ ...position, layer: layer.layer });
       }
     }
   }

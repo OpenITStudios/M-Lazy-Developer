@@ -1,6 +1,6 @@
 # Test classification (provisional)
 
-Inventory refreshed against GitHub `Local` source commit `fa5e22c75044de2ea66628a9642c5b4ef86eb014`: **691 existing test files**. Two already-present tests missing from the previous 689-entry inventory were included; no tests were added, executed, or deleted.
+Current `Local` inventory: **691 existing test files** after consolidating the source-reviewed causal comparison and causal retest files into one behavior-level suite. The comparison, regression-priority and negative-improvement assertions remain covered; the new integrated test is authored but **NOT EXECUTED**. One redundant test file was removed without changing production causal owners. The previous 692-file inventory is preserved by Git history.
 
 This is a **path/name-derived execution routing inventory**, not proof that any test ran, is redundant, or is safe to remove. Review metadata currently records 232 `source-reviewed`, 159 `case-inventory-reviewed`, and 300 `pending-semantic-review` entries. A review label describes source triage, never a PASS. A file may guard several behaviors; its single lane is a provisional execution route, not an exclusive risk assessment.
 

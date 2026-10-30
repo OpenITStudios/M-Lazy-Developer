@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { parseMcFunction } from "../../../../analyzers/functions/src/index.js";
 import { analyzeStructureAndChunkRuntime } from "../../src/structure-runtime-analysis.js";
 import { derivePlacementProofs } from "../../src/inspection/structure-proof-analysis.js";
+import { assessStructureTransitionResidue } from "../../src/inspection/structure-transition-residue.js";
+import type { McStructureModel } from "../../../../adapters/mcstructure/src/types.js";
 
 const structure = {
   identifier: "demo:arena",
@@ -73,5 +75,31 @@ describe("structure placement proofs", () => {
 
     expect(proofs.areaLoadedCoverage).toHaveLength(1);
     expect(proofs.areaLoadedCoverage[0]?.functionId).toBe("demo:load");
+  });
+});
+
+// Verify the same canonical X→Y→Z flat-index contract used for
+// embedded command blocks and footprint projection, not another axis order.
+describe("structure transition residue sampling", () => {
+  it("locates structure_void cells at canonical non-cubic coordinates", () => {
+    const indices = Array.from({ length: 12 }, () => -1);
+    for (const flatIndex of [1, 3, 6]) indices[flatIndex] = 0;
+    const source = {
+      size: { x: 2, y: 2, z: 3 },
+      palette: [{ index: 0, name: "minecraft:structure_void", raw: {} }],
+      blockIndexLayers: [{ layer: 0, indices }],
+      entities: [],
+      rawSimplified: {},
+      nbt: {} as McStructureModel["nbt"],
+    } satisfies McStructureModel;
+
+    const result = assessStructureTransitionResidue(source);
+    expect(result.status).toBe("residue-risk");
+    expect(result.voidCellCount).toBe(3);
+    expect(result.samples).toEqual([
+      { x: 0, y: 0, z: 1, layer: 0 },
+      { x: 0, y: 1, z: 0, layer: 0 },
+      { x: 1, y: 0, z: 0, layer: 0 },
+    ]);
   });
 });

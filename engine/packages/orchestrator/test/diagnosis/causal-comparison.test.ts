@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compareCausalAnalysis } from "../../src/diagnosis/causal-comparison.js";
+import { causalRetestReasons } from "../../src/diagnosis/causal-retest.js";
 
 function result(input: {
   confidence: "low" | "medium" | "high";
@@ -106,5 +107,27 @@ describe("causal comparison", () => {
 
     expect(comparison.delta.addedCandidateLabels).toEqual(["new-cause"]);
     expect(comparison.delta.removedCandidateLabels).toEqual(["old-cause"]);
+  });
+});
+
+// One comparison → retest behavior contract replaces a separate mock-delta suite.
+describe("causal comparison-to-retest", () => {
+  it("prioritizes actual positive causal deltas by impact", () => {
+    const before = result({ confidence: "low", observedOutcomes: 0,
+      corroboratedRisks: 0, candidate: "old-cause" });
+    const after = result({ confidence: "high", observedOutcomes: 1,
+      corroboratedRisks: 2, candidate: "new-cause" });
+    const reasons = causalRetestReasons(compareCausalAnalysis(before, after));
+    expect(reasons.map((reason) => reason.weight).toEqual([5, 4, 3, 2]);
+    expect(reasons.every((reason) => reason.kind === "causal-regression")).toBe(true);
+    expect(reasons.some((reason) => reason.detail.includes("new-cause"))).toBe(true);
+  });
+
+  it("does not invent regression work for causal improvements", () => {
+    const before = result({ confidence: "high", observedOutcomes: 1,
+      corroboratedRisks: 2, candidate: "old-cause" });
+    const after = result({ confidence: "low", observedOutcomes: 0,
+      corroboratedRisks: 0, candidate: "old-cause" });
+    expect(causalRetestReasons(compareCausalAnalysis(before, after))).toEqual([]);
   });
 });

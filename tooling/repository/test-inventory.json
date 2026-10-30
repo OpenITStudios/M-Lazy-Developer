@@ -3181,8 +3181,8 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Production compareCausalAnalysis produces before/after delta consumed by causalRetestReasons; preserve label and evidence-delta assertions in a joint scenario."
+      "recommendation": "keep",
+      "rationale": "Consolidated source-reviewed comparison → causal retest behavior: original delta/label assertions plus real positive ordering, negative improvement and candidate-label checks; no separate mock-only suite."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/causal-incident-analysis.test.ts",
@@ -3223,14 +3223,6 @@
       "review": "source-reviewed",
       "recommendation": "keep",
       "rationale": "Three cases cover invariant derivation, unavailable causal chain refusal and repair proof decision-basis continuity; safety-critical."
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/causal-retest.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "merge-candidate",
-      "rationale": "Production causalRetestReasons consumes CausalComparison; candidate to combine tests without changing either production owner or dropping negative improvement case."
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/cross-domain-reasoning-end-to-end.test.ts",

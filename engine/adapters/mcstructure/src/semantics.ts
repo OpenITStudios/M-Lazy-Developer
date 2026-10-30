@@ -1,5 +1,8 @@
 import type { McStructureModel } from "./types.js";
-import { extractStructureRuntimeContent } from "./runtime-content.js";
+import {
+  extractStructureRuntimeContent,
+  type StructureRuntimeContent,
+} from "./runtime-content.js";
 
 export interface McStructureSemantics {
   entityCount: number;
@@ -33,6 +36,7 @@ const CONTAINER_HINTS = [
 
 export function deriveMcStructureSemantics(
   structure: McStructureModel,
+  runtime: StructureRuntimeContent = extractStructureRuntimeContent(structure),
 ): McStructureSemantics {
   let commandBlockPaletteEntries = 0;
   let containerPaletteEntries = 0;
@@ -50,8 +54,6 @@ export function deriveMcStructureSemantics(
     if (name === "minecraft:deny") educationDenyEntries += 1;
     if (name === "minecraft:border_block") educationBorderEntries += 1;
   }
-
-  const runtime = extractStructureRuntimeContent(structure);
 
   return {
     entityCount: structure.entities.length,
