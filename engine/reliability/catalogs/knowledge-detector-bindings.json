@@ -82,7 +82,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/entity-ai-navigation-diagnostics.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -147,7 +147,7 @@
         "engine/packages/orchestrator/src/inspection/entity-ai-navigation-diagnostics.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/entity-ai-navigation-diagnostics.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -786,7 +786,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts"
       ]
     },
     {
@@ -797,7 +797,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts"
       ]
     },
     {
@@ -808,7 +808,7 @@
         "engine/analyzers/scripts/src/domains/cleanup/cleanup-resource-evidence.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts"
       ]
     },
@@ -820,7 +820,7 @@
         "engine/analyzers/scripts/src/domains/cleanup/cleanup-resource-evidence.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts"
       ]
     },
@@ -832,7 +832,7 @@
         "engine/analyzers/scripts/src/domains/cleanup/cleanup-resource-evidence.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts"
       ]
     },
@@ -844,7 +844,7 @@
         "engine/analyzers/scripts/src/domains/cleanup/cleanup-resource-evidence.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts"
       ]
     },
@@ -856,7 +856,7 @@
         "engine/analyzers/scripts/src/domains/cleanup/cleanup-resource-evidence.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/cinematic-control-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/client-feedback-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts"
       ]
     },
@@ -2890,7 +2890,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
-        "engine/packages/orchestrator/test/inspection/mount-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts"
       ]
     },
     {
@@ -2902,7 +2902,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
-        "engine/packages/orchestrator/test/inspection/mount-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts"
       ]
     },
     {
@@ -3020,7 +3020,7 @@
         "engine/analyzers/commands/src/parse.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/commands/test/dialogue-selector.test.ts"
+        "engine/analyzers/commands/test/parse.test.ts"
       ]
     },
     {
@@ -3182,7 +3182,7 @@
         "engine/packages/orchestrator/src/inspection/player-capability-surface-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/diagnostic-reasoning/test/capability-guard-activation.test.ts",
+        "engine/packages/diagnostic-reasoning/test/reachability-capability-exposure.test.ts",
         "engine/packages/orchestrator/test/inspection/player-capability-surface-analysis.test.ts"
       ]
     },

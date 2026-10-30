@@ -1,7 +1,12 @@
+// Cohesive source test family; same owner, feature, execution lane.
 import { describe, expect, it } from "vitest";
-import {
-  analyzeEntityAiStacks,
-} from "../../src/inspection/entity-ai-stack-analysis.js";
+import { analyzeEntityAiStacks } from "../../src/inspection/entity-ai-stack-analysis.js";
+import { parseEntityDefinition } from "../../../../analyzers/entities/src/index.js";
+import { analyzeMountSurfaces } from "../../src/inspection/mount-analysis.js";
+
+// Original source suite: engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts (Git blob b73d3194f08492c407d8115a30361f1e68bd2d9a)
+{
+
 
 const source = {
   artifactId: "fixture",
@@ -141,3 +146,34 @@ describe("entity AI stack analysis", () => {
     ).toBe(true);
   });
 });
+}
+
+// Original source suite: engine/packages/orchestrator/test/inspection/mount-analysis.test.ts (Git blob a1043194cd377122d38a552d9565fc7d7fe3cf07)
+{
+
+
+describe("mount analysis", () => {
+  it("surfaces contradictory seat declarations without inventing runtime rider state", () => {
+    const entity = parseEntityDefinition({
+      "minecraft:entity": {
+        description: { identifier: "demo:vehicle" },
+        components: {
+          "minecraft:rideable": {
+            seat_count: 1,
+            seats: [
+              { controlling_seat: true },
+              { controlling_seat: true },
+            ],
+          },
+        },
+      },
+    }, { artifactId: "fixture", relativePath: "entities/vehicle.json" });
+    expect(analyzeMountSurfaces([entity])).toMatchObject({
+      rideableEntities: 1,
+      seatCountMismatches: 1,
+      multipleControllingSeatStates: 1,
+      runtimeRelationshipStatus: "unresolved",
+    });
+  });
+});
+}

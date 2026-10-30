@@ -174,7 +174,7 @@
       "capabilityId": "domain.player-capability",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/diagnostic-reasoning/test/capability-guard-activation.test.ts",
+        "engine/packages/diagnostic-reasoning/test/reachability-capability-exposure.test.ts",
         "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-capability-surface-analysis.test.ts"
       ],
@@ -345,7 +345,7 @@
       "capabilityId": "source.entities.economy",
       "kind": "unit-contract",
       "paths": [
-        "engine/analyzers/entities/test/loot.test.ts"
+        "engine/analyzers/entities/test/loot-table.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -441,7 +441,7 @@
       "capabilityId": "source.scripts.source-map",
       "kind": "unit-contract",
       "paths": [
-        "engine/analyzers/scripts/test/recovery/source-map-binding.test.ts"
+        "engine/analyzers/scripts/test/recovery/source-recovery.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     }

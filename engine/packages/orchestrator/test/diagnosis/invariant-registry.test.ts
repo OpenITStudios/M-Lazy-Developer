@@ -1,10 +1,71 @@
+// Coherent source-level test family; no coverage or runtime claim.
 import { describe, expect, it } from "vitest";
-import type {
-  CompiledDiagnosticInvariant,
-} from "../../../knowledge/src/index.js";
-import {
-  materializeInvariantRegistry,
-} from "../../src/diagnosis/invariant-registry.js";
+import { buildInvariantIntelligence } from "../../src/diagnosis/invariant-intelligence.js";
+import { type CompiledDiagnosticInvariant } from "../../../knowledge/src/index.js";
+import { materializeInvariantRegistry } from "../../src/diagnosis/invariant-registry.js";
+
+// Original source suite: engine/packages/orchestrator/test/diagnosis/invariant-intelligence.test.ts (Git blob 418bcd107e6ec4ee9014c3552b0824b565953066)
+{
+
+
+describe("invariant intelligence orchestration", () => {
+  it("never auto-promotes challenged candidates", () => {
+    const good = Array.from({ length: 5 }, (_, index) => ({
+      schemaVersion: 1 as const,
+      tick: index,
+      players: [{
+        playerId: "p1",
+        connected: true,
+        arenaId: "arena1",
+        phase: "starting" as const,
+        progress: 0,
+      }],
+      arenas: [{
+        arenaId: "arena1",
+        activePlayerIds: ["p1"],
+        cutsceneActive: true,
+        round: 0,
+      }],
+    }));
+
+    const result = buildInvariantIntelligence({
+      knownGoodSnapshots: good,
+      historicalFailureSnapshots: [{
+        schemaVersion: 1,
+        tick: 100,
+        players: [{
+          playerId: "p1",
+          connected: true,
+          arenaId: "arena1",
+          phase: "playing",
+          progress: 0,
+        }],
+        arenas: [{
+          arenaId: "arena1",
+          activePlayerIds: ["p1"],
+          cutsceneActive: true,
+          round: 0,
+        }],
+      }],
+      options: {
+        minAntecedentMatches: 3,
+        minConfidence: 1,
+        minDistinctStates: 1,
+      },
+    });
+
+    const cutscene = result.candidates.find((item) =>
+      item.candidate.kind === "arena-cutscene-implies-starting-player",
+    );
+    expect(cutscene?.candidate.status).toBe("challenged");
+    expect(cutscene?.promotion.eligible).toBe(false);
+  });
+});
+}
+
+// Original source suite: engine/packages/orchestrator/test/diagnosis/invariant-registry.test.ts (Git blob c0b72ec0e3b1b1bf3cbdc19f745198cd1c252ebb)
+{
+
 
 function invariant(
   id: string,
@@ -89,3 +150,4 @@ describe("global invariant registry", () => {
     });
   });
 });
+}

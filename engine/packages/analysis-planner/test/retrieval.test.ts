@@ -1,11 +1,193 @@
+// Coherent Development test family, source-only consolidation.
+// Original cases and assertions remain; executable equivalence not yet proven.
 import { describe, expect, it } from "vitest";
-import {
-  retrieveResources,
-  scoreTextDocuments,
-  prepareTextDocumentScorer,
-  type CatalogResource,
-  type GraphEdge,
-} from "../src/retrieval.js";
+import { BUILTIN_ANALYSIS_CAPABILITIES, createAnalysisCapabilityRegistry, planMinimumSufficientAnalysis, assertEngineeringTaskPreconditions, routeEngineeringTask } from "../src/index.js";
+import { retrieveResources, scoreTextDocuments, prepareTextDocumentScorer, type CatalogResource, type GraphEdge } from "../src/retrieval.js";
+import { retrieveDocumentSections, type DocumentSection } from "../src/section-retrieval.js";
+
+// Original suite: engine/packages/analysis-planner/test/domain-capabilities.test.ts (blob bebc6da2eacd0d50b96d93b5944dd1ddcef8c29d)
+{
+
+
+describe("domain analysis capabilities", () => {
+  it("forms one valid builtin capability registry", () => {
+    const registry =
+      createAnalysisCapabilityRegistry(
+        BUILTIN_ANALYSIS_CAPABILITIES,
+      );
+
+    expect(registry.capabilities.length)
+      .toBe(
+        BUILTIN_ANALYSIS_CAPABILITIES.length,
+      );
+  });
+
+  it("selects inventory semantic analysis directly in remote GitHub context", () => {
+    const plan =
+      planMinimumSufficientAnalysis({
+        goal: "semantic-consistency",
+        relevantTags: [
+          "inventory",
+          "loadout",
+        ],
+        context: "REMOTE_GITHUB",
+        capabilities:
+          BUILTIN_ANALYSIS_CAPABILITIES,
+      });
+
+    expect(plan.disposition)
+      .toBe("execute");
+    expect(plan.steps[0]).toMatchObject({
+      capabilityId:
+        "inventory-lifecycle-integrity",
+      evidenceLevel: "semantic",
+      cost: "moderate",
+    });
+  });
+
+  it("selects static navigation readiness before expensive runtime navigation", () => {
+    const plan =
+      planMinimumSufficientAnalysis({
+        goal: "runtime-behavior",
+        relevantTags: [
+          "entity",
+          "navigation",
+        ],
+        context: "LIVE_MINECRAFT",
+        capabilities:
+          BUILTIN_ANALYSIS_CAPABILITIES,
+      });
+
+    expect(plan.disposition)
+      .toBe("execute");
+    expect(plan.steps[0]?.capabilityId)
+      .toBe(
+        "entity-ai-navigation-readiness",
+      );
+  });
+
+  it("advances to runtime navigation after semantic prerequisite is complete", () => {
+    const plan =
+      planMinimumSufficientAnalysis({
+        goal: "runtime-behavior",
+        relevantTags: [
+          "entity",
+          "navigation",
+        ],
+        context: "LIVE_MINECRAFT",
+        completedCapabilityIds: [
+          "entity-ai-navigation-readiness",
+        ],
+        availableEvidence: [{
+          level: "semantic",
+          evidenceIds: [
+            "entity-ai-stack:demo:zombie",
+          ],
+          quality: "usable",
+          traits: ["semantic-model"],
+        }],
+        capabilities:
+          BUILTIN_ANALYSIS_CAPABILITIES,
+      });
+
+    expect(plan.disposition)
+      .toBe("execute");
+    expect(plan.steps[0]?.capabilityId)
+      .toBe(
+        "entity-ai-navigation-runtime",
+      );
+  });
+
+  it("does not invent runtime economy capability where no controlled experiment exists", () => {
+    const plan =
+      planMinimumSufficientAnalysis({
+        goal: "runtime-behavior",
+        relevantTags: [
+          "economy",
+          "reward",
+        ],
+        context: "LIVE_MINECRAFT",
+        completedCapabilityIds: [
+          "economy-reward-integrity",
+        ],
+        availableEvidence: [{
+          level: "semantic",
+          evidenceIds: [
+            "economy:semantic",
+          ],
+          quality: "usable",
+          traits: ["semantic-model"],
+        }],
+        capabilities:
+          BUILTIN_ANALYSIS_CAPABILITIES,
+      });
+
+    expect(plan.disposition)
+      .toBe("capability-gap");
+    expect(plan.steps).toEqual([]);
+  });
+
+  it("selects persistence semantic analysis before runtime recovery", () => {
+    const plan =
+      planMinimumSufficientAnalysis({
+        goal: "runtime-behavior",
+        relevantTags: [
+          "persistence",
+          "recovery",
+        ],
+        context: "LIVE_MINECRAFT",
+        capabilities:
+          BUILTIN_ANALYSIS_CAPABILITIES,
+      });
+
+    expect(plan.disposition).toBe("execute");
+    expect(plan.steps[0]).toMatchObject({
+      capabilityId:
+        "persistence-lifecycle-integrity",
+      evidenceLevel: "semantic",
+      cost: "moderate",
+    });
+  });
+
+  it("advances persistence analysis to controlled runtime recovery after semantic evidence", () => {
+    const plan =
+      planMinimumSufficientAnalysis({
+        goal: "runtime-behavior",
+        relevantTags: [
+          "persistence",
+          "recovery",
+        ],
+        context: "LIVE_MINECRAFT",
+        completedCapabilityIds: [
+          "persistence-lifecycle-integrity",
+        ],
+        availableEvidence: [{
+          level: "semantic",
+          evidenceIds: [
+            "persistence:semantic",
+          ],
+          quality: "usable",
+          traits: ["semantic-model"],
+        }],
+        capabilities:
+          BUILTIN_ANALYSIS_CAPABILITIES,
+      });
+
+    expect(plan.disposition).toBe("execute");
+    expect(plan.steps[0]).toMatchObject({
+      capabilityId:
+        "persistence-recovery-runtime",
+      evidenceLevel: "runtime",
+      cost: "expensive",
+    });
+  });
+
+});
+}
+
+// Original suite: engine/packages/analysis-planner/test/retrieval.test.ts (blob e5c3cecbda1dcae017146c204db4fdcf17b8c571)
+{
+
 
 const resources: readonly CatalogResource[] = [
   {
@@ -278,3 +460,187 @@ describe("retrieveResources", () => {
     ).toBe(false);
   });
 });
+}
+
+// Original suite: engine/packages/analysis-planner/test/section-retrieval.test.ts (blob 386dfcc4eee09482174e45c9b4459160002c9932)
+{
+
+
+const sections: readonly DocumentSection[] = [
+  {
+    id: "document.analysis.mandatory-audit-procedure#prove",
+    documentId: "document.analysis.mandatory-audit-procedure",
+    path: "docs/analysis/mandatory-audit-procedure.md",
+    heading: "PROVE",
+    level: 2,
+    anchor: "prove",
+    startLine: 100,
+    endLine: 180,
+  },
+  {
+    id: "document.analysis.mandatory-audit-procedure#report",
+    documentId: "document.analysis.mandatory-audit-procedure",
+    path: "docs/analysis/mandatory-audit-procedure.md",
+    heading: "REPORT",
+    level: 2,
+    anchor: "report",
+    startLine: 181,
+    endLine: 240,
+  },
+  {
+    id: "document.analysis.player-lifecycle#reconnect",
+    documentId: "document.analysis.player-lifecycle",
+    path: "docs/analysis/player-lifecycle.md",
+    heading: "Reconnect",
+    level: 3,
+    anchor: "reconnect",
+    startLine: 80,
+    endLine: 120,
+  },
+];
+
+describe("retrieveDocumentSections", () => {
+  it("restricts search to selected documents", () => {
+    const results = retrieveDocumentSections(sections, {
+      text: "prove",
+      documentIds: [
+        "document.analysis.mandatory-audit-procedure",
+      ],
+    });
+
+    expect(results.map((item) => item.section.anchor)).toEqual([
+      "prove",
+    ]);
+    expect(results[0]?.reasons).toContain("document-scope");
+  });
+
+  it("can use optional semantic ranking without making it authority", () => {
+    const results = retrieveDocumentSections(sections, {
+      text: "session recovery",
+      semanticScores: {
+        "document.analysis.player-lifecycle#reconnect": 0.9,
+      },
+    });
+
+    expect(results[0]?.section.anchor).toBe("reconnect");
+    expect(results[0]?.reasons).toContain("semantic-rank");
+  });
+});
+}
+
+// Original suite: engine/packages/analysis-planner/test/task-routing.test.ts (blob eae8b16d65a45088f0b9c59a7c908e78e0ebe34a)
+{
+
+
+describe("engineering task routing", () => {
+  it("starts bug diagnosis from intent instead of mutation", () => {
+    const route =
+      routeEngineeringTask({
+        kind: "diagnose",
+        context:
+          "LOCAL_ARTIFACT",
+      });
+
+    expect(route.initialGoal)
+      .toBe(
+        "intent-classification",
+      );
+    expect(route.mutationAllowed)
+      .toBe(false);
+  });
+
+  it("requires runtime behavior for runtime-sensitive bug verification", () => {
+    const route =
+      routeEngineeringTask({
+        kind: "verify-bug",
+        context:
+          "LIVE_MINECRAFT",
+        runtimeSensitive: true,
+      });
+
+    expect(route.initialGoal)
+      .toBe(
+        "runtime-behavior",
+      );
+    expect(
+      route.requiredPreconditions,
+    ).toContain(
+      "candidate-bug",
+    );
+  });
+
+  it("keeps lower-context bug verification below the runtime proof ceiling", () => {
+    const route =
+      routeEngineeringTask({
+        kind: "verify-bug",
+        context:
+          "LOCAL_ARTIFACT",
+        runtimeSensitive: true,
+      });
+
+    expect(route.initialGoal)
+      .toBe(
+        "contradiction-proof",
+      );
+    expect(route.runtimeMayBeRequired)
+      .toBe(true);
+  });
+
+  it("keeps lower-context repair work below the runtime proof ceiling", () => {
+    const route =
+      routeEngineeringTask({
+        kind: "repair",
+        context:
+          "LOCAL_ARTIFACT",
+      });
+
+    expect(route.initialGoal)
+      .toBe(
+        "semantic-consistency",
+      );
+    expect(route.runtimeMayBeRequired)
+      .toBe(true);
+    expect(route.requiredPreconditions)
+      .toContain("approved-bug");
+  });
+
+  it("does not allow repair without Approved Bug and preservation preconditions", () => {
+    const route =
+      routeEngineeringTask({
+        kind: "repair",
+        context:
+          "LOCAL_ARTIFACT",
+      });
+
+    expect(() =>
+      assertEngineeringTaskPreconditions(
+        route,
+        {
+          hasApprovedBug:
+            true,
+        },
+      )
+    ).toThrow(
+      /repair-invariants/,
+    );
+  });
+
+  it("keeps performance conclusions below runtime proof when runtime is unavailable", () => {
+    const route =
+      routeEngineeringTask({
+        kind:
+          "performance-audit",
+        context:
+          "LOCAL_ARTIFACT",
+      });
+
+    expect(route.initialGoal)
+      .toBe(
+        "semantic-consistency",
+      );
+    expect(
+      route.runtimeMayBeRequired,
+    ).toBe(true);
+  });
+});
+}
