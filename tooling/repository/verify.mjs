@@ -198,12 +198,24 @@ if (requiredNpmVersion.startsWith("10.") && pkg.allowScripts !== undefined) {
   console.error("npm 10 does not enforce package.json#allowScripts: remove the misleading policy and disable scripts on install.");
   process.exit(1);
 }
-for (const workflow of [".github/workflows/verify.yml", ".github/workflows/package-source.yml"]) {
-  const source = readFileSync(workflow, "utf8");
-  if (!source.includes("npm ci --ignore-scripts --no-audit --no-fund")) {
-    console.error(workflow + " must install with --ignore-scripts; preserve optional esbuild platform binaries.");
+// CI verification is deliberately suspended on Local. Absence is required:
+// reintroducing those jobs must not become a silent verification prerequisite.
+for (const suspended of [
+  ".github/workflows/verify.yml",
+  ".github/workflows/repository-policy.yml",
+]) {
+  if (existsSync(suspended)) {
+    console.error("Suspended CI workflow must remain absent on Local: " + suspended);
     process.exit(1);
   }
+}
+// The separately authorized packaging-only workflow retains script-safe npm
+// installation without restoring Verify or Repository Policy CI.
+const packageWorkflow = ".github/workflows/package-source.yml";
+const packageWorkflowSource = readFileSync(packageWorkflow, "utf8");
+if (!packageWorkflowSource.includes("npm ci --ignore-scripts --include=optional --no-audit --no-fund")) {
+  console.error(packageWorkflow + " must install with --ignore-scripts; preserve optional esbuild platform binaries.");
+  process.exit(1);
 }
 
 
