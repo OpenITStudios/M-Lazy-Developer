@@ -38,38 +38,61 @@ function discoverSourceTests() {
     const insideTestTree = dir.split("/").some(segment =>
       segment === "test" || segment === "tests");
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const path = dir + "/" + entry.name;
+      const path = dir === "." ? entry.name : dir + "/" + entry.name;
       if (entry.isDirectory() && !ignored.has(entry.name) &&
           (entry.name !== "coverage" || insideTestTree)) walk(path);
       else if (entry.isFile() && /\.test\.(ts|tsx|js|mjs|cjs)$/.test(entry.name)) tests.push(path);
     }
   }
-  for (const root of [".agents", "apps", "engine", "tooling"]) walk(root);
+  walk(".");
   return tests;
 }
 
 function loadInventory() {
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
-  if (!Array.isArray(data.tests)) throw new Error("Invalid test inventory");
+  if (data.schemaVersion !== 1 || !Array.isArray(data.tests)) {
+    throw new Error("Invalid test inventory");
+  }
+  const validReviews = new Set([
+    "pending-semantic-review", "case-inventory-reviewed", "source-reviewed",
+  ]);
+  const validRecommendations = new Set([
+    "keep", "keep-provisional", "merge-candidate", "defer", "obsolete",
+  ]);
   const paths = new Set();
   for (const item of data.tests) {
-    if (typeof item.path !== "string" || !/^[a-zA-Z0-9._/-]+\.test\.(ts|tsx|js|mjs|cjs)$/.test(item.path) ||
-        item.path.split("/").includes("..") || paths.has(item.path) || !lanes.includes(item.lane) ||
+    if (!item || typeof item.path !== "string" ||
+        !/^[a-zA-Z0-9._/-]+\.test\.(ts|tsx|js|mjs|cjs)$/.test(item.path) ||
+        item.path.split("/").includes("..") || paths.has(item.path) ||
+        !lanes.includes(item.lane) || typeof item.owner !== "string" ||
+        !item.path.startsWith(item.owner + "/") ||
+        !validReviews.has(item.review) ||
+        !validRecommendations.has(item.recommendation) ||
+        typeof item.rationale !== "string" || !item.rationale.trim() ||
+        !item.triage || item.triage.owner !== item.owner ||
+        typeof item.triage.basis !== "string" || !item.triage.basis ||
+        typeof item.triage.action !== "string" || !item.triage.action ||
+        (item.triage.sourceBlobSha !== undefined &&
+          !/^[a-f0-9]{40}$/.test(item.triage.sourceBlobSha)) ||
         !existsSync(resolve(item.path))) {
-      throw new Error("Stale or invalid test inventory entry: " + item.path);
+      throw new Error("Stale or invalid test inventory entry: " +
+        String(item?.path));
     }
     paths.add(item.path);
   }
-  const missing = discoverSourceTests().filter((path) => !paths.has(path));
-  if (missing.length > 0) {
+  const discovered = new Set(discoverSourceTests());
+  const missing = [...discovered].filter(path => !paths.has(path));
+  const extra = [...paths].filter(path => !discovered.has(path));
+  if (missing.length || extra.length) {
     throw new Error(
-      "Test lane inventory omits " + missing.length + " source test(s): " +
-      missing.slice(0, 5).join(", ") + ". Classify them before using lanes.",
+      "Test inventory mismatch (missing " + missing.length +
+      ", extra " + extra.length + "); examples: " +
+      [...missing, ...extra].slice(0, 5).join(", ") +
+      ". Classify exact source tests before selecting a lane.",
     );
   }
   return data.tests;
 }
-
 function catalogClaims(catalog, path) {
   if (catalog?.schemaVersion !== 1 || !Array.isArray(catalog.facts) ||
       (catalog.relations !== undefined && !Array.isArray(catalog.relations))) {
@@ -316,6 +339,11 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
 
 const args = process.argv.slice(2);
 const mode = args[0] ?? "--acceptance";
+const registeredTests = loadInventory();
+const registeredPaths = new Set(registeredTests.map(item => item.path));
+for (const file of [...acceptanceVitestFiles, ...acceptanceNativeFiles]) {
+  if (!registeredPaths.has(file)) throw new Error("Unregistered default acceptance test: " + file);
+}
 
 let vitestFiles;
 let selectedNative;
@@ -327,11 +355,11 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = nativeFiles;
 } else if (mode === "--lane" && args.length === 2 && lanes.includes(args[1])) {
   // Provisional routing only. Not proof of coverage or permission to skip safety tests.
-  const matching = loadInventory().filter((item) => item.lane === args[1]).map((item) => item.path);
+  const matching = registeredTests.filter((item) => item.lane === args[1]).map((item) => item.path);
   selectedNative = matching.filter((path) => nativeFiles.includes(path));
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
 } else if (mode === "--list-lanes" && args.length === 1) {
-  const tests = loadInventory();
+  const tests = registeredTests;
   for (const lane of lanes) {
     console.log(lane + ": " + tests.filter((item) => item.lane === lane).length + " files (provisional)");
   }
@@ -367,7 +395,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   try {
     const startedAt = performance.now();
     const { importSpecifiers } = await import("./source-import-specifiers.mjs");
-    const result = selectAffectedTests(loadInventory(), changed,
+    const result = selectAffectedTests(registeredTests, changed,
       flags.has("--integration"), importSpecifiers, baseSha);
     const selectionElapsedMs = Math.max(0, performance.now() - startedAt);
     selectedNative = result.selected.filter(item => nativeFiles.includes(item.path))
@@ -400,7 +428,8 @@ if (mode === "--acceptance" && args.length <= 1) {
   const requested = [...new Set(args.slice(1).map((file) => file.replaceAll("\\", "/")))];
   for (const file of requested) {
     if (file.startsWith("/") || file.split("/").includes("..") ||
-        !/\.test\.(ts|tsx|js|mjs|cjs)$/.test(file) || !existsSync(resolve(file))) {
+        !/\.test\.(ts|tsx|js|mjs|cjs)$/.test(file) ||
+        !registeredPaths.has(file) || !existsSync(resolve(file))) {
       console.error("Expected existing repository test file: " + file);
       process.exit(2);
     }
