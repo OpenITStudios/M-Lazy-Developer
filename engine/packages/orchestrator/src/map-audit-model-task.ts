@@ -604,7 +604,6 @@ export function retrieveAuditTaskKnowledge(input: {
       ? input.preparedKnowledge
       : prepareAuditTaskKnowledgeIndex(input.catalog, edition);
   const { sourcesById, entries, bodyTerms, entriesByTerm } = prepared;
-  const scores = prepared.score(input.lookup.query);
   // Only records sharing the map's authored mechanic vocabulary can pass the
   // existing >=2 (or >=1) gate. Count matches using the once-built postings
   // instead of rescanning every unrelated catalog entry for every packet.
@@ -619,6 +618,10 @@ export function retrieveAuditTaskKnowledge(input: {
     .filter(([, count]) => count >= minimumMatch)
     .map(([index]) => index)
     .sort((a, b) => a - b);
+  // BM25 can only rank eligible mechanic candidates. An empty inverted
+  // intersection cannot yield a reference, so skip query scoring entirely.
+  if (candidateIndices.length === 0) return empty();
+  const scores = prepared.score(input.lookup.query);
   const candidates = candidateIndices.flatMap((index) => {
     const { kind, item, statement } = entries[index]!;
     if ((scores[item.id] ?? 0) <= 0) return [];
@@ -1453,6 +1456,19 @@ function provePackets(
     });
 }
 
+
+/** Developer method routing only; never a map-specific gameplay truth. */
+const DEVELOPER_KIND_DOMAINS: Readonly<Record<string, readonly string[]>> = {
+  actor: ["entity"], role: ["player"],
+  phase: ["round", "timing"],
+  lifecycle: ["lifecycle", "session"],
+  state: ["state", "persistence"],
+  resource: ["state", "inventory"],
+  objective: ["progression"],
+  outcome: ["round", "progression"],
+  "spatial-region": ["spatial"],
+};
+
 export function deriveAuditModelTaskPackets(input: {
   readonly admission: SelectedMapAuditAdmission;
   readonly procedure: MandatoryAuditProcedureReceipt;
@@ -1482,6 +1498,30 @@ export function deriveAuditModelTaskPackets(input: {
       ? prepareDeveloperPracticeReferenceSelector(
           input.semanticIr, input.intent.artifactId,
         ) : undefined;
+  // Source/pack inputs are immutable during this audit projection. Index
+  // authored node POSITIONS once (not Map's last-writer node): duplicate
+  // selected IDs must retain the original source-array order and all kinds.
+  // Neither these routing indexes nor vendor references create map proof.
+  const sourceNodePositionsById = new Map<string, number[]>();
+  if (selectDeveloperReference !== undefined) {
+    input.intent.nodes.forEach((node, index) => {
+      const positions = sourceNodePositionsById.get(node.id);
+      if (positions) positions.push(index);
+      else sourceNodePositionsById.set(node.id, [index]);
+    });
+  }
+  const manifestWitnesses = selectDeveloperReference === undefined ? [] :
+    (input.selectedPacks ?? [])
+      .filter(pack => pack.manifestSource !== undefined)
+      .map(pack => ({
+        packRoot: pack.root,
+        source: pack.manifestSource!,
+        ...(pack.minEngineVersion === undefined ? {} :
+          { minEngineVersion: pack.minEngineVersion }),
+        scriptModules: pack.scriptModules,
+        ...(pack.worldAttachment === undefined ? {} :
+          { worldAttachment: pack.worldAttachment }),
+      }));
   const userPressure =
     deriveAuditUserIntentSearchPressure(
       input.userIntent,
@@ -1728,82 +1768,61 @@ export function deriveAuditModelTaskPackets(input: {
               ? {}
               : { edition: input.knowledgeEdition }),
           });
-    // Reference cues require current-map source evidence and the matching
-    // typed IR file; generic bug categories or user suspicion cannot admit them.
-    // Canonical Intent kinds supply scoped lookup language, not gameplay
-    // proof; matching still requires an exact typed IR witness at the source.
-    const subjectIds = new Set(knowledgeLookup?.matchedSubjectIds ?? []);
-    const kindDomains: Readonly<Record<string, readonly string[]>> = {
-      actor: ["entity"], role: ["player"],
-      phase: ["round", "timing"],
-      lifecycle: ["lifecycle", "session"],
-      state: ["state", "persistence"],
-      resource: ["state", "inventory"],
-      objective: ["progression"],
-      outcome: ["round", "progression"],
-      "spatial-region": ["spatial"],
-    };
-    const domains = knowledgeLookup?.grounding === "SELECTED_ARTIFACT"
-      ? [...new Set([
-          // Keep canonical Knowledge domain IDs intact, including
-          // hyphenated IDs such as "script-api" and "client-feedback".
-          ...packet.knowledgeContext.map(item => item.domain.toLowerCase()),
-          ...[
-            knowledgeLookup.query,
-            ...input.intent.nodes
-              .filter(node => subjectIds.has(node.id))
-              .flatMap(node => [node.kind, ...(kindDomains[node.kind] ?? [])]),
-          ].join(" ").toLowerCase().split(/[^a-z0-9]+/g),
-        ].filter(Boolean))]
-      : [];
-    const versionQuestion = domains.some(term => [
-      "manifest", "version", "versions", "edition", "compatibility",
-      "compatible", "experiments", "experiment", "api",
-    ].includes(term));
-    // A causal investigation can carry an exact guard/effect source site
-    // even when its broad Gameplay Intent subject only names the source file.
-    // Use ONLY current-artifact evidence already authorized for this packet,
-    // and favor operation-level locators over same-file matches. This changes
-    // developer REFERENCE questions, never the causal proof/admission gate.
-    const scopedSourceLocators = unique(packet.evidenceContext.flatMap(item =>
-      item.kind === "selected-artifact-evidence" && item.locator
-        ? [item.locator] : []));
-    const candidateSourceLocators = unique([
-      ...(knowledgeLookup?.sourceLocators ?? []),
-      ...scopedSourceLocators,
-    ]);
-    const preciseSourceSite = (locator: string): boolean =>
-      /(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator);
-    const scopedSites = scopedSourceLocators.filter(preciseSourceSite);
-    const allSites = candidateSourceLocators.filter(preciseSourceSite);
-    const referenceSourceLocators =
-      packet.causalLinkId !== undefined && scopedSites.length > 0
-        ? scopedSites
-        : allSites.length > 0 ? allSites : candidateSourceLocators;
-    const reference = selectDeveloperReference === undefined ||
-      knowledgeLookup?.grounding !== "SELECTED_ARTIFACT" ||
-      referenceSourceLocators.length === 0 ||
-      domains.length === 0
-        ? undefined
-        : selectDeveloperReference({
-            data: input.developerPractice!,
-            domains: [...new Set([
-              ...domains,
-              ...(versionQuestion ? ["manifest", "edition", "script-api"] : []),
-            ])],
-            sourceLocators: referenceSourceLocators,
-            manifestWitnesses: (input.selectedPacks ?? [])
-              .filter(pack => pack.manifestSource !== undefined)
-              .map(pack => ({
-                packRoot: pack.root,
-                source: pack.manifestSource!,
-                ...(pack.minEngineVersion === undefined ? {} :
-                  { minEngineVersion: pack.minEngineVersion }),
-                scriptModules: pack.scriptModules,
-                ...(pack.worldAttachment === undefined ? {} :
-                  { worldAttachment: pack.worldAttachment }),
-              })),
-          });
+    // This entire enrichment is advisory. When there is no selected-source
+    // developer selector or grounded subject, do not tokenize, traverse every
+    // authored node, or rebuild manifest witnesses for each of thousands of
+    // unrelated proof tasks. Canonical Knowledge/proof tasks stay unchanged.
+    let reference: CompiledDeveloperPracticeReferenceContext | undefined;
+    if (selectDeveloperReference !== undefined &&
+        knowledgeLookup?.grounding === "SELECTED_ARTIFACT") {
+      const subjectIds = new Set(knowledgeLookup.matchedSubjectIds);
+      const authoredKinds = [...subjectIds]
+        .flatMap(id => sourceNodePositionsById.get(id) ?? [])
+        .sort((left, right) => left - right)
+        .flatMap(index => {
+          const kind = input.intent.nodes[index]!.kind;
+          return [kind, ...(DEVELOPER_KIND_DOMAINS[kind] ?? [])];
+        });
+      const domains = [...new Set([
+        // Keep canonical hyphenated domain IDs untouched. Maintain original
+        // full-array kind order, including any duplicated source subject ID.
+        ...packet.knowledgeContext.map(item => item.domain.toLowerCase()),
+        ...[knowledgeLookup.query, ...authoredKinds]
+          .join(" ").toLowerCase().split(/[^a-z0-9]+/g),
+      ].filter(Boolean))];
+      const versionQuestion = domains.some(term => [
+        "manifest", "version", "versions", "edition", "compatibility",
+        "compatible", "experiments", "experiment", "api",
+      ].includes(term));
+      // A causal task can carry a precise authored guard/effect site when
+      // its broader Gameplay Intent subject only names the source file.
+      const scopedSourceLocators = unique(packet.evidenceContext.flatMap(item =>
+        item.kind === "selected-artifact-evidence" && item.locator
+          ? [item.locator] : []));
+      const candidateSourceLocators = unique([
+        ...(knowledgeLookup.sourceLocators ?? []),
+        ...scopedSourceLocators,
+      ]);
+      const preciseSourceSite = (locator: string): boolean =>
+        /(?:#[/]\\S+|#L[1-9]\\d*(?:-L?[1-9]\\d*)?(?::[1-9]\\d*)?|:[1-9]\\d*(?::[1-9]\\d*)?)$/.test(locator);
+      const scopedSites = scopedSourceLocators.filter(preciseSourceSite);
+      const allSites = candidateSourceLocators.filter(preciseSourceSite);
+      const referenceSourceLocators =
+        packet.causalLinkId !== undefined && scopedSites.length > 0
+          ? scopedSites
+          : allSites.length > 0 ? allSites : candidateSourceLocators;
+      if (referenceSourceLocators.length > 0 && domains.length > 0) {
+        reference = selectDeveloperReference({
+          data: input.developerPractice!,
+          domains: [...new Set([
+            ...domains,
+            ...(versionQuestion ? ["manifest", "edition", "script-api"] : []),
+          ])],
+          sourceLocators: referenceSourceLocators,
+          manifestWitnesses,
+        });
+      }
+    }
     return {
       ...packet,
       ...(userSearchContext === undefined
