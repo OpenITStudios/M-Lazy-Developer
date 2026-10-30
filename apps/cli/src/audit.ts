@@ -178,6 +178,12 @@ async function main(): Promise<void> {
       artifactFingerprint: resolvedAudit.identity.artifactFingerprint,
       auditRevision: resolvedAudit.auditRevision,
       auditCallElapsedMs,
+      // Initial-run observations cannot claim timing for a later accepted
+      // model-response revision. Preserve both revision identities.
+      ...(audit.timingObservations === undefined ? {} : {
+        initialAuditRevision: audit.auditRevision,
+        initialAuditAvailability: audit.timingObservations,
+      }),
       steps: steps.map(step => ({
         pass: step.pass,
         sourceIndexAction: step.action,

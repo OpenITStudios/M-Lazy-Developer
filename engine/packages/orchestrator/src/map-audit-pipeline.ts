@@ -222,6 +222,34 @@ export interface SelectedMapAuditRun {
   readonly gameplayArchitecture: GameplayArchitectureNavigation;
   readonly userIntent?: AuditUserIntentEnvelope;
   readonly demandReconciliation: AuditDemandReconciliation;
+  /** Initial-run wall-clock observations only: NOT a new source/proof owner.
+   * Continuations rebuild proof from current evidence and do not inherit this
+   * timing as if their findings had been discovered during the initial run.
+   */
+  readonly timingObservations?: {
+    readonly scope: "INITIAL_AUDIT_ONLY_NOT_EXECUTED_GAMEPLAY";
+    readonly inspectionReadyElapsedMs: number;
+    /** The whole current-source issue projection completed here.
+     * This is an upper-bound to first result availability in this pipeline,
+     * not an individual detector's discovery time or emitted report time.
+     */
+    readonly scopedFindingProjectionElapsedMs: number;
+    readonly firstScopedFinding?: {
+      readonly availableElapsedMs: number;
+      readonly causalLinkId: string;
+      readonly issueType: AuditIssueProjection["issueType"];
+      readonly status: AuditIssueProjection["status"];
+    };
+    readonly provenCount: number;
+    readonly needValidationCount: number;
+    readonly firstNextDecision?: {
+      readonly availableElapsedMs: number;
+      readonly taskId: string;
+      readonly stage: SelectedMapAuditStage;
+      readonly kind: AuditModelTaskPacket["kind"];
+    };
+    readonly reportReadyElapsedMs: number;
+  };
   readonly executionTrace: AuditExecutionTrace;
   readonly stageOrder: readonly SelectedMapAuditStage[];
   readonly status: "READY_FOR_REVIEW" | "BLOCKED";
@@ -677,7 +705,12 @@ function assembleSelectedMapAuditRun(
   runtimeProbeTranscript?: RuntimeProbeTranscript,
   knowledgeCatalog?: KnowledgeCatalog,
   developerPractice?: DeveloperPracticeReferenceData,
+  initialRunStartedAt?: number,
 ): SelectedMapAuditRun {
+  const elapsedSinceInitialStart = (): number | undefined =>
+    initialRunStartedAt === undefined ? undefined :
+      Math.max(0, performance.now() - initialRunStartedAt);
+  const inspectionReadyElapsedMs = elapsedSinceInitialStart();
   const identity =
     deriveSelectedMapAuditIdentity(inspection);
   const procedure =
@@ -839,6 +872,19 @@ function assembleSelectedMapAuditRun(
       inspection.capabilityExposure,
     ...(userIntent === undefined ? {} : { userIntent }),
   });
+  // The canonical source/proof gate has now projected all eligible findings.
+  // Earlier parser candidates and historical hints cannot start the clock.
+  const scopedFindingProjectionElapsedMs = elapsedSinceInitialStart();
+  const projectedFindings: readonly AuditIssueProjection[] = [
+    ...control.issueLanes.BUG,
+    ...control.issueLanes.DESIGN_MISMATCH,
+  ];
+  // A PROVEN finding is surfaced ahead of unconfirmed work. If only
+  // NEED_VALIDATION exists, it remains a scoped deciding-proof task, NOT a bug
+  // proven by the game. No finding means this observation is absent, not 0 ms.
+  const firstScopedFinding =
+    projectedFindings.find(item => item.status === "PROVEN") ??
+    projectedFindings[0];
   const needValidationFindings = [
     ...control.issueLanes.BUG,
     ...control.issueLanes.DESIGN_MISMATCH,
@@ -889,6 +935,7 @@ function assembleSelectedMapAuditRun(
   // A source-only continuation without those inputs must abstain rather than
   // silently carry stale reference statements into the next audit revision.
   const modelTaskPackets = freshModelTaskPackets;
+  const firstDecisionAvailableElapsedMs = elapsedSinceInitialStart();
   const allFindings = [
     ...control.issueLanes.BUG,
     ...control.issueLanes.DESIGN_MISMATCH,
@@ -957,6 +1004,38 @@ function assembleSelectedMapAuditRun(
               control.fullMapReplica,
           }),
     });
+  const reportReadyElapsedMs = elapsedSinceInitialStart();
+  const timingObservations =
+    inspectionReadyElapsedMs === undefined ||
+    scopedFindingProjectionElapsedMs === undefined ||
+    firstDecisionAvailableElapsedMs === undefined ||
+    reportReadyElapsedMs === undefined
+      ? undefined
+      : {
+          scope: "INITIAL_AUDIT_ONLY_NOT_EXECUTED_GAMEPLAY" as const,
+          inspectionReadyElapsedMs,
+          scopedFindingProjectionElapsedMs,
+          ...(firstScopedFinding === undefined ? {} : {
+            firstScopedFinding: {
+              availableElapsedMs: scopedFindingProjectionElapsedMs,
+              causalLinkId: firstScopedFinding.causalLinkId,
+              issueType: firstScopedFinding.issueType,
+              status: firstScopedFinding.status,
+            },
+          }),
+          provenCount: projectedFindings.filter(item =>
+            item.status === "PROVEN").length,
+          needValidationCount: needValidationFindings.length,
+          ...(modelTaskPackets[0] === undefined ? {} : {
+            firstNextDecision: {
+              availableElapsedMs: firstDecisionAvailableElapsedMs,
+              taskId: modelTaskPackets[0].id,
+              stage: modelTaskPackets[0].stage,
+              kind: modelTaskPackets[0].kind,
+            },
+          }),
+          reportReadyElapsedMs,
+        };
 
   return {
     schemaVersion: 1,
@@ -969,6 +1048,7 @@ function assembleSelectedMapAuditRun(
       ? {}
       : { userIntent }),
     demandReconciliation: reconciliation,
+    ...(timingObservations === undefined ? {} : { timingObservations }),
     admission,
     stageOrder: SELECTED_MAP_AUDIT_STAGE_ORDER,
     modelTaskPackets,
@@ -984,6 +1064,7 @@ function assembleSelectedMapAuditRun(
 export async function runSelectedMapAudit(
   input: SelectedMapAuditInput,
 ): Promise<SelectedMapAuditRun> {
+  const initialRunStartedAt = performance.now();
   let userIntent: AuditUserIntentEnvelope | undefined;
 
   if (input.userIntent !== undefined) {
@@ -1052,6 +1133,7 @@ export async function runSelectedMapAudit(
     input.runtimeProbeTranscript,
     input.knowledgeCatalog,
     input.developerPractice,
+    initialRunStartedAt,
   );
 }
 

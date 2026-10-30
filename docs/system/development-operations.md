@@ -118,6 +118,23 @@ gameplay/runtime        → actual live execution evidence, otherwise UNKNOWN
 
 The existing selected-map audit now records actual per-invocation wall-clock durations for initial ZIP fingerprint/extraction, each prepared working-copy copy, each LevelDB read or snapshot reuse, and source indexing (parsed versus reused), with full per-pass inspection elapsed time already reported by the canonical demand-reconciliation owner. These measurements are **observations**, not a guarantee that the game was executed or that a speedup occurred. The optional `npm run audit -- <selected.mcworld> --brief --timings` appends one `AUDIT_TIMINGS` JSON line to standard error. This keeps the canonical JSON/brief/handoff standard output, audit revision, report admission and exit status unchanged; no second report/cache/CI workflow is introduced. Report assembly is not included in `inspectionElapsedMs`; the separate `auditCallElapsedMs` covers the full `runSelectedMapAudit()` call only. Archive preparation is counted once and not multiplied by the number of reconciliation passes. A native LevelDB failure remains an incomplete scan even if its elapsed time is measured.
 
+The same optional `--timings` output now includes `initialAuditAvailability`, bound
+to `initialAuditRevision` even if accepted model responses produce a different
+final report revision. `inspectionReadyElapsedMs` ends after the last required
+RIG pass; `scopedFindingProjectionElapsedMs` records completion of the
+**canonical evidence-admitted finding projection**, not the time a detector
+first encountered a suspicious source site. The optional
+`firstScopedFinding` is PROVEN if one exists, otherwise NEED_VALIDATION
+with its status unchanged; it is **absent** if there are no scoped findings,
+never fabricated as 0 ms. `firstNextDecision` records the earliest existing
+stage-ordered model task, including mandatory checkpoint work, without
+executing or approving that task. `reportReadyElapsedMs` ends after the
+canonical V2 report is assembled but excludes CLI rendering and stdout.
+All values are monotonic process observations of source analysis; they do
+not prove that Minecraft ran, that a finding was published earlier, or that
+optimization improved latency. Continuation revisions recompute proof and
+do not inherit first-finding timing as new observed execution.
+
 ### One-run risk-based test selection (no new CI)
 
 The existing `tooling/repository/run-tests.mjs` remains the **single test runner**; AI chooses its smallest defensible test set from exact GitHub `Local` source changes and the present risk. The full `test-inventory.json` still owns all five lanes and every source test, even when only a subset is executed. When actual repo code and dependencies are available to ChatGPT, use:

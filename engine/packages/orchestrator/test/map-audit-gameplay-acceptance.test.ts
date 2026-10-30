@@ -262,6 +262,58 @@ function expectReconstructionContract(
   if (passes?.length === 2 && passes[0]?.snapshotReusable) {
     expect(passes[1]?.action).toBe("REUSED");
   }
+  // These are wall-clock observations of source/report production, NOT
+  // Minecraft execution or evidence that a defect was found earlier.
+  const timing = result.timingObservations;
+  expect(timing?.scope).toBe("INITIAL_AUDIT_ONLY_NOT_EXECUTED_GAMEPLAY");
+  for (const value of [
+    timing?.inspectionReadyElapsedMs,
+    timing?.scopedFindingProjectionElapsedMs,
+    timing?.reportReadyElapsedMs,
+  ]) {
+    expect(Number.isFinite(value)).toBe(true);
+    expect(value).toBeGreaterThanOrEqual(0);
+  }
+  expect(timing!.inspectionReadyElapsedMs)
+    .toBeLessThanOrEqual(timing!.scopedFindingProjectionElapsedMs);
+  expect(timing!.scopedFindingProjectionElapsedMs)
+    .toBeLessThanOrEqual(timing!.reportReadyElapsedMs);
+  const projectedFindings = [
+    ...result.issueLanes.BUG, ...result.issueLanes.DESIGN_MISMATCH,
+  ];
+  expect(timing?.provenCount).toBe(
+    projectedFindings.filter(item => item.status === "PROVEN").length,
+  );
+  expect(timing?.needValidationCount).toBe(
+    projectedFindings.filter(item => item.status === "NEED_VALIDATION").length,
+  );
+  if (projectedFindings.length === 0) {
+    expect(timing?.firstScopedFinding).toBeUndefined();
+  } else {
+    expect(timing?.firstScopedFinding).toMatchObject({
+      availableElapsedMs: timing?.scopedFindingProjectionElapsedMs,
+    });
+    expect(projectedFindings).toContainEqual(
+      expect.objectContaining({
+        causalLinkId: timing?.firstScopedFinding?.causalLinkId,
+        status: timing?.firstScopedFinding?.status,
+        issueType: timing?.firstScopedFinding?.issueType,
+      }),
+    );
+  }
+  if (result.modelTaskPackets.length === 0) {
+    expect(timing?.firstNextDecision).toBeUndefined();
+  } else {
+    expect(timing?.firstNextDecision).toMatchObject({
+      taskId: result.modelTaskPackets[0]?.id,
+      stage: result.modelTaskPackets[0]?.stage,
+      kind: result.modelTaskPackets[0]?.kind,
+    });
+    expect(timing!.firstNextDecision!.availableElapsedMs)
+      .toBeGreaterThanOrEqual(timing!.scopedFindingProjectionElapsedMs);
+    expect(timing!.firstNextDecision!.availableElapsedMs)
+      .toBeLessThanOrEqual(timing!.reportReadyElapsedMs);
+  }
   expect(result.mapAuditReport.auditTarget).toMatchObject({
     source: "selected-audit-runtime-target-not-live-observation",
   });
