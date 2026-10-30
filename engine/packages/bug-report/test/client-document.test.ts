@@ -1,10 +1,15 @@
-import { describe, expect, it } from "vitest";
-import {
-  projectBugReportClientDocument,
-  reviewBugReportClientDocument,
-  type BugReportV2,
-} from "../src/index.js";
+// Contract-preserving consolidated report test cases. Existing cases kept.
+import { describe } from "vitest";
+import { expect } from "vitest";
+import { it } from "vitest";
+import { projectBugReportClientDocument } from "../src/index.js";
+import { reviewBugReportClientDocument } from "../src/index.js";
+import { type BugReportV2 } from "../src/index.js";
+import { BUG_REPORT_V2_SCHEMA } from "../src/index.js";
+import { BUG_REPORT_V2_LABELS } from "../src/index.js";
 
+// Original suite engine/packages/bug-report/test/client-document.test.ts, blob 06d6ddafdbef92d028101345166185852360d7c2
+{
 function report(): BugReportV2 {
   return {
     schema: "m-bedrock-bug-report/v2",
@@ -140,3 +145,92 @@ describe("client bug report document projection", () => {
     ).toEqual([]);
   });
 });
+}
+
+// Original suite engine/packages/bug-report/test/document-client-presentation.test.ts, blob 2c6f38efeabdfdf68606c14a5c3a9d4398f05bd7
+{
+describe("bug report client presentation", () => {
+  it("projects canonical metadata and presentation-only checklists", () => {
+    const report: BugReportV2 = {
+      schema: BUG_REPORT_V2_SCHEMA,
+      map: {
+        name: "Audit Map",
+        mapVersion: "1.0.0",
+        drive: "https://drive.google.com/file/d/map/view",
+        baseVersion: "1.0.0",
+        testedVersion: "1.26.30",
+      },
+      repairBy: "developer",
+      bugs: [{
+        id: "BUG-AUD-1",
+        fixed: false,
+        severity: "major",
+        category: "game-flow",
+        foundBy: "ai",
+        title: "Restricted action remains exposed",
+        problem: "Ordinary players can trigger a restricted action.",
+        expected: "Only authorized players can trigger the action.",
+        observed: "The action can be triggered without authorization.",
+        reproduction: [
+          "Enter the affected gameplay area.",
+          "Trigger the interaction as a normal player.",
+        ],
+        suggestedFix: "Require the existing authorization gate.",
+        aiAnalysis: "Root Cause\nAuthorization is not enforced.",
+        relevantCode: [{
+          file: "scripts/action.ts",
+          reason: "Owns the interaction path.",
+        }],
+        mustPreserve: [
+          "Authorized developer workflow remains available.",
+        ],
+      }],
+    };
+
+    const document =
+      projectBugReportClientDocument(report, {
+        includeMinor: true,
+      });
+
+    expect(document.issues[0]).toMatchObject({
+      id: "BUG-AUD-1",
+      category: "game-flow",
+      foundBy: "ai",
+      workChecklist: [
+        "Reproduce issue",
+        "Apply or confirm fix",
+        "Retest expected behavior",
+        "Confirm no regression",
+      ],
+    });
+    expect(
+      document.issues[0]?.technicalAnalysis,
+    ).toContain("Root Cause");
+    expect(
+      reviewBugReportClientDocument(document),
+    ).toEqual([]);
+  });
+});
+}
+
+// Original suite engine/packages/bug-report/test/vocabulary.test.ts, blob 68a65b865517fa0be42a89e8c911608f008e1eef
+{
+describe("bug report v2 vocabulary", () => {
+  it("keeps canonical frontend labels explicit and stable", () => {
+    expect(BUG_REPORT_V2_LABELS).toMatchObject({
+      mapVersion: "Map Version",
+      drive: "Map Drive",
+      baseVersion: "Base Version",
+      testedVersion: "Tested Version",
+      repairBy: "Repair By",
+      bugs: "Bugs",
+      fixed: "Fixed",
+      severity: "Severity",
+      foundBy: "Found By",
+      aiAnalysis: "AI Analysis",
+      suggestedFix: "Suggested Fix",
+      mustPreserve: "Must Preserve",
+    });
+  });
+});
+}

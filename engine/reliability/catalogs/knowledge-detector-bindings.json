@@ -326,7 +326,7 @@
         "engine/adapters/mcstructure/src/command-chain.ts"
       ],
       "proofPaths": [
-        "engine/adapters/mcstructure/test/command-chain.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -337,7 +337,7 @@
         "engine/adapters/mcstructure/src/command-chain.ts"
       ],
       "proofPaths": [
-        "engine/adapters/mcstructure/test/command-chain.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -347,7 +347,7 @@
         "engine/adapters/mcstructure/src/command-chain.ts"
       ],
       "proofPaths": [
-        "engine/adapters/mcstructure/test/command-chain.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -358,7 +358,7 @@
         "engine/adapters/mcstructure/src/command-chain.ts"
       ],
       "proofPaths": [
-        "engine/adapters/mcstructure/test/command-chain.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -1480,8 +1480,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1492,8 +1491,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1504,8 +1502,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1516,8 +1513,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1528,8 +1524,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1540,8 +1535,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1552,8 +1546,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1564,8 +1557,7 @@
         "engine/packages/compatibility/src/index.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -1578,7 +1570,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/blocks/test/education-permission.test.ts",
-        "engine/adapters/mcstructure/test/footprint.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -1591,7 +1583,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/blocks/test/education-permission.test.ts",
-        "engine/adapters/mcstructure/test/footprint.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -1604,7 +1596,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/blocks/test/education-permission.test.ts",
-        "engine/adapters/mcstructure/test/footprint.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -1617,7 +1609,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/blocks/test/education-permission.test.ts",
-        "engine/adapters/mcstructure/test/footprint.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -1628,8 +1620,7 @@
         "engine/analyzers/manifest/src/compatibility.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/manifest/test/education.test.ts",
-        "engine/analyzers/manifest/test/compatibility.test.ts"
+        "engine/analyzers/manifest/test/analyze.test.ts"
       ]
     },
     {
@@ -1640,8 +1631,7 @@
         "engine/analyzers/manifest/src/compatibility.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/manifest/test/education.test.ts",
-        "engine/analyzers/manifest/test/compatibility.test.ts"
+        "engine/analyzers/manifest/test/analyze.test.ts"
       ]
     },
     {
@@ -1652,8 +1642,7 @@
         "engine/analyzers/manifest/src/compatibility.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/manifest/test/education.test.ts",
-        "engine/analyzers/manifest/test/compatibility.test.ts"
+        "engine/analyzers/manifest/test/analyze.test.ts"
       ]
     },
     {
@@ -3118,7 +3107,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4080,9 +4069,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4095,9 +4082,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4110,9 +4095,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4124,8 +4107,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4137,8 +4119,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4151,9 +4132,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4165,8 +4144,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4179,9 +4157,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4194,9 +4170,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4209,9 +4183,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4224,9 +4196,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4239,9 +4209,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4253,8 +4221,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4266,8 +4233,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4280,9 +4246,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4295,9 +4259,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4309,8 +4271,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4322,8 +4283,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4336,9 +4296,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4350,8 +4308,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4364,9 +4321,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4379,9 +4334,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4394,9 +4347,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4409,9 +4360,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4424,9 +4373,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4438,8 +4385,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4452,9 +4398,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4467,9 +4411,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4482,9 +4424,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4497,9 +4437,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4512,9 +4450,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4527,9 +4463,7 @@
         "engine/analyzers/diagnostics/src/script/script-event-findings.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/diagnostics/test/script/script-method-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-event-findings.test.ts",
-        "engine/analyzers/diagnostics/test/script/script-return-contract-findings.test.ts"
+        "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts"
       ]
     },
     {
@@ -4726,7 +4660,7 @@
         "engine/adapters/mcstructure/src/command-chain.ts"
       ],
       "proofPaths": [
-        "engine/adapters/mcstructure/test/command-chain.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -4736,7 +4670,7 @@
         "engine/adapters/mcstructure/src/command-chain.ts"
       ],
       "proofPaths": [
-        "engine/adapters/mcstructure/test/command-chain.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -4796,7 +4730,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/commands/test/structure-tickingarea.test.ts",
-        "engine/adapters/mcstructure/test/placement-transform.test.ts",
+        "engine/adapters/mcstructure/test/mcstructure.test.ts",
         "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts"
       ]
     },
@@ -5004,7 +4938,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
-        "engine/adapters/mcstructure/test/placement-transform.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -5018,7 +4952,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
-        "engine/adapters/mcstructure/test/placement-transform.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -5032,7 +4966,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
-        "engine/adapters/mcstructure/test/placement-transform.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -5046,7 +4980,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
-        "engine/adapters/mcstructure/test/placement-transform.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
@@ -5060,7 +4994,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
-        "engine/adapters/mcstructure/test/placement-transform.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {

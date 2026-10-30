@@ -1,18 +1,77 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
-import {
-  allocateBugIds,
-  buildBugReportFromConfirmedDefects,
-  deriveRepairUnitIdsFromSourceEvidence,
-  groupConfirmedDefects,
-  deriveConfirmedDefectSemanticKey,
-  projectConfirmedDefects,
-  type ConfirmedDefect,
-} from "../src/index.js";
+// Contract-preserving consolidated report test cases. Existing cases kept.
+import { describe } from "vitest";
+import { expect } from "vitest";
+import { it } from "vitest";
+import { projectConfirmedDefects } from "../src/index.js";
+import { type ConfirmedDefect } from "../src/index.js";
+import { allocateBugIds } from "../src/index.js";
+import { buildBugReportFromConfirmedDefects } from "../src/index.js";
+import { deriveRepairUnitIdsFromSourceEvidence } from "../src/index.js";
+import { groupConfirmedDefects } from "../src/index.js";
+import { deriveConfirmedDefectSemanticKey } from "../src/index.js";
 
+// Original suite engine/packages/bug-report/test/engineering-analysis-projection.test.ts, blob 74efd0fe31c2d91cdcca9e0c0c1fe7743b292025
+{
+describe("engineering analysis projection", () => {
+  it("merges engineering analysis into persisted Technical Analysis without changing V2 schema", () => {
+    const defect: ConfirmedDefect = {
+      semanticKey: "subjects=arena|invariants=inv:capacity|failure=session-concurrency",
+      subjectIds: ["arena"],
+      foundBy: "ai",
+      confirmation: {
+        basis: "authored-contract-violation",
+        evidence: "Selected source contradicts the stated design contract.",
+      },
+      impact: {
+        progression: "degraded",
+        recovery: "abnormal",
+        stability: "stable",
+        coreMechanic: "materially-wrong",
+        importantState: "materially-wrong",
+        fairness: "materially-affected",
+      },
+      primaryFailure: "session-concurrency",
+      title: "Arena concurrency is capped below available capacity",
+      problem: "Teams beyond the second active arena are queued.",
+      expected: {
+        authority: "selected-artifact",
+        statement: "Independent arenas should remain available concurrently.",
+        evidenceIds: ["design:arena-layout"],
+      },
+      observed: {
+        statement: "Only two sessions are admitted.",
+        evidenceIds: ["source:cap"],
+      },
+      aiAnalysis: "Static contradiction found.",
+      engineeringAnalysis: "Root Cause\nGlobal concurrency gate is lower than available arena capacity.",
+      sourceEvidence: [{
+        source: {
+          artifactId: "map:test",
+          relativePath: "scripts/arena.ts",
+          range: { lineStart: 10, lineEnd: 10 },
+        },
+        reason: "Declares concurrency cap.",
+      }],
+      brokenInvariantIds: ["inv:capacity"],
+      repairUnitIds: ["source-range:scripts/arena.ts#L10-L10"],
+    };
+
+    const [projected] = projectConfirmedDefects({
+      name: "Defense",
+      mapVersion: "1.1.1",
+      drive: "https://drive.google.com/test",
+      baseVersion: "1.1.0",
+      testedVersion: "1.1.1",
+    }, [defect]);
+
+    expect(projected?.aiAnalysis).toContain("Static contradiction found.");
+    expect(projected?.aiAnalysis).toContain("Root Cause");
+  });
+});
+}
+
+// Original suite engine/packages/bug-report/test/project-confirmed-defect.test.ts, blob 82fa54ab85252091601beb752714212db680fc7d
+{
 const map = {
   name: "Beach Bedwars",
   mapVersion: "1.0.4",
@@ -380,3 +439,4 @@ describe("confirmed defect projection", () => {
     );
   });
 });
+}

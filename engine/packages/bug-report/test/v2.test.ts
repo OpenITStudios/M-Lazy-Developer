@@ -1,16 +1,70 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
-import {
-  BUG_REPORT_V2_SCHEMA,
-  bugReportV2Progress,
-  parseBugReportV2Json,
-  serializeBugReportV2,
-  type BugReportV2,
-} from "../src/index.js";
+// Contract-preserving consolidated report test cases. Existing cases kept.
+import { readFileSync } from "node:fs";
+import { describe } from "vitest";
+import { expect } from "vitest";
+import { it } from "vitest";
+import { BUG_FINDER_CATEGORIES } from "../src/index.js";
+import { BUG_REPORT_V2_FOUND_BY_VALUES } from "../src/index.js";
+import { BUG_REPORT_V2_ISSUE_TYPES } from "../src/index.js";
+import { BUG_REPORT_V2_REPAIR_BY_VALUES } from "../src/index.js";
+import { BUG_SEVERITIES } from "../src/index.js";
+import { BUG_REPORT_V2_SCHEMA } from "../src/index.js";
+import { bugReportV2Progress } from "../src/index.js";
+import { parseBugReportV2Json } from "../src/index.js";
+import { serializeBugReportV2 } from "../src/index.js";
+import { type BugReportV2 } from "../src/index.js";
 
+// Original suite engine/packages/bug-report/test/schema-runtime-parity.test.ts, blob f685b14a4f4120faf86187296bac384cf104881b
+{
+interface EnumSchema {
+  readonly enum?: readonly string[];
+}
+
+interface BugReportSchema {
+  readonly properties?: {
+    readonly repairBy?: EnumSchema;
+  };
+  readonly $defs?: {
+    readonly bug?: {
+      readonly properties?: {
+        readonly severity?: EnumSchema;
+        readonly category?: EnumSchema;
+        readonly foundBy?: EnumSchema;
+        readonly issueType?: EnumSchema;
+      };
+    };
+  };
+}
+
+function schema(): BugReportSchema {
+  const url = new URL(
+    "../../../schemas/bug-report/v2.schema.json",
+    import.meta.url,
+  );
+  return JSON.parse(readFileSync(url, "utf8")) as BugReportSchema;
+}
+
+describe("Bug Report V2 schema/runtime parity", () => {
+  it("keeps canonical enum values aligned", () => {
+    const value = schema();
+    const bug = value.$defs?.bug?.properties;
+
+    expect(value.properties?.repairBy?.enum)
+      .toEqual(BUG_REPORT_V2_REPAIR_BY_VALUES);
+    expect(bug?.severity?.enum)
+      .toEqual(BUG_SEVERITIES);
+    expect(bug?.category?.enum)
+      .toEqual(BUG_FINDER_CATEGORIES);
+    expect(bug?.foundBy?.enum)
+      .toEqual(BUG_REPORT_V2_FOUND_BY_VALUES);
+    expect(bug?.issueType?.enum)
+      .toEqual(BUG_REPORT_V2_ISSUE_TYPES);
+  });
+});
+}
+
+// Original suite engine/packages/bug-report/test/v2.test.ts, blob 7a2d4eed7449a351e6e782b2cbe633bd45ec21d6
+{
 function report(): BugReportV2 {
   return {
     schema: BUG_REPORT_V2_SCHEMA,
@@ -166,3 +220,4 @@ describe("bug report v2", () => {
   });
 
 });
+}
