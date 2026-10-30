@@ -1,4 +1,4 @@
-// Source-preserving consolidation: original test cases remain in isolated lexical blocks.
+// Consolidated source suites with one source-identical v2 parsing regression deduplicated.
 import { describe, expect, it } from "vitest";
 import { confirmDefectForReport, createBugReportV2, parseBugReportToCurrent, BUG_REPORT_SCHEMA, normalizeBugReportV1, parseBugReportJson, parseBugReportV1, BUG_REPORT_WORKSPACE_DIRECTORY, buildBugReportWorkspacePath, BUG_REPORT_V2_SCHEMA, parseBugReportV2Json, promoteConfirmedBugsToV2, reviewConfirmedBugInputs, serializeBugReportV1, BUG_FINDER_CATEGORIES, BUG_REPORT_V2_FOUND_BY_VALUES, BUG_REPORT_V2_ISSUE_TYPES, BUG_REPORT_V2_REPAIR_BY_VALUES, BUG_SEVERITIES, bugReportV2Progress, serializeBugReportV2 } from "../src/index.js";
 import type { CreateBugReportV2Input, BugReportBug, BugReportV1, BugReportV2 } from "../src/index.js";
@@ -748,35 +748,6 @@ describe("confirmed bug promotion", () => {
     expect(issues.map((issue) => issue.code)).toContain(
       "too-many-relevant-code-locations",
     );
-  });
-
-  it("requires the canonical map Drive URL", () => {
-    const missing = JSON.parse(
-      JSON.stringify(report()),
-    ) as {
-      map: Record<string, unknown>;
-    };
-    delete missing.map.drive;
-
-    const missingResult =
-      parseBugReportV2Json(
-        JSON.stringify(missing),
-      );
-    expect(missingResult.ok).toBe(false);
-
-    const invalid = JSON.parse(
-      JSON.stringify(report()),
-    ) as {
-      map: Record<string, unknown>;
-    };
-    invalid.map.drive =
-      "https://example.com/map";
-
-    const invalidResult =
-      parseBugReportV2Json(
-        JSON.stringify(invalid),
-      );
-    expect(invalidResult.ok).toBe(false);
   });
 
 });

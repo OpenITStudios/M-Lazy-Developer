@@ -1,4 +1,4 @@
-// Source-preserving consolidation: original test cases remain in isolated lexical blocks.
+// Related decision paths share bounded behavior matrices; other regression suites remain isolated.
 import { describe, expect, it } from "vitest";
 import { classifyBugCandidate, classifyBugSeverity, highestBugSeverity, routeBugFinderCategory, shouldIncludeInDefaultBugReport, BUG_REPORT_V2_SCHEMA, projectBugReportPreview, renderBugReportPreviewMarkdown, projectConfirmedDefects, allocateBugIds, buildBugReportFromConfirmedDefects, deriveRepairUnitIdsFromSourceEvidence, groupConfirmedDefects, deriveConfirmedDefectSemanticKey, reconcileCanonicalBugReport, reviewBugReportReadiness, resolveConfirmedDefectGroup, applyProposedBugReview, buildBugReportFromApprovedBugSet, projectProposedBugSet } from "../src/index.js";
 import type { BugImpactAssessment, BugReportV2, ConfirmedDefect, BugReportV2Bug } from "../src/index.js";
@@ -15,135 +15,76 @@ const cleanImpact: BugImpactAssessment = {
 };
 
 describe("bug candidate reportability", () => {
-  it("rejects candidates when counter-evidence is present", () => {
-    expect(classifyBugCandidate({
-      intent: "grounded-contradiction",
-      playerImpact: "blocking",
-      testerObservable: true,
-      counterEvidence: "present",
-    }).disposition).toBe("counter-evidence-present");
-  });
-
-  it("fails closed while counter-evidence remains unresolved", () => {
-    expect(classifyBugCandidate({
-      intent: "grounded-contradiction",
-      playerImpact: "blocking",
-      testerObservable: true,
-      counterEvidence: "unresolved",
-    }).disposition).toBe("counter-evidence-unresolved");
-  });
-
-  it("rejects grounded game design as a bug", () => {
-    expect(classifyBugCandidate({
-      intent: "grounded-designed-behavior",
-      playerImpact: "blocking",
-      testerObservable: true,
-      counterEvidence: "cleared",
-    })).toEqual({
-      disposition: "designed-behavior",
-      reportable: false,
-    });
-  });
-
-  it("rejects ambiguous intent instead of guessing", () => {
-    expect(classifyBugCandidate({
-      intent: "ambiguous",
-      playerImpact: "material",
-      testerObservable: true,
-      counterEvidence: "cleared",
-    }).disposition).toBe("ambiguous-intent");
-  });
-
-  it("rejects technical-only findings with no tester-visible trigger", () => {
-    expect(classifyBugCandidate({
-      intent: "grounded-contradiction",
-      playerImpact: "material",
-      testerObservable: false,
-      counterEvidence: "cleared",
-    }).disposition).toBe("tester-trigger-missing");
-  });
-
-  it("keeps limited issues out of the default report", () => {
-    expect(classifyBugCandidate({
-      intent: "grounded-contradiction",
-      playerImpact: "limited",
-      testerObservable: true,
-      counterEvidence: "cleared",
-    }).disposition).toBe("below-report-threshold");
-  });
-
-  it("reports grounded player-visible material failures", () => {
-    expect(classifyBugCandidate({
+  it("evaluates the complete grounded-evidence reportability matrix", () => {
+    const groundedCandidate = {
       intent: "grounded-contradiction",
       playerImpact: "material",
       testerObservable: true,
       counterEvidence: "cleared",
-    })).toEqual({
-      disposition: "reportable-bug",
-      reportable: true,
-    });
+    } as const;
+    const cases = [
+      ["counter-evidence present", {
+        ...groundedCandidate, playerImpact: "blocking", counterEvidence: "present",
+      }, { disposition: "counter-evidence-present", reportable: false }],
+      ["counter-evidence unresolved", {
+        ...groundedCandidate, playerImpact: "blocking", counterEvidence: "unresolved",
+      }, { disposition: "counter-evidence-unresolved", reportable: false }],
+      ["authored behavior is not a defect", {
+        ...groundedCandidate, intent: "grounded-designed-behavior", playerImpact: "blocking",
+      }, { disposition: "designed-behavior", reportable: false }],
+      ["ambiguous intent remains unresolved", {
+        ...groundedCandidate, intent: "ambiguous",
+      }, { disposition: "ambiguous-intent", reportable: false }],
+      ["technical-only finding without a tester trigger", {
+        ...groundedCandidate, testerObservable: false,
+      }, { disposition: "tester-trigger-missing", reportable: false }],
+      ["limited impact remains below threshold", {
+        ...groundedCandidate, playerImpact: "limited",
+      }, { disposition: "below-report-threshold", reportable: false }],
+      ["grounded player-visible material failure", groundedCandidate, {
+        disposition: "reportable-bug", reportable: true,
+      }],
+    ] as const;
+
+    const observed = cases.map(([label, candidate]) => ({
+      label,
+      ...classifyBugCandidate(candidate),
+    }));
+    const expected = cases.map(([label, , outcome]) => ({ label, ...outcome }));
+    expect(observed).toEqual(expected);
   });
 });
 
 describe("bug report severity policy", () => {
-  it("classifies blocked mandatory flow without normal recovery as blocker", () => {
-    expect(
-      classifyBugSeverity({
-        ...cleanImpact,
-        progression: "blocked",
-        recovery: "abnormal",
-      }),
-    ).toBe("blocker");
-  });
+  it("applies one severity policy matrix across player-impact conditions", () => {
+    const cases = [
+      ["blocked mandatory flow without normal recovery", {
+        ...cleanImpact, progression: "blocked", recovery: "abnormal",
+      }, "blocker"],
+      ["recoverable blocked flow", {
+        ...cleanImpact, progression: "blocked", recovery: "normal",
+      }, "major"],
+      ["recovery alone without a gameplay impact", {
+        ...cleanImpact, recovery: "none",
+      }, "minor"],
+      ["game crash or freeze", {
+        ...cleanImpact, stability: "crash-or-freeze",
+      }, "blocker"],
+      ["materially wrong gameplay mechanic", {
+        ...cleanImpact, coreMechanic: "materially-wrong",
+      }, "major"],
+      ["material gameplay fairness violation", {
+        ...cleanImpact, fairness: "materially-affected",
+      }, "major"],
+      ["presentation-only impact", cleanImpact, "minor"],
+    ] as const;
 
-  it("keeps recoverable blocked flow at major", () => {
-    expect(
-      classifyBugSeverity({
-        ...cleanImpact,
-        progression: "blocked",
-        recovery: "normal",
-      }),
-    ).toBe("major");
-  });
-
-  it("does not make recovery alone a blocker without gameplay impact", () => {
-    expect(
-      classifyBugSeverity({
-        ...cleanImpact,
-        recovery: "none",
-      }),
-    ).toBe("minor");
-  });
-
-  it("classifies crash or freeze as blocker", () => {
-    expect(
-      classifyBugSeverity({
-        ...cleanImpact,
-        stability: "crash-or-freeze",
-      }),
-    ).toBe("blocker");
-  });
-
-  it("classifies materially wrong gameplay mechanics as major", () => {
-    expect(
-      classifyBugSeverity({
-        ...cleanImpact,
-        coreMechanic: "materially-wrong",
-      }),
-    ).toBe("major");
-  });
-
-  it("classifies gameplay fairness violations as major", () => {
-    expect(
-      classifyBugSeverity({
-        ...cleanImpact,
-        fairness: "materially-affected",
-      }),
-    ).toBe("major");
-  });
-
-  it("classifies presentation-only defects as minor", () => {
-    expect(classifyBugSeverity(cleanImpact)).toBe("minor");
+    const observed = cases.map(([label, impact]) => ({
+      label,
+      severity: classifyBugSeverity(impact),
+    }));
+    const expected = cases.map(([label, , severity]) => ({ label, severity }));
+    expect(observed).toEqual(expected);
   });
 
   it("shows only blocker and major in the default report", () => {
@@ -154,19 +95,23 @@ describe("bug report severity policy", () => {
 });
 
 describe("bug finder category routing", () => {
-  it.each([
-    ["game-progression", "game-flow"],
-    ["player-owned-state", "player-state"],
-    ["session-concurrency", "multiplayer-session"],
-    ["world-mutation", "world-interaction"],
-    ["entity-decision", "entity-behavior"],
-    ["combat-rule", "combat"],
-    ["score-reward", "score-reward"],
-    ["presentation-feedback", "ui-feedback"],
-    ["runtime-capacity", "performance-stability"],
-    ["runtime-compatibility", "compatibility"],
-  ] as const)("routes %s to %s", (failure, category) => {
-    expect(routeBugFinderCategory(failure)).toBe(category);
+  it("routes all supported primary failure categories through one mapping contract", () => {
+    const cases = [
+      ["game-progression", "game-flow"],
+      ["player-owned-state", "player-state"],
+      ["session-concurrency", "multiplayer-session"],
+      ["world-mutation", "world-interaction"],
+      ["entity-decision", "entity-behavior"],
+      ["combat-rule", "combat"],
+      ["score-reward", "score-reward"],
+      ["presentation-feedback", "ui-feedback"],
+      ["runtime-capacity", "performance-stability"],
+      ["runtime-compatibility", "compatibility"],
+    ] as const;
+    const observed = cases.map(([failure]) => [
+      failure, routeBugFinderCategory(failure),
+    ]);
+    expect(observed).toEqual(cases);
   });
 
   it("derives finder severity without storing duplicate truth", () => {
