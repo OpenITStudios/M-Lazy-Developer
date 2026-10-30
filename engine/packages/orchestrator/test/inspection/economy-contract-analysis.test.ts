@@ -1,10 +1,72 @@
-import { describe, expect, it } from "vitest";
-import {
-  analyzeEconomyBehaviorContract,
-} from "../../src/inspection/economy-contract-analysis.js";
-import type {
-  RewardSourceAnalysis,
-} from "../../src/inspection/reward-source-analysis.js";
+// Source-preserving family consolidation: original suites and assertions retained in separate lexical scopes.
+import { describe } from "vitest";
+import { expect } from "vitest";
+import { it } from "vitest";
+import { parseEconomyBehaviorContract } from "../../src/inspection/economy-contract-load.js";
+import { analyzeEconomyBehaviorContract } from "../../src/inspection/economy-contract-analysis.js";
+import type { RewardSourceAnalysis } from "../../src/inspection/reward-source-analysis.js";
+import { economyContractDiagnostics } from "../../src/inspection/economy-contract-diagnostics.js";
+
+// Original suite engine/packages/orchestrator/test/inspection/economy-contract-load.test.ts, blob 7edda38d8e71ffc0b305020d811ccf9ac1ae8f89
+{
+
+
+
+describe("economy contract loader", () => {
+  it("parses explicit reward transaction contract", () => {
+    expect(
+      parseEconomyBehaviorContract({
+        schemaVersion: 1,
+        id: "arena-economy",
+        deathRewardArbitration:
+          "mutually-exclusive",
+        pickupCurrencyItemContract:
+          "consume",
+        inventoryFullContract:
+          "compensate",
+        rewardIdempotencyRequired: true,
+        pickupScopeValidationRequired: true,
+        staleDropCleanupRequired: true,
+        terminalRewardRequiresResultCommit:
+          true,
+      }),
+    ).toMatchObject({
+      id: "arena-economy",
+      deathRewardArbitration:
+        "mutually-exclusive",
+      pickupCurrencyItemContract:
+        "consume",
+    });
+  });
+
+  it("rejects enum typos rather than inventing defaults", () => {
+    expect(() =>
+      parseEconomyBehaviorContract({
+        schemaVersion: 1,
+        id: "invalid",
+        deathRewardArbitration:
+          "exclusive",
+        pickupCurrencyItemContract:
+          "consume",
+        inventoryFullContract:
+          "compensate",
+        rewardIdempotencyRequired: true,
+        pickupScopeValidationRequired: true,
+        staleDropCleanupRequired: true,
+        terminalRewardRequiresResultCommit:
+          true,
+      }),
+    ).toThrow(/invalid value/);
+  });
+});
+
+}
+
+// Original suite engine/packages/orchestrator/test/inspection/economy-contract-analysis.test.ts, blob c9e60e822dd523be8cb44e3649dbc5df05aaed17
+{
+
+
+
 
 const rewards: RewardSourceAnalysis = {
   sourceKinds: [
@@ -124,3 +186,61 @@ describe("economy contract analysis", () => {
       .toMatch(/RESULT_COMMITTED binding proof/);
   });
 });
+
+}
+
+// Original suite engine/packages/orchestrator/test/inspection/economy-contract-diagnostics.test.ts, blob df1785935560f67cae69bf96b741b16e49d0fdf4
+{
+
+
+
+describe("economy contract diagnostics", () => {
+  it("separates authored conflicts from coverage gaps", () => {
+    const findings =
+      economyContractDiagnostics({
+        configured: true,
+        contractId: "economy",
+        deathRewardOverlapContractConflicts: 1,
+        deathRewardOverlapUnresolved: 1,
+        pickupCurrencyConsumeCoverageGaps: 0,
+        pickupCurrencyContractMismatch: 0,
+        idempotencyCoverageGaps: 1,
+        staleDropCleanupCoverageGaps: 0,
+        inventoryFullContractGaps: 0,
+        pickupScopeValidationUnproven: 1,
+        terminalRewardResultCommitUnproven: 0,
+        reasons: [],
+      });
+
+    expect(
+      findings.map((item) => item.code),
+    ).toEqual([
+      "ECONOMY_CONTRACT_CONFLICT",
+      "ECONOMY_CONTRACT_COVERAGE_GAP",
+    ]);
+    expect(findings[0]?.severity)
+      .toBe("medium");
+    expect(findings[1]?.severity)
+      .toBe("minor");
+  });
+
+  it("emits nothing when no authored economy contract is configured", () => {
+    expect(
+      economyContractDiagnostics({
+        configured: false,
+        deathRewardOverlapContractConflicts: 0,
+        deathRewardOverlapUnresolved: 1,
+        pickupCurrencyConsumeCoverageGaps: 0,
+        pickupCurrencyContractMismatch: 0,
+        idempotencyCoverageGaps: 0,
+        staleDropCleanupCoverageGaps: 0,
+        inventoryFullContractGaps: 0,
+        pickupScopeValidationUnproven: 0,
+        terminalRewardResultCommitUnproven: 0,
+        reasons: [],
+      }),
+    ).toEqual([]);
+  });
+});
+
+}

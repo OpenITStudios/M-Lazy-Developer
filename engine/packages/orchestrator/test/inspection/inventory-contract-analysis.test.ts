@@ -1,8 +1,93 @@
-import { describe, expect, it } from "vitest";
+// Source-preserving family consolidation: original suites and assertions retained in separate lexical scopes.
+import { describe } from "vitest";
+import { expect } from "vitest";
+import { it } from "vitest";
+import { parseInventoryItemBehaviorContract } from "../../src/inspection/inventory-contract-load.js";
 import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
-import {
-  analyzeInventoryContract,
-} from "../../src/inspection/inventory-contract-analysis.js";
+import { analyzeInventoryContract } from "../../src/inspection/inventory-contract-analysis.js";
+
+// Original suite engine/packages/orchestrator/test/inspection/inventory-contract-load.test.ts, blob 61a1c756973a8b177cf36ae96b4cc23ff3500c45
+{
+
+
+
+describe("inventory item contract parser", () => {
+  it("parses explicit ownership, drop, reset, and restore rules", () => {
+    expect(
+      parseInventoryItemBehaviorContract({
+        schemaVersion: 1,
+        id: "arena-items",
+        rules: [
+          {
+            id: "upgrade-sword",
+            itemClass: "minecraft:diamond_sword",
+            ownershipScope: "round",
+            dropAllowed: false,
+            resetOn: ["round-end", "arena-end"],
+            restoreOn: ["respawn"],
+          },
+        ],
+      }),
+    ).toEqual({
+      schemaVersion: 1,
+      id: "arena-items",
+      rules: [
+        {
+          id: "upgrade-sword",
+          itemClass: "minecraft:diamond_sword",
+          ownershipScope: "round",
+          dropAllowed: false,
+          resetOn: ["round-end", "arena-end"],
+          restoreOn: ["respawn"],
+        },
+      ],
+    });
+  });
+
+  it("rejects invalid transitions instead of accepting typos", () => {
+    expect(() =>
+      parseInventoryItemBehaviorContract({
+        schemaVersion: 1,
+        id: "invalid",
+        rules: [
+          {
+            id: "bad",
+            itemClass: "minecraft:stone",
+            ownershipScope: "round",
+            dropAllowed: false,
+            resetOn: ["round_end"],
+          },
+        ],
+      }),
+    ).toThrow(/invalid resetOn transition/);
+  });
+
+  it("rejects durable items with automatic reset transitions", () => {
+    expect(() =>
+      parseInventoryItemBehaviorContract({
+        schemaVersion: 1,
+        id: "invalid-durable",
+        rules: [
+          {
+            id: "durable",
+            itemClass: "minecraft:clock",
+            ownershipScope: "player-durable",
+            dropAllowed: true,
+            resetOn: ["round-end"],
+          },
+        ],
+      }),
+    ).toThrow(/Player-durable item contract rule/);
+  });
+});
+
+}
+
+// Original suite engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts, blob c20f56f9b60fccf0dc81acfe4bb9c988b9518065
+{
+
+
+
 
 describe("inventory contract analysis", () => {
   it("binds deterministic item drop evidence to authored deny contract", () => {
@@ -108,3 +193,5 @@ describe("inventory contract analysis", () => {
     expect(result.deniedDrops).toBe(0);
   });
 });
+
+}

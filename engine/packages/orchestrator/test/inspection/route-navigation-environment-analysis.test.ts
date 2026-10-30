@@ -1,7 +1,72 @@
-import { describe, expect, it } from "vitest";
-import {
-  analyzeRouteNavigationEnvironments,
-} from "../../src/inspection/route-navigation-environment-analysis.js";
+// Source-preserving family consolidation: original suites and assertions retained in separate lexical scopes.
+import { describe } from "vitest";
+import { expect } from "vitest";
+import { it } from "vitest";
+import { parseRouteNavigationEnvironmentContracts } from "../../src/inspection/route-navigation-environment-load.js";
+import { analyzeRouteNavigationEnvironments } from "../../src/inspection/route-navigation-environment-analysis.js";
+
+// Original suite engine/packages/orchestrator/test/inspection/route-navigation-environment-load.test.ts, blob b6cb0e310d4439dd2b708946dd07908c61b901de
+{
+
+
+
+describe("route navigation environment loader", () => {
+  it("parses explicit route capability requirements", () => {
+    expect(
+      parseRouteNavigationEnvironmentContracts({
+        contracts: [{
+          id: "bridge-zombie",
+          routeId: "bridge",
+          entityKeys: ["demo:zombie"],
+          medium: "ground",
+          doorRequirement: "open",
+          requiresWalking: true,
+          avoidDamageBlocksRequired: true,
+        }],
+      }),
+    ).toEqual([{
+      id: "bridge-zombie",
+      routeId: "bridge",
+      entityKeys: ["demo:zombie"],
+      medium: "ground",
+      doorRequirement: "open",
+      requiresWalking: true,
+      avoidDamageBlocksRequired: true,
+    }]);
+  });
+
+  it("rejects invalid capability enums", () => {
+    expect(() =>
+      parseRouteNavigationEnvironmentContracts([
+        {
+          id: "invalid",
+          routeId: "bridge",
+          medium: "lava",
+        },
+      ]),
+    ).toThrow(/invalid medium/);
+  });
+
+  it("rejects contradictory water traversal policy", () => {
+    expect(() =>
+      parseRouteNavigationEnvironmentContracts([
+        {
+          id: "water-conflict",
+          routeId: "river",
+          medium: "water",
+          avoidWaterRequired: true,
+        },
+      ]),
+    ).toThrow(/avoid-water requirement conflict/);
+  });
+});
+
+}
+
+// Original suite engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts, blob aad9e3ba4582d67a70cd09256c9c39268bc1e73e
+{
+
+
 
 describe("route navigation environment analysis", () => {
   it("marks route incompatible when all navigation states miss authored capability", () => {
@@ -113,3 +178,5 @@ describe("route navigation environment analysis", () => {
     expect(result.incompatible).toBe(0);
   });
 });
+
+}
