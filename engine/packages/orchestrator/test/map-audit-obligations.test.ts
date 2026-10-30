@@ -415,6 +415,7 @@ describe("reusable blind-spot obligations", () => {
       compoundBoundaries: [],
       accumulationGrowth: [],
       ...(extra.capabilityExposure === undefined ? {} : { capabilityExposure: extra.capabilityExposure }),
+      ...(extra.replicaDivergenceIds === undefined ? {} : { replicaDivergenceIds: extra.replicaDivergenceIds }),
     });
 
   it("preserves the earliest causal blocker when graph and resolution share an ID", () => {
@@ -467,6 +468,30 @@ describe("reusable blind-spot obligations", () => {
           item.source === "detection-gap",
       ),
     ).toBe(true);
+  });
+
+  it("preserves unclassified replica divergence as FORMALIZE evidence debt", () => {
+    const id = "replica-delta:arena:4";
+    const replica = derive({
+      gate: { ...gate, status: "BLOCKED" },
+      gameplayWorld: {
+        ...baseWorld,
+        arenas: { ...baseWorld.arenas, detected: false },
+      },
+      replicaDivergenceIds: [id],
+    }).filter((item: any) => item.id === id);
+
+    expect(replica).toHaveLength(1);
+    expect(replica[0]).toMatchObject({
+      source: "replica-divergence",
+      stage: "FORMALIZE",
+      validationGroupKey: "full-map-replica:" + id,
+      evidenceIds: [id],
+    });
+    expect(replica[0]?.missingProof).toContain("Grounded evidence");
+    expect(replica[0]?.validationTest).toContain(
+      "Promote only a grounded gameplay consequence",
+    );
   });
 
   it("forces proof for non-isolated arena resources", () => {

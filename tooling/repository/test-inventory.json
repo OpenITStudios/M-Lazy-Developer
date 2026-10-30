@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "983ba5a77dfdb48b0e14bff3765231871e963086",
-  "classification": "498 physical source test files after six source-preserving consolidation batches (687 original). Latest batch merges 93 original same-owner same-feature test suites into 22 suites; 86 old paths retired and 15 destinations created. Case bodies and it()/expect() call sites preserved; executable equivalence NOT VERIFIED.",
+  "sourceCommit": "b8450ab6484c50b6b7d3939c29dc35e268fd6425",
+  "classification": "497 physical source test files after a bounded owner-level cleanup on top of six source-preserving consolidation batches (687 original). One separate replica-divergence test suite moved into canonical map-audit-obligations.test.ts, with its four assertion sites and scenario preserved. Two direct deterministic helper suites reclassified from Acceptance to Development; default acceptance hardcoded selection unchanged. No executable equivalence verified.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -6749,18 +6749,18 @@
     },
     {
       "path": "engine/packages/orchestrator/test/map-audit-candidate-grouping.test.ts",
-      "lane": "acceptance",
+      "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
         "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
+        "action": "retain-as-targeted-development-contract",
         "sourceBlobSha": "4352d1c251c9a2b2cc00984e4f87ba77d472be86"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Direct deterministic helper contract only, with no selected-map pipeline or user-facing integration. Retain all original assertions; classify Development rather than Acceptance while preserving full/affected source selection. Execution not verified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -6791,18 +6791,18 @@
     },
     {
       "path": "engine/packages/orchestrator/test/map-audit-history-hints.test.ts",
-      "lane": "acceptance",
+      "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
         "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
+        "action": "retain-as-targeted-development-contract",
         "sourceBlobSha": "e258def00d0bce7be4b71e945cd38005615be287"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Direct deterministic helper contract only, with no selected-map pipeline or user-facing integration. Retain all original assertions; classify Development rather than Acceptance while preserving full/affected source selection. Execution not verified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -6878,11 +6878,11 @@
         "basis": "pinned-source-case-inventory",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
+        "action": "retain-obligation-and-replica-proof-boundaries",
         "sourceBlobSha": "401f229ea56003c9c3d762020578a82edd92a25a"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Includes all prior audit obligation cases and the unclassified replica divergence regression merged from the retired single-case suite; same canonical deriveAuditObligations source owner and explicit FORMALIZE/validation evidence checks. Source reviewed, execution not verified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -6980,26 +6980,6 @@
         "riskHint": "high",
         "action": "review-assertion-and-consumer-equivalence",
         "sourceBlobSha": "0e59f26163a33b2a6745f7426f51966399a49859"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.proof-control",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/map-audit-replica-divergence-visibility.test.ts",
-      "lane": "acceptance",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "2377985860144ba807ec2489559c266437d548f6"
       },
       "recommendation": "keep-provisional",
       "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
@@ -13140,14 +13120,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "983ba5a77dfdb48b0e14bff3765231871e963086",
+    "parentCommit": "b8450ab6484c50b6b7d3939c29dc35e268fd6425",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 498,
-    "groups": 77,
-    "removedPaths": 206,
+    "sourceFilesAfter": 497,
+    "groups": 78,
+    "removedPaths": 207,
     "addedPaths": 17,
     "deletedAssertionsProven": 0,
-    "proof": "source-body-and-callsite-parity_ONLY_NOT_TYPESCRIPT_VITEST",
-    "open": "Merged-file TypeScript/Vitest suite isolation, actual test execution cost, exact map audit and Minecraft gameplay NOT EXECUTED"
+    "proof": "source-contract-and-assertion-parity_ONLY_NOT_VITEST",
+    "open": "Exact-head TypeScript/Vitest runtime and selection-cost measurements NOT EXECUTED; cross-lane grouping remains evidence-driven."
   }
 }
