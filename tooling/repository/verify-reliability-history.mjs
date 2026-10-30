@@ -22,7 +22,8 @@ function identity(record) {
     .slice(0, 20);
 }
 
-const allowedArchiveDirectories = new Set(["audit-runs", "repository-operations"]);
+// Historical artifact/source inspections are also immutable archive evidence.
+const allowedArchiveDirectories = new Set(["artifact-inventory", "audit-runs", "repository-operations"]);
 const directEntries = readdirSync(directory, { withFileTypes: true });
 
 for (const entry of directEntries) {
