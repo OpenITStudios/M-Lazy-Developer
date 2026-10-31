@@ -20,7 +20,7 @@ are statically preserved in lexical-isolated original bodies.
 | `acceptance` | 20 |
 | **Total** | **401** |
 
-Inventory disposition: 293 provisional,
+Inventory disposition: 294 provisional,
 92 keep, 15 defer.
 Review provenance: 290 case-inventory-reviewed
 and 111 source-reviewed; feature mapping remains
