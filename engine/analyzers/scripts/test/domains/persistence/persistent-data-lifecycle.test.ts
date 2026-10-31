@@ -1,8 +1,11 @@
+// Owner-local source consolidation. Original cases are preserved verbatim.
 import { describe, expect, it } from "vitest";
-import {
-  derivePersistentDataLifecycleEvidence,
-} from "../../../src/domains/persistence/persistent-data-lifecycle.js";
+import { derivePersistentDataLifecycleEvidence } from "../../../src/domains/persistence/persistent-data-lifecycle.js";
+import { inferPersistentStateLifetimes } from "../../../src/domains/persistence/persistent-state-lifetime.js";
+import { inferPersistentStateScopes } from "../../../src/domains/persistence/persistent-state-scope.js";
 
+// Original engine/analyzers/scripts/test/domains/persistence/persistent-data-lifecycle.test.ts [0bea285286aa22a598d26f8bdb4e7206983ce999]
+{
 describe("persistent data lifecycle evidence", () => {
   it("retains a direct reset statement's lexical block and excludes nested calls", () => {
     const output = derivePersistentDataLifecycleEvidence([
@@ -135,3 +138,194 @@ describe("persistent data lifecycle evidence", () => {
     );
   });
 });
+}
+
+// Original engine/analyzers/scripts/test/domains/persistence/persistent-state-lifetime.test.ts [b47f0856b9df5847bc385cf05f9402dc0e4b080a]
+{
+describe("persistent state lifetime", () => {
+  it("does not infer player-session lifetime from a player dynamic-property receiver", () => {
+    const result = inferPersistentStateLifetimes(
+      [{
+        propertyKey: "reconnectPhase", variable: "phase",
+        reads: 1, appends: 0, writes: 1, clears: 0,
+        growth: "no-append",
+        source: { artifactId: "artifact:test", relativePath: "scripts/main.ts" },
+      }],
+      [{
+        propertyId: "reconnectPhase", scope: "player",
+        confidence: "exact-receiver", reasons: ["player receiver"],
+      }],
+      [],
+    );
+    expect(result[0]?.lifetime).toBe("unknown");
+    expect(result[0]?.confidence).toBe("unknown");
+    expect(result[0]?.reasons.join(" ")).toContain("not connection-session lifetime");
+  });
+
+
+  it("does not infer round or match lifetime from unrelated resource cleanup labels", () => {
+    const source = { artifactId: "artifact:test", relativePath: "scripts/main.ts" };
+    const result = inferPersistentStateLifetimes(
+      [{
+        propertyKey: "savedProgress",
+        variable: "progress",
+        reads: 1, appends: 1, writes: 1, clears: 1,
+        growth: "append-with-clear", source,
+      }],
+      [{
+        propertyId: "savedProgress", scope: "world",
+        confidence: "exact-receiver", reasons: ["world receiver"],
+      }],
+      [{
+        surface: "tag", action: "release", key: "player:ready",
+        precision: "exact", executionRegion: "function:cleanupRound",
+        source,
+      }],
+    );
+    expect(result[0]?.lifetime).toBe("unknown");
+    expect(result[0]?.confidence).toBe("unknown");
+  });
+
+  it("identifies world-lifetime growth when world state appends without cleanup", () => {
+    const result = inferPersistentStateLifetimes(
+      [{
+        propertyKey: "history",
+        variable: "history",
+        reads: 1,
+        appends: 1,
+        writes: 1,
+        clears: 0,
+        growth: "append-without-clear",
+        source: {
+          artifactId: "artifact:test",
+          relativePath: "scripts/main.ts",
+        },
+      }],
+      [{
+        propertyId: "history",
+        scope: "world",
+        confidence: "exact-receiver",
+        reasons: ["world receiver"],
+      }],
+      [],
+    );
+
+    expect(result[0]?.lifetime).toBe("world");
+  });
+});
+}
+
+// Original engine/analyzers/scripts/test/domains/persistence/persistent-state-scope.test.ts [0a2454d30205afc49864d420a69f276d746eab4e]
+{
+describe("persistent state scope inference", () => {
+  it("lets recognized world receiver outrank a round/arena key name", () => {
+    const result = inferPersistentStateScopes([{
+      operation: "set", propertyId: "arenaRoundState",
+      receiverHint: "world",
+      receiverType: "World",
+      receiverInference: "direct",
+      source: { artifactId: "a", relativePath: "scripts/main.ts" },
+    }]);
+    expect(result[0]).toMatchObject({
+      scope: "world", confidence: "exact-receiver",
+    });
+  });
+
+  it("keeps same literal key across player/world owners unresolved", () => {
+    const source = { artifactId: "a", relativePath: "scripts/main.ts" };
+    const result = inferPersistentStateScopes([
+      { operation: "get", propertyId: "roundState",
+        receiverHint: "world", receiverType: "World", receiverInference: "direct", source },
+      { operation: "set", propertyId: "roundState",
+        receiverHint: "player", receiverType: "Player", receiverInference: "direct", source },
+    ]);
+    expect(result[0]).toMatchObject({
+      scope: "unknown", confidence: "unknown",
+    });
+  });
+
+  it("does not turn an unidentified receiver into an exact mixed ownership proof", () => {
+    const source = { artifactId: "a", relativePath: "scripts/main.ts" };
+    const result = inferPersistentStateScopes([
+      { operation: "get", propertyId: "matchState",
+        receiverHint: "world", receiverType: "World", receiverInference: "direct", source },
+      { operation: "set", propertyId: "matchState",
+        receiverHint: "manager", source },
+    ]);
+    expect(result[0]?.scope).toBe("unknown");
+    expect(result[0]?.confidence).toBe("unknown");
+  });
+
+
+  it("prefers receiver evidence over naming heuristics", () => {
+    const result = inferPersistentStateScopes([
+      {
+        operation: "set",
+        propertyId: "lastMatch",
+        receiverHint: "player",
+        receiverType: "Player",
+        receiverInference: "direct",
+        source: {
+          artifactId: "artifact:test",
+          relativePath: "scripts/main.ts",
+        },
+      },
+    ]);
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        scope: "player",
+        confidence: "exact-receiver",
+      }),
+    );
+  });
+
+
+  it("does not promote a lexical world-looking variable to typed ownership", () => {
+    const source = { artifactId: "selected", relativePath: "scripts/main.ts" };
+    const lexicalOnly = inferPersistentStateScopes([{
+      operation: "set", propertyId: "arenaRoundState",
+      receiverHint: "world", source,
+    }]);
+    expect(lexicalOnly[0]).toMatchObject({
+      scope: "arena", confidence: "name-pattern",
+    });
+    const bounded = inferPersistentStateScopes([{
+      operation: "get", propertyId: "arenaRoundState",
+      receiverHint: "world", receiverType: "World",
+      receiverInference: "bounded", source,
+    }]);
+    expect(bounded[0]).toMatchObject({
+      scope: "unknown", confidence: "unknown",
+    });
+  });
+
+  it("preserves exact item dynamic-property ownership without borrowing player state", () => {
+    const result = inferPersistentStateScopes([{
+      operation: "get", propertyId: "item:unique-id",
+      receiverHint: "item", receiverType: "ItemStack",
+      receiverInference: "direct",
+      source: { artifactId: "selected", relativePath: "scripts/items.ts" },
+    }]);
+    expect(result[0]).toMatchObject({
+      scope: "item", confidence: "exact-receiver",
+    });
+  });
+
+  it("keeps ambiguous properties unknown", () => {
+    const result = inferPersistentStateScopes([
+      {
+        operation: "get",
+        propertyId: "data",
+        receiverHint: "manager",
+        source: {
+          artifactId: "artifact:test",
+          relativePath: "scripts/main.ts",
+        },
+      },
+    ]);
+
+    expect(result[0]?.scope).toBe("unknown");
+  });
+});
+}

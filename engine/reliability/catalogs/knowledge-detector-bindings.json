@@ -3559,7 +3559,7 @@
         "engine/analyzers/scripts/src/domains/persistence/persistent-state-lifetime.ts"
       ],
       "proofPaths": [
-        "engine/analyzers/scripts/test/domains/persistence/persistent-state-lifetime.test.ts"
+        "engine/analyzers/scripts/test/domains/persistence/persistent-data-lifecycle.test.ts"
       ]
     },
     {

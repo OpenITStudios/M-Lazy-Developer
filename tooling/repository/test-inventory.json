@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "9485e4fedaba08bf4e28d09065eb574682fb4db0",
-  "classification": "494 physical test files after consolidating two same-owner cross-version differential suites into one, preserving all 3 cases and 6 expect() callsites. Domain definition validation 6 -> 3 it() registrations keeps all 23 factory/validation cases plus both read-only boundary tests. Runtime lane 51 -> 50; runtime-lane tests exercise contracts and injected/synthetic evidence, not actual Minecraft proof. No CI or runtime tests executed.",
+  "sourceCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+  "classification": "486 physical test files after seven bounded owner-local source suite consolidations (15 original source files -> 7 retained suites); preserve all 52 it/test and 118 expect() call sites by exact body inclusion and count parity; redirect one persistence proof binding; default acceptance unchanged. TypeScript/Vitest/Minecraft NOT EXECUTED.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -36,19 +36,37 @@
       "owner": "apps/bug-report-ui",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "apps/bug-report-ui",
         "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "43367dfdc8f2e4b9bbea77ea56a3acc7b69463da"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "67393e364e3067aba390d9f661f59a337f0b5527"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 5 it/test and 9 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.ui",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
+        "sourceFiles": [
+          {
+            "path": "apps/bug-report-ui/test/github-report-client.test.ts",
+            "blobSha": "43367dfdc8f2e4b9bbea77ea56a3acc7b69463da"
+          },
+          {
+            "path": "apps/bug-report-ui/test/report-view.test.ts",
+            "blobSha": "78ae05bf0fddd18d3b4226df1dc3536ba30d2603"
+          }
+        ],
+        "originalTestCallSites": 5,
+        "originalExpectCallSites": 9,
+        "mergedSourceBlobSha": "67393e364e3067aba390d9f661f59a337f0b5527",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "apps/bug-report-ui/test/report-file.test.ts",
@@ -63,26 +81,6 @@
       },
       "recommendation": "keep",
       "rationale": "Compatibility upload rejects non-JSON and preserves canonical V2 export naming.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.ui",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "apps/bug-report-ui/test/report-view.test.ts",
-      "lane": "development",
-      "owner": "apps/bug-report-ui",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "apps/bug-report-ui",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "78ae05bf0fddd18d3b4226df1dc3536ba30d2603"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -538,38 +536,37 @@
       "owner": "engine/analyzers/diagnostics",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/analyzers/diagnostics",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "ab199337229e337d5b1a28fea1b087a56a51a587"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "4cc137f2e0c41cf269c6e4842bea720c0787220f"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 9 it/test and 27 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.evidence",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/analyzers/diagnostics/test/runtime/runtime-evidence-merge.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/diagnostics",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/analyzers/diagnostics",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Temporal comparison never allows stale/incomparable evidence to override current state.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.evidence",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
+        "sourceFiles": [
+          {
+            "path": "engine/analyzers/diagnostics/test/runtime/knowledge-runtime-findings.test.ts",
+            "blobSha": "ab199337229e337d5b1a28fea1b087a56a51a587"
+          },
+          {
+            "path": "engine/analyzers/diagnostics/test/runtime/runtime-evidence-merge.test.ts",
+            "blobSha": "4b196d8c77e537d02b04da7e4b1ce4bb4e378ba0"
+          }
+        ],
+        "originalTestCallSites": 9,
+        "originalExpectCallSites": 27,
+        "mergedSourceBlobSha": "4cc137f2e0c41cf269c6e4842bea720c0787220f",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/analyzers/diagnostics/test/script/script-diagnostics.test.ts",
@@ -727,19 +724,37 @@
       "owner": "engine/analyzers/entities",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/analyzers/entities",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "1eaf50e04158efe95bd207ff9a40e22741df8357"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "2bfa6537c40b6cf73f349d163572418fa2b073ac"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 7 it/test and 17 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "combat-entities",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "entity.evidence",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
+        "sourceFiles": [
+          {
+            "path": "engine/analyzers/entities/test/entity.test.ts",
+            "blobSha": "1eaf50e04158efe95bd207ff9a40e22741df8357"
+          },
+          {
+            "path": "engine/analyzers/entities/test/runtime-evidence.test.ts",
+            "blobSha": "cfe0ca314f30888a4eaeffe1c694048acabb1720"
+          }
+        ],
+        "originalTestCallSites": 7,
+        "originalExpectCallSites": 17,
+        "mergedSourceBlobSha": "2bfa6537c40b6cf73f349d163572418fa2b073ac",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/analyzers/entities/test/loot-table.test.ts",
@@ -822,26 +837,6 @@
       }
     },
     {
-      "path": "engine/analyzers/entities/test/runtime-evidence.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/entities",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/analyzers/entities",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "cfe0ca314f30888a4eaeffe1c694048acabb1720"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "combat-entities",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "entity.evidence",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/analyzers/entities/test/targeting.test.ts",
       "lane": "development",
       "owner": "engine/analyzers/entities",
@@ -868,39 +863,37 @@
       "owner": "engine/analyzers/functions",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/analyzers/functions",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "bc2fc8e00389d6123b090ac9e8a41d9feb24c197"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "279e2377c85e7000b925a4ce98e6b107466010ba"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 2 it/test and 5 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "script.mcfunctions",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/analyzers/functions/test/runtime-evidence.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/functions",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/analyzers/functions",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "849c71a68d1a04c4d080b1fdc71c041b2fbc6cbd"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-scripting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "script.mcfunctions",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
+        "sourceFiles": [
+          {
+            "path": "engine/analyzers/functions/test/parse.test.ts",
+            "blobSha": "bc2fc8e00389d6123b090ac9e8a41d9feb24c197"
+          },
+          {
+            "path": "engine/analyzers/functions/test/runtime-evidence.test.ts",
+            "blobSha": "849c71a68d1a04c4d080b1fdc71c041b2fbc6cbd"
+          }
+        ],
+        "originalTestCallSites": 2,
+        "originalExpectCallSites": 5,
+        "mergedSourceBlobSha": "279e2377c85e7000b925a4ce98e6b107466010ba",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/analyzers/gameplay-intent/test/gameplay-intent.test.ts",
@@ -928,14 +921,14 @@
       "owner": "engine/analyzers/manifest",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "source-preserving-family-consolidation",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/analyzers/manifest",
         "riskHint": "medium",
-        "action": "verify-selected-suite-and-dependency-consumers",
-        "sourceBlobSha": "50beca19fd377950efaaa27744359ab990323cb1"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "bab6feaf84865c46ff1d44d009afa6d3328a0ed9"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Consolidated 3 source test files as one family suite; 4 it()/test() sites and 7 expect() sites retained by static source comparison. Execution/equivalence pending.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 6 it/test and 14 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "map-content",
       "mechanicTags": [
         "map.manifest"
@@ -944,49 +937,45 @@
       "featureId": "map.manifest",
       "featureMappingBasis": "source-case-inspected",
       "consolidation": {
-        "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
-        "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
         "sourceFiles": [
           {
             "path": "engine/analyzers/manifest/test/analyze.test.ts",
-            "blobSha": "b4f752c412b88a8a73cf5860a52ef6faa7fa8449"
+            "blobSha": "50beca19fd377950efaaa27744359ab990323cb1"
           },
           {
-            "path": "engine/analyzers/manifest/test/compatibility.test.ts",
-            "blobSha": "6ef36604ec00c49739634347dc87b6c979a0690e"
-          },
-          {
-            "path": "engine/analyzers/manifest/test/education.test.ts",
-            "blobSha": "bfc15cfa4309b4e5611e3eb3389be9c6e021101e"
+            "path": "engine/analyzers/manifest/test/runtime-evidence.test.ts",
+            "blobSha": "3feb17da3a08a9e874a86cb3ccba6bbd17cce1d0"
           }
         ],
-        "originalTestCallSites": 4,
-        "originalExpectCallSites": 7,
-        "mergedSourceBlobSha": "50beca19fd377950efaaa27744359ab990323cb1",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 6,
+        "originalExpectCallSites": 14,
+        "mergedSourceBlobSha": "bab6feaf84865c46ff1d44d009afa6d3328a0ed9",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidation": {
+          "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
+          "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
+          "sourceFiles": [
+            {
+              "path": "engine/analyzers/manifest/test/analyze.test.ts",
+              "blobSha": "b4f752c412b88a8a73cf5860a52ef6faa7fa8449"
+            },
+            {
+              "path": "engine/analyzers/manifest/test/compatibility.test.ts",
+              "blobSha": "6ef36604ec00c49739634347dc87b6c979a0690e"
+            },
+            {
+              "path": "engine/analyzers/manifest/test/education.test.ts",
+              "blobSha": "bfc15cfa4309b4e5611e3eb3389be9c6e021101e"
+            }
+          ],
+          "originalTestCallSites": 4,
+          "originalExpectCallSites": 7,
+          "mergedSourceBlobSha": "50beca19fd377950efaaa27744359ab990323cb1",
+          "execution": "NOT_EXECUTED"
+        }
       }
-    },
-    {
-      "path": "engine/analyzers/manifest/test/runtime-evidence.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/manifest",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/analyzers/manifest",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "3feb17da3a08a9e874a86cb3ccba6bbd17cce1d0"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "map-content",
-      "mechanicTags": [
-        "map.manifest"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "map.manifest",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/analyzers/references/test/owned-economy-reference-edges.test.ts",
@@ -1376,21 +1365,43 @@
       "owner": "engine/analyzers/scripts",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "0bea285286aa22a598d26f8bdb4e7206983ce999"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "ac2fde512e47d027adb6e267bfb97351829451ac"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner/feature/lane consolidation 3 -> 1: 16 it/test and 34 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "player-state-persistence",
       "mechanicTags": [
         "player.persistence"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "player.persistence-analysis",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
+        "sourceFiles": [
+          {
+            "path": "engine/analyzers/scripts/test/domains/persistence/persistent-data-lifecycle.test.ts",
+            "blobSha": "0bea285286aa22a598d26f8bdb4e7206983ce999"
+          },
+          {
+            "path": "engine/analyzers/scripts/test/domains/persistence/persistent-state-lifetime.test.ts",
+            "blobSha": "b47f0856b9df5847bc385cf05f9402dc0e4b080a"
+          },
+          {
+            "path": "engine/analyzers/scripts/test/domains/persistence/persistent-state-scope.test.ts",
+            "blobSha": "0a2454d30205afc49864d420a69f276d746eab4e"
+          }
+        ],
+        "originalTestCallSites": 16,
+        "originalExpectCallSites": 34,
+        "mergedSourceBlobSha": "ac2fde512e47d027adb6e267bfb97351829451ac",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/analyzers/scripts/test/domains/persistence/persistent-reconciliation.test.ts",
@@ -1411,49 +1422,6 @@
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "player.state-recovery",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/analyzers/scripts/test/domains/persistence/persistent-state-lifetime.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/scripts",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/analyzers/scripts",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b47f0856b9df5847bc385cf05f9402dc0e4b080a"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "player-state-persistence",
-      "mechanicTags": [
-        "player.persistence"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "player.persistence-analysis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/analyzers/scripts/test/domains/persistence/persistent-state-scope.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/scripts",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/analyzers/scripts",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Persistence owner scope cannot be guessed from variable or key names.",
-      "functionalArea": "player-state-persistence",
-      "mechanicTags": [
-        "player.persistence"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "player.persistence-analysis",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -10956,44 +10924,42 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "tooling/bug-report-ui/github-report-handler.test.ts",
-      "lane": "development",
-      "owner": "tooling/bug-report-ui",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "tooling/bug-report-ui",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "816cbe8c9b509c3ff0c6e1b510032ffee8d336b7"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.ui",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "tooling/bug-report-ui/github-report-store.test.ts",
       "lane": "development",
       "owner": "tooling/bug-report-ui",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "tooling/bug-report-ui",
         "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "65b98533018a3fa1b1a4ea1680d3157632f1ffb8"
+        "action": "validate-merged-module-isolation-and-affected-selection",
+        "sourceBlobSha": "c63832c5eeec6030abafe50760b6e3bee0509d91"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 7 it/test and 12 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.ui",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+        "method": "same-directory-import-unification-and-original-body-lexical-isolation",
+        "sourceFiles": [
+          {
+            "path": "tooling/bug-report-ui/github-report-store.test.ts",
+            "blobSha": "65b98533018a3fa1b1a4ea1680d3157632f1ffb8"
+          },
+          {
+            "path": "tooling/bug-report-ui/github-report-handler.test.ts",
+            "blobSha": "816cbe8c9b509c3ff0c6e1b510032ffee8d336b7"
+          }
+        ],
+        "originalTestCallSites": 7,
+        "originalExpectCallSites": 12,
+        "mergedSourceBlobSha": "c63832c5eeec6030abafe50760b6e3bee0509d91",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "tooling/repository/source-import-specifiers.test.mjs",
@@ -13051,14 +13017,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "9485e4fedaba08bf4e28d09065eb574682fb4db0",
+    "parentCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 494,
-    "groups": 80,
-    "removedPaths": 210,
+    "sourceFilesAfter": 486,
+    "groups": 87,
+    "removedPaths": 218,
     "addedPaths": 17,
     "deletedAssertionsProven": 0,
-    "proof": "static-factory-case-and-expectation-parity_NOT_TYPESCRIPT_VITEST_MINECRAFT",
-    "open": "Synthetic runtime host/proof-label tests do not attest real client execution. TypeScript/Vitest, host integration, game runtime and true execution overhead NOT EXECUTED."
+    "proof": "static-source-body-case-and-expectation-parity_NOT_TYPESCRIPT_VITEST_MINECRAFT",
+    "open": "Per-file Vitest isolation, typecheck, actual execution cost, map-audit and Minecraft runtime NOT EXECUTED."
   }
 }

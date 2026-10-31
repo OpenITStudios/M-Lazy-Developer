@@ -1,40 +1,57 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source-audit snapshot — 2026-10-31 (authoritative inventory: 494)
+## Active source-audit snapshot — 2026-10-31 (authoritative inventory: 486)
 
-Source baseline: GitHub `Local` at `3b119d776ec96c7ac820db9e04f6dcee12f68ee5`.
-The machine owner is **`tooling/repository/test-inventory.json`**, not
-this historical narrative. At that pinned source, the recursive tree
-contains **494 physical `*.test.*` files and exactly 494 registered paths**:
-no absent or unregistered test paths were observed.
+Source baseline: GitHub `Local` parent `2e15f07018a1b03c2c339378e7a48434ac4673f2`.
+The machine owner is **`tooling/repository/test-inventory.json`**.
+The bounded batch reduces **494 → 486 physical source test files** by
+co-locating related cases within their original owner, feature and lane.
+No test case or assertion has been intentionally deleted.
 
 | Existing lane | Registered physical files |
 | --- | ---: |
-| `development` | 331 |
+| `development` | 323 |
 | `runtime` | 50 |
 | `safety` | 48 |
 | `regression` | 45 |
 | `acceptance` | 20 |
-| **Total** | **494** |
+| **Total** | **486** |
 
-Inventory recommendations: 349 `keep-provisional`, 124 `keep`,
-21 `defer` (retain for **targeted** checks, not permission to delete).
-Review provenance: 360 `case-inventory-reviewed` and 134
-`source-reviewed`. The mechanical/feature mapping for 455 source
-tests is still `path-provisional`; only 39 are
-`source-case-inspected`. Risk hints are preliminary, not an
-authorization to drop high-risk cases outside the `safety` lane.
+Inventory: 343 `keep-provisional`,
+122 `keep`, 21 `defer`.
+Review: 354 `case-inventory-reviewed`,
+132 `source-reviewed`.
+Feature mapping is still `path-provisional` for
+447 of 486 entries, not proven mechanic coverage.
 
-The historical reduction **687 → 494 files** is a 193-file net reduction
-across 80 recorded consolidation groups: 210 removed paths, 17 added
-paths. Recorded preservation is **static source construction only**;
-there is no same-head TypeScript/Vitest, `runSelectedMapAudit()`, selected
-world or live Minecraft execution proof in this snapshot. Source
-consolidation did not establish elapsed-time savings. Especially, a
-larger combined suite can broaden `--affected` selection or alter
-per-file isolation. The normal `npm test` path already selects
-10 Vitest suites and one native Node acceptance file; **494 physical
-files are not 494 routinely executed suites**.
+The historical reduction **687 → 486 files** is now 201 net fewer
+files. Inventory lineage: 87 consolidation
+groups, 218 retired paths and
+17 added paths. Physical file
+consolidation does **not** imply fewer cases or faster execution.
+The normal `npm test` path remains 10 Vitest suites and one native Node
+suite; CI stays suspended.
+
+### Current owner-local consolidation — 52 test cases, 118 expect sites
+
+- `engine/analyzers/functions/test/parse.test.ts`: 2 → 1; 2 case sites, 5 assertions
+- `engine/analyzers/manifest/test/analyze.test.ts`: 2 → 1; 6 case sites, 14 assertions
+- `engine/analyzers/entities/test/entity.test.ts`: 2 → 1; 7 case sites, 17 assertions
+- `engine/analyzers/diagnostics/test/runtime/knowledge-runtime-findings.test.ts`: 2 → 1; 9 case sites, 27 assertions
+- `engine/analyzers/scripts/test/domains/persistence/persistent-data-lifecycle.test.ts`: 3 → 1; 16 case sites, 34 assertions
+- `apps/bug-report-ui/test/github-report-client.test.ts`: 2 → 1; 5 case sites, 9 assertions
+- `tooling/bug-report-ui/github-report-store.test.ts`: 2 → 1; 7 case sites, 12 assertions
+
+The original `describe/it/expect` bodies remain verbatim in isolated lexical
+blocks; imports are unified within each original directory. The one affected
+knowledge-to-proof path for persisted player dynamic properties now points
+to the retained persistence family and its old assertion remains present.
+No default acceptance entrypoint or test execution lane changed.
+
+**Evidence ceiling:** static source/body/callsite parity and exact GitHub
+path/binding review. TypeScript, Vitest, actual wall-time, map audit and
+Minecraft gameplay **NOT EXECUTED**. Co-locating modules may alter
+per-file isolation or `--affected` selection; no speedup is claimed.
 
 ### Three distinct meanings of "test"
 
@@ -75,8 +92,8 @@ journey, terminal ownership, observed cross-domain needs, and every
 unresolved proof obligation are unchanged. A resolved map classification
 may still **broaden** these scenarios, never suppress other source
 evidence. This is an exact-source construction review only:
-TypeScript/Vitest/Minecraft **NOT EXECUTED**. Registered source-test
-file count remains **494**.
+TypeScript/Vitest/Minecraft **NOT EXECUTED**. At the time of this source-selectivity correction the registered source-test
+file count was **494**, before the subsequent seven suite consolidations.
 
 The source artifact determines which gameplay surfaces exist. The
 following is a *decision overlay* on the canonical coverage owner,

@@ -1,9 +1,9 @@
+// Owner-local source consolidation. Original cases are preserved verbatim.
 import { describe, expect, it } from "vitest";
-import {
-  deriveEntityStateGraph,
-  parseEntityDefinition,
-} from "../src/index.js";
+import { deriveEntityStateGraph, parseEntityDefinition, entityRuntimeEvidence } from "../src/index.js";
 
+// Original engine/analyzers/entities/test/entity.test.ts [1eaf50e04158efe95bd207ff9a40e22741df8357]
+{
 describe("entity definition analysis", () => {
   it("extracts base components, groups and nested event mutations", () => {
     const parsed = parseEntityDefinition({
@@ -147,3 +147,48 @@ describe("entity definition analysis", () => {
   });
 
 });
+}
+
+// Original engine/analyzers/entities/test/runtime-evidence.test.ts [cfe0ca314f30888a4eaeffe1c694048acabb1720]
+{
+const source = { artifactId: "fixture", relativePath: "entities/demo.json" };
+
+describe("entity runtime evidence", () => {
+  it("marks definite broken transitions absent", () => {
+    const entity = parseEntityDefinition({
+      "minecraft:entity": {
+        component_groups: {
+          hostile: { "minecraft:behavior.melee_attack": {} },
+        },
+        events: {
+          "demo:start": {
+            add: { component_groups: ["missing_group"] },
+            trigger: "demo:missing",
+          },
+        },
+      },
+    }, source);
+
+    const records = entityRuntimeEvidence(entity);
+    const integrity = records.find((record) => record.predicate === "entity-transition-integrity");
+    expect(integrity?.state).toBe("absent");
+    expect(integrity?.note).toContain("Definite broken transitions");
+  });
+
+  it("does not treat externally unresolved reachability alone as broken integrity", () => {
+    const entity = parseEntityDefinition({
+      "minecraft:entity": {
+        components: { "minecraft:navigation.walk": {} },
+        events: {
+          "demo:external_only": {},
+        },
+      },
+    }, source);
+
+    const records = entityRuntimeEvidence(entity);
+    const integrity = records.find((record) => record.predicate === "entity-transition-integrity");
+    expect(integrity?.state).toBe("present");
+    expect(records.some((record) => record.predicate === "navigation-component-present")).toBe(true);
+  });
+});
+}
