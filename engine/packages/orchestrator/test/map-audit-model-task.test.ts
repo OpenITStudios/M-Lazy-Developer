@@ -1335,9 +1335,11 @@ describe("EVALUATE source-scoped indicators on existing task", () => {
       schemaVersion: 1, id: "intent:current", artifactId: "selected",
       evidence: [
         { id: "ev:terminal", origin: "source-code",
-          scope: "selected-artifact", locator: "scripts/end.js:12:4" },
+          scope: "selected-artifact", locator: "scripts/end.js:12:4",
+          summary: "Current terminal operation" },
         { id: "ev:foreign", origin: "source-code",
-          scope: "external-reference", locator: "older/end.js:12:4" },
+          scope: "external-reference", locator: "older/end.js:12:4",
+          summary: "Previous map terminal operation" },
       ],
       nodes: [{ id: "state:end", kind: "state", label: "Terminal owner",
         status: "authored", evidenceIds: ["ev:terminal"] }],
@@ -1425,5 +1427,9 @@ describe("EVALUATE source-scoped indicators on existing task", () => {
     }] } })[0]?.scenarioIndicators).toBeUndefined();
     expect(run({ scenarioPreset: undefined })[0]?.scenarioIndicators)
       .toBeUndefined();
+    expect(run({ intent: { ...intent, evidence: [
+      ...intent.evidence,
+      { ...intent.evidence[0]!, scope: "external-reference" },
+    ] } })[0]?.scenarioIndicators).toBeUndefined();
   });
 });

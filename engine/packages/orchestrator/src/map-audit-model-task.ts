@@ -898,11 +898,18 @@ function scopedCheckpointScenarioIndicators(
   if (checkpoint.block !== "EVALUATE" || preset === undefined) {
     return { indicators: [], omitted: 0 };
   }
-  const evidenceById = new Map(intent.evidence.map(e => [e.id, e]));
+  // Duplicate IDs cannot identify a unique selected-source witness.
+  const evidenceById = new Map<string, GameplayIntentModel["evidence"][number]>();
+  const ambiguousEvidenceIds = new Set<string>();
+  for (const evidence of intent.evidence) {
+    if (evidenceById.has(evidence.id)) ambiguousEvidenceIds.add(evidence.id);
+    else evidenceById.set(evidence.id, evidence);
+  }
   const implementationOrigins = new Set([
     "source-code", "command", "structure", "world-db",
   ]);
   const isImplementation = (id: string): boolean => {
+    if (ambiguousEvidenceIds.has(id)) return false;
     const evidence = evidenceById.get(id);
     return isCurrentArtifactSourceEvidence(evidence) &&
       implementationOrigins.has(evidence.origin);
