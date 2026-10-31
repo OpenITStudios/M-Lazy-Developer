@@ -397,6 +397,15 @@ export function buildGameplayAuditScenarioPreset(
         "Does cleanup restore enough baseline state for another run?",
         "Are the spawn route, gameplay actions and access permissions reachable?",
         "Does player-facing feedback reflect the actual state and terminal result?",
+        // Existing canonical Universal QA source questions; never PASS claims.
+        "U01: Does artifact identity, manifest, edition and source dependency graph match the selected world?",
+        "U02: Is authored goal, action and success/failure route grounded in current source evidence?",
+        "U03: Are applicable player-flow stages from join through recovery accounted for?",
+        "U04: Do material state writers, owners, persistence and cleanup agree?",
+        "U05: Are meaningful positive, negative, capacity and timing boundaries challenged?",
+        "U06: Does each suspected contradiction have proof or a precise open obligation?",
+        "U07: Are terminal, exit, reset and replay effects settled under the correct owner?",
+        "U08: Does player-facing information and the report agree with supported current-map state?",
       ],
     }),
     scenario({

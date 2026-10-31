@@ -2529,15 +2529,28 @@
           "description": "One exact source-trace missing-evidence list per entry region referenced by features[].observedFlowEntries; not runtime execution or gameplay proof.",
           "items": {
             "type": "object",
-            "required": ["entryRegionId", "modelingStatus", "unmodeledEvidenceIds"],
+            "required": [
+              "entryRegionId",
+              "modelingStatus",
+              "unmodeledEvidenceIds"
+            ],
             "properties": {
-              "entryRegionId": { "type": "string", "minLength": 1 },
+              "entryRegionId": {
+                "type": "string",
+                "minLength": 1
+              },
               "modelingStatus": {
-                "enum": ["UNMODELED", "PARTIALLY_MODELED", "PLACED_UNPROVEN"]
+                "enum": [
+                  "UNMODELED",
+                  "PARTIALLY_MODELED",
+                  "PLACED_UNPROVEN"
+                ]
               },
               "unmodeledEvidenceIds": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "additionalProperties": false
@@ -5770,6 +5783,147 @@
         }
       },
       "additionalProperties": false
+    },
+    "qaCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority",
+        "profile",
+        "activityScope",
+        "sourceActivities",
+        "omittedSourceActivities",
+        "selected",
+        "proofBound",
+        "checks"
+      ],
+      "properties": {
+        "authority": {
+          "const": "READ_ONLY_QA_NAVIGATION_NOT_PROOF"
+        },
+        "profile": {
+          "enum": [
+            "RESOLVED_HINT_ROUTING_ONLY",
+            "UNRESOLVED_SOURCE_CANDIDATES"
+          ]
+        },
+        "activityScope": {
+          "enum": [
+            "NO_SELECTED_SOURCE_ACTIVITY",
+            "SOURCE_ACTIVITY_CANDIDATES_SCOPE_UNVERIFIED"
+          ]
+        },
+        "sourceActivities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "subjectId",
+              "kind",
+              "label",
+              "evidenceIds"
+            ],
+            "properties": {
+              "subjectId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "game",
+                  "mechanic",
+                  "objective"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        "omittedSourceActivities": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proofBound": {
+          "const": 0
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "scenarioId",
+              "question",
+              "status",
+              "scenarioSourceEvidenceIds",
+              "relatedCausalLinkIds",
+              "omittedScenarioEvidence",
+              "omittedRelatedLinks",
+              "evidenceRole"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^(U|P|BLD|CBT|SUR|STG|PUZ|QST|CRS|SKL)[0-9]{2}$"
+              },
+              "scenarioId": {
+                "type": "string",
+                "pattern": "^preset:"
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "const": "QA_SPECIFIC_PROOF_UNRESOLVED"
+              },
+              "scenarioSourceEvidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "relatedCausalLinkIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "omittedScenarioEvidence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "omittedRelatedLinks": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "evidenceRole": {
+                "const": "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "additionalProperties": true

@@ -750,6 +750,31 @@ not applicable, each material requirement's source proof and counterproof,
 confirmed finding vs unresolved obligation, and the exact runtime evidence
 still needed. The category or analytics event itself never means PASS.
 
+### QA ID coverage projection — source leads, not gameplay proof
+
+The existing Map Audit Output V2 has a read-only optional `qaCoverage`
+projection built from the SAME canonical scenario preset, Gameplay Intent and
+Scenario Graph. It adds no runner, registry, owner, proof gate or map artifact.
+The user-facing report shows selected QA IDs and refuses to call any
+scenario-wide source lead a requirement-specific PASS.
+
+- Universal U01–U08 now travel through the existing full-journey scenario;
+  type/PvP IDs appear only after a resolved selected-map classification.
+- Without a resolved classification, the type/mode remain UNKNOWN; current
+  source-backed game/mechanic/objective candidates appear for investigation,
+  not auto-promotion into a genre or complete multi-minigame profile.
+- Every selected QA ID has an original question, canonical scenario ID,
+  and, where available, *scenario-scoped* source and causal-link leads.
+- All entries are `QA_SPECIFIC_PROOF_UNRESOLVED`. The projection never
+  creates a PROVEN result, NOT_APPLICABLE decision, source/runtime receipt,
+  Audit Obligation or finding.
+- An otherwise READY_FOR_REVIEW audit does not certify these IDs. The
+  current view explicitly surfaces the missing QA-specific deciding proof.
+
+This is a bounded source-backed visibility improvement. Automatic exact
+multi-mode classification and per-ID EVALUATE/PROVE closing receipts remain
+unresolved work requiring source-specific rules and evidence.
+
 ## Mutable-state reverse index
 
 For every material mutable resource build:

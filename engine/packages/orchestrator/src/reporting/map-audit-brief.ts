@@ -118,6 +118,31 @@ export function formatSelectedMapAuditFinalReport(input: {
     "**Map:** " + concise(report.evidenceScope.selectedArtifact),
     "**Versi:** " + concise(report.mapVersion), "",
   ];
+  // Derived QA IDs remain pending until requirement-specific PROVE evidence.
+  const qa = report.qaCoverage;
+  if (qa) {
+    out.push(
+      "## Klasifikasi QA — BELUM TERVERIFIKASI",
+      "Profil: " + qa.profile + "; pertanyaan terpilih: " +
+        qa.selected + "; QA ID terbukti lulus: " + qa.proofBound + ".",
+      "Source yang terkait dengan skenario adalah petunjuk investigasi, bukan PASS.",
+    );
+    if (qa.profile === "UNRESOLVED_SOURCE_CANDIDATES") {
+      out.push("Klasifikasi tipe/mode belum dibuktikan. " +
+        "Kandidat aktivitas source tidak otomatis menjadi jenis game.");
+    }
+    for (const item of qa.checks.slice(0, 10)) {
+      out.push("- " + item.id + " BELUM TERVERIFIKASI — " +
+        item.question.slice(0, 135) + " (bukti skenario: " +
+        (item.scenarioSourceEvidenceIds.slice(0, 2).join(", ") ||
+          "belum ada") + ")");
+    }
+    if (qa.checks.length > 10) {
+      out.push("- " + (qa.checks.length - 10) +
+        " ID lain tercatat di qaCoverage pada laporan yang sama.");
+    }
+    out.push("");
+  }
   // Explain the same source evidence already present in Gameplay Intent and
   // the model handoff. A typed send is NOT evidence of an observed message,
   // a real player/arena binding, an approved objective, or a new Bug.

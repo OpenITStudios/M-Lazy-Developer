@@ -130,6 +130,36 @@ export interface MapAuditOutputControl {
   readonly reasons: readonly string[];
 }
 
+/**
+ * Derived QA navigation. Evidence on the same gameplay scenario can guide
+ * investigation but NEVER closes an individual requirement or proves a game.
+ */
+export interface MapAuditQaCoverage {
+  readonly authority: "READ_ONLY_QA_NAVIGATION_NOT_PROOF";
+  readonly profile: "RESOLVED_HINT_ROUTING_ONLY" | "UNRESOLVED_SOURCE_CANDIDATES";
+  readonly activityScope: "NO_SELECTED_SOURCE_ACTIVITY" | "SOURCE_ACTIVITY_CANDIDATES_SCOPE_UNVERIFIED";
+  readonly sourceActivities: readonly {
+    readonly subjectId: string;
+    readonly kind: "game" | "mechanic" | "objective";
+    readonly label: string;
+    readonly evidenceIds: readonly string[];
+  }[];
+  readonly omittedSourceActivities: number;
+  readonly selected: number;
+  readonly proofBound: 0;
+  readonly checks: readonly {
+    readonly id: string;
+    readonly scenarioId: string;
+    readonly question: string;
+    readonly status: "QA_SPECIFIC_PROOF_UNRESOLVED";
+    readonly scenarioSourceEvidenceIds: readonly string[];
+    readonly relatedCausalLinkIds: readonly string[];
+    readonly omittedScenarioEvidence: number;
+    readonly omittedRelatedLinks: number;
+    readonly evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF";
+  }[];
+}
+
 export interface MapAuditOutputV2 {
   readonly schemaVersion: 2;
   readonly artifactId: string;
@@ -156,6 +186,8 @@ export interface MapAuditOutputV2 {
     readonly classification:
       GameDesignMapClassification;
   };
+  /** Derived QA-ID investigation navigation, NOT executed or PROVEN tests. */
+  readonly qaCoverage?: MapAuditQaCoverage;
   readonly evidenceScope: {
     readonly mode: "selected-map-version-only";
     readonly selectedArtifact: string;
@@ -495,6 +527,80 @@ function projectFinding(
   };
 }
 
+/** Do not borrow scenario-wide source proof to certify any one QA ID. */
+function projectSelectedMapQaCoverage(
+  inspection: InspectArtifactResult,
+): MapAuditQaCoverage {
+  const intent = inspection.gameplayIntent.model;
+  const selectedIds = new Set(intent.evidence
+    .filter(item => item.scope === "selected-artifact")
+    .map(item => item.id));
+  const byNode = new Map(intent.nodes.map(node => [node.id, node]));
+  const preset = inspection.hiddenGameplayDefects.auditScenarioPreset;
+  const graph = inspection.hiddenGameplayDefects.scenarioAudit.graph;
+  const activityCandidates = intent.nodes.flatMap(node => {
+    if (node.status === "hypothesis" ||
+        (node.kind !== "game" && node.kind !== "mechanic" &&
+         node.kind !== "objective")) return [];
+    const evidenceIds = [...new Set(node.evidenceIds
+      .filter(id => selectedIds.has(id)))].sort();
+    if (evidenceIds.length === 0) return [];
+    return [{
+      subjectId: node.id, kind: node.kind, label: node.label,
+      evidenceIds: evidenceIds.slice(0, 8),
+    }];
+  }).sort((a, b) => a.subjectId.localeCompare(b.subjectId));
+  const seen = new Set<string>();
+  const checks: MapAuditQaCoverage["checks"][number][] = [];
+  for (const scenario of preset.scenarios) {
+    const matchGraph = graph.scenarios.filter(item =>
+      item.id === "preset:" + scenario.id &&
+      item.label === scenario.kind &&
+      item.gameplayStage === scenario.flowStage);
+    const scoped = matchGraph.length === 1 ? matchGraph[0] : undefined;
+    const evidence = scoped === undefined ? [] : [...new Set(
+      scoped.sourceSubjectIds.flatMap(subjectId =>
+        byNode.get(subjectId)?.evidenceIds.filter(id => selectedIds.has(id)) ?? [])
+    )].sort();
+    const linkIds = scoped === undefined ? [] : graph.causalLinks.filter(link =>
+      link.scenarioId === scoped.id &&
+      scoped.causalLinkIds.includes(link.id) &&
+      graph.causalLinks.filter(other => other.id === link.id).length === 1 &&
+      link.evidenceIds.some(id => selectedIds.has(id))
+    ).map(link => link.id).sort();
+    for (const question of scenario.questions) {
+      const tagged = /^(U\d{2}|P\d{2}|BLD\d{2}|CBT\d{2}|SUR\d{2}|STG\d{2}|PUZ\d{2}|QST\d{2}|CRS\d{2}|SKL\d{2}):\s+(.+)$/.exec(question);
+      if (!tagged) continue;
+      const identity = scenario.id + "::" + tagged[1];
+      if (seen.has(identity)) continue;
+      seen.add(identity);
+      checks.push({
+        id: tagged[1]!, scenarioId: "preset:" + scenario.id,
+        question: tagged[2]!,
+        status: "QA_SPECIFIC_PROOF_UNRESOLVED",
+        scenarioSourceEvidenceIds: evidence.slice(0, 8),
+        relatedCausalLinkIds: linkIds.slice(0, 8),
+        omittedScenarioEvidence: Math.max(0, evidence.length - 8),
+        omittedRelatedLinks: Math.max(0, linkIds.length - 8),
+        evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF",
+      });
+    }
+  }
+  return {
+    authority: "READ_ONLY_QA_NAVIGATION_NOT_PROOF",
+    profile: inspection.hiddenGameplayDefects.classification === undefined
+      ? "UNRESOLVED_SOURCE_CANDIDATES" : "RESOLVED_HINT_ROUTING_ONLY",
+    activityScope: activityCandidates.length === 0
+      ? "NO_SELECTED_SOURCE_ACTIVITY"
+      : "SOURCE_ACTIVITY_CANDIDATES_SCOPE_UNVERIFIED",
+    sourceActivities: activityCandidates.slice(0, 16),
+    omittedSourceActivities: Math.max(0, activityCandidates.length - 16),
+    selected: checks.length,
+    proofBound: 0,
+    checks,
+  };
+}
+
 export function projectMapAuditOutputV2(input: {
   readonly inspection: InspectArtifactResult;
   readonly identity: SelectedMapAuditIdentity;
@@ -800,6 +906,7 @@ export function projectMapAuditOutputV2(input: {
                 .classification,
           },
         }),
+    qaCoverage: projectSelectedMapQaCoverage(input.inspection),
     evidenceScope: {
       mode: "selected-map-version-only",
       selectedArtifact:
