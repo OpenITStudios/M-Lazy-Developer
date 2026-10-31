@@ -11,7 +11,7 @@
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
     "proofRegistryFingerprint": "868f390c",
-    "proofInventoryFingerprint": "b566b2ad"
+    "proofInventoryFingerprint": "ce84b29f"
   },
   "summary": {
     "taskCapabilities": 55,
@@ -38,14 +38,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -71,14 +70,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -104,14 +102,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -137,14 +134,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -170,14 +166,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -203,14 +198,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -236,14 +230,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -269,14 +262,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 5,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/source-evidence.test.ts"
+        "engine/packages/behavior-model/test/reward-lifecycle.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -302,14 +294,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -335,14 +327,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -368,14 +360,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 15,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/diagnostic-reasoning/test/audit-coverage.test.ts",
-        "engine/packages/diagnostic-reasoning/test/behavior-evidence.test.ts",
         "engine/packages/diagnostic-reasoning/test/calibration.test.ts",
-        "engine/packages/diagnostic-reasoning/test/contradiction-registry.test.ts",
-        "engine/packages/diagnostic-reasoning/test/counterexample-explanation.test.ts"
+        "engine/packages/diagnostic-reasoning/test/crosscheck-scenario-routing.test.ts",
+        "engine/packages/diagnostic-reasoning/test/declarative-rules.test.ts",
+        "engine/packages/diagnostic-reasoning/test/reachability-capability-exposure.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -401,14 +392,13 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 15,
+      "testFiles": 4,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/diagnostic-reasoning/test/audit-coverage.test.ts",
-        "engine/packages/diagnostic-reasoning/test/behavior-evidence.test.ts",
         "engine/packages/diagnostic-reasoning/test/calibration.test.ts",
-        "engine/packages/diagnostic-reasoning/test/contradiction-registry.test.ts",
-        "engine/packages/diagnostic-reasoning/test/counterexample-explanation.test.ts"
+        "engine/packages/diagnostic-reasoning/test/crosscheck-scenario-routing.test.ts",
+        "engine/packages/diagnostic-reasoning/test/declarative-rules.test.ts",
+        "engine/packages/diagnostic-reasoning/test/reachability-capability-exposure.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -434,14 +424,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -467,14 +457,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -500,14 +490,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -533,14 +523,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -566,14 +556,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -599,14 +589,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -632,14 +622,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -665,14 +655,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -698,14 +688,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -731,14 +721,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -766,14 +756,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -799,14 +789,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -861,14 +851,10 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 17,
-      "testFiles": 5,
+      "testFiles": 1,
       "hasReadme": false,
       "proofPaths": [
-        "engine/packages/knowledge/test/entity-reasoning.test.ts",
-        "engine/packages/knowledge/test/evaluate.test.ts",
-        "engine/packages/knowledge/test/invariant-compiler.test.ts",
-        "engine/packages/knowledge/test/loader-ownership.test.ts",
-        "engine/packages/knowledge/test/reasoning-infrastructure.test.ts"
+        "engine/packages/knowledge/test/evaluate.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -894,14 +880,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -927,14 +913,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -960,14 +946,12 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 10,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
-        "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history.test.ts"
+        "engine/packages/reliability-search/test/robustness/metamorphic-robustness.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -993,14 +977,12 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 10,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
-        "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history.test.ts"
+        "engine/packages/reliability-search/test/robustness/metamorphic-robustness.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1026,14 +1008,12 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 10,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
-        "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history.test.ts"
+        "engine/packages/reliability-search/test/robustness/metamorphic-robustness.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1059,14 +1039,12 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 10,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
-        "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history.test.ts"
+        "engine/packages/reliability-search/test/robustness/metamorphic-robustness.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1092,14 +1070,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 200,
+      "testFiles": 61,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts",
+        "engine/packages/orchestrator/test/causal-inspection-integration.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1123,14 +1101,12 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 27,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
-        "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
         "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
-        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
+        "engine/packages/runtime-lab/test/host/multi-client-orchestrator.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1154,14 +1130,12 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 27,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
-        "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
         "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
-        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
+        "engine/packages/runtime-lab/test/host/multi-client-orchestrator.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1188,14 +1162,12 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 27,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
-        "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
         "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
-        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
+        "engine/packages/runtime-lab/test/host/multi-client-orchestrator.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1219,14 +1191,12 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 27,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
-        "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
         "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
-        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
+        "engine/packages/runtime-lab/test/host/multi-client-orchestrator.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1250,14 +1220,12 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 27,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
-        "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
         "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
-        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
+        "engine/packages/runtime-lab/test/host/multi-client-orchestrator.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1283,14 +1251,12 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 44,
-      "testFiles": 19,
+      "testFiles": 3,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/reliability/test/catalog/catalogs.test.ts",
-        "engine/packages/reliability/test/catalog/historical-regression-catalog.test.ts",
-        "engine/packages/reliability/test/core/reliability.test.ts",
-        "engine/packages/reliability/test/knowledge-catalogs.test.ts",
-        "engine/packages/reliability/test/portfolio/map-knowledge-retest.test.ts"
+        "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
+        "engine/packages/reliability/test/runtime/chunk-runtime-observation.test.ts",
+        "engine/packages/reliability/test/runtime/runtime-observation.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1316,14 +1282,10 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 46,
-      "testFiles": 9,
+      "testFiles": 1,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/project-model/test/contracts/arena-region-contract.test.ts",
-        "engine/packages/project-model/test/evidence/decision-ledger-validate.test.ts",
-        "engine/packages/project-model/test/evidence/telemetry-continuity.test.ts",
-        "engine/packages/project-model/test/project-lifecycle.test.ts",
-        "engine/packages/project-model/test/project/source-ref.test.ts"
+        "engine/packages/project-model/test/runtime/runtime-evidence-continuity.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1349,7 +1311,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 15,
-      "testFiles": 6,
+      "testFiles": 5,
       "hasReadme": false,
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
@@ -1382,7 +1344,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 15,
-      "testFiles": 6,
+      "testFiles": 5,
       "hasReadme": false,
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
@@ -1415,7 +1377,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 15,
-      "testFiles": 6,
+      "testFiles": 5,
       "hasReadme": false,
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
@@ -1448,14 +1410,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1481,14 +1443,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1514,14 +1476,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1547,14 +1509,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1580,14 +1542,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1613,14 +1575,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1646,14 +1608,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1679,14 +1641,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1712,14 +1674,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1745,14 +1707,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1778,14 +1740,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1811,14 +1773,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 40,
-      "testFiles": 25,
+      "testFiles": 14,
       "hasReadme": true,
       "proofPaths": [
-        "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
+        "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/cleanup/cleanup-resource-evidence.test.ts",
+        "engine/analyzers/scripts/test/domains/combat/combat-lifecycle-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
