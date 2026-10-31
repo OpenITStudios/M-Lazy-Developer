@@ -247,6 +247,108 @@ help locate relevant methods and adverse examples only. Their PASS and Node
 statuses never count as detected map defects, passing local test cases, or
 proof of a particular player's observed Minecraft behavior.
 
+### Indicator evidence-readiness review — 31 October 2026
+
+> **Source-only assessment**, pinned to `Local` commit
+> `7b295277927efcaabcf098238ca807aa4faee150`.
+> This review does **not** execute a detector, score a current audit
+> output, amend frozen expectations or open the acceptance holdout.
+
+Historical source `engine/reliability/corpus/audit-detection-cases.json` contains
+**15** generalized failure-family prompts. **12/15** are directly navigable
+through existing scenario detection indicators. **3/15** are routed instead
+through named, already-mandatory Multi-Scenario Checks. These three are
+not evidence of absent engine coverage; the individual indicator metadata
+simply does not own their stage/resource/custody join.
+
+| Frozen historical source ID | Existing indicator | Canonical check | Required discriminator |
+| --- | --- | --- | --- |
+| `REG-MULTIARENA-CONCURRENCY` | `arena-capacity-plus-one` | A9 / A20 | Compare advertised concurrent capacity against source-grounded shared resource budget and admission. |
+| `REG-TICKING-NOT-CREATED` | `simulation-distance` | A13 | Required remote simulation must be materialized and ready before progression depends on it. |
+| `REG-RECONNECT-INVENTORY` | `disconnect-reconnect` | A9 / A17 | Fresh-join and reconnect inventory writers/clearers must reconcile to the same authorized state. |
+| `REG-RESPAWN-RECONNECT` | `disconnect-reconnect` | A10 / A17 | A reconnect cannot overrule the current death/respawn generation without an authored transition. |
+| `REG-RESET-REUSE` | `repeated-run` | A10 / A15 | Old cleanup and deferred writes must settle or be invalidated before arena reuse. |
+| `REG-WAVE-PREMATURE-COMPLETE` | `progression-wave-integrity` | A9 / A14 | Pending and retry operations must remain accounted for before zero/complete is committed. |
+| `REG-GLOBAL-SELECTOR-ARENA` | `multi-arena-parallel` | A27 | A global selector reached from arena-local code requires exact scoped ownership. |
+| `REG-DEVELOPER-TOOL-EXPOSURE` | `player-capability-integrity` | A19 | Only a reachable player-level privileged action is a bug candidate; unused maintenance code is not. |
+| `REG-INCOMPLETE-REPLICA` | `arena-replica-integrity` | A15 | Physical replica proof must compare each material route, block and objective independently. |
+| `REG-DOUBLE-TERMINAL` | `terminal-collision` | A11 | Two same-generation result paths must have one active exactly-once commit owner. |
+| `REG-TRANSITION-CONTAINER-RESIDUE` | Canonical multi-scenario only | Stage Transition State Check + Container & Economy Reset Check | Previous-stage item sources, reset/structure writers and the next stage's allowed inventory must reconcile. |
+| `REG-WORLD-MUTATION-NEXT-STAGE-BLOCKER` | Canonical multi-scenario only | Stage Transition State Check + Shared World State Check | Previous world mutations must not block the next stage's required route or actor capability. |
+| `REG-OBJECTIVE-CARRIER-DISCONNECT` | Canonical multi-scenario only | Carried Objective Ownership Check + Disconnect / Reconnect Check | On disconnect, carried objective custody and world representation must transfer, restore or resolve. |
+| `REG-OFFLINE-CINEMATIC-ADVANCE` | `deferred-ownership` | A26 / A17 | Offline timer completion must revalidate owner eligibility before later gameplay begins. |
+| `REG-BLOCK-BREAK-TARGET-FEEDBACK` | `information-correctness` | A12 | Missing visual cue requires authored feedback or material player impact; else Developer Note. |
+
+**Special classification guard:** `REG-BLOCK-BREAK-TARGET-FEEDBACK` is
+not an unconditional defect: when an authored cue is not required and play
+is unaffected, preserve a Developer Note instead of fabricating a BUG.
+Likewise, a configured structure/guard does not prove effective protection;
+evaluate activation, ownership, reachability and the exact next-stage
+dependency through the already-canonical checks.
+
+The current `engine/reliability/corpus/regressions.json` declares **46**
+regression cases: **17 ready**, **27 candidate**, **2 blocked**. In the
+17 ready cases, independently frozen `expected.disposition` values are
+**6 defect**, **6 designed-behavior** and **5 insufficient-evidence**.
+Of these 17, **4 declare external world artifacts** and **13 reduced
+source fixtures**. Declared readiness is not an observed execution.
+
+| Existing scenario kind | Defect expectation | Known-good expectation | Insufficient-evidence expectation |
+| --- | ---: | ---: | ---: |
+| `deferred-ownership` | 1 | 0 | 0 |
+| `disconnect-reconnect` | 2 | 0 | 0 |
+| `progression-wave-integrity` | 1 | 2 | 2 |
+| `transaction-atomicity` | 1 | 2 | 1 |
+| `terminal-collision` | 1 | 2 | 2 |
+| **Total across 5 kinds** | **6** | **6** | **5** |
+
+Known-good frozen regression IDs (must not become false positives):
+- `reg_progression_deferred_spawn_reserved_generation_guarded`
+- `reg_progression_generation_bound_actor_registry`
+- `reg_result_transaction_complete_result_record`
+- `reg_result_transaction_reward_journal_before_cleanup`
+- `reg_result_transaction_terminal_precedence_explicit`
+- `reg_terminal_race_one_shot_latch`
+
+Frozen insufficient-evidence regression IDs (must remain separately unresolved):
+- `reg_progression_deferred_spawn_unreserved`
+- `reg_progression_unbound_actor_registry`
+- `reg_result_transaction_partial_result_record`
+- `reg_result_transaction_terminal_precedence_latch_only`
+- `reg_terminal_race_two_event_unresolved`
+
+Frozen defect expectation IDs:
+- `reg_defense_async_reset_lease_reuse_race`
+- `reg_defense_challenge_1_1_1_bug_def_preload_inventory`
+- `reg_defense_challenge_1_1_1_bug_def_respawn_reconnect`
+- `reg_defense_challenge_1_1_1_bug_def_wave_retry`
+- `reg_result_transaction_cleanup_before_reward_journal`
+- `reg_terminal_race_unguarded_deferred`
+
+Only **5 of 20** indicator kinds have a `ready` regression expectation
+in this snapshot. Other kinds may have historical search hints or
+candidate/blocked fixtures; neither amounts to an eligible observed result.
+The frozen expectation disposition takes precedence over informal
+`positive` or `negative` metadata: a known risk whose expected disposition
+is `insufficient-evidence` does not automatically count as a proven defect.
+
+**Metric boundary:** no current-commit output is paired with these cases.
+TP/TN/FP/FN and current-commit precision/recall/specificity/false-positive
+rate are **NOT MEASURED**, never treated as 0% or 100%. Earlier
+post-repair `engine/reliability/history/audit-runs/evaluations/`
+scorecards belong to older revisions and cannot establish results for
+this source revision. Test execution, target Minecraft operation and
+real player observations were **NOT EXECUTED** in this review.
+
+To measure detection, the existing benchmark owner requires the
+correct artifact SHA-256, target edition/version, genuinely observed
+same-revision output, independent frozen expectation, adjudicated proof
+scope, and a negative control; preserve missing predictions and unknown
+states. Compare comparable reduced fixtures separately from actual
+full-map and live-client evidence. Do not rewrite the corpus or reuse
+historical PASS labels to inflate detector accuracy.
+
+
 ### Map-type scenario questions (existing canonical owners)
 
 Every selected map retains the universal five coverage layers and player-journey contract.
