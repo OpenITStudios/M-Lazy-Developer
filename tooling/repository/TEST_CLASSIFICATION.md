@@ -62,6 +62,22 @@ files are not 494 routinely executed suites**.
 
 ### Mandatory versus applicable checks for each selected map
 
+**Implemented source-selectivity correction (2026-10-31):**
+`engine/packages/orchestrator/src/inspection/hidden-gameplay-defect-analysis.ts`
+now derives the same three optional-scenario signals on initial inspection
+and world refresh: actual dynamic-property evidence for persistence,
+economy reward/debit evidence for transaction atomicity, and actor
+counter or a scoped wave cue for entity-backed progression. Presence
+of a zero-filled `persistence` summary, ordinary kit inventory
+activity, or generic "round"/"objective"/"kill" wording no longer
+automatically opens those optional scenario families. The baseline
+journey, terminal ownership, observed cross-domain needs, and every
+unresolved proof obligation are unchanged. A resolved map classification
+may still **broaden** these scenarios, never suppress other source
+evidence. This is an exact-source construction review only:
+TypeScript/Vitest/Minecraft **NOT EXECUTED**. Registered source-test
+file count remains **494**.
+
 The source artifact determines which gameplay surfaces exist. The
 following is a *decision overlay* on the canonical coverage owner,
 **not another stage, runner, registry, or checklist authority**.

@@ -696,7 +696,34 @@ function scenarioSurfaceSignals(
     spatialContainment:
       /barrier|arena boundary|containment|mayfly|flight|fly|physical arena|collision|outside arena/i.test(text),
     progressionActor:
-      /wave|enemy|enemies|mob|mobs|kill|defeat|eliminate|remaining|horde|round|objective|progression/i.test(text),
+      /\b(?:waves?|hordes?|(?:enemies|mobs?)\s+(?:remaining|alive|counts?|counter)|(?:remaining|alive|counts?)\s+(?:enemies|mobs?))\b/i.test(text),
+  };
+}
+
+/** Source-grounded optional checks shared by first inspection and refresh.
+ * Empty summary sections and generic player-inventory operations are not
+ * evidence of persistence, payment, or wave-counter gameplay.
+ */
+function sourceBoundPresetSignals(
+  world: GameplayWorldModel,
+  actorProgressionCue: boolean,
+): {
+  hasPersistence: boolean;
+  hasTransactionalGameplay: boolean;
+  hasProgressionActorSurface: boolean;
+} {
+  return {
+    // The world model always constructs a persistence summary. Its presence
+    // is not proof that persistent gameplay properties were actually found.
+    hasPersistence: (world.persistence?.properties ?? 0) > 0,
+    // A kit grant/drop/reset alone is not a payment or reward transaction.
+    hasTransactionalGameplay:
+      world.economy.paths.length > 0 ||
+      world.economy.scoreboardDebits > 0,
+    // Counter observations are stronger than generic "round" / "kill" text.
+    hasProgressionActorSurface:
+      world.progression.actorAccounting.counters > 0 ||
+      (world.entities.definitions > 0 && actorProgressionCue),
   };
 }
 
@@ -718,6 +745,9 @@ function auditScenarioPresetFromModel(
     );
   const surfaceSignals =
     scenarioSurfaceSignals(input.intent);
+  const sourceSignals = sourceBoundPresetSignals(
+    input.world, surfaceSignals.progressionActor,
+  );
 
   return buildGameplayAuditScenarioPreset({
     ...(input.classification === undefined
@@ -732,16 +762,10 @@ function auditScenarioPresetFromModel(
     hasMultiArena:
       input.world.arenas.detected &&
       (input.world.arenas.count ?? 0) > 1,
-    hasPersistence:
-      input.world.persistence !== undefined,
+    ...sourceSignals,
     hasDeferredWork: deferredWork,
     hasRepeatedRunSurface:
       input.world.arenas.detected,
-    hasTransactionalGameplay:
-      input.world.economy.paths.length > 0 ||
-      input.world.inventory.regions > 0 ||
-      input.world.inventory.grantRegions > 0 ||
-      input.world.inventory.dropRegions > 0,
     hasSimulationDistanceDependency:
       input.world.entities.definitions > 0 &&
       (
@@ -753,9 +777,6 @@ function auditScenarioPresetFromModel(
             node.kind === "objective",
         )
       ),
-    hasProgressionActorSurface:
-      input.world.entities.definitions > 0 &&
-      surfaceSignals.progressionActor,
     hasPlayerFeedbackSurface:
       input.intent.evidence.some((item) =>
         item.origin === "dialogue" ||
@@ -1011,6 +1032,9 @@ export function refreshHiddenGameplayDefectsForWorld(
             ),
         }
       : scenarioSurfaceSignals(intent);
+  const sourceSignals = sourceBoundPresetSignals(
+    world, refreshSurfaceSignals.progressionActor,
+  );
   const auditScenarioPreset =
     buildGameplayAuditScenarioPreset({
       ...(existing.classification === undefined
@@ -1025,19 +1049,13 @@ export function refreshHiddenGameplayDefectsForWorld(
       hasMultiArena:
         world.arenas.detected &&
         (world.arenas.count ?? 0) > 1,
-      hasPersistence:
-        world.persistence !== undefined,
+      ...sourceSignals,
       hasDeferredWork:
         existing.auditScenarioPreset.scenarios.some(
           (scenario) => scenario.kind === "deferred-ownership",
         ),
       hasRepeatedRunSurface:
         world.arenas.detected,
-      hasTransactionalGameplay:
-        world.economy.paths.length > 0 ||
-        world.inventory.regions > 0 ||
-        world.inventory.grantRegions > 0 ||
-        world.inventory.dropRegions > 0,
       hasSimulationDistanceDependency:
         world.entities.definitions > 0 &&
         (
@@ -1049,9 +1067,6 @@ export function refreshHiddenGameplayDefectsForWorld(
               node.kind === "objective",
           ) ?? false)
         ),
-      hasProgressionActorSurface:
-        world.entities.definitions > 0 &&
-        refreshSurfaceSignals.progressionActor,
       hasPlayerFeedbackSurface:
         intent?.evidence.some((item) =>
           item.origin === "dialogue" ||
