@@ -30,8 +30,31 @@ Inventory disposition: 289 provisional,
 82 keep, 14 defer.
 Review provenance: 284 case-inventory-reviewed
 and 101 source-reviewed; feature mapping remains
-`path-provisional` for 328 entries (57 source-case-inspected).
+`path-provisional` for 318 entries (67 source-case-inspected).
 These provisional labels **cannot** justify deleting a unique test.
+
+### Exact-source classification integrity — 2026-10-31
+
+No physical test was removed in this review. Ten smaller source suites
+were found to invoke unique production consumers and assert concrete
+effects. Their classifications were upgraded from path-only labels after
+reviewing the pinned source, not based only on filenames. Thirteen
+previously classified `source-case-inspected` suites were also missing
+a pinned source SHA; each was re-read and tied to its exact Git blob.
+All **67 source-case-inspected entries now have an exact source SHA**.
+
+The existing `tooling/repository/run-tests.mjs` inventory loader now
+checks the byte identity (Git blob SHA-1, LF-normalized per repository
+`.gitattributes`) of every source-case-inspected test. Missing or
+stale fingerprints fail closed instead of silently inheriting a
+high-confidence classification after a source edit. This is a
+source-integrity gate, **not** a new runner, test lane, CI workflow,
+or assertion that any test executed successfully.
+
+The remaining **318 path-provisional** entries still need actual
+consumer/fixture/positive-negative review. A small test, a deferred
+test, a repeated assertion method name, or a fewer-files target
+does not justify erasing a distinct production behavior test.
 
 ### Runtime family consolidation and source-case review — 2026-10-31
 

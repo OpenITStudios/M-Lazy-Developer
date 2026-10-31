@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-  "classification": "385 active physical source-test files after 389 -> 385 feature-local runtime suite consolidation, preserving 41 source test registrations and 93 expect callsites across scheduler, multiplayer and chunk cases. 15 additional source-test feature mappings verified against test assertions and production symbol consumers. No distinct runtime/negative cases were deleted; reviewed 15 deferred suites remain intact. Source/runtime verification NOT EXECUTED; ~100 source files remains an evidence-gated ambition.",
+  "classification": "385 source test files; 67 source-case-inspected mappings now have exact pinned Git blob SHA review provenance (13 previous gaps closed; 10 newly inspected). 318 path-provisional feature mappings remain. No distinct source assertions, cases or test files deleted in this review: inspected candidates invoke production behavior and lack demonstrated full semantic equivalence. Runtime Vitest/TypeScript/Minecraft NOT EXECUTED.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -256,20 +256,22 @@
       "owner": "engine/adapters/nbt",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/adapters/nbt",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "b5bbbddd836c5face887d0867ea222c74f139d7d",
+        "consumerSymbol": "writeBedrockNbt"
       },
       "recommendation": "keep",
-      "rationale": "Untouched NBT documents preserve exact bytes.",
+      "rationale": "Untouched NBT documents preserve exact bytes. Direct source review establishes writeBedrockNbt consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "map-database",
       "mechanicTags": [
         "map.nbt"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "database.nbt",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/blocks/test/automation.test.ts",
@@ -373,21 +375,22 @@
       "owner": "engine/analyzers/commands",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/commands",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b4ef727548ccb77c3ddb1d16fdcc65dfa7f3179a"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "b4ef727548ccb77c3ddb1d16fdcc65dfa7f3179a",
+        "consumerSymbol": "parseStructureLoadSemantics"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes parseStructureLoadSemantics consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "map-content",
       "mechanicTags": [
         "map.structure"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "map.structure-proof",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/diagnostics/test/arena/arena-capacity.test.ts",
@@ -438,19 +441,20 @@
       "owner": "engine/analyzers/diagnostics",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/diagnostics",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "9cf8baa3f0d08fb3285e98a9eb4bf59c4cc8c62f"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "9cf8baa3f0d08fb3285e98a9eb4bf59c4cc8c62f",
+        "consumerSymbol": "educationRequirementDiagnostic"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes educationRequirementDiagnostic consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "platform-compatibility",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "platform.editions",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/diagnostics/test/core/findings.test.ts",
@@ -1004,19 +1008,20 @@
       "owner": "engine/analyzers/references",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/references",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "672c5cae9a421b70d74f708186ad27f0d07ac14a"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "672c5cae9a421b70d74f708186ad27f0d07ac14a",
+        "consumerSymbol": "resolveByIdentifier"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes resolveByIdentifier consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/resource-pack/test/animation.test.ts",
@@ -1084,10 +1089,12 @@
       "owner": "engine/analyzers/scripts",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "ce81a83bab6785a0ab36238fb10ae856a1b63c00",
+        "consumerSymbol": "deriveScriptTerminalEvidenceBundle"
       },
       "recommendation": "keep",
       "rationale": "Capacity/membership authority proofs must share arena identity, branch, and exact synchronous path.",
@@ -2914,19 +2921,20 @@
       "owner": "engine/packages/graph",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/graph",
         "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "d5c45ebadfb6b739308cd87738b49d1a3ce141b0"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "d5c45ebadfb6b739308cd87738b49d1a3ce141b0",
+        "consumerSymbol": "buildInvalidationPlan"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes buildInvalidationPlan consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "tooling.repository",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/knowledge/test/entity-reasoning.test.ts",
@@ -5435,10 +5443,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "4ca7404fa9f970cd04708662c5be82acc0d5c05f",
+        "consumerSymbol": "analyzeInteractionLifecycle"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5456,10 +5466,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "c9e1b0a7459f1c6b070a29d4d170163e1c6a0275",
+        "consumerSymbol": "analyzeInteractiveBlockState"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5535,10 +5547,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "ae9498b51c7faf8bbff97729edbf6b0ca3f70374",
+        "consumerSymbol": "analyzeInventoryRestoreOwnership"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5615,10 +5629,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "b267423ec502ae6e1d91972c0ada1d2195e8678b",
+        "consumerSymbol": "deriveMultiplayerStateValidationPlan"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5637,10 +5653,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "897e8ac1254e864260a64647a38297e0c2e582e6",
+        "consumerSymbol": "analyzePermissionProfile"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5656,10 +5674,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "2de56034c4c76ea2afe6ed069b6789c8af165c45",
+        "consumerSymbol": "analyzePersistenceSource"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5678,10 +5698,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "c6a2cd121cb3bb56cc83f74014cf401b260eaf51",
+        "consumerSymbol": "analyzePlayerCapabilitySurfaces"
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
@@ -5699,10 +5721,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "3e57bace3d2243ddc616a16d609910d78ca5f2b6",
+        "consumerSymbol": "analyzePlayerSessionLifecycle"
       },
       "recommendation": "keep",
       "rationale": "Join, spawn and leave remain distinct; spawn event is not readiness proof.",
@@ -6008,10 +6032,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "4e224e19b1deec01c798221cc2f8d763ba58c1a1",
+        "consumerSymbol": "analyzeTeleportTransactions"
       },
       "recommendation": "keep",
       "rationale": "Teleport return outcome must be checked as an actual guarded transaction.",
@@ -6866,17 +6892,19 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending.",
+      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending. Direct source review establishes detectFunctionGraphMutation consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "52401adaec18aaca787e0910322acef91046859f",
+        "consumerSymbol": "detectFunctionGraphMutation"
       },
       "functionalArea": "repair-preservation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "repair.mutations",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/repair/mutation-transaction-analysis.test.ts",
@@ -8377,18 +8405,20 @@
       "owner": "engine/packages/reliability-search",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/reliability-search",
         "riskHint": "low",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "643ddbf9ad071962a504ed583698c3289d219c02",
+        "consumerSymbol": "buildCoverageQualityDashboard"
       },
       "recommendation": "defer",
-      "rationale": "Weak/runtime-only coverage reporting is a dashboard projection, not a direct evidence gate.",
+      "rationale": "Weak/runtime-only coverage reporting is a dashboard projection, not a direct evidence gate. Direct source review establishes buildCoverageQualityDashboard consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
@@ -8515,19 +8545,20 @@
       "owner": "engine/packages/reliability-search",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/reliability-search",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "df0f3e83628f1349ad1bd08fd9c5f75ce42ca7dc"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "df0f3e83628f1349ad1bd08fd9c5f75ce42ca7dc",
+        "consumerSymbol": "runMetamorphicCampaign"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes runMetamorphicCampaign consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.falsification-search",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/reliability-search/test/search/search.test.ts",
@@ -8882,19 +8913,20 @@
       "owner": "engine/packages/reliability",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/reliability",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "842090676926e9a74769c58593ae264a1ad0cb4c"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "842090676926e9a74769c58593ae264a1ad0cb4c",
+        "consumerSymbol": "createRuntimeControlPlan"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes createRuntimeControlPlan consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.evidence",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/reliability/test/runtime/runtime-observation.test.ts",
@@ -8944,10 +8976,12 @@
       "owner": "engine/packages/reliability",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/reliability",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "1da3cc196ff55406642d7d140feec2cfc82d1f61",
+        "consumerSymbol": "buildMultiplayerStressMatrix"
       },
       "recommendation": "defer",
       "rationale": "Deterministic stress scenario construction; maintain for stress catalog changes.",
@@ -9028,19 +9062,20 @@
       "owner": "engine/packages/repair",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/repair",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "3c94f13c388274e0f8477b2b841c6e33b2f2cc22"
+        "action": "retain-distinct-source-backed-assertions; reconsider-only-with-semantic-equivalence",
+        "sourceBlobSha": "3c94f13c388274e0f8477b2b841c6e33b2f2cc22",
+        "consumerSymbol": "atomicWriteText"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes atomicWriteText consumer invocation and observed assertions; not a duplicate-removal authorization.",
       "functionalArea": "repair-preservation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "repair.mutations",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/repair/test/authorization.test.ts",
@@ -9398,9 +9433,11 @@
       "recommendation": "keep",
       "rationale": "Reconnect, leave and respawn evidence must bind to changing participation and generation identities.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "bc97eea36b215d4a178058f01f43ed97925c9a99",
+        "consumerSymbol": "createDeathDuringJoinExperiment"
       },
       "functionalArea": "player-session",
       "mechanicTags": [
@@ -9623,9 +9660,11 @@
       "recommendation": "keep",
       "rationale": "Preserves concurrency, adapter capacity, and real-client versus simulated proof boundaries.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
+        "sourceBlobSha": "815e5734336536cc3cb59ba63b7c1d8c71bab159",
+        "consumerSymbol": "executeMultiClientScenario"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [
@@ -11803,7 +11842,7 @@
       }
     }
   },
-  "featureMappingPolicy": "Feature and mechanic tags are navigation, not runtime or end-to-end proof. A source-case-inspected label means case names/important assertions were read on a pinned source commit, not complete semantic equivalence. Path-provisional rows are not certified by source review. Source-preserving family consolidation retains distinct describe/it bodies and records original paths with blob SHAs; never treat fewer files as fewer test cases.",
+  "featureMappingPolicy": "Source-case-inspected feature metadata requires exact source Git blob SHA and a source-reviewed production consumer/assertion. The existing test runner must reject missing/stale exact-source provenance. Path-provisional metadata remains navigation only. Neither source-case inspection nor byte identity establishes executed test coverage or permission to delete distinct cases.",
   "featureMappingReviewedAtCommit": "2dcfa66b52dfabdbf06e612f597be1c9880ba84d",
   "upstreamCategoryCrosswalk": {
     "schemaVersion": 1,

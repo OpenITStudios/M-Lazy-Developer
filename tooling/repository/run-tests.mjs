@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, extname, relative, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
@@ -193,6 +194,26 @@ function loadInventory() {
         !existsSync(resolve(item.path))) {
       throw new Error("Stale or invalid test inventory entry: " +
         String(item?.path));
+    }
+    // A source-case inspection label is valid for one exact source revision.
+    // The Git blob hash is checked here, within the existing inventory loader.
+    // Source files are LF-normalized per the repository .gitattributes.
+    if (item.featureMappingBasis === "source-case-inspected") {
+      if (typeof item.triage.sourceBlobSha !== "string") {
+        throw new Error("Missing source-case review provenance: " + item.path);
+      }
+      const source = readFileSync(resolve(item.path), "utf8")
+        .replace(/\r\n/g, "\n");
+      const currentSha = createHash("sha1")
+        .update("blob " + Buffer.byteLength(source) + "\0")
+        .update(source)
+        .digest("hex");
+      if (currentSha !== item.triage.sourceBlobSha) {
+        throw new Error(
+          "Stale source-case feature mapping: " + item.path +
+          ". Re-review its consumer/assertions or demote to path-provisional.",
+        );
+      }
     }
     paths.add(item.path);
   }
