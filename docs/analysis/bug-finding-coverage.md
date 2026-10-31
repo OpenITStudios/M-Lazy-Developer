@@ -401,6 +401,21 @@ Existing `SAFE`, `PROVEN`, `NEED_VALIDATION`, `AUDIT_OBLIGATION` and
 cases prioritize but never prove a current bug. Deduplicate checks that
 share the same causal owner.
 
+#### Player mode — explicit role and participation checks
+
+These use the same five canonical player-mode values. Exactly one
+resolved mode contributes its relevant source-guided questions. When
+mode evidence conflicts, retain the source ambiguity instead of
+assigning a convenient default.
+
+| Mode | Required questions when resolved |
+| --- | --- |
+| SOLO | Can one authorized player start, fail, finish and replay without hidden dependency on other players? / Are solo retry, owned inventory and exit state unaffected by stale party/team resources? |
+| COOPERATIVE | Does party join/leave/reconnect retain the authored quorum and distinct per-player vs collective progress? / Can a single disconnected, dead or departing member change group completion only through an explicit legal policy? |
+| COMPETITIVE | Are each opponent's eligibility, score and elimination isolated, with only one legal result at simultaneous termination? / Do late join, quit, disconnect and repeat matches preserve rival ownership and authorized access? |
+| TEAM_COMPETITIVE | Are team roles, shared resources, friendly-fire policy and objective/score attribution owned by the correct team? / Do side switching, spectator privileges and absent members preserve opposing-team isolation and one legal victory? |
+| ASYMMETRIC | Are initial role assignment, conversion, role-specific permissions and objectives consistent with authored behavior? / Do role changes and reconnect correctly restore identity, inventory, score and asymmetric victory eligibility? |
+
 #### Universal — every selected map
 
 | ID | Must establish from selected map |
@@ -414,14 +429,20 @@ share the same causal owner.
 | U07 | Terminal and exit/replay settle and release the right resources; repeat-run parity is assessed if supported. |
 | U08 | Player-facing UI/instructions/result and report match supported state, with precise proof limits. |
 
-#### PvP Core — COMBAT with competitive player mode
+#### PvP Core — competitive combat across base types
 
-The resolved source classification `COMBAT` plus `COMPETITIVE`,
-`TEAM_COMPETITIVE` or `ASYMMETRIC` routes these questions through the
-existing map-classification profile. The same PvP checks can apply as
-source-discovered combat surfaces in larger SURVIVAL/STRATEGY maps; the
-primary type label must never suppress a discovered mechanic.
-Feature-specific details below are only required where authored.
+When the resolved player mode is `COMPETITIVE`,
+`TEAM_COMPETITIVE` or `ASYMMETRIC`, the existing map-classification
+profile raises P01–P17 questions for primary type `COMBAT` **or** a
+declared competitive combat/capture surface (`MELEE_COMBAT`,
+`RANGED_COMBAT`, `TEAM_COMBAT`, `BASE_ATTACK`, `BASE_DEFENSE`,
+`CAPTURE_OBJECTIVE`). This includes mixed `STRATEGY`/`SURVIVAL`
+worlds with source-backed PvP mechanics. It is still only **audit
+navigation**: category and mechanic tags never prove actual PvP,
+legitimate game design or a bug. If a competitive surface exists but its
+classification remains unresolved/missing, keep an explicit discovery
+obligation; do not silently omit combat checks.
+Feature-specific details below are required only where authored.
 Each question needs exact source/selector/state evidence, a counterexample
 or runtime proof where the effect cannot be established statically.
 
@@ -490,23 +511,203 @@ Subtypes overlap. Example: `Beach Bedwars` is PvP Core + Team Combat +
 Bed/Respawn ownership + Shop/Economy + destructible World/Reset + any
 Multi-Arena surface detected. Do not run all variants by default.
 
-#### Eight canonical base types — required focal checks
+#### Eight canonical types — full bounded QA requirements
 
-| Base map type | What to verify if this type/feature is observed | Example activity |
-| --- | --- | --- |
-| BUILDING | Allowed block/item, plot/phase permission, invalid placement and liquid rejection, material grant vs use, reference comparison if authored, world/inventory cleanup. | Build barrier; reference wall; Build & Guess |
-| COMBAT | Legal attack/damage/death/credit; kit/life/score; authoritative objective/terminal; wave NPC accounting for PvE; full PvP Core when competitive. | PvP Arena; The Circuit; Defense Challenge |
-| SURVIVAL | Hazard/damage cause, resource/life depletion, healing, survival/round timer, NPC threat/chunk readiness, death/restart. | Survival/chase; timed defense |
-| STRATEGY | Team/individual resources, purchases/upgrades, objective HP/control, concurrent writes, temporal dependencies and victory. | Threefold Citadel upgrades; tower match |
-| SEARCH_PUZZLE | Clue reachability, correct/wrong actions, ordered triggers, unskippable guards, phase reset and no softlock. | Mysteries of Biomes; Clockwork |
-| STORY_QUEST | Dialogue/quest trigger ordering, choices/branch, player input, checkpoint recovery, valid story ending and replay. | Adventure objective examples (derived QA extension) |
-| CHALLENGE_COURSE | Physical path reachability, jump/fall checkpoint, hazard activation vs damage, retries/assistance, time and completion. | Aftershock; The Gauntlet |
-| SKILL_COURSE | Objective/instruction alignment, observed player decision/action, feedback correctness, retry/assessment, supported completion claims. | Proposed learning inquiry prototype |
+Each base type contributes exactly **eight** type-focused source questions to
+the existing `classification:map-type` coverage scenario. Those questions
+are **added to** the universal U01–U08 requirements, the selected mode,
+authored mechanic overlays, and relevant risk checks. The requirements
+below are a source-informed QA design; they are not observations or
+pass/fail scores for any map. Within a type, a row may be `NOT_APPLICABLE`
+only when the selected world positively proves its activation surface absent.
 
-These broad type requirements supplement the detailed mechanic questions
-in `map-classification-audit-profile.ts` and the universal coverage layers.
-They never declare a design expected behavior without selected source.
+##### BUILDING — Building / build battle / repair
 
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| BLD01 | Plots, phase or authorized builders | Can only authorized players place or break blocks inside their assigned plot and active phase? | Outsider/other plot edit, invalid coordinate or forbidden phase allowed | Plot bounds + role/phase guards + world footprint |
+| BLD02 | Item, crafting, drop and interaction rules | Are forbidden block, item-use, crafting and drop actions rejected at all relevant permission boundaries? | Wrong role or spectator bypasses an advertised restriction | Before/after event path, role and negative branch |
+| BLD03 | Materials granted, removed or consumed | Do material grants, placements, removals, returns and remaining inventory reconcile per owner? | A stack duplicates, is lost or is falsely credited as consumed | Grant/consume/clear writers and inventory conservation |
+| BLD04 | Stateful blocks, stairs, slabs or liquids | Do facing, waterlogging, block state and canceled liquid actions match intended authoritative world changes? | Wrong state, ghost liquid or client-only placement | Block permutation, event cancellation and world proof |
+| BLD05 | Target/template or scoring of a structure | Is build comparison limited to correct positions, block variants and authored scoring criteria? | Wrong block/position passes, missing block ignored, scan misattributes | Reference topology, comparison and result owner |
+| BLD06 | Build and scoring phases or timers | Do build, lock, judging and end phases change exactly once at their authored boundaries? | Late block edits, double scoring or stale timer after phase end | Stage timer, permission and transition guards |
+| BLD07 | World changes by enemies or systems | Are player, NPC, hazard and script block mutations distinguished and kept in their authorized regions? | Enemy break counted as player work, global terrain changed | Mutation source chain and spatial/world DB evidence |
+| BLD08 | Reset, retry or next build round | Are plot blocks, world state, player inventory and deferred edits restored or intentionally persisted before the next round? | Old structure or timer changes the new build | Cleanup writers, world diff, second-run proof |
+
+
+##### COMBAT — Combat (PvP core adds P01–P17 when competitive)
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| CBT01 | Any authored damage/attack system | Do attacks and damage affect only phase-eligible actors and targets under selected map rules? | Pre-start/outsider/friendly target receives illegal damage | Combat guard and target/phase ownership |
+| CBT02 | Hits, kills, NPCs or eliminations | Are hit, actual damage, death and combat credit treated as distinct events and attributed once? | Hit counted as kill, duplicate death or wrong owner | Hit/hurt/death path and reward/score writers |
+| CBT03 | Kits, class or equipment in combat | Do kit choice, upgrades, item use and death/round equipment changes follow the authored lifecycle? | Wrong loadout, duplicated item or erased permanent upgrade | Inventory owner, life/round switches, restore rules |
+| CBT04 | Enemy spawn or wave progression | Are spawned, pending, dead, removed and despawned enemies reconciled before a wave/round transition? | Last NPC not counted, premature wave clear or stuck wave | Spawn/death/remove counter and transition guard |
+| CBT05 | Targeting AI or distant objectives | Can required actors reach targets and remain simulated whenever combat/progression depends on them? | Unloaded/blocked NPC stalls completion or attacks wrong region | Navigation, positions, chunk/actor readiness |
+| CBT06 | Flag, base or combat objective | Does objective health, capture or score change only from legal attacks, and terminate only on supported conditions? | Objective damaged by invalid action or double victory | Objective writer, target/guard, terminal state |
+| CBT07 | Player death, knockdown or revive | Do downed, revive, death, respawn and forfeiture rules settle without double result or stale player ownership? | Invalid revive after death, dead participant continues | Health lifecycle, revive/death and terminal guards |
+| CBT08 | Combat end, abort and replay | Does combat termination cancel old attacks/projectiles/timers and restore all required team, entity, score and world state? | Run 1 attack/reward affects Run 2 | Cleanup and generation ownership, second-run proof |
+
+
+##### SURVIVAL — Survival / chase / timed hazards
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| SUR01 | Survival start and conditions | Are entry, permitted actions and survival objectives defined and reachable according to the selected game contract? | Unowned starting state or impossible survival win | Mode rules, source conditions and goal path |
+| SUR02 | Hazards, fall, lava or other damage | Are environmental damage causes and protection applied to eligible players without inventing damage from harmless contacts? | Wrong hazard cause, immunity bypass or safe landing counted | Damage cause, protection and actual health path |
+| SUR03 | Resource collection and depletion | Do food, supplies, crafting and resource consumption affect the correct player and result, without duplication? | Slot movement credited as acquisition or loss not committed | Inventory source, resource/use and success branch |
+| SUR04 | Healing, status and recovery zones | Do healing, buffs, effects and recovery-area thresholds apply only when actually completed and to the intended actor? | Heal event implies HP gain at full health; expired effect persists | Heal/effect owner, duration and zone progress |
+| SUR05 | NPC/monster, patrol or chunk dependency | Do required actor spawns, targets, despawns and chunk readiness preserve threat and progression? | Unloaded NPC silently bypasses or blocks objective | Entity lifecycle, simulation and chunk evidence |
+| SUR06 | Cooperative, chase or asymmetric roles | Are survivor/hunter/party roles and role-dependent objectives correctly isolated and updated after conversion or leave? | Role mix-up, hidden offline member blocks win | Role assignment, roster and transitions |
+| SUR07 | Survival timer, death or end conditions | Do timeout, last-player death, objective success and ties settle the authored outcome exactly once? | Two outcomes committed or old timer overrides winner | Terminal guards and time state |
+| SUR08 | Retry/rejoin/reload and restart | Does restart or reconnect restore only authorized survival resources, status and progress? | Inventory exploit, stale hazard or lost valid progress | Persistence, cleanup and second-run ownership |
+
+
+##### STRATEGY — Strategy / tower objective / economy
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| STG01 | Gold, points, resources or generators | Are resource generation and balance changes scoped to the rightful player/team/arena? | Shared wallet cross-credits opponents or negatives | Resource producer, wallet key and consumer |
+| STG02 | Purchase, upgrades or costs | Is cost validation followed by atomic debit and delivery, with rollback or reconciliation on failure/retry? | Coins spent with no item or duplicate upgrade | Debit → grant → rollback, idempotency |
+| STG03 | Timed/repeated upgrades | Do upgrade ownership, stacking, restrictions and persistence follow the authored progression contract? | Wrong-team benefit or upgrade disappears illegally | Upgrade level/effect writer and phase transitions |
+| STG04 | Towers, bases, captures or targets | Can only legal actors alter objective health/capture, and does destruction update the right objective? | Friendly/invalid damage, duplicate objective reward | Target/owner ID, HP, capture and score writer |
+| STG05 | Teams, classes or side changes | Are roles/side membership, allied resources and objective attribution consistent before/after a switch? | Old side receives score or player keeps illegal privilege | Role transition, team selectors and authoritative score |
+| STG06 | Minions, escort or remote entities | Do units spawn, navigate, attack and remain active in required chunks without violating team/arena ownership? | Minion freezes remotely or attacks allied objective | Entity routing, simulation and region ownership |
+| STG07 | Victory thresholds, timers or overtime | Do competing win conditions, limit thresholds, timeout and simultaneous objective events resolve exactly once? | Two winners or victory after terminal cleanup | Decision table, terminal actor and negative race |
+| STG08 | End/restart and saved progress | Are temporary strategies, entities, economy, timers and structure mutations reset or persisted only by approved design? | Next match inherits old enemy upgrades or coins | Cleanup/snapshot world and session proof |
+
+
+##### SEARCH_PUZZLE — Search, puzzle and mechanism order
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| PUZ01 | Clues, targets or required route | Can every required clue, block, dialogue and mechanism be accessed from the legal player route? | Required control unreachable or hidden permanently | World coordinates, collision and trigger source |
+| PUZ02 | Ordered button/valve/relay sequence | Do valid ordered actions advance, while invalid or reversed orders cannot bypass guards? | Wrong combination opens final stage | Action/state transition and counterexample |
+| PUZ03 | Repeated, canceled or reversed actions | Do repeated clicks, wrong answers and undo operations avoid double credit and impossible intermediate state? | Double score, stale powered relay or softlock | Sequence owner, idempotency and inverse |
+| PUZ04 | Inventory-driven mechanism or item use | Does a puzzle consume, retain or return its items only when the required action truly completes? | Select/use-start triggers completion; duplicate item | Item start/complete, inventory writer, success guard |
+| PUZ05 | Hint, assistance or deliberate skip | Are hints, player choices and authorized skips distinguished from automatically completed puzzles? | Hint counted as solve or unauthorized skip bypasses stage | Help choice, skip authorization, puzzle state |
+| PUZ06 | Co-op puzzles, phases or shared state | Are player/party attempts and puzzle phase/region state owned correctly under concurrent actions? | One player resets another party's puzzle | Stage/party owner and shared selectors |
+| PUZ07 | Timer, progress or clue UI | Do attempts, wrong/correct totals and player-facing progress reflect the correct stage, player and committed state? | Wrong button credited as success or stale HUD | UI data source, timer and committed counters |
+| PUZ08 | Failure, retry and completion route | Do every legitimate branch, fail and checkpoint reset permit eventual completion without a softlock? | No reachable success/exit after wrong input | Reachability, recovery and completion proof |
+
+
+##### STORY_QUEST — Story, quest and branching narrative
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| QST01 | Quest entry or initial objective | Can the intended quest begin from available triggers, with exact actors/locations and valid prerequisites? | Quest never starts or starts for wrong player | Trigger, spatial target, objective owner |
+| QST02 | Dialogue, choices or NPC prompts | Does authored dialogue/selection route to the correct quest state and player with no stale callback? | Unrelated player receives dialogue or wrong branch | Dialogue ID, actor/role and state writer |
+| QST03 | Branching quests or alternate paths | Do prerequisite guards block early progression while every legal branch reaches a valid ending? | Skip mandatory step or valid choice deadlocks | Quest graph, preconditions and ending reachability |
+| QST04 | Quest items, clues or interaction goals | Do collected objects and action completion credit only the right player/party and current stage? | One item double-completes a different quest | Item/interaction producer and objective update |
+| QST05 | Checkpoints, cutscenes or stage switches | Are stage and scene transitions atomic, preserving authored inventory/world changes without stale stages? | Cutscene replays out of order or objective overwritten | Stage owner, scene/flag writer and checkpoint |
+| QST06 | Help, choices, skips or developer tools | Are optional assistance, player-selected skips and administrative bypasses distinguished in results? | Developer skip recorded as natural completion | Authorization and outcome provenance |
+| QST07 | Death, reconnect or world reload | Do interrupted quests resume or intentionally reset from the correct checkpoint under saved-state rules? | Old objective disappears, another player's stage loaded | Persistence, revision and recovery path |
+| QST08 | Completion, ending or replay | Does the correct ending settle once, deliver accurate feedback/reward and restore replayable world state? | Duplicate reward, wrong ending or persistent trigger | Terminal guards, presentation and cleanup |
+
+
+##### CHALLENGE_COURSE — Parkour, checkpoints and obstacle courses
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| CRS01 | Parkour route or obstacle world | Is there a physically traversable start-to-finish player route respecting intended collision, bounds and barriers? | Impossible jump or unintended bypass/escape | World geometry and physical reachability |
+| CRS02 | Checkpoint/level advancement | Do checkpoints activate once in correct order, storing the intended next spawn/retry position? | Later checkpoint awarded early or wrong teleport | Checkpoint triggers and player stage state |
+| CRS03 | Fall, void or death reset | Are fall resets, damaging landings and death treated differently under the authored thresholds? | Death-only logic misses fall teleport or safe landing counts | Fall/hurt/death cause and teleport rule |
+| CRS04 | Moving hazards, traps or obstacles | Do hazard activation, hits, block changes and immunity windows follow the current phase and player? | Trap hit credited to different player or stale activation | Hazard control, actual damage and phase |
+| CRS05 | Attempt, section or course timing | Do start, pause, fail, skip and finish boundaries yield accurate per-attempt durations and outcomes? | Timer accumulates across retries or pause | Timer state and outcome commit |
+| CRS06 | Assistance, skips and retry items | Are optional help, confirmed skip and legitimate retry counted distinctly, never as unassisted completion? | Rejected help counted as accepted or skip hidden | Choice confirmation and attempt metadata |
+| CRS07 | Item/place/break/teleport exploits | Do course restrictions and physical containment prevent bypass or illegal terrain edits while preserving authorized tools? | Player escapes course by block placement/teleport | Item and spatial permission guards |
+| CRS08 | Finish, restart and saved best | Does finish commit exactly once and replay reset current attempts without corrupting legitimate best/previous records? | Best timer overwritten by invalid run, stale checkpoint | Score/result, persistence, world cleanup |
+
+
+##### SKILL_COURSE — Skill, learning and inquiry
+
+| ID | Activate when map has | What must be verified | Example failure to challenge | Minimum deciding evidence |
+| --- | --- | --- | --- | --- |
+| SKL01 | Instruction and learning objective | Are the stated steps, available tools and success criteria explicit and actually achievable? | Instructions demand unavailable mechanic | Course text, authored task and route |
+| SKL02 | Task/attempt start and finish | Are a learner's attempts started, completed or abandoned only by their defined game triggers? | Death alone marks success or ghost attempt remains | Attempt lifecycle, actor, completion source |
+| SKL03 | Submitted input, answer or action | Does evaluation use the action/input actually submitted by the learner and the intended task state? | Selection mistaken for execution or wrong learner scored | Input owner, submission and evaluator |
+| SKL04 | Pass/fail, partial credit or criteria | Are scoring decisions, limits, correct/incorrect and repeated answers tied to explicit authored rules? | Unsupported general-ability inference or double credit | Rubric/guards, result and counterexamples |
+| SKL05 | Feedback and revision | Does feedback reflect the real evaluated outcome, and are revisions/attempts distinguished from final answers? | Feedback says success after invalid or canceled action | Evaluation/feedback provenance and history |
+| SKL06 | Teams, teachers or privilege | Are learner, observer, teacher/admin roles and shared tasks isolated, without privileged bypass of learner results? | Teacher action counted as student completion | Role/permission and task ownership |
+| SKL07 | Retry, session restore or progression | Do retries and checkpoints maintain permitted learner progress, respecting authored saved-state and reset rules? | Expired attempt grants certification or reload erases legitimate progress | Retry/checkpoint and persistence owners |
+| SKL08 | Completion, report and data costs | Are achievements/report limited to actually observed criteria and is analytics aggregation bounded without uncontrolled per-tick history? | Coded answer mislabeled reasoning ability; unbounded scans | Completion evidence and recording policy |
+
+
+#### Minimal evidence and counterexample design
+
+Apply a **small sufficient set**, not one microtest per table cell:
+
+1. **State transitions** — inspect legal/illegal movement through ENTER/READY/ACTIVE/TERMINAL/REPLAY and material alternate paths. One scenario may cover multiple transitions.
+2. **Decision tables** — when several guards combine (e.g. active phase + team + available coins), compare at least authorized success and the meaningful disallowed/failure branches.
+3. **Boundaries** — check first/final, zero, supported limit and limit+1 only when relevant; do not generate arbitrary exhaustive values.
+4. **Inverse and replay** — challenge acquire/release, spawn/remove, debit/grant/rollback, lock/unlock and deferred-callback generation.
+5. **Cross-system intersections** — add only when the current source shows shared state, target, owner, selector, world region or timing. Do not generate the Cartesian product.
+
+The technique selection follows the general distinction between test
+analysis (what to test) and test design (how to test), using state
+transitions, decision tables, equivalence partitions and meaningful
+boundaries as described by [ISTQB CTFL v4.0.1](https://istqb.org/certifications/certified-tester-foundation-level-ctfl-v4-0/).
+ISTQB is a testing-method reference, **not** Minecraft gameplay authority.
+
+#### Cross-system checks — activate only on a proven shared surface
+
+| Case | Combined mechanic | Source trigger | Required invariant | Deciding evidence |
+| --- | --- | --- | --- | --- |
+| X01 | PvP + Multi-Arena | Shared scoreboard or world selectors | A kill or terminal in Arena A must never change Arena B's active state | Arena IDs, selector resolution, shared resource writes |
+| X02 | PvP + Reconnect | Player leaves then rejoins during active round | No duplicate life/score, phantom roster or wrong team/arena restoration | Join/rejoin ownership, generation, current life |
+| X03 | Bed Defense + Death | Bed destroyed in same tick/window as teammate death | Correct final kill vs permissible respawn, one authoritative ordering | Bed/respawn predicates and terminal order |
+| X04 | Shop + Reconnect | Debit and grant interrupted by leave/reload | No spent-without-delivery or double grant; correct payer/beneficiary | Debit→grant→rollback and stable transaction ID |
+| X05 | Wave + Chunk | Last required mob unloads or stops simulating | Objective remains completable or explicit runtime dependency is reported | Spawn/death/despawn counter and chunk readiness |
+| X06 | Wave + Reset | Old deferred spawn or reward fires after restart | Old-generation work cannot mutate new run | Timer/async generation ownership and cleanup |
+| X07 | Building + Liquid | Placement is canceled or rewritten at plot edge | Authoritative block/liquid and clients reconcile; no region leak | Before-event guard, world-state and targeted client observation |
+| X08 | Quest + Skip/Death | Required step skipped, player dies or restarts | Checkpoint and valid quest path survive; no false completion | Stage graph, skip authority, persistence |
+| X09 | Parkour + Retry | Fall reset and timeout occur together | One attempt result and correct checkpoint, best score unchanged illegally | Attempt/terminal ownership and timer |
+| X10 | Multi-minigame + Mode Switch | Vote selects next mode after prior match | Previous scores/lives/timers clear; mode-specific metrics remain separate | Mode/score owner and cleanup |
+
+These ten entries are **examples of merged investigations**, not ten
+mandatory new source-test suites, preset kinds or standalone bug detectors.
+
+#### Example — actual classification to source-bound QA plan
+
+```text
+Illustrative map: multi-arena PvP Bed Defense (not an observed audit)
+Type: COMBAT
+Mode: TEAM_COMPETITIVE
+Tags (only when source establishes them):
+  TEAM_COMBAT, BASE_DEFENSE, RESPAWN, SHOP,
+  RESOURCE_ECONOMY, MULTI_ARENA, WORLD_RESET
+Resulting coverage:
+  Universal U01–U08
+  Type CBT01–CBT08 (with source-dependent N/A dispositions)
+  PvP P01–P17 and TEAM_COMPETITIVE player-mode questions
+  Applicable mechanic source questions and selected-map scenarios
+  Cross checks X01, X03, X04 only when their shared cause is present
+  Event analytics = supporting data, never a game PASS
+  Wave Defense = excluded only after positive selected-source non-applicability
+  Every unresolved runtime-only effect = exact NEED_VALIDATION/obligation
+```
+
+**Evidence card per material requirement** (as a view of existing
+audit/checkpoint data, not a second ledger):
+
+```text
+ID: CBT02 / P07 / X03 (one or multiple relevant navigation IDs)
+Activation: selected map source IDs + authored rule
+Expected behavior: current-artifact design; UNKNOWN if not grounded
+Suspected violation: exact positive/negative causal path
+Proof: selected script/config, NBT/LevelDB/geometry, or targeted runtime
+Counterproof: reachable guard / legitimate alternative behavior
+Disposition: canonical PROVEN / SAFE / NEED_VALIDATION / AUDIT_OBLIGATION / NOT_APPLICABLE
+Next deciding question: only when unresolved
+```
+
+**Runtime boundary:** A source review may resolve source constraints; it
+does not automatically establish client perception, chunk activation,
+real multi-client concurrency or performance. Minecraft Education 26.32
+analytics examples come from the user-provided research. Official
+[Microsoft Bedrock Script API events](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable)
+are separately versioned references; verify selected edition, API version
+and applicability before treating any listed event as available evidence.
 #### Technical QA applies by evidence, not by game label
 
 - `Multi-Arena`: all concurrent sessions and advertised replicas, shared selectors, scoreboards, resource leases, limit/limit+1, arena cleanup and physical geometry.

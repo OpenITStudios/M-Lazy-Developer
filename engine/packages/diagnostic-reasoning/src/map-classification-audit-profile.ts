@@ -189,52 +189,117 @@ const MECHANIC_DOMAINS: Readonly<
 /** Resolved map type / mechanic questions reuse the existing scenario and proof owners.
  * These questions do not create tests or prove failures without current-map evidence.
  */
+/**
+ * Type-specific QA navigation: eight bounded coverage questions per resolved
+ * map type. Codes match the human QA matrix in bug-finding-coverage.md.
+ * These are NOT standalone tests, PASS assertions, or proof-gate owners.
+ */
 const TYPE_SCENARIO_QUESTIONS: Readonly<Record<GameDesignMapType, readonly string[]>> = {
-  BUILDING: [
-    "BUILDING: Are plot boundaries and block place/break permissions correct for every authored phase?",
-    "BUILDING: Do stateful blocks, liquids and reset restore the correct world and player inventories?",
+BUILDING: [
+  "BLD01: Can only authorized players place or break blocks inside their assigned plot and active phase?",
+  "BLD02: Are forbidden block, item-use, crafting and drop actions rejected at all relevant permission boundaries?",
+  "BLD03: Do material grants, placements, removals, returns and remaining inventory reconcile per owner?",
+  "BLD04: Do facing, waterlogging, block state and canceled liquid actions match intended authoritative world changes?",
+  "BLD05: Is build comparison limited to correct positions, block variants and authored scoring criteria?",
+  "BLD06: Do build, lock, judging and end phases change exactly once at their authored boundaries?",
+  "BLD07: Are player, NPC, hazard and script block mutations distinguished and kept in their authorized regions?",
+  "BLD08: Are plot blocks, world state, player inventory and deferred edits restored or intentionally persisted before the next round?",
   ],
-  COMBAT: [
-    "COMBAT: Do damage, team restrictions, equipment, death and respawn obey the intended owner?",
-    "COMBAT: Are score, win/loss, simultaneous terminal and cleanup correctly arbitrated?",
+COMBAT: [
+  "CBT01: Do attacks and damage affect only phase-eligible actors and targets under selected map rules?",
+  "CBT02: Are hit, actual damage, death and combat credit treated as distinct events and attributed once?",
+  "CBT03: Do kit choice, upgrades, item use and death/round equipment changes follow the authored lifecycle?",
+  "CBT04: Are spawned, pending, dead, removed and despawned enemies reconciled before a wave/round transition?",
+  "CBT05: Can required actors reach targets and remain simulated whenever combat/progression depends on them?",
+  "CBT06: Does objective health, capture or score change only from legal attacks, and terminate only on supported conditions?",
+  "CBT07: Do downed, revive, death, respawn and forfeiture rules settle without double result or stale player ownership?",
+  "CBT08: Does combat termination cancel old attacks/projectiles/timers and restore all required team, entity, score and world state?",
   ],
-  SURVIVAL: [
-    "SURVIVAL: Do survival resources, hazards and entity threats follow the authored game rules?",
-    "SURVIVAL: Can death, depletion, timer failure and restart recover without stale state?",
+SURVIVAL: [
+  "SUR01: Are entry, permitted actions and survival objectives defined and reachable according to the selected game contract?",
+  "SUR02: Are environmental damage causes and protection applied to eligible players without inventing damage from harmless contacts?",
+  "SUR03: Do food, supplies, crafting and resource consumption affect the correct player and result, without duplication?",
+  "SUR04: Do healing, buffs, effects and recovery-area thresholds apply only when actually completed and to the intended actor?",
+  "SUR05: Do required actor spawns, targets, despawns and chunk readiness preserve threat and progression?",
+  "SUR06: Are survivor/hunter/party roles and role-dependent objectives correctly isolated and updated after conversion or leave?",
+  "SUR07: Do timeout, last-player death, objective success and ties settle the authored outcome exactly once?",
+  "SUR08: Does restart or reconnect restore only authorized survival resources, status and progress?",
   ],
-  STRATEGY: [
-    "STRATEGY: Are resource generation, spending, upgrades and objectives consistently authoritative?",
-    "STRATEGY: Do concurrent actions, partial transactions and delayed results preserve owner and score?",
+STRATEGY: [
+  "STG01: Are resource generation and balance changes scoped to the rightful player/team/arena?",
+  "STG02: Is cost validation followed by atomic debit and delivery, with rollback or reconciliation on failure/retry?",
+  "STG03: Do upgrade ownership, stacking, restrictions and persistence follow the authored progression contract?",
+  "STG04: Can only legal actors alter objective health/capture, and does destruction update the right objective?",
+  "STG05: Are roles/side membership, allied resources and objective attribution consistent before/after a switch?",
+  "STG06: Do units spawn, navigate, attack and remain active in required chunks without violating team/arena ownership?",
+  "STG07: Do competing win conditions, limit thresholds, timeout and simultaneous objective events resolve exactly once?",
+  "STG08: Are temporary strategies, entities, economy, timers and structure mutations reset or persisted only by approved design?",
   ],
-  SEARCH_PUZZLE: [
-    "SEARCH_PUZZLE: Are every necessary clue, puzzle action and objective transition reachable in order?",
-    "SEARCH_PUZZLE: Do wrong choices, skipped stages, retries and checkpoint restore prevent false completion or softlock?",
+SEARCH_PUZZLE: [
+  "PUZ01: Can every required clue, block, dialogue and mechanism be accessed from the legal player route?",
+  "PUZ02: Do valid ordered actions advance, while invalid or reversed orders cannot bypass guards?",
+  "PUZ03: Do repeated clicks, wrong answers and undo operations avoid double credit and impossible intermediate state?",
+  "PUZ04: Does a puzzle consume, retain or return its items only when the required action truly completes?",
+  "PUZ05: Are hints, player choices and authorized skips distinguished from automatically completed puzzles?",
+  "PUZ06: Are player/party attempts and puzzle phase/region state owned correctly under concurrent actions?",
+  "PUZ07: Do attempts, wrong/correct totals and player-facing progress reflect the correct stage, player and committed state?",
+  "PUZ08: Do every legitimate branch, fail and checkpoint reset permit eventual completion without a softlock?",
   ],
-  STORY_QUEST: [
-    "STORY_QUEST: Are dialogue and quest triggers reachable in their authored sequence without early advancement?",
-    "STORY_QUEST: If choices or branching paths exist, can each valid branch progress without dead ends or softlock?",
-    "STORY_QUEST: When checkpoints or endings exist, do recovery and player-facing outcome preserve the authored story?",
+STORY_QUEST: [
+  "QST01: Can the intended quest begin from available triggers, with exact actors/locations and valid prerequisites?",
+  "QST02: Does authored dialogue/selection route to the correct quest state and player with no stale callback?",
+  "QST03: Do prerequisite guards block early progression while every legal branch reaches a valid ending?",
+  "QST04: Do collected objects and action completion credit only the right player/party and current stage?",
+  "QST05: Are stage and scene transitions atomic, preserving authored inventory/world changes without stale stages?",
+  "QST06: Are optional assistance, player-selected skips and administrative bypasses distinguished in results?",
+  "QST07: Do interrupted quests resume or intentionally reset from the correct checkpoint under saved-state rules?",
+  "QST08: Does the correct ending settle once, deliver accurate feedback/reward and restore replayable world state?",
   ],
-  CHALLENGE_COURSE: [
-    "CHALLENGE_COURSE: Are course stages and checkpoints reachable without unintended shortcuts or dead ends?",
-    "CHALLENGE_COURSE: Do death, failed jumps, teleport and retry restore the intended checkpoint and completion state?",
+CHALLENGE_COURSE: [
+  "CRS01: Is there a physically traversable start-to-finish player route respecting intended collision, bounds and barriers?",
+  "CRS02: Do checkpoints activate once in correct order, storing the intended next spawn/retry position?",
+  "CRS03: Are fall resets, damaging landings and death treated differently under the authored thresholds?",
+  "CRS04: Do hazard activation, hits, block changes and immunity windows follow the current phase and player?",
+  "CRS05: Do start, pause, fail, skip and finish boundaries yield accurate per-attempt durations and outcomes?",
+  "CRS06: Are optional help, confirmed skip and legitimate retry counted distinctly, never as unassisted completion?",
+  "CRS07: Do course restrictions and physical containment prevent bypass or illegal terrain edits while preserving authorized tools?",
+  "CRS08: Does finish commit exactly once and replay reset current attempts without corrupting legitimate best/previous records?",
   ],
-  SKILL_COURSE: [
-    "SKILL_COURSE: Do instructions, practice steps and feedback match the authored skill objective?",
-    "SKILL_COURSE: Are evaluation triggers, retries and completion evidence consistent with required exercises?",
+SKILL_COURSE: [
+  "SKL01: Are the stated steps, available tools and success criteria explicit and actually achievable?",
+  "SKL02: Are a learner's attempts started, completed or abandoned only by their defined game triggers?",
+  "SKL03: Does evaluation use the action/input actually submitted by the learner and the intended task state?",
+  "SKL04: Are scoring decisions, limits, correct/incorrect and repeated answers tied to explicit authored rules?",
+  "SKL05: Does feedback reflect the real evaluated outcome, and are revisions/attempts distinguished from final answers?",
+  "SKL06: Are learner, observer, teacher/admin roles and shared tasks isolated, without privileged bypass of learner results?",
+  "SKL07: Do retries and checkpoints maintain permitted learner progress, respecting authored saved-state and reset rules?",
+  "SKL08: Are achievements/report limited to actually observed criteria and is analytics aggregation bounded without uncontrolled per-tick history?",
   ],
 };
-
 /** Source-bound player-mode and PvP QA prompts: non-proof scenario
  * navigation only; no new runner, registry or failure-domain owner. */
 const PLAYER_MODE_SCENARIO_QUESTIONS: Readonly<Record<GameDesignPlayerMode, readonly string[]>> = {
-  SOLO: ["SOLO: Does a one-player journey start, progress and terminate without relying on absent teammates?"],
-  COOPERATIVE: ["COOPERATIVE: Are party membership, quorum, collective objectives and individual reward ownership correct after join, leave or disconnect?"],
-  COMPETITIVE: ["COMPETITIVE: Are opponent eligibility, score and simultaneous terminal rules separated for each player?"],
-  TEAM_COMPETITIVE: ["TEAM_COMPETITIVE: Are team roles, membership, friendly-fire policy, shared objective and scoring scoped to the correct team?"],
-  ASYMMETRIC: ["ASYMMETRIC: Do authored initial roles, conversions, role-specific permissions and victory conditions remain correct through recovery?"],
+  SOLO: [
+    "SOLO: Can one authorized player start, fail, finish and replay without hidden dependency on other players?",
+    "SOLO: Are solo retry, owned inventory and exit state unaffected by stale party/team resources?",
+  ],
+  COOPERATIVE: [
+    "COOPERATIVE: Does party join/leave/reconnect retain the authored quorum and distinct per-player vs collective progress?",
+    "COOPERATIVE: Can a single disconnected, dead or departing member change group completion only through an explicit legal policy?",
+  ],
+  COMPETITIVE: [
+    "COMPETITIVE: Are each opponent's eligibility, score and elimination isolated, with only one legal result at simultaneous termination?",
+    "COMPETITIVE: Do late join, quit, disconnect and repeat matches preserve rival ownership and authorized access?",
+  ],
+  TEAM_COMPETITIVE: [
+    "TEAM_COMPETITIVE: Are team roles, shared resources, friendly-fire policy and objective/score attribution owned by the correct team?",
+    "TEAM_COMPETITIVE: Do side switching, spectator privileges and absent members preserve opposing-team isolation and one legal victory?",
+  ],
+  ASYMMETRIC: [
+    "ASYMMETRIC: Are initial role assignment, conversion, role-specific permissions and objectives consistent with authored behavior?",
+    "ASYMMETRIC: Do role changes and reconnect correctly restore identity, inventory, score and asymmetric victory eligibility?",
+  ],
 };
-
 const PVP_COMBAT_SCENARIO_QUESTIONS: readonly string[] = [
   "P01: Each player is in exactly one authorized active match; duplicate or late joining follows the selected map's rule.",
   "P02: A match starts only after its authored participant/ready conditions; pre-start actors cannot progress it.",
@@ -348,16 +413,24 @@ export function deriveMapClassificationAuditProfile(
     }
   }
 
-  const isCompetitiveCombat =
-    classification.mapType === "COMBAT" &&
-    (classification.playerMode === "COMPETITIVE" ||
-     classification.playerMode === "TEAM_COMPETITIVE" ||
-     classification.playerMode === "ASYMMETRIC");
-
-  const mechanicTags =
-    new Set(
-      classification.mechanicTags,
-    );
+  const mechanicTags = new Set(classification.mechanicTags);
+  const competitiveMode =
+    classification.playerMode === "COMPETITIVE" ||
+    classification.playerMode === "TEAM_COMPETITIVE" ||
+    classification.playerMode === "ASYMMETRIC";
+  // Type COMBAT or a positively declared combat/capture mechanic can raise
+  // PvP QA questions even when the dominant type is STRATEGY or SURVIVAL.
+  // Selection is advisory: actual opponent-vs-opponent behavior and expected
+  // outcomes must still be established from current selected-artifact proof.
+  const competitiveCombatSurface =
+    classification.mapType === "COMBAT" ||
+    mechanicTags.has("MELEE_COMBAT") ||
+    mechanicTags.has("RANGED_COMBAT") ||
+    mechanicTags.has("TEAM_COMBAT") ||
+    mechanicTags.has("BASE_ATTACK") ||
+    mechanicTags.has("BASE_DEFENSE") ||
+    mechanicTags.has("CAPTURE_OBJECTIVE");
+  const isCompetitiveCombat = competitiveMode && competitiveCombatSurface;
 
   return {
     active: true,
