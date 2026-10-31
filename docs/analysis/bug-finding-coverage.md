@@ -364,6 +364,191 @@ create type-specific questions. A not-applicable disposition needs positive
 current-map evidence. Only shared state/owner/resource/lifecycle intersections
 justify cross-system challenges; no Cartesian-product microtest campaign.
 
+### Exact gameplay QA classification by design profile
+
+**Purpose:** make requirements auditable, not merely assign labels to test
+files. This is the canonical selected-map coverage owner's human navigation
+projection. It adds no test runner, machine test ID, enum, registry, gate or
+new proof state. For every check below, expected behavior comes from the
+**current selected map**, not the category name or past reports.
+
+**Reference boundary:** User-supplied *Gameplay Analytics Research*
+(Minecraft Education 26.32, pp. 1–24) supplies illustrative activities
+(PvP Arena, Objective, Chase, Bed Defense, Combat/Waves, Building, Parkour,
+Puzzle/Exploration, Stealth, Mining, Education) and possible event signals.
+It is research on analytics, **not** a verified QA acceptance standard or
+evidence that a selected game implements every example. The private document
+is not committed. The requirements below are audit design derived from its
+examples plus canonical repository concepts.
+
+#### Classification axes
+
+| Dimension | Canonical value | Meaning |
+| --- | --- | --- |
+| Base type | 8 `GameDesignMapType` values | One dominant map type; not an isolated test runner. |
+| Player mode | 5 `GameDesignPlayerMode` values | Solo/co-op/competitive/team/asymmetric; controls role and ownership challenges. |
+| Mechanics | 30 `GameDesignMechanicTag` values | Many allowed; specific checks activate only on current-artifact evidence. |
+| Activity/subtype | Derived label (e.g. PvP Bed Defense) | No new enum. Explain using type + mode + mechanics and actual authored behavior. |
+| Technical surface | LevelDB, NBT, structures, scripts, session, chunk | Evidence source and implementation scope, not another game type. |
+| Gameplay bug | 13 canonical `failureDomain` values after PROVE | One primary and optional contributing root-cause domains; not test-file buckets. |
+
+**Applicability:** `REQUIRED` (universal), `CONDITIONAL_ACTIVE`
+(mechanic/type/source-supported), `NOT_APPLICABLE` (positive current-map
+evidence rules it out) and `UNRESOLVED` (retain an Audit Obligation). These
+are explanatory selection labels, *not* new persisted enums or closure.
+Existing `SAFE`, `PROVEN`, `NEED_VALIDATION`, `AUDIT_OBLIGATION` and
+`NOT_APPLICABLE` proof rules remain authoritative. Historical regression
+cases prioritize but never prove a current bug. Deduplicate checks that
+share the same causal owner.
+
+#### Universal — every selected map
+
+| ID | Must establish from selected map |
+| --- | --- |
+| U01 | Artifact identity, manifest and dependency graph match the exact selected .mcworld and declared platform. |
+| U02 | Authored actor, goal, inputs, world/state and permitted success/failure routes can be reconstructed from current artifact evidence. |
+| U03 | All applicable ENTRY → START → ACTIVE → PROGRESSION → TERMINAL → CLEANUP → RECOVERY stages are accounted for. |
+| U04 | All material mutable state has explicit owner, readers/writers, clear/restore and persistence scope. |
+| U05 | Positive, negative, boundary/limit+1 and interleaving checks are considered where materially applicable. |
+| U06 | Any suspected contradiction receives source/current-world counterproof; uncertainty is not converted into PASS. |
+| U07 | Terminal and exit/replay settle and release the right resources; repeat-run parity is assessed if supported. |
+| U08 | Player-facing UI/instructions/result and report match supported state, with precise proof limits. |
+
+#### PvP Core — COMBAT with competitive player mode
+
+The resolved source classification `COMBAT` plus `COMPETITIVE`,
+`TEAM_COMPETITIVE` or `ASYMMETRIC` routes these questions through the
+existing map-classification profile. The same PvP checks can apply as
+source-discovered combat surfaces in larger SURVIVAL/STRATEGY maps; the
+primary type label must never suppress a discovered mechanic.
+Feature-specific details below are only required where authored.
+Each question needs exact source/selector/state evidence, a counterexample
+or runtime proof where the effect cannot be established statically.
+
+| ID | Area | What must be true | Deciding evidence |
+| --- | --- | --- | --- |
+| P01 | Join/roster | Each player is in exactly one authorized active match; duplicate or late joining follows the selected map's rule. | Roster/join/leave source and membership guards |
+| P02 | Ready/start | A match starts only after its authored participant/ready conditions; pre-start actors cannot progress it. | Ready quorum, phase guards and terminal ownership |
+| P03 | Capacity | The declared minimum, maximum and max+1 are accepted, rejected or queued consistently without partial admission. | Capacity/config, admission and negative branch |
+| P04 | Spawn/region | Spawn and teleport destinations are reachable, valid and contained; protected or spectator roles cannot escape through movement privileges. | Spawn, permission and physical world geometry |
+| P05 | Eligibility | Unready, eliminated, post-terminal, outsider or protected actors cannot damage, score or mutate the match illegally. | Participant/phase/target guards |
+| P06 | Combat/damage | Melee, projectile, environmental damage and health changes affect only legal targets according to the authored rules. | Hit vs actual hurt vs damage writer and guards |
+| P07 | Kill/death credit | Each death commits once; kill, environmental death, assist and final-elimination credit go to the correct participant without duplication. | Death and game-defined kill/final-kill ownership |
+| P08 | Score/ownership | Individual, team and objective scores are scoped and updated exactly once, never by another arena or side. | Scoreboard keys, source writers, causal score commit |
+| P09 | Win/loss/draw | All authored victory, defeat, tie, forfeiture and no-result paths reach exactly one coherent result. | Outcome predicates and player-facing result |
+| P10 | Terminal races | Simultaneous final kills, death, timeout, score threshold or overtime cannot produce competing winners or double rewards. | Terminal ownership/atomicity and negative race |
+| P11 | Explicit exit | Confirmed quit/surrender is not inferred from disconnect, death, timer expiry or forced removal. | Intent confirmation, session result/penalty branch |
+| P12 | Connection loss | Offline roster membership and active-session progression follow the defined missing-player and quorum rules. | Leave/disconnect/timeout lifecycle and owner |
+| P13 | Rejoin policy | If reconnect exists, restore the correct team, life, kit, arena and match; otherwise reject/forfeit re-entry consistently. | Source-identified rejoin or explicit non-resume policy |
+| P14 | UI/scoreboard | Current HUD, timer, player/team labels and winner announcements reflect committed state for the correct audience. | UI data writer/reader, causal result |
+| P15 | Post-match freeze | After the terminal result, old damage, timers, rewards, subscriptions or projectiles cannot mutate the finished outcome. | Generation/phase guard and terminal rejection |
+| P16 | Cleanup | Owned player state, inventory, entities, timers and world changes are cleaned or intentionally persisted at exit/abort. | Release/inverse/reset writer contract |
+| P17 | Second run | Replay starts from the authored baseline, not stale Run 1 state, roster or delayed callbacks. | Second-run lifecycle and world/state equivalence |
+
+**Meaning of 'required':** every P01–P17 question receives a grounded
+disposition, but a feature such as ready pads or in-session reconnect
+is not invented for a game lacking it. If absent, prove why the
+specific conditional branch is not applicable.
+
+#### PvP conditional mechanic matrix
+
+| Feature | When to activate | Additional exact acceptance |
+| --- | --- | --- |
+| Team combat | TEAM_COMBAT / TEAM_COMPETITIVE | Legal assignment/switching; team-only scoring and authored friendly-fire restrictions; no cross-team target/role leak. |
+| Respawn, lives, final kills | RESPAWN or authored life mechanic | Correct life counter, location and eligibility; permanent elimination only under stated contract. |
+| Loadout / class | LOADOUT / authored kit | Selection and switching preserve legal equipment and owned upgrades; death/round restoration matches design. |
+| Melee / ranged / special effect | MELEE_COMBAT, RANGED_COMBAT or authored special action | Actual damage vs impact, cooldown/effect duration and target permissions; use start is not completion. |
+| Economy / shop / upgrade | SHOP / RESOURCE_ECONOMY | Personal/team payer, recipient, inventory effects, debit-grant-rollback, idempotency, insufficient funds. |
+| Round timer / overtime | ROUND_TIMER / SURVIVAL_TIMER | Pause, expiry, extra-time and end collision behave once; stale timer never affects next match. |
+| Multiple arenas | MULTI_ARENA or repeated playable arena regions | 2-way and maximal concurrent isolation; scoreboard/selector, replica completeness and shared resource cleanup. |
+| World build / destructible arena | BUILD / WORLD_RESET or any world mutation surface | Place/break/damage only inside allowed region/phase; no ghost client state; world restores for replay. |
+| Saved state / reconnect | PERSISTENCE / RECONNECT | Persisted vs transient state, invalid session restore, reload and intentional reset have explicit ownership. |
+| AI, chunks, projectiles | ENTITY_AI / WAVE_DEFENSE or other remote entity dependency | Navigation, spawn/death removal, chunk readiness and projectile cleanup do not stall or cross boundaries. |
+| Objectives / capture | CAPTURE_OBJECTIVE / BASE_ATTACK / BASE_DEFENSE | Single owner of objective HP/flag; contested capture, drop, return, defeat and victory commit exactly once. |
+
+#### Derived activity subtypes — not additional map-type enums
+
+| Subtype | Example from reference or derived activity | Profile combination (illustrative) | Additional QA burden |
+| --- | --- | --- | --- |
+| PvP Duel / FFA | PvP Arena (Raid Arena Classic) | COMBAT + COMPETITIVE | Legal one-on-one/FFA roster, kills vs death credit, life/score limit, draw, spawn reset; no team-only assumptions. |
+| PvP Team Match | Competitive team combat | COMBAT + TEAM_COMPETITIVE | Team/role assignment, friendly fire, team score, switch/leave, team victory and per-player reward isolation. |
+| PvP Capture / Flag | Attack Challenge / The Circuit flag examples | COMBAT/STRATEGY + CAPTURE_OBJECTIVE | Carrier ownership, flag pickup/drop/return, valid objective capture, death while carrying and once-only score. |
+| PvP Objective / MOBA | Threefold Citadel | COMBAT/STRATEGY + BASE_ATTACK + team/upgrade mechanics | Tower/base health, role/side change, shared objective attacks, win transition; if authored: minions, shops, resource ownership. |
+| PvP Chase / Manhunt | Manhunt | COMBAT/SURVIVAL + ASYMMETRIC | Initial Hunter/Runner roles, conversion/tag, owned traps and victim, survival timer, recovery area and role-specific victory. |
+| PvP Bed Defense / Bedwars | Beach Bedwars | COMBAT + TEAM_COMPETITIVE + BASE_DEFENSE + RESPAWN | Bed destruction disables only that side's future respawns; final kills are a subset of kills; fireballs, currencies and team upgrades remain scoped. |
+| PvP Multi-minigames | Marathon Test of Tactics | COMBAT + active minigame mode switching | One legal vote per player; transition/reset between Bridge/Duels/TNT; no mixing survival time with wins under different modes. |
+| PvE Wave / Defense | Defense Challenge / Fall of the Pillager | COMBAT + COOPERATIVE + WAVE_DEFENSE | Enemy spawn/death/despawn counters and objective HP; group wave result separate from individual kill; revive and retry only when authored. |
+| Build and Fight | The Circuit / The Gauntlet | BUILD + COMBAT or BUILDING with timed phases | Legal building and timed handoff; enemy vs player-caused block removal; fortification readiness and post-wave restoration. |
+| Parkour / Obstacle | Aftershock / The Gauntlet | CHALLENGE_COURSE + PARKOUR | Reachable checkpoint and valid fall/teleport reset, timing, hazards, assistance and complete/replay. |
+| Puzzle / Explore | Mysteries of Biomes / Clockwork | SEARCH_PUZZLE + SEARCH/PUZZLE | Correct/wrong input, clue request, valve/relay action ordering, valid completion, no softlock and retry. |
+| Build & Guess | Build & Decode | BUILDING + competitive/coop roles | Builder and guesser permissions, categorized answer outcomes, valid/invalid guesses, timer and result; no raw answer retention requirement. |
+| Stealth / Hazard | Clockwork | SEARCH_PUZZLE/SURVIVAL + ENTITY_AI if authored | Alert/detection source, distraction use vs observed effect, trap/relay damage vs disable, player hazard/recovery. |
+| Mining / Collection | Aftershock | SURVIVAL/SEARCH_PUZZLE + COLLECTION | Ore target vs decoy classification, dedupe per position, owned resource rewards, successful goal and cleanup. |
+| Learning / Inquiry | Suggested Education prototype | SKILL_COURSE + appropriate choice/feedback mechanics | Task rules, choice and revision evidence, feedback validity, retry and completion without treating a coded answer as general reasoning ability. |
+
+Subtypes overlap. Example: `Beach Bedwars` is PvP Core + Team Combat +
+Bed/Respawn ownership + Shop/Economy + destructible World/Reset + any
+Multi-Arena surface detected. Do not run all variants by default.
+
+#### Eight canonical base types — required focal checks
+
+| Base map type | What to verify if this type/feature is observed | Example activity |
+| --- | --- | --- |
+| BUILDING | Allowed block/item, plot/phase permission, invalid placement and liquid rejection, material grant vs use, reference comparison if authored, world/inventory cleanup. | Build barrier; reference wall; Build & Guess |
+| COMBAT | Legal attack/damage/death/credit; kit/life/score; authoritative objective/terminal; wave NPC accounting for PvE; full PvP Core when competitive. | PvP Arena; The Circuit; Defense Challenge |
+| SURVIVAL | Hazard/damage cause, resource/life depletion, healing, survival/round timer, NPC threat/chunk readiness, death/restart. | Survival/chase; timed defense |
+| STRATEGY | Team/individual resources, purchases/upgrades, objective HP/control, concurrent writes, temporal dependencies and victory. | Threefold Citadel upgrades; tower match |
+| SEARCH_PUZZLE | Clue reachability, correct/wrong actions, ordered triggers, unskippable guards, phase reset and no softlock. | Mysteries of Biomes; Clockwork |
+| STORY_QUEST | Dialogue/quest trigger ordering, choices/branch, player input, checkpoint recovery, valid story ending and replay. | Adventure objective examples (derived QA extension) |
+| CHALLENGE_COURSE | Physical path reachability, jump/fall checkpoint, hazard activation vs damage, retries/assistance, time and completion. | Aftershock; The Gauntlet |
+| SKILL_COURSE | Objective/instruction alignment, observed player decision/action, feedback correctness, retry/assessment, supported completion claims. | Proposed learning inquiry prototype |
+
+These broad type requirements supplement the detailed mechanic questions
+in `map-classification-audit-profile.ts` and the universal coverage layers.
+They never declare a design expected behavior without selected source.
+
+#### Technical QA applies by evidence, not by game label
+
+- `Multi-Arena`: all concurrent sessions and advertised replicas, shared selectors, scoreboards, resource leases, limit/limit+1, arena cleanup and physical geometry.
+- `Player Session`: admission/leave/reconnect/reload, role/team ownership and no phantom offline players; actual network loss requires runtime proof.
+- `Map DB/NBT/Structure`: archive source consistency, exact record decoding, material world geometry, structure loading, script/config linkage; unreadable DB is a source/proof gap, **not automatically a gameplay defect**.
+- `Mechanics`: combat, shop, inventory, crafting, wave, capture, build, parkour, puzzle, minigame voting and progression are checked only if supported by selected artifact evidence.
+- `Temporal/Async`: timers, delayed rewards, cleanup and next-run generation guards when any associated callback or deferred writer is reachable.
+- `Client/Server and Chunk`: cross-client visual reconciliation, chunk readiness, projectile/AI delivery and real multiplayer concurrency only at the proof tier actually observed.
+- `Repair`: developer-source tests and authorized patch preservation are separate from TEST MAP; no original user `.mcworld` is mutated during inspection.
+
+#### Research analytics versus QA evidence
+
+| Event/metric | What the supplied research supports | What it does NOT establish |
+| --- | --- | --- |
+| playerSpawn / playerLeave | Spawn may be join or respawn; leave gives no reason | Do not infer surrender or unique entry from event count. |
+| entityHitEntity / entityHurt / entityDie | A hit, actual damage and death are not the same signal | Kill credit, final elimination and game result need game-owned logic. |
+| projectileHitEntity / projectileHitBlock | Target/position impact evidence | Impact does not independently prove damage, valid kill or objective credit. |
+| entityHeal / effectAdd | Heal/effect-add report | Full-health event need not restore HP; effectAdd alone does not show expiration. |
+| playerInventoryItemChange | Inventory slot mutation | Slot movement is not item acquisition; purchase/consumption requires game logic. |
+| itemStartUse / itemCompleteUse | Started vs completed use | Purchase or start is not completed potion consumption. |
+| playerPlaceBlock / playerBreakBlock | Block action by player | World edits also occur via scripts/enemies; event count is not final world state or permission proof. |
+| Position samples / action sequences | Sampled visits / selected actions | Not a continuous trace; broad high-rate collection grows history or processing load. |
+
+Analytics measurements may be useful for debugging and balancing, but
+`entityHitEntity` does not demonstrate valid damage; death alone does not
+terminate an attempt; a disconnect is not surrender; final-kill counts
+must not be added to ordinary kills; group wave kills are not individual
+PvP kills; selected hotbar slots are not item uses; and timed location
+samples are not full movement traces. The document warns about event
+volume, history growth and per-tick scanning; those are potential cost
+markers, not measured performance. Nominal 20 ticks/second is not
+guaranteed real elapsed time.
+
+#### What a selected-map report must make clear
+
+Use the existing report/obligation owners to express: exact selected
+artifact fingerprint and edition/version, inferred type/mode/tag evidence,
+which universal/PvP/type/feature checks apply, which are positively
+not applicable, each material requirement's source proof and counterproof,
+confirmed finding vs unresolved obligation, and the exact runtime evidence
+still needed. The category or analytics event itself never means PASS.
+
 ## Mutable-state reverse index
 
 For every material mutable resource build:

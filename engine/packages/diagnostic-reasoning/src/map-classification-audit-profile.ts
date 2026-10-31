@@ -6,6 +6,7 @@ import {
   type GameDesignMapClassification,
   type GameDesignMapType,
   type GameDesignMechanicTag,
+  type GameDesignPlayerMode,
 } from "../../game-design-spec/src/index.js";
 
 export interface MapClassificationAuditSignals {
@@ -224,6 +225,35 @@ const TYPE_SCENARIO_QUESTIONS: Readonly<Record<GameDesignMapType, readonly strin
   ],
 };
 
+/** Source-bound player-mode and PvP QA prompts: non-proof scenario
+ * navigation only; no new runner, registry or failure-domain owner. */
+const PLAYER_MODE_SCENARIO_QUESTIONS: Readonly<Record<GameDesignPlayerMode, readonly string[]>> = {
+  SOLO: ["SOLO: Does a one-player journey start, progress and terminate without relying on absent teammates?"],
+  COOPERATIVE: ["COOPERATIVE: Are party membership, quorum, collective objectives and individual reward ownership correct after join, leave or disconnect?"],
+  COMPETITIVE: ["COMPETITIVE: Are opponent eligibility, score and simultaneous terminal rules separated for each player?"],
+  TEAM_COMPETITIVE: ["TEAM_COMPETITIVE: Are team roles, membership, friendly-fire policy, shared objective and scoring scoped to the correct team?"],
+  ASYMMETRIC: ["ASYMMETRIC: Do authored initial roles, conversions, role-specific permissions and victory conditions remain correct through recovery?"],
+};
+
+const PVP_COMBAT_SCENARIO_QUESTIONS: readonly string[] = [
+  "P01: Each player is in exactly one authorized active match; duplicate or late joining follows the selected map's rule.",
+  "P02: A match starts only after its authored participant/ready conditions; pre-start actors cannot progress it.",
+  "P03: The declared minimum, maximum and max+1 are accepted, rejected or queued consistently without partial admission.",
+  "P04: Spawn and teleport destinations are reachable, valid and contained; protected or spectator roles cannot escape through movement privileges.",
+  "P05: Unready, eliminated, post-terminal, outsider or protected actors cannot damage, score or mutate the match illegally.",
+  "P06: Melee, projectile, environmental damage and health changes affect only legal targets according to the authored rules.",
+  "P07: Each death commits once; kill, environmental death, assist and final-elimination credit go to the correct participant without duplication.",
+  "P08: Individual, team and objective scores are scoped and updated exactly once, never by another arena or side.",
+  "P09: All authored victory, defeat, tie, forfeiture and no-result paths reach exactly one coherent result.",
+  "P10: Simultaneous final kills, death, timeout, score threshold or overtime cannot produce competing winners or double rewards.",
+  "P11: Confirmed quit/surrender is not inferred from disconnect, death, timer expiry or forced removal.",
+  "P12: Offline roster membership and active-session progression follow the defined missing-player and quorum rules.",
+  "P13: If reconnect exists, restore the correct team, life, kit, arena and match; otherwise reject/forfeit re-entry consistently.",
+  "P14: Current HUD, timer, player/team labels and winner announcements reflect committed state for the correct audience.",
+  "P15: After the terminal result, old damage, timers, rewards, subscriptions or projectiles cannot mutate the finished outcome.",
+  "P16: Owned player state, inventory, entities, timers and world changes are cleaned or intentionally persisted at exit/abort.",
+  "P17: Replay starts from the authored baseline, not stale Run 1 state, roster or delayed callbacks.",
+];
 /**
  * Each canonical design mechanic has one source-scoped audit question family.
  * This is a map-type coverage projection, not a detector, test runner or
@@ -318,6 +348,12 @@ export function deriveMapClassificationAuditProfile(
     }
   }
 
+  const isCompetitiveCombat =
+    classification.mapType === "COMBAT" &&
+    (classification.playerMode === "COMPETITIVE" ||
+     classification.playerMode === "TEAM_COMPETITIVE" ||
+     classification.playerMode === "ASYMMETRIC");
+
   const mechanicTags =
     new Set(
       classification.mechanicTags,
@@ -329,6 +365,8 @@ export function deriveMapClassificationAuditProfile(
       [...domains].sort(),
     specificScenarioQuestions: [...new Set([
       ...TYPE_SCENARIO_QUESTIONS[classification.mapType!],
+      ...PLAYER_MODE_SCENARIO_QUESTIONS[classification.playerMode!],
+      ...(isCompetitiveCombat ? PVP_COMBAT_SCENARIO_QUESTIONS : []),
       ...classification.mechanicTags.flatMap((tag) =>
         MECHANIC_SCENARIO_QUESTIONS[tag]
       ),
