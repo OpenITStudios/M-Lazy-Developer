@@ -215,7 +215,20 @@ export function buildGameplayAuditScenarioPreset(
       ? Math.floor(input.maxPartySize)
       : undefined;
 
-  if (maxParty === undefined || maxParty >= 2) {
+  // Resolved SOLO with no multiplayer surface need not generate mixed-player
+  // or offline-roster checks. Unknown mode/cap remains conservative; declared
+  // multiplayer, multi-arena evidence, or a conflicting capacity restores them.
+  const declaredMultiplayer =
+    classificationProfile.active &&
+    input.classification?.playerMode !== "SOLO";
+  const needsMixedPlayerCoverage =
+    (maxParty ?? 0) >= 2 ||
+    effective.hasMultiArena ||
+    (input.arenaCount ?? 0) > 1 ||
+    declaredMultiplayer ||
+    (maxParty === undefined && !classificationProfile.active);
+
+  if (needsMixedPlayerCoverage) {
     scenarios.push(
       scenario({
         id: "players:two",

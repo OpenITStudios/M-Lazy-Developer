@@ -171,6 +171,46 @@ describe("gameplay audit scenario preset flow stages", () => {
     expect(kinds.has(
       "repeated-run",
     )).toBe(true);
+    // Resolved solo excludes irrelevant roster checks, but never hides a
+    // multi-arena or contradictory multiplayer source/design obligation.
+    const classified = (
+      playerMode: "SOLO" | "COOPERATIVE",
+      overrides: Partial<Parameters<typeof buildGameplayAuditScenarioPreset>[0]> = {},
+    ) => buildGameplayAuditScenarioPreset({
+      classification: {
+        mapType: "CHALLENGE_COURSE",
+        playerMode,
+        mechanicTags: [],
+        classificationStatus: "RESOLVED",
+        evidenceRefs: ["design:player-mode"],
+      },
+      ...overrides,
+    });
+    const mixedKinds = (
+      preset: ReturnType<typeof buildGameplayAuditScenarioPreset>,
+    ) => preset.scenarios.filter((scenario) =>
+      scenario.kind === "two-player" ||
+      scenario.kind === "disconnect-reconnect").map((scenario) => scenario.kind);
+    const mixed = ["two-player", "disconnect-reconnect"];
+
+    expect(mixedKinds(classified("SOLO"))).toEqual([]);
+    expect(mixedKinds(classified("SOLO", { maxPartySize: 1 }))).toEqual([]);
+    expect(mixedKinds(classified("SOLO", { maxPartySize: 2 }))).toEqual(mixed);
+    expect(mixedKinds(classified("SOLO", {
+      hasMultiArena: true, arenaCount: 2,
+    }))).toEqual(mixed);
+    expect(mixedKinds(classified("COOPERATIVE", {
+      maxPartySize: 1,
+    }))).toEqual(mixed);
+    expect(mixedKinds(buildGameplayAuditScenarioPreset({
+      classification: {
+        mapType: "CHALLENGE_COURSE",
+        playerMode: "SOLO",
+        mechanicTags: [],
+        classificationStatus: "UNRESOLVED",
+        evidenceRefs: [],
+      },
+    }))).toEqual(mixed);
   });
 
   it("does not route unresolved map classification into mandatory audit coverage", () => {
