@@ -1,6 +1,129 @@
 # Test inventory — classification and bounded consolidation
 
-## Current snapshot (source review only)
+## Active source-audit snapshot — 2026-10-31 (authoritative inventory: 494)
+
+Source baseline: GitHub `Local` at `3b119d776ec96c7ac820db9e04f6dcee12f68ee5`.
+The machine owner is **`tooling/repository/test-inventory.json`**, not
+this historical narrative. At that pinned source, the recursive tree
+contains **494 physical `*.test.*` files and exactly 494 registered paths**:
+no absent or unregistered test paths were observed.
+
+| Existing lane | Registered physical files |
+| --- | ---: |
+| `development` | 331 |
+| `runtime` | 50 |
+| `safety` | 48 |
+| `regression` | 45 |
+| `acceptance` | 20 |
+| **Total** | **494** |
+
+Inventory recommendations: 349 `keep-provisional`, 124 `keep`,
+21 `defer` (retain for **targeted** checks, not permission to delete).
+Review provenance: 360 `case-inventory-reviewed` and 134
+`source-reviewed`. The mechanical/feature mapping for 455 source
+tests is still `path-provisional`; only 39 are
+`source-case-inspected`. Risk hints are preliminary, not an
+authorization to drop high-risk cases outside the `safety` lane.
+
+The historical reduction **687 → 494 files** is a 193-file net reduction
+across 80 recorded consolidation groups: 210 removed paths, 17 added
+paths. Recorded preservation is **static source construction only**;
+there is no same-head TypeScript/Vitest, `runSelectedMapAudit()`, selected
+world or live Minecraft execution proof in this snapshot. Source
+consolidation did not establish elapsed-time savings. Especially, a
+larger combined suite can broaden `--affected` selection or alter
+per-file isolation. The normal `npm test` path already selects
+10 Vitest suites and one native Node acceptance file; **494 physical
+files are not 494 routinely executed suites**.
+
+### Three distinct meanings of "test"
+
+1. **Repository source tests** are `*.test.*` files validating
+   M-Lazy-Developer code. They are selected by changed source/ownership,
+   existing lanes and source dependency, not by declaring a map PvP/PvE.
+2. **Selected-map audit checks** are user-visible LOAD → UNDERSTAND →
+   TEST → REPORT investigations derived from a particular immutable
+   `.mcworld`. Canonical obligations are
+   [Bug-Finding Coverage](../../docs/analysis/bug-finding-coverage.md)
+   and [Mandatory Audit Procedure](../../docs/analysis/mandatory-audit-procedure.md).
+   They are not the 494 source test files or upstream Skills Probe tests.
+3. **External developer/Skills Probe evidence** is versioned
+   reference material. The two newer supplied ZIPs match the inventory's
+   v0.30.0 source-taxonomy archive SHA-256 digests
+   `5e4608858cd824d9f5476a6d89242084db6b6d80ce61fa0b5e4b0c079669f0d8`
+   and
+   `89ec46832abb7fbb1215ec5e460275f18b4071ce5ca1d4c3cb3a7f052077f5d5`.
+   The independently curated
+   `skills/bedrock/source-lock.json` and
+   `experiments/developer-practice-signals.json` still record
+   developer v0.27.0 / Probe v0.23.0: **different
+   reference snapshots, not permission to overwrite old report evidence,
+   import unreviewed advice, or infer a selected-map PASS**.
+
+### Mandatory versus applicable checks for each selected map
+
+The source artifact determines which gameplay surfaces exist. The
+following is a *decision overlay* on the canonical coverage owner,
+**not another stage, runner, registry, or checklist authority**.
+
+| Scope | Applicability | Example coverage questions |
+| --- | --- | --- |
+| **Baseline audit integrity** | Every selected map | Archive and identity, edition/source support, authored gameplay goal, player-flow/surface accounting, source/evidence integrity, material access restrictions, causal/proof admission, final findings or explicit obligations |
+| **Player/match lifecycle** | When player join/leave, start/end or session state matters | Join/ready/start, end-state, leaving, rejoin, replay, cleanup, information feedback; one valid happy path and relevant inverses |
+| **Arena / multiplayer / team** | Only with evidenced arena, team, capacity or shared-state surface | Admission cap and cap+1, simultaneous joins, ownership isolation, per-arena scoreboard, reconnect and reset |
+| **PvE / waves / entities** | Only with evidenced enemy/actor/wave contracts | Spawn versus counted actor, death/remove reconciliation, navigation and target, wave completion, cleanup |
+| **PvP / combat / objectives** | Only with evidenced combat/objective contracts | Damage/kill scoring, class/team rules, respawn, win/lose and result ownership |
+| **Building / plot / economy** | Only with evidenced block/inventory/transaction surface | Plot permissions, placement/breaking, inventory spend/grant/rollback, resource restoration, cross-player isolation |
+| **Puzzle / parkour / quest** | Only with evidenced stage, checkpoint or scripted objective | Unreachable state/softlock, checkpoint restore, false completion, reset and final transition |
+| **Persistence / world mutation / chunks** | When evidence identifies mutable state, save/restore, loaded area or spatial effects | Authoritative writer, restoration, safe bounds, chunk/simulation readiness, interrupted change |
+| **Historical bug regression** | Only when current version still exposes the failure mechanism | One high-value positive + negative assertion, with historical evidence treated as prioritization rather than current defect proof |
+
+Do not run an arena-stress or shop suite for a map lacking those
+features, but a **NOT_APPLICABLE** disposition requires positive
+selected-source evidence; simple absence of a scenario name is not
+enough. Conversely, a meaningful state mutation, privilege boundary,
+score/result or information-flow hazard must not be excluded just
+because its inventory lane is not `safety`. Preserve every required
+coverage surface, proof admission and unresolved obligation.
+Grouping tests may reuse a setup but cannot silently erase distinct
+deciding assertions or proof boundaries. The existing
+`groupNeedValidationTests` and `planSelectiveValidation` owners
+already support narrow per-finding proof and affected-closure
+selection; do not create a third test scheduler.
+
+### Target: approximately 100 high-value source suites
+
+**100 is a user optimization goal, not an attained suite count or a
+safe-delete quota.** At this snapshot there are 249 distinct
+(owner, feature, lane) combinations; naive grouping to one file per
+combination still leaves 249 files, and collapsing across owners or
+safety/proof boundaries is not presumptively sound.
+
+Before a candidate file/case is retired, establish **the same concrete
+input/fixture, production consumer, decision/assertion, relevant
+negative counterexample, trust/proof boundary, and coverage
+binding/consumer dependency** in a retained case. Verify references
+from knowledge-detector/capability proof bindings and acceptance
+entrypoints. If any one is unique or uncertain, retain the test.
+For true duplicates, prefer source-owner-local elimination or reuse
+over creating a giant all-features suite. Avoid compensating
+microtests, snapshot proliferation or CI enablement. Changed-source
+`--affected` remains conservative for unknown/dynamic dependencies.
+
+Track efficiency by **relevant checks selected, real time spent,
+mutation/known-defect detection, missed defects, false positives,
+maintenance and proof integrity** when such measurements genuinely
+exist. A lower file count alone is not evidence of greater accuracy
+or performance. No executable benchmark was run or requested here.
+
+The remainder of this document is the archived provenance and
+classification narrative at older consolidation phases. It must not
+override the current machine inventory or the selected-map coverage
+owners.
+
+---
+
+## Historical snapshot (phase five, 569 files; not current)
 
 Working authority: GitHub `Local`; latest consolidation based on the pinned
 parent `ccacc266ef2691b33da2a68821429d768b63784f`.
