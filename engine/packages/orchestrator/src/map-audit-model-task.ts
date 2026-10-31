@@ -15,6 +15,11 @@ import {
   type SemanticIr,
 } from "../../semantic-ir/src/index.js";
 import type { InspectedPack } from "./core/types.js";
+import type {
+  GameplayAuditScenarioPreset,
+  GameplayAuditDetectionIndicator,
+  GameplayAuditScenarioKind,
+} from "../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
 import {
   compileDeveloperPracticeReferenceContext,
   prepareDeveloperPracticeReferenceSelector,
@@ -39,6 +44,10 @@ import type {
   MandatoryAuditProcedureReceipt,
   MandatoryAuditCheckpointReceipt,
 } from "./inspection/mandatory-audit-procedure.js";
+import {
+  ambiguousGameplayGraphIds,
+  uniqueGameplayCausalLinkScope,
+} from "./inspection/gameplay-scenario-model.js";
 import type {
   GameplayArchitectureNavigation,
   GameplayScenarioGraph,
@@ -265,6 +274,20 @@ export interface AuditModelSourceInterpretationReview
     "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF";
 }
 
+/** Source-scoped EVALUATE question. It never grants gameplay/proof authority. */
+export interface AuditModelTaskScenarioIndicator {
+  readonly authority: "SCOPED_EVALUATE_QUESTION_NOT_DEFECT_PROOF";
+  readonly scenarioId: string;
+  readonly kind: GameplayAuditScenarioKind;
+  readonly indicator: GameplayAuditDetectionIndicator;
+  readonly causalLinkIds: readonly string[];
+  readonly omittedCausalLinks: number;
+  readonly sourceEvidenceIds: readonly string[];
+  readonly omittedSourceEvidenceIds: number;
+  readonly subjectIds: readonly string[];
+  readonly componentIds: readonly string[];
+}
+
 export interface AuditModelTaskPacket {
   readonly schemaVersion: 1;
   readonly policy: "bounded-audit-model-task";
@@ -277,6 +300,9 @@ export interface AuditModelTaskPacket {
   readonly scenarioId?: string;
   readonly causalLinkId?: string;
   readonly checkpointId?: string;
+  /** Bounded advisory from this checkpoint's exact selected-source causal links. */
+  readonly scenarioIndicators?: readonly AuditModelTaskScenarioIndicator[];
+  readonly omittedScenarioIndicators?: number;
   readonly subjectIds: readonly string[];
   readonly componentIds: readonly string[];
   readonly requiredKnowledgeIds: readonly string[];
@@ -856,11 +882,100 @@ export function selectCheckpointIntentSubjects(
   };
 }
 
+
+/**
+ * Existing EVALUATE checkpoint -> uniquely owned Scenario Graph -> existing
+ * detection-indicator question. No generic mechanic routing, sibling-link
+ * borrowing, new lane, proof receipt or automatic finding classification.
+ */
+function scopedCheckpointScenarioIndicators(
+  checkpoint: MandatoryAuditCheckpointReceipt,
+  graph: GameplayScenarioGraph,
+  preset: GameplayAuditScenarioPreset | undefined,
+  intent: GameplayIntentModel,
+): { readonly indicators: readonly AuditModelTaskScenarioIndicator[];
+     readonly omitted: number } {
+  if (checkpoint.block !== "EVALUATE" || preset === undefined) {
+    return { indicators: [], omitted: 0 };
+  }
+  const evidenceById = new Map(intent.evidence.map(e => [e.id, e]));
+  const implementationOrigins = new Set([
+    "source-code", "command", "structure", "world-db",
+  ]);
+  const isImplementation = (id: string): boolean => {
+    const evidence = evidenceById.get(id);
+    return isCurrentArtifactSourceEvidence(evidence) &&
+      implementationOrigins.has(evidence.origin);
+  };
+  const checkpointSources = new Set([
+    ...checkpoint.evidenceIds,
+    ...checkpoint.obligations
+      .filter(o => o.required && !o.satisfied)
+      .flatMap(o => o.evidenceIds),
+  ].filter(isImplementation));
+  if (checkpointSources.size === 0) {
+    return { indicators: [], omitted: 0 };
+  }
+  const ambiguous = ambiguousGameplayGraphIds(graph);
+  const rows: AuditModelTaskScenarioIndicator[] = [];
+  for (const presetScenario of preset.scenarios) {
+    if (!presetScenario.detectionIndicator) continue;
+    const scenarioId = "preset:" + presetScenario.id;
+    const candidates = graph.scenarios.filter(s =>
+      s.id === scenarioId && s.label === presetScenario.kind &&
+      s.gameplayStage === presetScenario.flowStage);
+    if (candidates.length !== 1 ||
+        ambiguous.scenarioIds.includes(scenarioId)) continue;
+    const scenario = candidates[0]!;
+    const linked = scenario.causalLinkIds.flatMap(id => {
+      // Reject duplicate/detached/foreign links and ambiguous components.
+      const owner = uniqueGameplayCausalLinkScope(graph, id, ambiguous);
+      if (owner === undefined || owner.scenario !== scenario) return [];
+      const evidenceIds = owner.link.evidenceIds.filter(eid =>
+        checkpointSources.has(eid));
+      if (evidenceIds.length === 0) return [];
+      const hasSourceComponent = [
+        owner.link.fromComponentId, owner.link.toComponentId,
+      ].some(componentId => graph.components.some(component =>
+        component.id === componentId &&
+        component.evidenceIds.some(isImplementation)));
+      return hasSourceComponent ? [{ link: owner.link, evidenceIds }] : [];
+    });
+    if (linked.length === 0) continue;
+    const sources = unique(linked.flatMap(x => x.evidenceIds));
+    const links = unique(linked.map(x => x.link.id));
+    const subjects = unique(scenario.sourceSubjectIds.filter(id =>
+      intent.nodes.some(node => node.id === id &&
+        node.status !== "hypothesis" &&
+        node.evidenceIds.some(eid => sources.includes(eid)))));
+    const components = unique(linked.flatMap(x => [
+      x.link.fromComponentId, x.link.toComponentId, ...x.link.componentIds,
+    ]));
+    rows.push({
+      authority: "SCOPED_EVALUATE_QUESTION_NOT_DEFECT_PROOF",
+      scenarioId,
+      kind: presetScenario.kind,
+      indicator: presetScenario.detectionIndicator,
+      causalLinkIds: links.slice(0, 6),
+      omittedCausalLinks: Math.max(0, links.length - 6),
+      sourceEvidenceIds: sources.slice(0, 8),
+      omittedSourceEvidenceIds: Math.max(0, sources.length - 8),
+      subjectIds: subjects.slice(0, 4),
+      componentIds: components.slice(0, 12),
+    });
+  }
+  return {
+    indicators: rows.slice(0, 3),
+    omitted: Math.max(0, rows.length - 3),
+  };
+}
 function checkpointPackets(
   stage: SelectedMapAuditStage,
   procedure: MandatoryAuditProcedureReceipt,
   auditRevision: string,
   intent: GameplayIntentModel,
+  graph: GameplayScenarioGraph,
+  scenarioPreset?: GameplayAuditScenarioPreset,
 ): readonly AuditModelTaskPacket[] {
   return procedure.checkpoints
     .filter((checkpoint) =>
@@ -885,6 +1000,10 @@ function checkpointPackets(
       ]);
       const evidence = evidenceContext(ids, intent);
       const selection = selectCheckpointIntentSubjects(checkpoint, intent);
+      const scoped = stage === "EVALUATE"
+        ? scopedCheckpointScenarioIndicators(
+            checkpoint, graph, scenarioPreset, intent)
+        : { indicators: [], omitted: 0 };
       return {
         schemaVersion: 1 as const,
         policy: "bounded-audit-model-task" as const,
@@ -896,17 +1015,36 @@ function checkpointPackets(
           "Resolve only the blocking audit checkpoint " +
           checkpoint.id +
           " (" + checkpoint.label + ").",
-        decisionNeeded:
-          checkpoint.reason,
+        decisionNeeded: checkpoint.reason +
+          (scoped.indicators.length === 0
+            ? ""
+            : " Investigate only the selected-source-bound scenario(s): " +
+              scoped.indicators.map(item =>
+                item.kind + " [" + item.scenarioId + "]").join(", ") +
+              ". Establish intent from the selected map; challenge the " +
+              "failure signal, inspect the minimum evidence, and search " +
+              "for blocking counter-proof. This is not a bug verdict." +
+              (scoped.omitted > 0
+                ? " " + scoped.omitted + " more scoped indicators are " +
+                  "omitted from this bounded view." : "")),
         checkpointId: checkpoint.id,
-        subjectIds: selection.subjectIds,
+        ...(scoped.indicators.length === 0 ? {} : {
+          scenarioIndicators: scoped.indicators,
+          ...(scoped.omitted === 0
+            ? {} : { omittedScenarioIndicators: scoped.omitted }),
+        }),
+        subjectIds: unique([
+          ...selection.subjectIds,
+          ...scoped.indicators.flatMap(item => item.subjectIds),
+        ]),
         ...(selection.basis === undefined ? {} : {
           subjectSelection: {
             basis: selection.basis,
             omittedCandidates: selection.omittedCandidates,
           },
         }),
-        componentIds: [],
+        componentIds: unique(scoped.indicators.flatMap(item =>
+          item.componentIds)),
         requiredKnowledgeIds: [],
         evidenceIds: ids,
         evidenceContext: evidence.context,
@@ -1531,6 +1669,8 @@ export function deriveAuditModelTaskPackets(input: {
   readonly admission: SelectedMapAuditAdmission;
   readonly procedure: MandatoryAuditProcedureReceipt;
   readonly graph: GameplayScenarioGraph;
+  /** Same immutable selected-map scenario preset consumed by the compiler. */
+  readonly scenarioPreset?: GameplayAuditScenarioPreset;
   /** Produced by the ONE canonical source/behavior navigation for this map. */
   readonly sourceEffectContext?: GameplayArchitectureNavigation["gameplayStructure"]["uninterpretedSourceFlows"];
   readonly defectResolution: GameplayDefectResolutionGate;
@@ -1813,6 +1953,8 @@ export function deriveAuditModelTaskPackets(input: {
                     input.procedure,
                     input.auditRevision,
                     input.intent,
+                    input.graph,
+                    input.scenarioPreset,
                   ),
                   ...rankedNavigationPackets,
                   ...auditObligationPackets,
@@ -1824,6 +1966,8 @@ export function deriveAuditModelTaskPackets(input: {
               input.procedure,
               input.auditRevision,
               input.intent,
+              input.graph,
+              input.scenarioPreset,
             ),
             ...rankedNavigationPackets,
             ...auditObligationPackets,

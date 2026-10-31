@@ -223,6 +223,24 @@ and map-type coverage scenarios deliberately carry no single bug indicator.
 | `persistence-recovery` | Persistent state, reload or rejoin | Persisted state reconciles, and transient dependencies restore/reset | Duplicate apply, missing timer or stale restored state | Persisted keys, load path, generation/idempotency and resets | Complete recovery or independent intentional reset |
 | `platform-performance` | Edition/API/version or runtime resource limit matters | Claimed capability is supported for exact target and required load | Unsupported API assumption or playable capacity degradation | Pinned runtime profile, capabilities, actual constraint and performance proof | Profile-specific compatibility or measured adequate resources |
 
+**EVALUATE indicator consumption:** The canonical pipeline now passes the
+selected map's existing `auditScenarioPreset` to its one
+`deriveAuditModelTaskPackets()` handoff. An existing *blocking* C1–C9
+checkpoint receives a bounded `scenarioIndicators[]` view only if a unique
+compiled preset scenario has an actual same-scenario causal link, an attached
+selected-artifact implementation witness shared with the checkpoint, and a
+source-backed endpoint component. That task's `decisionNeeded` requests
+the exact scenario's failure, required evidence, and counter-proof search.
+Unknown/foreign sources, duplicate graph IDs, missing links, and mismatched
+scenario names cannot activate an indicator.
+
+This is **question context**, not new proof, a new checker, a new task ID, or
+a new audit category. C1–C9 checkpoint outcomes are unchanged; the canonical
+PROVE/REPORT gates still classify any resulting selected-map defect.
+At most three matched indicators enter a checkpoint task, with additional
+matches explicitly counted as omitted. Missing indicators are not proof of
+normal or absent gameplay.
+
 **Application rule:** discover the actual authored gameplay surface and the
 selected-source evidence first. For each applicable indicator determine one
 grounded expected behavior; investigate the exact adverse branch; search

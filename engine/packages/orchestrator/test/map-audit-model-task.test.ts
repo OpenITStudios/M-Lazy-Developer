@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { buildGameplayAuditScenarioPreset } from
+  "../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
 import type { GameplayIntentModel } from "../../../packages/gameplay-intent/src/index.js";
 import {
   projectReviewedSourceRelationships,
@@ -1321,5 +1323,107 @@ describe("unclassified source-effect relationship reuse", () => {
       .toBe("SOURCE_RELATION_UNRESOLVED");
     expect(() => propose("SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
       "op:write", "effect:foreign")).toThrow(/foreign operation IDs/);
+  });
+});
+
+describe("EVALUATE source-scoped indicators on existing task", () => {
+  it("uses the exact active source link, never neighboring or external evidence", () => {
+    const preset = buildGameplayAuditScenarioPreset({ hasDeferredWork: true });
+    const terminal = preset.scenarios.find(s => s.kind === "terminal-collision")!;
+    const id = "preset:" + terminal.id;
+    const intent: GameplayIntentModel = {
+      schemaVersion: 1, id: "intent:current", artifactId: "selected",
+      evidence: [
+        { id: "ev:terminal", origin: "source-code",
+          scope: "selected-artifact", locator: "scripts/end.js:12:4" },
+        { id: "ev:foreign", origin: "source-code",
+          scope: "external-reference", locator: "older/end.js:12:4" },
+      ],
+      nodes: [{ id: "state:end", kind: "state", label: "Terminal owner",
+        status: "authored", evidenceIds: ["ev:terminal"] }],
+      edges: [], invariants: [], unknowns: [],
+    };
+    const graph: GameplayScenarioGraph = {
+      schemaVersion: 1, policy: "scenario-driven-causal-audit",
+      scenarios: [{
+        id, label: terminal.kind, gameplayStage: terminal.flowStage,
+        purpose: terminal.reason, sourceSubjectIds: ["state:end"],
+        componentIds: ["component:start", "component:end"],
+        causalLinkIds: ["link:end"], requiredKnowledgeIds: [],
+        playerCounts: [], composedScenarioIds: [],
+      }],
+      components: [{
+        id: "component:start", label: "Start", kind: "state",
+        technicalRole: "state", gameplayPurpose: "Round end",
+        evidenceIds: ["ev:terminal"], usedByScenarioIds: [id], orphan: false,
+      }, {
+        id: "component:end", label: "Result", kind: "outcome",
+        technicalRole: "outcome", gameplayPurpose: "Round end",
+        evidenceIds: ["ev:terminal"], usedByScenarioIds: [id], orphan: false,
+      }],
+      causalLinks: [{
+        id: "link:end", scenarioId: id,
+        fromComponentId: "component:start", toComponentId: "component:end",
+        purpose: "Result commit", evidenceIds: ["ev:terminal"],
+        subjectIds: ["state:end"],
+        componentIds: ["component:start", "component:end"],
+        knowledgeRequirementIds: [], impactPathComponentIds: [],
+        impactPathEvidenceIds: [], dimensionEvidence: {},
+        status: "DETECTION_GAP", reason: "Result guard not proven",
+      }],
+      knowledgeRequirements: [], knowledgeReceipts: [],
+      requiredInspectionGraph: {
+        policy: "required-inspection-graph", nodes: [], receipts: [],
+      },
+    };
+    const checkpoint: MandatoryAuditCheckpointReceipt = {
+      id: "C6", block: "EVALUATE", label: "Terminal Ownership",
+      status: "OPEN", reasonCode: "OBLIGATION_INCOMPLETE",
+      blocksPublication: true, evidenceIds: ["ev:terminal"],
+      outputIds: [], obligations: [], reason: "Terminal source unverified",
+    };
+    const run = (overrides: Record<string, unknown> = {}) =>
+      deriveAuditModelTaskPackets({
+        admission: { firstBlockingStage: "EVALUATE" } as any,
+        procedure: { checkpoints: [checkpoint] } as any,
+        graph, scenarioPreset: preset, intent,
+        world: {} as any, defectResolution: {} as any,
+        auditRevision: "revision:selected",
+        ...overrides,
+      });
+    const tasks = run();
+    expect(tasks).toHaveLength(1);
+    const task = tasks[0]!;
+    expect(task).toMatchObject({
+      id: "task:checkpoint:C6", kind: "CHECKPOINT_REASONING",
+      stage: "EVALUATE", subjectIds: ["state:end"],
+      componentIds: ["component:end", "component:start"],
+      evidenceIds: ["ev:terminal"],
+      scenarioIndicators: [{
+        authority: "SCOPED_EVALUATE_QUESTION_NOT_DEFECT_PROOF",
+        scenarioId: id, kind: "terminal-collision",
+        sourceEvidenceIds: ["ev:terminal"],
+        causalLinkIds: ["link:end"],
+      }],
+    });
+    expect(task.decisionNeeded).toContain("selected-source-bound");
+    expect(task.scenarioIndicators?.[0]?.indicator.counterProofToSeek)
+      .toMatch(/guard/i);
+    expect(graph.causalLinks[0]?.status).toBe("DETECTION_GAP");
+    expect(tasks.some(x => x.kind === "COUNTERPROOF_SEARCH")).toBe(false);
+    expect(run({ intent: { ...intent,
+      evidence: intent.evidence.filter(x => x.id !== "ev:terminal") },
+    })[0]?.scenarioIndicators).toBeUndefined();
+    expect(run({ graph: { ...graph, scenarios: [{
+      ...graph.scenarios[0]!, label: "unrelated",
+    }] } })[0]?.scenarioIndicators).toBeUndefined();
+    expect(run({ graph: { ...graph,
+      causalLinks: [graph.causalLinks[0]!, { ...graph.causalLinks[0]! }],
+    } })[0]?.scenarioIndicators).toBeUndefined();
+    expect(run({ procedure: { checkpoints: [{
+      ...checkpoint, evidenceIds: ["ev:foreign"],
+    }] } })[0]?.scenarioIndicators).toBeUndefined();
+    expect(run({ scenarioPreset: undefined })[0]?.scenarioIndicators)
+      .toBeUndefined();
   });
 });

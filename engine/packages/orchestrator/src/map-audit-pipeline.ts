@@ -905,6 +905,7 @@ function assembleSelectedMapAuditRun(
     admission,
     procedure,
     graph: scenario.graph,
+    scenarioPreset: hidden.auditScenarioPreset,
     // The source effect slices are ALREADY constructed by the canonical
     // navigation. Reuse them; never run another analyzer for model context.
     sourceEffectContext:
