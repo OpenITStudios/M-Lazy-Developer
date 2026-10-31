@@ -46,6 +46,8 @@ export interface MandatoryAuditCheckpointReceipt {
   readonly obligations: readonly MandatoryAuditObligation[];
   readonly evidenceIds: readonly string[];
   readonly outputIds: readonly string[];
+  /** Applicable preset identities for investigation, not source/proof receipts. */
+  readonly investigationScenarioIds?: readonly string[];
   readonly reason: string;
 }
 
@@ -154,6 +156,7 @@ export function mandatoryAuditReceipt(
     readonly reasonCode?: MandatoryAuditCheckpointReasonCode;
     readonly blocksPublication?: boolean;
     readonly obligations?: readonly MandatoryAuditObligation[];
+    readonly investigationScenarioIds?: readonly string[];
   } = {},
 ): MandatoryAuditCheckpointReceipt {
   const obligations = options.obligations ?? [];
@@ -190,6 +193,10 @@ export function mandatoryAuditReceipt(
     reason,
     evidenceIds: [...new Set(evidenceIds)].sort(),
     outputIds: [...new Set(outputIds)].sort(),
+    ...(options.investigationScenarioIds?.length
+      ? { investigationScenarioIds:
+          [...new Set(options.investigationScenarioIds)].sort() }
+      : {}),
   };
 }
 

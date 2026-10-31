@@ -1383,6 +1383,7 @@ describe("EVALUATE source-scoped indicators on existing task", () => {
       status: "OPEN", reasonCode: "OBLIGATION_INCOMPLETE",
       blocksPublication: true, evidenceIds: ["ev:terminal"],
       outputIds: [], obligations: [], reason: "Terminal source unverified",
+      investigationScenarioIds: [id],
     };
     const run = (overrides: Record<string, unknown> = {}) =>
       deriveAuditModelTaskPackets({
@@ -1423,7 +1424,7 @@ describe("EVALUATE source-scoped indicators on existing task", () => {
       causalLinks: [graph.causalLinks[0]!, { ...graph.causalLinks[0]! }],
     } })[0]?.scenarioIndicators).toBeUndefined();
     expect(run({ procedure: { checkpoints: [{
-      ...checkpoint, evidenceIds: ["ev:foreign"],
+      ...checkpoint, investigationScenarioIds: ["preset:foreign"],
     }] } })[0]?.scenarioIndicators).toBeUndefined();
     expect(run({ scenarioPreset: undefined })[0]?.scenarioIndicators)
       .toBeUndefined();
@@ -1431,5 +1432,36 @@ describe("EVALUATE source-scoped indicators on existing task", () => {
       ...intent.evidence,
       { ...intent.evidence[0]!, scope: "external-reference" },
     ] } })[0]?.scenarioIndicators).toBeUndefined();
+
+    // A C9 detection gap has no closure proof, but still owns an exact
+    // selected-source investigation question.
+    const c9: MandatoryAuditCheckpointReceipt = {
+      ...checkpoint,
+      id: "C9", label: "Cross-System Scenario Coverage", evidenceIds: [],
+    };
+    const singleC9 = run({ procedure: { checkpoints: [c9] } })[0]!;
+    expect(singleC9.scenarioIndicators).toHaveLength(1);
+    expect(singleC9.evidenceIds).toEqual(["ev:terminal"]);
+    expect(singleC9.evidenceContext).toMatchObject([{
+      id: "ev:terminal", kind: "selected-artifact-evidence",
+    }]);
+    expect(c9.status).toBe("OPEN");
+    expect(c9.evidenceIds).toEqual([]);
+    // The identical source-scoped terminal question is not duplicated
+    // when the specialized C6 task and C9 both block.
+    const both = run({
+      procedure: { checkpoints: [checkpoint, c9] },
+    });
+    expect(both.map(x => x.id)).toEqual([
+      "task:checkpoint:C6", "task:checkpoint:C9",
+    ]);
+    expect(both[0]?.scenarioIndicators).toHaveLength(1);
+    expect(both[1]?.scenarioIndicators).toBeUndefined();
+    expect(run({ procedure: { checkpoints: [{
+      ...checkpoint, id: "C1", investigationScenarioIds: [],
+    }] } })[0]?.scenarioIndicators).toBeUndefined();
+    expect(run({ graph: { ...graph, causalLinks: [{
+      ...graph.causalLinks[0]!, evidenceIds: ["ev:foreign"],
+    }] } })[0]?.scenarioIndicators).toBeUndefined();
   });
 });

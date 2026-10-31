@@ -893,63 +893,62 @@ function scopedCheckpointScenarioIndicators(
   graph: GameplayScenarioGraph,
   preset: GameplayAuditScenarioPreset | undefined,
   intent: GameplayIntentModel,
+  alreadyRouted: ReadonlySet<string>,
 ): { readonly indicators: readonly AuditModelTaskScenarioIndicator[];
      readonly omitted: number } {
-  if (checkpoint.block !== "EVALUATE" || preset === undefined) {
+  // The Mandatory Audit Procedure owns applicability. An analysis receipt
+  // or a matching label cannot activate an unrelated scenario.
+  const required = checkpoint.investigationScenarioIds ?? [];
+  if (checkpoint.block !== "EVALUATE" || preset === undefined ||
+      required.length === 0 || new Set(required).size !== required.length) {
     return { indicators: [], omitted: 0 };
   }
-  // Duplicate IDs cannot identify a unique selected-source witness.
+  const eligible = new Set(required);
   const evidenceById = new Map<string, GameplayIntentModel["evidence"][number]>();
   const ambiguousEvidenceIds = new Set<string>();
   for (const evidence of intent.evidence) {
     if (evidenceById.has(evidence.id)) ambiguousEvidenceIds.add(evidence.id);
     else evidenceById.set(evidence.id, evidence);
   }
-  const implementationOrigins = new Set([
-    "source-code", "command", "structure", "world-db",
-  ]);
+  const origins = new Set(["source-code", "command", "structure", "world-db"]);
   const isImplementation = (id: string): boolean => {
     if (ambiguousEvidenceIds.has(id)) return false;
     const evidence = evidenceById.get(id);
     return isCurrentArtifactSourceEvidence(evidence) &&
-      implementationOrigins.has(evidence.origin);
+      origins.has(evidence.origin);
   };
-  const checkpointSources = new Set([
-    ...checkpoint.evidenceIds,
-    ...checkpoint.obligations
-      .filter(o => o.required && !o.satisfied)
-      .flatMap(o => o.evidenceIds),
-  ].filter(isImplementation));
-  if (checkpointSources.size === 0) {
-    return { indicators: [], omitted: 0 };
-  }
   const ambiguous = ambiguousGameplayGraphIds(graph);
-  const rows: AuditModelTaskScenarioIndicator[] = [];
-  for (const presetScenario of preset.scenarios) {
-    if (!presetScenario.detectionIndicator) continue;
-    const scenarioId = "preset:" + presetScenario.id;
-    const candidates = graph.scenarios.filter(s =>
-      s.id === scenarioId && s.label === presetScenario.kind &&
-      s.gameplayStage === presetScenario.flowStage);
-    if (candidates.length !== 1 ||
+  const rows: {
+    readonly priority: number;
+    readonly value: AuditModelTaskScenarioIndicator;
+  }[] = [];
+  for (const authored of preset.scenarios) {
+    if (!authored.detectionIndicator) continue;
+    const scenarioId = "preset:" + authored.id;
+    if (!eligible.has(scenarioId) || alreadyRouted.has(scenarioId)) continue;
+    const matches = graph.scenarios.filter(item =>
+      item.id === scenarioId &&
+      item.label === authored.kind &&
+      item.gameplayStage === authored.flowStage);
+    if (matches.length !== 1 ||
         ambiguous.scenarioIds.includes(scenarioId)) continue;
-    const scenario = candidates[0]!;
+    const scenario = matches[0]!;
     const linked = scenario.causalLinkIds.flatMap(id => {
-      // Reject duplicate/detached/foreign links and ambiguous components.
-      const owner = uniqueGameplayCausalLinkScope(graph, id, ambiguous);
-      if (owner === undefined || owner.scenario !== scenario) return [];
-      const evidenceIds = owner.link.evidenceIds.filter(eid =>
-        checkpointSources.has(eid));
-      if (evidenceIds.length === 0) return [];
-      const hasSourceComponent = [
-        owner.link.fromComponentId, owner.link.toComponentId,
+      const owned = uniqueGameplayCausalLinkScope(graph, id, ambiguous);
+      if (!owned || owned.scenario !== scenario) return [];
+      // DETECTION_GAP is still investigable when the selected-source link
+      // exists; this does NOT convert it to C9 closure-admissible evidence.
+      const sources = owned.link.evidenceIds.filter(isImplementation);
+      if (sources.length === 0) return [];
+      const sourceEndpoint = [
+        owned.link.fromComponentId, owned.link.toComponentId,
       ].some(componentId => graph.components.some(component =>
         component.id === componentId &&
         component.evidenceIds.some(isImplementation)));
-      return hasSourceComponent ? [{ link: owner.link, evidenceIds }] : [];
+      return sourceEndpoint ? [{ link: owned.link, sources }] : [];
     });
     if (linked.length === 0) continue;
-    const sources = unique(linked.flatMap(x => x.evidenceIds));
+    const sources = unique(linked.flatMap(x => x.sources));
     const links = unique(linked.map(x => x.link.id));
     const subjects = unique(scenario.sourceSubjectIds.filter(id =>
       intent.nodes.some(node => node.id === id &&
@@ -958,21 +957,29 @@ function scopedCheckpointScenarioIndicators(
     const components = unique(linked.flatMap(x => [
       x.link.fromComponentId, x.link.toComponentId, ...x.link.componentIds,
     ]));
+    const statusRank: Record<string, number> = {
+      DETECTION_GAP: 0, CONTRADICTED: 1,
+      RUNTIME_BLOCKED: 2, PROVEN: 3,
+    };
     rows.push({
-      authority: "SCOPED_EVALUATE_QUESTION_NOT_DEFECT_PROOF",
-      scenarioId,
-      kind: presetScenario.kind,
-      indicator: presetScenario.detectionIndicator,
-      causalLinkIds: links.slice(0, 6),
-      omittedCausalLinks: Math.max(0, links.length - 6),
-      sourceEvidenceIds: sources.slice(0, 8),
-      omittedSourceEvidenceIds: Math.max(0, sources.length - 8),
-      subjectIds: subjects.slice(0, 4),
-      componentIds: components.slice(0, 12),
+      priority: Math.min(...linked.map(x => statusRank[x.link.status] ?? 4)),
+      value: {
+        authority: "SCOPED_EVALUATE_QUESTION_NOT_DEFECT_PROOF",
+        scenarioId, kind: authored.kind,
+        indicator: authored.detectionIndicator,
+        causalLinkIds: links.slice(0, 6),
+        omittedCausalLinks: Math.max(0, links.length - 6),
+        sourceEvidenceIds: sources.slice(0, 8),
+        omittedSourceEvidenceIds: Math.max(0, sources.length - 8),
+        subjectIds: subjects.slice(0, 4),
+        componentIds: components.slice(0, 12),
+      },
     });
   }
+  rows.sort((a, b) => a.priority - b.priority ||
+    a.value.scenarioId.localeCompare(b.value.scenarioId));
   return {
-    indicators: rows.slice(0, 3),
+    indicators: rows.slice(0, 3).map(item => item.value),
     omitted: Math.max(0, rows.length - 3),
   };
 }
@@ -984,6 +991,8 @@ function checkpointPackets(
   graph: GameplayScenarioGraph,
   scenarioPreset?: GameplayAuditScenarioPreset,
 ): readonly AuditModelTaskPacket[] {
+  // Batch-local de-duplication: C6/C8 own their scenario before C9.
+  const routedScenarioIds = new Set<string>();
   return procedure.checkpoints
     .filter((checkpoint) =>
       checkpoint.blocksPublication &&
@@ -1005,12 +1014,21 @@ function checkpointPackets(
         ...checkpoint.evidenceIds,
         ...checkpoint.obligations.flatMap((item) => item.evidenceIds),
       ]);
-      const evidence = evidenceContext(ids, intent);
       const selection = selectCheckpointIntentSubjects(checkpoint, intent);
       const scoped = stage === "EVALUATE"
         ? scopedCheckpointScenarioIndicators(
-            checkpoint, graph, scenarioPreset, intent)
+            checkpoint, graph, scenarioPreset, intent, routedScenarioIds)
         : { indicators: [], omitted: 0 };
+      for (const item of scoped.indicators) {
+        routedScenarioIds.add(item.scenarioId);
+      }
+      // Source-backed QUESTION context is separate from the checkpoint's
+      // proof evidence, which may correctly be empty on DETECTION_GAP.
+      const taskEvidenceIds = unique([
+        ...ids,
+        ...scoped.indicators.flatMap(item => item.sourceEvidenceIds),
+      ]);
+      const evidence = evidenceContext(taskEvidenceIds, intent);
       return {
         schemaVersion: 1 as const,
         policy: "bounded-audit-model-task" as const,
@@ -1053,7 +1071,7 @@ function checkpointPackets(
         componentIds: unique(scoped.indicators.flatMap(item =>
           item.componentIds)),
         requiredKnowledgeIds: [],
-        evidenceIds: ids,
+        evidenceIds: taskEvidenceIds,
         evidenceContext: evidence.context,
         unresolvedEvidenceIds: evidence.unresolved,
         knowledgeContext: [],

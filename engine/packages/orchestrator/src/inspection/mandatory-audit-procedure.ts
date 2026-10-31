@@ -1393,6 +1393,9 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     terminalCoverage.evidenceIds,
     ["TerminalCollisionMatrix"],
     {
+      investigationScenarioIds: hidden.auditScenarioPreset.scenarios
+        .filter(item => item.kind === "terminal-collision")
+        .map(item => "preset:" + item.id),
       obligations: [
         obligation(
           "terminal-collision-source-evaluated",
@@ -1484,6 +1487,9 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     repeated ? [repeated.id] : [],
     ["SecondRunEquivalenceAssessment"],
     {
+      investigationScenarioIds: hidden.auditScenarioPreset.scenarios
+        .filter(item => item.kind === "repeated-run")
+        .map(item => "preset:" + item.id),
       obligations: [
         obligation(
           "repeated-run-scenario",
@@ -1720,6 +1726,10 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     sourceBoundCrossSystemEvidenceIds,
     ["ActivatedCrossSystemScenarioSet"],
     {
+      // Missing/DETECTION_GAP scenario names still need investigation;
+      // they cannot satisfy C9 proof by being listed here.
+      investigationScenarioIds: requiredCrossSystemPresets
+        .map(item => "preset:" + item.id),
       obligations: [
         obligation(
           "required-cross-system-scenarios-activated",
