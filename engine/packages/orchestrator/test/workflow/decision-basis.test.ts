@@ -1,14 +1,13 @@
+// Same-directory feature suite, retaining original lexical test bodies.
 import { describe, expect, it } from "vitest";
-import {
-  buildDecisionBasis,
-} from "../../src/workflow/decision-basis.js";
-import {
-  BUILTIN_REPAIR_REALIZERS,
-} from "../../src/repair/repair-realizer-registry.js";
-import {
-  BUILTIN_REPAIR_STRATEGY_SOURCES,
-} from "../../src/repair/repair-strategy-source-registry.js";
+import { buildDecisionBasis } from "../../src/workflow/decision-basis.js";
+import { BUILTIN_REPAIR_REALIZERS } from "../../src/repair/repair-realizer-registry.js";
+import { BUILTIN_REPAIR_STRATEGY_SOURCES } from "../../src/repair/repair-strategy-source-registry.js";
+import { SemanticGraph } from "../../../graph/src/index.js";
+import { assessSemanticProofReuse, createSemanticProofClaim } from "../../src/workflow/semantic-proof-cache.js";
 
+// Original engine/packages/orchestrator/test/workflow/decision-basis.test.ts; blob 67011b47005efc6baed0889d2f019aa13918be19
+{
 describe("decision basis", () => {
   it("fingerprints probe bindings independently of input ordering", () => {
     const a = {
@@ -433,3 +432,457 @@ describe("decision basis", () => {
   });
 
 });
+}
+
+// Original engine/packages/orchestrator/test/workflow/semantic-proof-cache.test.ts; blob 6664f42ea9deec4d1e5e90f763f52793d76d061d
+{
+function graph(
+  changedShop = false,
+  changedArena = false,
+): SemanticGraph {
+  const value =
+    new SemanticGraph();
+
+  value.addNode({
+    id: "function:pack:arena",
+    identity: {
+      kind: "function",
+      scope: "pack",
+      identifier: "arena",
+    },
+    kind: "function",
+    identifier: "arena",
+    source: {
+      artifactId: "map",
+      relativePath:
+        "functions/arena.mcfunction",
+    },
+    contentHash:
+      changedArena
+        ? "arena-v2"
+        : "arena-v1",
+  });
+
+  value.addNode({
+    id: "function:pack:shop",
+    identity: {
+      kind: "function",
+      scope: "pack",
+      identifier: "shop",
+    },
+    kind: "function",
+    identifier: "shop",
+    source: {
+      artifactId: "map",
+      relativePath:
+        "functions/shop.mcfunction",
+    },
+    contentHash:
+      changedShop
+        ? "shop-v2"
+        : "shop-v1",
+  });
+
+  return value;
+}
+
+describe("semantic proof cache", () => {
+  it("requires runtime claims to bind an exact runtime profile", () => {
+    expect(() =>
+      createSemanticProofClaim({
+        claimId: "claim:runtime-unbound",
+        claimRevision: "1",
+        kind: "runtime",
+        graph: graph(),
+        basisNodeIds: [
+          "function:pack:arena",
+        ],
+        evidenceIds: [
+          "runtime:arena:1",
+        ],
+      })
+    ).toThrow(
+      /targetProfileFingerprint/,
+    );
+  });
+
+  it("blocks reuse when stored evidence is no longer available", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId: "claim:evidence",
+        claimRevision: "1",
+        kind: "static",
+        graph: graph(),
+        basisNodeIds: [
+          "function:pack:arena",
+        ],
+        evidenceIds: [
+          "evidence:required",
+        ],
+      });
+
+    const result =
+      assessSemanticProofReuse(
+        claim,
+        {
+          graph: graph(),
+          claimRevision: "1",
+          availableEvidenceIds: [],
+        },
+      );
+
+    expect(result.status)
+      .toBe("blocked");
+  });
+  it("reuses proof when unrelated semantic nodes change", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId:
+          "claim:arena-capacity",
+        claimRevision: "1",
+        kind: "validation",
+        graph: graph(),
+        basisNodeIds: [
+          "function:pack:arena",
+        ],
+        evidenceIds: [
+          "validation:arena:1",
+        ],
+      });
+
+    const result =
+      assessSemanticProofReuse(
+        claim,
+        {
+          graph: graph(true, false),
+          claimRevision: "1",
+          availableEvidenceIds: [
+            "validation:arena:1",
+          ],
+        },
+      );
+
+    expect(result.status)
+      .toBe("reusable");
+  });
+
+  it("invalidates proof when a basis node changes", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId:
+          "claim:arena-capacity",
+        claimRevision: "1",
+        kind: "validation",
+        graph: graph(),
+        basisNodeIds: [
+          "function:pack:arena",
+        ],
+        evidenceIds: [
+          "validation:arena:1",
+        ],
+      });
+
+    const result =
+      assessSemanticProofReuse(
+        claim,
+        {
+          graph:
+            graph(false, true),
+          claimRevision: "1",
+          availableEvidenceIds: [
+            "validation:arena:1",
+            "semantic:scoreboard:1",
+            "semantic:edge:1",
+          ],
+        },
+      );
+
+    expect(result.status)
+      .toBe("stale");
+  });
+
+  it("invalidates arena runtime proof when generation changes", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId: "claim:arena-generation",
+        claimRevision: "1",
+        kind: "runtime",
+        graph: graph(),
+        basisNodeIds: ["function:pack:arena"],
+        evidenceIds: ["runtime:arena:g4"],
+        targetProfileFingerprint: "runtime-a",
+        runtimeScope: {
+          arenaId: "arena-2",
+          arenaGeneration: 4,
+        },
+      });
+
+    const result =
+      assessSemanticProofReuse(claim, {
+        graph: graph(),
+        claimRevision: "1",
+        availableEvidenceIds: ["runtime:arena:g4"],
+        targetProfileFingerprint: "runtime-a",
+        runtimeScope: {
+          arenaId: "arena-2",
+          arenaGeneration: 5,
+        },
+      });
+
+    expect(result.status).toBe("stale");
+  });
+
+  it("invalidates proof when its evidence is explicitly stale", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId: "claim:stale-evidence",
+        claimRevision: "1",
+        kind: "static",
+        graph: graph(),
+        basisNodeIds: ["function:pack:arena"],
+        evidenceIds: ["evidence:old"],
+      });
+
+    const result =
+      assessSemanticProofReuse(claim, {
+        graph: graph(),
+        claimRevision: "1",
+        availableEvidenceIds: ["evidence:old"],
+        staleEvidenceIds: ["evidence:old"],
+      });
+
+    expect(result.status).toBe("stale");
+  });
+
+  it("rejects mixed runtime generations inside one reused proof campaign", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId: "claim:mixed-generation",
+        claimRevision: "1",
+        kind: "runtime",
+        graph: graph(),
+        basisNodeIds: ["function:pack:arena"],
+        evidenceIds: ["runtime:a", "runtime:b"],
+        targetProfileFingerprint: "runtime-a",
+        runtimeScope: {
+          arenaId: "arena-2",
+          arenaGeneration: 4,
+        },
+      });
+
+    const result =
+      assessSemanticProofReuse(claim, {
+        graph: graph(),
+        claimRevision: "1",
+        availableEvidenceIds: ["runtime:a", "runtime:b"],
+        targetProfileFingerprint: "runtime-a",
+        runtimeScope: {
+          arenaId: "arena-2",
+          arenaGeneration: 4,
+        },
+        runtimeEvidenceRecords: [{
+          predicate: "ready",
+          state: "present",
+          confidence: "observed",
+          targetProfileFingerprint: "runtime-a",
+          scope: {
+            arenaId: "arena-2",
+            arenaGeneration: 4,
+          },
+        }, {
+          predicate: "released",
+          state: "present",
+          confidence: "observed",
+          targetProfileFingerprint: "runtime-a",
+          scope: {
+            arenaId: "arena-2",
+            arenaGeneration: 5,
+          },
+        }],
+      });
+
+    expect(result.status).toBe("stale");
+  });
+
+  it("invalidates runtime-bound proof when target profile changes", () => {
+    const claim =
+      createSemanticProofClaim({
+        claimId:
+          "claim:arena-runtime",
+        claimRevision: "1",
+        kind: "runtime",
+        graph: graph(),
+        basisNodeIds: [
+          "function:pack:arena",
+        ],
+        evidenceIds: [
+          "runtime:arena:1",
+        ],
+        targetProfileFingerprint:
+          "runtime-a",
+      });
+
+    const result =
+      assessSemanticProofReuse(
+        claim,
+        {
+          graph: graph(),
+          claimRevision: "1",
+          availableEvidenceIds: [
+            "runtime:arena:1",
+          ],
+          targetProfileFingerprint:
+            "runtime-b",
+        },
+      );
+
+    expect(result.status)
+      .toBe("stale");
+  });
+
+  it("invalidates a derived-node proof when an incident source node changes even if topology stays the same", () => {
+    const before = graph();
+    before.addNode({
+      id: "scoreboard:pack:round",
+      identity: {
+        kind: "scoreboard_objective",
+        scope: "pack",
+        identifier: "round",
+      },
+      kind: "scoreboard_objective",
+      identifier: "round",
+      source: {
+        artifactId: "map",
+        relativePath: "<derived>",
+      },
+    });
+    before.addEdge({
+      from: "function:pack:arena",
+      type: "READS_SCOREBOARD",
+      targetIdentifier: "round",
+      status: "resolved",
+      to: "scoreboard:pack:round",
+      evidence: {
+        source: {
+          artifactId: "map",
+          relativePath:
+            "functions/arena.mcfunction",
+        },
+      },
+    });
+
+    const claim =
+      createSemanticProofClaim({
+        claimId:
+          "claim:derived-scoreboard",
+        claimRevision: "1",
+        kind: "semantic",
+        graph: before,
+        basisNodeIds: [
+          "scoreboard:pack:round",
+        ],
+        evidenceIds: [
+          "semantic:scoreboard:1",
+        ],
+      });
+
+    const after =
+      graph(false, true);
+    after.addNode({
+      id: "scoreboard:pack:round",
+      identity: {
+        kind: "scoreboard_objective",
+        scope: "pack",
+        identifier: "round",
+      },
+      kind: "scoreboard_objective",
+      identifier: "round",
+      source: {
+        artifactId: "map",
+        relativePath: "<derived>",
+      },
+    });
+    after.addEdge({
+      from: "function:pack:arena",
+      type: "READS_SCOREBOARD",
+      targetIdentifier: "round",
+      status: "resolved",
+      to: "scoreboard:pack:round",
+      evidence: {
+        source: {
+          artifactId: "map",
+          relativePath:
+            "functions/arena.mcfunction",
+        },
+      },
+    });
+
+    const result =
+      assessSemanticProofReuse(
+        claim,
+        {
+          graph: after,
+          claimRevision: "1",
+          availableEvidenceIds: [
+            "semantic:scoreboard:1",
+          ],
+        },
+      );
+
+    expect(result.status)
+      .toBe("stale");
+  });
+
+  it("invalidates proof when an incident dependency edge changes", () => {
+    const before = graph();
+    before.addEdge({
+      from:
+        "function:pack:shop",
+      type: "CALLS",
+      targetIdentifier: "arena",
+      status: "resolved",
+      to:
+        "function:pack:arena",
+      evidence: {
+        source: {
+          artifactId: "map",
+          relativePath:
+            "functions/shop.mcfunction",
+        },
+      },
+    });
+
+    const claim =
+      createSemanticProofClaim({
+        claimId:
+          "claim:arena-edge",
+        claimRevision: "1",
+        kind: "semantic",
+        graph: before,
+        basisNodeIds: [
+          "function:pack:arena",
+        ],
+        evidenceIds: [
+          "semantic:edge:1",
+        ],
+      });
+
+    const result =
+      assessSemanticProofReuse(
+        claim,
+        {
+          graph: graph(),
+          claimRevision: "1",
+          availableEvidenceIds: [
+            "validation:arena:1",
+            "semantic:scoreboard:1",
+            "semantic:edge:1",
+          ],
+        },
+      );
+
+    expect(result.status)
+      .toBe("stale");
+  });
+});
+}

@@ -1,66 +1,75 @@
 # Test inventory — classification and bounded consolidation
 
-## Current source snapshot — 2026-10-31: 440 physical tests
+## Active source audit — 2026-10-31: 402 physical test files
 
-The canonical inventory is `tooling/repository/test-inventory.json`;
-this review was based on exact `Local` parent commit `3611a5f26615d8808e186579986e5704bf9fd453`.
-The current batch combines 21 same-owner, same-feature and same-lane
-source families, reducing **482 → 440 files** with **42 retired paths**.
-The original **278 `it()/test()` registrations** and **589
-`expect()` callsites** are retained in their original isolated lexical
-bodies; these are static source counts, not executed results.
+The working GitHub authority was `Local` at the pinned parent
+`8787c8210af847a29927fc1122a2acfe30312cee`. The authoritative machine registry remains
+`tooling/repository/test-inventory.json`, with a direct path-for-path
+match against the GitHub source tree. This bounded batch combines **21
+same-directory, same-owner, same-feature, development-lane suites**,
+retiring **38 obsolete physical file boundaries**. The original
+**511 `it()/test()` callsites** and **1,706 `expect()` callsites**
+are statically preserved in lexical-isolated original bodies.
 
-| Lane | Test files |
+| Execution lane | Physical files |
 | --- | ---: |
-| `development` | 279 |
+| `development` | 241 |
 | `safety` | 46 |
 | `runtime` | 50 |
 | `regression` | 45 |
 | `acceptance` | 20 |
-| **Total** | **440** |
+| **Total** | **402** |
 
-**Progress:** historical physical count **687 → 440**; net **247
-fewer files**. Canonical lineage now records **111 source consolidations**,
-**264 retired paths** and **17 added paths**, including earlier batches.
-No source test file or unique case was deliberately dropped in this batch.
-Known duplicate assertion deletions are confined to earlier source reviews.
+Inventory disposition: 294 provisional,
+92 keep, 16 defer.
+Review provenance: 291 case-inventory-reviewed
+and 111 source-reviewed; feature mapping remains
+`path-provisional` for 368 entries.
+These provisional labels **cannot** justify deleting a unique test.
 
-### Consolidated owners and source-retention proof
+### Physical reduction and preserved owner scope
 
-- `engine/packages/orchestrator`: grouped arena proof, gameplay reachability,
-  telemetry, project publication, zero-waste workflow, proof control, spatial,
-  entity, mutation, differential, arena cleanup, structure and diagnostic
-  cases without crossing test lanes.
-- `engine/packages/behavior-model`, `diagnosis-pipeline`, `knowledge`,
-  `project-model`, and `bug-report`: retained source cases as same-feature
-  families with provenance SHAs.
-- Unsafe candidates were **excluded**, including per-file hooks, conflicting
-  import names and cases that require more complex source isolation.
-- Existing `tooling/repository/run-tests.mjs` default acceptance
-  remains 10 Vitest suites and one native Node acceptance test.
-  No GitHub CI verification workflows were enabled.
+The historical source inventory went **687 → 402**, a net decrease of
+**285 source files**. Cumulative lineage is 132 bounded consolidation
+groups, 302 retired file paths, and 17 added paths. No source case
+or assertion was deliberately deleted in this batch. Earlier semantic
+duplicate retirement remains separately recorded (four proven
+duplicate `expect()` callsites); all other source cases are retained.
 
-### Corrected source consumer bindings
+Current family consolidation covers Project Model telemetry/decisions,
+topology, Orchestrator combat/entity/inventory/diagnosis/semantic IR,
+selected-map source identity and gameplay closure, repair proof and
+workflow decisions, Gameplay Intent, report findings, and Bug Tracker.
+Each merged source records the original file path and pinned Git blob
+SHA, the original registration and assertion counts, and the resulting
+source blob SHA in the canonical inventory. Unsafe candidates involving
+file-level hooks, import collisions or excessive coupling were skipped.
 
-The canonical knowledge-detector binding registry redirects **38**
-knowledge-to-proof entries to the exact new retained test file paths;
-the capability-proof registry redirects **4** proof bindings. Every
-registered proof path is present in the projected source tree.
-The derived `capability-truth/current.json` is reprojected from the
-same final tree and binding source; all **55 task capabilities** remain
-structurally proof-bound. Binding integrity is not executed test PASS.
+### Knowledge and capability proof paths
 
-### Remaining evidence and cost boundary
+Existing knowledge-detector and capability-proof registries now reference
+the new retained source paths for **65** knowledge and **3** capability
+binding entries. The derived `engine/reliability/catalogs/capability-truth/current.json`
+was reprojected against the exact source tree and proof registry; all
+**55 task capabilities remain structurally bound**. A registered path
+is *not* an execution result.
 
-Merging tests into one physical file **does not mean fewer test cases,
-better bug detection, or lower execution time**. Co-location can broaden
-file-level `--affected` execution and change module isolation; those
-risks still require actual Vitest execution. Source/consumer imports,
-original test-body and assertion-callsite parity, inventory exact path
-membership, and proof bindings are verifiable statically; **TypeScript,
-Vitest, `runSelectedMapAudit()`, and Minecraft runtime are NOT EXECUTED**.
-A 100-file count remains a target, not an acceptable excuse to delete
-unique safety, regression, negative-control or gameplay proof cases.
+### Important test-count distinction
+
+**402 files are not 402 executed tests.** The normal `npm test`
+configuration still selects 10 Vitest suites plus one native Node
+acceptance test; the full test suite remains separate. Merging physical
+files does not reduce 511 source registrations or 1,706 assertion
+callsites, does not demonstrate faster execution, and can expand
+`--affected` dependency selection. No new runner or test lane was
+added, and automatic CI remains disabled as requested.
+
+**Evidence ceiling:** exact GitHub source/consumer review, lexical
+source-body and callsite inclusion, current inventory/binding integrity.
+TypeScript compiler, Vitest, `runSelectedMapAudit()`, selected-map
+verification and live Minecraft gameplay **NOT EXECUTED**. The target
+of around 100 source files is still a design objective, not grounds
+for erasing distinct safety, regression, acceptance or negative cases.
 
 ### Three distinct meanings of "test"
 
@@ -72,7 +81,7 @@ unique safety, regression, negative-control or gameplay proof cases.
    `.mcworld`. Canonical obligations are
    [Bug-Finding Coverage](../../docs/analysis/bug-finding-coverage.md)
    and [Mandatory Audit Procedure](../../docs/analysis/mandatory-audit-procedure.md).
-   They are not the 440 source test files or upstream Skills Probe tests.
+   They are not the 402 source test files or upstream Skills Probe tests.
 3. **External developer/Skills Probe evidence** is versioned
    reference material. The two newer supplied ZIPs match the inventory's
    v0.30.0 source-taxonomy archive SHA-256 digests

@@ -104,7 +104,7 @@
         "engine/packages/orchestrator/src/inspection/route-navigation-environment-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -182,7 +182,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -195,7 +195,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -208,7 +208,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -221,7 +221,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -234,7 +234,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -247,7 +247,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -260,7 +260,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -368,7 +368,7 @@
         "engine/packages/orchestrator/src/inspection/route-navigation-environment-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -885,7 +885,7 @@
       "proofPaths": [
         "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -943,7 +943,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -967,7 +967,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -1148,7 +1148,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1158,7 +1158,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1168,7 +1168,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1178,7 +1178,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1189,7 +1189,6 @@
         "engine/packages/orchestrator/src/inspection/combat-contract-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
@@ -1200,7 +1199,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1210,7 +1209,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1221,7 +1220,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1232,7 +1231,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1243,7 +1242,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1254,7 +1253,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1265,7 +1264,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1735,7 +1734,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -1859,7 +1858,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1898,7 +1897,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1911,7 +1910,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1924,7 +1923,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1937,7 +1936,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1950,7 +1949,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1963,7 +1962,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1976,7 +1975,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -1989,7 +1988,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -2002,7 +2001,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts"
       ]
     },
     {
@@ -2381,7 +2380,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2392,7 +2391,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2402,7 +2401,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2412,7 +2411,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2435,7 +2434,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/scripts/test/domains/inventory/inventory-lifecycle-evidence.test.ts",
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2445,7 +2444,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2455,7 +2454,7 @@
         "engine/packages/orchestrator/src/inspection/inventory-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2466,7 +2465,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ]
     },
     {
@@ -2627,7 +2626,7 @@
         "engine/packages/orchestrator/src/inspection/player-session-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts"
       ]
     },
@@ -2639,7 +2638,7 @@
         "engine/packages/orchestrator/src/inspection/player-session-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts"
       ]
     },
@@ -2651,7 +2650,7 @@
         "engine/packages/orchestrator/src/inspection/player-session-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts"
       ]
     },
@@ -2663,7 +2662,7 @@
         "engine/packages/orchestrator/src/inspection/player-session-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts"
       ]
     },
@@ -2675,7 +2674,7 @@
         "engine/packages/orchestrator/src/inspection/player-session-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts"
       ]
     },
@@ -2687,7 +2686,7 @@
         "engine/packages/orchestrator/src/inspection/player-session-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/player-session-lifecycle-analysis.test.ts"
       ]
     },
@@ -3074,7 +3073,7 @@
         "engine/packages/orchestrator/src/inspection/gameplay-world-model.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -3085,7 +3084,7 @@
         "engine/packages/orchestrator/src/inspection/gameplay-world-model.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -3429,7 +3428,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -3440,7 +3439,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -3451,7 +3450,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -3462,7 +3461,7 @@
         "engine/packages/orchestrator/src/inspection/combat-lifecycle-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -3473,7 +3472,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -3484,7 +3483,7 @@
         "engine/analyzers/scripts/src/parser/parse.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ]
     },
     {
@@ -3901,7 +3900,7 @@
         "engine/packages/orchestrator/src/inspection/gameplay-world-model.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4550,7 +4549,7 @@
         "engine/packages/orchestrator/src/inspection/state-authority-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4560,7 +4559,7 @@
         "engine/packages/orchestrator/src/inspection/state-authority-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4583,7 +4582,7 @@
         "engine/analyzers/scripts/src/domains/persistence/persistent-state-scope.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4594,7 +4593,7 @@
         "engine/analyzers/scripts/src/domains/persistence/persistent-state-scope.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4605,7 +4604,7 @@
         "engine/analyzers/scripts/src/domains/persistence/persistent-state-scope.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4616,7 +4615,7 @@
         "engine/analyzers/scripts/src/domains/persistence/persistent-state-scope.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {
@@ -4627,7 +4626,7 @@
         "engine/analyzers/scripts/src/domains/persistence/persistent-state-scope.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts"
       ]
     },
     {

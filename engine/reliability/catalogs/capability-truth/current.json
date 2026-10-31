@@ -10,8 +10,8 @@
     ],
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
-    "proofRegistryFingerprint": "e32af9dc",
-    "proofInventoryFingerprint": "1bde79d4"
+    "proofRegistryFingerprint": "868f390c",
+    "proofInventoryFingerprint": "8c955c8d"
   },
   "summary": {
     "taskCapabilities": 55,
@@ -302,7 +302,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -335,7 +335,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -434,7 +434,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -467,7 +467,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -500,7 +500,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -533,7 +533,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -547,7 +547,7 @@
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+          "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -566,7 +566,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -599,7 +599,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -632,7 +632,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -646,7 +646,7 @@
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+          "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -665,7 +665,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -698,7 +698,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -731,7 +731,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -766,7 +766,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -799,7 +799,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -894,7 +894,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -927,7 +927,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -941,7 +941,7 @@
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/inspection/gameplay-world-model.test.ts"
+          "engine/packages/orchestrator/test/inspection/gameplay-architecture-identity.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -1092,7 +1092,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 224,
+      "testFiles": 201,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -1316,14 +1316,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 46,
-      "testFiles": 11,
+      "testFiles": 9,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/project-model/test/contracts/arena-region-contract.test.ts",
         "engine/packages/project-model/test/evidence/decision-ledger-validate.test.ts",
-        "engine/packages/project-model/test/evidence/invariant-registry-validate.test.ts",
         "engine/packages/project-model/test/evidence/telemetry-continuity.test.ts",
-        "engine/packages/project-model/test/evidence/telemetry-validate.test.ts"
+        "engine/packages/project-model/test/project-lifecycle.test.ts",
+        "engine/packages/project-model/test/project/source-ref.test.ts"
       ],
       "proofBinding": {
         "state": "bound",

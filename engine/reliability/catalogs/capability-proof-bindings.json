@@ -126,7 +126,7 @@
       "capabilityId": "domain.combat",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -150,7 +150,7 @@
       "capabilityId": "domain.inventory",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -224,7 +224,7 @@
       "capabilityId": "projection.world-model",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/inspection/gameplay-world-model.test.ts"
+        "engine/packages/orchestrator/test/inspection/gameplay-architecture-identity.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },

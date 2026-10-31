@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
-  "classification": "440 physical source test files after 21 same-owner/feature/lane consolidations retiring 42 paths; all 278 original it/test and 589 expect() static callsites retained in merged bodies. Default acceptance and disabled CI unchanged. Knowledge/capability proof binding paths remapped. TypeScript/Vitest/Minecraft NOT EXECUTED.",
+  "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+  "classification": "402 physical test files after 21 owner/feature/lane-preserving source-suite consolidations (440 -> 402). 511 it/test callsites and 1706 expect() callsites from all merged source files remain intact under lexical isolation. No extra test suite/runner or CI enabled. Source construction proof only; TypeScript, Vitest, selected-map audit and Minecraft NOT EXECUTED.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -1671,14 +1671,14 @@
       "owner": "engine/analyzers/topology",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "source-preserving-family-consolidation",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/analyzers/topology",
         "riskHint": "medium",
-        "action": "verify-selected-suite-and-dependency-consumers",
-        "sourceBlobSha": "4fcf8bfee1d87865009c286c8a182b2062fcfa23"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "198318c1c216504162e93cb9d718d6ff41f103c2"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Consolidated 5 source test files as one family suite; 10 it()/test() sites and 21 expect() sites retained by static source comparison. Execution/equivalence pending.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 20 it/test call sites and 40 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "map-content",
       "mechanicTags": [
         "map.topology"
@@ -1687,34 +1687,52 @@
       "featureId": "map.topology",
       "featureMappingBasis": "source-case-inspected",
       "consolidation": {
-        "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
-        "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
         "sourceFiles": [
           {
-            "path": "engine/analyzers/topology/test/arena-discovery.test.ts",
-            "blobSha": "8df5d404ae2535a7359f9aa2298081ea87f06f6f"
-          },
-          {
-            "path": "engine/analyzers/topology/test/arena-region-contract-role.test.ts",
-            "blobSha": "64f1ceb34737459068cbb4b756e6085d4c539071"
-          },
-          {
-            "path": "engine/analyzers/topology/test/arena-region-partition.test.ts",
-            "blobSha": "e31e99ea61f267277c4d5f9adfce993103f6cd47"
-          },
-          {
-            "path": "engine/analyzers/topology/test/arena-region-role.test.ts",
-            "blobSha": "8db28c245b8d1618aca0d4e3763dc27e9af04ae8"
-          },
-          {
             "path": "engine/analyzers/topology/test/arena-region.test.ts",
-            "blobSha": "8fe3db8fd5e0a004dff25a842efd2da5905eb766"
+            "blobSha": "4fcf8bfee1d87865009c286c8a182b2062fcfa23"
+          },
+          {
+            "path": "engine/analyzers/topology/test/topology.test.ts",
+            "blobSha": "16545bd0c2f57ca84befd6559ccf57d81832d75a"
           }
         ],
-        "originalTestCallSites": 10,
-        "originalExpectCallSites": 21,
-        "mergedSourceBlobSha": "4fcf8bfee1d87865009c286c8a182b2062fcfa23",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 20,
+        "originalExpectCallSites": 40,
+        "mergedSourceBlobSha": "198318c1c216504162e93cb9d718d6ff41f103c2",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidation": {
+          "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
+          "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
+          "sourceFiles": [
+            {
+              "path": "engine/analyzers/topology/test/arena-discovery.test.ts",
+              "blobSha": "8df5d404ae2535a7359f9aa2298081ea87f06f6f"
+            },
+            {
+              "path": "engine/analyzers/topology/test/arena-region-contract-role.test.ts",
+              "blobSha": "64f1ceb34737459068cbb4b756e6085d4c539071"
+            },
+            {
+              "path": "engine/analyzers/topology/test/arena-region-partition.test.ts",
+              "blobSha": "e31e99ea61f267277c4d5f9adfce993103f6cd47"
+            },
+            {
+              "path": "engine/analyzers/topology/test/arena-region-role.test.ts",
+              "blobSha": "8db28c245b8d1618aca0d4e3763dc27e9af04ae8"
+            },
+            {
+              "path": "engine/analyzers/topology/test/arena-region.test.ts",
+              "blobSha": "8fe3db8fd5e0a004dff25a842efd2da5905eb766"
+            }
+          ],
+          "originalTestCallSites": 10,
+          "originalExpectCallSites": 21,
+          "mergedSourceBlobSha": "4fcf8bfee1d87865009c286c8a182b2062fcfa23",
+          "execution": "NOT_EXECUTED"
+        }
       }
     },
     {
@@ -1738,62 +1756,6 @@
       "mechanicMappingBasis": "path-provisional",
       "featureId": "map.topology",
       "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/analyzers/topology/test/topology.test.ts",
-      "lane": "development",
-      "owner": "engine/analyzers/topology",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "source-preserving-family-consolidation",
-        "owner": "engine/analyzers/topology",
-        "riskHint": "medium",
-        "action": "verify-selected-suite-and-dependency-consumers",
-        "sourceBlobSha": "16545bd0c2f57ca84befd6559ccf57d81832d75a"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Consolidated 6 source test files as one family suite; 10 it()/test() sites and 19 expect() sites retained by static source comparison. Execution/equivalence pending.",
-      "functionalArea": "map-content",
-      "mechanicTags": [
-        "map.topology"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "map.topology",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
-        "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/analyzers/topology/test/arena-replica.test.ts",
-            "blobSha": "10677f9bf9b561106d49e2d5a4abc1df9be0fe95"
-          },
-          {
-            "path": "engine/analyzers/topology/test/candidates.test.ts",
-            "blobSha": "434beacc84348d52a7a711ebe3dd7cce98116d84"
-          },
-          {
-            "path": "engine/analyzers/topology/test/entity-spawn-topology.test.ts",
-            "blobSha": "7a903b18988cc67fe513f14c992a297757fc0cb9"
-          },
-          {
-            "path": "engine/analyzers/topology/test/signature.test.ts",
-            "blobSha": "621f68847cf9219fc941d88e6e10f609e01fcfa3"
-          },
-          {
-            "path": "engine/analyzers/topology/test/state-scope.test.ts",
-            "blobSha": "e4132c02ca1b791c3eec102009c0deab85aa73f0"
-          },
-          {
-            "path": "engine/analyzers/topology/test/topology.test.ts",
-            "blobSha": "9d716acc3cf3f1e05a9c0c63007b35c934850905"
-          }
-        ],
-        "originalTestCallSites": 10,
-        "originalExpectCallSites": 19,
-        "mergedSourceBlobSha": "16545bd0c2f57ca84befd6559ccf57d81832d75a",
-        "execution": "NOT_EXECUTED"
-      }
     },
     {
       "path": "engine/analyzers/world-db/test/world-db-evidence.test.ts",
@@ -2855,159 +2817,61 @@
       "owner": "engine/packages/gameplay-intent",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/gameplay-intent",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "4d6b785e904ccf8c258026186aa162b53e0d8b6f"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "6378454f8fbf7a2c8bc5d799077707fb9c1e5b72"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-directory development family 8 -> 1, retaining 58 it/test call sites and 165 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/compare.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "2ec11f46d003e449be54e7b16f9ae8eab4623ab6"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/design-readiness.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "ae90e2304049f568b4a9ea7c9390206badfd009e"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/gameplay-closure.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "75a39da73f4637d51683172b4af5f445e56449e3"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/gameplay-contract.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "a485ec6a7ab32caa16752f13fbeb7685b7cc1cfe"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/gameplay-intent.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "18b67ac6c83aff1c9b0125b69014b562bd69a879"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/hidden-defect-intent.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "2f7bf438ceb63e5567f50f9cf86f781aa6a91626"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/gameplay-intent/test/state-closure.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/gameplay-intent",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/gameplay-intent",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "1523e39a040b495695bf91523da9008261be69f3"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/gameplay-intent/test/authority.test.ts",
+            "blobSha": "4d6b785e904ccf8c258026186aa162b53e0d8b6f"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/compare.test.ts",
+            "blobSha": "2ec11f46d003e449be54e7b16f9ae8eab4623ab6"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/design-readiness.test.ts",
+            "blobSha": "ae90e2304049f568b4a9ea7c9390206badfd009e"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/gameplay-closure.test.ts",
+            "blobSha": "75a39da73f4637d51683172b4af5f445e56449e3"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/gameplay-contract.test.ts",
+            "blobSha": "a485ec6a7ab32caa16752f13fbeb7685b7cc1cfe"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/gameplay-intent.test.ts",
+            "blobSha": "18b67ac6c83aff1c9b0125b69014b562bd69a879"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/hidden-defect-intent.test.ts",
+            "blobSha": "2f7bf438ceb63e5567f50f9cf86f781aa6a91626"
+          },
+          {
+            "path": "engine/packages/gameplay-intent/test/state-closure.test.ts",
+            "blobSha": "1523e39a040b495695bf91523da9008261be69f3"
+          }
+        ],
+        "originalTestCallSites": 58,
+        "originalExpectCallSites": 165,
+        "mergedSourceBlobSha": "6378454f8fbf7a2c8bc5d799077707fb9c1e5b72",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/graph/test/graph.test.ts",
@@ -3868,18 +3732,37 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Filesystem-backed diagnosis executor verifies no fabricated authored evidence and explicit custom source roots.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-directory development family 2 -> 1, retaining 13 it/test call sites and 30 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "ef1e38a58300fa00c85e57372cb4010bdad90268"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-intent-executors.test.ts",
+            "blobSha": "1f4e5c478168b4a07e87d4eb37ea22318315ea66"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/runtime-intent-diagnostic-reclassification.test.ts",
+            "blobSha": "0364cf276edd9330fbd893f5d7c27b2aa22b7869"
+          }
+        ],
+        "originalTestCallSites": 13,
+        "originalExpectCallSites": 30,
+        "mergedSourceBlobSha": "ef1e38a58300fa00c85e57372cb4010bdad90268",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts",
@@ -3905,19 +3788,41 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "0bdc4cc06fca65d4a78011a26f40825effe74944"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "af7746e0b974c1584e235772721dad2b7d486149"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-directory development family 3 -> 1, retaining 22 it/test call sites and 128 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.semantic-analysis",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-semantic-ir-executor.test.ts",
+            "blobSha": "0bdc4cc06fca65d4a78011a26f40825effe74944"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/semantic-ir-diagnostics.test.ts",
+            "blobSha": "addd3a60b297519f8a87511353172adce7422022"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/semantic-ir-stage.test.ts",
+            "blobSha": "2209d9937fa20f7a5c6ff26e5638d37863eca61b"
+          }
+        ],
+        "originalTestCallSites": 22,
+        "originalExpectCallSites": 128,
+        "mergedSourceBlobSha": "af7746e0b974c1584e235772721dad2b7d486149",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-source-index-executor.test.ts",
@@ -4007,18 +3912,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "ff88ded2f26891d24a2f64a02dda01bec5b021c6"
       },
-      "recommendation": "keep",
-      "rationale": "Mutation requires causal intervention and predicate/factor provenance with runtime integrity.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-directory development family 2 -> 1, retaining 19 it/test call sites and 29 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "repair-preservation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "repair.authorization",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-repair-gate.test.ts",
+            "blobSha": "ed4ab42942ba5e86ad2365278c16b2f0d191e1f8"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/runtime-reclassification-repair-gate.test.ts",
+            "blobSha": "e9a364a33711ec1c3db3ee2238f63b979f50444b"
+          }
+        ],
+        "originalTestCallSites": 19,
+        "originalExpectCallSites": 29,
+        "mergedSourceBlobSha": "ff88ded2f26891d24a2f64a02dda01bec5b021c6",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-runtime-probe.test.ts",
@@ -4226,26 +4150,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/diagnosis/runtime-intent-diagnostic-reclassification.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "0364cf276edd9330fbd893f5d7c27b2aa22b7869"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.intent",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-multiplayer-diagnostic-bindings.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -4365,26 +4269,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/diagnosis/runtime-reclassification-repair-gate.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "e9a364a33711ec1c3db3ee2238f63b979f50444b"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "repair-preservation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "repair.authorization",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-scheduler-diagnostic-bindings.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -4402,46 +4286,6 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "script.scheduler",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/semantic-ir-diagnostics.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "addd3a60b297519f8a87511353172adce7422022"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.semantic-analysis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/diagnosis/semantic-ir-stage.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "2209d9937fa20f7a5c6ff26e5638d37863eca61b"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.semantic-analysis",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -4694,39 +4538,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "5f89c1a7e675ff7407bdb89ad7b350eb276b3340"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "8a3467f9e8972345c0f649a523cbcdf3728b959d"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 24 it/test call sites and 82 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "map-content",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "map.source-index",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspect-source-index-coverage.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "47ecec0831d87ffaa1d3d8920320b7233472a410"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "map-content",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "map.source-index",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspect-source-content-identity.test.ts",
+            "blobSha": "5f89c1a7e675ff7407bdb89ad7b350eb276b3340"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspect-source-index-coverage.test.ts",
+            "blobSha": "47ecec0831d87ffaa1d3d8920320b7233472a410"
+          }
+        ],
+        "originalTestCallSites": 24,
+        "originalExpectCallSites": 82,
+        "mergedSourceBlobSha": "8a3467f9e8972345c0f649a523cbcdf3728b959d",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts",
@@ -4832,13 +4674,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Source-preserving 3-file family consolidation retains 6 case call sites and 8 assertion call sites; TS/Vitest and file isolation NOT EXECUTED.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 11 it/test call sites and 19 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "aa097b64bcd4d9d29e164466e41edb0c91691dd1"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "01df445566cc9ffcdddb7e4bc7254116304fd1f6"
       },
       "functionalArea": "combat-entities",
       "mechanicTags": [
@@ -4848,48 +4690,45 @@
       "featureId": "combat.damage",
       "featureMappingBasis": "path-provisional",
       "consolidation": {
-        "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-        "method": "same-owner-same-lane-source-preserving-lexical-scope",
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
         "sourceFiles": [
           {
-            "path": "engine/packages/orchestrator/test/inspection/combat-contract-load.test.ts",
-            "blobSha": "28b2e9dab00c9d7f10b6192ca44770a383ad0453"
-          },
-          {
             "path": "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
-            "blobSha": "f07af467777cd657e4112ecc269b521d4192b447"
+            "blobSha": "aa097b64bcd4d9d29e164466e41edb0c91691dd1"
           },
           {
-            "path": "engine/packages/orchestrator/test/inspection/combat-contract-diagnostics.test.ts",
-            "blobSha": "c98f597ecccd18da093d8ff2fa059b74d6b157c2"
+            "path": "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
+            "blobSha": "1a5d46ab9f01255f694dfe9ee49bc6833eed7e23"
           }
         ],
-        "originalTestCallSites": 6,
-        "originalExpectCallSites": 8,
-        "mergedSourceBlobSha": "aa097b64bcd4d9d29e164466e41edb0c91691dd1",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 11,
+        "originalExpectCallSites": 19,
+        "mergedSourceBlobSha": "01df445566cc9ffcdddb7e4bc7254116304fd1f6",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidation": {
+          "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
+          "method": "same-owner-same-lane-source-preserving-lexical-scope",
+          "sourceFiles": [
+            {
+              "path": "engine/packages/orchestrator/test/inspection/combat-contract-load.test.ts",
+              "blobSha": "28b2e9dab00c9d7f10b6192ca44770a383ad0453"
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/combat-contract-analysis.test.ts",
+              "blobSha": "f07af467777cd657e4112ecc269b521d4192b447"
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/combat-contract-diagnostics.test.ts",
+              "blobSha": "c98f597ecccd18da093d8ff2fa059b74d6b157c2"
+            }
+          ],
+          "originalTestCallSites": 6,
+          "originalExpectCallSites": 8,
+          "mergedSourceBlobSha": "aa097b64bcd4d9d29e164466e41edb0c91691dd1",
+          "execution": "NOT_EXECUTED"
+        }
       }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/combat-lifecycle-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
-      "functionalArea": "combat-entities",
-      "mechanicTags": [
-        "combat.damage-lifecycle"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "combat.damage",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts",
@@ -4916,18 +4755,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "bc249957417a81a46e3a2be8b640b6ca216efb11"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 22 it/test call sites and 73 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.semantic-analysis",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/dynamic-import-semantic-ir.test.ts",
+            "blobSha": "08d96e1ea5a17d9d26d5d8585df95037b9bef834"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts",
+            "blobSha": "532159df1156b4e9199fccc1caa29ea455aeb67a"
+          }
+        ],
+        "originalTestCallSites": 22,
+        "originalExpectCallSites": 73,
+        "mergedSourceBlobSha": "bc249957417a81a46e3a2be8b640b6ca216efb11",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/economy-contract-analysis.test.ts",
@@ -5097,14 +4955,14 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "source-preserving-family-consolidation",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "verify-merged-test-file-isolation-and-affected-selection",
-        "sourceBlobSha": "0b5bdcb9b9405747f21f15ac36a54e4935e42143"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "e910022f8f6ba713fb237eaa5ed2d7e9b396ae52"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Consolidated 2 same-owner, same-feature Development source files into one suite; all original tests and 5 it()/test() plus 5 expect() call sites retained statically. Exact execution, test-file isolation and affected-selection cost unverified.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 10 it/test call sites and 13 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "combat-entities",
       "mechanicTags": [
         "entity.ai-navigation"
@@ -5113,22 +4971,40 @@
       "featureId": "entity.navigation",
       "featureMappingBasis": "path-provisional",
       "consolidation": {
-        "baseCommit": "ccacc266ef2691b33da2a68821429d768b63784f",
-        "method": "same-directory-deduplicated-named-imports-and-block-isolated-original-bodies",
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
         "sourceFiles": [
           {
-            "path": "engine/packages/orchestrator/test/inspection/entity-ai-navigation-diagnostics.test.ts",
-            "blobSha": "456b3bdd656bb3847a1e38c475ad17b5bc270d17"
+            "path": "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts",
+            "blobSha": "0b5bdcb9b9405747f21f15ac36a54e4935e42143"
           },
           {
-            "path": "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts",
-            "blobSha": "6942689b2b6887d7546989aa7f90bc0d9f7b24b6"
+            "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts",
+            "blobSha": "007f1b0ec17c5a30af71bd9d115a42fb50ee5886"
           }
         ],
-        "originalTestCallSites": 5,
-        "originalExpectCallSites": 5,
-        "mergedSourceBlobSha": "0b5bdcb9b9405747f21f15ac36a54e4935e42143",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 10,
+        "originalExpectCallSites": 13,
+        "mergedSourceBlobSha": "e910022f8f6ba713fb237eaa5ed2d7e9b396ae52",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidation": {
+          "baseCommit": "ccacc266ef2691b33da2a68821429d768b63784f",
+          "method": "same-directory-deduplicated-named-imports-and-block-isolated-original-bodies",
+          "sourceFiles": [
+            {
+              "path": "engine/packages/orchestrator/test/inspection/entity-ai-navigation-diagnostics.test.ts",
+              "blobSha": "456b3bdd656bb3847a1e38c475ad17b5bc270d17"
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/entity-navigation-runtime-classification.test.ts",
+              "blobSha": "6942689b2b6887d7546989aa7f90bc0d9f7b24b6"
+            }
+          ],
+          "originalTestCallSites": 5,
+          "originalExpectCallSites": 5,
+          "mergedSourceBlobSha": "0b5bdcb9b9405747f21f15ac36a54e4935e42143",
+          "execution": "NOT_EXECUTED"
+        }
       }
     },
     {
@@ -5174,54 +5050,82 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "High-impact developer skip capability must retain deep review and permission priority; security-relevant negative admission.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-directory development family 3 -> 1, retaining 5 it/test call sites and 13 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "2d382d6ae934f0caf8953bded33b56189aa4f793"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.discovery",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-analysis-priority.test.ts",
+            "blobSha": "d4c8c1ade113c398980344ae3b0f19077ef29651"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-surface-discovery.test.ts",
+            "blobSha": "c73e2fe60536b049142b39d02622d3d9db05bb2d"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-understanding-fingerprint.test.ts",
+            "blobSha": "9f5a76e5f81a8c831693331cea46fcf7aab9fcbf"
+          }
+        ],
+        "originalTestCallSites": 5,
+        "originalExpectCallSites": 13,
+        "mergedSourceBlobSha": "2d382d6ae934f0caf8953bded33b56189aa4f793",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-architecture-identity.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "20 cases retain exact cross-file source/effect identity, branch scope and foreign/ambiguous refusal.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-directory development family 3 -> 1, retaining 24 it/test call sites and 241 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "678b6ed3df3ffb5e4eefff5a35b8b4951555b589"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.semantic-model",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/gameplay-boundary-registry.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Boundary extraction from resolved configuration and explicit failed/unresolved boundaries are unique to this owner, not duplicated by gameplay discovery/closure.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "gameplay.semantic-model",
-      "featureMappingBasis": "source-case-inspected"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-architecture-identity.test.ts",
+            "blobSha": "61298e66e3b81c21c0f4f277585d72b720c067b7"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-boundary-registry.test.ts",
+            "blobSha": "fd68ab85416b3f9ced61b75109721451d116987a"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-world-model.test.ts",
+            "blobSha": "8141ab533d95edce205a4be3f12837a31930f0e9"
+          }
+        ],
+        "originalTestCallSites": 24,
+        "originalExpectCallSites": 241,
+        "mergedSourceBlobSha": "678b6ed3df3ffb5e4eefff5a35b8b4951555b589",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-calibration-corpus.test.ts",
@@ -5246,18 +5150,37 @@
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Cross-arena/player/simulation scalability and lease isolation are distinct compound failure modes.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-directory development family 2 -> 1, retaining 27 it/test call sites and 72 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "251de0364a476f9ad5dab44834d11adb91f7db4a"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.scenarios",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-compound-growth-analysis.test.ts",
+            "blobSha": "71ad5a0a6ae935ce46c5b3ea71d9e272ac5bddfe"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-closure.test.ts",
+            "blobSha": "9fd5913f1265592ab4acc31e4b73602a30fe5e59"
+          }
+        ],
+        "originalTestCallSites": 27,
+        "originalExpectCallSites": 72,
+        "mergedSourceBlobSha": "251de0364a476f9ad5dab44834d11adb91f7db4a",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-resolution-crosscheck.test.ts",
@@ -5265,18 +5188,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "7467f4f7d6bb28800ce43822e9635fc031033519"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 38 it/test call sites and 125 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.closure",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-resolution-crosscheck.test.ts",
+            "blobSha": "ca57766c594f0fdd81603681acdfc4b5511ecc01"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-closure.test.ts",
+            "blobSha": "1fc325d6a223e9e76ed01b42502922c5b6f4f8b8"
+          }
+        ],
+        "originalTestCallSites": 38,
+        "originalExpectCallSites": 125,
+        "mergedSourceBlobSha": "7467f4f7d6bb28800ce43822e9635fc031033519",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-challenger.test.ts",
@@ -5294,24 +5236,6 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.discovery",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-closure.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Prevents incomplete inventory, native scan truncation and unresolved references from becoming full discovery proof.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.closure",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -5396,24 +5320,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-closure.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Scenario closure rejects missing, duplicated, foreign or misbound knowledge receipts; high-value proof isolation cases.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.scenarios",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-knowledge-conditional.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -5450,60 +5356,6 @@
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.discovery",
       "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/gameplay-surface-discovery.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Independent runtime-surface inventory is a separate source contract from gameplay discovery completeness and scenario closure; preserve narrow assertion.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.discovery",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/gameplay-understanding-fingerprint.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Preserves comparable semantic-coverage fingerprints and explicit regression signals without mistaking names for authority.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "gameplay.discovery",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/gameplay-world-model.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Single summarization scenario with extensive fixture; review output consumer contract for overlap with broader acceptance.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "retain-for-targeted-validation"
-      },
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "gameplay.semantic-model",
-      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inspect-artifact.test.ts",
@@ -5610,13 +5462,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Source-preserving 2-file family consolidation retains 6 case call sites and 9 assertion call sites; TS/Vitest and file isolation NOT EXECUTED.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 16 it/test call sites and 31 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "a52f2f71ad3988265381fb5df1ccfb2a88e440f1"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "c569155f68e5acda4fd1ac0d40ad8c7885c3737b"
       },
       "functionalArea": "inventory-economy",
       "mechanicTags": [
@@ -5626,63 +5478,40 @@
       "featureId": "inventory.lifecycle",
       "featureMappingBasis": "path-provisional",
       "consolidation": {
-        "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-        "method": "same-owner-same-lane-source-preserving-lexical-scope",
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
         "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/inspection/inventory-contract-load.test.ts",
-            "blobSha": "61a1c756973a8b177cf36ae96b4cc23ff3500c45"
-          },
           {
             "path": "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts",
-            "blobSha": "c20f56f9b60fccf0dc81acfe4bb9c988b9518065"
-          }
-        ],
-        "originalTestCallSites": 6,
-        "originalExpectCallSites": 9,
-        "mergedSourceBlobSha": "a52f2f71ad3988265381fb5df1ccfb2a88e440f1",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Source-preserving 2-file family consolidation retains 10 case call sites and 22 assertion call sites; TS/Vitest and file isolation NOT EXECUTED.",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "aed1a1f2a9c728ac50bee99373e020ce9cd70b5e"
-      },
-      "functionalArea": "inventory-economy",
-      "mechanicTags": [
-        "inventory.item-flow",
-        "inventory.loadout"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "inventory.lifecycle",
-      "featureMappingBasis": "path-provisional",
-      "consolidation": {
-        "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-        "method": "same-owner-same-lane-source-preserving-lexical-scope",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts",
-            "blobSha": "565215758656e2a31856eb5e7dfee679f31c90be"
+            "blobSha": "a52f2f71ad3988265381fb5df1ccfb2a88e440f1"
           },
           {
-            "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-diagnostics.test.ts",
-            "blobSha": "63e3129a6e124d8695868e616d528d0590a05913"
+            "path": "engine/packages/orchestrator/test/inspection/inventory-lifecycle-analysis.test.ts",
+            "blobSha": "aed1a1f2a9c728ac50bee99373e020ce9cd70b5e"
           }
         ],
-        "originalTestCallSites": 10,
-        "originalExpectCallSites": 22,
-        "mergedSourceBlobSha": "aed1a1f2a9c728ac50bee99373e020ce9cd70b5e",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 16,
+        "originalExpectCallSites": 31,
+        "mergedSourceBlobSha": "c569155f68e5acda4fd1ac0d40ad8c7885c3737b",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidation": {
+          "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
+          "method": "same-owner-same-lane-source-preserving-lexical-scope",
+          "sourceFiles": [
+            {
+              "path": "engine/packages/orchestrator/test/inspection/inventory-contract-load.test.ts",
+              "blobSha": "61a1c756973a8b177cf36ae96b4cc23ff3500c45"
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/inventory-contract-analysis.test.ts",
+              "blobSha": "c20f56f9b60fccf0dc81acfe4bb9c988b9518065"
+            }
+          ],
+          "originalTestCallSites": 6,
+          "originalExpectCallSites": 9,
+          "mergedSourceBlobSha": "a52f2f71ad3988265381fb5df1ccfb2a88e440f1",
+          "execution": "NOT_EXECUTED"
+        }
       }
     },
     {
@@ -5958,46 +5787,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Source-preserving 2-file family consolidation retains 5 case call sites and 8 assertion call sites; TS/Vitest and file isolation NOT EXECUTED.",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "007f1b0ec17c5a30af71bd9d115a42fb50ee5886"
-      },
-      "functionalArea": "combat-entities",
-      "mechanicTags": [
-        "entity.ai-navigation"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "entity.navigation",
-      "featureMappingBasis": "path-provisional",
-      "consolidation": {
-        "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-        "method": "same-owner-same-lane-source-preserving-lexical-scope",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-load.test.ts",
-            "blobSha": "b6cb0e310d4439dd2b708946dd07908c61b901de"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/inspection/route-navigation-environment-analysis.test.ts",
-            "blobSha": "aad9e3ba4582d67a70cd09256c9c39268bc1e73e"
-          }
-        ],
-        "originalTestCallSites": 5,
-        "originalExpectCallSites": 8,
-        "mergedSourceBlobSha": "007f1b0ec17c5a30af71bd9d115a42fb50ee5886",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
       "path": "engine/packages/orchestrator/test/inspection/script-api-usage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -6168,26 +5957,6 @@
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.source-inspection",
       "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/state-authority-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Checks authority and mirror consistency, value/revision drift, missing authority, and knowledge diagnostics.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [
-        "scoreboard.authority"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "audit.semantic-analysis",
-      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
@@ -7785,18 +7554,45 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "read-assertions-before-decision"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162"
       },
-      "recommendation": "keep",
-      "rationale": "Evidence-bound cached rejections are reevaluated when evidence or terminal status changes.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same-directory development family 4 -> 1, retaining 40 it/test call sites and 90 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/reporting/report-candidate-reuse.test.ts",
+            "blobSha": "6fb7469c69c9b482f918f4fee02d72f272fb561e"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/reporting/report-defect-classification.test.ts",
+            "blobSha": "e4bd43adc4384e511cb85483d12302c9e92c9ad2"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/reporting/report-defect-collector.test.ts",
+            "blobSha": "22420f454e5f900313fd6c1cb455efc14a75775a"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/reporting/report-source-owner.test.ts",
+            "blobSha": "2d60e868ab149593f3d5699836aaa05f493493ec"
+          }
+        ],
+        "originalTestCallSites": 40,
+        "originalExpectCallSites": 90,
+        "mergedSourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-confirmation-adapter.test.ts",
@@ -7841,63 +7637,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/reporting/report-defect-classification.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b9829527c8ba643a4415dee09c543db5fea2f5a4"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source-preserving 2-file family consolidation retains 9 case call sites and 17 assertion call sites; TS/Vitest and file isolation NOT EXECUTED.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional",
-      "consolidation": {
-        "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-        "method": "same-owner-same-lane-source-preserving-lexical-scope",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/reporting/report-classification-producers.test.ts",
-            "blobSha": "d9c07cb8612ac6d1af1db22f0a9641d0a0db95dd"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/reporting/report-defect-classification.test.ts",
-            "blobSha": "7a81de843ebfceaa012c2c26fc6888fdbda07ff6"
-          }
-        ],
-        "originalTestCallSites": 9,
-        "originalExpectCallSites": 17,
-        "mergedSourceBlobSha": "b9829527c8ba643a4415dee09c543db5fea2f5a4",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reporting/report-defect-collector.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/reporting/report-repair-context.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -7933,25 +7672,6 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.evidence",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/reporting/report-source-owner.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "low",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.findings",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -8128,18 +7848,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "dcdc6c02351bd1213028e27db7f536d94bcd1c22"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.task-context",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/workflow/context-compiler.test.ts",
+            "blobSha": "5e7f683b43755c4373b935c21f687bfbf57afc22"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/workflow/resource-context.test.ts",
+            "blobSha": "b835f9bb8a0b134ca710f6c525f258f39f40b0dd"
+          }
+        ],
+        "originalTestCallSites": 28,
+        "originalExpectCallSites": 71,
+        "mergedSourceBlobSha": "dcdc6c02351bd1213028e27db7f536d94bcd1c22",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/decision-basis.test.ts",
@@ -8147,18 +7886,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "c3ad1a1fc635211ccf472e336994c2da82a4b25a"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 22 it/test call sites and 26 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.proof-control",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/workflow/decision-basis.test.ts",
+            "blobSha": "67011b47005efc6baed0889d2f019aa13918be19"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/workflow/semantic-proof-cache.test.ts",
+            "blobSha": "6664f42ea9deec4d1e5e90f763f52793d76d061d"
+          }
+        ],
+        "originalTestCallSites": 22,
+        "originalExpectCallSites": 26,
+        "mergedSourceBlobSha": "c3ad1a1fc635211ccf472e336994c2da82a4b25a",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/decision-ledger.test.ts",
@@ -8167,36 +7925,44 @@
       "review": "case-inventory-reviewed",
       "triage": {
         "owner": "engine/packages/orchestrator",
-        "basis": "source-body-preservation-no-executable-proof",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "riskHint": "medium",
-        "action": "validate-merged-suite-on-affected-change"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "ce76b92fa4c51ab2128e2532fff3fd70ff8b16a6"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
+      "rationale": "Same-directory development family 4 -> 1, retaining 37 it/test call sites and 105 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/workflow/engineering-review.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "owner": "engine/packages/orchestrator",
-        "basis": "source-body-preservation-no-executable-proof",
-        "riskHint": "high",
-        "action": "validate-merged-suite-on-affected-change"
-      },
-      "recommendation": "defer",
-      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/workflow/decision-ledger.test.ts",
+            "blobSha": "83480cfeeb0312f1db538ec2ebf9dc5be09088e1"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/workflow/engineering-review.test.ts",
+            "blobSha": "931aa4373610064e754ee6a81bdbe4e9ead8bf62"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/workflow/selective-validation-plan.test.ts",
+            "blobSha": "5f92bf65b14abde305841b6523b8f3ea787e97bf"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/workflow/semantic-affected-plan.test.ts",
+            "blobSha": "1aeed4a3ea976094f5a440e40f5b5fd2c6c544ec"
+          }
+        ],
+        "originalTestCallSites": 37,
+        "originalExpectCallSites": 105,
+        "mergedSourceBlobSha": "ce76b92fa4c51ab2128e2532fff3fd70ff8b16a6",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/repository-task-plan.test.ts",
@@ -8218,62 +7984,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/workflow/resource-context.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.task-context",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/workflow/selective-validation-plan.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Selective skip requires current source/semantic bindings and still runs unbound and mandatory safety scenarios.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/workflow/semantic-affected-plan.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Selective validation requires exact graph binding of mutations and affected dependents.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.workflow",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/workflow/semantic-graph-fingerprint.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -8290,25 +8000,6 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.semantic-analysis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/workflow/semantic-proof-cache.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Proof reuse invalidates on missing evidence, runtime generation, target profile, incident node/edge changes.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.proof-control",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -8458,39 +8149,37 @@
       "owner": "engine/packages/project-model",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/project-model",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "08a4e3b0380916c7997b6abe5fb390db7df8938c"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "dfdad499d68f305f97b47e79f3835d17011bf272"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 21 it/test call sites and 29 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "tooling.decisions",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/project-model/test/evidence/invariant-registry-validate.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/project-model",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/project-model",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "f9e1e357ba11b3ec8bd41d3dcec421b85d502141"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "engineering-tooling",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "tooling.decisions",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/project-model/test/evidence/decision-ledger-validate.test.ts",
+            "blobSha": "08a4e3b0380916c7997b6abe5fb390db7df8938c"
+          },
+          {
+            "path": "engine/packages/project-model/test/evidence/invariant-registry-validate.test.ts",
+            "blobSha": "f9e1e357ba11b3ec8bd41d3dcec421b85d502141"
+          }
+        ],
+        "originalTestCallSites": 21,
+        "originalExpectCallSites": 29,
+        "mergedSourceBlobSha": "dfdad499d68f305f97b47e79f3835d17011bf272",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/project-model/test/evidence/telemetry-continuity.test.ts",
@@ -8498,38 +8187,37 @@
       "owner": "engine/packages/project-model",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "engine/packages/project-model",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Per-stream sequence continuity rejects duplicate and non-monotonic evidence.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/project-model/test/evidence/telemetry-validate.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/project-model",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/project-model",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "d7e78e0e3b2c0fd4aa6046fe6b39f3b5f44c9c9f"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "ed64f3d854539ed513e531ffb11924c96f5e9ae2"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 12 it/test call sites and 23 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.telemetry",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/project-model/test/evidence/telemetry-continuity.test.ts",
+            "blobSha": "a50d254a3da2ff4416eb4df23f4932dc85ac95b1"
+          },
+          {
+            "path": "engine/packages/project-model/test/evidence/telemetry-validate.test.ts",
+            "blobSha": "d7e78e0e3b2c0fd4aa6046fe6b39f3b5f44c9c9f"
+          }
+        ],
+        "originalTestCallSites": 12,
+        "originalExpectCallSites": 23,
+        "mergedSourceBlobSha": "ed64f3d854539ed513e531ffb11924c96f5e9ae2",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/project-model/test/project-lifecycle.test.ts",
@@ -10388,119 +10076,53 @@
       "owner": "tooling/bug-report-documents",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-original-source-and-merged-body-preservation",
         "owner": "tooling/bug-report-documents",
         "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "417783b7c7d82be8dd9a4c13ec28eae1be87cb0d"
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "3c500c71a0afff9ad6d5aa76d2f37659d304d83c"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same-directory development family 6 -> 1, retaining 42 it/test call sites and 301 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.tracker",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "tooling/bug-report-documents/tracker/project.test.ts",
-      "lane": "development",
-      "owner": "tooling/bug-report-documents",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "tooling/bug-report-documents",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "906888a05f76233ada552ecadfec0b6cb156457a"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.tracker",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "tooling/bug-report-documents/tracker/quality.test.ts",
-      "lane": "development",
-      "owner": "tooling/bug-report-documents",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "tooling/bug-report-documents",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "8ef6d49bf5c4da1dfbd73bbe28ef341e9c3f4914"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.tracker",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "tooling/bug-report-documents/tracker/real-reports.test.ts",
-      "lane": "development",
-      "owner": "tooling/bug-report-documents",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "tooling/bug-report-documents",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "199dbbb214cce0f868d9f4fc02059789560a0e09"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.tracker",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "tooling/bug-report-documents/tracker/render-html.test.ts",
-      "lane": "development",
-      "owner": "tooling/bug-report-documents",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "tooling/bug-report-documents",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "6bfdeb47466ca596644c623a1b1594a1a8a4bcbd"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.tracker",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "tooling/bug-report-documents/tracker/workspace-version.test.ts",
-      "lane": "development",
-      "owner": "tooling/bug-report-documents",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "tooling/bug-report-documents",
-        "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "bf428596f165174304362e6a77253c3496708885"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "reporting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "report.tracker",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "tooling/bug-report-documents/tracker/export.test.ts",
+            "blobSha": "417783b7c7d82be8dd9a4c13ec28eae1be87cb0d"
+          },
+          {
+            "path": "tooling/bug-report-documents/tracker/project.test.ts",
+            "blobSha": "906888a05f76233ada552ecadfec0b6cb156457a"
+          },
+          {
+            "path": "tooling/bug-report-documents/tracker/quality.test.ts",
+            "blobSha": "8ef6d49bf5c4da1dfbd73bbe28ef341e9c3f4914"
+          },
+          {
+            "path": "tooling/bug-report-documents/tracker/real-reports.test.ts",
+            "blobSha": "199dbbb214cce0f868d9f4fc02059789560a0e09"
+          },
+          {
+            "path": "tooling/bug-report-documents/tracker/render-html.test.ts",
+            "blobSha": "6bfdeb47466ca596644c623a1b1594a1a8a4bcbd"
+          },
+          {
+            "path": "tooling/bug-report-documents/tracker/workspace-version.test.ts",
+            "blobSha": "bf428596f165174304362e6a77253c3496708885"
+          }
+        ],
+        "originalTestCallSites": 42,
+        "originalExpectCallSites": 301,
+        "mergedSourceBlobSha": "3c500c71a0afff9ad6d5aa76d2f37659d304d83c",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "tooling/bug-report-ui/github-report-store.test.ts",
@@ -12596,14 +12218,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
+    "parentCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 440,
-    "groups": 111,
-    "removedPaths": 264,
+    "sourceFilesAfter": 402,
+    "groups": 132,
+    "removedPaths": 302,
     "addedPaths": 17,
     "deletedAssertionsProven": 4,
-    "proof": "static-original-body-case-and-assertion-parity_NOT_TYPESCRIPT_VITEST_MINECRAFT",
-    "open": "Actual test file isolation/affected selection overhead, TS/Vitest, map audit and Minecraft runtime NOT EXECUTED. 100-file target not achieved."
+    "proof": "pinned-original-source-body-and-static-test-assertion-parity_NOT_EXECUTED",
+    "open": "No TypeScript/Vitest/isolation/performance/Minecraft execution proof; 100 physical test files is a target and is not a safe-delete quota."
   }
 }
