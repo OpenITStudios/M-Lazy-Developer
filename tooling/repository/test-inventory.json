@@ -6334,7 +6334,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "c1ecadbd55b51649a42f7a2c8b3342d4d6bc3126"
+        "sourceBlobSha": "231261dd2ff939f7ce2b32a2f715212a79c0b4aa"
       },
       "recommendation": "keep",
       "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
