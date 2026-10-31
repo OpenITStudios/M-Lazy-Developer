@@ -131,11 +131,38 @@ export function formatSelectedMapAuditFinalReport(input: {
       out.push("Klasifikasi tipe/mode belum dibuktikan. " +
         "Kandidat aktivitas source tidak otomatis menjadi jenis game.");
     }
+    const gameScopes = qa.gameScopes ?? [];
+    if (gameScopes.length > 0) {
+      out.push(
+        "Relasi aktivitas game dari source (belum klasifikasi mode/game type):",
+        ...gameScopes.slice(0, 4).map(group =>
+          "- " + group.gameSubjectId + ": " +
+          group.directRelations.length + " relasi source langsung; " +
+          group.sharedSubjectIds.length + " subject berbagi game. " +
+          "Tidak membuktikan mode permainan."),
+      );
+      if ((qa.omittedGameScopes ?? 0) > 0) {
+        out.push("- Kelompok game lain tidak ditampilkan: " +
+          qa.omittedGameScopes + ".");
+      }
+    }
+    if ((qa.unscopedActivitySubjectIds?.length ?? 0) > 0) {
+      out.push("Aktivitas tanpa relasi scope game yang terbukti: " +
+        qa.unscopedActivitySubjectIds!.length +
+        " (ini tetap perlu ditelusuri).");
+    }
     for (const item of qa.checks.slice(0, 10)) {
+      const binding = item.exactSourceQaRule;
+      const bindingText = binding?.status ===
+        "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS"
+        ? "source-rule " + binding.invariantIds.join(", ") +
+          "; causal lead " + binding.relatedCausalLinkIds.length +
+          "; temuan PROVEN terkait " + binding.relatedProvenFindingIds.length
+        : "belum ada rule QA terikat secara spesifik (" +
+          (binding?.status ?? "UNKNOWN") + ")";
       out.push("- " + item.id + " BELUM TERVERIFIKASI — " +
-        item.question.slice(0, 135) + " (bukti skenario: " +
-        (item.scenarioSourceEvidenceIds.slice(0, 2).join(", ") ||
-          "belum ada") + ")");
+        item.question.slice(0, 135) + " (" + bindingText +
+        "; bukan QA PASS)");
     }
     if (qa.checks.length > 10) {
       out.push("- " + (qa.checks.length - 10) +

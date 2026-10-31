@@ -775,6 +775,41 @@ This is a bounded source-backed visibility improvement. Automatic exact
 multi-mode classification and per-ID EVALUATE/PROVE closing receipts remain
 unresolved work requiring source-specific rules and evidence.
 
+### Exact game scopes and QA-ID source-rule association
+
+The existing `qaCoverage` projection now provides **two conservative
+extensions**, still inside the same selected-map output:
+
+1. `gameScopes[]` reflects **direct authored source edges** between current
+   Gameplay Intent `game` nodes and other current selected-artifact
+   subjects. Each edge retains its exact ID/kind and selected-source evidence.
+   Ambiguous subjects connected to several games are listed as shared, while
+   mechanics/objectives with no admitted direct game link remain unscoped.
+   Names, keywords, same filenames, UI copy and source proximity never
+   assign `mapType`, player mode, minigame membership or executable behavior.
+   One or more game nodes are **candidate scopes**, not certified independent
+   subgames. Full per-mode Game Design still needs explicit evidence.
+2. Per QA row, `exactSourceQaRule` joins an explicitly authored Gameplay
+   Intent invariant whose **exact ID** is the QA code or `qa:` + code.
+   The source rule must have selected-artifact evidence and exact
+   non-hypothesis selected-source subject IDs. Matching names/descriptions
+   is not permitted. Only causal links with unique graph IDs, all of that
+   source rule's subject IDs, and their own current-source evidence may be
+   shown as *related leads*. A canonical PROVEN finding on the very same
+   scoped CONTRADICTED link is reported as a **related proven issue**, not
+   proof that the whole QA rule passed or failed. Duplicate source rules,
+   missing subjects, and absent exact rule IDs fail closed to a clear
+   unresolved binding status.
+
+These are optional source **associations**, not a new authoring prerequisite
+for auditing maps, an extra status machine, or a proof/bug owner. The report
+continues to emit `QA_SPECIFIC_PROOF_UNRESOLVED` for every selected QA ID.
+It never automatically claims `SAFE`, `PROVEN`, or `NOT_APPLICABLE`
+from a scenario link, explicit invariant, design approval flag or genre name.
+Canonical EVALUATE/PROVE retain all actual proof decisions. The exact QA
+source-rule association only makes the remaining deciding question narrower
+when such evidence exists.
+
 ## Mutable-state reverse index
 
 For every material mutable resource build:

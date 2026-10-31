@@ -145,6 +145,27 @@ export interface MapAuditQaCoverage {
     readonly evidenceIds: readonly string[];
   }[];
   readonly omittedSourceActivities: number;
+  /** Explicit selected-source game/subject graph, not resolved game modes.
+   * Each node retains its actual source edge and never borrows a genre.
+   */
+  readonly gameScopes?: readonly {
+    readonly gameSubjectId: string;
+    readonly gameLabel: string;
+    readonly sourceEvidenceIds: readonly string[];
+    readonly directRelations: readonly {
+      readonly edgeId: string;
+      readonly edgeKind: string;
+      readonly relatedSubjectId: string;
+      readonly relatedKind: string;
+      readonly edgeEvidenceIds: readonly string[];
+    }[];
+    readonly omittedDirectRelations: number;
+    readonly sharedSubjectIds: readonly string[];
+    readonly classificationBoundary: "EXACT_SOURCE_EDGES_NOT_MODE_OR_GAME_TYPE";
+  }[];
+  readonly omittedGameScopes?: number;
+  readonly unscopedActivitySubjectIds?: readonly string[];
+  readonly omittedUnscopedActivities?: number;
   readonly selected: number;
   readonly proofBound: 0;
   readonly checks: readonly {
@@ -157,6 +178,25 @@ export interface MapAuditQaCoverage {
     readonly omittedScenarioEvidence: number;
     readonly omittedRelatedLinks: number;
     readonly evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF";
+    /** Exact QA IDs can optionally be authored as Gameplay Intent invariants
+     * (id = QA code or "qa:" + code). An associated causal link or even
+     * a PROVEN issue is NOT a requirement-specific QA verdict.
+     */
+    readonly exactSourceQaRule?: {
+      readonly status:
+        "NO_EXACT_SELECTED_SOURCE_RULE" |
+        "AMBIGUOUS_EXACT_SOURCE_RULE" |
+        "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED" |
+        "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS";
+      readonly invariantIds: readonly string[];
+      readonly subjectIds: readonly string[];
+      readonly sourceEvidenceIds: readonly string[];
+      readonly selectedApprovedDesignEvidence: boolean;
+      readonly relatedCausalLinkIds: readonly string[];
+      readonly relatedProvenFindingIds: readonly string[];
+      readonly omittedRelatedLinks: number;
+      readonly proof: "QA_SOURCE_RULE_TO_CAUSAL_LEADS_NOT_QA_VERDICT";
+    };
   }[];
 }
 
@@ -530,6 +570,7 @@ function projectFinding(
 /** Do not borrow scenario-wide source proof to certify any one QA ID. */
 function projectSelectedMapQaCoverage(
   inspection: InspectArtifactResult,
+  relatedFindings: readonly AuditIssueProjection[],
 ): MapAuditQaCoverage {
   const intent = inspection.gameplayIntent.model;
   const selectedIds = new Set(intent.evidence
@@ -550,6 +591,143 @@ function projectSelectedMapQaCoverage(
       evidenceIds: evidenceIds.slice(0, 8),
     }];
   }).sort((a, b) => a.subjectId.localeCompare(b.subjectId));
+  // A single current-artifact Intent graph may describe multiple game
+  // candidates. Only exact authored edges with selected-source evidence
+  // connect them; labels, shared file names and inferred graph proximity
+  // never assign a second mode or game type.
+  const uniqueNode = (id: string) => {
+    const owned = intent.nodes.filter(node => node.id === id);
+    return owned.length === 1 ? owned[0] : undefined;
+  };
+  const directGameScopes = activityCandidates
+    .filter(item => item.kind === "game")
+    .map(game => {
+      const links = intent.edges.flatMap(edge => {
+        if (edge.status !== "authored" ||
+            (edge.from !== game.subjectId && edge.to !== game.subjectId)) {
+          return [];
+        }
+        const otherId = edge.from === game.subjectId ? edge.to : edge.from;
+        if (otherId === game.subjectId) return [];
+        const other = uniqueNode(otherId);
+        if (other === undefined || other.status === "hypothesis" ||
+            !other.evidenceIds.some(id => selectedIds.has(id))) return [];
+        const exactEvidence = [...new Set(edge.evidenceIds
+          .filter(id => selectedIds.has(id)))].sort();
+        if (exactEvidence.length === 0) return [];
+        return [{
+          edgeId: edge.id,
+          edgeKind: edge.kind,
+          relatedSubjectId: otherId,
+          relatedKind: other.kind,
+          edgeEvidenceIds: exactEvidence,
+        }];
+      }).sort((a, b) => a.edgeId.localeCompare(b.edgeId) ||
+        a.relatedSubjectId.localeCompare(b.relatedSubjectId));
+      return { game, links };
+    });
+  const ownersBySubject = new Map<string, Set<string>>();
+  for (const group of directGameScopes) {
+    for (const link of group.links) {
+      const owners = ownersBySubject.get(link.relatedSubjectId) ??
+        new Set<string>();
+      owners.add(group.game.subjectId);
+      ownersBySubject.set(link.relatedSubjectId, owners);
+    }
+  }
+  const gameScopes: NonNullable<MapAuditQaCoverage["gameScopes"]> =
+    directGameScopes.map(({ game, links }) => ({
+      gameSubjectId: game.subjectId,
+      gameLabel: game.label,
+      sourceEvidenceIds: game.evidenceIds,
+      directRelations: links.slice(0, 16),
+      omittedDirectRelations: Math.max(0, links.length - 16),
+      sharedSubjectIds: [...new Set(links.filter(link =>
+        (ownersBySubject.get(link.relatedSubjectId)?.size ?? 0) > 1)
+        .map(link => link.relatedSubjectId))].sort(),
+      classificationBoundary: "EXACT_SOURCE_EDGES_NOT_MODE_OR_GAME_TYPE",
+    }));
+  const unscopedActivities = [...new Set(activityCandidates.filter(item =>
+    item.kind !== "game" && !ownersBySubject.has(item.subjectId))
+    .map(item => item.subjectId))].sort();
+
+  const selectedInvariantFor = (id: string) =>
+    intent.invariants.filter(invariant =>
+      invariant.status === "authored" &&
+      (invariant.id === id || invariant.id === "qa:" + id) &&
+      invariant.evidenceIds.some(sourceId => selectedIds.has(sourceId)));
+  const causalIdCounts = new Map<string, number>();
+  for (const link of graph.causalLinks) {
+    causalIdCounts.set(link.id, (causalIdCounts.get(link.id) ?? 0) + 1);
+  }
+  const relatedQaRuleFor = (
+    id: string,
+    relatedFindings: readonly AuditIssueProjection[],
+  ): NonNullable<MapAuditQaCoverage["checks"][number]["exactSourceQaRule"]> => {
+    const matches = selectedInvariantFor(id);
+    const common = {
+      proof: "QA_SOURCE_RULE_TO_CAUSAL_LEADS_NOT_QA_VERDICT" as const,
+    };
+    const empty = (
+      status: "NO_EXACT_SELECTED_SOURCE_RULE" |
+        "AMBIGUOUS_EXACT_SOURCE_RULE" |
+        "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED",
+      invariantIds: readonly string[],
+    ) => ({
+      ...common, status, invariantIds,
+      subjectIds: [], sourceEvidenceIds: [],
+      selectedApprovedDesignEvidence: false,
+      relatedCausalLinkIds: [], relatedProvenFindingIds: [],
+      omittedRelatedLinks: 0,
+    });
+    if (matches.length === 0) {
+      return empty("NO_EXACT_SELECTED_SOURCE_RULE", []);
+    }
+    if (matches.length !== 1) {
+      return empty("AMBIGUOUS_EXACT_SOURCE_RULE",
+        matches.map(item => item.id).sort());
+    }
+    const rule = matches[0]!;
+    const subjectIds = [...new Set(rule.subjectIds)].sort();
+    if (subjectIds.length === 0 || subjectIds.some(subjectId => {
+      const node = uniqueNode(subjectId);
+      return node === undefined || node.status === "hypothesis" ||
+        !node.evidenceIds.some(sourceId => selectedIds.has(sourceId));
+    })) {
+      return empty("EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED", [rule.id]);
+    }
+    const sourceEvidenceIds = [...new Set(rule.evidenceIds
+      .filter(evidenceId => selectedIds.has(evidenceId)))].sort();
+    // A link must own EVERY named source subject, have a unique graph
+    // identity and carry its own current-artifact evidence. This proves
+    // an exact source association, not that the rule's predicate was tested.
+    const associated = graph.causalLinks.filter(link =>
+      causalIdCounts.get(link.id) === 1 &&
+      subjectIds.every(subjectId => link.subjectIds.includes(subjectId)) &&
+      link.evidenceIds.some(evidenceId => selectedIds.has(evidenceId)))
+      .sort((a,b) => a.id.localeCompare(b.id));
+    const relatedProven = relatedFindings.filter(finding =>
+      finding.status === "PROVEN" &&
+      finding.evidenceIds.some(evidenceId => selectedIds.has(evidenceId)) &&
+      associated.some(link =>
+        link.id === finding.causalLinkId &&
+        link.scenarioId === finding.scenarioId &&
+        link.status === "CONTRADICTED"))
+      .map(finding => finding.causalLinkId).sort();
+    return {
+      ...common, status: "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS",
+      invariantIds: [rule.id],
+      subjectIds,
+      sourceEvidenceIds: sourceEvidenceIds.slice(0, 8),
+      selectedApprovedDesignEvidence: sourceEvidenceIds.some(id =>
+        intent.evidence.some(e => e.id === id &&
+          e.origin === "game-design-spec" &&
+          e.designStatus === "approved")),
+      relatedCausalLinkIds: associated.slice(0, 8).map(x => x.id),
+      relatedProvenFindingIds: [...new Set(relatedProven)].slice(0, 8),
+      omittedRelatedLinks: Math.max(0, associated.length - 8),
+    };
+  };
   const seen = new Set<string>();
   const checks: MapAuditQaCoverage["checks"][number][] = [];
   for (const scenario of preset.scenarios) {
@@ -583,6 +761,7 @@ function projectSelectedMapQaCoverage(
         omittedScenarioEvidence: Math.max(0, evidence.length - 8),
         omittedRelatedLinks: Math.max(0, linkIds.length - 8),
         evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF",
+        exactSourceQaRule: relatedQaRuleFor(tagged[1]!, relatedFindings),
       });
     }
   }
@@ -595,6 +774,10 @@ function projectSelectedMapQaCoverage(
       : "SOURCE_ACTIVITY_CANDIDATES_SCOPE_UNVERIFIED",
     sourceActivities: activityCandidates.slice(0, 16),
     omittedSourceActivities: Math.max(0, activityCandidates.length - 16),
+    gameScopes: gameScopes.slice(0, 12),
+    omittedGameScopes: Math.max(0, gameScopes.length - 12),
+    unscopedActivitySubjectIds: unscopedActivities.slice(0, 16),
+    omittedUnscopedActivities: Math.max(0, unscopedActivities.length - 16),
     selected: checks.length,
     proofBound: 0,
     checks,
@@ -906,7 +1089,10 @@ export function projectMapAuditOutputV2(input: {
                 .classification,
           },
         }),
-    qaCoverage: projectSelectedMapQaCoverage(input.inspection),
+    qaCoverage: projectSelectedMapQaCoverage(input.inspection, [
+      ...input.issueLanes.BUG,
+      ...input.issueLanes.DESIGN_MISMATCH,
+    ]),
     evidenceScope: {
       mode: "selected-map-version-only",
       selectedArtifact:

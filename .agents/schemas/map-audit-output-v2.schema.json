@@ -5919,9 +5919,188 @@
               },
               "evidenceRole": {
                 "const": "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF"
+              },
+              "exactSourceQaRule": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "invariantIds",
+                  "subjectIds",
+                  "sourceEvidenceIds",
+                  "selectedApprovedDesignEvidence",
+                  "relatedCausalLinkIds",
+                  "relatedProvenFindingIds",
+                  "omittedRelatedLinks",
+                  "proof"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "NO_EXACT_SELECTED_SOURCE_RULE",
+                      "AMBIGUOUS_EXACT_SOURCE_RULE",
+                      "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED",
+                      "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS"
+                    ]
+                  },
+                  "invariantIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "subjectIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "sourceEvidenceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "selectedApprovedDesignEvidence": {
+                    "type": "boolean"
+                  },
+                  "relatedCausalLinkIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "relatedProvenFindingIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "omittedRelatedLinks": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "proof": {
+                    "const": "QA_SOURCE_RULE_TO_CAUSAL_LEADS_NOT_QA_VERDICT"
+                  }
+                }
               }
             }
           }
+        },
+        "gameScopes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "gameSubjectId",
+              "gameLabel",
+              "sourceEvidenceIds",
+              "directRelations",
+              "omittedDirectRelations",
+              "sharedSubjectIds",
+              "classificationBoundary"
+            ],
+            "properties": {
+              "gameSubjectId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "gameLabel": {
+                "type": "string"
+              },
+              "sourceEvidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "directRelations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "edgeId",
+                    "edgeKind",
+                    "relatedSubjectId",
+                    "relatedKind",
+                    "edgeEvidenceIds"
+                  ],
+                  "properties": {
+                    "edgeId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "edgeKind": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "relatedSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "relatedKind": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "edgeEvidenceIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    }
+                  }
+                }
+              },
+              "omittedDirectRelations": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sharedSubjectIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "classificationBoundary": {
+                "const": "EXACT_SOURCE_EDGES_NOT_MODE_OR_GAME_TYPE"
+              }
+            }
+          }
+        },
+        "omittedGameScopes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unscopedActivitySubjectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "omittedUnscopedActivities": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     }
