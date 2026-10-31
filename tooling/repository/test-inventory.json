@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "43d5f1759eba137ec0a3a9b95713bd862429ca31",
-  "classification": "495 physical test files after combining three direct inspectDirectory source suites into one existing inspection owner (prior 497). All original 16 it() cases and 74 expect() sites are preserved within that owner. The now-unreferenced audit.end-to-end feature label (source-level helper, not selected-map end-to-end) was removed. Default acceptance selected suites, runtime/safety boundaries and disabled CI policy are unchanged. No executable test PASS asserted.",
+  "sourceCommit": "9485e4fedaba08bf4e28d09065eb574682fb4db0",
+  "classification": "494 physical test files after consolidating two same-owner cross-version differential suites into one, preserving all 3 cases and 6 expect() callsites. Domain definition validation 6 -> 3 it() registrations keeps all 23 factory/validation cases plus both read-only boundary tests. Runtime lane 51 -> 50; runtime-lane tests exercise contracts and injected/synthetic evidence, not actual Minecraft proof. No CI or runtime tests executed.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -9969,11 +9969,11 @@
       "owner": "engine/packages/runtime-lab",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Explicit live proof authority refuses server-simulated evidence.",
+      "rationale": "Synthetic controlled trial records test the experiment qualification authority gate: server-simulated evidence cannot meet live-authority requirements; accepted live-authority labels do not independently attest to an executed client.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "exact-ref-test-and-production-contract-source-review",
+        "action": "retain-with-runtime-evidence-ceiling-explicit"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
@@ -10000,34 +10000,16 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Negative missing-host fail-closed contract guards differential execution.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "runtime.differential",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Distinct runtime targets and qualified cases are prerequisites; incomplete receipts remain incomplete.",
+      "rationale": "Retains the two distinct-profile and incomplete-receipt cases plus the exact missing-host executor case formerly in cross-version-differential-executor.test.ts; three distinct static contract checks, not executed Minecraft cross-version evidence.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "exact-ref-test-and-production-contract-source-review",
+        "action": "retain-with-runtime-evidence-ceiling-explicit"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
@@ -10326,11 +10308,11 @@
       "owner": "engine/packages/runtime-lab",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Consolidated four source-reviewed validation experiment definitions into one file: retains all original family validity, observability-only, mutation-risk and stimulus assertions; Minecraft runtime remains not executed.",
+      "rationale": "Single labeled source-validation matrix preserves all 23 originally distinct experiment-definition constructors, with all factory calls evaluated independently and exceptions reported per family; two separate read-only observability/storage action-boundary tests remain. Static builder tests, not Bedrock execution proof.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "exact-ref-test-and-production-contract-source-review",
+        "action": "retain-with-runtime-evidence-ceiling-explicit"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
@@ -10445,11 +10427,11 @@
       "owner": "engine/packages/runtime-lab",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Reconnect evidence must be live, generation-bound and cannot rely on server simulation.",
+      "rationale": "Synthetic proof receipts distinguish simulated versus live-authority labels and generation-scoped evidence inside the pure reconnect acceptance gate. No Minecraft client session was executed or authenticated by this test.",
       "triage": {
-        "basis": "inherited-review-record",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "basis": "exact-ref-test-and-production-contract-source-review",
+        "action": "retain-with-runtime-evidence-ceiling-explicit"
       },
       "functionalArea": "player-session",
       "mechanicTags": [
@@ -13069,14 +13051,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "43d5f1759eba137ec0a3a9b95713bd862429ca31",
+    "parentCommit": "9485e4fedaba08bf4e28d09065eb574682fb4db0",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 495,
-    "groups": 79,
-    "removedPaths": 209,
+    "sourceFilesAfter": 494,
+    "groups": 80,
+    "removedPaths": 210,
     "addedPaths": 17,
     "deletedAssertionsProven": 0,
-    "proof": "exact-source-body-and-assertion-callsite-parity_ONLY_NOT_TYPESCRIPT_VITEST",
-    "open": "Transferred suites have not been executed in TypeScript/Vitest; selected-map end-to-end and Minecraft runtime remain NOT EXECUTED; case-level redundancies among unrelated consumers are not established."
+    "proof": "static-factory-case-and-expectation-parity_NOT_TYPESCRIPT_VITEST_MINECRAFT",
+    "open": "Synthetic runtime host/proof-label tests do not attest real client execution. TypeScript/Vitest, host integration, game runtime and true execution overhead NOT EXECUTED."
   }
 }

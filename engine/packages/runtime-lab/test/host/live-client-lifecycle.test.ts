@@ -1,3 +1,4 @@
+// Constructed execution receipts test policy checks, not an observed Minecraft client session.
 import { describe, expect, it } from "vitest";
 import {
   buildLiveClientReconnectPlan,
@@ -38,7 +39,7 @@ describe("live client lifecycle proof", () => {
       .toBe("blocked");
   });
 
-  it("proves reconnect only with live generation-scoped evidence", () => {
+  it("accepts live-labelled scoped reconnect observations at the pure proof gate", () => {
     const proof =
       evaluateLiveClientReconnectProof(
         plan,

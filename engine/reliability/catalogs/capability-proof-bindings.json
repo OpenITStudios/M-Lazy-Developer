@@ -280,7 +280,7 @@
       "capabilityId": "runtime.cross-version-differential-executor",
       "kind": "contract-only",
       "paths": [
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts"
+        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB",
       "note": "Binds fail-closed orchestration behavior only; live cross-version proof still requires LOCAL/LIVE Minecraft hosts."

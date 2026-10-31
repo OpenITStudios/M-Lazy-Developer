@@ -1,3 +1,4 @@
+// Synthetic trial records validate authority gating; they are not captured Minecraft runs.
 import { describe, expect, it } from "vitest";
 import {
   qualifyRuntimeExperiment,
@@ -106,7 +107,7 @@ describe("runtime evidence proof authority", () => {
     );
   });
 
-  it("accepts live-runtime evidence for live-runtime requirements", () => {
+  it("accepts live-authority-labelled trial records at the qualification boundary", () => {
     const result =
       qualifyRuntimeExperiment(
         definition,
