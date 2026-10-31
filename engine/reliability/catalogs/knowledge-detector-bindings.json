@@ -871,7 +871,6 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/repair/mutation-transaction-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts",
         "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
@@ -898,8 +897,7 @@
         "engine/packages/orchestrator/src/inspection/inspect-runtime-analysis-stage.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -910,7 +908,7 @@
         "engine/packages/orchestrator/src/inspection/inspect-runtime-analysis-stage.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -923,7 +921,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/progression-actor-accounting-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -980,7 +978,7 @@
         "engine/packages/orchestrator/src/inspection/inspect-runtime-analysis-stage.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1085,8 +1083,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1097,8 +1094,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1109,8 +1105,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1121,8 +1116,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1133,8 +1127,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1145,8 +1138,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1698,8 +1690,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1711,8 +1702,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1734,8 +1724,7 @@
         "engine/packages/orchestrator/src/arena/arena-reset-closure-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -1759,7 +1748,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/entities/test/entity.test.ts",
-        "engine/packages/orchestrator/test/inspection/entity-knowledge-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-event-evidence.test.ts"
       ]
     },
     {
@@ -1883,7 +1872,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/entities/test/entity.test.ts",
-        "engine/packages/orchestrator/test/inspection/entity-knowledge-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-event-evidence.test.ts"
       ]
     },
     {
@@ -1896,7 +1885,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/entities/test/entity.test.ts",
-        "engine/packages/orchestrator/test/inspection/entity-knowledge-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/entity-event-evidence.test.ts"
       ]
     },
     {
@@ -2211,7 +2200,7 @@
         "engine/packages/orchestrator/src/inspection/gameplay-scenario-compiler.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts"
       ]
     },
     {
@@ -2222,7 +2211,7 @@
         "engine/packages/orchestrator/src/map-audit-validation-plan.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts"
       ]
     },
     {
@@ -3624,7 +3613,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/entity-population-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -3715,7 +3704,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/progression-actor-accounting-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts",
         "engine/packages/orchestrator/test/inspection/entity-population-analysis.test.ts"
       ]
     },
@@ -3775,7 +3764,7 @@
       ],
       "proofPaths": [
         "engine/packages/orchestrator/test/inspection/progression-actor-accounting-analysis.test.ts",
-        "engine/packages/orchestrator/test/arena/arena-reset-closure-analysis.test.ts"
+        "engine/packages/orchestrator/test/arena/arena-cleanup-surface-analysis.test.ts"
       ]
     },
     {
@@ -4495,7 +4484,7 @@
         "engine/packages/orchestrator/src/inspection/spatial-authority-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ]
     },
     {
@@ -4506,7 +4495,7 @@
         "engine/packages/orchestrator/src/inspection/spatial-authority-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ]
     },
     {
@@ -4516,7 +4505,7 @@
         "engine/packages/orchestrator/src/inspection/spatial-authority-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ]
     },
     {
@@ -4527,8 +4516,7 @@
         "engine/packages/orchestrator/src/inspection/script-spatial-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/script-spatial-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ]
     },
     {
@@ -4540,7 +4528,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/scripts/test/domains/spatial/spatial-mutation-evidence.test.ts",
-        "engine/packages/orchestrator/test/inspection/script-spatial-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ]
     },
     {
@@ -4552,7 +4540,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/scripts/test/domains/spatial/spatial-mutation-evidence.test.ts",
-        "engine/packages/orchestrator/test/inspection/script-spatial-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ]
     },
     {
@@ -4650,7 +4638,7 @@
         "engine/packages/orchestrator/src/inspection/structure-runtime-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts"
+        "engine/packages/orchestrator/test/structure-correlation.test.ts"
       ]
     },
     {
@@ -4682,7 +4670,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/commands/test/structure-tickingarea.test.ts",
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts"
+        "engine/packages/orchestrator/test/structure-correlation.test.ts"
       ]
     },
     {
@@ -4694,7 +4682,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/commands/test/structure-tickingarea.test.ts",
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts"
+        "engine/packages/orchestrator/test/structure-correlation.test.ts"
       ]
     },
     {
@@ -4706,7 +4694,7 @@
       ],
       "proofPaths": [
         "engine/analyzers/commands/test/structure-tickingarea.test.ts",
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts"
+        "engine/packages/orchestrator/test/structure-correlation.test.ts"
       ]
     },
     {
@@ -4731,7 +4719,7 @@
       "proofPaths": [
         "engine/analyzers/commands/test/structure-tickingarea.test.ts",
         "engine/adapters/mcstructure/test/mcstructure.test.ts",
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts"
+        "engine/packages/orchestrator/test/structure-correlation.test.ts"
       ]
     },
     {
@@ -4937,7 +4925,7 @@
         "engine/packages/orchestrator/src/inspection/structure-placement-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
+        "engine/packages/orchestrator/test/structure-correlation.test.ts",
         "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
@@ -4951,7 +4939,7 @@
         "engine/packages/orchestrator/src/inspection/structure-placement-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
+        "engine/packages/orchestrator/test/structure-correlation.test.ts",
         "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
@@ -4965,7 +4953,7 @@
         "engine/packages/orchestrator/src/inspection/structure-placement-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
+        "engine/packages/orchestrator/test/structure-correlation.test.ts",
         "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
@@ -4979,7 +4967,7 @@
         "engine/packages/orchestrator/src/inspection/structure-placement-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
+        "engine/packages/orchestrator/test/structure-correlation.test.ts",
         "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
@@ -4993,7 +4981,7 @@
         "engine/packages/orchestrator/src/inspection/structure-placement-analysis.ts"
       ],
       "proofPaths": [
-        "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
+        "engine/packages/orchestrator/test/structure-correlation.test.ts",
         "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },

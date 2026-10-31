@@ -1,6 +1,11 @@
+// Co-located same-feature source tests; original test cases remain in lexical blocks.
 import { describe, expect, it } from "vitest";
 import { analyzeCapabilityMutationFootprint } from "../../src/inspection/capability-mutation-footprint-analysis.js";
+import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import { analyzeClientMutationReconciliation } from "../../src/inspection/client-mutation-reconciliation-analysis.js";
 
+// Original engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts; blob 219ab41e11b6532d0a3cb3570e2ebf62af0674d0
+{
 describe("capability mutation footprint analysis", () => {
   it("keeps Creative cleanup unresolved when inventory reset omits equipment", () => {
     const result = analyzeCapabilityMutationFootprint({
@@ -120,3 +125,57 @@ describe("capability mutation footprint analysis", () => {
     ).toBe("covered");
   });
 });
+}
+
+// Original engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts; blob 84fc9490369031112759c724de4fd02e1a83842c
+{
+describe("client mutation reconciliation analysis", () => {
+  it("detects cancelled predicted block interactions with liquid hints", () => {
+    const text = [
+      "world.beforeEvents.playerInteractWithBlock.subscribe((event) => {",
+      "  const item = event.itemStack;",
+      "  if (item?.typeId === 'minecraft:water_bucket') {",
+      "    event.cancel = true;",
+      "  }",
+      "});",
+    ].join("\n");
+    const parsed = parseScriptFile(
+      "main",
+      text,
+      {
+        artifactId: "fixture",
+        relativePath: "scripts/main.ts",
+      },
+    );
+
+    const result = analyzeClientMutationReconciliation([
+      { parsed, text },
+    ]);
+
+    expect(result.predictedMutationCancellations).toBe(1);
+    expect(result.liquidOrWaterlogCancellations).toBe(1);
+  });
+
+  it("ignores after-event handlers because they cannot cancel the mutation", () => {
+    const text = [
+      "world.afterEvents.playerPlaceBlock.subscribe((event) => {",
+      "  console.warn(event.block.typeId);",
+      "});",
+    ].join("\n");
+    const parsed = parseScriptFile(
+      "main",
+      text,
+      {
+        artifactId: "fixture",
+        relativePath: "scripts/main.ts",
+      },
+    );
+
+    const result = analyzeClientMutationReconciliation([
+      { parsed, text },
+    ]);
+
+    expect(result.predictedMutationCancellations).toBe(0);
+  });
+});
+}

@@ -118,7 +118,7 @@
       "capabilityId": "domain.client-reconciliation",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -184,7 +184,7 @@
       "capabilityId": "domain.spatial-authority",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts"
+        "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -208,7 +208,7 @@
       "capabilityId": "knowledge.freshness",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/knowledge/test/freshness.test.ts"
+        "engine/packages/knowledge/test/evaluate.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },
@@ -321,7 +321,7 @@
       "capabilityId": "runtime.semantic-convention",
       "kind": "unit-contract",
       "paths": [
-        "engine/packages/project-model/test/runtime/runtime-semantic-convention.test.ts"
+        "engine/packages/project-model/test/runtime/runtime-evidence-continuity.test.ts"
       ],
       "executionContext": "REMOTE_GITHUB"
     },

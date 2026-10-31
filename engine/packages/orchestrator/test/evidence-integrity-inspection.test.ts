@@ -1,9 +1,13 @@
+// Same-owner audit proof-control family; original cases kept in separate blocks.
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { inspectDirectory } from "../src/inspection/inspect.js";
+import { buildFullMapReplicaReceipt } from "../src/arena/full-map-replica-receipt.js";
 
+// Original engine/packages/orchestrator/test/evidence-integrity-inspection.test.ts [0041038d6eea3be6e1413a29ba9423729bc01521]
+{
 describe("inspection evidence integrity", () => {
   it("keeps telemetry and runtime-probe continuity independent", async () => {
     const root = await mkdtemp(join(tmpdir(), "m-bedrock-integrity-"));
@@ -182,3 +186,194 @@ describe("inspection evidence integrity", () => {
     }
   });
 });
+}
+
+// Original engine/packages/orchestrator/test/full-map-replica-receipt.test.ts [c72f339302181175b18551757653fd43ab3b2280]
+{
+describe("full-map replica receipt", () => {
+  it("reuses baseline only when every replica has sufficient proof", () => {
+    const result = buildFullMapReplicaReceipt({
+      replicaBaseline: "arena:canonical",
+      replicas: [{
+        replicaId: "arena:2",
+        proofStatus: "complete-proof",
+        mismatchCount: 0,
+        evidenceIds: ["e:a2"],
+      }, {
+        replicaId: "arena:3",
+        proofStatus: "bounded-proof",
+        mismatchCount: 0,
+        evidenceIds: ["e:a3"],
+      }],
+    });
+
+    expect(result.baselineReusableForAllReplicas).toBe(false);
+    expect(
+      result.replicaResults.map(
+        (item) => item.replicaStatus,
+      ),
+    ).toEqual([
+      "EQUIVALENT",
+      "BOUNDED_EQUIVALENCE",
+    ]);
+  });
+
+  it("does not reuse baseline globally when any replica still requires divergence classification", () => {
+    const result = buildFullMapReplicaReceipt({
+      replicaBaseline: "arena:canonical",
+      replicas: [{
+        replicaId: "arena:2",
+        proofStatus: "diverged",
+        mismatchCount: 1,
+        evidenceIds: ["e:a2"],
+      }],
+    });
+
+    expect(result.replicaResults[0]?.replicaStatus).toBe(
+      "DIVERGENCE_REQUIRES_CLASSIFICATION",
+    );
+    expect(result.baselineReusableForAllReplicas).toBe(false);
+  });
+
+  it("keeps material divergence separate from incomplete proof", () => {
+    const result = buildFullMapReplicaReceipt({
+      replicaBaseline: "arena:canonical",
+      replicas: [{
+        replicaId: "arena:4",
+        proofStatus: "diverged",
+        mismatchCount: 2,
+        evidenceIds: ["e:a4"],
+      }, {
+        replicaId: "arena:5",
+        proofStatus: "no-proof",
+        mismatchCount: 0,
+        evidenceIds: [],
+      }],
+    });
+
+    expect(result.replicaDivergenceIds).toEqual([
+      "replica-delta:arena:4",
+    ]);
+    expect(result.incompleteReplicaIds).toEqual([
+      "arena:5",
+    ]);
+    expect(result.baselineReusableForAllReplicas).toBe(false);
+  });
+});
+}
+
+// Original engine/packages/orchestrator/test/inspection-decision-basis.test.ts [95cec9fcf5135321c07e3c27aaa429f87b5c2312]
+{
+describe("inspection decision basis", () => {
+  it("changes runtime evidence revision when telemetry semantics change", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-decision-basis-"));
+    try {
+      await mkdir(join(root, "behavior_pack", "functions"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(root, "behavior_pack", "functions", "noop.mcfunction"),
+        "say ready\n",
+        "utf8",
+      );
+
+      const common = {
+        schemaVersion: 1 as const,
+        eventId: "route-1",
+        kind: "route-revalidation" as const,
+        producer: "runtime" as const,
+        scope: { operationId: "route-op" },
+        tick: 10,
+        routeId: "bridge",
+      };
+
+      const passed = await inspectDirectory(
+        root,
+        "artifact-basis",
+        { edition: "bedrock" },
+        "source-a",
+        undefined,
+        [],
+        [{ ...common, result: "passed" }],
+      );
+      const failed = await inspectDirectory(
+        root,
+        "artifact-basis",
+        { edition: "bedrock" },
+        "source-a",
+        undefined,
+        [],
+        [{ ...common, result: "failed" }],
+      );
+
+      expect(passed.decisionBasis.sourceFingerprint).toBe("source-a");
+      expect(passed.decisionBasis.graphFingerprint).toBeDefined();
+      expect(passed.decisionBasis.targetProfileFingerprint).toBeDefined();
+      expect(passed.decisionBasis.runtimeEvidenceRevision).toBeDefined();
+      expect(passed.decisionBasis.runtimeEvidenceRevision)
+        .not.toBe(failed.decisionBasis.runtimeEvidenceRevision);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps the evidence revision stable when the same runtime evidence arrives in another array order", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-decision-order-"));
+    try {
+      await mkdir(join(root, "behavior_pack", "functions"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(root, "behavior_pack", "functions", "noop.mcfunction"),
+        "say ready\n",
+        "utf8",
+      );
+
+      const a = {
+        schemaVersion: 1 as const,
+        eventId: "a",
+        kind: "route-revalidation" as const,
+        producer: "runtime" as const,
+        scope: { operationId: "route-a" },
+        tick: 10,
+        routeId: "a",
+        result: "passed" as const,
+      };
+      const b = {
+        schemaVersion: 1 as const,
+        eventId: "b",
+        kind: "route-revalidation" as const,
+        producer: "runtime" as const,
+        scope: { operationId: "route-b" },
+        tick: 11,
+        routeId: "b",
+        result: "failed" as const,
+      };
+
+      const left = await inspectDirectory(
+        root,
+        "artifact-basis-order",
+        { edition: "bedrock" },
+        "source-a",
+        undefined,
+        [],
+        [a, b],
+      );
+      const right = await inspectDirectory(
+        root,
+        "artifact-basis-order",
+        { edition: "bedrock" },
+        "source-a",
+        undefined,
+        [],
+        [b, a],
+      );
+
+      expect(left.decisionBasis.runtimeEvidenceRevision)
+        .toBe(right.decisionBasis.runtimeEvidenceRevision);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+}

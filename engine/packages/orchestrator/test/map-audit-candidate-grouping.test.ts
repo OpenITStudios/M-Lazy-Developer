@@ -1,14 +1,12 @@
+// Source-only co-location: all original test statements retained in isolated lexical scopes.
 import { describe, expect, it } from "vitest";
-import {
-  groupReadyAuditIssuesForCandidateCoverage,
-} from "../src/map-audit-candidate-grouping.js";
-import type {
-  GameplayScenarioGraph,
-} from "../src/inspection/gameplay-scenario-model.js";
-import type {
-  ReadyAuditIssueProjection,
-} from "../src/map-audit-issue-projection.js";
+import { groupReadyAuditIssuesForCandidateCoverage } from "../src/map-audit-candidate-grouping.js";
+import type { GameplayScenarioGraph } from "../src/inspection/gameplay-scenario-model.js";
+import type { ReadyAuditIssueProjection } from "../src/map-audit-issue-projection.js";
+import { validateMapClassificationRoutingHint } from "../src/map-classification-routing.js";
 
+// Original engine/packages/orchestrator/test/map-audit-candidate-grouping.test.ts 4352d1c251c9a2b2cc00984e4f87ba77d472be86
+{
 const graph: GameplayScenarioGraph = {
   schemaVersion: 1,
   policy: "scenario-driven-causal-audit",
@@ -184,3 +182,72 @@ describe("map audit candidate grouping", () => {
   });
 
 });
+}
+
+// Original engine/packages/orchestrator/test/map-classification-routing.test.ts de7ede3ae980ea2ddf3dd94e7c11c6cc018a6848
+{
+const fingerprint = "a".repeat(64);
+
+const classification = {
+  mapType: "COMBAT" as const,
+  playerMode: "COOPERATIVE" as const,
+  mechanicTags: [
+    "MULTI_ARENA" as const,
+  ],
+  classificationStatus:
+    "RESOLVED" as const,
+  evidenceRefs: [
+    "drive:selected#scripts/main.js",
+  ],
+};
+
+describe(
+  "Map Classification Routing Hint",
+  () => {
+    it("accepts a resolved classification bound to the selected artifact", () => {
+      expect(
+        validateMapClassificationRoutingHint(
+          {
+            artifactFingerprint:
+              "sha256:" + fingerprint,
+            classification,
+          },
+          fingerprint,
+        ),
+      ).toEqual([]);
+    });
+
+    it("rejects stale classification from another artifact", () => {
+      expect(
+        validateMapClassificationRoutingHint(
+          {
+            artifactFingerprint:
+              "b".repeat(64),
+            classification,
+          },
+          fingerprint,
+        ).join(" "),
+      ).toMatch(/does not match/);
+    });
+
+    it("rejects unresolved classification as audit routing input", () => {
+      expect(
+        validateMapClassificationRoutingHint(
+          {
+            artifactFingerprint:
+              fingerprint,
+            classification: {
+              ...classification,
+              mapType: null,
+              playerMode: null,
+              classificationStatus:
+                "UNRESOLVED",
+            },
+          },
+          fingerprint,
+        ).join(" "),
+      ).toMatch(/RESOLVED/);
+    });
+  },
+);
+}

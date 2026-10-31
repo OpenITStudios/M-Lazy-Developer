@@ -1,28 +1,11 @@
+// Same-feature source test family. Every original describe/it/expect body retained.
 import { describe, expect, it } from "vitest";
-import {
-  applyBehaviorTransition,
-  auditBehaviorModelProvenance,
-  behaviorStateKey,
-  composeBehavioralWorldModel,
-  createArenaLifecycleBehavior,
-  createChunkResidencyBehavior,
-  createDeferredCallbackBehavior,
-  createInventoryLifecycleBehavior,
-  createPlayerSessionBehavior,
-  resolveSpatialAuthority,
-  validateSpatialAuthorityPolicy,
-  resolveInventoryItemPolicy,
-  validateInventoryItemPolicy,
-  planNavigationRecovery,
-  validateNavigationRecoveryPolicy,
-  evaluateTemporalProperty,
-  unknownNondeterminismCapabilityProfile,
-  validateBehavioralWorldModel,
-  validateNondeterminismCapabilityProfile,
-  type BehavioralWorldModel,
-  type BehaviorTrace,
-} from "../src/index.js";
+import { applyBehaviorTransition, auditBehaviorModelProvenance, behaviorStateKey, composeBehavioralWorldModel, createArenaLifecycleBehavior, createChunkResidencyBehavior, createDeferredCallbackBehavior, createInventoryLifecycleBehavior, createPlayerSessionBehavior, resolveSpatialAuthority, validateSpatialAuthorityPolicy, resolveInventoryItemPolicy, validateInventoryItemPolicy, planNavigationRecovery, validateNavigationRecoveryPolicy, evaluateTemporalProperty, unknownNondeterminismCapabilityProfile, validateBehavioralWorldModel, validateNondeterminismCapabilityProfile, projectPolicyProvenance, resolveMinecraftSemanticClaim, validateMinecraftSemanticOverlays, resolveMinecraftSemanticClaimRevision, semanticClaimConflicts, validateMinecraftSemanticClaimRegistry } from "../src/index.js";
+import type { BehavioralWorldModel, BehaviorTrace, MinecraftSemanticOverlay, MinecraftSemanticClaimRegistry } from "../src/index.js";
+import { SafeConfigEvaluationError, evaluateSafeConfig } from "../src/safe-config.js";
 
+// Original engine/packages/behavior-model/test/behavior-model.test.ts, blob 30fdff218b7a5b8e4d8636db5fc5c258ac0a8833
+{
 const c = (
   variableId: string,
   value: string | number | boolean | null,
@@ -556,3 +539,398 @@ describe("behavioral world model", () => {
     ).toBe("unknown");
   });
 });
+}
+
+// Original engine/packages/behavior-model/test/runtime-overlay.test.ts, blob fb8cebcccbc9c2f7ad8ae71ebf6f597aebf93792
+{
+const provenance = projectPolicyProvenance(
+  "spec:runtime-overlay-test",
+);
+
+const bedrock: MinecraftSemanticOverlay = {
+  schemaVersion: 1,
+  id: "bedrock-retail",
+  runtimeClass: "bedrock-retail-client",
+  claims: [{
+    id: "scheduler:example",
+    domain: "scheduler",
+    statement:
+      "Example scheduler semantic claim.",
+    disposition: "affirmed",
+    provenance,
+  }],
+};
+
+const education: MinecraftSemanticOverlay = {
+  schemaVersion: 1,
+  id: "education",
+  runtimeClass: "education-host",
+  claims: [],
+};
+
+describe("minecraft semantic runtime overlays", () => {
+  it("does not inherit Bedrock claims into Education implicitly", () => {
+    const resolved =
+      resolveMinecraftSemanticClaim(
+        "education",
+        "scheduler:example",
+        [bedrock, education],
+      );
+
+    expect(resolved.errors)
+      .toEqual([]);
+    expect(resolved.resolved)
+      .toBeUndefined();
+  });
+
+  it("permits only claim-by-claim explicit inheritance", () => {
+    const explicit: MinecraftSemanticOverlay = {
+      ...education,
+      inherits: [{
+        fromOverlayId: "bedrock-retail",
+        claimIds: [
+          "scheduler:example",
+        ],
+      }],
+    };
+
+    const resolved =
+      resolveMinecraftSemanticClaim(
+        "education",
+        "scheduler:example",
+        [bedrock, explicit],
+      );
+
+    expect(resolved).toMatchObject({
+      resolved: {
+        inherited: true,
+        sourceOverlayId:
+          "bedrock-retail",
+        claim: {
+          disposition: "affirmed",
+        },
+      },
+      errors: [],
+    });
+  });
+
+  it("rejects inheritance declarations with no explicit claim list", () => {
+    const invalid: MinecraftSemanticOverlay = {
+      ...education,
+      inherits: [{
+        fromOverlayId: "bedrock-retail",
+        claimIds: [],
+      }],
+    };
+
+    expect(
+      validateMinecraftSemanticOverlays(
+        [bedrock, invalid],
+      ).join(" "),
+    ).toMatch(/must list explicit claimIds/);
+  });
+});
+}
+
+// Original engine/packages/behavior-model/test/safe-config.test.ts, blob 528cfb235df324ff271a0bb4356948518b1fa692
+{
+describe("safe config evaluator", () => {
+  it("resolves pure coordinate transforms without executing artifact JavaScript", () => {
+    const value = evaluateSafeConfig(
+      {
+        kind: "intrinsic",
+        name: "translate3",
+        args: [
+          { kind: "ref", name: "base" },
+          { kind: "ref", name: "arena2Offset" },
+        ],
+      },
+      {
+        bindings: {
+          base: {
+            kind: "literal",
+            value: { x: 444, y: 51, z: 280 },
+          },
+          arena2Offset: {
+            kind: "literal",
+            value: { x: 0, y: 0, z: -516 },
+          },
+        },
+      },
+    );
+
+    expect(value).toEqual({ x: 444, y: 51, z: -236 });
+  });
+
+  it("evaluates bounded map Array.from and pure helper calls", () => {
+    const value = evaluateSafeConfig(
+      {
+        kind: "object",
+        entries: {
+          mapped: {
+            kind: "map",
+            source: {
+              kind: "literal",
+              value: [1, 2, 3],
+            },
+            itemName: "item",
+            indexName: "index",
+            body: {
+              kind: "call",
+              name: "doubleWithIndex",
+              args: [
+                { kind: "ref", name: "item" },
+                { kind: "ref", name: "index" },
+              ],
+            },
+          },
+          generated: {
+            kind: "array-from",
+            length: {
+              kind: "literal",
+              value: 3,
+            },
+            indexName: "index",
+            body: {
+              kind: "binary",
+              operator: "*",
+              left: {
+                kind: "ref",
+                name: "index",
+              },
+              right: {
+                kind: "literal",
+                value: 10,
+              },
+            },
+          },
+        },
+      },
+      {
+        bindings: {},
+        functions: {
+          doubleWithIndex: {
+            params: ["value", "index"],
+            body: {
+              kind: "binary",
+              operator: "+",
+              left: {
+                kind: "binary",
+                operator: "*",
+                left: {
+                  kind: "ref",
+                  name: "value",
+                },
+                right: {
+                  kind: "literal",
+                  value: 2,
+                },
+              },
+              right: {
+                kind: "ref",
+                name: "index",
+              },
+            },
+          },
+        },
+      },
+    );
+
+    expect(value).toEqual({
+      mapped: [2, 5, 8],
+      generated: [0, 10, 20],
+    });
+  });
+
+  it("fails closed when collection transforms exceed their budget", () => {
+    expect(() =>
+      evaluateSafeConfig(
+        {
+          kind: "array-from",
+          length: {
+            kind: "literal",
+            value: 5,
+          },
+          indexName: "index",
+          body: {
+            kind: "ref",
+            name: "index",
+          },
+        },
+        { bindings: {} },
+        { maxCollectionItems: 4 },
+      )
+    ).toThrowError(SafeConfigEvaluationError);
+  });
+
+  it("fails closed on cycles", () => {
+    expect(() =>
+      evaluateSafeConfig(
+        { kind: "ref", name: "a" },
+        {
+          bindings: {
+            a: { kind: "ref", name: "b" },
+            b: { kind: "ref", name: "a" },
+          },
+        },
+      )
+    ).toThrowError(SafeConfigEvaluationError);
+  });
+});
+}
+
+// Original engine/packages/behavior-model/test/semantic-registry.test.ts, blob aef6cfa7ba8b145c6aa24dbbd0fa255cb4e6a233
+{
+const registry: MinecraftSemanticClaimRegistry = {
+  schemaVersion: 1,
+  revision: "r1",
+  entries: [{
+    id: "claim:chunk:doc",
+    claimId: "chunk.loaded-for-script",
+    runtimeClass: "bedrock-dedicated-server",
+    minecraftVersion: "1.26.40",
+    revision: "1",
+    statement: "Chunk is reported loaded for script.",
+    disposition: "affirmed",
+    provenance: {
+      kind: "official-knowledge",
+      evidenceCeiling: "documented",
+      evidenceIds: ["doc:chunk-loaded"],
+    },
+  }, {
+    id: "claim:chunk:obs",
+    claimId: "chunk.loaded-for-script",
+    runtimeClass: "bedrock-dedicated-server",
+    minecraftVersion: "1.26.40",
+    revision: "2",
+    statement: "Observed target reports chunk not loaded for script.",
+    disposition: "denied",
+    provenance: {
+      kind: "runtime-evidence",
+      evidenceCeiling: "observed",
+      evidenceIds: ["obs:chunk-loaded"],
+    },
+  }],
+};
+
+describe("versioned minecraft semantic claim registry", () => {
+  it("detects documented-vs-observed contradiction instead of picking a winner", () => {
+    expect(
+      validateMinecraftSemanticClaimRegistry(registry),
+    ).toEqual([]);
+
+    const conflicts = semanticClaimConflicts(registry);
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]).toMatchObject({
+      claimId: "chunk.loaded-for-script",
+      runtimeClass: "bedrock-dedicated-server",
+      minecraftVersion: "1.26.40",
+      dispositions: ["affirmed", "denied"],
+    });
+  });
+
+  it("blocks automatic resolution while conflicting active revisions remain", () => {
+    const result = resolveMinecraftSemanticClaimRevision(
+      registry,
+      {
+        claimId: "chunk.loaded-for-script",
+        runtimeClass: "bedrock-dedicated-server",
+        minecraftVersion: "1.26.40",
+      },
+    );
+
+    expect(result.resolved).toBeUndefined();
+    expect(result.conflict).toBeDefined();
+  });
+
+  it("allows an explicit newer revision to supersede old conflicting revisions", () => {
+    const reconciled: MinecraftSemanticClaimRegistry = {
+      ...registry,
+      revision: "r2",
+      entries: [
+        ...registry.entries,
+        {
+          id: "claim:chunk:reconciled",
+          claimId: "chunk.loaded-for-script",
+          runtimeClass: "bedrock-dedicated-server",
+          minecraftVersion: "1.26.40",
+          revision: "3",
+          statement: "Reconciled target-scoped semantic claim.",
+          disposition: "denied",
+          provenance: {
+            kind: "controlled-experiment",
+            evidenceCeiling: "intervention-supported",
+            evidenceIds: ["exp:chunk-loaded"],
+          },
+          supersedesRevisionIds: [
+            "claim:chunk:doc",
+            "claim:chunk:obs",
+          ],
+        },
+      ],
+    };
+
+    expect(
+      semanticClaimConflicts(reconciled),
+    ).toEqual([]);
+
+    const result = resolveMinecraftSemanticClaimRevision(
+      reconciled,
+      {
+        claimId: "chunk.loaded-for-script",
+        runtimeClass: "bedrock-dedicated-server",
+        minecraftVersion: "1.26.40",
+      },
+    );
+
+    expect(result.resolved?.id)
+      .toBe("claim:chunk:reconciled");
+    expect(result.resolved?.provenance.evidenceCeiling)
+      .toBe("intervention-supported");
+  });
+
+  it("prefers exact-version claims over unversioned fallback claims", () => {
+    const scoped: MinecraftSemanticClaimRegistry = {
+      schemaVersion: 1,
+      revision: "r1",
+      entries: [{
+        id: "fallback",
+        claimId: "scheduler.ordering",
+        runtimeClass: "education-host",
+        revision: "1",
+        statement: "Fallback semantic claim.",
+        disposition: "unknown",
+        provenance: {
+          kind: "project-policy",
+          evidenceCeiling: "designed",
+          evidenceIds: ["policy:scheduler"],
+        },
+      }, {
+        id: "exact",
+        claimId: "scheduler.ordering",
+        runtimeClass: "education-host",
+        minecraftVersion: "1.26.32",
+        revision: "2",
+        statement: "Exact version semantic claim.",
+        disposition: "affirmed",
+        provenance: {
+          kind: "runtime-evidence",
+          evidenceCeiling: "observed",
+          evidenceIds: ["obs:scheduler"],
+        },
+      }],
+    };
+
+    const result = resolveMinecraftSemanticClaimRevision(
+      scoped,
+      {
+        claimId: "scheduler.ordering",
+        runtimeClass: "education-host",
+        minecraftVersion: "1.26.32",
+      },
+    );
+
+    expect(result.resolved?.id).toBe("exact");
+  });
+});
+}

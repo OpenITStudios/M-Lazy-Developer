@@ -10,8 +10,8 @@
     ],
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
-    "proofRegistryFingerprint": "26ad5410",
-    "proofInventoryFingerprint": "f6ee785a"
+    "proofRegistryFingerprint": "e32af9dc",
+    "proofInventoryFingerprint": "1bde79d4"
   },
   "summary": {
     "taskCapabilities": 55,
@@ -38,14 +38,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -71,14 +71,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -104,14 +104,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -137,14 +137,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -170,14 +170,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -203,14 +203,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -236,14 +236,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -269,14 +269,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 8,
+      "testFiles": 5,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/behavior-model/test/behavior-model.test.ts",
         "engine/packages/behavior-model/test/capability-contracts.test.ts",
         "engine/packages/behavior-model/test/combat-lifecycle.test.ts",
         "engine/packages/behavior-model/test/reward-lifecycle.test.ts",
-        "engine/packages/behavior-model/test/runtime-overlay.test.ts"
+        "engine/packages/behavior-model/test/source-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -302,7 +302,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -335,7 +335,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -434,7 +434,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -467,7 +467,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -500,7 +500,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -514,7 +514,7 @@
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/inspection/client-mutation-reconciliation-analysis.test.ts"
+          "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -533,7 +533,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -566,7 +566,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -599,7 +599,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -632,7 +632,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -665,7 +665,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -698,7 +698,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -731,7 +731,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -766,7 +766,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -780,7 +780,7 @@
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts"
+          "engine/packages/orchestrator/test/inspection/route-mutation-analysis.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -799,7 +799,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -861,21 +861,21 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 17,
-      "testFiles": 9,
+      "testFiles": 5,
       "hasReadme": false,
       "proofPaths": [
         "engine/packages/knowledge/test/entity-reasoning.test.ts",
         "engine/packages/knowledge/test/evaluate.test.ts",
-        "engine/packages/knowledge/test/freshness.test.ts",
         "engine/packages/knowledge/test/invariant-compiler.test.ts",
-        "engine/packages/knowledge/test/knowledge-claim-contracts.test.ts"
+        "engine/packages/knowledge/test/loader-ownership.test.ts",
+        "engine/packages/knowledge/test/reasoning-infrastructure.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/knowledge/test/freshness.test.ts"
+          "engine/packages/knowledge/test/evaluate.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -894,7 +894,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -927,7 +927,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -1092,7 +1092,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 638,
-      "testFiles": 250,
+      "testFiles": 224,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
@@ -1316,7 +1316,7 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 46,
-      "testFiles": 13,
+      "testFiles": 11,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/project-model/test/contracts/arena-region-contract.test.ts",
@@ -1330,7 +1330,7 @@
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/project-model/test/runtime/runtime-semantic-convention.test.ts"
+          "engine/packages/project-model/test/runtime/runtime-evidence-continuity.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."

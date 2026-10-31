@@ -1,69 +1,66 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source-audit snapshot — 2026-10-31 (authoritative inventory: 482)
+## Current source snapshot — 2026-10-31: 440 physical tests
 
-GitHub `Local` pinned parent: `2ec375391207c9f492530fb6eef90ff0d7436bf7`. Canonical machine owner:
-`tooling/repository/test-inventory.json`. Current reduction
-**486 → 482 physical test files**, including **one semantically duplicate
-suite deleted** and three owner-local source-preserving merges.
-Historical progress **687 → 482 files**, a net reduction of **205**.
+The canonical inventory is `tooling/repository/test-inventory.json`;
+this review was based on exact `Local` parent commit `3611a5f26615d8808e186579986e5704bf9fd453`.
+The current batch combines 21 same-owner, same-feature and same-lane
+source families, reducing **482 → 440 files** with **42 retired paths**.
+The original **278 `it()/test()` registrations** and **589
+`expect()` callsites** are retained in their original isolated lexical
+bodies; these are static source counts, not executed results.
 
-| Lane | Physical test files |
+| Lane | Test files |
 | --- | ---: |
-| `development` | 321 |
+| `development` | 279 |
 | `safety` | 46 |
 | `runtime` | 50 |
 | `regression` | 45 |
 | `acceptance` | 20 |
-| **Total** | **482** |
+| **Total** | **440** |
 
-Inventory: 340 provisional, 121 keep,
-21 defer. Review: 132 source-reviewed
-and 350 case-inventory-reviewed.
-Feature mapping remains `path-provisional` for 443
-registered files; not source-grounded gameplay proof.
+**Progress:** historical physical count **687 → 440**; net **247
+fewer files**. Canonical lineage now records **111 source consolidations**,
+**264 retired paths** and **17 added paths**, including earlier batches.
+No source test file or unique case was deliberately dropped in this batch.
+Known duplicate assertion deletions are confined to earlier source reviews.
 
-### One semantically redundant suite removed
+### Consolidated owners and source-retention proof
 
-`engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts` contained two cases (four `expect` calls) that assert
-exactly the same `arena-replica-remediation` registry entry
-(`proposal-only`, non-deterministic, five diagnostic codes) and
-`validateRepairStrategySourceRegistry(...).toEqual([])` as the retained
-`engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts`. That suite additionally checks chunk remediation.
-Exact fixture, consumer, assertion and negative boundary comparison
-identified **no unique behavior in the retired cases**.
-This is a static semantic review, **not** executed Vitest equivalence.
+- `engine/packages/orchestrator`: grouped arena proof, gameplay reachability,
+  telemetry, project publication, zero-waste workflow, proof control, spatial,
+  entity, mutation, differential, arena cleanup, structure and diagnostic
+  cases without crossing test lanes.
+- `engine/packages/behavior-model`, `diagnosis-pipeline`, `knowledge`,
+  `project-model`, and `bug-report`: retained source cases as same-feature
+  families with provenance SHAs.
+- Unsafe candidates were **excluded**, including per-file hooks, conflicting
+  import names and cases that require more complex source isolation.
+- Existing `tooling/repository/run-tests.mjs` default acceptance
+  remains 10 Vitest suites and one native Node acceptance test.
+  No GitHub CI verification workflows were enabled.
 
-### Three same-producer source family mergers
+### Corrected source consumer bindings
 
-- Mutation campaign: 2 → 1, **6 test cases / 7 assertions**.
-- Post-repair closure: 2 → 1, **8 test cases / 12 assertions**.
-- Spatial authority: 2 → 1, **9 test cases / 12 assertions**.
+The canonical knowledge-detector binding registry redirects **38**
+knowledge-to-proof entries to the exact new retained test file paths;
+the capability-proof registry redirects **4** proof bindings. Every
+registered proof path is present in the projected source tree.
+The derived `capability-truth/current.json` is reprojected from the
+same final tree and binding source; all **55 task capabilities** remain
+structurally proof-bound. Binding integrity is not executed test PASS.
 
-All original test bodies remain within isolated lexical blocks.
-Safety/ownership/feature execution-lane boundaries remain unchanged.
-The normal acceptance selection is still 10 Vitest suites plus one
-native Node suite; automatic GitHub CI stays suspended. File merging
-can widen `--affected` selection and does not establish speedup.
+### Remaining evidence and cost boundary
 
-### Derived capability-truth consistency
-
-`engine/reliability/catalogs/capability-truth/current.json` was found
-stale due to prior source/test consolidation. The projection is
-regenerated to reflect actual source files, current test inventory,
-proof-path previews and source fingerprints. Explicit capability
-and knowledge proof-binding registries remain unchanged.
-This derived index **does not prove tests ran**.
-
-Consolidation lineage: 90 groups, 222 retired file paths, 17
-added paths, with **4 source-reviewed duplicate assertion sites**
-removed in this batch. The other **23 cases and 31 assertion sites**
-in merged files are retained exactly.
-
-**Proof ceiling:** GitHub pinned static source/consumer/registries only.
-TypeScript, Vitest, selected-map audit, Minecraft gameplay and
-execution duration **NOT EXECUTED**. A 100-file quota is not proof
-of adequate gameplay defect detection.
+Merging tests into one physical file **does not mean fewer test cases,
+better bug detection, or lower execution time**. Co-location can broaden
+file-level `--affected` execution and change module isolation; those
+risks still require actual Vitest execution. Source/consumer imports,
+original test-body and assertion-callsite parity, inventory exact path
+membership, and proof bindings are verifiable statically; **TypeScript,
+Vitest, `runSelectedMapAudit()`, and Minecraft runtime are NOT EXECUTED**.
+A 100-file count remains a target, not an acceptable excuse to delete
+unique safety, regression, negative-control or gameplay proof cases.
 
 ### Three distinct meanings of "test"
 
@@ -75,7 +72,7 @@ of adequate gameplay defect detection.
    `.mcworld`. Canonical obligations are
    [Bug-Finding Coverage](../../docs/analysis/bug-finding-coverage.md)
    and [Mandatory Audit Procedure](../../docs/analysis/mandatory-audit-procedure.md).
-   They are not the 482 source test files or upstream Skills Probe tests.
+   They are not the 440 source test files or upstream Skills Probe tests.
 3. **External developer/Skills Probe evidence** is versioned
    reference material. The two newer supplied ZIPs match the inventory's
    v0.30.0 source-taxonomy archive SHA-256 digests

@@ -1,12 +1,11 @@
+// Related source tests retained as complete lexical original blocks.
+import { describe, expect, it } from "vitest";
+import { projectBugReportClientDocument, reviewBugReportClientDocument, BUG_REPORT_V2_SCHEMA, BUG_REPORT_V2_LABELS, reviewBugReportCopy } from "../src/index.js";
+import type { BugReportV2 } from "../src/index.js";
+
+// Original engine/packages/bug-report/test/client-document.test.ts; blob aa0fe87abe4b0ab82d8cf0efbfb85637e90a312d
+{
 // Contract-preserving consolidated report test cases. Existing cases kept.
-import { describe } from "vitest";
-import { expect } from "vitest";
-import { it } from "vitest";
-import { projectBugReportClientDocument } from "../src/index.js";
-import { reviewBugReportClientDocument } from "../src/index.js";
-import { type BugReportV2 } from "../src/index.js";
-import { BUG_REPORT_V2_SCHEMA } from "../src/index.js";
-import { BUG_REPORT_V2_LABELS } from "../src/index.js";
 
 // Original suite engine/packages/bug-report/test/client-document.test.ts, blob 06d6ddafdbef92d028101345166185852360d7c2
 {
@@ -231,6 +230,189 @@ describe("bug report v2 vocabulary", () => {
       suggestedFix: "Suggested Fix",
       mustPreserve: "Must Preserve",
     });
+  });
+});
+}
+}
+
+// Original engine/packages/bug-report/test/client-document-layout.test.ts; blob 8de40922235f72783766834d72c9d4c6322fd9e6
+{
+function report(count: number): BugReportV2 {
+  return {
+    schema: "m-bedrock-bug-report/v2",
+    map: {
+      name: "Layout Map",
+      mapVersion: "1.0.0",
+      drive: "https://drive.google.com/file/d/map/view",
+      baseVersion: "1.26.20",
+      testedVersion: "1.26.32",
+    },
+    repairBy: "developer",
+    bugs: Array.from({ length: count }, (_, index) => ({
+      id: "BUG-LAYOUT-" + String(index + 1),
+      fixed: false,
+      severity:
+        index === 0
+          ? "blocker" as const
+          : index % 2 === 0
+            ? "minor" as const
+            : "major" as const,
+      category: "game-flow" as const,
+      foundBy: "tester" as const,
+      title: "Issue " + String(index + 1),
+      problem:
+        "Gameplay issue " + String(index + 1) + " affects the current run.",
+      expected:
+        "The gameplay step completes normally.",
+      observed:
+        "The gameplay step does not complete normally.",
+      reproduction: [
+        "Start the affected gameplay.",
+        "Perform the affected action.",
+        "Confirm the wrong result is visible.",
+      ],
+    })),
+  };
+}
+
+describe("client document canonical issue projection", () => {
+  it("projects a short report directly, without a duplicate issue index", () => {
+    const document = projectBugReportClientDocument(report(3));
+    expect(document.issues).toHaveLength(3);
+    expect(document.summary.visibleIssues).toBe(3);
+    expect(document.issues.map(issue => issue.number)).toEqual([1, 2, 3]);
+    expect("issueIndex" in document).toBe(false);
+  });
+
+  it("preserves one numbered issue per source defect from four onward", () => {
+    const document = projectBugReportClientDocument(report(4));
+    expect(document.issues).toHaveLength(4);
+    expect(document.issues.map(issue => issue.number)).toEqual([1, 2, 3, 4]);
+    expect(new Set(document.issues.map(issue => issue.id)).size).toBe(4);
+  });
+
+  it("keeps large reports in one canonical ordered issue collection", () => {
+    const document = projectBugReportClientDocument(report(7));
+    expect(document.summary.visibleIssues).toBe(7);
+    expect(document.issues).toHaveLength(7);
+    expect(document.issues.map(issue => issue.number)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect("issueIndex" in document).toBe(false);
+  });
+});
+}
+
+// Original engine/packages/bug-report/test/copy-quality.test.ts; blob 99646a447abdd377c8e8acfb2cc59cf61f49e719
+{
+function report(): BugReportV2 {
+  return {
+    schema: BUG_REPORT_V2_SCHEMA,
+    map: {
+      name: "Map",
+      mapVersion: "1.0.0",
+      drive: "https://drive.google.com/file/d/map/view",
+      baseVersion: "1.26.0",
+      testedVersion: "1.26.0",
+    },
+    repairBy: "developer",
+    bugs: [{
+      id: "BUG-001",
+      fixed: false,
+      severity: "major",
+      category: "game-flow",
+      foundBy: "tester",
+      title: "Gate remains closed after objective",
+      problem: "The closed gate blocks progression to the next area.",
+      expected: "The gate opens after the objective completes.",
+      observed: "The gate remains closed after completion.",
+      reproduction: [
+        "Complete the objective.",
+        "Walk to the gate.",
+        "Confirm the gate remains closed and blocks progression.",
+      ],
+    }],
+  };
+}
+
+describe("bug report copy quality", () => {
+  it("accepts concise player-facing copy", () => {
+    expect(reviewBugReportCopy(report().bugs)).toEqual([]);
+  });
+
+  it("rejects implementation language in Issue", () => {
+    const source = report();
+    const issues = reviewBugReportCopy([{
+      ...source.bugs[0]!,
+      problem:
+        "A race condition in the event handler can prevent the gate transition.",
+    }]);
+
+    expect(
+      issues.some(
+        (issue) => issue.code === "technical-issue-copy",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects duplicated core copy", () => {
+    const source = report();
+    const bug = source.bugs[0]!;
+    const issues = reviewBugReportCopy([{
+      ...bug,
+      observed: bug.expected,
+    }]);
+
+    expect(
+      issues.some((issue) => issue.code === "duplicate-core-copy"),
+    ).toBe(true);
+  });
+
+  it("rejects trigger paths without an observable final result", () => {
+    const source = report();
+    const issues = reviewBugReportCopy([{
+      ...source.bugs[0]!,
+      reproduction: [
+        "Complete the objective.",
+        "Walk to the gate.",
+      ],
+    }]);
+
+    expect(
+      issues.some(
+        (issue) =>
+          issue.code === "missing-observable-result",
+      ),
+    ).toBe(true);
+  });
+
+  it("uses one tester-step rule for empty, technical and vague instructions", () => {
+    const initial = report().bugs[0]!;
+    for (const step of [
+      "",
+      "Inspect the session script.",
+      "Verify the logic.",
+      "Confirm the bug is visible.",
+    ]) {
+      const issues = reviewBugReportCopy([{
+        ...initial,
+        reproduction: ["Join the arena with 2 players.", step],
+      }]);
+      expect(issues.some(issue => [
+        "empty-reproduction-step", "code-centric-reproduction",
+        "vague-reproduction",
+      ].includes(issue.code)), step).toBe(true);
+    }
+  });
+
+  it("rejects multiline titles", () => {
+    const source = report();
+    const issues = reviewBugReportCopy([{
+      ...source.bugs[0]!,
+      title: "Gate remains closed\nafter objective",
+    }]);
+
+    expect(
+      issues.some((issue) => issue.code === "title-multiline"),
+    ).toBe(true);
   });
 });
 }
