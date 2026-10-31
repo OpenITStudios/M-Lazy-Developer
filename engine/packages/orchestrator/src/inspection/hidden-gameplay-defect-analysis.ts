@@ -920,6 +920,7 @@ export function analyzeHiddenGameplayDefects(
     assessGameplayDefectResolutionGate(
       scenarioGraph,
       input.defectResolutions ?? [],
+      input.intent,
     );
 
   return {
@@ -1173,6 +1174,7 @@ export function refreshHiddenGameplayDefectsForWorld(
           scenarioGraph,
           defectResolutions ??
             existing.scenarioAudit.defectResolution.resolutions,
+          intent,
         );
 
   return {

@@ -848,6 +848,44 @@ exist, the profile remains unresolved and discovery continues. This is
 a conditional source-backed integration path, not universal automatic
 recognition or native Minecraft runtime proof.
 
+### QA-specific violation admission through canonical PROVE
+
+The existing `GameplayDefectResolution` now supports an optional
+`qaInvariantId` on a **CONFIRMED_DEFECT_READY** CONTRADICTED causal
+link. The same PROVE validator accepts this extension only when the
+selected Gameplay Intent has **exactly one** authored `must` or
+`must-not` invariant with that ID, uniquely grounded current-source
+subjects on the same link, and at least one *identical selected-source
+evidence ID* in the invariant, the contradictory link, and the supplied
+resolution. A per-mode ID must also have a source-authored game subject;
+the QA projection checks the exact bound mode's gameSubjectId.
+Malformed, stale, disconnected, foreign, duplicate, name-matched, or
+runtime-unsupported bindings are rejected by the canonical gate.
+
+The same `qaCoverage` projection now displays
+`QA_VIOLATION_PROVEN` **only** if one PROVE-admitted resolution with
+that exact `qaInvariantId` is independently matched to one canonical
+`PROVEN BUG` or `PROVEN DESIGN_MISMATCH` on the same CONTRADICTED
+causal link/scenario with source evidence. Duplicate competing links
+do not become a fabricated unique QA verdict. The exact original
+finding remains the authority: the QA view only cites its ID, scope,
+issue type, and evidence.
+
+All other rows stay `QA_SPECIFIC_PROOF_UNRESOLVED`.
+`qaCoverage.confirmedViolations` counts affected QA rows, not
+executed tests or successful QA runs. `proofBound: 0` remains the
+number of QA IDs certified **PASS**, intentionally none.
+`BLOCKING_COUNTERPROOF`, no reported defect, unverified exclusion,
+and incomplete runtime proof do **not** independently establish
+whole-requirement `SAFE` or `NOT_APPLICABLE`.
+
+This change delivers an evidence-admitted *violation-side* QA decision
+without creating another gate, issue ledger, test runner, or proof owner.
+Positive per-requirement SAFE/NOT_APPLICABLE needs explicit complete
+scope coverage and affirmative contrary/absence evidence which the
+existing canonical issue resolution does not provide merely by
+counterproving a single candidate.
+
 ## Mutable-state reverse index
 
 For every material mutable resource build:

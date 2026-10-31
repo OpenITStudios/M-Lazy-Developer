@@ -5892,7 +5892,10 @@
                 "minLength": 1
               },
               "status": {
-                "const": "QA_SPECIFIC_PROOF_UNRESOLVED"
+                "enum": [
+                  "QA_SPECIFIC_PROOF_UNRESOLVED",
+                  "QA_VIOLATION_PROVEN"
+                ]
               },
               "scenarioSourceEvidenceIds": {
                 "type": "array",
@@ -6025,6 +6028,49 @@
                   },
                   "proof": {
                     "const": "EXACT_SOURCE_GAME_MODE_ROUTING_NOT_QA_PROOF"
+                  }
+                }
+              },
+              "qaViolation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "qaInvariantId",
+                  "causalLinkId",
+                  "scenarioId",
+                  "issueType",
+                  "evidenceIds",
+                  "proof"
+                ],
+                "properties": {
+                  "qaInvariantId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "causalLinkId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scenarioId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "issueType": {
+                    "enum": [
+                      "BUG",
+                      "DESIGN_MISMATCH"
+                    ]
+                  },
+                  "evidenceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "proof": {
+                    "const": "CANONICAL_PROVE_ADMITTED_EXACT_QA_VIOLATION"
                   }
                 }
               }
@@ -6185,6 +6231,10 @@
               }
             }
           }
+        },
+        "confirmedViolations": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     }

@@ -1562,7 +1562,9 @@ export function applySelectedMapAuditModelResponses(input: {
   }
 
   const candidate = [...candidateResolutions.values()];
-  const assessment = assessGameplayDefectResolutionGate(graph, candidate);
+  const assessment = assessGameplayDefectResolutionGate(
+    graph, candidate, audit.inspection.gameplayIntent.model,
+  );
   // A global unresolved checkpoint may remain legitimately open. A specific
   // proposed response must not pass through malformed resolution diagnostics.
   const invalid = assessment.issues.filter((issue) =>

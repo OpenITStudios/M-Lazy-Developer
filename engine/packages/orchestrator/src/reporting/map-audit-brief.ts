@@ -122,10 +122,13 @@ export function formatSelectedMapAuditFinalReport(input: {
   const qa = report.qaCoverage;
   if (qa) {
     out.push(
-      "## Klasifikasi QA — BELUM TERVERIFIKASI",
+      "## Klasifikasi QA — keputusan per kriteria",
       "Profil: " + qa.profile + "; pertanyaan terpilih: " +
-        qa.selected + "; QA ID terbukti lulus: " + qa.proofBound + ".",
-      "Source yang terkait dengan skenario adalah petunjuk investigasi, bukan PASS.",
+        qa.selected + "; pelanggaran QA terbukti: " +
+        (qa.confirmedViolations ?? 0) +
+        "; QA ID dinyatakan lulus: " + qa.proofBound + ".",
+      "Hanya keputusan PROVE dengan invariant QA dan temuan PROVEN yang " +
+        "tepat dapat mengonfirmasi pelanggaran; kekurangan bukti bukan PASS.",
     );
     if (qa.profile === "UNRESOLVED_SOURCE_CANDIDATES") {
       out.push("Klasifikasi tipe/mode belum dibuktikan. " +
@@ -162,7 +165,10 @@ export function formatSelectedMapAuditFinalReport(input: {
         qa.unscopedActivitySubjectIds!.length +
         " (ini tetap perlu ditelusuri).");
     }
-    for (const item of qa.checks.slice(0, 10)) {
+    const displayedQa = [...qa.checks].sort((a,b) =>
+      Number(b.status === "QA_VIOLATION_PROVEN") -
+      Number(a.status === "QA_VIOLATION_PROVEN"));
+    for (const item of displayedQa.slice(0, 10)) {
       const binding = item.exactSourceQaRule;
       const bindingText = binding?.status ===
         "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS"
@@ -171,10 +177,17 @@ export function formatSelectedMapAuditFinalReport(input: {
           "; temuan PROVEN terkait " + binding.relatedProvenFindingIds.length
         : "belum ada rule QA terikat secara spesifik (" +
           (binding?.status ?? "UNKNOWN") + ")";
+      const violation = item.status === "QA_VIOLATION_PROVEN"
+        ? item.qaViolation : undefined;
       out.push("- " + item.id +
         (item.modeScope ? " [" + item.modeScope.modeId + "]" : "") +
-        " BELUM TERVERIFIKASI — " +
-        item.question.slice(0, 135) + " (" + bindingText +
+        (violation ? " PELANGGARAN TERBUKTI — " :
+          " BELUM TERVERIFIKASI — ") +
+        item.question.slice(0, 135) + " (" +
+        (violation
+          ? "PROVE " + violation.causalLinkId +
+            ", " + violation.issueType
+          : bindingText) +
         "; bukan QA PASS)");
     }
     if (qa.checks.length > 10) {

@@ -12,6 +12,7 @@ import {
   classifyGameplayIssue,
   type GameplayIssueFailureDomain,
 } from "../../../diagnostic-reasoning/src/index.js";
+import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js";
 
 /** Exact selected-artifact subject/scope relation; not a proof of reachability or delivery. */
 export function capabilityDeliveryMatchesScope(
@@ -85,6 +86,10 @@ export interface FamilyProofReceipt {
 export interface GameplayDefectResolution {
   readonly causalLinkId: string;
   readonly scenarioId?: string;
+  /** Explicit exact QA invariant bound to a canonical proven contradiction.
+   * Not independent defect evidence and never a QA PASS.
+   */
+  readonly qaInvariantId?: string;
   readonly knowledgeRequirementIds?: readonly string[];
   readonly subjectIds?: readonly string[];
   readonly componentIds?: readonly string[];
@@ -434,8 +439,55 @@ function validateResolution(
   resolution: GameplayDefectResolution,
   scenario:
     GameplayScenarioGraph["scenarios"][number] | undefined,
+  intent?: GameplayIntentModel,
 ): readonly string[] {
   const issues: string[] = [];
+
+  // QA rule association belongs to the same canonical PROVE gate as the
+  // original causal-link resolution. Never accept a name-matched assertion,
+  // a mere scenario link, or a source witness from another map/mode.
+  if (resolution.qaInvariantId !== undefined) {
+    const qaId = resolution.qaInvariantId;
+    const isCanonical =
+      /^(?:qa:)?(?:U|P|BLD|CBT|SUR|STG|PUZ|QST|CRS|SKL)\d{2}$/.test(qaId) ||
+      /^qa:mode:[A-Za-z0-9_.!~*'()%\-]+:(?:U|P|BLD|CBT|SUR|STG|PUZ|QST|CRS|SKL)\d{2}$/.test(qaId);
+    if (!isCanonical || resolution.disposition !== "CONFIRMED_DEFECT_READY" ||
+        link.status !== "CONTRADICTED") {
+      issues.push(link.id +
+        ": QA invariant binding requires a valid ID on a confirmed contradicted causal link.");
+    } else if (intent === undefined) {
+      issues.push(link.id +
+        ": QA invariant binding requires the current selected-artifact Gameplay Intent.");
+    } else {
+      const selected = new Set(intent.evidence
+        .filter(item => item.scope === "selected-artifact")
+        .map(item => item.id));
+      const matches = intent.invariants.filter(item => item.id === qaId);
+      const rule = matches.length === 1 ? matches[0] : undefined;
+      const subjectIds = [...new Set(rule?.subjectIds ?? [])];
+      const commonEvidence = (rule?.evidenceIds ?? []).filter(id =>
+        selected.has(id) && link.evidenceIds.includes(id) &&
+        (resolution.evidenceIds ?? []).includes(id));
+      const groundedSubjects = subjectIds.length > 0 &&
+        subjectIds.every(id => link.subjectIds.includes(id) &&
+          intent.nodes.filter(node => node.id === id &&
+            node.status !== "hypothesis" &&
+            node.evidenceIds.some(eid => selected.has(eid))).length === 1);
+      const gameScoped = !qaId.startsWith("qa:mode:") ||
+        subjectIds.some(id => intent.nodes.some(node =>
+          node.id === id && node.kind === "game" &&
+          node.status === "authored"));
+      if (rule === undefined || rule.status !== "authored" ||
+          (rule.strength !== "must" && rule.strength !== "must-not") ||
+          rule.evidenceIds.length === 0 ||
+          !rule.evidenceIds.every(id => selected.has(id)) ||
+          !groundedSubjects || !gameScoped || commonEvidence.length === 0) {
+        issues.push(link.id +
+          ": QA binding lacks one authored must/must-not rule, uniquely scoped subjects and common source evidence.");
+      }
+    }
+  }
+
 
   if (resolution.disposition === "CONFIRMED_DEFECT_READY") {
     if (blockingCounterProofFor(graph, link).length > 0) {
@@ -1015,6 +1067,7 @@ export function blockingCounterProofFor(
 export function assessGameplayDefectResolutionGate(
   graph: GameplayScenarioGraph,
   suppliedResolutions: readonly GameplayDefectResolution[] = [],
+  intent?: GameplayIntentModel,
 ): GameplayDefectResolutionGate {
   const contradicted = graph.causalLinks
     .filter((link) => link.status === "CONTRADICTED")
@@ -1125,7 +1178,7 @@ export function assessGameplayDefectResolutionGate(
       (candidate) => candidate.id === sourceLink.scenarioId,
     );
     const invalid = validateResolution(
-      graph, sourceLink, resolution, scenario,
+      graph, sourceLink, resolution, scenario, intent,
     );
     if (invalid.length > 0) {
       issues.push(...invalid);
@@ -1147,6 +1200,7 @@ export function assessGameplayDefectResolutionGate(
             link,
             supplied,
             scenario,
+            intent,
           ),
         );
         return supplied;
@@ -1191,6 +1245,7 @@ export function assessGameplayDefectResolutionGate(
             link,
             supplied,
             scenario,
+            intent,
           ),
         );
         return supplied;
@@ -1223,6 +1278,7 @@ export function assessGameplayDefectResolutionGate(
           link,
           supplied,
           scenario,
+          intent,
         ),
       );
       return supplied;
@@ -1436,6 +1492,7 @@ export function assessGameplayDefectResolutionGate(
       link,
       resolution,
       scenario,
+      intent,
     ).length > 0;
   });
 

@@ -179,17 +179,31 @@ export interface MapAuditQaCoverage {
     readonly proof: "MODE_HINT_SOURCE_CORRELATION_NOT_GAMEPLAY_PROOF";
   }[];
   readonly selected: number;
+  /** Canonically PROVEN violations tied to their exact QA invariants. */
+  readonly confirmedViolations?: number;
+  /** No full QA PASS is inferred from a missing bug or one counterproof. */
   readonly proofBound: 0;
   readonly checks: readonly {
     readonly id: string;
     readonly scenarioId: string;
     readonly question: string;
-    readonly status: "QA_SPECIFIC_PROOF_UNRESOLVED";
+    readonly status: "QA_SPECIFIC_PROOF_UNRESOLVED" | "QA_VIOLATION_PROVEN";
     readonly scenarioSourceEvidenceIds: readonly string[];
     readonly relatedCausalLinkIds: readonly string[];
     readonly omittedScenarioEvidence: number;
     readonly omittedRelatedLinks: number;
     readonly evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF";
+    /** Only an admitted canonical PROVE resolution + exact PROVEN finding
+     * can supply this source violation. It never constitutes a QA PASS.
+     */
+    readonly qaViolation?: {
+      readonly qaInvariantId: string;
+      readonly causalLinkId: string;
+      readonly scenarioId: string;
+      readonly issueType: "BUG" | "DESIGN_MISMATCH";
+      readonly evidenceIds: readonly string[];
+      readonly proof: "CANONICAL_PROVE_ADMITTED_EXACT_QA_VIOLATION";
+    };
     readonly modeScope?: {
       readonly modeId: string;
       readonly gameSubjectId: string;
@@ -778,6 +792,53 @@ function projectSelectedMapQaCoverage(
       omittedRelatedLinks: Math.max(0, associated.length - 8),
     };
   };
+  const canonicalProof =
+    inspection.hiddenGameplayDefects.scenarioAudit.defectResolution;
+  const admittedDefects = new Set(canonicalProof.confirmedDefectReadyIds);
+  // PROVE alone owns confirmation. The QA report may ONLY project an
+  // explicit QA-invariant binding from an admitted canonical resolution
+  // joined to an independently PROVEN issue on the exact same source link.
+  const admittedQaViolationFor = (
+    invariantId: string,
+    qaRuleStatus: string,
+    modeGameSubjectId?: string,
+  ): NonNullable<MapAuditQaCoverage["checks"][number]["qaViolation"]> | undefined => {
+    if (qaRuleStatus !== "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS") return undefined;
+    const found = canonicalProof.resolutions.flatMap(resolution => {
+      if (resolution.qaInvariantId !== invariantId ||
+          resolution.disposition !== "CONFIRMED_DEFECT_READY" ||
+          !admittedDefects.has(resolution.causalLinkId)) return [];
+      const links = graph.causalLinks.filter(link =>
+        link.id === resolution.causalLinkId &&
+        link.status === "CONTRADICTED" &&
+        (resolution.scenarioId === undefined ||
+         resolution.scenarioId === link.scenarioId) &&
+        (modeGameSubjectId === undefined ||
+         link.subjectIds.includes(modeGameSubjectId)));
+      if (links.length !== 1) return [];
+      const link = links[0]!;
+      const admitted = relatedFindings.filter(finding =>
+        finding.status === "PROVEN" &&
+        (finding.issueType === "BUG" ||
+         finding.issueType === "DESIGN_MISMATCH") &&
+        finding.causalLinkId === link.id &&
+        finding.scenarioId === link.scenarioId &&
+        finding.evidenceIds.some(id => link.evidenceIds.includes(id)));
+      if (admitted.length !== 1) return [];
+      const finding = admitted[0]!;
+      return [{
+        qaInvariantId: invariantId,
+        causalLinkId: finding.causalLinkId,
+        scenarioId: finding.scenarioId,
+        issueType: finding.issueType,
+        evidenceIds: [...new Set(finding.evidenceIds)].sort().slice(0, 8),
+        proof: "CANONICAL_PROVE_ADMITTED_EXACT_QA_VIOLATION" as const,
+      }];
+    });
+    // Competing/duplicate admitted source owners are not a unique QA
+    // verdict. Preserve the independent issue in canonical findings.
+    return found.length === 1 ? found[0] : undefined;
+  };
   const seen = new Set<string>();
   const checks: MapAuditQaCoverage["checks"][number][] = [];
   for (const scenario of preset.scenarios) {
@@ -807,10 +868,20 @@ function projectSelectedMapQaCoverage(
         ? undefined : sourceBoundModes.find(mode =>
             mode.modeId === scenario.sourceModeId &&
             mode.gameSubjectId === scenario.sourceGameSubjectId);
+      const exactSourceQaRule = relatedQaRuleFor(
+        tagged[1]!, relatedFindings, modeScope);
+      const qaInvariantId = exactSourceQaRule.invariantIds.length === 1
+        ? exactSourceQaRule.invariantIds[0] : undefined;
+      const qaViolation = qaInvariantId === undefined ? undefined :
+        admittedQaViolationFor(
+          qaInvariantId, exactSourceQaRule.status,
+          modeScope?.gameSubjectId);
       checks.push({
         id: tagged[1]!, scenarioId: "preset:" + scenario.id,
         question: tagged[2]!,
-        status: "QA_SPECIFIC_PROOF_UNRESOLVED",
+        status: qaViolation === undefined
+          ? "QA_SPECIFIC_PROOF_UNRESOLVED" : "QA_VIOLATION_PROVEN",
+        ...(qaViolation === undefined ? {} : { qaViolation }),
         scenarioSourceEvidenceIds: evidence.slice(0, 8),
         relatedCausalLinkIds: linkIds.slice(0, 8),
         omittedScenarioEvidence: Math.max(0, evidence.length - 8),
@@ -824,8 +895,7 @@ function projectSelectedMapQaCoverage(
             proof: "EXACT_SOURCE_GAME_MODE_ROUTING_NOT_QA_PROOF" as const,
           },
         }),
-        exactSourceQaRule: relatedQaRuleFor(tagged[1]!, relatedFindings,
-          modeScope),
+        exactSourceQaRule,
       });
     }
   }
@@ -847,6 +917,8 @@ function projectSelectedMapQaCoverage(
     omittedUnscopedActivities: Math.max(0, unscopedActivities.length - 16),
     modeClassifications,
     selected: checks.length,
+    confirmedViolations: checks.filter(item =>
+      item.status === "QA_VIOLATION_PROVEN").length,
     proofBound: 0,
     checks,
   };
