@@ -16,6 +16,7 @@ import {
   type GameplayCapabilityDeliveryAssessment,
   type GameplayDegradationSignal,
   type GameplayAuditScenarioPreset,
+  type SourceBoundGameMode,
   type NegativeSpaceSignal,
   type TemporalInteractionRisk,
 } from "../../../diagnostic-reasoning/src/index.js";
@@ -727,6 +728,51 @@ function sourceBoundPresetSignals(
   };
 }
 
+/**
+ * Admit only source-bound per-mode routing hints. The selected Intent's exact
+ * authored game ID and its direct authored edges are required; an arbitrary
+ * evidenceRef, UI label, file name or same-version fingerprint is not enough.
+ */
+function sourceBoundModeProfiles(
+  classification: GameDesignMapClassification | undefined,
+  intent: GameplayIntentModel,
+): readonly SourceBoundGameMode[] {
+  const selectedEvidence = new Set(intent.evidence
+    .filter(item => item.scope === "selected-artifact")
+    .map(item => item.id));
+  return (classification?.modes ?? []).flatMap(mode => {
+    const games = intent.nodes.filter(node =>
+      node.id === mode.gameSubjectId &&
+      node.kind === "game" && node.status === "authored");
+    if (games.length !== 1 || mode.evidenceRefs.length === 0) return [];
+    const associated = new Set(games[0]!.evidenceIds);
+    for (const edge of intent.edges) {
+      if (edge.status !== "authored" ||
+          (edge.from !== mode.gameSubjectId &&
+           edge.to !== mode.gameSubjectId)) continue;
+      for (const id of edge.evidenceIds) associated.add(id);
+    }
+    if (mode.evidenceRefs.some(id =>
+        !selectedEvidence.has(id) || !associated.has(id)) ||
+        !mode.evidenceRefs.some(id => games[0]!.evidenceIds.includes(id))) {
+      return [];
+    }
+    return [{
+      modeId: mode.modeId,
+      gameSubjectId: mode.gameSubjectId,
+      classification: {
+        mapType: mode.mapType,
+        playerMode: mode.playerMode,
+        mechanicTags: mode.mechanicTags,
+        classificationStatus: "RESOLVED" as const,
+        evidenceRefs: mode.evidenceRefs,
+      },
+      evidenceIds: [...mode.evidenceRefs],
+      proof: "EXACT_SELECTED_SOURCE_MODE_HINT_NOT_GAMEPLAY_PROOF" as const,
+    }];
+  });
+}
+
 function auditScenarioPresetFromModel(
   input: {
     readonly intent: GameplayIntentModel;
@@ -750,6 +796,7 @@ function auditScenarioPresetFromModel(
   );
 
   return buildGameplayAuditScenarioPreset({
+    sourceBoundModes: sourceBoundModeProfiles(input.classification, input.intent),
     ...(input.classification === undefined
       ? {}
       : {
@@ -1037,6 +1084,9 @@ export function refreshHiddenGameplayDefectsForWorld(
   );
   const auditScenarioPreset =
     buildGameplayAuditScenarioPreset({
+      sourceBoundModes: intent === undefined
+        ? existing.auditScenarioPreset.sourceBoundModes ?? []
+        : sourceBoundModeProfiles(existing.classification, intent),
       ...(existing.classification === undefined
         ? {}
         : {

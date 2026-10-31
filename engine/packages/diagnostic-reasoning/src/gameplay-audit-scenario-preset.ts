@@ -59,6 +59,15 @@ export interface GameplayAuditDetectionIndicator {
   readonly counterProofToSeek: string;
 }
 
+/** Verified selected-source anchor, NOT proof of gameplay or game design. */
+export interface SourceBoundGameMode {
+  readonly modeId: string;
+  readonly gameSubjectId: string;
+  readonly classification: GameDesignMapClassification;
+  readonly evidenceIds: readonly string[];
+  readonly proof: "EXACT_SELECTED_SOURCE_MODE_HINT_NOT_GAMEPLAY_PROOF";
+}
+
 export interface GameplayAuditScenario {
   readonly id: string;
   readonly kind: GameplayAuditScenarioKind;
@@ -68,6 +77,8 @@ export interface GameplayAuditScenario {
   readonly proofMode: GameplayAuditScenarioProofMode;
   readonly reason: string;
   readonly questions: readonly string[];
+  readonly sourceGameSubjectId?: string;
+  readonly sourceModeId?: string;
   /** Non-binding detection guidance; not evidence that a map feature exists or a bug occurred. */
   readonly detectionIndicator?: GameplayAuditDetectionIndicator;
   readonly requiredKnowledgeDomains?:
@@ -77,6 +88,7 @@ export interface GameplayAuditScenario {
 export interface GameplayAuditScenarioPresetInput {
   readonly classification?:
     GameDesignMapClassification;
+  readonly sourceBoundModes?: readonly SourceBoundGameMode[];
   readonly maxPartySize?: number;
   readonly arenaCount?: number;
   readonly concurrentArenaLimit?: number | null;
@@ -98,6 +110,7 @@ export interface GameplayAuditScenarioPreset {
   readonly schemaVersion: 1;
   readonly policy: "selected-map-scenario-audit";
   readonly scenarios: readonly GameplayAuditScenario[];
+  readonly sourceBoundModes?: readonly SourceBoundGameMode[];
 }
 
 /**
@@ -459,6 +472,26 @@ export function buildGameplayAuditScenarioPreset(
     );
   }
 
+  // One real game source node per scoped minigame. No genre-name inference.
+  // These remain advisory, and cannot close an audit checkpoint or PROVE.
+  for (const scoped of input.sourceBoundModes ?? []) {
+    const profile = deriveMapClassificationAuditProfile(scoped.classification);
+    if (!profile.active) continue;
+    scenarios.push(scenario({
+      id: "classification:mode:" +
+        encodeURIComponent(scoped.modeId) + ":" +
+        encodeURIComponent(scoped.gameSubjectId),
+      kind: "map-type-coverage",
+      flowStage: "FULL_JOURNEY",
+      reason: "Source-bound mode " + scoped.modeId +
+        " requires scoped QA; hint is not game-design or gameplay proof.",
+      questions: [...profile.specificScenarioQuestions],
+      requiredKnowledgeDomains: profile.requiredKnowledgeDomains,
+      sourceGameSubjectId: scoped.gameSubjectId,
+      sourceModeId: scoped.modeId,
+    }));
+  }
+
   const maxParty =
     input.maxPartySize !== undefined &&
     input.maxPartySize > 0
@@ -817,5 +850,7 @@ export function buildGameplayAuditScenarioPreset(
     schemaVersion: 1,
     policy: "selected-map-scenario-audit",
     scenarios,
+    ...(input.sourceBoundModes === undefined ? {}
+      : { sourceBoundModes: input.sourceBoundModes }),
   };
 }

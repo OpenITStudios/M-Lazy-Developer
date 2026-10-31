@@ -136,7 +136,9 @@ export interface MapAuditOutputControl {
  */
 export interface MapAuditQaCoverage {
   readonly authority: "READ_ONLY_QA_NAVIGATION_NOT_PROOF";
-  readonly profile: "RESOLVED_HINT_ROUTING_ONLY" | "UNRESOLVED_SOURCE_CANDIDATES";
+  readonly profile: "RESOLVED_HINT_ROUTING_ONLY" |
+    "SOURCE_BOUND_PER_MODE_ROUTING_ONLY" |
+    "UNRESOLVED_SOURCE_CANDIDATES";
   readonly activityScope: "NO_SELECTED_SOURCE_ACTIVITY" | "SOURCE_ACTIVITY_CANDIDATES_SCOPE_UNVERIFIED";
   readonly sourceActivities: readonly {
     readonly subjectId: string;
@@ -166,6 +168,16 @@ export interface MapAuditQaCoverage {
   readonly omittedGameScopes?: number;
   readonly unscopedActivitySubjectIds?: readonly string[];
   readonly omittedUnscopedActivities?: number;
+  /** One exact map-hint claim per minigame. Failed source binding is explicit. */
+  readonly modeClassifications?: readonly {
+    readonly modeId: string;
+    readonly gameSubjectId: string;
+    readonly mapType: string;
+    readonly playerMode: string;
+    readonly status: "SOURCE_SCOPED_ROUTING_ONLY" | "SOURCE_BINDING_UNRESOLVED";
+    readonly evidenceIds: readonly string[];
+    readonly proof: "MODE_HINT_SOURCE_CORRELATION_NOT_GAMEPLAY_PROOF";
+  }[];
   readonly selected: number;
   readonly proofBound: 0;
   readonly checks: readonly {
@@ -178,6 +190,12 @@ export interface MapAuditQaCoverage {
     readonly omittedScenarioEvidence: number;
     readonly omittedRelatedLinks: number;
     readonly evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF";
+    readonly modeScope?: {
+      readonly modeId: string;
+      readonly gameSubjectId: string;
+      readonly evidenceIds: readonly string[];
+      readonly proof: "EXACT_SOURCE_GAME_MODE_ROUTING_NOT_QA_PROOF";
+    };
     /** Exact QA IDs can optionally be authored as Gameplay Intent invariants
      * (id = QA code or "qa:" + code). An associated causal link or even
      * a PROVEN issue is NOT a requirement-specific QA verdict.
@@ -187,6 +205,7 @@ export interface MapAuditQaCoverage {
         "NO_EXACT_SELECTED_SOURCE_RULE" |
         "AMBIGUOUS_EXACT_SOURCE_RULE" |
         "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED" |
+        "MODE_SCOPE_RULE_UNRESOLVED" |
         "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS";
       readonly invariantIds: readonly string[];
       readonly subjectIds: readonly string[];
@@ -651,10 +670,35 @@ function projectSelectedMapQaCoverage(
     item.kind !== "game" && !ownersBySubject.has(item.subjectId))
     .map(item => item.subjectId))].sort();
 
-  const selectedInvariantFor = (id: string) =>
+  // Mode routing is still a user/source hint; only matching current
+  // authored game nodes may activate it. Unmatched claims remain visible.
+  const sourceBoundModes = preset.sourceBoundModes ?? [];
+  const modeClassifications: NonNullable<MapAuditQaCoverage["modeClassifications"]> =
+    (inspection.hiddenGameplayDefects.classification?.modes ?? [])
+      .map(mode => {
+        const exact = sourceBoundModes.filter(bound =>
+          bound.modeId === mode.modeId &&
+          bound.gameSubjectId === mode.gameSubjectId);
+        const admitted = exact.length === 1 ? exact[0] : undefined;
+        return {
+          modeId: mode.modeId,
+          gameSubjectId: mode.gameSubjectId,
+          mapType: mode.mapType,
+          playerMode: mode.playerMode,
+          status: admitted === undefined
+            ? "SOURCE_BINDING_UNRESOLVED" as const
+            : "SOURCE_SCOPED_ROUTING_ONLY" as const,
+          evidenceIds: admitted?.evidenceIds ?? [],
+          proof: "MODE_HINT_SOURCE_CORRELATION_NOT_GAMEPLAY_PROOF" as const,
+        };
+      });
+  const selectedInvariantFor = (id: string, modeId?: string) =>
     intent.invariants.filter(invariant =>
       invariant.status === "authored" &&
-      (invariant.id === id || invariant.id === "qa:" + id) &&
+      (modeId === undefined
+        ? (invariant.id === id || invariant.id === "qa:" + id)
+        : invariant.id === "qa:mode:" +
+          encodeURIComponent(modeId) + ":" + id) &&
       invariant.evidenceIds.some(sourceId => selectedIds.has(sourceId)));
   const causalIdCounts = new Map<string, number>();
   for (const link of graph.causalLinks) {
@@ -663,15 +707,17 @@ function projectSelectedMapQaCoverage(
   const relatedQaRuleFor = (
     id: string,
     relatedFindings: readonly AuditIssueProjection[],
+    modeScope?: { readonly modeId: string; readonly gameSubjectId: string },
   ): NonNullable<MapAuditQaCoverage["checks"][number]["exactSourceQaRule"]> => {
-    const matches = selectedInvariantFor(id);
+    const matches = selectedInvariantFor(id, modeScope?.modeId);
     const common = {
       proof: "QA_SOURCE_RULE_TO_CAUSAL_LEADS_NOT_QA_VERDICT" as const,
     };
     const empty = (
       status: "NO_EXACT_SELECTED_SOURCE_RULE" |
         "AMBIGUOUS_EXACT_SOURCE_RULE" |
-        "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED",
+        "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED" |
+        "MODE_SCOPE_RULE_UNRESOLVED",
       invariantIds: readonly string[],
     ) => ({
       ...common, status, invariantIds,
@@ -695,6 +741,10 @@ function projectSelectedMapQaCoverage(
         !node.evidenceIds.some(sourceId => selectedIds.has(sourceId));
     })) {
       return empty("EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED", [rule.id]);
+    }
+    if (modeScope !== undefined &&
+        !subjectIds.includes(modeScope.gameSubjectId)) {
+      return empty("MODE_SCOPE_RULE_UNRESOLVED", [rule.id]);
     }
     const sourceEvidenceIds = [...new Set(rule.evidenceIds
       .filter(evidenceId => selectedIds.has(evidenceId)))].sort();
@@ -752,6 +802,11 @@ function projectSelectedMapQaCoverage(
       const identity = scenario.id + "::" + tagged[1];
       if (seen.has(identity)) continue;
       seen.add(identity);
+      const modeScope = scenario.sourceModeId === undefined ||
+          scenario.sourceGameSubjectId === undefined
+        ? undefined : sourceBoundModes.find(mode =>
+            mode.modeId === scenario.sourceModeId &&
+            mode.gameSubjectId === scenario.sourceGameSubjectId);
       checks.push({
         id: tagged[1]!, scenarioId: "preset:" + scenario.id,
         question: tagged[2]!,
@@ -761,14 +816,26 @@ function projectSelectedMapQaCoverage(
         omittedScenarioEvidence: Math.max(0, evidence.length - 8),
         omittedRelatedLinks: Math.max(0, linkIds.length - 8),
         evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF",
-        exactSourceQaRule: relatedQaRuleFor(tagged[1]!, relatedFindings),
+        ...(modeScope === undefined ? {} : {
+          modeScope: {
+            modeId: modeScope.modeId,
+            gameSubjectId: modeScope.gameSubjectId,
+            evidenceIds: modeScope.evidenceIds,
+            proof: "EXACT_SOURCE_GAME_MODE_ROUTING_NOT_QA_PROOF" as const,
+          },
+        }),
+        exactSourceQaRule: relatedQaRuleFor(tagged[1]!, relatedFindings,
+          modeScope),
       });
     }
   }
   return {
     authority: "READ_ONLY_QA_NAVIGATION_NOT_PROOF",
-    profile: inspection.hiddenGameplayDefects.classification === undefined
-      ? "UNRESOLVED_SOURCE_CANDIDATES" : "RESOLVED_HINT_ROUTING_ONLY",
+    profile: inspection.hiddenGameplayDefects.classification?.classificationStatus === "RESOLVED"
+      ? "RESOLVED_HINT_ROUTING_ONLY"
+      : sourceBoundModes.length > 0
+        ? "SOURCE_BOUND_PER_MODE_ROUTING_ONLY"
+        : "UNRESOLVED_SOURCE_CANDIDATES",
     activityScope: activityCandidates.length === 0
       ? "NO_SELECTED_SOURCE_ACTIVITY"
       : "SOURCE_ACTIVITY_CANDIDATES_SCOPE_UNVERIFIED",
@@ -778,6 +845,7 @@ function projectSelectedMapQaCoverage(
     omittedGameScopes: Math.max(0, gameScopes.length - 12),
     unscopedActivitySubjectIds: unscopedActivities.slice(0, 16),
     omittedUnscopedActivities: Math.max(0, unscopedActivities.length - 16),
+    modeClassifications,
     selected: checks.length,
     proofBound: 0,
     checks,

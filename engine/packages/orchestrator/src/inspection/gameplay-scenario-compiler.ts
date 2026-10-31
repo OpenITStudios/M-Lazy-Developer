@@ -3388,14 +3388,34 @@ export function compileGameplayScenarioGraph(
       scenarioId,
       requiredDomains,
     );
-    const componentIds = presetComponentIds(
-      presetScenario.kind,
-    );
-    const sourceSubjectIds =
-      presetAnchorIds(
-        presetScenario.kind,
-        input.intent,
-      );
+    const defaultComponents = presetComponentIds(presetScenario.kind);
+    const sourceSubjectIds = presetScenario.sourceGameSubjectId === undefined
+      ? presetAnchorIds(presetScenario.kind, input.intent)
+      : input.intent.nodes.filter(node =>
+          node.id === presetScenario.sourceGameSubjectId &&
+          node.kind === "game" && node.status === "authored" &&
+          node.evidenceIds.some(id => sourceEvidenceIds.has(id))
+        ).map(node => node.id);
+    // One minigame cannot borrow sibling-mode components or state.
+    const scoped = new Set(sourceSubjectIds);
+    if (presetScenario.sourceGameSubjectId !== undefined) {
+      for (const edge of input.intent.edges) {
+        if (edge.status !== "authored" ||
+            !edge.evidenceIds.some(id => sourceEvidenceIds.has(id))) continue;
+        const otherId = edge.from === presetScenario.sourceGameSubjectId
+          ? edge.to : edge.to === presetScenario.sourceGameSubjectId
+            ? edge.from : undefined;
+        const other = otherId === undefined ? undefined :
+          input.intent.nodes.find(node => node.id === otherId);
+        if (other && other.status !== "hypothesis" &&
+            other.evidenceIds.some(id => sourceEvidenceIds.has(id))) {
+          scoped.add(other.id);
+        }
+      }
+    }
+    const componentIds = presetScenario.sourceGameSubjectId === undefined
+      ? defaultComponents
+      : defaultComponents.filter(id => scoped.has(id));
     scenarios.push({
       id: scenarioId,
       label: presetScenario.kind,

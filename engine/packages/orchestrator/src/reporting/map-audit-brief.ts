@@ -131,6 +131,17 @@ export function formatSelectedMapAuditFinalReport(input: {
       out.push("Klasifikasi tipe/mode belum dibuktikan. " +
         "Kandidat aktivitas source tidak otomatis menjadi jenis game.");
     }
+    const routes = qa.modeClassifications ?? [];
+    if (routes.length > 0) {
+      out.push("Profil minigame berbasis bukti (routing, bukan PASS):");
+      for (const mode of routes.slice(0, 8)) {
+        out.push("- " + mode.modeId + " / " + mode.gameSubjectId +
+          ": " + mode.mapType + " / " + mode.playerMode +
+          " [" + mode.status + "].");
+      }
+      if (routes.length > 8) out.push(
+        "- " + (routes.length - 8) + " profil lain ada di qaCoverage.");
+    }
     const gameScopes = qa.gameScopes ?? [];
     if (gameScopes.length > 0) {
       out.push(
@@ -160,7 +171,9 @@ export function formatSelectedMapAuditFinalReport(input: {
           "; temuan PROVEN terkait " + binding.relatedProvenFindingIds.length
         : "belum ada rule QA terikat secara spesifik (" +
           (binding?.status ?? "UNKNOWN") + ")";
-      out.push("- " + item.id + " BELUM TERVERIFIKASI — " +
+      out.push("- " + item.id +
+        (item.modeScope ? " [" + item.modeScope.modeId + "]" : "") +
+        " BELUM TERVERIFIKASI — " +
         item.question.slice(0, 135) + " (" + bindingText +
         "; bukan QA PASS)");
     }

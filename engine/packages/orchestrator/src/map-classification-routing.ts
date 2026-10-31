@@ -51,13 +51,10 @@ export function validateMapClassificationRoutingHint(
     );
   }
 
-  if (
-    !isResolvedMapClassification(
-      hint.classification,
-    )
-  ) {
+  if (!isResolvedMapClassification(hint.classification) &&
+      (hint.classification.modes?.length ?? 0) === 0) {
     errors.push(
-      "Map Classification Routing Hint requires a RESOLVED classification.",
+      "Map Classification Routing Hint needs a resolved map type or scoped mode declarations.",
     );
   }
 

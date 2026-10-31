@@ -5804,7 +5804,8 @@
         "profile": {
           "enum": [
             "RESOLVED_HINT_ROUTING_ONLY",
-            "UNRESOLVED_SOURCE_CANDIDATES"
+            "UNRESOLVED_SOURCE_CANDIDATES",
+            "SOURCE_BOUND_PER_MODE_ROUTING_ONLY"
           ]
         },
         "activityScope": {
@@ -5940,7 +5941,8 @@
                       "NO_EXACT_SELECTED_SOURCE_RULE",
                       "AMBIGUOUS_EXACT_SOURCE_RULE",
                       "EXACT_RULE_SUBJECT_SCOPE_UNRESOLVED",
-                      "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS"
+                      "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS",
+                      "MODE_SCOPE_RULE_UNRESOLVED"
                     ]
                   },
                   "invariantIds": {
@@ -5992,6 +5994,37 @@
                   },
                   "proof": {
                     "const": "QA_SOURCE_RULE_TO_CAUSAL_LEADS_NOT_QA_VERDICT"
+                  }
+                }
+              },
+              "modeScope": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "modeId",
+                  "gameSubjectId",
+                  "evidenceIds",
+                  "proof"
+                ],
+                "properties": {
+                  "modeId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "gameSubjectId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "evidenceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "proof": {
+                    "const": "EXACT_SOURCE_GAME_MODE_ROUTING_NOT_QA_PROOF"
                   }
                 }
               }
@@ -6101,6 +6134,57 @@
         "omittedUnscopedActivities": {
           "type": "integer",
           "minimum": 0
+        },
+        "modeClassifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "modeId",
+              "gameSubjectId",
+              "mapType",
+              "playerMode",
+              "status",
+              "evidenceIds",
+              "proof"
+            ],
+            "properties": {
+              "modeId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "gameSubjectId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mapType": {
+                "type": "string",
+                "minLength": 1
+              },
+              "playerMode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "SOURCE_SCOPED_ROUTING_ONLY",
+                  "SOURCE_BINDING_UNRESOLVED"
+                ]
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "proof": {
+                "const": "MODE_HINT_SOURCE_CORRELATION_NOT_GAMEPLAY_PROOF"
+              }
+            }
+          }
         }
       }
     }

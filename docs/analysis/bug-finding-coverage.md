@@ -810,6 +810,44 @@ Canonical EVALUATE/PROVE retain all actual proof decisions. The exact QA
 source-rule association only makes the remaining deciding question narrower
 when such evidence exists.
 
+### Per-minigame source-bound QA selection
+
+A single selected `.mcworld` may contain multiple game or minigame
+systems. The existing `GameDesignMapClassification` now accepts optional
+`modes[]` (one unique `modeId` and exact source `gameSubjectId` per
+entry, with mapType, playerMode, mechanicTags and selected evidence IDs).
+The same fingerprint-bound routing hint may carry these mode claims even
+when the overarching map type remains unresolved.
+
+The *existing* inspection's Gameplay Intent must have one exact
+`authored` game node with that ID and source evidence. Every declared
+evidence ID must be present in the same selected artifact and associated
+with that game node or its direct authored source edge. Otherwise the
+mode is **SOURCE_BINDING_UNRESOLVED** and activates no type/PvP QA.
+Valid source-correlated hints create bounded `map-type-coverage`
+scenarios named `classification:mode:<modeId>:<gameSubjectId>`,
+with the existing eight type/5 player-mode/30 mechanic/PvP question
+families. The Scenario Graph constrains the source anchor and component
+neighborhood to that exact game node and direct source-linked subjects:
+another minigame cannot borrow its proof merely because both are in
+one world.
+
+`qaCoverage.modeClassifications[]` shows every supplied mode claim and
+whether current source supports its routing. A selected QA row carries
+`modeScope` and remains **QA_SPECIFIC_PROOF_UNRESOLVED**. Only an
+authored Gameplay Intent invariant with exact ID
+`qa:mode:<encodeURIComponent(modeId)>:<QA_ID>`, selected source evidence
+and the same gameSubjectId can generate QA-specific causal *leads*.
+This does **not** automatically prove the QA requirement, approve game
+design, or establish a PASS/FAIL verdict. Canonical EVALUATE/PROVE
+still own deciding proof, counterproof, and issue publication.
+
+No minigame type is guessed from `PvP`, `Bedwars`, `Bridge` or any
+name/keyword. When exact current-artifact classification data does not
+exist, the profile remains unresolved and discovery continues. This is
+a conditional source-backed integration path, not universal automatic
+recognition or native Minecraft runtime proof.
+
 ## Mutable-state reverse index
 
 For every material mutable resource build:

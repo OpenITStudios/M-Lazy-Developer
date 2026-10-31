@@ -54,6 +54,19 @@ export type GameDesignMapClassificationStatus =
   | "RESOLVED"
   | "UNRESOLVED";
 
+/**
+ * Optional scoped mode routing; only an exact source game node and evidence
+ * admitted during current-world inspection can activate its QA scenarios.
+ */
+export interface GameDesignModeClassification {
+  readonly modeId: string;
+  readonly gameSubjectId: string;
+  readonly mapType: GameDesignMapType;
+  readonly playerMode: GameDesignPlayerMode;
+  readonly mechanicTags: readonly GameDesignMechanicTag[];
+  readonly evidenceRefs: readonly string[];
+}
+
 export interface GameDesignMapClassification {
   readonly mapType: GameDesignMapType | null;
   readonly playerMode: GameDesignPlayerMode | null;
@@ -61,6 +74,7 @@ export interface GameDesignMapClassification {
   readonly classificationStatus:
     GameDesignMapClassificationStatus;
   readonly evidenceRefs: readonly string[];
+  readonly modes?: readonly GameDesignModeClassification[];
 }
 
 export interface GameDesignSpec {

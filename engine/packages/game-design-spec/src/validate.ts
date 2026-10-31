@@ -125,6 +125,51 @@ export function validateGameDesignMapClassification(
     }
   }
 
+  if (item.modes !== undefined) {
+    if (!Array.isArray(item.modes) || item.modes.length > 32) {
+      errors.push("Game Design modes must be an array of at most 32 entries.");
+    } else {
+      const gameIds = new Set<string>();
+      const modeIds = new Set<string>();
+      for (const [index, mode] of item.modes.entries()) {
+        const label = "Game Design mode " + index;
+        if (mode === null || typeof mode !== "object" ||
+            Array.isArray(mode)) {
+          errors.push(label + " must be an object.");
+          continue;
+        }
+        if (typeof mode.modeId !== "string" || !mode.modeId.trim() ||
+            mode.modeId.length > 128 || modeIds.has(mode.modeId)) {
+          errors.push(label + " requires a unique modeId (1-128 characters).");
+        } else modeIds.add(mode.modeId);
+        if (typeof mode.gameSubjectId !== "string" ||
+            !mode.gameSubjectId.trim() || mode.gameSubjectId.length > 256 ||
+            gameIds.has(mode.gameSubjectId)) {
+          errors.push(label + " requires a unique source gameSubjectId (1-256 characters).");
+        } else gameIds.add(mode.gameSubjectId);
+        if (!GAME_DESIGN_MAP_TYPES.includes(mode.mapType as any)) {
+          errors.push(label + " mapType is not canonical.");
+        }
+        if (!GAME_DESIGN_PLAYER_MODES.includes(mode.playerMode as any)) {
+          errors.push(label + " playerMode is not canonical.");
+        }
+        if (!Array.isArray(mode.mechanicTags) ||
+            mode.mechanicTags.some((tag: string) =>
+              !GAME_DESIGN_MECHANIC_TAGS.includes(tag as any)) ||
+            new Set(mode.mechanicTags).size !== mode.mechanicTags.length) {
+          errors.push(label + " mechanicTags must be unique canonical tags.");
+        }
+        if (!Array.isArray(mode.evidenceRefs) ||
+            mode.evidenceRefs.length === 0 ||
+            mode.evidenceRefs.some((ref: string) =>
+              typeof ref !== "string" || !ref.trim()) ||
+            new Set(mode.evidenceRefs).size !== mode.evidenceRefs.length) {
+          errors.push(label + " evidenceRefs must be unique nonempty selected-source IDs.");
+        }
+      }
+    }
+  }
+
   if (
     item.classificationStatus === "RESOLVED"
   ) {
