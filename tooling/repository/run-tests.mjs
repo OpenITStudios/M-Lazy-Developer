@@ -162,7 +162,7 @@ function loadInventory() {
     }
   }
   const validRecommendations = new Set([
-    "keep", "keep-provisional", "merge-candidate", "defer", "obsolete",
+    "keep", "merge-candidate", "defer", "obsolete",
   ]);
   const paths = new Set();
   for (const item of data.tests) {
@@ -178,12 +178,12 @@ function loadInventory() {
         featureCatalog[item.featureId]?.area !== item.functionalArea ||
         typeof featureCatalog[item.featureId]?.label !== "string" ||
         !featureCatalog[item.featureId].label.trim() ||
-        !["source-case-inspected", "path-provisional"].includes(item.featureMappingBasis) ||
+        item.featureMappingBasis !== "source-case-inspected" ||
         !Array.isArray(item.mechanicTags) ||
         new Set(item.mechanicTags).size !== item.mechanicTags.length ||
         item.mechanicTags.some(tag => typeof tag !== "string" ||
           !/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)*$/.test(tag)) ||
-        !["path-provisional", "source-case-inspected"].includes(item.mechanicMappingBasis) ||
+        item.mechanicMappingBasis !== "source-case-inspected" ||
         !validRecommendations.has(item.recommendation) ||
         typeof item.rationale !== "string" || !item.rationale.trim() ||
         !item.triage || item.triage.owner !== item.owner ||
@@ -211,7 +211,7 @@ function loadInventory() {
       if (currentSha !== item.triage.sourceBlobSha) {
         throw new Error(
           "Stale source-case feature mapping: " + item.path +
-          ". Re-review its consumer/assertions or demote to path-provisional.",
+          ". Re-review its consumer/assertions and re-pin its exact Git blob before selection.",
         );
       }
     }
@@ -496,7 +496,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   vitestFiles = null; // Vitest discovers the complete suite, excluding node:test.
   selectedNative = nativeFiles;
 } else if (mode === "--lane" && args.length === 2 && lanes.includes(args[1])) {
-  // Provisional routing only. Not proof of coverage or permission to skip safety tests.
+  // Lane routing is a selection hint, not proof of coverage or permission to skip safety tests.
   const matching = registeredTests.filter((item) => item.lane === args[1]).map((item) => item.path);
   selectedNative = matching.filter((path) => nativeFiles.includes(path));
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
@@ -509,7 +509,7 @@ if (mode === "--acceptance" && args.length <= 1) {
     const inspected = files.filter(test => test.featureMappingBasis === "source-case-inspected").length;
     console.log(area + ": " + files.length + " source files / " +
       features.size + " behavior features (" + inspected +
-      " source-case-inspected, " + (files.length - inspected) + " provisional).");
+      " source-case-inspected, " + (files.length - inspected) + " without evidence).");
   }
   process.exit(0);
 } else if (mode === "--show-area" && args.length === 2) {
@@ -564,7 +564,7 @@ if (mode === "--acceptance" && args.length <= 1) {
     " across " + laneFeatureGroups.size + " lane/feature groups; " +
     developmentFeatures.size + " Development features.");
   console.log("Source-backed feature mappings: " + inspected +
-    "; path-provisional: " + (registeredTests.length - inspected) + ".");
+    "; not source-classified: " + (registeredTests.length - inspected) + ".");
   console.log("Default acceptance selection: " + acceptanceVitestFiles.length +
     " Vitest suites + " + acceptanceNativeFiles.length +
     " native suite (selection only; NOT EXECUTED).");
@@ -774,7 +774,7 @@ if (mode === "--acceptance" && args.length <= 1) {
     }
   }
   for (const [tag, count] of [...counts].sort(([a], [b]) => a.localeCompare(b))) {
-    console.log(tag + ": " + count + " files (provisional)");
+    console.log(tag + ": " + count + " source-classified files (NOT gameplay proof)");
   }
   process.exit(0);
 } else if (mode === "--show-mechanic" && args.length === 2) {
@@ -788,7 +788,7 @@ if (mode === "--acceptance" && args.length <= 1) {
 } else if (mode === "--list-lanes" && args.length === 1) {
   const tests = registeredTests;
   for (const lane of lanes) {
-    console.log(lane + ": " + tests.filter((item) => item.lane === lane).length + " files (provisional)");
+    console.log(lane + ": " + tests.filter((item) => item.lane === lane).length + " files (selection only; NOT execution proof)");
   }
   process.exit(0);
 } else if (mode === "--affected" && args.length > 1) {

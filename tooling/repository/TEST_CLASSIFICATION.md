@@ -1,6 +1,69 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source audit — 2026-10-31: 381 physical test files
+## Classification closure — October 31, 2026 (source/static evidence)
+
+Status: **381 source-test files**, **381 source-case-anchored feature mappings**,
+**381 source-reviewed mechanic mapping decisions**, and **0 path-provisional entries**.
+Every file retains a primary functional area, feature ID, original execution lane,
+and an exact Git source blob SHA. An empty mechanic-tag set means no specific
+mechanic was assigned to that source test, not that the map lacks the mechanic.
+
+This classification review inspected the test declarations, deciding assertion
+sites and direct or indirect consumer routes of all 301 previously provisional
+test files, plus 47 source-classified entries whose mechanic mapping was still
+path-derived. Prior 33 inspected mechanic mappings were preserved. Two
+source-evidenced corrections align environment-hazard checks with world rules
+and zero-waste benchmark checks with tooling efficiency. No physical test file,
+negative case, suite boundary, execution lane or CI trigger was changed.
+
+**Independent axes:** functionalArea and featureId identify the repository
+test's primary subject; mechanicTags are optional secondary lookups; lane
+determines test selection; two upstream v0.30.0 ZIPs provide reference topics
+only. Selected-map gameplay issues instead use the existing failureDomain,
+gameplayFlow, issueType and impact-derived severity. File classification is
+not measured bug-detection coverage or proof of successful execution.
+
+Conservative retention: **368 keep**, **13 defer**, **0 keep-provisional**.
+Historical review-depth flags remain **100 source-reviewed** and **281
+case-inventory-reviewed**; neither establishes full assertion equivalence,
+test isolation, Vitest/TypeScript execution or Minecraft-runtime verification.
+Source SHA invalidation requires re-review after every edit; it is an integrity
+gate, not a claim that a test has run. The existing runner is unchanged except
+for refusing future uninspected classifications and improving navigation labels.
+
+| Functional area | Source test files |
+| --- | ---: |
+| `map-database` | 4 |
+| `map-content` | 17 |
+| `lobby-pre-match` | 0 |
+| `player-session` | 6 |
+| `arena-match` | 26 |
+| `player-state-persistence` | 7 |
+| `combat-entities` | 21 |
+| `inventory-economy` | 8 |
+| `world-interaction` | 13 |
+| `gameplay-scripting` | 22 |
+| `gameplay-interpretation` | 31 |
+| `audit-diagnosis` | 87 |
+| `runtime-telemetry` | 48 |
+| `repair-preservation` | 51 |
+| `reporting` | 18 |
+| `platform-compatibility` | 3 |
+| `engineering-tooling` | 19 |
+| **Total** | **381** |
+
+`lobby-pre-match` has zero dedicated physical test files, but arena and
+player-session checks include join/ready behavior. This is not proof of
+end-to-end lobby coverage or its absence. The canonical selected-map
+Bug-Finding Coverage and Mandatory Audit Procedure remain separate owners.
+
+## Earlier consolidation/source audits — historical snapshots
+
+All historical sections below preserve their earlier counts. The word
+"current" and provisional classifications in those snapshots mean
+current **at that historical phase**, not at this closure.
+
+### Source consolidation audit before classification closure — 381 files
 
 The canonical machine registry is `tooling/repository/test-inventory.json`.
 The active source tree and inventory contain **381** physical test files.

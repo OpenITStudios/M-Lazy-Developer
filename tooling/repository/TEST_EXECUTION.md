@@ -1,9 +1,11 @@
 # Test execution lanes
 
-The path-derived routing inventory is `tooling/repository/test-inventory.json`.
-Its lane labels are provisional navigation metadata, not proof of test safety,
-coverage or successful execution. Semantic decisions in `review` and
-`recommendation` do not automatically disable any test.
+The canonical inventory is `tooling/repository/test-inventory.json`.
+Its feature and mechanic classifications are tied to inspected source test cases,
+assertions, their owner/consumer routes and exact Git blob fingerprints. Lane labels
+are selection/routing hints only; neither a source classification nor a lane
+establishes successful execution, release safety or selected-map bug detection.
+Retention decisions in `review` and `recommendation` do not disable tests.
 
 Existing execution remains intact:
 
