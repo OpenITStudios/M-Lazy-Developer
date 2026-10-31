@@ -126,6 +126,8 @@ export function formatSelectedMapAuditFinalReport(input: {
       "Profil: " + qa.profile + "; pertanyaan terpilih: " +
         qa.selected + "; pelanggaran QA terbukti: " +
         (qa.confirmedViolations ?? 0) +
+        "; source relation terhitung: " +
+        (qa.sourceRelationsAccounted ?? 0) +
         "; QA ID dinyatakan lulus: " + qa.proofBound + ".",
       "Hanya keputusan PROVE dengan invariant QA dan temuan PROVEN yang " +
         "tepat dapat mengonfirmasi pelanggaran; kekurangan bukti bukan PASS.",
@@ -179,6 +181,12 @@ export function formatSelectedMapAuditFinalReport(input: {
           (binding?.status ?? "UNKNOWN") + ")";
       const violation = item.status === "QA_VIOLATION_PROVEN"
         ? item.qaViolation : undefined;
+      const sourceStatus = item.positiveSourceCoverage?.status ===
+        "SOURCE_RELATIONS_ACCOUNTED"
+        ? "source-scope terhitung, belum berarti SAFE/PASS"
+        : item.positiveSourceCoverage?.status === "RUNTIME_PROOF_REQUIRED"
+          ? "bukti Minecraft/native masih diperlukan"
+          : undefined;
       out.push("- " + item.id +
         (item.modeScope ? " [" + item.modeScope.modeId + "]" : "") +
         (violation ? " PELANGGARAN TERBUKTI — " :
@@ -188,6 +196,7 @@ export function formatSelectedMapAuditFinalReport(input: {
           ? "PROVE " + violation.causalLinkId +
             ", " + violation.issueType
           : bindingText) +
+        (sourceStatus ? "; " + sourceStatus : "") +
         "; bukan QA PASS)");
     }
     if (qa.checks.length > 10) {

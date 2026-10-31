@@ -886,6 +886,47 @@ scope coverage and affirmative contrary/absence evidence which the
 existing canonical issue resolution does not provide merely by
 counterproving a single candidate.
 
+### Positive QA source-coverage review — not whole-requirement SAFE
+
+The existing canonical Gameplay Defect Resolution owner also exposes
+`assessQaPositiveSourceCoverage()` for **read-only positive source
+coverage** on one exact authored QA invariant. This is an input-scoped
+projection for QA navigation, not a new gate, test registry, certificate,
+issue or second result authority.
+
+Source relations can be **SOURCE_RELATIONS_ACCOUNTED** only when:
+
+- One exact `must`/`must-not` QA invariant, its selected-artifact evidence,
+  and all its uniquely owned source subjects are grounded. A per-mode QA
+  must match the exact current source-owned `game` subject.
+- Exact source causal links share all QA subjects and actual rule evidence,
+  contain selected implementation evidence, are uniquely scoped and
+  `PROVEN`, and have their own satisfied required Knowledge receipts.
+- **All** causal links touching the rule's subjects are `PROVEN`; a
+  conveniently proven subset cannot hide another contradictory,
+  runtime-blocked or detection-gap dependency.
+- The canonical Discovery source inventory is fully accounted (no
+  unsupported/unparsed sources, unresolved references or intent unknowns),
+  and canonical Scenario Closure is `CLOSED`.
+
+Any failed requirement yields `UNRESOLVED`, or
+`RUNTIME_PROOF_REQUIRED` when a matching source dependency still needs
+native runtime evidence. The QA row retains the exact source/link IDs
+and missing proof reasons. `qaCoverage.sourceRelationsAccounted` counts
+**source relationships accounted**, *not* safe QA tests.
+
+Crucially, **SOURCE_RELATIONS_ACCOUNTED is NOT SAFE**: even complete
+static source relations do not establish all player input interleavings,
+observed Minecraft effects, live networking, every map-mode branch or
+the requested requirement's absolute correctness. Nor does absence of
+violations prove `NOT_APPLICABLE`. The separate `QA_VIOLATION_PROVEN`
+route remains the only admitted QA verdict in the current projection.
+`proofBound: 0` and the prohibition on automatic PASS remain unchanged.
+
+Future genuine QA SAFE or NOT_APPLICABLE decisions must cite
+requirement-specific deciding and affirmative absence evidence with
+bounded completeness, through the same canonical EVALUATE/PROVE owner.
+Do **not** promote this read-only source coverage into those verdicts.
 ## Mutable-state reverse index
 
 For every material mutable resource build:

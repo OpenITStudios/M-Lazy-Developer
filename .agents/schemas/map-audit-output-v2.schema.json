@@ -6073,6 +6073,53 @@
                     "const": "CANONICAL_PROVE_ADMITTED_EXACT_QA_VIOLATION"
                   }
                 }
+              },
+              "positiveSourceCoverage": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "causalLinkIds",
+                  "sourceEvidenceIds",
+                  "unresolvedReasons",
+                  "proof"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "SOURCE_RELATIONS_ACCOUNTED",
+                      "RUNTIME_PROOF_REQUIRED",
+                      "UNRESOLVED"
+                    ]
+                  },
+                  "causalLinkIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "sourceEvidenceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "unresolvedReasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "proof": {
+                    "const": "SCOPED_SOURCE_COVERAGE_NOT_QA_SAFE_OR_NOT_APPLICABLE"
+                  }
+                }
               }
             }
           }
@@ -6233,6 +6280,10 @@
           }
         },
         "confirmedViolations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceRelationsAccounted": {
           "type": "integer",
           "minimum": 0
         }

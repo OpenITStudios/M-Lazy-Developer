@@ -35,6 +35,10 @@ import type {
   GameplayArchitectureNavigation,
   GameplayCausalLink,
 } from "./inspection/gameplay-scenario-model.js";
+import {
+  assessQaPositiveSourceCoverage,
+  type QaPositiveSourceCoverageAssessment,
+} from "./inspection/gameplay-defect-resolution.js";
 import type {
   AuditUserIntentEnvelope,
 } from "./map-audit-user-intent.js";
@@ -181,6 +185,8 @@ export interface MapAuditQaCoverage {
   readonly selected: number;
   /** Canonically PROVEN violations tied to their exact QA invariants. */
   readonly confirmedViolations?: number;
+  /** Source-level candidate evidence, NEVER QA PASS or native Minecraft proof. */
+  readonly sourceRelationsAccounted?: number;
   /** No full QA PASS is inferred from a missing bug or one counterproof. */
   readonly proofBound: 0;
   readonly checks: readonly {
@@ -193,6 +199,8 @@ export interface MapAuditQaCoverage {
     readonly omittedScenarioEvidence: number;
     readonly omittedRelatedLinks: number;
     readonly evidenceRole: "SCENARIO_SCOPE_NAVIGATION_NOT_REQUIREMENT_PROOF";
+    /** Source-positive investigation from canonical graph, not a SAFE decision. */
+    readonly positiveSourceCoverage?: QaPositiveSourceCoverageAssessment;
     /** Only an admitted canonical PROVE resolution + exact PROVEN finding
      * can supply this source violation. It never constitutes a QA PASS.
      */
@@ -876,12 +884,25 @@ function projectSelectedMapQaCoverage(
         admittedQaViolationFor(
           qaInvariantId, exactSourceQaRule.status,
           modeScope?.gameSubjectId);
+      const positiveSourceCoverage = qaInvariantId === undefined ||
+        exactSourceQaRule.status !== "EXACT_SOURCE_RULE_WITH_CAUSAL_LEADS"
+        ? undefined : assessQaPositiveSourceCoverage({
+          graph,
+          intent,
+          discovery: inspection.gameplayDiscoveryClosure,
+          scenarioClosure: inspection.hiddenGameplayDefects.scenarioAudit.closure,
+          qaInvariantId,
+          ...(modeScope === undefined ? {} :
+            { modeGameSubjectId: modeScope.gameSubjectId }),
+        });
       checks.push({
         id: tagged[1]!, scenarioId: "preset:" + scenario.id,
         question: tagged[2]!,
         status: qaViolation === undefined
           ? "QA_SPECIFIC_PROOF_UNRESOLVED" : "QA_VIOLATION_PROVEN",
         ...(qaViolation === undefined ? {} : { qaViolation }),
+        ...(positiveSourceCoverage === undefined ? {} :
+          { positiveSourceCoverage }),
         scenarioSourceEvidenceIds: evidence.slice(0, 8),
         relatedCausalLinkIds: linkIds.slice(0, 8),
         omittedScenarioEvidence: Math.max(0, evidence.length - 8),
@@ -919,6 +940,8 @@ function projectSelectedMapQaCoverage(
     selected: checks.length,
     confirmedViolations: checks.filter(item =>
       item.status === "QA_VIOLATION_PROVEN").length,
+    sourceRelationsAccounted: checks.filter(item =>
+      item.positiveSourceCoverage?.status === "SOURCE_RELATIONS_ACCOUNTED").length,
     proofBound: 0,
     checks,
   };

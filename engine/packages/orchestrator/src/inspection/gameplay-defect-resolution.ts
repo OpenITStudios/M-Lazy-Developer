@@ -13,6 +13,161 @@ import {
   type GameplayIssueFailureDomain,
 } from "../../../diagnostic-reasoning/src/index.js";
 import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js";
+import type { GameplayDiscoveryClosure } from "./gameplay-discovery-closure.js";
+import type { GameplayScenarioClosure } from "./gameplay-scenario-model.js";
+
+/**
+ * Read-only *positive source coverage* assessment for one explicit QA
+ * invariant. Reuses the existing PROVE graph/knowledge owners. Even a
+ * fully accounted selected-source graph is NOT a QA SAFE, PASS, or
+ * NOT_APPLICABLE decision, nor evidence of Minecraft execution.
+ */
+export interface QaPositiveSourceCoverageAssessment {
+  readonly status:
+    "SOURCE_RELATIONS_ACCOUNTED" |
+    "RUNTIME_PROOF_REQUIRED" |
+    "UNRESOLVED";
+  readonly causalLinkIds: readonly string[];
+  readonly sourceEvidenceIds: readonly string[];
+  readonly unresolvedReasons: readonly string[];
+  readonly proof: "SCOPED_SOURCE_COVERAGE_NOT_QA_SAFE_OR_NOT_APPLICABLE";
+}
+
+export function assessQaPositiveSourceCoverage(input: {
+  readonly graph: GameplayScenarioGraph;
+  readonly intent: GameplayIntentModel;
+  readonly discovery: GameplayDiscoveryClosure;
+  readonly scenarioClosure: GameplayScenarioClosure;
+  readonly qaInvariantId: string;
+  readonly modeGameSubjectId?: string;
+}): QaPositiveSourceCoverageAssessment {
+  const {graph, intent, discovery, scenarioClosure, qaInvariantId} = input;
+  const reasons: string[] = [];
+  const evidenceById = new Map<string, GameplayIntentModel["evidence"][number][]>();
+  for (const item of intent.evidence) {
+    const matching = evidenceById.get(item.id) ?? [];
+    matching.push(item);
+    evidenceById.set(item.id, matching);
+  }
+  const uniqueSelected = (id: string) => {
+    const matching = evidenceById.get(id) ?? [];
+    return matching.length === 1 &&
+      matching[0]?.scope === "selected-artifact";
+  };
+  const sourceImplementation = (id: string) => {
+    const item = evidenceById.get(id);
+    return item?.length === 1 && item[0]?.scope === "selected-artifact" &&
+      (item[0].origin === "source-code" || item[0].origin === "command");
+  };
+  const rules = intent.invariants.filter(rule => rule.id === qaInvariantId);
+  const rule = rules.length === 1 ? rules[0] : undefined;
+  if (rule === undefined || rule.status !== "authored" ||
+      (rule.strength !== "must" && rule.strength !== "must-not")) {
+    reasons.push("QA rule must have one exact authored must/must-not source owner.");
+  }
+  const subjects = [...new Set(rule?.subjectIds ?? [])].sort();
+  if (subjects.length === 0 || subjects.length !== (rule?.subjectIds.length ?? 0) ||
+      subjects.some(id => {
+        const nodes = intent.nodes.filter(node => node.id === id);
+        return nodes.length !== 1 || nodes[0]?.status === "hypothesis" ||
+          !nodes[0].evidenceIds.some(uniqueSelected);
+      })) {
+    reasons.push("QA rule subject ownership is missing, duplicated or outside selected source.");
+  }
+  if (input.modeGameSubjectId !== undefined &&
+      (!subjects.includes(input.modeGameSubjectId) ||
+       intent.nodes.filter(node =>
+         node.id === input.modeGameSubjectId && node.kind === "game" &&
+         node.status === "authored" &&
+         node.evidenceIds.some(uniqueSelected)).length !== 1)) {
+    reasons.push("Exact per-mode game subject is not grounded by the QA rule.");
+  }
+  const ruleEvidence = rule?.evidenceIds ?? [];
+  if (ruleEvidence.length === 0 || ruleEvidence.some(id => !uniqueSelected(id))) {
+    reasons.push("QA invariant needs unambiguous exact selected-source evidence.");
+  }
+  if (discovery.status !== "COMPLETE" ||
+      !discovery.sourceFileAccountingComplete ||
+      !discovery.sourceInventoryBalanced ||
+      !discovery.sourceCoverageComplete ||
+      discovery.semanticUnderstandingGaps !== 0 ||
+      discovery.sourceParseFailures !== 0 ||
+      discovery.unsupportedRelevantSources !== 0 ||
+      discovery.nativeWorldScanIncomplete ||
+      discovery.unresolvedReferences !== 0 ||
+      discovery.discoveryChallengeIds.length > 0 ||
+      (discovery.unresolvedSourceLinkIds?.length ?? 0) > 0 ||
+      discovery.gameplayIntentUnknownIds.length > 0 ||
+      intent.unknowns.length > 0) {
+    reasons.push("Selected-artifact discovery has open or unsupported source surfaces.");
+  }
+  if (scenarioClosure.status !== "CLOSED") {
+    reasons.push("Canonical scenario closure is not complete at source tier.");
+  }
+
+  // Every graph link touching the invariant's exact subjects contributes
+  // to the source coverage challenge, even if it does not share a source
+  // witness. This prevents selectively proving one convenient route.
+  const related = graph.causalLinks.filter(link =>
+    subjects.some(id => link.subjectIds.includes(id)));
+  const exact = related.filter(link =>
+    subjects.every(id => link.subjectIds.includes(id)) &&
+    ruleEvidence.some(id => link.evidenceIds.includes(id)));
+  if (exact.length === 0) {
+    reasons.push("No exact causal link shares every QA subject and rule evidence.");
+  }
+  if (related.length === 0 ||
+      related.some(link => link.status !== "PROVEN" ||
+        uniqueGameplayCausalLinkScope(graph, link.id) === undefined)) {
+    reasons.push("At least one relevant causal link lacks a unique PROVEN source owner.");
+  }
+  const sourceIds = new Set<string>(ruleEvidence.filter(uniqueSelected));
+  const usable: string[] = [];
+  for (const link of exact) {
+    if (link.status !== "PROVEN" ||
+        uniqueGameplayCausalLinkScope(graph, link.id) === undefined ||
+        !link.evidenceIds.some(sourceImplementation)) {
+      reasons.push("QA causal link is not source-proven with implementation evidence: " + link.id);
+      continue;
+    }
+    const required = link.knowledgeRequirementIds;
+    if (required.length === 0 || required.some(id => {
+      const requirement = uniqueScenarioKnowledgeRequirement(
+        graph, id, link.scenarioId);
+      return requirement === undefined ||
+        satisfiedScenarioKnowledgeReceipt(graph, requirement) === undefined;
+    })) {
+      reasons.push("QA causal link is missing exact satisfied knowledge: " + link.id);
+      continue;
+    }
+    usable.push(link.id);
+    for (const id of link.evidenceIds.filter(uniqueSelected)) sourceIds.add(id);
+    for (const id of required) {
+      const requirement = uniqueScenarioKnowledgeRequirement(
+        graph, id, link.scenarioId);
+      const receipt = requirement === undefined
+        ? undefined : satisfiedScenarioKnowledgeReceipt(graph, requirement);
+      for (const evidenceId of receipt?.evidenceIds ?? []) {
+        if (uniqueSelected(evidenceId)) sourceIds.add(evidenceId);
+      }
+    }
+  }
+  // Runtime work in another game or subsystem must not become this QA's
+  // native-runtime requirement. Global closure still blocks source coverage,
+  // but the runtime label belongs only to the exact related causal links.
+  const runtime = related.some(link => link.status === "RUNTIME_BLOCKED");
+  const sortedReasons = [...new Set(reasons)].sort();
+  return {
+    status: runtime ? "RUNTIME_PROOF_REQUIRED" :
+      sortedReasons.length === 0 && usable.length === exact.length &&
+      usable.length > 0
+        ? "SOURCE_RELATIONS_ACCOUNTED" : "UNRESOLVED",
+    causalLinkIds: [...new Set(usable)].sort(),
+    sourceEvidenceIds: [...sourceIds].sort(),
+    unresolvedReasons: sortedReasons,
+    proof: "SCOPED_SOURCE_COVERAGE_NOT_QA_SAFE_OR_NOT_APPLICABLE",
+  };
+}
 
 /** Exact selected-artifact subject/scope relation; not a proof of reachability or delivery. */
 export function capabilityDeliveryMatchesScope(
