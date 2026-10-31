@@ -2617,7 +2617,7 @@
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "verify-merged-test-file-isolation-and-affected-selection",
-        "sourceBlobSha": "ea866a5e38f145ac0a019996e3b0c6de7dc16411"
+        "sourceBlobSha": "b9915fdb8e1e1f70fd64d65b0aece72155255524"
       },
       "recommendation": "keep-provisional",
       "rationale": "Consolidated 3 same-owner, same-feature Development source files into one suite; all original tests and 10 it()/test() plus 47 expect() call sites retained statically. Exact execution, test-file isolation and affected-selection cost unverified.",
@@ -6286,7 +6286,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-obligation-and-replica-proof-boundaries",
-        "sourceBlobSha": "401f229ea56003c9c3d762020578a82edd92a25a"
+        "sourceBlobSha": "0798b832fc11dce98619c0e164d4c9f71f98f791"
       },
       "recommendation": "keep-provisional",
       "rationale": "Includes all prior audit obligation cases and the unclassified replica divergence regression merged from the retired single-case suite; same canonical deriveAuditObligations source owner and explicit FORMALIZE/validation evidence checks. Source reviewed, execution not verified.",
