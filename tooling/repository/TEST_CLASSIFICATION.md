@@ -30,8 +30,48 @@ Inventory disposition: 289 provisional,
 82 keep, 14 defer.
 Review provenance: 284 case-inventory-reviewed
 and 101 source-reviewed; feature mapping remains
-`path-provisional` for 318 entries (67 source-case-inspected).
+`path-provisional` for 307 entries (78 source-case-inspected, exact Git SHA-bound).
 These provisional labels **cannot** justify deleting a unique test.
+
+### Bounded duplicate-case and behavior-family audit — 2026-10-31
+
+A pinned source audit compared **327 actual `it()/test()` bodies** and their
+**1,135 `expect()` callsites** across **12** substantial suites (Orchestrator
+inspection/discovery/reporting/proof, Behavior Model, and Diagnostic
+Reasoning). Every extracted body was compared with whitespace normalized;
+**zero exact duplicate bodies** appeared within that selected corpus. This
+does **not** prove all 385 source files contain no semantic duplicates:
+different fixture setup can produce equivalent expectations, and identical
+assertion methods do not make two scenarios equivalent. None of the 327
+cases was deleted. Exact original file/SHA/case-count provenance is stored in
+the existing `test-inventory.json` consolidation review.
+
+**11 additional** suites are now `source-case-inspected`, rising from 67
+to **78 exact Git SHA-bound source feature mappings**. The remaining **307**
+are provisional. No test case/registration/assertion was deleted merely to
+reduce the physical file count.
+
+#### Count semantics for a sustainable target
+
+- **385 physical test files** are stored in the repository source tree.
+- **113 feature families** are classified in the current canonical
+  `featureCatalog`; **100 distinct features** occur in the Development lane.
+- **153 lane/feature groupings** carry the safety, development, runtime,
+  regression, and acceptance separation.
+- `npm test` / `--acceptance` selects **10 Vitest suites and one native
+  suite** in its default execution plan, not all 385 source test files.
+  Selection is not proof of execution.
+- Among current paths, only **33** same-directory/feature/lane families have
+  multiple files. Combining all of them could remove at most **80** file
+  boundaries, reaching **305** files in theory, *without even proving those
+  mergers safe*. Reaching 100 physical files necessarily requires additional
+  cross-feature merges or substantive behavior-coverage changes. It is not
+  licensed by the count target.
+
+The existing `run-tests.mjs --list-areas` and `--list-test-groups`
+navigation now shows source-file and feature-family counts separately,
+including source-backed versus provisional classification. It introduces
+no alternate runner, CI workflow, runtime proof, or new test lane.
 
 ### Exact-source classification integrity — 2026-10-31
 

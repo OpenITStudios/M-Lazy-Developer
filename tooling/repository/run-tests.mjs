@@ -502,8 +502,14 @@ if (mode === "--acceptance" && args.length <= 1) {
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
 } else if (mode === "--list-areas" && args.length === 1) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  console.log("Area overview: source files are not executable case counts. NO TESTS EXECUTED.");
   for (const area of inventory.functionalAreaTaxonomy.areas) {
-    console.log(area + ": " + registeredTests.filter(test => test.functionalArea === area).length + " files (provisional)");
+    const files = registeredTests.filter(test => test.functionalArea === area);
+    const features = new Set(files.map(test => test.featureId));
+    const inspected = files.filter(test => test.featureMappingBasis === "source-case-inspected").length;
+    console.log(area + ": " + files.length + " source files / " +
+      features.size + " behavior features (" + inspected +
+      " source-case-inspected, " + (files.length - inspected) + " provisional).");
   }
   process.exit(0);
 } else if (mode === "--show-area" && args.length === 2) {
@@ -546,6 +552,24 @@ if (mode === "--acceptance" && args.length <= 1) {
   console.log("Registered source test files: " + registeredTests.length +
     "; related to publisher topics: " + topical.length +
     "; M-Lazy internal-only: " + internal.length + ".");
+  const behaviorFeatures = new Set(registeredTests.map(test => test.featureId));
+  const laneFeatureGroups = new Set(registeredTests.map(test =>
+    test.lane + "|" + test.featureId));
+  const developmentFeatures = new Set(registeredTests
+    .filter(test => test.lane === "development")
+    .map(test => test.featureId));
+  const inspected = registeredTests.filter(test =>
+    test.featureMappingBasis === "source-case-inspected").length;
+  console.log("Behavior feature families: " + behaviorFeatures.size +
+    " across " + laneFeatureGroups.size + " lane/feature groups; " +
+    developmentFeatures.size + " Development features.");
+  console.log("Source-backed feature mappings: " + inspected +
+    "; path-provisional: " + (registeredTests.length - inspected) + ".");
+  console.log("Default acceptance selection: " + acceptanceVitestFiles.length +
+    " Vitest suites + " + acceptanceNativeFiles.length +
+    " native suite (selection only; NOT EXECUTED).");
+  console.log("Map-specific Basic/Mechanic scenarios use the gameplay audit preset," +
+    " NOT the count of repository source-test files.");
   console.log("Actual M-Lazy categories: --list-areas or --list-features.");
   console.log("\nEXTERNAL REFERENCE TOPICS — similarities, NOT test coverage");
   for (const [sourceId, example] of Object.entries(

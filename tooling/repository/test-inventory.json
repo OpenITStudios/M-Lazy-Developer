@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-  "classification": "385 source test files; 67 source-case-inspected mappings now have exact pinned Git blob SHA review provenance (13 previous gaps closed; 10 newly inspected). 318 path-provisional feature mappings remain. No distinct source assertions, cases or test files deleted in this review: inspected candidates invoke production behavior and lack demonstrated full semantic equivalence. Runtime Vitest/TypeScript/Minecraft NOT EXECUTED.",
+  "classification": "385 physical source-test files across 113 unique behavior feature IDs (153 lane/feature groups, 100 Development feature IDs). 78 source-case-inspected feature mappings have exact matching current Git SHA; 307 remain path-provisional. Bounded source-body comparison of 327 test registrations from 12 exact-SHA suites found 0 whitespace-normalized identical case bodies; full semantic-equivalence analysis and Vitest/Minecraft execution NOT EXECUTED. No test files, registrations, or assertion callsites were deleted in this batch.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -1964,19 +1964,20 @@
       "owner": "engine/packages/behavior-model",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-family-consolidation",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/behavior-model",
         "riskHint": "medium",
-        "action": "review-merged-file-isolation-and-affected-import-closure",
-        "sourceBlobSha": "a7cc6f502fc9b3f4c9668e653776c6e64c4d5da1"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "a7cc6f502fc9b3f4c9668e653776c6e64c4d5da1",
+        "consumerSymbol": "applyBehaviorTransition"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Owner-local feature/lane family: 4 -> 1. Source-level 25 registered it/test callsites and 50 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
+      "rationale": "Owner-local feature/lane family: 4 -> 1. Source-level 25 registered it/test callsites and 50 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup. Direct source review confirms production invocation of applyBehaviorTransition and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.semantic-model",
-      "featureMappingBasis": "path-provisional",
+      "featureMappingBasis": "source-case-inspected",
       "consolidation": {
         "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
         "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
@@ -2562,19 +2563,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "source-preserving-family-consolidation",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "verify-merged-test-file-isolation-and-affected-selection",
-        "sourceBlobSha": "33e47fead4f97ea0275c23b7b50f298efc2a4046"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "33e47fead4f97ea0275c23b7b50f298efc2a4046",
+        "consumerSymbol": "evaluateGameplayBugCandidateEvidence"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Consolidated 5 same-owner, same-feature Development source files into one suite; all original tests and 23 it()/test() plus 42 expect() call sites retained statically. Exact execution, test-file isolation and affected-selection cost unverified.",
+      "rationale": "Consolidated 5 same-owner, same-feature Development source files into one suite; all original tests and 23 it()/test() plus 42 expect() call sites retained statically. Exact execution, test-file isolation and affected-selection cost unverified. Direct source review confirms production invocation of evaluateGameplayBugCandidateEvidence and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.defect-analysis",
-      "featureMappingBasis": "path-provisional",
+      "featureMappingBasis": "source-case-inspected",
       "consolidation": {
         "baseCommit": "ccacc266ef2691b33da2a68821429d768b63784f",
         "method": "same-directory-deduplicated-named-imports-and-block-isolated-original-bodies",
@@ -5211,19 +5213,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-original-source-and-merged-body-preservation",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "7467f4f7d6bb28800ce43822e9635fc031033519"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "7467f4f7d6bb28800ce43822e9635fc031033519",
+        "consumerSymbol": "assessGameplayDefectResolutionGate"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Same-directory development family 2 -> 1, retaining 38 it/test call sites and 125 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 38 it/test call sites and 125 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Direct source review confirms production invocation of assessGameplayDefectResolutionGate and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.closure",
-      "featureMappingBasis": "path-provisional",
+      "featureMappingBasis": "source-case-inspected",
       "consolidation": {
         "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
         "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
@@ -5249,17 +5252,19 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "23 cases protect unowned raw evidence, unresolved edges and source/scenario proof ownership; critical against false closure.",
+      "rationale": "23 cases protect unowned raw evidence, unresolved edges and source/scenario proof ownership; critical against false closure. Direct source review confirms production invocation of challengeGameplayDiscovery and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "5df91bd81a9d0e2546638875555e70e9fc866d4a",
+        "consumerSymbol": "challengeGameplayDiscovery"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.discovery",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-intent-runtime-stage.test.ts",
@@ -5348,17 +5353,19 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Seven explicit positive and negative cases protect receipt identity, knowledge domain obligations, and conditional scenario requirements.",
+      "rationale": "Seven explicit positive and negative cases protect receipt identity, knowledge domain obligations, and conditional scenario requirements. Direct source review confirms production invocation of requiredKnowledgeDomainsForPreset and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "c82173137684d71760707858e60a5154bca81c15",
+        "consumerSymbol": "requiredKnowledgeDomainsForPreset"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.knowledge",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-source-handoff.test.ts",
@@ -5366,19 +5373,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "256f216e3286023da3ac3fd9cd52bea5af60c074"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "256f216e3286023da3ac3fd9cd52bea5af60c074",
+        "consumerSymbol": "compileGameplayScenarioGraph"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review confirms production invocation of compileGameplayScenarioGraph and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "gameplay.discovery",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inspect-artifact.test.ts",
@@ -5425,17 +5433,19 @@
       "review": "case-inventory-reviewed",
       "triage": {
         "owner": "engine/packages/orchestrator",
-        "basis": "source-body-identity-and-entrypoint-consumer",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "riskHint": "medium",
-        "action": "retain-direct-inspection-contract-and-retest-affected-source"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "a4525d204d10f4b037fe0869adf5432459b8634a",
+        "consumerSymbol": "inspectDirectory"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Canonical inspectDirectory source suite: preserves original source discovery/semantics plus two manifest-script/world-DB scenarios and one scoped Knowledge diagnostic scenario transferred exactly from former top-level integration suites. Three moved cases are source-body-identical, not executed, and do not constitute selected .mcworld end-to-end acceptance.",
+      "rationale": "Canonical inspectDirectory source suite: preserves original source discovery/semantics plus two manifest-script/world-DB scenarios and one scoped Knowledge diagnostic scenario transferred exactly from former top-level integration suites. Three moved cases are source-body-identical, not executed, and do not constitute selected .mcworld end-to-end acceptance. Direct source review confirms production invocation of inspectDirectory and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/interaction-lifecycle-analysis.test.ts",
@@ -5747,18 +5757,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "ee6dd58e9f903fbe38849b707ce20b2940c9f454",
+        "consumerSymbol": "analyzeProgressionActorAccounting"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Direct source review confirms production invocation of analyzeProgressionActorAccounting and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/reward-source-analysis.test.ts",
@@ -6333,19 +6345,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "afaa32ec530ce2f3534adffc7d2382c91743124b"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "afaa32ec530ce2f3534adffc7d2382c91743124b",
+        "consumerSymbol": "projectMapAuditOutputV2"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review confirms production invocation of projectMapAuditOutputV2 and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.schema",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/map-audit-proof-navigation.test.ts",
@@ -6373,19 +6386,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "c8d516431e0d5384d611745c1652a5ec6b0207e3"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "c8d516431e0d5384d611745c1652a5ec6b0207e3",
+        "consumerSymbol": "assessReadyResolutionSaturation"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review confirms production invocation of assessReadyResolutionSaturation and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.proof-control",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/map-audit-quality-gates.test.ts",
@@ -7549,19 +7563,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "pinned-original-source-and-merged-body-preservation",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162"
+        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
+        "sourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162",
+        "consumerSymbol": "planReportCandidateReuse"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Same-directory development family 4 -> 1, retaining 40 it/test call sites and 90 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 4 -> 1, retaining 40 it/test call sites and 90 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Direct source review confirms production invocation of planReportCandidateReuse and distinct case scenarios; no semantic duplicate-deletion authorization.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional",
+      "featureMappingBasis": "source-case-inspected",
       "consolidation": {
         "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
         "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
@@ -12271,6 +12286,102 @@
         "evidence": "exact-blob-source-case-and-assertion-callsite-parity, import binding collision check, same owner/feature/lane, unbound retired proof paths; NOT_EXECUTED",
         "proof": "REMOTE_GITHUB_SOURCE_ONLY_NOT_EXECUTED"
       }
+    },
+    "semanticCaseAudit": {
+      "atCommit": "b8ab688c9a431787a9e2a41e292423733f7ac38e",
+      "scope": "12 source suites, exact pinned SHA; source registrations with static => body extraction",
+      "sourceSuiteFiles": [
+        {
+          "path": "engine/packages/orchestrator/test/inspection/progression-actor-accounting-analysis.test.ts",
+          "sourceBlobSha": "ee6dd58e9f903fbe38849b707ce20b2940c9f454",
+          "consumerSymbol": "analyzeProgressionActorAccounting",
+          "caseCount": 44,
+          "expectCallsites": 92
+        },
+        {
+          "path": "engine/packages/orchestrator/test/reporting/report-candidate-reuse.test.ts",
+          "sourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162",
+          "consumerSymbol": "planReportCandidateReuse",
+          "caseCount": 40,
+          "expectCallsites": 90
+        },
+        {
+          "path": "engine/packages/orchestrator/test/map-audit-output-v2.test.ts",
+          "sourceBlobSha": "afaa32ec530ce2f3534adffc7d2382c91743124b",
+          "consumerSymbol": "projectMapAuditOutputV2",
+          "caseCount": 26,
+          "expectCallsites": 307
+        },
+        {
+          "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-resolution-crosscheck.test.ts",
+          "sourceBlobSha": "7467f4f7d6bb28800ce43822e9635fc031033519",
+          "consumerSymbol": "assessGameplayDefectResolutionGate",
+          "caseCount": 38,
+          "expectCallsites": 125
+        },
+        {
+          "path": "engine/packages/orchestrator/test/inspection/gameplay-discovery-challenger.test.ts",
+          "sourceBlobSha": "5df91bd81a9d0e2546638875555e70e9fc866d4a",
+          "consumerSymbol": "challengeGameplayDiscovery",
+          "caseCount": 23,
+          "expectCallsites": 72
+        },
+        {
+          "path": "engine/packages/orchestrator/test/inspection/gameplay-source-handoff.test.ts",
+          "sourceBlobSha": "256f216e3286023da3ac3fd9cd52bea5af60c074",
+          "consumerSymbol": "compileGameplayScenarioGraph",
+          "caseCount": 11,
+          "expectCallsites": 74
+        },
+        {
+          "path": "engine/packages/orchestrator/test/map-audit-proof-saturation.test.ts",
+          "sourceBlobSha": "c8d516431e0d5384d611745c1652a5ec6b0207e3",
+          "consumerSymbol": "assessReadyResolutionSaturation",
+          "caseCount": 22,
+          "expectCallsites": 89
+        },
+        {
+          "path": "engine/packages/orchestrator/test/inspection/persistence-source-analysis.test.ts",
+          "sourceBlobSha": "2de56034c4c76ea2afe6ed069b6789c8af165c45",
+          "consumerSymbol": "analyzePersistenceSource",
+          "caseCount": 51,
+          "expectCallsites": 92
+        },
+        {
+          "path": "engine/packages/orchestrator/test/inspection/inspect.test.ts",
+          "sourceBlobSha": "a4525d204d10f4b037fe0869adf5432459b8634a",
+          "consumerSymbol": "inspectDirectory",
+          "caseCount": 16,
+          "expectCallsites": 74
+        },
+        {
+          "path": "engine/packages/behavior-model/test/behavior-model.test.ts",
+          "sourceBlobSha": "a7cc6f502fc9b3f4c9668e653776c6e64c4d5da1",
+          "consumerSymbol": "applyBehaviorTransition",
+          "caseCount": 25,
+          "expectCallsites": 50
+        },
+        {
+          "path": "engine/packages/diagnostic-reasoning/test/diagnostic-reasoning.test.ts",
+          "sourceBlobSha": "33e47fead4f97ea0275c23b7b50f298efc2a4046",
+          "consumerSymbol": "evaluateGameplayBugCandidateEvidence",
+          "caseCount": 23,
+          "expectCallsites": 42
+        },
+        {
+          "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-knowledge-conditional.test.ts",
+          "sourceBlobSha": "c82173137684d71760707858e60a5154bca81c15",
+          "consumerSymbol": "requiredKnowledgeDomainsForPreset",
+          "caseCount": 8,
+          "expectCallsites": 28
+        }
+      ],
+      "registrationCount": 327,
+      "expectCallsites": 1135,
+      "exactWhitespaceNormalizedDuplicateCaseBodies": 0,
+      "semanticEquivalence": "UNPROVEN — same assertion method or shared production consumer is not enough to retire a test",
+      "executableVerification": "NOT_EXECUTED",
+      "conclusion": "No case deletion authorised from this corpus; full 385-file semantic comparison not claimed."
     }
   }
 }
