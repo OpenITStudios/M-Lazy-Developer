@@ -1,19 +1,10 @@
+// Source-preserving feature-local runtime suite. No executable claim.
 import { describe, expect, it } from "vitest";
-import {
-  MULTIPLAYER_CONCURRENCY_CAPABILITY_REGISTRY,
-  createArenaCapacityGuardExperiment,
-  createFullCapacitySessionExperiment,
-  createMultiArenaStartOwnershipExperiment,
-  experimentQualificationCausalProof,
-  preflightRuntimeExperimentCapabilities,
-  qualifyRuntimeExperiment,
-  runtimeExperimentDefinitionRevision,
-  validateRuntimeActionCapabilityRegistry,
-  validateRuntimeExperimentDefinition,
-  type RuntimeExperimentDefinition,
-  type RuntimeExperimentTrial,
-} from "../../../src/index.js";
+import { MULTIPLAYER_CONCURRENCY_CAPABILITY_REGISTRY, createArenaCapacityGuardExperiment, createFullCapacitySessionExperiment, createMultiArenaStartOwnershipExperiment, experimentQualificationCausalProof, preflightRuntimeExperimentCapabilities, qualifyRuntimeExperiment, runtimeExperimentDefinitionRevision, validateRuntimeActionCapabilityRegistry, validateRuntimeExperimentDefinition, type RuntimeExperimentDefinition, type RuntimeExperimentTrial } from "../../../src/index.js";
+import { MULTIPLAYER_STRESS_CAPABILITY_REGISTRY, createAllArenaFinishStressExperiment, createAllArenaStartStressExperiment, createCleanupStartOverlapExperiment } from "../../../src/index.js";
 
+// Original source suite: engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts (blob 920bdccad017332ce781c17ccd1f702370a49ed9)
+{
 const arenaA = {
   arenaId: "arena-a",
   arenaGeneration: 3,
@@ -418,3 +409,89 @@ describe("multiplayer concurrency runtime experiments", () => {
     ).toMatch(/min cannot exceed max/i);
   });
 });
+}
+
+// Original source suite: engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts (blob cd82bef8d16cff779f32990faf8634f8f92d1d6a)
+{
+const arenas = [
+  { arenaId: "arena-1", arenaGeneration: 1 },
+  { arenaId: "arena-2", arenaGeneration: 2 },
+  { arenaId: "arena-3", arenaGeneration: 3 },
+];
+
+const common = {
+  targetProfileFingerprint: "profile",
+  fixtureFingerprint: "fixture",
+  objectiveId: "qa",
+  participant: "result",
+};
+
+describe("multi-arena stress runtime experiments", () => {
+  it("publishes a valid stress capability registry", () => {
+    expect(
+      validateRuntimeActionCapabilityRegistry(
+        MULTIPLAYER_STRESS_CAPABILITY_REGISTRY,
+      ),
+    ).toEqual([]);
+  });
+
+  it("defines runtime-ready all-arena start and finish experiments", () => {
+    const definitions = [
+      createAllArenaStartStressExperiment({
+        ...common,
+        id: "start-all",
+        title: "start all",
+        arenas,
+        playerCountPerArena: 5,
+      }),
+      createAllArenaFinishStressExperiment({
+        ...common,
+        id: "finish-all",
+        title: "finish all",
+        arenas,
+        playerCountPerArena: 5,
+      }),
+    ];
+
+    for (const definition of definitions) {
+      expect(
+        validateRuntimeExperimentDefinition(
+          definition,
+        ),
+      ).toEqual([]);
+      expect(
+        preflightRuntimeExperimentCapabilities(
+          definition,
+          MULTIPLAYER_STRESS_CAPABILITY_REGISTRY,
+          "LIVE_MINECRAFT",
+        ).ready,
+      ).toBe(true);
+    }
+  });
+
+  it("defines cleanup/start overlap for two distinct arenas", () => {
+    const definition =
+      createCleanupStartOverlapExperiment({
+        ...common,
+        id: "overlap",
+        title: "cleanup start overlap",
+        endingArena: arenas[0]!,
+        startingArena: arenas[1]!,
+        playerCountStartingArena: 5,
+      });
+
+    expect(
+      validateRuntimeExperimentDefinition(
+        definition,
+      ),
+    ).toEqual([]);
+    expect(
+      preflightRuntimeExperimentCapabilities(
+        definition,
+        MULTIPLAYER_STRESS_CAPABILITY_REGISTRY,
+        "LIVE_MINECRAFT",
+      ).ready,
+    ).toBe(true);
+  });
+});
+}

@@ -1,14 +1,15 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source audit — 2026-10-31: 389 physical test files
+## Active source audit — 2026-10-31: 385 physical test files
 
 The canonical machine registry is `tooling/repository/test-inventory.json`.
-The active source tree and inventory contain **389** physical test files
-following this bounded 399 -> 389 suite consolidation. Seven same-owner,
-same-directory, same-feature/lane family mergers preserve **59** source test
-calls and **148** `expect()` callsites in isolated original bodies. This
-reduces file fragmentation; it does not establish fewer executed tests,
-faster runs, or complete semantic/test isolation proof.
+The active source tree and inventory contain **385** physical test files.
+The latest **389 -> 385** batch consolidates three runtime behavior families,
+preserving **41** test registrations and **93** `expect()` callsites.
+The prior **399 -> 389** batch consolidated seven families with **59**
+test registrations and **148** `expect()` callsites. These source-only
+counts do not establish fewer executed tests, faster runs, or executable
+semantic/test isolation proof.
 
 Historical provenance: earlier batches had 687 -> 402 source files and
 a separately justified literal-only suite retirement to 401, followed
@@ -20,17 +21,43 @@ for those source groups, not the number of tests executed now.
 | --- | ---: |
 | `development` | 235 |
 | `safety` | 46 |
-| `runtime` | 50 |
+| `runtime` | 46 |
 | `regression` | 38 |
 | `acceptance` | 20 |
-| **Total** | **389** |
+| **Total** | **385** |
 
-Inventory disposition: 287 provisional,
-87 keep, 15 defer.
-Review provenance: 282 case-inventory-reviewed
-and 107 source-reviewed; feature mapping remains
-`path-provisional` for 348 entries.
+Inventory disposition: 289 provisional,
+82 keep, 14 defer.
+Review provenance: 284 case-inventory-reviewed
+and 101 source-reviewed; feature mapping remains
+`path-provisional` for 328 entries (57 source-case-inspected).
 These provisional labels **cannot** justify deleting a unique test.
+
+### Runtime family consolidation and source-case review — 2026-10-31
+
+Three owner/feature/lane-local runtime test families were consolidated:
+scheduler generation/cancellation/ordering, multiplayer concurrency/stress,
+and chunk probes/readiness. This retires four physical source-file boundaries
+while retaining all **41** original `it()/test()` registrations and **93**
+`expect()` callsites in lexical scopes. Source SHA and original source
+lineage, including previous chunk consolidations, are retained in the
+canonical inventory. Important positive, negative, concurrency, timing,
+and proof-gate cases were not intentionally removed.
+
+Fifteen additional source-test files were inspected for actual
+production-consumer invocation and deciding assertions. Their mapping basis
+was advanced from `path-provisional` to `source-case-inspected` with pinned
+Git blob and consumer symbol in the canonical inventory; this review
+**does not** establish that any one file is a safe deletion candidate.
+Separately, the existing fifteen `defer` suites were inspected and
+found to call production consumers. `defer` indicates selective execution,
+not obsolete tests; fourteen such suites remain after consolidation.
+
+No changes were made to core/selected-map audit stages, feature gates,
+proof-bound file paths, CI, or runtime implementations. Reduced physical
+test-file count does **not** prove faster execution; merged files may
+broaden `--affected` selection. TypeScript, Vitest, runtime isolation,
+Minecraft gameplay and performance are **NOT EXECUTED**.
 
 ### Additional owner-local family consolidation — 2026-10-31
 

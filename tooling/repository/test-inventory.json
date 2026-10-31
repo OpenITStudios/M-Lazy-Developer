@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-  "classification": "389 active physical source test files after 399 -> 389 source-preserving, owner/feature/lane-local consolidations (2026-10-31). Seven bounded retained suites hold 59 source it/test calls and 148 expect callsites. Exact source-body integrity and import-name collision checks completed; TypeScript/Vitest/isolation/performance/Minecraft NOT EXECUTED. Source tests are distinct from per-map audit scenarios. The 100-file target remains conditional on distinct consumer and proof preservation.",
+  "classification": "385 active physical source-test files after 389 -> 385 feature-local runtime suite consolidation, preserving 41 source test registrations and 93 expect callsites across scheduler, multiplayer and chunk cases. 15 additional source-test feature mappings verified against test assertions and production symbol consumers. No distinct runtime/negative cases were deleted; reviewed 15 deferred suites remain intact. Source/runtime verification NOT EXECUTED; ~100 source files remains an evidence-gated ambition.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -1153,21 +1153,22 @@
       "owner": "engine/analyzers/scripts",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "82171a8c3317577e54b42f1db3b411de0c165933"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "82171a8c3317577e54b42f1db3b411de0c165933",
+        "consumerSymbol": "deriveScriptGlobalLeaseEvidence"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Source case explicitly invokes deriveScriptGlobalLeaseEvidence and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "arena-match",
       "mechanicTags": [
         "arena.isolation"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "arena.state-isolation",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/scripts/test/domains/automation/block-custom-component-evidence.test.ts",
@@ -1175,21 +1176,22 @@
       "owner": "engine/analyzers/scripts",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "ec31bd7cca4eda3a3da1788a4b4e6c910577c6f0"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "ec31bd7cca4eda3a3da1788a4b4e6c910577c6f0",
+        "consumerSymbol": "deriveBlockCustomComponentRegistrations"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Source case explicitly invokes deriveBlockCustomComponentRegistrations and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "world-interaction",
       "mechanicTags": [
         "world.block-state"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "world.blocks-rules",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/scripts/test/domains/chunk/chunk-lifecycle-evidence.test.ts",
@@ -1237,21 +1239,22 @@
       "owner": "engine/analyzers/scripts",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "3e977e00a419fb3a53d6561dec326bc986b511f8"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "3e977e00a419fb3a53d6561dec326bc986b511f8",
+        "consumerSymbol": "deriveScriptCombatLifecycleEvidence"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Source case explicitly invokes deriveScriptCombatLifecycleEvidence and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "combat-entities",
       "mechanicTags": [
         "combat.damage-lifecycle"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "combat.damage",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/analyzers/scripts/test/domains/economy/economy-evidence.test.ts",
@@ -2430,18 +2433,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "036d8601e514a445cfaa7589fe3800204ea0bf55",
+        "consumerSymbol": "buildDiagnosticCalibrationReport"
       },
       "recommendation": "defer",
-      "rationale": "Display, calibration or preset behavior: keep available for targeted changes; not an unconditional default acceptance check.",
+      "rationale": "Display, calibration or preset behavior: keep available for targeted changes; not an unconditional default acceptance check. Source case explicitly invokes buildDiagnosticCalibrationReport and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.reliability",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/contradiction-registry.test.ts",
@@ -2449,18 +2454,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "0dcaf7955b67f0d5444c275e4127bdb09269a2ef",
+        "consumerSymbol": "buildContradictionRegistry"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
+      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review. Source case explicitly invokes buildContradictionRegistry and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.invariants",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/counterexample-explanation.test.ts",
@@ -2506,18 +2513,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "7d02b61e84992ac1d61649d491a1bd1ce69b75ef",
+        "consumerSymbol": "buildGameplayAuditScenarioPreset"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
+      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review. Source case explicitly invokes buildGameplayAuditScenarioPreset and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.task-context",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/declarative-rules.test.ts",
@@ -2525,18 +2534,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "9ec00b771b71a34e040115403edbc80409ba61e2",
+        "consumerSymbol": "evaluateDeclarativeDiagnosticRule"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review.",
+      "rationale": "Named test scenarios protect source evidence, canonical issue identity, decision honesty, schema or causal/repair review. Keep provisionally until full assertion/consumer equivalence review. Source case explicitly invokes evaluateDeclarativeDiagnosticRule and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.rule-evaluation",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/diagnostic-reasoning.test.ts",
@@ -2594,18 +2605,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "low",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "78b6837d74cc07f93e8dd85827e94ca666bdb5fb",
+        "consumerSymbol": "projectFindingClassification"
       },
       "recommendation": "keep",
-      "rationale": "Three independent classification proof boundaries: proven-confidence threshold, designed/expected distinction, and runtime-proof-required UNKNOWN. No equivalent assertion found in engineering renderer.",
+      "rationale": "Three independent classification proof boundaries: proven-confidence threshold, designed/expected distinction, and runtime-proof-required UNKNOWN. No equivalent assertion found in engineering renderer. Source case explicitly invokes projectFindingClassification and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/gameplay-capability-delivery.test.ts",
@@ -2716,18 +2729,20 @@
       "owner": "engine/packages/diagnostic-reasoning",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "64d36c500e155024ff2de9dc93f41a17bec5d31b",
+        "consumerSymbol": "planMinimalCrossDomainProbes"
       },
       "recommendation": "keep",
-      "rationale": "Uses lowest-cost useful next probe and makes unsupported probe requirements explicit.",
+      "rationale": "Uses lowest-cost useful next probe and makes unsupported probe requirements explicit. Source case explicitly invokes planMinimalCrossDomainProbes and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.probes",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/diagnostic-reasoning/test/reachability-capability-exposure.test.ts",
@@ -3134,21 +3149,22 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "source-confirmed-semantic-assertion-redundancy",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "retain-replica-plus-chunk-repair-registry-proofs",
-        "sourceBlobSha": "3a986b13853a5dcd56f852778722b3549f7a6c1e"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "3a986b13853a5dcd56f852778722b3549f7a6c1e",
+        "consumerSymbol": "validateRepairStrategySourceRegistry"
       },
       "recommendation": "keep",
-      "rationale": "Two cases from engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts (blob 21967d1d12fd19ad597d5284293bd68bf3186a89) statically subsumed: proposal-only, deterministic false, identical 5 diagnostic codes and identical validateRepairStrategySourceRegistry(...).toEqual([]). Retained suite adds chunk remediation. Two redundant cases, four expect sites retired; Vitest NOT EXECUTED.",
+      "rationale": "Two cases from engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts (blob 21967d1d12fd19ad597d5284293bd68bf3186a89) statically subsumed: proposal-only, deterministic false, identical 5 diagnostic codes and identical validateRepairStrategySourceRegistry(...).toEqual([]). Retained suite adds chunk remediation. Two redundant cases, four expect sites retired; Vitest NOT EXECUTED. Source case explicitly invokes validateRepairStrategySourceRegistry and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "arena-match",
       "mechanicTags": [
         "arena.repair"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "arena.repair-strategy",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
@@ -5848,17 +5864,19 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "defer",
-      "rationale": "Scheduler and entity-query counting must not claim measured runtime cost; maintain until full inspection acceptance covers it.",
+      "rationale": "Scheduler and entity-query counting must not claim measured runtime cost; maintain until full inspection acceptance covers it. Source case explicitly invokes analyzeScriptPerformanceSurfaces and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "retain-for-targeted-validation"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "87fbfacae32219a4d3ef78f6ce608d17e3f7e9b1",
+        "consumerSymbol": "analyzeScriptPerformanceSurfaces"
       },
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "script.runtime-evidence",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-safe-config-analysis.test.ts",
@@ -7482,18 +7500,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "e86d6e8bd5d3f64d006db2cb2a0abaf703260ac7",
+        "consumerSymbol": "assessReasoningMonotonicity"
       },
       "recommendation": "keep",
-      "rationale": "Unchanged evidence cannot silently downgrade an established reasoning classification.",
+      "rationale": "Unchanged evidence cannot silently downgrade an established reasoning classification. Source case explicitly invokes assessReasoningMonotonicity and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "report.findings",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/reporting/report-candidate-reuse.test.ts",
@@ -7917,18 +7937,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "8b4a2e88eacc222e8b087f4fcdf5a6d0d5004a08",
+        "consumerSymbol": "planRepositoryTasks"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review. Source case explicitly invokes planRepositoryTasks and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "tooling.repository",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/semantic-graph-fingerprint.test.ts",
@@ -7936,18 +7958,20 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "read-assertions-before-decision"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "1a4d1c8c8ca5902e5f008b378cd70a606c262850",
+        "consumerSymbol": "semanticGraphFingerprint"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review.",
+      "rationale": "Scenario cases include evidence grounding, source and decision identity, false-positive refusal or runtime-proof boundaries; retain provisionally until full semantic review. Source case explicitly invokes semanticGraphFingerprint and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.semantic-analysis",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/zero-waste-benchmark.test.ts",
@@ -8074,21 +8098,22 @@
       "owner": "engine/packages/project-model",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/project-model",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "dd6c7d159c1f6147a00a4b25132bc87458f993b7"
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "dd6c7d159c1f6147a00a4b25132bc87458f993b7",
+        "consumerSymbol": "resolveArenaRegionContractVolume"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Source case explicitly invokes resolveArenaRegionContractVolume and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
       "functionalArea": "arena-match",
       "mechanicTags": [
         "arena.layout"
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "arena.layout-replicas",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/project-model/test/evidence/decision-ledger-validate.test.ts",
@@ -9224,12 +9249,12 @@
       "owner": "engine/packages/runtime-lab",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Consolidated 4 source test files as one family suite; 7 it()/test() sites and 15 expect() sites retained by static source comparison. Execution/equivalence pending.",
+      "rationale": "Source-grounded runtime feature family; separate scheduler, multiplayer or chunk producer scenarios and failure/negative assertions retained in isolated lexical blocks. No runtime equivalence or speedup claimed.",
       "triage": {
-        "basis": "source-preserving-family-consolidation",
+        "basis": "exact-pinned-source-case-and-consumer-contract",
         "owner": "engine/packages/runtime-lab",
-        "action": "verify-selected-suite-and-dependency-consumers",
-        "sourceBlobSha": "9091dc8a828ba7d9b90c2e5eb950efcfbd3cad7d"
+        "action": "retain-distinct-runtime-scenarios; validate-isolation-when-execution-available",
+        "sourceBlobSha": "a61677a7a97dbb28839cf2001a4d01ec77abf0c4"
       },
       "functionalArea": "world-interaction",
       "mechanicTags": [
@@ -9239,51 +9264,54 @@
       "featureId": "world.chunk-lifecycle",
       "featureMappingBasis": "source-case-inspected",
       "consolidation": {
-        "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
-        "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
+        "baseCommit": "a98dfe718494bf55fc0725364c3d00de84a1b377",
+        "method": "feature-local-runtime-suite-source-body-and-import-unification",
         "sourceFiles": [
           {
-            "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-knowledge-validation-plan.test.ts",
-            "blobSha": "0cb65c79b85006edd493af63c6c7c605992182b8"
-          },
-          {
-            "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-lifecycle-experiments.test.ts",
-            "blobSha": "25b1937183a4e5023533dcbd229688887248adb9"
-          },
-          {
             "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
-            "blobSha": "c0377dbc45a6a120f47296037d5dbbc55ab2b043"
+            "blobSha": "9091dc8a828ba7d9b90c2e5eb950efcfbd3cad7d"
           },
           {
-            "path": "engine/packages/runtime-lab/test/domains/chunk/script-ticking-area-experiment.test.ts",
-            "blobSha": "cf3e11f0f4c4f6eed32d2acc20f15f84da2ec823"
+            "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts",
+            "blobSha": "7c734cd8dc224466ba6fa1d827a94a53b69bd547"
           }
         ],
-        "originalTestCallSites": 7,
-        "originalExpectCallSites": 15,
-        "mergedSourceBlobSha": "9091dc8a828ba7d9b90c2e5eb950efcfbd3cad7d",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 12,
+        "originalExpectCallSites": 29,
+        "mergedSourceBlobSha": "a61677a7a97dbb28839cf2001a4d01ec77abf0c4",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidationRecords": [
+          {
+            "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
+            "record": {
+              "baseCommit": "fd89e977970a5e1dbd631767df3a2e5d553f0aab",
+              "method": "top-level-import-dedup-plus-block-isolated-original-bodies",
+              "sourceFiles": [
+                {
+                  "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-knowledge-validation-plan.test.ts",
+                  "blobSha": "0cb65c79b85006edd493af63c6c7c605992182b8"
+                },
+                {
+                  "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-lifecycle-experiments.test.ts",
+                  "blobSha": "25b1937183a4e5023533dcbd229688887248adb9"
+                },
+                {
+                  "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
+                  "blobSha": "c0377dbc45a6a120f47296037d5dbbc55ab2b043"
+                },
+                {
+                  "path": "engine/packages/runtime-lab/test/domains/chunk/script-ticking-area-experiment.test.ts",
+                  "blobSha": "cf3e11f0f4c4f6eed32d2acc20f15f84da2ec823"
+                }
+              ],
+              "originalTestCallSites": 7,
+              "originalExpectCallSites": 15,
+              "mergedSourceBlobSha": "9091dc8a828ba7d9b90c2e5eb950efcfbd3cad7d",
+              "execution": "NOT_EXECUTED"
+            }
+          }
+        ]
       }
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Guards experiment cleanup, repeated trials, causal provenance, and chunk mutation capability.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "world-interaction",
-      "mechanicTags": [
-        "map.chunk"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "world.chunk-lifecycle",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/entity/entity-navigation-experiment.test.ts",
@@ -9329,19 +9357,38 @@
       "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Positive and negative capacity, arena isolation and session completion evidence are distinct risk checks.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Source-grounded runtime feature family; separate scheduler, multiplayer or chunk producer scenarios and failure/negative assertions retained in isolated lexical blocks. No runtime equivalence or speedup claimed.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "exact-pinned-source-case-and-consumer-contract",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-runtime-scenarios; validate-isolation-when-execution-available",
+        "sourceBlobSha": "d278dc005bc00aee4e16818f7030eec5ad373d9e"
       },
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "runtime.multiplayer",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "a98dfe718494bf55fc0725364c3d00de84a1b377",
+        "method": "feature-local-runtime-suite-source-body-and-import-unification",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
+            "blobSha": "920bdccad017332ce781c17ccd1f702370a49ed9"
+          },
+          {
+            "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
+            "blobSha": "cd82bef8d16cff779f32990faf8634f8f92d1d6a"
+          }
+        ],
+        "originalTestCallSites": 11,
+        "originalExpectCallSites": 21,
+        "mergedSourceBlobSha": "d278dc005bc00aee4e16818f7030eec5ad373d9e",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-session-experiment.test.ts",
@@ -9369,27 +9416,6 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
-      "path": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "defer",
-      "rationale": "Positive descriptor/registry scenarios; not evidence of actual multiplayer stress execution.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "retain-for-targeted-validation"
-      },
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [
-        "arena.multi-instance",
-        "arena.start"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "runtime.multiplayer",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
       "path": "engine/packages/runtime-lab/test/domains/persistence/persistence-recovery-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
@@ -9410,58 +9436,45 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Generation replacement failure and repeatable causal provenance are risk boundaries.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-scripting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "script.scheduler",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Cancellation, cross-arena ownership and callback generation require explicit evidence.",
+      "review": "case-inventory-reviewed",
+      "recommendation": "keep-provisional",
+      "rationale": "Source-grounded runtime feature family; separate scheduler, multiplayer or chunk producer scenarios and failure/negative assertions retained in isolated lexical blocks. No runtime equivalence or speedup claimed.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "exact-pinned-source-case-and-consumer-contract",
         "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
+        "action": "retain-distinct-runtime-scenarios; validate-isolation-when-execution-available",
+        "sourceBlobSha": "d5ca6c7e093f13de571cbcb1768236c80b2ea819"
       },
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "script.scheduler",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/runtime-lab",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Comparable stream sequence/tick metadata required for event ordering conclusions.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/runtime-lab",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "gameplay-scripting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "script.scheduler",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "a98dfe718494bf55fc0725364c3d00de84a1b377",
+        "method": "feature-local-runtime-suite-source-body-and-import-unification",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
+            "blobSha": "d87337c0c053e4bbf58359a8cb1d7a5f3a418aa3"
+          },
+          {
+            "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
+            "blobSha": "886acd1c2f862e960c04f6dbe870b8a57e4de39a"
+          },
+          {
+            "path": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts",
+            "blobSha": "d329bc92fa309bcfdc11a26349616d75e663cb1b"
+          }
+        ],
+        "originalTestCallSites": 18,
+        "originalExpectCallSites": 43,
+        "mergedSourceBlobSha": "d5ca6c7e093f13de571cbcb1768236c80b2ea819",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/runtime-lab/test/domains/validation/domain-validation-experiments.test.ts",
@@ -12143,35 +12156,82 @@
     "proof": "pinned-original-source-body-and-static-test-assertion-parity_NOT_EXECUTED",
     "open": "No TypeScript/Vitest/isolation/performance/Minecraft execution proof; 100 physical test files is a target and is not a safe-delete quota.",
     "latestSourcePreservingBatch": {
-      "parentCommit": "bdf43253d6f9db0825df78367a0f36b7cec15633",
-      "sourceFilesBefore": 399,
-      "sourceFilesAfter": 389,
-      "consolidatedOwnerFeatureLaneFamilies": 7,
+      "parentCommit": "a98dfe718494bf55fc0725364c3d00de84a1b377",
+      "sourceFilesBefore": 389,
+      "sourceFilesAfter": 385,
+      "groups": [
+        {
+          "retained": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
+          "retired": [
+            "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
+            "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts"
+          ],
+          "sourceCasesRetained": 18,
+          "expectCallsRetained": 43
+        },
+        {
+          "retained": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
+          "retired": [
+            "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts"
+          ],
+          "sourceCasesRetained": 11,
+          "expectCallsRetained": 21
+        },
+        {
+          "retained": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
+          "retired": [
+            "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts"
+          ],
+          "sourceCasesRetained": 12,
+          "expectCallsRetained": 29
+        }
+      ],
       "retiredPaths": [
-        "engine/packages/reliability/test/runtime/content-log-parser.test.ts",
-        "engine/packages/reliability/test/regression/regression-session-report.test.ts",
-        "engine/packages/reliability/test/portfolio/portfolio-planner.test.ts",
-        "engine/packages/reliability/test/portfolio/portfolio-regression-scheduler.test.ts",
-        "engine/packages/orchestrator/test/inspection/embedded-structure-graph.test.ts",
-        "engine/packages/orchestrator/test/inspection/script-structure-correlation.test.ts",
-        "engine/packages/orchestrator/test/inspection/script-command-transaction-analysis.test.ts",
-        "engine/packages/orchestrator/test/reliability/qa-execution-budget.test.ts",
-        "engine/packages/orchestrator/test/reliability/regression-batch-retest-feedback.test.ts",
-        "engine/packages/orchestrator/test/reliability/regression-execution-queue-runner.test.ts"
+        "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
+        "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts",
+        "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
+        "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts"
       ],
       "retainedPaths": [
-        "engine/packages/reliability/test/runtime/bedrock-runtime-emitter.test.ts",
-        "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
-        "engine/packages/reliability/test/portfolio/map-knowledge-retest.test.ts",
-        "engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts",
-        "engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts",
-        "engine/packages/orchestrator/test/reliability/history-driven-qa-recommendation.test.ts",
-        "engine/packages/orchestrator/test/reliability/portfolio-regression-batch-runner.test.ts"
+        "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
+        "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
+        "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts"
       ],
-      "retainedTestCallSites": 59,
-      "retainedExpectCallSites": 148,
-      "evidence": "exact-blob-source-case-and-assertion-callsite-parity, import binding collision check, same owner/feature/lane, unbound retired proof paths; NOT_EXECUTED",
-      "proof": "REMOTE_GITHUB_SOURCE_ONLY_NOT_EXECUTED"
+      "registeredCasesRetained": 41,
+      "expectCallsitesRetained": 93,
+      "additionalReviewedMappings": 15,
+      "proof": "SOURCE_ONLY: exact blob, import-binding and source-body/callsite parity; no executable tests or Minecraft proof",
+      "priorBatch": {
+        "parentCommit": "bdf43253d6f9db0825df78367a0f36b7cec15633",
+        "sourceFilesBefore": 399,
+        "sourceFilesAfter": 389,
+        "consolidatedOwnerFeatureLaneFamilies": 7,
+        "retiredPaths": [
+          "engine/packages/reliability/test/runtime/content-log-parser.test.ts",
+          "engine/packages/reliability/test/regression/regression-session-report.test.ts",
+          "engine/packages/reliability/test/portfolio/portfolio-planner.test.ts",
+          "engine/packages/reliability/test/portfolio/portfolio-regression-scheduler.test.ts",
+          "engine/packages/orchestrator/test/inspection/embedded-structure-graph.test.ts",
+          "engine/packages/orchestrator/test/inspection/script-structure-correlation.test.ts",
+          "engine/packages/orchestrator/test/inspection/script-command-transaction-analysis.test.ts",
+          "engine/packages/orchestrator/test/reliability/qa-execution-budget.test.ts",
+          "engine/packages/orchestrator/test/reliability/regression-batch-retest-feedback.test.ts",
+          "engine/packages/orchestrator/test/reliability/regression-execution-queue-runner.test.ts"
+        ],
+        "retainedPaths": [
+          "engine/packages/reliability/test/runtime/bedrock-runtime-emitter.test.ts",
+          "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
+          "engine/packages/reliability/test/portfolio/map-knowledge-retest.test.ts",
+          "engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts",
+          "engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts",
+          "engine/packages/orchestrator/test/reliability/history-driven-qa-recommendation.test.ts",
+          "engine/packages/orchestrator/test/reliability/portfolio-regression-batch-runner.test.ts"
+        ],
+        "retainedTestCallSites": 59,
+        "retainedExpectCallSites": 148,
+        "evidence": "exact-blob-source-case-and-assertion-callsite-parity, import binding collision check, same owner/feature/lane, unbound retired proof paths; NOT_EXECUTED",
+        "proof": "REMOTE_GITHUB_SOURCE_ONLY_NOT_EXECUTED"
+      }
     }
   }
 }
