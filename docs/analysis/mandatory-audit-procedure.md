@@ -1512,6 +1512,7 @@ Activate only when the selected artifact contains the trigger:
 - Inventory / Loadout / Economy → inventory writers, kits, shops, grants, equipment, currency, item persistence.
 - Multi-Arena / Shared Capacity → multiple arenas/sessions/teams or shared admission/resource limits.
 - Progression / Wave / Objective → waves, levels, counters, objectives, required entity/work accounting.
+- Story / Quest / Dialogue → only with authored narrative, dialogue, branching, checkpoints or quest progression; check reachability, ordering, skipped steps, false completion, and recovery.
 - Lifecycle Race / Generation → delayed callbacks, async work, retry, scheduled cleanup, reusable owner/session.
 - Terminal / Idempotency → two or more terminal/retry/restart paths or non-idempotent terminal consequences.
 - UI / Player-Facing → material scoreboard, actionbar/title, dialogue, timer, queue/capacity/reward feedback.

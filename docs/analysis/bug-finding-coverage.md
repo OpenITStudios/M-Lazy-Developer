@@ -196,6 +196,22 @@ Activate when applicable:
 
 These are coverage families, not a manual test checklist.
 
+### Map-type scenario questions (existing canonical owners)
+
+Every selected map retains the universal five coverage layers and player-journey contract.
+A resolved, selected-artifact-bound Map Classification activates questions for
+`BUILDING`, `COMBAT`, `SURVIVAL`, `STRATEGY`, `SEARCH_PUZZLE`,
+`STORY_QUEST`, `CHALLENGE_COURSE`, or `SKILL_COURSE` through the
+existing `map-classification-audit-profile.ts` and `gameplay-audit-scenario-preset.ts`.
+Declared mechanic tags add only their corresponding targeted questions.
+Multiple gameplay families may apply to the same selected map.
+
+The classification does not assert defects, suppress discovered hazards, invent
+Minecraft proof, or create a new test lane. Unknown classification does not
+create type-specific questions. A not-applicable disposition needs positive
+current-map evidence. Only shared state/owner/resource/lifecycle intersections
+justify cross-system challenges; no Cartesian-product microtest campaign.
+
 ## Mutable-state reverse index
 
 For every material mutable resource build:

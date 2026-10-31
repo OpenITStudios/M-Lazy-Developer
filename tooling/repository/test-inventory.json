@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-  "classification": "401 physical test files after retiring one non-executing Development type/value fixture suite (402 -> 401). The prior 21 source-preserving owner/feature/lane consolidation groups remain at 440 -> 402 (original 511 it/test and 1706 expect source callsites in those groups, not executed). The removed version-aware comparison suite had two it() bodies and five expect() calls that only read their own literal values and never invoke the production comparison consumer. No new runner, CI, map obligation or runtime proof claim. Source construction only; TypeScript, Vitest and Minecraft NOT EXECUTED.",
+  "classification": "399 physical test files after 401 -> 399 bounded, source-preserving Development suite consolidations on 2026-10-31. All original it/test/expect calls in the two merged pairs are retained under isolated lexical blocks; TypeScript, Vitest and Minecraft NOT EXECUTED. 687 -> 402 -> 401 remains historical source-consolidation lineage. Map-audit scenarios and code source tests have separate purposes; near-100 is a quality-gated target, not a safe deletion quota.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -3710,24 +3710,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Preserves BUG versus DESIGN_MISMATCH disposition and refusal to upgrade runtime-proof-required evidence.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.defect-analysis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-intent-executors.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -3850,19 +3832,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "224c83c1476015b052bc3f5f3f0fdcdc7fafc225"
+        "action": "verify-merged-test-isolation-and-affected-selection",
+        "sourceBlobSha": "28ef974b173ef4094ed7000d843c307437fd911d"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Same owner/feature/lane lexical source-preserving consolidation. Original test registrations and expect bodies kept; executable isolation not yet verified.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.defect-analysis",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "fd3f97b0239ce1ba771a89f033071f420f59a199",
+        "method": "same-directory-owner-feature-lane-lexical-source-preservation",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts",
+            "blobSha": "224c83c1476015b052bc3f5f3f0fdcdc7fafc225"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts",
+            "blobSha": "7fdeb196551e34f8361f8a943c1d2f9ee46d5a6d"
+          }
+        ],
+        "originalTestCallSites": 5,
+        "originalExpectCallSites": 12,
+        "mergedSourceBlobSha": "28ef974b173ef4094ed7000d843c307437fd911d",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-probe-analysis.test.ts",
@@ -5830,18 +5830,37 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "verify-merged-test-isolation-and-affected-selection",
+        "sourceBlobSha": "c47b65b40d27414b59ac46698c5adc4683bf86f3"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Same owner/feature/lane lexical source-preserving consolidation. Original test registrations and expect bodies kept; executable isolation not yet verified.",
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "script.control-flow",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "fd3f97b0239ce1ba771a89f033071f420f59a199",
+        "method": "same-directory-owner-feature-lane-lexical-source-preservation",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/script-dataflow-context-capability.test.ts",
+            "blobSha": "bd0e7197e62cd19442e4e9cb8d14b48ff9ccd368"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/script-update-correlation.test.ts",
+            "blobSha": "7ec538dd3f03bc5003d39ef6b867bc4ace576c51"
+          }
+        ],
+        "originalTestCallSites": 3,
+        "originalExpectCallSites": 8,
+        "mergedSourceBlobSha": "c47b65b40d27414b59ac46698c5adc4683bf86f3",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/script-performance-analysis.test.ts",
@@ -5919,25 +5938,6 @@
         "mergedSourceBlobSha": "04f5bd370f74d4690dfba955eed0ade70b9823b3",
         "execution": "NOT_EXECUTED"
       }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/script-update-correlation.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "recommendation": "keep",
-      "rationale": "Exact API symbol match versus module-only overlap and alias handling are distinct compatibility negative controls, not duplicated by broad script usage inventory.",
-      "functionalArea": "gameplay-scripting",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "script.control-flow",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/shared-resource-ownership.test.ts",
@@ -12196,6 +12196,22 @@
     "addedPaths": 17,
     "deletedAssertionsProven": 4,
     "proof": "pinned-original-source-body-and-static-test-assertion-parity_NOT_EXECUTED",
-    "open": "No TypeScript/Vitest/isolation/performance/Minecraft execution proof; 100 physical test files is a target and is not a safe-delete quota."
+    "open": "No TypeScript/Vitest/isolation/performance/Minecraft execution proof; 100 physical test files is a target and is not a safe-delete quota.",
+    "latestSourcePreservingBatch": {
+      "parentCommit": "fd3f97b0239ce1ba771a89f033071f420f59a199",
+      "sourceFilesBefore": 401,
+      "sourceFilesAfter": 399,
+      "removedPaths": [
+        "engine/packages/orchestrator/test/inspection/script-update-correlation.test.ts",
+        "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts"
+      ],
+      "retainedPaths": [
+        "engine/packages/orchestrator/test/inspection/script-dataflow-context-capability.test.ts",
+        "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts"
+      ],
+      "casesRetained": 8,
+      "expectCallsitesRetained": 20,
+      "proof": "Git pinned-source body and registration parity, NOT_EXECUTED"
+    }
   }
 }

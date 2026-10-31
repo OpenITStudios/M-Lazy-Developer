@@ -103,6 +103,18 @@ describe("Game Design intent resolution", () => {
     expect(errors).toEqual([]);
   });
 
+  it("accepts explicit Story/Quest classification with authored evidence", () => {
+    expect(validateGameDesignSpec({
+      ...design,
+      classification: {
+        mapType: "STORY_QUEST", playerMode: "SOLO",
+        mechanicTags: ["MULTI_STAGE", "PROGRESSION"],
+        classificationStatus: "RESOLVED",
+        evidenceRefs: ["authored:quest"],
+      },
+    })).toEqual([]);
+  });
+
   it("rejects non-canonical map type labels", () => {
     const errors = validateGameDesignSpec({
       ...design,
@@ -159,6 +171,16 @@ describe("Game Design intent resolution", () => {
         "Find The Button - Mysteries of Biomes / Level 1",
         "SEARCH_PUZZLE",
         ["SEARCH", "PUZZLE"],
+      ],
+      [
+        "Story - A Lost Village",
+        "STORY_QUEST",
+        [],
+      ],
+      [
+        "Quest - Rescue",
+        "STORY_QUEST",
+        [],
       ],
       [
         "Skills - Aftershock",

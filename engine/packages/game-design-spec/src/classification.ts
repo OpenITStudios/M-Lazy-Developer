@@ -11,6 +11,7 @@ export const GAME_DESIGN_MAP_TYPES = [
   "SURVIVAL",
   "STRATEGY",
   "SEARCH_PUZZLE",
+  "STORY_QUEST",
   "CHALLENGE_COURSE",
   "SKILL_COURSE",
 ] as const satisfies readonly GameDesignMapType[];
@@ -103,6 +104,9 @@ export function migrateLegacyMapClassification(
     };
   }
 
+  if (prefix === "story" || prefix === "quest") {
+    return { ...base, mapType: "STORY_QUEST", mechanicTags: [] };
+  }
   if (prefix === "challenge") {
     return {
       ...base,

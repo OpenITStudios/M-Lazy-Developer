@@ -1,6 +1,6 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source audit — 2026-10-31: 401 physical test files
+## Active source audit — 2026-10-31: 399 physical test files
 
 The prior source-preserving consolidation used GitHub `Local` at the pinned parent
 `8787c8210af847a29927fc1122a2acfe30312cee`. The authoritative machine registry remains
@@ -13,19 +13,38 @@ are statically preserved in lexical-isolated original bodies.
 
 | Execution lane | Physical files |
 | --- | ---: |
-| `development` | 240 |
+| `development` | 238 |
 | `safety` | 46 |
 | `runtime` | 50 |
 | `regression` | 45 |
 | `acceptance` | 20 |
-| **Total** | **401** |
+| **Total** | **399** |
 
 Inventory disposition: 294 provisional,
-92 keep, 15 defer.
-Review provenance: 290 case-inventory-reviewed
-and 111 source-reviewed; feature mapping remains
-`path-provisional` for 367 entries.
+90 keep, 15 defer.
+Review provenance: 289 case-inventory-reviewed
+and 110 source-reviewed; feature mapping remains
+`path-provisional` for 365 entries.
 These provisional labels **cannot** justify deleting a unique test.
+
+### Current bounded consolidation and map-specific scenario routing
+
+Two same-directory, same-owner, same-feature, same-lane `Development`
+source suites were combined (401 -> **399** physical files). The retained
+Script dataflow-context suite now includes Script API-update correlation;
+the retained diagnostic-investigation suite includes diagnostic proof
+disposition. Original source bodies, registrations and assertions remain in
+distinct lexical scopes. The pinned paths, blob SHAs and new source SHAs are
+registered in `test-inventory.json`. Neither retired path is a knowledge
+or capability proof binding. The derived proof inventory fingerprint was
+updated; `context.dataflow-slice` remains bound to the retained suite.
+TypeScript, Vitest, isolation, performance and Minecraft are **NOT EXECUTED**.
+
+Resolved `STORY_QUEST` and explicit map-type/mechanic scenario questions
+use the existing classification and gameplay scenario owners. Universal
+coverage, source-derived applicability and cross-system joins remain
+mandatory when evidenced. No new runner, map-audit stage, checklist
+authority or CI workflow was introduced.
 
 ### Separate source-grounded dead-suite retirement (2026-10-31)
 

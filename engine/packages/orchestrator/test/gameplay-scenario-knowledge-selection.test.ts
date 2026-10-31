@@ -1,3 +1,4 @@
+import { buildGameplayAuditScenarioPreset } from "../../diagnostic-reasoning/src/index.js";
 import { describe, expect, it } from "vitest";
 import { expandGameplayKnowledgeRequirementIds, knowledgeIdsForRequirement } from "../src/inspection/gameplay-scenario-knowledge.js";
 
@@ -126,5 +127,61 @@ describe("gameplay scenario knowledge selection", () => {
         requirements,
       ),
     ).toEqual(["chunks.relevant"]);
+  });
+});
+
+describe("map-type and mechanic-specific scenario selection", () => {
+  const cases = [
+    ["BUILDING", "plot boundaries"],
+    ["COMBAT", "damage"],
+    ["SURVIVAL", "survival resources"],
+    ["STRATEGY", "resource generation"],
+    ["SEARCH_PUZZLE", "puzzle action"],
+    ["STORY_QUEST", "dialogue and quest"],
+    ["CHALLENGE_COURSE", "checkpoints"],
+    ["SKILL_COURSE", "instructions"],
+  ] as const;
+
+  it("routes resolved map types without suppressing universal map coverage", () => {
+    for (const [mapType, needle] of cases) {
+      const preset = buildGameplayAuditScenarioPreset({
+        classification: {
+          mapType, playerMode: "SOLO", mechanicTags: [],
+          classificationStatus: "RESOLVED", evidenceRefs: ["authored:classification"],
+        },
+      });
+      const text = preset.scenarios.find(s => s.kind === "map-type-coverage")?.questions.join(" ") ?? "";
+      expect(text).toContain(needle);
+      expect(preset.scenarios.some(s => s.kind === "full-journey")).toBe(true);
+      expect(preset.scenarios.some(s => s.kind === "two-player")).toBe(false);
+    }
+  });
+
+  it("adds only authored mechanic-specific questions", () => {
+    const preset = buildGameplayAuditScenarioPreset({
+      classification: {
+        mapType: "STORY_QUEST", playerMode: "SOLO",
+        mechanicTags: ["MULTI_STAGE", "PERSISTENCE"],
+        classificationStatus: "RESOLVED", evidenceRefs: ["source:story"],
+      },
+    });
+    const text = preset.scenarios.find(s => s.kind === "map-type-coverage")?.questions.join(" ") ?? "";
+    expect(text).toContain("STORY_QUEST:");
+    expect(text).toContain("MULTI_STAGE:");
+    expect(text).toContain("PERSISTENCE:");
+    expect(text).not.toContain("TEAM_COMBAT:");
+    expect(text).not.toContain("SHOP:");
+    expect(preset.scenarios.some(s => s.kind === "reload-recovery")).toBe(true);
+  });
+
+  it("does not invent map-specific checks for unresolved classification", () => {
+    const preset = buildGameplayAuditScenarioPreset({
+      classification: {
+        mapType: null, playerMode: null, mechanicTags: [],
+        classificationStatus: "UNRESOLVED", evidenceRefs: [],
+      },
+    });
+    expect(preset.scenarios.some(s => s.kind === "map-type-coverage")).toBe(false);
+    expect(preset.scenarios.some(s => s.kind === "full-journey")).toBe(true);
   });
 });

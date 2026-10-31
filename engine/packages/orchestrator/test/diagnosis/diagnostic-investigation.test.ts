@@ -1,3 +1,4 @@
+import { diagnosticDispositionForDefectResolution } from "../../src/diagnosis/defect-resolution-diagnostic-disposition.js";
 import { describe, expect, it } from "vitest";
 import type { CausalIncident } from "../../../project-model/src/index.js";
 import type { DiagnosticProbeDefinition } from "../../../project-model/src/index.js";
@@ -82,3 +83,19 @@ describe("diagnostic investigation state", () => {
     )).toThrow(/Unknown diagnostic probe/);
   });
 });
+
+// Source-preserved engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts (original Git blob 7fdeb196551e34f8361f8a943c1d2f9ee46d5a6d).
+// Registrations and assertions isolated from original retained suite.
+{
+describe("defect resolution diagnostic disposition",()=>{it("maps authority explicitly",()=>{expect(diagnosticDispositionForDefectResolution("CONFIRMED_DEFECT_READY")).toBe("confirmed-defect");expect(diagnosticDispositionForDefectResolution("RUNTIME_PROOF_REQUIRED")).toBe("runtime-proof-required");expect(diagnosticDispositionForDefectResolution("DETECTION_GAP")).toBe("insufficient-evidence");});});
+describe("issue type to diagnostic disposition", () => {
+  it("preserves canonical BUG and DESIGN_MISMATCH classification without changing other proof dispositions", () => {
+    expect(diagnosticDispositionForDefectResolution("CONFIRMED_DEFECT_READY", "BUG"))
+      .toBe("confirmed-defect");
+    expect(diagnosticDispositionForDefectResolution("CONFIRMED_DEFECT_READY", "DESIGN_MISMATCH"))
+      .toBe("design-review");
+    expect(diagnosticDispositionForDefectResolution("RUNTIME_PROOF_REQUIRED", "DESIGN_MISMATCH"))
+      .toBe("runtime-proof-required");
+  });
+});
+}

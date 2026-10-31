@@ -7,6 +7,7 @@ export type GameDesignMapType =
   | "SURVIVAL"
   | "STRATEGY"
   | "SEARCH_PUZZLE"
+  | "STORY_QUEST"
   | "CHALLENGE_COURSE"
   | "SKILL_COURSE";
 

@@ -157,6 +157,8 @@ export function buildGameplayAuditScenarioPreset(
         "Can every required gameplay stage be reached in order?",
         "Does each stage have a valid success, failure, and exit path?",
         "Does cleanup restore enough baseline state for another run?",
+        "Are the spawn route, gameplay actions and access permissions reachable?",
+        "Does player-facing feedback reflect the actual state and terminal result?",
       ],
     }),
     scenario({
@@ -201,6 +203,7 @@ export function buildGameplayAuditScenarioPreset(
           "Are all knowledge domains required by this Map Type represented in the Required Inspection Graph?",
           "Do declared Mechanics add the expected bounded audit scenarios without assuming their failure?",
           "Does selected-artifact evidence still decide whether each suspected issue is proven, unresolved, or safe?",
+          ...classificationProfile.specificScenarioQuestions,
         ],
         requiredKnowledgeDomains:
           classificationProfile
