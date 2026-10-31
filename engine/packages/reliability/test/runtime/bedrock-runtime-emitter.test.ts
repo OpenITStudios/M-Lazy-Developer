@@ -1,9 +1,10 @@
+// Consolidated bounded owner/feature/lane suite. Original tests/assertions preserved.
 import { describe, expect, it } from "vitest";
-import {
-  captureBedrockObservationSnapshot,
-  DEFAULT_ARENA_SESSION_MAPPING,
-} from "../../src/index.js";
+import { captureBedrockObservationSnapshot, DEFAULT_ARENA_SESSION_MAPPING } from "../../src/index.js";
+import { parseRuntimeObservationLog, RUNTIME_OBSERVATION_LOG_PREFIX } from "../../src/index.js";
 
+// Original suite: engine/packages/reliability/test/runtime/bedrock-runtime-emitter.test.ts (blob ab9836877ce0b0a40857aad31be921410e386d16)
+{
 describe("Bedrock runtime evidence emitter", () => {
   it("captures player tags, scores, arena scores, tick and selected entities", () => {
     const scores = {
@@ -120,3 +121,36 @@ describe("Bedrock runtime evidence emitter", () => {
     expect(result.snapshot.players[0]?.scores).toEqual({});
   });
 });
+}
+
+// Original suite: engine/packages/reliability/test/runtime/content-log-parser.test.ts (blob 76b255086ca4bbe7aa9f29b7b1dcc6f7719aaf86)
+{
+describe("runtime content-log parser", () => {
+  it("extracts structured observation records from noisy content logs", () => {
+    const payload = {
+      schemaVersion: 1,
+      tick: 42,
+      players: [],
+      arenas: [],
+    };
+
+    const result = parseRuntimeObservationLog([
+      "[Scripting][warning]-some unrelated line",
+      `[Scripting][warning]-${RUNTIME_OBSERVATION_LOG_PREFIX}${JSON.stringify(payload)}`,
+      "another unrelated line",
+    ].join("\n"));
+
+    expect(result.malformed).toEqual([]);
+    expect(result.snapshots).toEqual([payload]);
+  });
+
+  it("keeps malformed observation records visible", () => {
+    const result = parseRuntimeObservationLog(
+      `${RUNTIME_OBSERVATION_LOG_PREFIX}{not-json}`,
+    );
+
+    expect(result.snapshots).toEqual([]);
+    expect(result.malformed).toHaveLength(1);
+  });
+});
+}

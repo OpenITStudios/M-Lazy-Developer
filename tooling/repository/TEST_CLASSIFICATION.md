@@ -1,31 +1,60 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source audit — 2026-10-31: 399 physical test files
+## Active source audit — 2026-10-31: 389 physical test files
 
-The prior source-preserving consolidation used GitHub `Local` at the pinned parent
-`8787c8210af847a29927fc1122a2acfe30312cee`. The authoritative machine registry remains
-`tooling/repository/test-inventory.json`, with a direct path-for-path
-match against the GitHub source tree. This bounded batch combines **21
-same-directory, same-owner, same-feature, development-lane suites**,
-retiring **38 obsolete physical file boundaries**. The original
-**511 `it()/test()` callsites** and **1,706 `expect()` callsites**
-are statically preserved in lexical-isolated original bodies.
+The canonical machine registry is `tooling/repository/test-inventory.json`.
+The active source tree and inventory contain **389** physical test files
+following this bounded 399 -> 389 suite consolidation. Seven same-owner,
+same-directory, same-feature/lane family mergers preserve **59** source test
+calls and **148** `expect()` callsites in isolated original bodies. This
+reduces file fragmentation; it does not establish fewer executed tests,
+faster runs, or complete semantic/test isolation proof.
+
+Historical provenance: earlier batches had 687 -> 402 source files and
+a separately justified literal-only suite retirement to 401, followed
+by 401 -> 399 safe consolidation. The 511 `it/test` and 1,706
+`expect` callsites cited in that historical batch were static counts
+for those source groups, not the number of tests executed now.
 
 | Execution lane | Physical files |
 | --- | ---: |
-| `development` | 238 |
+| `development` | 235 |
 | `safety` | 46 |
 | `runtime` | 50 |
-| `regression` | 45 |
+| `regression` | 38 |
 | `acceptance` | 20 |
-| **Total** | **399** |
+| **Total** | **389** |
 
-Inventory disposition: 294 provisional,
-90 keep, 15 defer.
-Review provenance: 289 case-inventory-reviewed
-and 110 source-reviewed; feature mapping remains
-`path-provisional` for 365 entries.
+Inventory disposition: 287 provisional,
+87 keep, 15 defer.
+Review provenance: 282 case-inventory-reviewed
+and 107 source-reviewed; feature mapping remains
+`path-provisional` for 348 entries.
 These provisional labels **cannot** justify deleting a unique test.
+
+### Additional owner-local family consolidation — 2026-10-31
+
+Seven focused source-file mergers reduce **399 -> 389** test files,
+while preserving 59 test registrations and 148 assertion callsites.
+Families are runtime observation framing/parsing, regression queue/report,
+portfolio retest planning, structure and chunk evidence, command context
+and transactions, historical QA planning, and regression batch execution.
+Mergers retain the exact original file body within its own lexical block,
+hoist only source-compatible imports, and record original blob SHAs plus
+their merged SHA. Retired paths were not knowledge-detector or capability
+proof bindings and were not in the default acceptance selection.
+
+A previous multi-source `script-structure-correlation` consolidation
+remains recorded under `priorConsolidationRecords` in the retained
+structure proof suite. Seven retained source families have source-case-
+inspected feature routing; the remaining provisional mappings must be
+reviewed against their actual consumer rather than guessed from filenames.
+
+**Proof ceiling:** source SHA, original body/callsite parity,
+static import collision control and metadata integrity; TypeScript,
+Vitest, runtime isolation, test timing, map audit and Minecraft
+gameplay **NOT EXECUTED**. The target of around 100 file boundaries
+is still conditional on semantic and negative-case equivalence.
 
 ### Current bounded consolidation and map-specific scenario routing
 

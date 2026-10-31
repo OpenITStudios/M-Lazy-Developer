@@ -11,7 +11,7 @@
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
     "proofRegistryFingerprint": "868f390c",
-    "proofInventoryFingerprint": "08ea83be"
+    "proofInventoryFingerprint": "f80641cd"
   },
   "summary": {
     "taskCapabilities": 55,
