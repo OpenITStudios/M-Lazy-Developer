@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "b8450ab6484c50b6b7d3939c29dc35e268fd6425",
-  "classification": "497 physical source test files after a bounded owner-level cleanup on top of six source-preserving consolidation batches (687 original). One separate replica-divergence test suite moved into canonical map-audit-obligations.test.ts, with its four assertion sites and scenario preserved. Two direct deterministic helper suites reclassified from Acceptance to Development; default acceptance hardcoded selection unchanged. No executable equivalence verified.",
+  "sourceCommit": "43d5f1759eba137ec0a3a9b95713bd862429ca31",
+  "classification": "495 physical test files after combining three direct inspectDirectory source suites into one existing inspection owner (prior 497). All original 16 it() cases and 74 expect() sites are preserved within that owner. The now-unreferenced audit.end-to-end feature label (source-level helper, not selected-map end-to-end) was removed. Default acceptance selected suites, runtime/safety boundaries and disabled CI policy are unchanged. No executable test PASS asserted.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -5847,13 +5847,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
         "owner": "engine/packages/orchestrator",
+        "basis": "source-body-identity-and-entrypoint-consumer",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "retain-direct-inspection-contract-and-retest-affected-source"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Canonical inspectDirectory source suite: preserves original source discovery/semantics plus two manifest-script/world-DB scenarios and one scoped Knowledge diagnostic scenario transferred exactly from former top-level integration suites. Three moved cases are source-body-identical, not executed, and do not constitute selected .mcworld end-to-end acceptance.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -6681,46 +6681,6 @@
       },
       "recommendation": "keep-provisional",
       "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/integration.test.ts",
-      "lane": "acceptance",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "21926efda77c1e04207b4ae96c2bf7b0fc4d36da"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.end-to-end",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/knowledge-inspect-integration.test.ts",
-      "lane": "acceptance",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b130142e22c9699818a1a6fe5882b35fe2631e47"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
@@ -11349,17 +11309,6 @@
         "probeIds": []
       }
     },
-    "audit.end-to-end": {
-      "area": "audit-diagnosis",
-      "label": "Source-level audit integration",
-      "upstream": {
-        "relation": "LAZY_INTERNAL_ONLY",
-        "skills": [],
-        "modules": [],
-        "probeExamples": [],
-        "probeIds": []
-      }
-    },
     "audit.evidence-integrity": {
       "area": "audit-diagnosis",
       "label": "Evidence recovery, consistency and traceability",
@@ -13120,14 +13069,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "b8450ab6484c50b6b7d3939c29dc35e268fd6425",
+    "parentCommit": "43d5f1759eba137ec0a3a9b95713bd862429ca31",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 497,
-    "groups": 78,
-    "removedPaths": 207,
+    "sourceFilesAfter": 495,
+    "groups": 79,
+    "removedPaths": 209,
     "addedPaths": 17,
     "deletedAssertionsProven": 0,
-    "proof": "source-contract-and-assertion-parity_ONLY_NOT_VITEST",
-    "open": "Exact-head TypeScript/Vitest runtime and selection-cost measurements NOT EXECUTED; cross-lane grouping remains evidence-driven."
+    "proof": "exact-source-body-and-assertion-callsite-parity_ONLY_NOT_TYPESCRIPT_VITEST",
+    "open": "Transferred suites have not been executed in TypeScript/Vitest; selected-map end-to-end and Minecraft runtime remain NOT EXECUTED; case-level redundancies among unrelated consumers are not established."
   }
 }

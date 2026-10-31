@@ -16,6 +16,8 @@ import { buildFilesystemInventory } from "../../../project-model/src/index.js";
 import { deriveGameplayResourceTextSignals } from "../../src/inspection/gameplay-intent-resource-text.js";
 import { buildGameplayIntentModel } from "../../src/inspection/gameplay-intent-stage.js";
 
+import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
+
 describe("inspectDirectory", () => {
   it("discovers pack, functions, structures and unresolved references", async () => {
     const root = await mkdtemp(join(tmpdir(), "m-bedrock-inspect-"));
@@ -661,3 +663,127 @@ describe("inspectDirectory", () => {
 
 
 });
+
+// Source-preserved cross-domain inspect scenarios from ../integration.test.ts.
+{
+describe("cross-domain inspect integration", () => {
+  it("correlates manifest and script facts and reports undeclared Minecraft modules", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-integrated-"));
+    const pack = join(root, "behavior_packs/demo");
+
+    await mkdir(join(pack, "scripts"), { recursive: true });
+    await writeFile(join(pack, "manifest.json"), JSON.stringify({
+      format_version: 2,
+      header: {
+        name: "Demo",
+        uuid: "00000000-0000-0000-0000-000000001001",
+        version: [1,0,0],
+        min_engine_version: [1,21,0]
+      },
+      modules: [{
+        type: "script",
+        uuid: "00000000-0000-0000-0000-000000001002",
+        version: [1,0,0],
+        entry: "scripts/main.js"
+      }]
+    }));
+
+    await writeFile(
+      join(pack, "scripts/main.js"),
+      'import { world } from "@minecraft/server";\nworld.afterEvents.playerSpawn.subscribe(() => {});\n',
+    );
+
+    const result = await inspectDirectory(root);
+
+    expect(result.scripts).toBe(1);
+    expect(result.packs[0]?.minEngineVersion).toBe("1.21.0");
+    expect(result.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "SCRIPT_MODULE_UNDECLARED" }),
+    ]));
+  });
+
+  it("detects world DB presence without opening the database", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-db-presence-"));
+    await mkdir(join(root, "db"), { recursive: true });
+    await writeFile(join(root, "db/CURRENT"), "MANIFEST-000001\n");
+
+    const result = await inspectDirectory(root);
+
+    expect(result.worldDatabase).toEqual({
+      present: true,
+      fileCount: 1,
+    });
+  });
+});
+}
+
+// Source-preserved knowledge inspections from ../knowledge-inspect-integration.test.ts.
+{
+const catalog: KnowledgeCatalog = {
+  schemaVersion: 1,
+  sources: [{
+    id: "official",
+    title: "Official",
+    url: "https://learn.microsoft.com/example",
+    authority: "official",
+    confidence: "documented",
+    retrievedDate: "2026-09-24",
+  }],
+  facts: [],
+  relations: [{
+    id: "structure-needs-readiness",
+    domain: "world-mutation",
+    subject: "structure-placement-request",
+    kind: "requires",
+    object: "post-placement-readiness-verification",
+    classification: "derived-rule",
+    applicability: { editions: ["bedrock"] },
+    sourceIds: ["official"],
+  }, {
+    id: "placement-needs-target",
+    domain: "world-mutation",
+    subject: "structure-placement-request",
+    kind: "requires",
+    object: "structure-target-resolved",
+    classification: "derived-rule",
+    applicability: { editions: ["bedrock"] },
+    sourceIds: ["official"],
+  }],
+};
+
+describe("inspectDirectory executable knowledge integration", () => {
+  it("produces scoped knowledge diagnostics from real discovered function files", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-knowledge-test-"));
+    try {
+      const functions = join(root, "behavior_pack", "functions");
+      await mkdir(functions, { recursive: true });
+      await writeFile(
+        join(functions, "start.mcfunction"),
+        "structure load demo:missing 0 64 0\n",
+        "utf8",
+      );
+
+      const result = await inspectDirectory(
+        root,
+        "artifact-test",
+        { edition: "bedrock", version: "1.21.130" },
+        "fingerprint-test",
+        catalog,
+      );
+
+      expect(result.knowledgeRuntime.enabled).toBe(true);
+      expect(result.knowledgeRuntime.profileResolved).toBe(true);
+      expect(result.knowledgeRuntime.violations).toBe(1);
+      expect(result.knowledgeRuntime.evidenceGaps).toBe(1);
+      expect(result.knowledgeRuntime.validationCases).toBe(2);
+      expect(result.targetCompatibility.version).toBe("1.21.130");
+      expect(result.diagnostics).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: "KNOWLEDGE_RELATION_VIOLATION" }),
+        expect.objectContaining({ code: "KNOWLEDGE_EVIDENCE_GAP" }),
+      ]));
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+}
