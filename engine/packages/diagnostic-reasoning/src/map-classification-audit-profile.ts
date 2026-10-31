@@ -224,17 +224,33 @@ const TYPE_SCENARIO_QUESTIONS: Readonly<Record<GameDesignMapType, readonly strin
   ],
 };
 
-const MECHANIC_SCENARIO_QUESTIONS: Readonly<Partial<Record<GameDesignMechanicTag, readonly string[]>>> = {
+/**
+ * Each canonical design mechanic has one source-scoped audit question family.
+ * This is a map-type coverage projection, not a detector, test runner or
+ * proof of a defect. Adding a mechanic tag requires an explicit question.
+ */
+const MECHANIC_SCENARIO_QUESTIONS: Readonly<Record<GameDesignMechanicTag, readonly string[]>> = {
   BUILD: ["BUILD: Are denied placement, stateful blocks and liquids rejected at every plot edge?"],
+  MEMORY: ["MEMORY: Can required memory sequences be presented, attempted, failed, retried and completed without stale progress?"],
+  SEARCH: ["SEARCH: Are required search targets discoverable and reachable, and do missing or repeated interactions preserve completion rules?"],
+  PUZZLE: ["PUZZLE: Do correct and incorrect puzzle actions respect authored guards, retries and completion without skip or softlock?"],
+  PARKOUR: ["PARKOUR: Do jumps, hazards, checkpoints and retry/teleport paths prevent unintended shortcuts or lost progress?"],
+  MELEE_COMBAT: ["MELEE_COMBAT: Are melee hit eligibility, damage, attacker/target ownership and death credit consistent with authored rules?"],
+  RANGED_COMBAT: ["RANGED_COMBAT: Are projectile hit, target scope, team restrictions and kill credit consistent with authored rules?"],
   TEAM_COMBAT: ["TEAM_COMBAT: Do friendly fire and cross-team score follow authored team ownership?"],
   BASE_DEFENSE: ["BASE_DEFENSE: Does objective health change only from authored attacks?"],
+  BASE_ATTACK: ["BASE_ATTACK: Can only valid attacks change the opposing base's health and trigger a single authorized outcome?"],
   CAPTURE_OBJECTIVE: ["CAPTURE_OBJECTIVE: Can multiple actors capture or score an objective only once?"],
+  ESCORT: ["ESCORT: Can the escorted actor follow required routes and remain simulated, and do loss/recovery rules permit completion?"],
+  EXTRACTION: ["EXTRACTION: Are collection, entry and extraction gates ordered correctly, with no early or duplicate completion?"],
   WAVE_DEFENSE: ["WAVE_DEFENSE: Are spawn, death/removal, wave progression and cleanup reconciled?"],
+  SURVIVAL_TIMER: ["SURVIVAL_TIMER: Can start, pause, expiry and cancellation follow the authored survival condition without stale timeout commits?"],
   ENTITY_AI: ["ENTITY_AI: Do critical actors have navigable targets and simulation residency?"],
   RESOURCE_ECONOMY: ["RESOURCE_ECONOMY: Are earn, debit, rollback and retry atomic per owner?"],
   SHOP: ["SHOP: Does purchase failure or retry avoid duplicate grants and partial debit?"],
-  CRAFTING: ["CRAFTING: Are permitted recipes and consumed inventory consistent with restrictions?"],
   LOADOUT: ["LOADOUT: Are class, kit, death and respawn inventories scoped correctly?"],
+  CRAFTING: ["CRAFTING: Are permitted recipes and consumed inventory consistent with restrictions?"],
+  COLLECTION: ["COLLECTION: Are required items counted per correct owner, without duplicate credit or premature completion?"],
   RESPAWN: ["RESPAWN: Does respawn restore the correct location, role and life-state?"],
   REVIVE: ["REVIVE: Are multi-reviver and stale terminal-after-revive conflicts rejected?"],
   ROUND_TIMER: ["ROUND_TIMER: Can timeout race with victory without duplicate commit?"],
@@ -245,7 +261,6 @@ const MECHANIC_SCENARIO_QUESTIONS: Readonly<Partial<Record<GameDesignMechanicTag
   RECONNECT: ["RECONNECT: Is offline membership and restored ownership correct on rejoin?"],
   WORLD_RESET: ["WORLD_RESET: Does replay restore all changed regions and cancel stale work?"],
 };
-
 const EMPTY_SIGNALS: MapClassificationAuditSignals = {
   hasMultiArena: false,
   hasPersistence: false,
@@ -315,7 +330,7 @@ export function deriveMapClassificationAuditProfile(
     specificScenarioQuestions: [...new Set([
       ...TYPE_SCENARIO_QUESTIONS[classification.mapType!],
       ...classification.mechanicTags.flatMap((tag) =>
-        MECHANIC_SCENARIO_QUESTIONS[tag] ?? []
+        MECHANIC_SCENARIO_QUESTIONS[tag]
       ),
     ])],
     signals: {

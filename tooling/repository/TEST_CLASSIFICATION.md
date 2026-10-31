@@ -82,6 +82,49 @@ and one native suite at this source snapshot), which is **not**
 are choices of the same runner. See `TEST_EXECUTION.md`. The
 `Local` CI workflow remains disabled.
 
+## Read categories without mixing source tests with gameplay checks
+
+**Two independent questions:** (1) *Which part of M-Lazy-Developer is
+this source test exercising?* Use the existing inventory/runner.
+(2) *Which gameplay checks apply to this `.mcworld`?* Use the selected
+artifact, [Bug-Finding Coverage](../../docs/analysis/bug-finding-coverage.md)
+and the canonical scenario preset. Running 381 source tests is not a
+prerequisite for auditing one map, and a source test PASS is not Minecraft
+gameplay proof.
+
+| User-facing concern | Repository source-test navigation | Possible proven gameplay failure domain |
+| --- | --- | --- |
+| Multi-arena / team isolation | `arena-match`, plus applicable `player-session` and `runtime-telemetry`; e.g. `arena.isolation`, `arena.capacity` | `arena-multi-arena`, `state-ownership`, `boundary-capacity` |
+| Join / leave / reconnect | `player-session`, `player-state-persistence`; e.g. `player.join`, `player.reconnect`, `player.persistence` | `player-lifecycle`, `persistence-recovery`, `state-ownership` |
+| Wave / objectives / combat / AI | `gameplay-interpretation`, `combat-entities`, `arena-match`; e.g. `entity.ai-navigation`, `combat.damage-lifecycle` | `progression-wave-objective`, `entity-ai-combat`, `chunk-simulation` |
+| Shop / reward / inventory | `inventory-economy`; e.g. `economy.currency-rewards`, `inventory.item-flow` | `inventory-economy`, sometimes `state-ownership` |
+| Map world DB / LevelDB / NBT / structures | `map-database`, `map-content`; e.g. `map.database`, `map.nbt`, `map.structure` | Not a domain by itself; proven consequences may be `world-structure-mutation` or `persistence-recovery` |
+| Lobby / ready / start | Currently distributed across `arena-match` and `player-session`, despite **0** dedicated `lobby-pre-match` source-test files | `player-lifecycle`, `arena-multi-arena`, or `state-ownership`, depending on cause |
+| Building permissions / resets | `world-interaction`, `map-content` and applicable repair/preservation owners | `world-structure-mutation`, `state-ownership` |
+
+Each file retains **one** primary `functionalArea`, **one** `featureId`,
+**one** source execution `lane` and optional multiple secondary
+`mechanicTags[]`. These dotted/lowercase tags are repository source-test
+navigation, **not** the uppercase `GameDesignMechanicTag` values
+(`MULTI_ARENA`, `RECONNECT`, `BUILD`, etc.) used to profile selected maps.
+The 13 `failureDomain` values describe *proven gameplay issues*, not test
+folders or additional runner groups. An issue may have one primary and
+multiple contributing domains without duplicating a test case.
+
+Read-only navigation already exists in `run-tests.mjs`:
+`--list-areas`, `--show-area arena-match`, `--show-area map-database`,
+`--list-features`, `--show-feature arena.state-isolation`,
+`--list-mechanics`, `--show-mechanic arena.isolation`,
+`--show-mechanic map.database`, and `--list-lanes`.
+These commands enumerate current source metadata; they do **not**
+execute tests or decide which gameplay mechanics exist in a selected map.
+
+**Selection contract:** repo unit/regression/safety/acceptance tests
+are selected by changed source, known proof bindings or explicit scope;
+selected-map checks are selected by actual map evidence plus universal
+coverage, type, player mode, mechanics and material risk. Do not add
+another registry, lane, map-to-test-file lookup or duplicate runner.
+
 ## Separate meaning of testing and external references
 
 Repository `*.test.*` files evaluate M-Lazy implementation behavior.

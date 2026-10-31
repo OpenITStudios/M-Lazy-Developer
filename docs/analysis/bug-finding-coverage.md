@@ -196,6 +196,62 @@ Activate when applicable:
 
 These are coverage families, not a manual test checklist.
 
+### Choosing applicable checks — one selected-map audit
+
+These are four **selection inputs** to the existing selected-map audit, not
+four test runners, proof owners or separate checklists:
+
+| Input | When it applies | Existing owner |
+| --- | --- | --- |
+| **Universal** | Every selected artifact: source/surface accounting, applicable player journey, state ownership, inverse/cleanup challenge, coverage/proof closure | Mandatory Audit Procedure and the five coverage layers above |
+| **Feature-based** | A source-grounded mechanic or runtime dependency exists: multi-arena, reconnect, persistence, world DB/structure, entity AI, shops, wave progression, boundaries, etc. | Existing scenario preset, semantic/analysis owners and EVALUATE/PROVE |
+| **Map-type** | Selected-artifact-bound `RESOLVED` type and player mode, plus its authored mechanic tags; the type supplies focus, not a fabricated expected behavior | `map-classification-audit-profile.ts` consumed by `gameplay-audit-scenario-preset.ts` |
+| **Regression/risk** | Relevant changed-source impact, historical failure family or shared mutable owner/resource/timing raises additional investigation pressure | Existing regression knowledge, source coverage and proof owners |
+
+Read selection as **Core + applicable feature + resolved game type +
+relevant regression/risk**, then deduplicate checks by one causal owner.
+Source-derived scenario questions are investigation tasks, **not** automatic
+gameplay `PASS`, new issue types or evidence that Minecraft was executed.
+
+Operator-facing applicability labels can be explained as follows; these are
+**descriptive views**, not new persisted enums, runner lanes or proof states:
+
+- `REQUIRED`: universal audit/coverage obligation; apply it to the actually authored player flow.
+- `CONDITIONAL_ACTIVE`: an observed or positively supported feature/type activates its relevant check.
+- `NOT_APPLICABLE`: a particular check is excluded **only with positive current-artifact evidence**, never because a file/tag/search result is missing.
+- `UNRESOLVED`: evidence is insufficient to decide applicability or a material check; retain a scoped Audit Obligation/Detection Gap rather than silently skipping it.
+
+Final proof still uses the canonical `SAFE`, `PROVEN`, `NEED_VALIDATION`,
+`AUDIT_OBLIGATION` and `NOT_APPLICABLE` dispositions with established
+checkpoint gates. Applicability is **not** a second proof/closure authority.
+
+**Source-test categories are different.** `tooling/repository/test-inventory.json`
+owns the 381 repository source-test files by `functionalArea`, `featureId`,
+optional lowercase `mechanicTags[]` and `lane`. These fields select tests of
+M-Lazy-Developer's implementation when affected or intentionally requested;
+they do not directly select `.mcworld` scenarios. The selected-map classifier
+uses eight `GameDesignMapType` values, five player modes and 30 uppercase
+`GameDesignMechanicTag` values. The 13 gameplay `failureDomain` values
+classify independently proven findings **after** PROVE. No one-to-one
+file/tag/domain correspondence is required.
+
+**World database is an evidence source, not a fourteenth failure domain.**
+Inspect LevelDB/world DB, NBT, structures and script/config references when
+available and material; classify unreadable/unsupported/ambiguous records
+as source or proof gaps. Only an evidenced player-facing causal contradiction
+may become `world-structure-mutation`, `persistence-recovery`,
+`state-ownership` or another existing issue domain.
+
+**Examples of activation:** A cooperative multi-arena wave-defense map
+requires its authored join/start, parallel arena ownership, wave/entity
+progression, simulation and cleanup/reconnect paths; shops are checked only
+if the selected source actually supports a shop. A building-plot map instead
+activates placement, permission, liquid/stateful-block, spatial-boundary and
+applicable reset checks. No `WAVE_DEFENSE` check is forced on a map where
+its absence is positively established. Shared writer/selector/ownership
+intersections justify a bounded cross-system challenge, not a Cartesian
+product of microtests.
+
 ### Defect indicators — from category to deciding evidence
 
 These are **investigation indicators**, not automatic test assertions, a second
@@ -296,8 +352,11 @@ A resolved, selected-artifact-bound Map Classification activates questions for
 `BUILDING`, `COMBAT`, `SURVIVAL`, `STRATEGY`, `SEARCH_PUZZLE`,
 `STORY_QUEST`, `CHALLENGE_COURSE`, or `SKILL_COURSE` through the
 existing `map-classification-audit-profile.ts` and `gameplay-audit-scenario-preset.ts`.
-Declared mechanic tags add only their corresponding targeted questions.
-Multiple gameplay families may apply to the same selected map.
+Every declared canonical mechanic tag adds its own bounded targeted question;
+all 30 design mechanic tags are covered in the existing map-classification
+profile. These questions supplement the eight type-specific question families
+and never establish a bug independently. Multiple gameplay families may apply
+to the same selected map.
 
 The classification does not assert defects, suppress discovered hazards, invent
 Minecraft proof, or create a new test lane. Unknown classification does not
