@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-  "classification": "385 physical source-test files across 113 unique behavior feature IDs (153 lane/feature groups, 100 Development feature IDs). 78 source-case-inspected feature mappings have exact matching current Git SHA; 307 remain path-provisional. Bounded source-body comparison of 327 test registrations from 12 exact-SHA suites found 0 whitespace-normalized identical case bodies; full semantic-equivalence analysis and Vitest/Minecraft execution NOT EXECUTED. No test files, registrations, or assertion callsites were deleted in this batch.",
+  "classification": "381 physical source-test files after 385 to 381 bounded same-owner/directory/feature Development suite mergers, retaining 18 source test calls and 39 expect callsites in original lexical bodies. Source-backed exact-SHA feature classifications now include retained merged files; no safety/runtime/regression/acceptance lane changes. Source file count is not runnable test count. Static proof only; TypeScript/Vitest/selected-map/Minecraft NOT EXECUTED.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -3773,24 +3773,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Stage execution and refusals for incomplete discovery, artifact-only runtime claims and missing formal problem.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.defect-analysis",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-semantic-ir-executor.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -3858,36 +3840,64 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "source-preserving-owner-feature-lane-consolidation",
+        "basis": "source-case-consumer-and-exact-original-body-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "verify-merged-test-isolation-and-affected-selection",
-        "sourceBlobSha": "28ef974b173ef4094ed7000d843c307437fd911d"
+        "action": "verify-merged-suite-when-executable-context-available; do-not-erase-unique-conditions",
+        "sourceBlobSha": "caa13e46a1989f6f4e0c0ddb8050f68a031d3e27",
+        "consumerSymbol": "applyDiagnosticProbeObservation / runBuiltinDiagnosis"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Same owner/feature/lane lexical source-preserving consolidation. Original test registrations and expect bodies kept; executable isolation not yet verified.",
+      "rationale": "Original consumer-driven positive/negative and distinct end-to-end source bodies remain in isolated lexical scopes. No exact semantic duplicate case removed; source-based consolidation reduces physical file boundaries only. Executable behavior NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.defect-analysis",
-      "featureMappingBasis": "path-provisional",
+      "featureMappingBasis": "source-case-inspected",
       "consolidation": {
-        "baseCommit": "fd3f97b0239ce1ba771a89f033071f420f59a199",
-        "method": "same-directory-owner-feature-lane-lexical-source-preservation",
+        "baseCommit": "9c0fa79ebbcd949a402fdc675f9d8123f63b41fc",
+        "method": "same-owner-directory-feature-development-lane-lexical-scope-and-import-dedup",
         "sourceFiles": [
           {
             "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts",
-            "blobSha": "224c83c1476015b052bc3f5f3f0fdcdc7fafc225"
+            "blobSha": "28ef974b173ef4094ed7000d843c307437fd911d",
+            "caseRegistrations": 5,
+            "expectCallsites": 12
           },
           {
-            "path": "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts",
-            "blobSha": "7fdeb196551e34f8361f8a943c1d2f9ee46d5a6d"
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts",
+            "blobSha": "3d8f4142c1609ce256406187398338b6be48a1cb",
+            "caseRegistrations": 4,
+            "expectCallsites": 11
           }
         ],
-        "originalTestCallSites": 5,
-        "originalExpectCallSites": 12,
-        "mergedSourceBlobSha": "28ef974b173ef4094ed7000d843c307437fd911d",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 9,
+        "originalExpectCallSites": 23,
+        "mergedSourceBlobSha": "caa13e46a1989f6f4e0c0ddb8050f68a031d3e27",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidationRecords": [
+          {
+            "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts",
+            "record": {
+              "baseCommit": "fd3f97b0239ce1ba771a89f033071f420f59a199",
+              "method": "same-directory-owner-feature-lane-lexical-source-preservation",
+              "sourceFiles": [
+                {
+                  "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts",
+                  "blobSha": "224c83c1476015b052bc3f5f3f0fdcdc7fafc225"
+                },
+                {
+                  "path": "engine/packages/orchestrator/test/diagnosis/defect-resolution-diagnostic-disposition.test.ts",
+                  "blobSha": "7fdeb196551e34f8361f8a943c1d2f9ee46d5a6d"
+                }
+              ],
+              "originalTestCallSites": 5,
+              "originalExpectCallSites": 12,
+              "mergedSourceBlobSha": "28ef974b173ef4094ed7000d843c307437fd911d",
+              "execution": "NOT_EXECUTED"
+            }
+          }
+        ]
       }
     },
     {
@@ -4876,25 +4886,6 @@
         "mergedSourceBlobSha": "9a2c94551d86ab47a87a7c1a18880523b1365d16",
         "execution": "NOT_EXECUTED"
       }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/engineering-analysis-stage.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/entity-ai-stack-analysis.test.ts",
@@ -5934,42 +5925,59 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/inspection/shared-resource-ownership.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "source-case-consumer-and-exact-original-body-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
+        "action": "verify-merged-suite-when-executable-context-available; do-not-erase-unique-conditions",
+        "sourceBlobSha": "b8caa69e0b62f8e187a4ac2448a3265a3180f0a7",
+        "consumerSymbol": "analyzeInteractiveBlockComponents / analyzeFunctionTopology / analyzeSharedResourceOwnership / deriveInspectionEngineeringAnalyses"
       },
       "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Original consumer-driven positive/negative and distinct end-to-end source bodies remain in isolated lexical scopes. No exact semantic duplicate case removed; source-based consolidation reduces physical file boundaries only. Executable behavior NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "9c0fa79ebbcd949a402fdc675f9d8123f63b41fc",
+        "method": "same-owner-directory-feature-development-lane-lexical-scope-and-import-dedup",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
+            "blobSha": "80aecac3ae1836c9e498be89f2f3dab3426435f3",
+            "caseRegistrations": 3,
+            "expectCallsites": 3
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/topology-analysis.test.ts",
+            "blobSha": "d4077b0350fd1e4b69ab13a28aac4ceb86e29f29",
+            "caseRegistrations": 3,
+            "expectCallsites": 6
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/shared-resource-ownership.test.ts",
+            "blobSha": "26ccdcbf39285063cc87d8a3d3914a9ef0e8df85",
+            "caseRegistrations": 2,
+            "expectCallsites": 3
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection/engineering-analysis-stage.test.ts",
+            "blobSha": "a2a2c0835c0596a7f698b615787b4813405a03b3",
+            "caseRegistrations": 1,
+            "expectCallsites": 4
+          }
+        ],
+        "originalTestCallSites": 9,
+        "originalExpectCallSites": 16,
+        "mergedSourceBlobSha": "b8caa69e0b62f8e187a4ac2448a3265a3180f0a7",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts",
@@ -6060,25 +6068,6 @@
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "world.teleport",
       "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspection/topology-analysis.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.source-inspection",
-      "featureMappingBasis": "path-provisional"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/world-db-diff.test.ts",
@@ -12210,81 +12199,150 @@
     "proof": "pinned-original-source-body-and-static-test-assertion-parity_NOT_EXECUTED",
     "open": "No TypeScript/Vitest/isolation/performance/Minecraft execution proof; 100 physical test files is a target and is not a safe-delete quota.",
     "latestSourcePreservingBatch": {
-      "parentCommit": "a98dfe718494bf55fc0725364c3d00de84a1b377",
-      "sourceFilesBefore": 389,
-      "sourceFilesAfter": 385,
-      "groups": [
-        {
-          "retained": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
-          "retired": [
-            "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
-            "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts"
-          ],
-          "sourceCasesRetained": 18,
-          "expectCallsRetained": 43
-        },
-        {
-          "retained": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
-          "retired": [
-            "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts"
-          ],
-          "sourceCasesRetained": 11,
-          "expectCallsRetained": 21
-        },
-        {
-          "retained": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
-          "retired": [
-            "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts"
-          ],
-          "sourceCasesRetained": 12,
-          "expectCallsRetained": 29
-        }
-      ],
+      "parentCommit": "9c0fa79ebbcd949a402fdc675f9d8123f63b41fc",
+      "sourceFilesBefore": 385,
+      "sourceFilesAfter": 381,
+      "consolidatedOwnerFeatureLaneFamilies": 2,
       "retiredPaths": [
-        "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
-        "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts",
-        "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
-        "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts"
+        "engine/packages/orchestrator/test/inspection/topology-analysis.test.ts",
+        "engine/packages/orchestrator/test/inspection/shared-resource-ownership.test.ts",
+        "engine/packages/orchestrator/test/inspection/engineering-analysis-stage.test.ts",
+        "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts"
       ],
       "retainedPaths": [
-        "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
-        "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
-        "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts"
+        "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
+        "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts"
       ],
-      "registeredCasesRetained": 41,
-      "expectCallsitesRetained": 93,
-      "additionalReviewedMappings": 15,
-      "proof": "SOURCE_ONLY: exact blob, import-binding and source-body/callsite parity; no executable tests or Minecraft proof",
-      "priorBatch": {
-        "parentCommit": "bdf43253d6f9db0825df78367a0f36b7cec15633",
-        "sourceFilesBefore": 399,
-        "sourceFilesAfter": 389,
-        "consolidatedOwnerFeatureLaneFamilies": 7,
+      "casesRetained": 18,
+      "expectCallsitesRetained": 39,
+      "families": [
+        {
+          "retained": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
+          "originals": [
+            {
+              "path": "engine/packages/orchestrator/test/inspection/static-frontier-analysis.test.ts",
+              "sha": "80aecac3ae1836c9e498be89f2f3dab3426435f3",
+              "cases": 3,
+              "assertions": 3
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/topology-analysis.test.ts",
+              "sha": "d4077b0350fd1e4b69ab13a28aac4ceb86e29f29",
+              "cases": 3,
+              "assertions": 6
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/shared-resource-ownership.test.ts",
+              "sha": "26ccdcbf39285063cc87d8a3d3914a9ef0e8df85",
+              "cases": 2,
+              "assertions": 3
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/engineering-analysis-stage.test.ts",
+              "sha": "a2a2c0835c0596a7f698b615787b4813405a03b3",
+              "cases": 1,
+              "assertions": 4
+            }
+          ],
+          "mergedSha": "b8caa69e0b62f8e187a4ac2448a3265a3180f0a7"
+        },
+        {
+          "retained": "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts",
+          "originals": [
+            {
+              "path": "engine/packages/orchestrator/test/diagnosis/diagnostic-investigation.test.ts",
+              "sha": "28ef974b173ef4094ed7000d843c307437fd911d",
+              "cases": 5,
+              "assertions": 12
+            },
+            {
+              "path": "engine/packages/orchestrator/test/diagnosis/diagnosis-runtime.test.ts",
+              "sha": "3d8f4142c1609ce256406187398338b6be48a1cb",
+              "cases": 4,
+              "assertions": 11
+            }
+          ],
+          "mergedSha": "caa13e46a1989f6f4e0c0ddb8050f68a031d3e27"
+        }
+      ],
+      "proof": "pinned source body/case/expect parity, import binding collision checks and knowledge/capability binding retention; NOT_EXECUTED",
+      "previousBatch": {
+        "parentCommit": "a98dfe718494bf55fc0725364c3d00de84a1b377",
+        "sourceFilesBefore": 389,
+        "sourceFilesAfter": 385,
+        "groups": [
+          {
+            "retained": "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
+            "retired": [
+              "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
+              "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts"
+            ],
+            "sourceCasesRetained": 18,
+            "expectCallsRetained": 43
+          },
+          {
+            "retained": "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
+            "retired": [
+              "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts"
+            ],
+            "sourceCasesRetained": 11,
+            "expectCallsRetained": 21
+          },
+          {
+            "retained": "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts",
+            "retired": [
+              "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts"
+            ],
+            "sourceCasesRetained": 12,
+            "expectCallsRetained": 29
+          }
+        ],
         "retiredPaths": [
-          "engine/packages/reliability/test/runtime/content-log-parser.test.ts",
-          "engine/packages/reliability/test/regression/regression-session-report.test.ts",
-          "engine/packages/reliability/test/portfolio/portfolio-planner.test.ts",
-          "engine/packages/reliability/test/portfolio/portfolio-regression-scheduler.test.ts",
-          "engine/packages/orchestrator/test/inspection/embedded-structure-graph.test.ts",
-          "engine/packages/orchestrator/test/inspection/script-structure-correlation.test.ts",
-          "engine/packages/orchestrator/test/inspection/script-command-transaction-analysis.test.ts",
-          "engine/packages/orchestrator/test/reliability/qa-execution-budget.test.ts",
-          "engine/packages/orchestrator/test/reliability/regression-batch-retest-feedback.test.ts",
-          "engine/packages/orchestrator/test/reliability/regression-execution-queue-runner.test.ts"
+          "engine/packages/runtime-lab/test/domains/scheduler/scheduler-generation-experiment.test.ts",
+          "engine/packages/runtime-lab/test/domains/scheduler/scheduler-ordering-experiment.test.ts",
+          "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-stress-experiment.test.ts",
+          "engine/packages/runtime-lab/test/domains/chunk/chunk-readiness-experiment.test.ts"
         ],
         "retainedPaths": [
-          "engine/packages/reliability/test/runtime/bedrock-runtime-emitter.test.ts",
-          "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
-          "engine/packages/reliability/test/portfolio/map-knowledge-retest.test.ts",
-          "engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts",
-          "engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts",
-          "engine/packages/orchestrator/test/reliability/history-driven-qa-recommendation.test.ts",
-          "engine/packages/orchestrator/test/reliability/portfolio-regression-batch-runner.test.ts"
+          "engine/packages/runtime-lab/test/domains/scheduler/scheduler-isolation-experiment.test.ts",
+          "engine/packages/runtime-lab/test/domains/multiplayer/multiplayer-concurrency-experiment.test.ts",
+          "engine/packages/runtime-lab/test/domains/chunk/chunk-probe-experiments.test.ts"
         ],
-        "retainedTestCallSites": 59,
-        "retainedExpectCallSites": 148,
-        "evidence": "exact-blob-source-case-and-assertion-callsite-parity, import binding collision check, same owner/feature/lane, unbound retired proof paths; NOT_EXECUTED",
-        "proof": "REMOTE_GITHUB_SOURCE_ONLY_NOT_EXECUTED"
+        "registeredCasesRetained": 41,
+        "expectCallsitesRetained": 93,
+        "additionalReviewedMappings": 15,
+        "proof": "SOURCE_ONLY: exact blob, import-binding and source-body/callsite parity; no executable tests or Minecraft proof",
+        "priorBatch": {
+          "parentCommit": "bdf43253d6f9db0825df78367a0f36b7cec15633",
+          "sourceFilesBefore": 399,
+          "sourceFilesAfter": 389,
+          "consolidatedOwnerFeatureLaneFamilies": 7,
+          "retiredPaths": [
+            "engine/packages/reliability/test/runtime/content-log-parser.test.ts",
+            "engine/packages/reliability/test/regression/regression-session-report.test.ts",
+            "engine/packages/reliability/test/portfolio/portfolio-planner.test.ts",
+            "engine/packages/reliability/test/portfolio/portfolio-regression-scheduler.test.ts",
+            "engine/packages/orchestrator/test/inspection/embedded-structure-graph.test.ts",
+            "engine/packages/orchestrator/test/inspection/script-structure-correlation.test.ts",
+            "engine/packages/orchestrator/test/inspection/script-command-transaction-analysis.test.ts",
+            "engine/packages/orchestrator/test/reliability/qa-execution-budget.test.ts",
+            "engine/packages/orchestrator/test/reliability/regression-batch-retest-feedback.test.ts",
+            "engine/packages/orchestrator/test/reliability/regression-execution-queue-runner.test.ts"
+          ],
+          "retainedPaths": [
+            "engine/packages/reliability/test/runtime/bedrock-runtime-emitter.test.ts",
+            "engine/packages/reliability/test/regression/regression-execution-queue.test.ts",
+            "engine/packages/reliability/test/portfolio/map-knowledge-retest.test.ts",
+            "engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts",
+            "engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts",
+            "engine/packages/orchestrator/test/reliability/history-driven-qa-recommendation.test.ts",
+            "engine/packages/orchestrator/test/reliability/portfolio-regression-batch-runner.test.ts"
+          ],
+          "retainedTestCallSites": 59,
+          "retainedExpectCallSites": 148,
+          "evidence": "exact-blob-source-case-and-assertion-callsite-parity, import binding collision check, same owner/feature/lane, unbound retired proof paths; NOT_EXECUTED",
+          "proof": "REMOTE_GITHUB_SOURCE_ONLY_NOT_EXECUTED"
+        }
       }
     },
     "semanticCaseAudit": {

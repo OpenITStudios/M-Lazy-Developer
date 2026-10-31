@@ -1,13 +1,15 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source audit — 2026-10-31: 385 physical test files
+## Active source audit — 2026-10-31: 381 physical test files
 
 The canonical machine registry is `tooling/repository/test-inventory.json`.
-The active source tree and inventory contain **385** physical test files.
-The latest **389 -> 385** batch consolidates three runtime behavior families,
-preserving **41** test registrations and **93** `expect()` callsites.
-The prior **399 -> 389** batch consolidated seven families with **59**
-test registrations and **148** `expect()` callsites. These source-only
+The active source tree and inventory contain **381** physical test files.
+The latest **385 -> 381** batch consolidates two owner-local Development
+families, preserving **18** source test registrations and **39** `expect()`
+calls. The prior **389 -> 385** batch consolidated three runtime behavior
+families, preserving **41** test registrations and **93** `expect()`
+calls. The earlier **399 -> 389** batch consolidated seven families with
+**59** test registrations and **148** `expect()` calls. These source-only
 counts do not establish fewer executed tests, faster runs, or executable
 semantic/test isolation proof.
 
@@ -19,19 +21,48 @@ for those source groups, not the number of tests executed now.
 
 | Execution lane | Physical files |
 | --- | ---: |
-| `development` | 235 |
+| `development` | 231 |
 | `safety` | 46 |
 | `runtime` | 46 |
 | `regression` | 38 |
 | `acceptance` | 20 |
-| **Total** | **385** |
+| **Total** | **381** |
 
-Inventory disposition: 289 provisional,
-82 keep, 14 defer.
-Review provenance: 284 case-inventory-reviewed
-and 101 source-reviewed; feature mapping remains
-`path-provisional` for 307 entries (78 source-case-inspected, exact Git SHA-bound).
+Inventory disposition: 287 provisional,
+81 keep, 13 defer.
+Review provenance: 281 case-inventory-reviewed
+and 100 source-reviewed; feature mapping remains
+`path-provisional` for 301 entries (80 source-case-inspected, exact Git SHA-bound).
 These provisional labels **cannot** justify deleting a unique test.
+
+### Development owner-local suite consolidation — 2026-10-31
+
+Two small same-owner, same-directory, same-feature, Development-lane
+families were reduced from **6 to 2** physical files, lowering the
+repository from **385 to 381** source-test files. The retained
+`static-frontier-analysis.test.ts` now also holds topology, shared-resource
+ownership, and engineering analysis-stage cases. The retained
+`diagnostic-investigation.test.ts` also holds the source indexing/diagnosis
+runtime cases. Each original source test body is still present inside its
+own lexical block; **all 18 `it()/test()` calls and 39 `expect()` calls**
+are statically preserved. No negative or guarded-case assertion was
+retired. Both families retain their Development lane/feature IDs;
+known Knowledge and Capability proof bindings still point to an active
+retained source test.
+
+Source blobs are pinned in `tooling/repository/test-inventory.json`,
+including earlier retained-suite consolidation lineage. The generated
+Capability Truth source-inventory fingerprint was updated; it is **source
+identity evidence**, not TypeScript/Vitest/Minecraft test execution.
+The number of test registrations has not been intentionally reduced.
+
+Current structure: **113 feature IDs**, **153 lane-feature groups**, of
+which **100 occur in the Development lane**; **80 exact source-reviewed
+feature mappings** and **301 provisional**. With these four file
+boundaries retired, the same-directory/feature/lane theoretical
+consolidation ceiling is **32 remaining multi-file families and 76
+additional removable boundaries** (381 -> 305 in theory). That ceiling
+does not prove safe equivalence or faster execution.
 
 ### Bounded duplicate-case and behavior-family audit — 2026-10-31
 
@@ -40,29 +71,30 @@ A pinned source audit compared **327 actual `it()/test()` bodies** and their
 inspection/discovery/reporting/proof, Behavior Model, and Diagnostic
 Reasoning). Every extracted body was compared with whitespace normalized;
 **zero exact duplicate bodies** appeared within that selected corpus. This
-does **not** prove all 385 source files contain no semantic duplicates:
+does **not** prove the entire active repository has no semantic duplicates:
 different fixture setup can produce equivalent expectations, and identical
 assertion methods do not make two scenarios equivalent. None of the 327
 cases was deleted. Exact original file/SHA/case-count provenance is stored in
 the existing `test-inventory.json` consolidation review.
 
-**11 additional** suites are now `source-case-inspected`, rising from 67
-to **78 exact Git SHA-bound source feature mappings**. The remaining **307**
-are provisional. No test case/registration/assertion was deleted merely to
+**11 additional** suites were classified in that prior audit, rising from 67
+to 78 exact Git SHA-bound source feature mappings. The newer Development
+consolidation adds two retained source-inspected files, giving **80** in
+current inventory; **301** remain provisional. No test case/registration/assertion was deleted merely to
 reduce the physical file count.
 
 #### Count semantics for a sustainable target
 
-- **385 physical test files** are stored in the repository source tree.
+- **381 physical test files** are stored in the repository source tree.
 - **113 feature families** are classified in the current canonical
   `featureCatalog`; **100 distinct features** occur in the Development lane.
 - **153 lane/feature groupings** carry the safety, development, runtime,
   regression, and acceptance separation.
 - `npm test` / `--acceptance` selects **10 Vitest suites and one native
-  suite** in its default execution plan, not all 385 source test files.
+  suite** in its default execution plan, not all 381 source test files.
   Selection is not proof of execution.
-- Among current paths, only **33** same-directory/feature/lane families have
-  multiple files. Combining all of them could remove at most **80** file
+- Among current paths, only **32** same-directory/feature/lane families have
+  multiple files. Combining all of them could remove at most **76** more file
   boundaries, reaching **305** files in theory, *without even proving those
   mergers safe*. Reaching 100 physical files necessarily requires additional
   cross-feature merges or substantive behavior-coverage changes. It is not
