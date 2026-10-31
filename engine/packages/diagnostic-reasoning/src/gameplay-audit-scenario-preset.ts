@@ -7,6 +7,9 @@ import type {
 import {
   deriveMapClassificationAuditProfile,
 } from "./map-classification-audit-profile.js";
+import type {
+  GameplayIssueFailureDomain,
+} from "./gameplay-issue-taxonomy.js";
 export type GameplayAuditScenarioKind =
   | "map-type-coverage"
   | "full-journey"
@@ -46,6 +49,16 @@ export type GameplayFlowStage =
   | "CLEANUP_REPLAY"
   | "RECOVERY";
 
+/** A source-grounded question contract, not a PASS/FAIL, finding or test receipt. */
+export interface GameplayAuditDetectionIndicator {
+  /** Candidate classification routing only; PROVE owns the actual issue domain. */
+  readonly candidateFailureDomains: readonly GameplayIssueFailureDomain[];
+  readonly contractToEstablish: string;
+  readonly failureSignalToChallenge: string;
+  readonly minimumEvidence: string;
+  readonly counterProofToSeek: string;
+}
+
 export interface GameplayAuditScenario {
   readonly id: string;
   readonly kind: GameplayAuditScenarioKind;
@@ -55,6 +68,8 @@ export interface GameplayAuditScenario {
   readonly proofMode: GameplayAuditScenarioProofMode;
   readonly reason: string;
   readonly questions: readonly string[];
+  /** Non-binding detection guidance; not evidence that a map feature exists or a bug occurred. */
+  readonly detectionIndicator?: GameplayAuditDetectionIndicator;
   readonly requiredKnowledgeDomains?:
     readonly AnalysisKnowledgeDomain[];
 }
@@ -85,11 +100,233 @@ export interface GameplayAuditScenarioPreset {
   readonly scenarios: readonly GameplayAuditScenario[];
 }
 
+/**
+ * Indicators are co-located with the existing selected-map scenario router.
+ * They do not define a second taxonomy, test lane, checker, or proof owner.
+ * The scenario's selected-artifact trigger remains authoritative for routing;
+ * candidateFailureDomains are investigation hints only.
+ */
+type ConcreteScenarioKind = Exclude<GameplayAuditScenarioKind,
+  "full-journey" | "map-type-coverage">;
+
+const DETECTION_INDICATORS: Readonly<Record<ConcreteScenarioKind,
+  GameplayAuditDetectionIndicator>> = {
+  "solo": {
+    "candidateFailureDomains": [
+      "player-lifecycle",
+      "state-ownership"
+    ],
+    "contractToEstablish": "An authored solo join/ready/start/exit path admits one eligible player and settles the correct session state.",
+    "failureSignalToChallenge": "Join pad remains occupied, ready never resolves, duplicate membership starts two sessions, or exit/replay retains stale owner.",
+    "minimumEvidence": "Selected-artifact join-pad/ready/start and leave handlers, roster writes, spawn/teleport route and session ownership; compare initial and repeated path.",
+    "counterProofToSeek": "A reachable exact guard, cleanup and authorized solo design that preserves the expected player/session state."
+  },
+  "two-player": {
+    "candidateFailureDomains": [
+      "player-lifecycle",
+      "arena-multi-arena",
+      "state-ownership"
+    ],
+    "contractToEstablish": "Where cooperative or shared-player play is authored, joining/leaving players retain independently scoped membership and authorized start/terminal rules.",
+    "failureSignalToChallenge": "A second player inherits another's arena/role or a leaving/offline player blocks or prematurely ends an active session.",
+    "minimumEvidence": "Two relevant player identities, selected-artifact roster/ready/leave selectors and writers, ownership boundaries and the actual required quorum.",
+    "counterProofToSeek": "Source-supported scoped selectors, exactly-once admission and authored roster/quorum rules that reject the suspected cross-player path."
+  },
+  "max-party": {
+    "candidateFailureDomains": [
+      "boundary-capacity",
+      "player-lifecycle"
+    ],
+    "contractToEstablish": "A selected-source supported maximum party can enter, receive roles and progress without losing membership or overwriting player state.",
+    "failureSignalToChallenge": "The declared maximum exceeds the actually supported player count or an admitted player corrupts an existing player record.",
+    "minimumEvidence": "Grounded declared limit, admission owner, shared resource budget and per-player state/role writers at that limit.",
+    "counterProofToSeek": "Exact admission and resource constraints proving the whole stated party can run, or independent design authority defining a smaller advertised capability."
+  },
+  "party-capacity-plus-one": {
+    "candidateFailureDomains": [
+      "boundary-capacity",
+      "player-lifecycle"
+    ],
+    "contractToEstablish": "At the authored party limit plus one, excess entry is rejected or queued only according to the selected map's player-facing design.",
+    "failureSignalToChallenge": "Extra player bypasses the cap, starts a partially owned session, or receives a misleading/absent rejection.",
+    "minimumEvidence": "Selected-artifact cap and owner, cap+1 admission condition, roster and queue mutation, plus player-facing feedback route.",
+    "counterProofToSeek": "A reached cap guard with scoped queue/rejection, consistent committed roster and justified visible limitation."
+  },
+  "multi-arena-parallel": {
+    "candidateFailureDomains": [
+      "arena-multi-arena",
+      "state-ownership"
+    ],
+    "contractToEstablish": "Each authored parallel arena owns its players, scores, resources, entity/world mutations and cleanup generation.",
+    "failureSignalToChallenge": "Arena A changes Arena B's roster, scoreboard, gamerules, inventory, entities, messages or cleanup.",
+    "minimumEvidence": "Two selected-source arena identities, actor selectors, shared resource keys, mutation writer paths, ownership and cleanup/release.",
+    "counterProofToSeek": "Active arena-scoped selectors and leases, exact resource isolation and generation-aware cleanup that block the suspected cross-arena path."
+  },
+  "arena-replica-integrity": {
+    "candidateFailureDomains": [
+      "arena-multi-arena",
+      "world-structure-mutation"
+    ],
+    "contractToEstablish": "Every advertised playable arena replica has the material topology, spawn, structures and objective routes required by the selected game.",
+    "failureSignalToChallenge": "A replica admits play with missing blocks, paths, structures, actor positions or required objectives despite a safe baseline elsewhere.",
+    "minimumEvidence": "Independent source/voxel/layout identity and completion comparison for each replica, including unresolved chunks and material divergences.",
+    "counterProofToSeek": "Complete exact per-replica comparisons and separate evidence that differences are intentionally cosmetic or inaccessible."
+  },
+  "arena-capacity-plus-one": {
+    "candidateFailureDomains": [
+      "arena-multi-arena",
+      "boundary-capacity"
+    ],
+    "contractToEstablish": "The concurrently playable arena count matches the independently presented capability, with an explicit admission response beyond the supported budget.",
+    "failureSignalToChallenge": "Visible arena capacity exceeds proven concurrency or a limit+1 start steals another arena's resources.",
+    "minimumEvidence": "Presented arena count, actual per-arena resource costs, safe shared budget, admission predicates and queue/fallback source.",
+    "counterProofToSeek": "Independent authored design establishes the smaller playable capability, or source-backed capacity/lease proof supports all advertised arenas."
+  },
+  "disconnect-reconnect": {
+    "candidateFailureDomains": [
+      "player-lifecycle",
+      "persistence-recovery",
+      "state-ownership"
+    ],
+    "contractToEstablish": "An authored disconnect/rejoin lifecycle reconciles roster, inventory, life/phase and active arena ownership as designed.",
+    "failureSignalToChallenge": "Stale offline membership is counted, restored items overwrite a fresh session, or pending death/respawn ownership is bypassed.",
+    "minimumEvidence": "Selected player identity, leave/reconnect writer matrix, persisted and transient state boundaries and generation/phase guards.",
+    "counterProofToSeek": "A same-generation reconciliation path with explicit stale-state invalidation and correct rejoin/restart conditions."
+  },
+  "reload-recovery": {
+    "candidateFailureDomains": [
+      "persistence-recovery",
+      "state-ownership"
+    ],
+    "contractToEstablish": "After reload, each authored persisted field is either reconstructed with required transient dependencies or intentionally reset.",
+    "failureSignalToChallenge": "Reload creates duplicate reward/progression, loses required stage, reuses old callback state or exposes an unready session.",
+    "minimumEvidence": "Exact persistent keys, startup/load handlers, transient timers/actors/state dependencies and idempotent recovery order.",
+    "counterProofToSeek": "Reachable current-version initialization/reconciliation that restores or intentionally clears every required dependent state."
+  },
+  "deferred-ownership": {
+    "candidateFailureDomains": [
+      "temporal-async",
+      "state-ownership"
+    ],
+    "contractToEstablish": "Delayed or async gameplay work may commit only while its original player, arena, phase and generation remain authoritative.",
+    "failureSignalToChallenge": "A scheduled callback writes after leave, reset, replay, phase change or rejoin into a newer owner's state.",
+    "minimumEvidence": "Exact scheduler registration, captured owner/generation, callback mutation, cancellation/revalidation and relevant event ordering.",
+    "counterProofToSeek": "Reachable cancellation or same-generation check on every mutation path, including failure and interruption branches."
+  },
+  "terminal-collision": {
+    "candidateFailureDomains": [
+      "temporal-async",
+      "state-ownership",
+      "progression-wave-objective"
+    ],
+    "contractToEstablish": "Simultaneous eligible win/lose/timeout/death paths settle once with one result owner and no late commits.",
+    "failureSignalToChallenge": "Two terminal events grant rewards twice, publish conflicting outcomes or allow old cleanup to affect the next round.",
+    "minimumEvidence": "Authored terminal predicates and result writer, same-tick overlap, idempotency/generation policy and deferred side effects.",
+    "counterProofToSeek": "An activated exclusive winner/commit guard and generation-aware cancellation that reject all competing terminal writes."
+  },
+  "transaction-atomicity": {
+    "candidateFailureDomains": [
+      "inventory-economy",
+      "state-ownership"
+    ],
+    "contractToEstablish": "Payment, consumption, grant and feedback follow the map's authored all-or-reconciled transaction rule.",
+    "failureSignalToChallenge": "Currency is removed without delivery or a retry/reconnect duplicates item, reward or debit.",
+    "minimumEvidence": "Exact debit/grant/refund writers, same-player/session identity, error branches, idempotency guard and committed result.",
+    "counterProofToSeek": "Reachable commit/rollback compensation or generation-keyed exactly-once delivery covering the suspected partial-failure path."
+  },
+  "simulation-distance": {
+    "candidateFailureDomains": [
+      "chunk-simulation",
+      "entity-ai-combat"
+    ],
+    "contractToEstablish": "Gameplay-critical remote entities and objectives receive the chunk/simulation residency required for their authored progress.",
+    "failureSignalToChallenge": "An actor or scheduled operation stays pending while its location is not simulated or loaded when progression needs it.",
+    "minimumEvidence": "Exact objective/actor coordinates, simulation vs loading bounds, ticking-area lease creation/readiness and dependency timing.",
+    "counterProofToSeek": "Geometric and lifecycle evidence that the required area is resident before use, or an authored alternative independent of remote simulation."
+  },
+  "progression-wave-integrity": {
+    "candidateFailureDomains": [
+      "progression-wave-objective",
+      "entity-ai-combat",
+      "chunk-simulation"
+    ],
+    "contractToEstablish": "The required work, pending attempts, active actors and completion counter reconcile before one authored progression transition.",
+    "failureSignalToChallenge": "A removed/despawned/unloaded actor stalls completion, or pending spawn/retry permits premature zero and double advancement.",
+    "minimumEvidence": "Selected-source completion gate, spawn/request/commit/death/remove paths, outstanding count, chunk/actor readiness and state writers.",
+    "counterProofToSeek": "An authoritative accounting invariant that includes pending work and reconciles all exit paths before exactly-once progression."
+  },
+  "information-correctness": {
+    "candidateFailureDomains": [
+      "ui-feedback-information",
+      "state-ownership"
+    ],
+    "contractToEstablish": "Player-facing timer, wave, score, queue, price, success or failure reflects the committed state of that player/session.",
+    "failureSignalToChallenge": "A stale/cross-arena UI update announces success before the corresponding state commit or delivers mismatched values.",
+    "minimumEvidence": "Exact source of displayed value, UI-send route, state commit and scoped receiver, with runtime observation when delivery cannot be inferred statically.",
+    "counterProofToSeek": "Source-correlated, correctly scoped delivery after commit and a counterexample-free reconciliation path; a send attempt alone is not observed display."
+  },
+  "player-capability-integrity": {
+    "candidateFailureDomains": [
+      "state-ownership",
+      "world-structure-mutation"
+    ],
+    "contractToEstablish": "The selected map's Player, Builder, Roommaster and Developer roles can perform only their independently authored actions.",
+    "failureSignalToChallenge": "An operational or player permission bypasses plot boundaries, destructive controls or another session's authority.",
+    "minimumEvidence": "Selected-source role/tag/gamemode changes, authorization guards, protection registration and mutation capability path.",
+    "counterProofToSeek": "A reachable active role-specific authorization and physical/state boundary that blocks the exact unauthorized action."
+  },
+  "world-rule-authority": {
+    "candidateFailureDomains": [
+      "world-structure-mutation",
+      "platform-performance"
+    ],
+    "contractToEstablish": "Every authored gamerule and world setting controls only its actual engine mechanism; privileged source mutations remain separately governed.",
+    "failureSignalToChallenge": "A natural spawn rule is credited as blocking script summons, or a later world-rule writer silently changes gameplay.",
+    "minimumEvidence": "World rule baseline and writers, natural/script/command spawn provenance, role and engine/edition profile.",
+    "counterProofToSeek": "Exact mechanism-appropriate rule evaluation plus all applicable active script/permission guards; mere gamerule presence is insufficient."
+  },
+  "client-server-reconciliation": {
+    "candidateFailureDomains": [
+      "world-structure-mutation",
+      "ui-feedback-information"
+    ],
+    "contractToEstablish": "Where the client predicts a block, liquid or interaction that the server cancels, both converge on authoritative state.",
+    "failureSignalToChallenge": "The acting client sees a block/liquid/state that other clients or the server rejected or replaced.",
+    "minimumEvidence": "Source-bound before-event cancellation/rewrites, affected block positions, server authoritative state and narrow client observation where required.",
+    "counterProofToSeek": "Observed or mechanism-specific reconciliation proving clients converge; a server-side cancellation statement alone cannot prove client appearance."
+  },
+  "spatial-containment": {
+    "candidateFailureDomains": [
+      "world-structure-mutation",
+      "boundary-capacity"
+    ],
+    "contractToEstablish": "The selected gameplay's actual physical collision envelope contains permitted player movement and access as authored.",
+    "failureSignalToChallenge": "A player reaches another arena or restricted volume through an actual traversable route ignored by logical/loading bounds.",
+    "minimumEvidence": "Full 3D player-sized route, material collision geometry, allowed movement abilities and distinct world/gameplay/loading/ownership bounds.",
+    "counterProofToSeek": "Continuous collision barrier or activated access guard blocks every relevant route with a profile-appropriate movement capability."
+  },
+  "repeated-run": {
+    "candidateFailureDomains": [
+      "state-ownership",
+      "temporal-async",
+      "world-structure-mutation"
+    ],
+    "contractToEstablish": "After terminal or abort, old state/resources release and the second authorized run uses a fresh intended baseline.",
+    "failureSignalToChallenge": "Run 1 leaves entities, blocks, items, timers, score or callbacks that corrupt Run 2 or enable premature readiness.",
+    "minimumEvidence": "Selected-source acquire/release matrix, terminal and cleanup ownership, reset footprint, deferred work and second-generation initialization.",
+    "counterProofToSeek": "Complete scoped cleanup/compensation and new-generation ownership that prevent any old mutation from affecting the next run."
+  }
+};
+
 function scenario(
   input: Omit<GameplayAuditScenario, "proofMode">,
 ): GameplayAuditScenario {
   return {
     ...input,
+    ...(input.kind !== "full-journey" &&
+        input.kind !== "map-type-coverage"
+      ? { detectionIndicator: DETECTION_INDICATORS[input.kind] }
+      : {}),
     proofMode: "static-first",
   };
 }
@@ -155,6 +392,7 @@ export function buildGameplayAuditScenarioPreset(
         "Every audit must trace one complete player journey through cleanup and replay.",
       questions: [
         "Can every required gameplay stage be reached in order?",
+        "Where lobby/join pads, team selection or ready gates exist, are admission, occupancy, start, exit and rejoin counted and owned correctly?",
         "Does each stage have a valid success, failure, and exit path?",
         "Does cleanup restore enough baseline state for another run?",
         "Are the spawn route, gameplay actions and access permissions reachable?",

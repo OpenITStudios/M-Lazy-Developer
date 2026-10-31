@@ -57,6 +57,19 @@ player-session checks include join/ready behavior. This is not proof of
 end-to-end lobby coverage or its absence. The canonical selected-map
 Bug-Finding Coverage and Mandatory Audit Procedure remain separate owners.
 
+### Connection to gameplay bug indicators
+
+Source-test classification answers **what repository code is being checked**,
+not whether a selected Minecraft world contains a bug. The canonical
+`docs/analysis/bug-finding-coverage.md#defect-indicators--from-category-to-deciding-evidence`
+defines all 13 gameplay failure domains and required proof boundaries.
+The existing `engine/packages/diagnostic-reasoning/src/gameplay-audit-scenario-preset.ts`
+now attaches bounded detection-indicator questions and counterproof routes
+to applicable selected-map scenarios; no new execution lane or test file
+is created. The 381 source-test classifications remain code/test metadata,
+the publisher Skills/Probe links remain topic-only references, and final
+issue decisions remain with the current selected-artifact PROVE owner.
+
 ## Earlier consolidation/source audits — historical snapshots
 
 All historical sections below preserve their earlier counts. The word

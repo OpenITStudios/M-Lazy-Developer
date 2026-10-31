@@ -196,6 +196,57 @@ Activate when applicable:
 
 These are coverage families, not a manual test checklist.
 
+### Defect indicators — from category to deciding evidence
+
+These are **investigation indicators**, not automatic test assertions, a second
+test inventory, or a new bug taxonomy. Every relevant selected-map scenario
+uses an indicator on the existing `GameplayAuditScenario.detectionIndicator`
+projection. `candidateFailureDomains[]` lists possible destinations; the
+canonical issue classifier and `PROVE` still determine the actual primary
+`failureDomain`, `contributingDomains[]`, `issueType`, `gameplayFlow` and
+impact-derived severity after current-artifact proof. The generic full-journey
+and map-type coverage scenarios deliberately carry no single bug indicator.
+
+| Canonical failure domain | Activate when selected artifact shows | Contract to establish | Suspected contradiction | Deciding evidence | Disconfirming evidence |
+| --- | --- | --- | --- | --- | --- |
+| `arena-multi-arena` | Parallel/replica arena or shared admission | Arena-scoped state, capacity and cleanup stay independent | Cross-arena mutation or advertised capacity not delivered | Exact arena IDs, selectors, resource leases, replica/world comparison | Scoped ownership/complete replica proof |
+| `inventory-economy` | Kit, inventory clear, shop or reward writer | Grant/debit/rollback belongs to correct player/session and commits coherently | Missing grant, stale item or duplicate debit/reward | Writer matrix, transaction ordering, idempotency and failure branches | Reachable rollback or exactly-once grant |
+| `progression-wave-objective` | Objective, wave, stage or entity-backed counter | Required work settles before one legal transition | Stalled wave, premature zero or repeated completion | Pending/spawn/death/remove accounting and completion guard | Complete authoritative counter/transition proof |
+| `chunk-simulation` | Remote actor/route/objective depends on active simulation | Required chunks/actors resident before gameplay uses them | Remote objective cannot progress or spawn is only requested | Coordinates, lease creation, geometry and readiness evidence | Proved residency or independence from it |
+| `player-lifecycle` | Join, lobby, ready, leave, respawn, rejoin | Eligible player has one roster/role/state owner per transition | Stale membership, wrong spawn or premature party reset | Join/leave handlers, roster and generation reconciliation | Reachable roster/phase guards and correct authored quorum |
+| `entity-ai-combat` | Combat/target/AI/spawn behavior is required | Actor and target lifecycle allows intended encounter/termination | Attack/target stalls, wrong damage or unaccounted removal | Entity config, event routes, targets and movement prerequisites | Active valid target, navigation and lifecycle evidence |
+| `world-structure-mutation` | Plot/build, structure load, teleport, world reset | Authorized blocks and positions change or restore within owned footprint | Unauthorized build, incomplete reset or material replica gap | World files, structure coordinates, mutation footprints and protections | Active bounds/collision/protection and full restoration |
+| `ui-feedback-information` | Timer, score, status, dialog, title or queue | Player-visible information matches committed owned state | Stale, misleading or cross-session status | State producer, send route, selected player receiver, delivery when native | Correct scoped postcommit delivery or targeted observation |
+| `state-ownership` | Shared mutable state or ownership change | Only authoritative current generation/session may mutate it | Wrong owner or stale generation overwrites state | Exact writer/reader keys, guards and owner transitions | Reached scope/generation exclusion prevents the path |
+| `temporal-async` | Timer, subscription, callback, retry or cleanup | Deferred effect remains valid when it commits | Old callback races reset, end or reconnect | Schedule/commit/order, cancellation and generation | All affected branches cancel/revalidate ownership |
+| `boundary-capacity` | Capacity, physical edge, maximum+1 or authority cap | Authored boundary is enforced and has a valid overflow result | Overadmission, escape, dead queue or hidden limit | Exact max, resource budget, collision/eligibility guard | Source-supported rejection/queue or complete containment |
+| `persistence-recovery` | Persistent state, reload or rejoin | Persisted state reconciles, and transient dependencies restore/reset | Duplicate apply, missing timer or stale restored state | Persisted keys, load path, generation/idempotency and resets | Complete recovery or independent intentional reset |
+| `platform-performance` | Edition/API/version or runtime resource limit matters | Claimed capability is supported for exact target and required load | Unsupported API assumption or playable capacity degradation | Pinned runtime profile, capabilities, actual constraint and performance proof | Profile-specific compatibility or measured adequate resources |
+
+**Application rule:** discover the actual authored gameplay surface and the
+selected-source evidence first. For each applicable indicator determine one
+grounded expected behavior; investigate the exact adverse branch; search
+negative/control cases and Blocking Proof; then record outcome in the existing
+surface/flow/vital/cross-system/proof coverage owners. The indicator alone
+cannot establish the expected design, actual behavior, runtime success,
+severity, or BUG versus DESIGN_MISMATCH. If the source evidence is not enough
+to establish a causal player-facing issue, retain a scoped `Audit Obligation`;
+if confirmation-ready with a specified missing decisive fact, use the existing
+`NEED_VALIDATION` path. Only fully admitted findings may be `PROVEN`.
+
+**Lobby/ready coverage:** the join-pad/team/ready checks are part of the
+entry and admission journey when actually present. The absence of a dedicated
+`lobby-pre-match` source-test file cannot make that gameplay surface disappear
+from selected-map coverage, nor does an existing arena unit test prove its
+end-to-end behavior. The full journey and player scenarios require the
+source-bound join/ready/leave/start contract when applicable.
+
+**Reference boundary:** the independently versioned developer-skills and
+Skills Probe ZIP topic mappings in `tooling/repository/test-inventory.json`
+help locate relevant methods and adverse examples only. Their PASS and Node
+statuses never count as detected map defects, passing local test cases, or
+proof of a particular player's observed Minecraft behavior.
+
 ### Map-type scenario questions (existing canonical owners)
 
 Every selected map retains the universal five coverage layers and player-journey contract.
