@@ -1,57 +1,69 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source-audit snapshot — 2026-10-31 (authoritative inventory: 486)
+## Active source-audit snapshot — 2026-10-31 (authoritative inventory: 482)
 
-Source baseline: GitHub `Local` parent `2e15f07018a1b03c2c339378e7a48434ac4673f2`.
-The machine owner is **`tooling/repository/test-inventory.json`**.
-The bounded batch reduces **494 → 486 physical source test files** by
-co-locating related cases within their original owner, feature and lane.
-No test case or assertion has been intentionally deleted.
+GitHub `Local` pinned parent: `2ec375391207c9f492530fb6eef90ff0d7436bf7`. Canonical machine owner:
+`tooling/repository/test-inventory.json`. Current reduction
+**486 → 482 physical test files**, including **one semantically duplicate
+suite deleted** and three owner-local source-preserving merges.
+Historical progress **687 → 482 files**, a net reduction of **205**.
 
-| Existing lane | Registered physical files |
+| Lane | Physical test files |
 | --- | ---: |
-| `development` | 323 |
+| `development` | 321 |
+| `safety` | 46 |
 | `runtime` | 50 |
-| `safety` | 48 |
 | `regression` | 45 |
 | `acceptance` | 20 |
-| **Total** | **486** |
+| **Total** | **482** |
 
-Inventory: 343 `keep-provisional`,
-122 `keep`, 21 `defer`.
-Review: 354 `case-inventory-reviewed`,
-132 `source-reviewed`.
-Feature mapping is still `path-provisional` for
-447 of 486 entries, not proven mechanic coverage.
+Inventory: 340 provisional, 121 keep,
+21 defer. Review: 132 source-reviewed
+and 350 case-inventory-reviewed.
+Feature mapping remains `path-provisional` for 443
+registered files; not source-grounded gameplay proof.
 
-The historical reduction **687 → 486 files** is now 201 net fewer
-files. Inventory lineage: 87 consolidation
-groups, 218 retired paths and
-17 added paths. Physical file
-consolidation does **not** imply fewer cases or faster execution.
-The normal `npm test` path remains 10 Vitest suites and one native Node
-suite; CI stays suspended.
+### One semantically redundant suite removed
 
-### Current owner-local consolidation — 52 test cases, 118 expect sites
+`engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts` contained two cases (four `expect` calls) that assert
+exactly the same `arena-replica-remediation` registry entry
+(`proposal-only`, non-deterministic, five diagnostic codes) and
+`validateRepairStrategySourceRegistry(...).toEqual([])` as the retained
+`engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts`. That suite additionally checks chunk remediation.
+Exact fixture, consumer, assertion and negative boundary comparison
+identified **no unique behavior in the retired cases**.
+This is a static semantic review, **not** executed Vitest equivalence.
 
-- `engine/analyzers/functions/test/parse.test.ts`: 2 → 1; 2 case sites, 5 assertions
-- `engine/analyzers/manifest/test/analyze.test.ts`: 2 → 1; 6 case sites, 14 assertions
-- `engine/analyzers/entities/test/entity.test.ts`: 2 → 1; 7 case sites, 17 assertions
-- `engine/analyzers/diagnostics/test/runtime/knowledge-runtime-findings.test.ts`: 2 → 1; 9 case sites, 27 assertions
-- `engine/analyzers/scripts/test/domains/persistence/persistent-data-lifecycle.test.ts`: 3 → 1; 16 case sites, 34 assertions
-- `apps/bug-report-ui/test/github-report-client.test.ts`: 2 → 1; 5 case sites, 9 assertions
-- `tooling/bug-report-ui/github-report-store.test.ts`: 2 → 1; 7 case sites, 12 assertions
+### Three same-producer source family mergers
 
-The original `describe/it/expect` bodies remain verbatim in isolated lexical
-blocks; imports are unified within each original directory. The one affected
-knowledge-to-proof path for persisted player dynamic properties now points
-to the retained persistence family and its old assertion remains present.
-No default acceptance entrypoint or test execution lane changed.
+- Mutation campaign: 2 → 1, **6 test cases / 7 assertions**.
+- Post-repair closure: 2 → 1, **8 test cases / 12 assertions**.
+- Spatial authority: 2 → 1, **9 test cases / 12 assertions**.
 
-**Evidence ceiling:** static source/body/callsite parity and exact GitHub
-path/binding review. TypeScript, Vitest, actual wall-time, map audit and
-Minecraft gameplay **NOT EXECUTED**. Co-locating modules may alter
-per-file isolation or `--affected` selection; no speedup is claimed.
+All original test bodies remain within isolated lexical blocks.
+Safety/ownership/feature execution-lane boundaries remain unchanged.
+The normal acceptance selection is still 10 Vitest suites plus one
+native Node suite; automatic GitHub CI stays suspended. File merging
+can widen `--affected` selection and does not establish speedup.
+
+### Derived capability-truth consistency
+
+`engine/reliability/catalogs/capability-truth/current.json` was found
+stale due to prior source/test consolidation. The projection is
+regenerated to reflect actual source files, current test inventory,
+proof-path previews and source fingerprints. Explicit capability
+and knowledge proof-binding registries remain unchanged.
+This derived index **does not prove tests ran**.
+
+Consolidation lineage: 90 groups, 222 retired file paths, 17
+added paths, with **4 source-reviewed duplicate assertion sites**
+removed in this batch. The other **23 cases and 31 assertion sites**
+in merged files are retained exactly.
+
+**Proof ceiling:** GitHub pinned static source/consumer/registries only.
+TypeScript, Vitest, selected-map audit, Minecraft gameplay and
+execution duration **NOT EXECUTED**. A 100-file quota is not proof
+of adequate gameplay defect detection.
 
 ### Three distinct meanings of "test"
 
@@ -63,7 +75,7 @@ per-file isolation or `--affected` selection; no speedup is claimed.
    `.mcworld`. Canonical obligations are
    [Bug-Finding Coverage](../../docs/analysis/bug-finding-coverage.md)
    and [Mandatory Audit Procedure](../../docs/analysis/mandatory-audit-procedure.md).
-   They are not the 494 source test files or upstream Skills Probe tests.
+   They are not the 482 source test files or upstream Skills Probe tests.
 3. **External developer/Skills Probe evidence** is versioned
    reference material. The two newer supplied ZIPs match the inventory's
    v0.30.0 source-taxonomy archive SHA-256 digests

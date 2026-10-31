@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
-  "classification": "486 physical test files after seven bounded owner-local source suite consolidations (15 original source files -> 7 retained suites); preserve all 52 it/test and 118 expect() call sites by exact body inclusion and count parity; redirect one persistence proof binding; default acceptance unchanged. TypeScript/Vitest/Minecraft NOT EXECUTED.",
+  "sourceCommit": "2ec375391207c9f492530fb6eef90ff0d7436bf7",
+  "classification": "482 test files after removing one source-proven duplicate suite (2 cases, 4 expectations) and merging 3 same-producer families retaining all 23 cases and 31 expectations. Canonical capability-truth owner/test count regenerated from source tree. No CI or Minecraft/TypeScript/Vitest execution.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -3410,40 +3410,19 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
+      "path": "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "triage": {
-        "basis": "path-and-directory-only",
+        "basis": "source-confirmed-semantic-assertion-redundancy",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "keep",
-      "rationale": "Physical divergence is proposal-only, not authorization.",
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.repair"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "arena.repair-strategy",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
+        "action": "retain-replica-plus-chunk-repair-registry-proofs",
         "sourceBlobSha": "3a986b13853a5dcd56f852778722b3549f7a6c1e"
       },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "recommendation": "keep",
+      "rationale": "Two cases from engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts (blob 21967d1d12fd19ad597d5284293bd68bf3186a89) statically subsumed: proposal-only, deterministic false, identical 5 diagnostic codes and identical validateRepairStrategySourceRegistry(...).toEqual([]). Retained suite adds chunk remediation. Two redundant cases, four expect sites retired; Vitest NOT EXECUTED.",
       "functionalArea": "arena-match",
       "mechanicTags": [
         "arena.repair"
@@ -6439,13 +6418,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Source-preserving 3-file family consolidation retains 8 case call sites and 10 assertion call sites; TS/Vitest and file isolation NOT EXECUTED.",
+      "rationale": "Same owner, producer, feature and lane; two sources merged with original bodies: 9 it/test and 12 expect() sites. No executable proof.",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "source-preserving-producer-and-feature-family",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "746b1faa6b058a4438783f4f180a1eb215b13602"
+        "action": "verify-file-isolation-and-affected-selection",
+        "sourceBlobSha": "2d9c759fea774a209fb68a96d9229d7706b850a5"
       },
       "functionalArea": "world-interaction",
       "mechanicTags": [
@@ -6455,26 +6434,44 @@
       "featureId": "world.spatial-authority",
       "featureMappingBasis": "path-provisional",
       "consolidation": {
-        "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
-        "method": "same-owner-same-lane-source-preserving-lexical-scope",
+        "baseCommit": "2ec375391207c9f492530fb6eef90ff0d7436bf7",
+        "method": "same-producer-and-feature-lexical-block-source-consolidation",
         "sourceFiles": [
           {
-            "path": "engine/packages/orchestrator/test/inspection/spatial-authority-contract-load.test.ts",
-            "blobSha": "4cddeccad552080e1c3fdc4b47d4d7d421650f3e"
-          },
-          {
             "path": "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts",
-            "blobSha": "773a491f923893c1bba55278b955b4017ee05d56"
+            "blobSha": "746b1faa6b058a4438783f4f180a1eb215b13602"
           },
           {
-            "path": "engine/packages/orchestrator/test/inspection/spatial-authority-diagnostics.test.ts",
-            "blobSha": "e98029ac73965c0b374fffc506cc02388fda911a"
+            "path": "engine/packages/orchestrator/test/spatial-authority-inspection-input.test.ts",
+            "blobSha": "921c676ef252887e2c9d8973aab4b2f4297a9767"
           }
         ],
-        "originalTestCallSites": 8,
-        "originalExpectCallSites": 10,
-        "mergedSourceBlobSha": "746b1faa6b058a4438783f4f180a1eb215b13602",
-        "execution": "NOT_EXECUTED"
+        "originalTestCallSites": 9,
+        "originalExpectCallSites": 12,
+        "mergedSourceBlobSha": "2d9c759fea774a209fb68a96d9229d7706b850a5",
+        "execution": "NOT_EXECUTED",
+        "priorConsolidation": {
+          "baseCommit": "fc9e9cdf9ff4179a0a1bb8f7586464050a9dec99",
+          "method": "same-owner-same-lane-source-preserving-lexical-scope",
+          "sourceFiles": [
+            {
+              "path": "engine/packages/orchestrator/test/inspection/spatial-authority-contract-load.test.ts",
+              "blobSha": "4cddeccad552080e1c3fdc4b47d4d7d421650f3e"
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts",
+              "blobSha": "773a491f923893c1bba55278b955b4017ee05d56"
+            },
+            {
+              "path": "engine/packages/orchestrator/test/inspection/spatial-authority-diagnostics.test.ts",
+              "blobSha": "e98029ac73965c0b374fffc506cc02388fda911a"
+            }
+          ],
+          "originalTestCallSites": 8,
+          "originalExpectCallSites": 10,
+          "mergedSourceBlobSha": "746b1faa6b058a4438783f4f180a1eb215b13602",
+          "execution": "NOT_EXECUTED"
+        }
       }
     },
     {
@@ -7040,26 +7037,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/post-repair-closure-receipt.test.ts",
-      "lane": "safety",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "4c4c2b782ce385579b30500b4412178567a5c296"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "repair-preservation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "repair.lifecycle",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/project-drive-publish-executor.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -7515,18 +7492,37 @@
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
-      "recommendation": "keep",
-      "rationale": "Closure requires defect removal plus preservation/package/runtime receipts; rejects foreign transactions.",
+      "recommendation": "keep-provisional",
+      "rationale": "Same owner, producer, feature and lane; two sources merged with original bodies: 8 it/test and 12 expect() sites. No executable proof.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "source-preserving-producer-and-feature-family",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "verify-file-isolation-and-affected-selection",
+        "sourceBlobSha": "4f4a5d201a26c0eed33dc308f83987fef56a6a11"
       },
       "functionalArea": "repair-preservation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "repair.lifecycle",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2ec375391207c9f492530fb6eef90ff0d7436bf7",
+        "method": "same-producer-and-feature-lexical-block-source-consolidation",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/repair/post-repair-closure.test.ts",
+            "blobSha": "a7722ee6055be49413e7c5d05118a02691b2bd75"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/post-repair-closure-receipt.test.ts",
+            "blobSha": "4c4c2b782ce385579b30500b4412178567a5c296"
+          }
+        ],
+        "originalTestCallSites": 8,
+        "originalExpectCallSites": 12,
+        "mergedSourceBlobSha": "4f4a5d201a26c0eed33dc308f83987fef56a6a11",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/repair/post-repair-validation-obligations.test.ts",
@@ -7925,24 +7921,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/repair/script-mutation-detection.test.ts",
-      "lane": "safety",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending.",
-      "triage": {
-        "basis": "inherited-review-record",
-        "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
-      },
-      "functionalArea": "repair-preservation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "repair.mutations",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/repair/script-mutation-transaction-analysis.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
@@ -8020,17 +7998,36 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep-provisional",
-      "rationale": "Retain provisionally: inspected named cases guard mutation authorization, proof lineage, preservation, runtime evidence, or release safety. Full assertion equivalence review remains pending.",
+      "rationale": "Same owner, producer, feature and lane; two sources merged with original bodies: 6 it/test and 7 expect() sites. No executable proof.",
       "triage": {
-        "basis": "inherited-review-record",
+        "basis": "source-preserving-producer-and-feature-family",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change"
+        "action": "verify-file-isolation-and-affected-selection",
+        "sourceBlobSha": "c6da96d5aff68c0e4ef57e623a48694cb80fe3e6"
       },
       "functionalArea": "repair-preservation",
       "mechanicTags": [],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "repair.mutations",
-      "featureMappingBasis": "path-provisional"
+      "featureMappingBasis": "path-provisional",
+      "consolidation": {
+        "baseCommit": "2ec375391207c9f492530fb6eef90ff0d7436bf7",
+        "method": "same-producer-and-feature-lexical-block-source-consolidation",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/repair/source-mutation-detection.test.ts",
+            "blobSha": "438bf58bd687dfeeeb148c939637979482be1537"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/repair/script-mutation-detection.test.ts",
+            "blobSha": "ffee81a52968891ea51399095cee2b32773de9cb"
+          }
+        ],
+        "originalTestCallSites": 6,
+        "originalExpectCallSites": 7,
+        "mergedSourceBlobSha": "c6da96d5aff68c0e4ef57e623a48694cb80fe3e6",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/repair/topology-repair-strategy-realizer.test.ts",
@@ -8362,28 +8359,6 @@
       ],
       "mechanicMappingBasis": "path-provisional",
       "featureId": "player.generation-guard",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/spatial-authority-inspection-input.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-inventory",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "921c676ef252887e2c9d8973aab4b2f4297a9767"
-      },
-      "recommendation": "keep-provisional",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "world-interaction",
-      "mechanicTags": [
-        "world.spatial-boundary"
-      ],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "world.spatial-authority",
       "featureMappingBasis": "path-provisional"
     },
     {
@@ -13017,14 +12992,14 @@
     "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
   },
   "consolidationReview": {
-    "parentCommit": "2e15f07018a1b03c2c339378e7a48434ac4673f2",
+    "parentCommit": "2ec375391207c9f492530fb6eef90ff0d7436bf7",
     "sourceFilesBefore": 687,
-    "sourceFilesAfter": 486,
-    "groups": 87,
-    "removedPaths": 218,
+    "sourceFilesAfter": 482,
+    "groups": 90,
+    "removedPaths": 222,
     "addedPaths": 17,
-    "deletedAssertionsProven": 0,
-    "proof": "static-source-body-case-and-expectation-parity_NOT_TYPESCRIPT_VITEST_MINECRAFT",
-    "open": "Per-file Vitest isolation, typecheck, actual execution cost, map-audit and Minecraft runtime NOT EXECUTED."
+    "deletedAssertionsProven": 4,
+    "proof": "static-source-cases-parity-plus-duplicate-assertion-implication_NOT_EXECUTED",
+    "open": "Merged-file isolation, actual execution overhead, TypeScript/Vitest/selected-world/Minecraft tests NOT EXECUTED."
   }
 }

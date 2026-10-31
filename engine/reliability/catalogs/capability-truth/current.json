@@ -10,8 +10,8 @@
     ],
     "registryFingerprint": "69306b3a",
     "proofRegistry": "engine/reliability/catalogs/capability-proof-bindings.json",
-    "proofRegistryFingerprint": "a8fa4f54",
-    "proofInventoryFingerprint": "a4731610"
+    "proofRegistryFingerprint": "26ad5410",
+    "proofInventoryFingerprint": "f6ee785a"
   },
   "summary": {
     "taskCapabilities": 55,
@@ -37,7 +37,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -70,7 +70,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -103,7 +103,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -136,7 +136,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -169,7 +169,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -202,7 +202,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -235,7 +235,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -268,7 +268,7 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 29,
+      "sourceFiles": 30,
       "testFiles": 8,
       "hasReadme": true,
       "proofPaths": [
@@ -301,15 +301,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -334,15 +334,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -368,14 +368,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 25,
+      "testFiles": 15,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/diagnostic-reasoning/test/audit-coverage.test.ts",
-        "engine/packages/diagnostic-reasoning/test/audit-risk.test.ts",
         "engine/packages/diagnostic-reasoning/test/behavior-evidence.test.ts",
         "engine/packages/diagnostic-reasoning/test/calibration.test.ts",
-        "engine/packages/diagnostic-reasoning/test/candidate-evidence.test.ts"
+        "engine/packages/diagnostic-reasoning/test/contradiction-registry.test.ts",
+        "engine/packages/diagnostic-reasoning/test/counterexample-explanation.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -401,14 +401,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 30,
-      "testFiles": 25,
+      "testFiles": 15,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/diagnostic-reasoning/test/audit-coverage.test.ts",
-        "engine/packages/diagnostic-reasoning/test/audit-risk.test.ts",
         "engine/packages/diagnostic-reasoning/test/behavior-evidence.test.ts",
         "engine/packages/diagnostic-reasoning/test/calibration.test.ts",
-        "engine/packages/diagnostic-reasoning/test/candidate-evidence.test.ts"
+        "engine/packages/diagnostic-reasoning/test/contradiction-registry.test.ts",
+        "engine/packages/diagnostic-reasoning/test/counterexample-explanation.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -433,15 +433,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -466,15 +466,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -499,15 +499,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -532,15 +532,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -565,15 +565,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -598,15 +598,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -631,15 +631,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -664,15 +664,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -697,22 +697,22 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/arena/arena-voxel-proof.test.ts"
+          "engine/packages/orchestrator/test/arena/arena-structure-proof.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -730,22 +730,22 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/diagnostic-reasoning/test/capability-guard-activation.test.ts",
+          "engine/packages/diagnostic-reasoning/test/reachability-capability-exposure.test.ts",
           "engine/packages/orchestrator/test/inspection/capability-mutation-footprint-analysis.test.ts",
           "engine/packages/orchestrator/test/inspection/player-capability-surface-analysis.test.ts"
         ]
@@ -765,15 +765,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -798,15 +798,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -893,15 +893,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -926,15 +926,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -960,14 +960,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 24,
+      "testFiles": 10,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
         "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history-intelligence.test.ts"
+        "engine/packages/reliability-search/test/history/history.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -993,14 +993,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 24,
+      "testFiles": 10,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
         "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history-intelligence.test.ts"
+        "engine/packages/reliability-search/test/history/history.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1026,14 +1026,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 24,
+      "testFiles": 10,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
         "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history-intelligence.test.ts"
+        "engine/packages/reliability-search/test/history/history.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1059,14 +1059,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 24,
+      "testFiles": 10,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/reliability-search/test/blindspot/blindspot-tasks.test.ts",
         "engine/packages/reliability-search/test/corpus/behavioral-pattern-library.test.ts",
         "engine/packages/reliability-search/test/coverage/coverage-quality-dashboard.test.ts",
         "engine/packages/reliability-search/test/coverage/runtime-coverage.test.ts",
-        "engine/packages/reliability-search/test/history/history-intelligence.test.ts"
+        "engine/packages/reliability-search/test/history/history.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1091,15 +1091,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 633,
-      "testFiles": 321,
+      "sourceFiles": 638,
+      "testFiles": 250,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
         "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-        "engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts",
         "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts"
+        "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
+        "engine/packages/orchestrator/test/arena/arena-audit.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1123,21 +1123,21 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 41,
+      "testFiles": 27,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
         "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
+        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
+        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/orchestrator/test/inspection/chunk-readiness-runtime-classification.test.ts"
+          "engine/packages/orchestrator/test/inspection/chunk-lifecycle-analysis.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -1154,21 +1154,21 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 41,
+      "testFiles": 27,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
         "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
+        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
+        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "contract-only",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts"
+          "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
         ],
         "note": "Binds fail-closed orchestration behavior only; live cross-version proof still requires LOCAL/LIVE Minecraft hosts."
       },
@@ -1188,14 +1188,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 52,
-      "testFiles": 41,
+      "testFiles": 27,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
         "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
+        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
+        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1219,14 +1219,14 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 41,
+      "testFiles": 27,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
         "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
+        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
+        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1250,14 +1250,14 @@
       ],
       "runtimeOnly": true,
       "sourceFiles": 52,
-      "testFiles": 41,
+      "testFiles": 27,
       "hasReadme": true,
       "proofPaths": [
         "engine/packages/runtime-lab/test/core/action-capability.test.ts",
         "engine/packages/runtime-lab/test/core/proof-authority.test.ts",
         "engine/packages/runtime-lab/test/core/runtime-lab.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-executor.test.ts",
-        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts"
+        "engine/packages/runtime-lab/test/differential/cross-version-differential-plan.test.ts",
+        "engine/packages/runtime-lab/test/domains/arena/global-state-lease-experiment.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1283,21 +1283,21 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 44,
-      "testFiles": 23,
+      "testFiles": 19,
       "hasReadme": true,
       "proofPaths": [
-        "engine/packages/reliability/test/catalog/catalog-loader.test.ts",
-        "engine/packages/reliability/test/catalog/catalog-writer.test.ts",
         "engine/packages/reliability/test/catalog/catalogs.test.ts",
         "engine/packages/reliability/test/catalog/historical-regression-catalog.test.ts",
-        "engine/packages/reliability/test/core/reliability.test.ts"
+        "engine/packages/reliability/test/core/reliability.test.ts",
+        "engine/packages/reliability/test/knowledge-catalogs.test.ts",
+        "engine/packages/reliability/test/portfolio/map-knowledge-retest.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/packages/reliability/test/runtime/runtime-session-replay.test.ts"
+          "engine/packages/reliability/test/runtime/runtime-observation.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -1349,14 +1349,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 15,
-      "testFiles": 11,
+      "testFiles": 6,
       "hasReadme": false,
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
         "engine/analyzers/entities/test/attack-sensor.test.ts",
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts",
         "engine/analyzers/entities/test/entity.test.ts",
-        "engine/analyzers/entities/test/loot-table.test.ts"
+        "engine/analyzers/entities/test/loot-table.test.ts",
+        "engine/analyzers/entities/test/navigation.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1382,14 +1382,14 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 15,
-      "testFiles": 11,
+      "testFiles": 6,
       "hasReadme": false,
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
         "engine/analyzers/entities/test/attack-sensor.test.ts",
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts",
         "engine/analyzers/entities/test/entity.test.ts",
-        "engine/analyzers/entities/test/loot-table.test.ts"
+        "engine/analyzers/entities/test/loot-table.test.ts",
+        "engine/analyzers/entities/test/navigation.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1415,21 +1415,21 @@
       ],
       "runtimeOnly": false,
       "sourceFiles": 15,
-      "testFiles": 11,
+      "testFiles": 6,
       "hasReadme": false,
       "proofPaths": [
         "engine/analyzers/entities/test/ai-stack.test.ts",
         "engine/analyzers/entities/test/attack-sensor.test.ts",
-        "engine/analyzers/entities/test/behavior-prerequisites.test.ts",
         "engine/analyzers/entities/test/entity.test.ts",
-        "engine/analyzers/entities/test/loot-table.test.ts"
+        "engine/analyzers/entities/test/loot-table.test.ts",
+        "engine/analyzers/entities/test/navigation.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/analyzers/entities/test/loot.test.ts"
+          "engine/analyzers/entities/test/loot-table.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -1447,15 +1447,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1480,15 +1480,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1513,15 +1513,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1546,15 +1546,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1579,22 +1579,22 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/analyzers/scripts/test/flow/dataflow-capability.test.ts"
+          "engine/analyzers/scripts/test/flow/semantic-flow-witness.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -1612,15 +1612,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1645,15 +1645,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1678,15 +1678,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1711,15 +1711,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1744,22 +1744,22 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/analyzers/scripts/test/flow/semantic-flow-bindings.test.ts"
+          "engine/analyzers/scripts/test/flow/semantic-flow-witness.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."
@@ -1777,15 +1777,15 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
@@ -1810,22 +1810,22 @@
         "LIVE_MINECRAFT"
       ],
       "runtimeOnly": false,
-      "sourceFiles": 39,
-      "testFiles": 32,
+      "sourceFiles": 40,
+      "testFiles": 25,
       "hasReadme": true,
       "proofPaths": [
         "engine/analyzers/scripts/test/config/safe-config-compiler.test.ts",
-        "engine/analyzers/scripts/test/config/safe-config-project.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-authority-evidence.test.ts",
         "engine/analyzers/scripts/test/domains/arena/arena-capacity-repair-transform-hints.test.ts",
-        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts"
+        "engine/analyzers/scripts/test/domains/arena/arena-start-ownership-repair-transform-hints.test.ts",
+        "engine/analyzers/scripts/test/domains/arena/global-lease-evidence.test.ts"
       ],
       "proofBinding": {
         "state": "bound",
         "kind": "unit-contract",
         "executionContext": "REMOTE_GITHUB",
         "paths": [
-          "engine/analyzers/scripts/test/recovery/source-map-binding.test.ts"
+          "engine/analyzers/scripts/test/recovery/source-recovery.test.ts"
         ]
       },
       "proofSemantics": "Capability-specific proof binding exists. This means proof paths are registered, not that the capability executed or passed in the current session."

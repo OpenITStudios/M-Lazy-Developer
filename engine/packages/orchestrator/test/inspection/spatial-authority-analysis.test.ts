@@ -1,10 +1,13 @@
-// Source-preserving family consolidation: original suites and assertions retained in separate lexical scopes.
-import { describe } from "vitest";
-import { expect } from "vitest";
-import { it } from "vitest";
+// Source-preserving owner-local family consolidation at pinned GitHub revision.
+// Original case/expect bodies retained in separate lexical blocks.
+import { describe, expect, it } from "vitest";
 import { parseSpatialAuthorityBehaviorContract } from "../../src/inspection/spatial-authority-contract-load.js";
 import { analyzeSpatialAuthorityCoverage } from "../../src/inspection/spatial-authority-analysis.js";
 import { spatialAuthorityDiagnostics } from "../../src/inspection/spatial-authority-diagnostics.js";
+
+// Original engine/packages/orchestrator/test/inspection/spatial-authority-analysis.test.ts; blob 746b1faa6b058a4438783f4f180a1eb215b13602
+{
+// Source-preserving family consolidation: original suites and assertions retained in separate lexical scopes.
 
 // Original suite engine/packages/orchestrator/test/inspection/spatial-authority-contract-load.test.ts, blob 4cddeccad552080e1c3fdc4b47d4d7d421650f3e
 {
@@ -259,4 +262,55 @@ describe("spatial authority diagnostics", () => {
   });
 });
 
+}
+}
+
+// Original engine/packages/orchestrator/test/spatial-authority-inspection-input.test.ts; blob 921c676ef252887e2c9d8973aab4b2f4297a9767
+{
+describe("spatial authority inspection inputs", () => {
+  it("resolves explicit requirements against authored regions and policy", () => {
+    const result =
+      analyzeSpatialAuthorityCoverage(
+        [{
+          id: "plot",
+          role: "mutable",
+          coordinateSpace: "absolute",
+          volume: {
+            min: { x: 0, y: 0, z: 0 },
+            max: { x: 10, y: 10, z: 10 },
+          },
+        }],
+        {
+          schemaVersion: 1,
+          id: "policy",
+          rules: [{
+            id: "deny-observation-build",
+            regionId: "plot",
+            actor: "player",
+            action: "place-block",
+            phases: ["observation"],
+            decision: "deny",
+          }],
+        },
+        [{
+          regionId: "plot",
+          actor: "player",
+          action: "place-block",
+          phase: "observation",
+        }],
+      );
+
+    expect(result).toMatchObject({
+      policyValid: true,
+      resolved: 1,
+      uncovered: 0,
+      conflicts: 0,
+      unknownRegions: 0,
+    });
+    expect(result.assessments[0]).toMatchObject({
+      status: "resolved",
+      decision: "deny",
+    });
+  });
+});
 }

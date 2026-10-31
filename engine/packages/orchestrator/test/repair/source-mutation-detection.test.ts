@@ -1,8 +1,10 @@
+// Source-preserving owner-local family consolidation at pinned GitHub revision.
+// Original case/expect bodies retained in separate lexical blocks.
 import { describe, expect, it } from "vitest";
-import {
-  runCommandMutationCampaign,
-} from "../../src/repair/mutation-campaign.js";
+import { runCommandMutationCampaign, runScriptMutationCampaign } from "../../src/repair/mutation-campaign.js";
 
+// Original engine/packages/orchestrator/test/repair/source-mutation-detection.test.ts; blob 438bf58bd687dfeeeb148c939637979482be1537
+{
 describe("source mutation detection through real analyzers", () => {
   it("kills selector broadening using state-scope analysis", async () => {
     const result = await runCommandMutationCampaign({
@@ -72,3 +74,49 @@ describe("source mutation detection through real analyzers", () => {
     expect(result.survivedOperators).toContain("coordinate-shift");
   });
 });
+}
+
+// Original engine/packages/orchestrator/test/repair/script-mutation-detection.test.ts; blob ffee81a52968891ea51399095cee2b32773de9cb
+{
+describe("Script API mutation detection", () => {
+  const source = [
+    'import { world } from "@minecraft/server";',
+    'world.afterEvents.playerSpawn.subscribe((event) => {',
+    '  event.player.setDynamicProperty("joined", true);',
+    '});',
+  ].join("\n");
+
+  it("kills event drop/rename/duplicate mutations through event graph differences", async () => {
+    const result = await runScriptMutationCampaign({
+      identifier: "scripts/main",
+      relativePath: "behavior_packs/demo/scripts/main.js",
+      source,
+      knownDynamicPropertyIds: ["joined"],
+    });
+
+    const eventResults = result.report.results
+      .filter((item) => item.descriptor.domain === "script-event");
+
+    expect(eventResults.length).toBeGreaterThan(0);
+    expect(eventResults.every((item) => item.status === "killed")).toBe(true);
+  });
+
+  it("kills dynamic property id substitutions against known property ids", async () => {
+    const result = await runScriptMutationCampaign({
+      identifier: "scripts/main",
+      relativePath: "behavior_packs/demo/scripts/main.js",
+      source,
+      knownDynamicPropertyIds: ["joined"],
+    });
+
+    expect(result.report.results).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        descriptor: expect.objectContaining({
+          operator: "dynamic-property-id-substitution",
+        }),
+        status: "killed",
+      }),
+    ]));
+  });
+});
+}
