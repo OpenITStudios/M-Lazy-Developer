@@ -32,7 +32,14 @@ gameplay-understanding.md    human-readable calibration corpus context and seman
 
 **Score/report discipline:** report raw TP/FP/FN/TN and denominators only for independently adjudicated scoped expectations; distinguish semantic precision/recall from defect precision/recall and from completeness of source indexing. Include abstention/unknown behavior and unscorable cases separately. Show per-style results (explicit, modular/compiled, bundled/minified, spatial) and worst-case regressions before weighted aggregate. An improvement must preserve negative examples and not substitute noisy additional candidate nodes for meaningful design understanding. See existing `gameplay-understanding.md` for the historical, non-authoritative node-count baseline.
 
-**Current static snapshot on 2026-10-11, GitHub `Local` at `9408782d5130`:** calibration 13 `candidate` / 0 `ready`; acceptance 8 `ready` reduced-source fixtures / 0 confirmed full-map runs; regressions 46 cases, 19 declared `ready` and 27 `candidate`. These are manifest readings, NOT benchmark execution. The Defense v1.1.5 frozen multi-claim static oracle has a pinned SHA but does not match the standard single-disposition expectation schema and has no observed `runSelectedMapAudit()` output: remains `candidate` and NOT SCORABLE. Do not silently rewrite its oracle or promote it to ready.
+**Readiness authority:** Current case/status counts belong to the
+exact-SHA `calibration.json`, `acceptance.json` and
+`regressions.json` manifests (or the existing
+`status:detection-corpus` metadata view). The 11 October 2026
+counts remain [historical](https://github.com/OpenITStudios/M-Lazy-Developer/blob/dc53541c54e5968d09d19674ae7d94d6ab3b0680/engine/reliability/corpus/README.md).
+A manifest `ready` status is not a detector PASS. The Defense
+v1.1.5 frozen multi-claim oracle is still not full-map scoreable
+without a compatible observation and independent adjudication.
 
 ### Exact full-map audit output identity
 
@@ -40,24 +47,11 @@ The production `runSelectedMapAudit()` already computes the selected `.mcworld` 
 
 A frozen receipt proves only that the supplied report declares the same selected artifact byte identity. Its `execution.gitCommit` is the Git checkout when **freezing**, not independent proof of which code built the report. Claiming full-map gameplay accuracy additionally requires genuine canonical engine execution, independently frozen map-scoped expectations, matching edition/version/proof tier, and blind-evaluation integrity where applicable. This change does not make the current Defense multi-claim oracle scoreable, upgrade reduced fixtures, or verify Minecraft runtime.
 
-## Current artifact verification (metadata, not audit execution)
+## Historical artifact identity (not current gameplay proof)
 
-On 2026-10-12 a ChatGPT-accessible Google Drive source delivered
-`Defense Challenge v1.1.5.mcworld` (24,032,943 bytes) at the file ID
-already present in `calibration.json`. Independent byte hashing in the
-ChatGPT analysis environment matched the pinned
-`eb554476d26b7b9de949628d8efe00f12beb95669f6c424a2eb754b52d39f45c`.
-The archive contained 529 entries including the named script-chunk path
-referenced by the existing frozen oracle. The original binary is NOT
-committed to GitHub and no artifact transferability, source correctness,
-canonical engine execution, or runtime effect is inferred from this check.
-
-The frozen `cal-defense-challenge-1-1-5` oracle remains a multi-claim
-historical document with unresolved target edition; no matching observed
-`runSelectedMapAudit()` V2 output exists at the current `Local` commit.
-Thus it remains **candidate / UNSCORABLE**, even though the exact external
-artifact was available and its SHA verified. Never promote metadata
-availability into semantic recall.
+The 12 October 2026 external Defense v1.1.5 archive hash check
+remains in the [original dated record](https://github.com/OpenITStudios/M-Lazy-Developer/blob/dc53541c54e5968d09d19674ae7d94d6ab3b0680/engine/reliability/corpus/README.md#current-artifact-verification-metadata-not-audit-execution).
+It does not prove current `runSelectedMapAudit()` or Minecraft runtime.
 
 ## Rules
 
@@ -109,17 +103,17 @@ blocked    source/evidence is invalid or cannot currently be evaluated
 
 A candidate must never be counted as benchmark proof.
 
-Check current readiness manually:
+The existing internal metadata view lists declared readiness:
 
 ```text
-node .agents/skills/m-bedrock-detection-benchmark/scripts/corpus-status.mjs
+node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/corpus-status.mjs
 ```
 
 
-Before changing a case to `ready`, run:
+Before promoting a case to `ready`, the existing owner checks:
 
 ```text
-node .agents/skills/m-bedrock-detection-benchmark/scripts/check-case-ready.mjs <manifest.json> <case-id>
+node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/check-case-ready.mjs <manifest.json> <case-id>
 ```
 
 Promotion is fail-closed: unresolved source references or any declared missing prerequisite keep the case out of benchmark-ready state.
@@ -153,12 +147,12 @@ explicit-invariant
 
 These are routing reasons, not a quality score or winner ranking.
 
-Filter current candidates manually:
+The existing metadata priority view is:
 
 ```text
-node .agents/skills/m-bedrock-detection-benchmark/scripts/regression-priority.mjs
-node .agents/skills/m-bedrock-detection-benchmark/scripts/regression-priority.mjs runtime-sensitive
-node .agents/skills/m-bedrock-detection-benchmark/scripts/regression-priority.mjs repeated-across-maps
+node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/regression-priority.mjs
+node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/regression-priority.mjs runtime-sensitive
+node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/regression-priority.mjs repeated-across-maps
 ```
 
 ## Corpus roles

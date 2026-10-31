@@ -1,38 +1,30 @@
-# Test execution lanes
+# Repository Test Selection — Single Runner
 
-The canonical inventory is `tooling/repository/test-inventory.json`.
-Its feature and mechanic classifications are tied to inspected source test cases,
-assertions, their owner/consumer routes and exact Git blob fingerprints. Lane labels
-are selection/routing hints only; neither a source classification nor a lane
-establishes successful execution, release safety or selected-map bug detection.
-Retention decisions in `review` and `recommendation` do not disable tests.
+Canonical machine inventory: `tooling/repository/test-inventory.json`.
+Existing selector/runner: `tooling/repository/run-tests.mjs`.
 
-Existing execution remains intact:
+| Command | Source-test selection |
+| --- | --- |
+| `npm test` | Maintained default acceptance (not all tests) |
+| `npm run test:full` | All Vitest + native Node source-test suites |
+| `npm run test:focus -- path/to/file.test.ts` | Explicit focused suite |
+| `npm run test:lanes` | List lane counts; **no test execution** |
+| `npm run test:lane -- development` | Development only |
+| `npm run test:lane -- safety` | Safety only |
+| `npm run test:lane -- runtime` | Runtime only |
+| `npm run test:lane -- regression` | Regression only |
+| `npm run test:lane -- acceptance` | Inventory acceptance; **not the same as `npm test`** |
 
-- `npm test`: selected integrated acceptance suite (default).
-- `npm run test:full`: all Vitest tests and the native Node test suites.
-- `npm run test:focus -- path/to/file.test.ts`: explicit changed-owner tests.
+`--affected` and area/feature/mechanic navigation reuse the same
+selector. Safety-relevant assertions may live outside `safety`;
+no single lane certifies release or repair.
 
-New optional commands:
+The existing runner checks test-file registration, duplicate paths,
+and exact LF-normalized Git blobs for source-case-inspected entries.
+After changing a test file, review its assertions/consumer and
+re-pin `triage.sourceBlobSha`. Source identity is not execution PASS.
 
-- `npm run test:lanes`: print file counts per provisional lane, without running tests.
-- `npm run test:lane -- safety`: run tests routed to the safety lane.
-- `npm run test:lane -- acceptance`: run the acceptance-labeled inventory entries.
-- `npm run test:lane -- runtime`: run the runtime-labeled entries.
-- `npm run test:lane -- regression`: run the regression-labeled entries.
-- `npm run test:lane -- development`: run the development-labeled entries.
+CI on `Local` remains disabled. No TypeScript/Vitest,
+`runSelectedMapAudit()` or Minecraft execution follows merely from
+authored source tests or inventory counts.
 
-Important: A single lane is never sufficient evidence for a release or repair
-approval. Tests about safety may currently exist outside the safety lane.
-`test:lane -- acceptance` is inventory-derived and is **not** the same
-selection as the maintained `npm test` acceptance contract.
-
-Before lane execution or lane listing, the existing runner refuses duplicate,
-missing or malformed inventory paths **and** checks actual `*.test.*` files
-under `.agents/`, `apps/`, `engine/` and `tooling/` against the inventory.
-A newly added test must be classified rather than silently omitted from lanes.
-This is a routing integrity check, not an executed test result. The default
-acceptance, focused, and complete regression execution routes are unchanged,
-and `verify:source` continues to use the complete route.
-The GitHub CI verification workflows on Local remain disabled.
-No test or production source has been deleted by this routing change.

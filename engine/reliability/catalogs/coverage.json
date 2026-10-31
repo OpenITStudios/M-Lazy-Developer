@@ -5,7 +5,7 @@
       "domain": "commands",
       "lane": "static",
       "state": "partial",
-      "evidence": "High-value command grammar, selectors, state access and topology effects are covered; the full Bedrock command surface is not.",
+      "evidence": "Selected command grammar, selectors, state accesses and topology hints have source analyzers. Full Bedrock grammar and exact-HEAD executable results are unverified.",
       "proofPaths": [
         "engine/analyzers/commands/src/index.ts",
         "engine/analyzers/commands/test/parse.test.ts"
@@ -15,17 +15,17 @@
       "domain": "structures",
       "lane": "static",
       "state": "partial",
-      "evidence": "mcstructure NBT, palette/index normalization and layer-length invariants are covered; full block/entity semantics are not.",
+      "evidence": "Source mcstructure adapter handles NBT palette/index normalization and layer lengths; complete block/entity semantics and native Minecraft import are not proven.",
       "proofPaths": [
         "engine/adapters/mcstructure/src/index.ts",
-        "engine/adapters/mcstructure/test/indexing.test.ts"
+        "engine/adapters/mcstructure/test/mcstructure.test.ts"
       ]
     },
     {
       "domain": "scripts",
       "lane": "static",
       "state": "partial",
-      "evidence": "Imports, module usage, events and dynamic-property calls are statically extracted without code execution.",
+      "evidence": "Static script analyzers index imports, modules, events and dynamic-property calls without executing map scripts. Test-source presence does not establish a current-HEAD PASS.",
       "proofPaths": [
         "engine/analyzers/scripts/src/index.ts",
         "engine/analyzers/scripts/test/parser/parse.test.ts"
@@ -35,7 +35,7 @@
       "domain": "world-db",
       "lane": "static",
       "state": "partial",
-      "evidence": "Database presence and transport boundaries exist; most record families remain opaque.",
+      "evidence": "Database presence and transport boundaries exist in source; most world DB record families remain opaque and gameplay semantics are not fully established.",
       "proofPaths": [
         "engine/analyzers/world-db/src/index.ts"
       ]
@@ -44,19 +44,19 @@
       "domain": "entities",
       "lane": "static",
       "state": "unknown",
-      "evidence": "No complete entity behavior/event lifecycle analyzer exists yet."
+      "evidence": "UNKNOWN for complete entity behavior, AI and event lifecycle; specialized source analyzers may exist but this catalog has no complete scope proof."
     },
     {
       "domain": "entities",
       "lane": "runtime",
       "state": "unknown",
-      "evidence": "No generic automated entity runtime harness is integrated yet."
+      "evidence": "UNKNOWN for generic native entity lifecycle observation. No exact-HEAD Minecraft entity run or multi-actor harness proof is recorded here."
     },
     {
       "domain": "multiplayer",
       "lane": "static",
       "state": "partial",
-      "evidence": "Broad scoreboard/tag writes are detected as cross-scope risk; session intent is not fully inferred.",
+      "evidence": "Static state/selector analysis locates broad scoreboard/tag writes as possible scope risks; it does not prove effective player/arena isolation.",
       "proofPaths": [
         "engine/analyzers/topology/src/state-scope.ts",
         "engine/packages/orchestrator/src/state-authority-analysis.ts"
@@ -66,19 +66,19 @@
       "domain": "multiplayer",
       "lane": "generative",
       "state": "partial",
-      "evidence": "Property-based session sequences, bounded state exploration and interleaving reduction are implemented and tested; generated scenarios still execute against an abstract session model rather than real Minecraft clients.",
+      "evidence": "Source supports bounded abstract session exploration and interleaving reduction with authored tests. No current-HEAD test run is evidenced and abstract models are not Minecraft clients.",
       "proofPaths": [
         "engine/packages/reliability/src/session/session-generators.ts",
         "engine/packages/reliability/test/session/session-model.test.ts",
         "engine/packages/reliability-search/src/search/session-bounded-domain.ts",
-        "engine/packages/reliability-search/test/search/interleaving-scale.test.ts"
+        "engine/packages/reliability-search/test/search/search.test.ts"
       ]
     },
     {
       "domain": "multiplayer",
       "lane": "runtime",
       "state": "partial",
-      "evidence": "Bedrock observation capture, runtime control records, model/runtime comparison and live regression incident capture are implemented and tested; automated multi-client Minecraft execution is not integrated yet.",
+      "evidence": "Source defines Bedrock observation, runtime control and live-regression adapters, with authored test suites; current-HEAD native multi-client execution is not evidenced.",
       "proofPaths": [
         "engine/packages/reliability/src/runtime/bedrock-runtime-emitter.ts",
         "engine/packages/reliability/src/regression/live-regression-runner.ts",
@@ -91,7 +91,7 @@
       "domain": "chunks",
       "lane": "runtime",
       "state": "partial",
-      "evidence": "Targeted chunk readiness observation using Dimension.isChunkLoaded is implemented with fail-closed unknown handling and tests; automated chunk lifecycle chaos, recovery lease execution, and real Minecraft runtime orchestration are not integrated yet.",
+      "evidence": "Source defines Dimension.isChunkLoaded readiness and fail-closed unknowns, with authored tests; native Minecraft chunk lifecycle and recovery orchestration are not established by these paths.",
       "proofPaths": [
         "engine/packages/reliability/src/runtime/chunk-runtime-observation.ts",
         "engine/packages/reliability/test/runtime/chunk-runtime-observation.test.ts",
@@ -103,7 +103,7 @@
       "domain": "compatibility",
       "lane": "differential",
       "state": "unknown",
-      "evidence": "Old-versus-new Minecraft runtime differential execution is not integrated yet."
+      "evidence": "UNKNOWN for an exact-HEAD old/new native Minecraft runtime differential or independently scored edition/version compatibility result."
     }
   ]
 }

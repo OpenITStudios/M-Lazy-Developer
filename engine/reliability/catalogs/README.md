@@ -19,7 +19,14 @@ minecraft-updates/
 
 - `regressions.json` stores minimized **historical failure knowledge**, never full private maps.
 - `failure-patterns.json` stores reusable failure abstractions backed by regression cases.
-- `coverage.json` exposes what test evidence exists and where blindspots remain.
+- `coverage.json` is a **source capability and known-limit index**, not
+  a test/benchmark result. `partial` means narrow source capability
+  is present, not an exact-HEAD PASS; `unknown` means decisive proof
+  is missing, not necessarily that no related analyzer exists.
+  `proofPaths` must point to retained source/test files, but are
+  locators rather than executed receipts. Coverage domain/lane
+  categories are independent of repository `functionalArea` and
+  selected-map issue `failureDomain`.
 - `knowledge-detector-bindings.json` records **declarations of related analyzer/proof paths**, not effective knowledge consumption. Declaration-only edges must not influence Resource Graph ranking or imply analyzer/test execution.
 - A new factual claim may be a useful searchable reference without receiving a permanent detector binding. Do not add bindings merely to satisfy accounting coverage. Run the existing `audit-knowledge-consumption.mjs` to inspect declared paths, source-ID mentions, and catalog-API hints; these are static signals, NOT demonstrated detection success.
 - `capability-proof-bindings.json` binds capabilities to explicit proof artifacts.
