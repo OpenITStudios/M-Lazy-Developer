@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-  "classification": "402 physical test files after 21 owner/feature/lane-preserving source-suite consolidations (440 -> 402). 511 it/test callsites and 1706 expect() callsites from all merged source files remain intact under lexical isolation. No extra test suite/runner or CI enabled. Source construction proof only; TypeScript, Vitest, selected-map audit and Minecraft NOT EXECUTED.",
+  "classification": "401 physical test files after retiring one non-executing Development type/value fixture suite (402 -> 401). The prior 21 source-preserving owner/feature/lane consolidation groups remain at 440 -> 402 (original 511 it/test and 1706 expect source callsites in those groups, not executed). The removed version-aware comparison suite had two it() bodies and five expect() calls that only read their own literal values and never invoke the production comparison consumer. No new runner, CI, map obligation or runtime proof claim. Source construction only; TypeScript, Vitest and Minecraft NOT EXECUTED.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -6039,25 +6039,6 @@
       "featureMappingBasis": "path-provisional"
     },
     {
-      "path": "engine/packages/orchestrator/test/inspection/version-aware-comparison.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "path-and-directory-only",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision"
-      },
-      "recommendation": "defer",
-      "rationale": "Source scenarios concern engineering projection, usage summaries or descriptive comparison; retain for targeted module changes.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "path-provisional",
-      "featureId": "audit.change-comparison",
-      "featureMappingBasis": "path-provisional"
-    },
-    {
       "path": "engine/packages/orchestrator/test/inspection/world-db-diff.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -10406,17 +10387,6 @@
     "audit.causal-diagnosis": {
       "area": "audit-diagnosis",
       "label": "Causal/cross-domain diagnosis",
-      "upstream": {
-        "relation": "LAZY_INTERNAL_ONLY",
-        "skills": [],
-        "modules": [],
-        "probeExamples": [],
-        "probeIds": []
-      }
-    },
-    "audit.change-comparison": {
-      "area": "audit-diagnosis",
-      "label": "Version-aware map comparisons",
       "upstream": {
         "relation": "LAZY_INTERNAL_ONLY",
         "skills": [],

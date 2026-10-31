@@ -1,8 +1,8 @@
 # Test inventory — classification and bounded consolidation
 
-## Active source audit — 2026-10-31: 402 physical test files
+## Active source audit — 2026-10-31: 401 physical test files
 
-The working GitHub authority was `Local` at the pinned parent
+The prior source-preserving consolidation used GitHub `Local` at the pinned parent
 `8787c8210af847a29927fc1122a2acfe30312cee`. The authoritative machine registry remains
 `tooling/repository/test-inventory.json`, with a direct path-for-path
 match against the GitHub source tree. This bounded batch combines **21
@@ -13,26 +13,49 @@ are statically preserved in lexical-isolated original bodies.
 
 | Execution lane | Physical files |
 | --- | ---: |
-| `development` | 241 |
+| `development` | 240 |
 | `safety` | 46 |
 | `runtime` | 50 |
 | `regression` | 45 |
 | `acceptance` | 20 |
-| **Total** | **402** |
+| **Total** | **401** |
 
-Inventory disposition: 294 provisional,
-92 keep, 16 defer.
-Review provenance: 291 case-inventory-reviewed
+Inventory disposition: 293 provisional,
+92 keep, 15 defer.
+Review provenance: 290 case-inventory-reviewed
 and 111 source-reviewed; feature mapping remains
-`path-provisional` for 368 entries.
+`path-provisional` for 367 entries.
 These provisional labels **cannot** justify deleting a unique test.
+
+### Separate source-grounded dead-suite retirement (2026-10-31)
+
+After the 402-file consolidation snapshot, the Development suite
+`engine/packages/orchestrator/test/inspection/version-aware-comparison.test.ts`
+was retired: its **two** `it()` registrations and **five** `expect()` calls
+only checked fields of literal objects constructed inside the tests.
+It imported `VersionAwareEvidenceLink` as a **type only** and never invoked
+`compareArtifactsForUpdate`, its comparison consumers, or any production
+runtime behavior. The typed producer still constructs
+`VersionAwareEvidenceLink[]` in production. This is a source-evidenced
+removal of non-detecting runtime assertions, not a claim of end-to-end
+test equivalence or runtime speedup. The standalone
+`audit.change-comparison` feature catalog entry was retired with its
+sole test; no knowledge/capability proof binding or default acceptance
+selection referenced this file.
+
+The consolidation registry's `sourceFilesAfter: 402` remains historical
+provenance of the previous 21-group batch, not the active 401-file count.
+No source production behavior, acceptance/risk lanes, map test obligations,
+or CI policy changed. TypeScript, Vitest and Minecraft NOT EXECUTED.
 
 ### Physical reduction and preserved owner scope
 
-The historical source inventory went **687 → 402**, a net decrease of
-**285 source files**. Cumulative lineage is 132 bounded consolidation
-groups, 302 retired file paths, and 17 added paths. No source case
-or assertion was deliberately deleted in this batch. Earlier semantic
+The historical source inventory went **687 → 402** through consolidation, then
+**402 → 401** by retiring one non-executing Development suite (net **286 fewer**). Cumulative lineage is 132 bounded consolidation
+groups, 302 retired consolidation file paths, and 17 added paths; the separate
+non-executing suite retirement removes one additional path. No source case
+or assertion was deliberately deleted in the consolidation batch; only the
+separately identified literal-only suite was subsequently removed. Earlier semantic
 duplicate retirement remains separately recorded (four proven
 duplicate `expect()` callsites); all other source cases are retained.
 
@@ -56,7 +79,7 @@ is *not* an execution result.
 
 ### Important test-count distinction
 
-**402 files are not 402 executed tests.** The normal `npm test`
+**401 files are not 401 executed tests.** The normal `npm test`
 configuration still selects 10 Vitest suites plus one native Node
 acceptance test; the full test suite remains separate. Merging physical
 files does not reduce 511 source registrations or 1,706 assertion
