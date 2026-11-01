@@ -9,7 +9,11 @@ lifecycle: ACTIVE
 
 # Bedrock Developer Agent Skills — Provisional Reference
 
-## Latest selective source intake — 24 October 2026
+## Current source reference — 1 November 2026
+
+Publisher-declared developer v0.35.0 and independent Skills Probe v0.35.0 ZIPs are now pinned in `skills/bedrock/source-lock.json`; 24 skill folders and 45 Probe module files matched. `experiments/developer-practice-signals.json` remains the only curated reference owner: 17 original typed-source map investigation hints stay source-gated, while analytics/particles are unrouted. Of 89 Probe reports present, 49 earlier reviewed outcomes remain historical and 40 new reports require semantic review. This is developer-authored guidance, not official Minecraft policy or proof the current map is bug-free.
+
+## Historical selective source intake — 24 October 2026
 
 The developer skills ZIP `v0.27.0` (23 active `SKILL.md`, 20
 implementation module files, eight module unit tests) has been

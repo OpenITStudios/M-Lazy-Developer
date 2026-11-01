@@ -29,6 +29,8 @@ methods cannot be implicitly selected for map audits.
 **Original source inventory/provenance:** [ZIP reference](../examples/bedrock-developer-agent-skills-reference.md).
 Stable document identity is this frontmatter `id`; update in place.
 
+**Current v0.35.0 technical reference (1 November 2026):** 24 matching publisher skill-folder hashes, 45 matching Probe installed module file SHA hashes, and 17 existing evidence-scoped map interpretation patterns. New analytics and particle methods remain unrouted without typed selected-map evidence. Probe includes 89 report texts, only 49 of which have historical curated outcomes; 40 require review before use. The source is publisher-authored, not official Microsoft/Mojang policy, executable verification or a new BUG acceptance requirement.
+
 ## Upstream ZIP intake in ChatGPT Chat — candidate before promotion
 
 The two independently versioned upstream sources feed **one existing REFERENCE
@@ -74,7 +76,7 @@ commit. The other ZIP may remain pending independently. One archive SHA must
 not simultaneously identify an active and a pending revision; a release is
 never runtime proof.
 
-**2026-10-24 selective promotion:** developer v0.27.0 (23
+**Historical 2026-10-24 selective promotion:** developer v0.27.0 (23
 `skills/*/SKILL.md`) is the active **SOURCE_REVIEWED** methodology
 snapshot. The earlier 16 optional interpretation patterns retain their
 source-grounded selection and negative controls. On 2026-10-27 one
@@ -121,8 +123,8 @@ engine.
 
 ## Skills Probe clean examples — independent source-evidence path
 
-The supplied Skills Probe ZIP has a separate `skills-lock.json`
-(`v0.23.0`) and `docs/examples/index.json` listing 14 clean examples:
+The current supplied Skills Probe ZIP has a separate `skills-lock.json`
+(`v0.35.0`) and `docs/examples/index.json` listing 14 clean examples:
 three index `PASS` and eleven `pending` as published by that archive.
 The SHA-pinned **source-index metadata**, not raw third-party code, lives
 in the *existing* `experiments/developer-practice-signals.json#probeExamples`

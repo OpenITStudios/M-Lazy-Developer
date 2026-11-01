@@ -5,35 +5,35 @@
   "usagePolicy": "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF",
   "lifecycle": "PROVISIONAL_UPDATABLE",
   "sourceSnapshot": {
-    "sourceName": "minecraft-bedrock-agent-skills-main (2).zip",
-    "release": "v0.27.0",
-    "archiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
-    "zipEntries": 315,
-    "files": 213,
-    "uncompressedBytes": 1078982,
-    "activeSkillDocuments": 23,
+    "sourceName": "minecraft-bedrock-agent-skills-main (3).zip",
+    "release": "v0.35.0",
+    "archiveSha256": "26c0a322cabed172ca74970413d5bb7a20d6f67181446df5f688e36057c54e21",
+    "zipEntries": 353,
+    "files": 244,
+    "uncompressedBytes": 1494298,
+    "activeSkillDocuments": 24,
     "pendingDocuments": 0,
-    "sourceAttribution": "ZIP source declares v0.27.0 and publisher origin achmadawdi/minecraft-bedrock-agent-skills; live GitHub HEAD and redistribution license are not independently verified. No root LICENSE found.",
+    "sourceAttribution": "Publisher-declared user-supplied v0.35.0; live release SHA and redistribution licensing not independently authenticated. Not an official Microsoft/Mojang platform rule.",
     "binaryIncludedInRepo": false,
     "normalizedPatternCount": 17,
     "interpretationEligibleSkillCount": 17,
     "workflowOnlySkillCount": 5,
     "deferredSourceFilesTracked": 0,
-    "intakeEvidence": "All 23 upstream SKILL.md files inspected as untrusted source; 22 previously reviewed method-to-source relationships were reconciled against current headings, and the newly added particle skill was retained as un-routed technical reference pending a specific typed Semantic IR witness. Platform truth and runtime proof are not asserted.",
+    "intakeEvidence": "24 current skill-source file SHA-256 records and original publisher skill-folder hashes pinned; existing 17 typed source interpretation questions retained, new analytics unrouted; no executable or Minecraft proof.",
     "codeReferencesTracked": 10,
     "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map.",
-    "codeImplementationFiles": 20,
-    "codeUnitTestFiles": 8,
+    "codeImplementationFiles": 26,
+    "codeUnitTestFiles": 11,
     "otherCodeSurfaces": {
-      "skillScripts": 28,
-      "developerTools": 20,
+      "skillScripts": 29,
+      "developerTools": 25,
       "projectConfiguration": 2,
       "developerTestUtilities": 1,
-      "note": "Counts reflect v0.27.0 ZIP: 28 skill-local scripts and 20 files under tools/, including release/checker sources. All scripts remain external source-only references, not executed or vendored."
+      "note": "Complete original ZIP retained externally; historical auxiliary code references are not active source or gameplay proof."
     },
-    "methodologyRecordsTracked": 23,
+    "methodologyRecordsTracked": 24,
     "developerWorkflowScriptSourcesTracked": 52,
-    "unroutedTechnicalSkillCount": 1
+    "unroutedTechnicalSkillCount": 2
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -46,14 +46,14 @@
     {
       "id": "src.bedrock-agent-team",
       "path": "skills/bedrock-agent-team/SKILL.md",
-      "sha256": "778b61c2a6136ef68bb1fd7e06313575c7854a8a967e1524d543115d9f6cf8f0",
+      "sha256": "c432aec899cec0508e7af2660c22ce127187f81c94ff6f1fe3462087ff8a8d13",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
       "methodology": {
         "applicability": "DEVELOPMENT_WORKFLOW_PROVENANCE",
         "sourceSections": [
-          "1. Roles",
+          "1. Roles and model pools",
           "3. Flow per task",
           "6. When an agent stops",
           "7. Tester notes (computer use)"
@@ -69,9 +69,35 @@
       }
     },
     {
+      "id": "src.bedrock-analytics",
+      "path": "skills/bedrock-analytics/SKILL.md",
+      "sha256": "3b0973a99d1a7fc0c900e87c3dd6f6cf7a4d3eb549fd6439ff6c533a7067c754",
+      "kind": "ACTIVE_SKILL",
+      "scope": "DEVELOPER_REFERENCE",
+      "auditUsage": "REFERENCE_ONLY_NOT_ROUTED",
+      "methodology": {
+        "applicability": "UNROUTED_TECHNICAL_REFERENCE",
+        "sourceSections": [
+          "1. Install and wiring",
+          "2. Capture",
+          "3. Session lifecycle: reload, reopen, leave",
+          "4. Performance rules",
+          "5. Pull and read an export"
+        ],
+        "objective": "Use analytics event, record and session-lifecycle methods as optional source-specific investigation references.",
+        "investigationSteps": [
+          "Identify the selected map's authored analytics source.",
+          "Trace its storage, reload, lifecycle, events, and export ownership.",
+          "Retain external negative cases and do not convert instrumentation advice into a map requirement."
+        ],
+        "disconfirmingCase": "Missing the publisher's analytics module does not mean the selected map contains a bug.",
+        "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
+      }
+    },
+    {
       "id": "src.bedrock-camera",
       "path": "skills/bedrock-camera/SKILL.md",
-      "sha256": "a7d3f78f9a792e15e032e54854fde97ba0bce2c9d5063973ac5a873ec85878b1",
+      "sha256": "708a2491857a6906e8d947b41596a66ff03cd31d6a495079720b0fb5a6556b11",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -95,7 +121,7 @@
     {
       "id": "src.bedrock-content",
       "path": "skills/bedrock-content/SKILL.md",
-      "sha256": "261c6efd4a4ef2c9cb407e037960582c1e938efbbfc03781b2108cf1f9fb0815",
+      "sha256": "017d6a6de4eb50bcfdaf2b8deee4002fb9dfc2873b5275d5c9529218204f6109",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -120,7 +146,7 @@
     {
       "id": "src.bedrock-coordinates",
       "path": "skills/bedrock-coordinates/SKILL.md",
-      "sha256": "5b681ed5906107eb44019184fc0cb64f914ca81c978ae81bf4a93f5d9cfdef13",
+      "sha256": "5cf4aea24b21c831bdfa8f56f93586b9ac2c2f6453e4012a1ba57bf9223cf228",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -145,7 +171,7 @@
     {
       "id": "src.bedrock-data-persistence",
       "path": "skills/bedrock-data-persistence/SKILL.md",
-      "sha256": "16d97cdfdb62dd7980709a2156d9fe0ee516bc540339c6edf6a62c53c73b14a2",
+      "sha256": "61ca93d5c88b1f149f5c92e9b86a05c43e24f09d68dd645e127b066da8a2dfd1",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -170,7 +196,7 @@
     {
       "id": "src.bedrock-debug-logging",
       "path": "skills/bedrock-debug-logging/SKILL.md",
-      "sha256": "1fda2b59d41bb7ee46d4907ff514c68340e92d249d78cb0cf8a15e72380f0e24",
+      "sha256": "dd1c23b847b9b58edd1c773f6c43d678e6f87849807213d563b13e68693cada8",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -194,7 +220,7 @@
     {
       "id": "src.bedrock-debug-profiling",
       "path": "skills/bedrock-debug-profiling/SKILL.md",
-      "sha256": "52bcd481a1b6098575c626d3e5611eb8235d2ca9104bb52a6de9bd6683c5adf8",
+      "sha256": "58cf2ad75824bbe9e448e3b3b6676706e1440427eabf005d0365a7b9dd1eec94",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -218,7 +244,7 @@
     {
       "id": "src.bedrock-entity-creation",
       "path": "skills/bedrock-entity-creation/SKILL.md",
-      "sha256": "f5d814ea3a2b32a423ee219d1124af1dcf90170bd50cc27138cb3653329fb96a",
+      "sha256": "66750f4bba1b4734e961d048fe1fffba143b1df9973952a3464bb04879c5ef24",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -243,7 +269,7 @@
     {
       "id": "src.bedrock-entity-lifecycle",
       "path": "skills/bedrock-entity-lifecycle/SKILL.md",
-      "sha256": "e66041c5117902fd1334183be066860d4ba05fc5a86f4b606e2a7cc093309730",
+      "sha256": "8cd749dfd147f9db5f1b5f6f113023054672753eecd1bf1665733565e0b70fe5",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -268,7 +294,7 @@
     {
       "id": "src.bedrock-forms",
       "path": "skills/bedrock-forms/SKILL.md",
-      "sha256": "e1cfe2adfac79cbd6d64c186f00ce717b72bcf42c41bdef39279e0d161448d9a",
+      "sha256": "f0140aeaa9562412d4ac0c396446c7835cc0ebd58d3c9096b82465582b57100e",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -293,7 +319,7 @@
     {
       "id": "src.bedrock-game-results",
       "path": "skills/bedrock-game-results/SKILL.md",
-      "sha256": "a9dc42310a2c9c1467177465aa667f0fa74dba0d9d64c55157a2cdbc1e75a5da",
+      "sha256": "4b4da97e07b7b3bb6acf8ca112845c931612216cdfa4fe9b425c1d6821ca5056",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -319,7 +345,7 @@
     {
       "id": "src.bedrock-game-time",
       "path": "skills/bedrock-game-time/SKILL.md",
-      "sha256": "2b473cab9f14b5330dc667eba315fc5b9331f38c864ddded8daf6488329b51ce",
+      "sha256": "6ec561a8be14e9265a8334cd5db7c4c2de08362093987144056cfd3b0d125247",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -344,7 +370,7 @@
     {
       "id": "src.bedrock-git-workflow",
       "path": "skills/bedrock-git-workflow/SKILL.md",
-      "sha256": "7a949520b7272da5ea87074b0b28077e62ec0278b76aaeeb53a1a745b6d52231",
+      "sha256": "e4e797716c8ae9577ae9ac48ed2d820be62a78a18a5f64daf871aca911c934da",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -368,7 +394,7 @@
     {
       "id": "src.bedrock-onscreen-display",
       "path": "skills/bedrock-onscreen-display/SKILL.md",
-      "sha256": "06be73e531c0184701ac0cbdc41ab306d4c14d5656347d7415ae3c00a1784ae0",
+      "sha256": "cc81fe808350150255640e50d7ad5195a4cda67b3c8a228c7e9d99decf512924",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -393,7 +419,7 @@
     {
       "id": "src.bedrock-player-attached-particles",
       "path": "skills/bedrock-player-attached-particles/SKILL.md",
-      "sha256": "efb6cdd5e5dc7f4d7ecd3e98439155a1b5c9d44768103ebcf5efe9cfa4465edd",
+      "sha256": "23337d5b4f980a43bf015285a04367bd967779896a99dc827be118e5f5409688",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "REFERENCE_ONLY_NOT_ROUTED",
@@ -417,7 +443,7 @@
     {
       "id": "src.bedrock-project-setup",
       "path": "skills/bedrock-project-setup/SKILL.md",
-      "sha256": "e091e8762d5aefe0df4243831d8bfe827c5f56249596bb2eee57c7bcd6843744",
+      "sha256": "0516daa709845b361e3da7de509aa20c287d4b1cfbaa6e71fe102cd8b4595147",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -442,7 +468,7 @@
     {
       "id": "src.bedrock-release-export",
       "path": "skills/bedrock-release-export/SKILL.md",
-      "sha256": "a0537cce4d2c5e2076e9deeebfc20b9afe71ceca178a651572d95881d10cb48a",
+      "sha256": "3ee607908d90911a2cce7bb5e2aaa073e418ffb433a37ddae1e2ffcb7b91b9cd",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -467,7 +493,7 @@
     {
       "id": "src.bedrock-script-optimization",
       "path": "skills/bedrock-script-optimization/SKILL.md",
-      "sha256": "155b467f7037e0e15d4b7a99a0f899c9d3de9f40eac4012a99b6702229f8469d",
+      "sha256": "af3f34e8b8297612d009798ffd43d41b79fa6d0e0f1b83bf1fcaeb17e5aec059",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -492,7 +518,7 @@
     {
       "id": "src.bedrock-sound",
       "path": "skills/bedrock-sound/SKILL.md",
-      "sha256": "fd2628fd005904412eda1042d45e0b4c2de0f91ceaf29529ad1ec4003a1ca941",
+      "sha256": "4231e6a74fd04a56b12ddf7aa87861c324ea782ca60715e255cfa1d08346a245",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -517,7 +543,7 @@
     {
       "id": "src.bedrock-teleport",
       "path": "skills/bedrock-teleport/SKILL.md",
-      "sha256": "42de88cc232c50b711ddbbfbaf5d9f58ce33fecd8e4bffae1016705099970e50",
+      "sha256": "de60ee41afe3d42c988a80230eb3632d2df932ddb76186b6e799be17cbcb1395",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -542,7 +568,7 @@
     {
       "id": "src.bedrock-testing-policy",
       "path": "skills/bedrock-testing-policy/SKILL.md",
-      "sha256": "7d6796a3beb6a38f32774e223cfc1a8c385c9aec0557ad27793e23de70c52c7a",
+      "sha256": "535c34416d2289cd5ef1032b04499312c94a7bfe6265757dfb579c6d6abd1065",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "DEVELOPMENT_WORKFLOW_ONLY",
@@ -567,7 +593,7 @@
     {
       "id": "src.bedrock-text-glyphs",
       "path": "skills/bedrock-text-glyphs/SKILL.md",
-      "sha256": "c0f64a31475d6e7d7ea84c29f5e1a75ba3ef6634ebd88b3c198a8e9335c54ec3",
+      "sha256": "abc8ca8bbf9c1be69f0a55748849abebbae2159c8b4107d932b9bd55cb1a9535",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -592,7 +618,7 @@
     {
       "id": "src.bedrock-version-targeting",
       "path": "skills/bedrock-version-targeting/SKILL.md",
-      "sha256": "815d823fc4710092b0a1a579e99cc86a66cfc5aa5dfcf96b09379b78aa5029a1",
+      "sha256": "7e6886ead89b646f46fa25b72e9acc2c20c692fe60cb563aa777865c3f1fded2",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
       "auditUsage": "INTERPRETATION_CANDIDATE",
@@ -1177,35 +1203,38 @@
   ],
   "deferredSources": [],
   "probeSnapshot": {
-    "sourceName": "skills-probe-main (1).zip",
-    "archiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
-    "files": 829,
-    "uncompressedBytes": 17203233,
-    "observedSkillsLockTag": "v0.23.0",
-    "observedSkillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
-    "companionSkillArchiveRelease": "v0.27.0",
-    "identityWarning": "Skills Probe still pins installed developer skills v0.23.0 at f5b8275d..., distinct from source-reviewed v0.27.0 developer method release. New P63 visual/lifecycle work and source revisions must not be back-projected to v0.27.0 map findings.",
+    "sourceName": "skills-probe-main (2).zip",
+    "archiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+    "files": 1036,
+    "uncompressedBytes": 52956136,
+    "observedSkillsLockTag": "v0.35.0",
+    "observedSkillsLockCommit": "1856f1875ef0fb7039710c3a215da2123f87e7ba",
+    "companionSkillArchiveRelease": "v0.35.0",
+    "identityWarning": "24/24 skill-folder and 45/45 installed module file identities matched supplied ZIPs. Upstream commit self-declared in lock, not independently checked against GitHub.",
     "licenseWarning": "No root LICENSE found; scripts, Minecraft packs, media and user-specific test harness are not vendored.",
-    "executionBoundary": "Third-party self-reported native reports inspected as text; no Minecraft client, test harness, dependencies, installers or scripts were executed here.",
+    "executionBoundary": "Source inspection only; upstream test code, actual map-audit TypeScript and Minecraft gameplay NOT EXECUTED.",
     "reportsIndexed": 49,
-    "evidenceScope": "49 original narrative reports (22 previously indexed, 27 newly reviewed as scoped text). P63 consists of 23 linked revision reports; failures, blockers, and narrow passes coexist. A report's overall status is not every subcase's outcome, and a newer candidate must not overwrite another report's failure.",
+    "evidenceScope": "49 historical report texts remain byte-identical in new ZIP, while 40 additional original report files are not curated as PASS/FAIL until individual review. A self-reported Probe PASS never proves the current selected map.",
     "otherCodeSurfaces": {
       "probePackScriptFiles": 106,
       "probeToolScriptFiles": 35,
       "duplicatedInstalledSkillScripts": 58,
-      "note": "All 106 pack TypeScript and 35 textual tools are pinned by current ZIP SHA; 49 narrative source reports remain independently pinned, not executed. Minecraft runtime outcomes and media behavior are external self-reports.",
+      "note": "v0.35.0 original archive has 137 pack TypeScript source files and 89 report files; historical individually pinned auxiliary code rows remain reference-only.",
       "installedSkillScriptIdentityNote": "Current probe ZIP contains 29 script files under .agents/skills/ and 29 mirrored under .claude/skills/, locked to v0.23.0. They are external instructions/scripts, not imported."
     },
-    "sourcePackFiles": 106,
+    "sourcePackFiles": 137,
     "databaseInstalledVersion": "2.1.1",
     "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified.",
     "probeToolScriptSourcesTracked": 35,
     "reportSourceIdentityPolicy": "49 SHA-pinned report texts, 22 originally indexed from previousArchiveSha256 and 27 newly indexed from current archive. All original 22 report digests were reobserved byte-for-byte in the new ZIP. Source-file references in older reports may differ from the latest 106-file code inventory and must remain historically pinned.",
-    "reportReviewMethod": "Whole test-runs directory inventoried. Twenty-seven new reports reviewed by declared overall verdict, scoped subcase outcomes, source revision, original client/target and negative proof boundaries; no upstream fixture was executed or source status recast as Minecraft runtime truth.",
+    "reportReviewMethod": "49 prior individually reviewed reports retained; the 40 new reports have no promoted outcome until scoped source and revision review.",
     "archiveHistorySha256": [
-      "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203"
+      "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
+      "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658"
     ],
-    "zipEntries": 1111
+    "zipEntries": 1334,
+    "reportsAvailable": 89,
+    "reportsPendingSemanticReview": 40
   },
   "probeEvidence": [
     {
@@ -2329,7 +2358,7 @@
     }
   ],
   "codeInventory": {
-    "scope": "Entire modules/*.ts source surface from v0.27.0 skill ZIP; full source contents remain in the supplied archive, not copied into the Lazy-Developer engine.",
+    "scope": "Publisher v0.35.0: 26 module implementation and 11 external test source identities. Legacy individual auxiliary code SHA records retain historical provenance until re-pinned; active whole-skill identity uses the new native source lock.",
     "codeModules": [
       {
         "path": "modules/coords/coords.ts",
@@ -2450,6 +2479,42 @@
         "sha256": "920bb4b3d648165cc45bbf75254967cbb7e1baded099beff98fcdc320d3f99d5",
         "ownerSkill": "src.bedrock-game-time",
         "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/analytics/analytics-events.ts",
+        "sha256": "7bc360bbb0ccea8794a50f41b6f1e1a88b0b30c7a6267949936d58589cd5a8a9",
+        "ownerSkill": "src.bedrock-analytics",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/analytics/analytics-export.ts",
+        "sha256": "e1f0f46b33108a5ba93f9e923e2c94fbd011876e57312b9a2ae6189df959256b",
+        "ownerSkill": "src.bedrock-analytics",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/analytics/analytics.ts",
+        "sha256": "3e4a0479c5947e8ddfe34e5778ab799ed134a78064f63418253365782f2b56bf",
+        "ownerSkill": "src.bedrock-analytics",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/analytics/capture.ts",
+        "sha256": "6af57ee83b93cf6bb56f9899bb0d1b71585c71a61783cc5011d39fbbc42a679d",
+        "ownerSkill": "src.bedrock-analytics",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/analytics/contract.ts",
+        "sha256": "ef43cd5a6af36c266664e7a0f935bb510df9e853712105d82eed9de63ee45d16",
+        "ownerSkill": "src.bedrock-analytics",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
+      },
+      {
+        "path": "modules/analytics/records.ts",
+        "sha256": "9362f8de78bd181ab2a7062255020e47116b3d9c6a398c8b6a4ae65b155ed86f",
+        "ownerSkill": "src.bedrock-analytics",
+        "usage": "SOURCE_IMPLEMENTATION_REFERENCE"
       }
     ],
     "unitTests": [
@@ -2491,6 +2556,21 @@
       {
         "path": "modules/time/ticks.test.ts",
         "sha256": "14a0f798bc82faff93af93aa33b808ea4d34f52bb72afa1dbc105e0f58c12635",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/analytics/analytics-events.test.ts",
+        "sha256": "807dca5d57b9606a00acdccaefdfa0315ff481d5c1f75802aafd0556eb2adaf0",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/analytics/analytics-export.test.ts",
+        "sha256": "56307294a3220c8b4808bac82b1651b44c16f870fd6455820acc5713120ed6ad",
+        "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
+      },
+      {
+        "path": "modules/analytics/analytics.test.ts",
+        "sha256": "747768f8f877179a243f619f30b0fc71ac22a4c64bb050d5dad6e2b7ab8a1d96",
         "usage": "EXTERNAL_TEST_SOURCE_NOT_EXECUTED"
       }
     ],
@@ -3526,16 +3606,16 @@
         "kind": "PROBE_TOOL_TEST_SOURCE"
       }
     ],
-    "untrackedSourcePolicy": "Source code inventory indexes every 106 *.ts files under current Skills Probe ZIP packs/BP/scripts/ with current exact SHA-256; older report fixture hashes are pinned as historical report claims and may refer to earlier code revisions. Other assets, RP/BP binaries and unsurveyed docs remain covered by whole-archive identity, not executable proof."
+    "untrackedSourcePolicy": "The complete archive is pinned; selected auxiliary code records are not a claim of exhaustive v0.35.0 per-file re-review. 40 new Probe reports remain outcome-unreviewed and must not be treated as PASS."
   },
   "probeExamples": {
     "schemaVersion": 1,
     "authority": "UPSTREAM_INDEX_ONLY_NOT_SELECTED_MAP_PROOF",
-    "sourceArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
+    "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
     "indexPath": "docs/examples/index.json",
-    "indexSha256": "5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630",
-    "sourceSkillLockTag": "v0.23.0",
-    "sourceSkillLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
+    "indexSha256": "ab72ae2cc8b1dd997d695081c0e5c2acbc9300f9aba9644e2846179d2c91c458",
+    "sourceSkillLockTag": "v0.35.0",
+    "sourceSkillLockCommit": "1856f1875ef0fb7039710c3a215da2123f87e7ba",
     "target": {
       "client": "education 26.32",
       "engine": "1.26.30"
@@ -3623,7 +3703,7 @@
           "P56L",
           "P56X"
         ],
-        "report": "docs/examples/README.md",
+        "report": "docs/test-runs/2026-10-22-visual-audit-lead.md",
         "sourcePath": "packs/BP/scripts/probe/examples/display/quest-card.test.ts"
       },
       {

@@ -2,41 +2,54 @@
   "schemaVersion": 1,
   "status": "SOURCE_REVIEWED",
   "authority": "REFERENCE_NOT_EXECUTABLE",
-  "skillsArchiveSha256": "c82b7fd8e78e8d0630e5bd603be877ad64141663f119f4785589cbb112547304",
+  "skillsArchiveSha256": "26c0a322cabed172ca74970413d5bb7a20d6f67181446df5f688e36057c54e21",
   "skillsLock": {
     "repo": "https://github.com/achmadawdi/minecraft-bedrock-agent-skills.git",
-    "tag": "v0.27.0",
+    "tag": "v0.35.0",
     "commit": null,
     "source": "zip",
     "hashAlgorithm": "UPSTREAM_HASH_SKILL_V1",
     "skills": {
-      "bedrock-agent-team": "b7550dda948c3d1c8d6d7d2ea79899e2cc2efa1d0067de31fae5fa7385b9ec2e",
-      "bedrock-camera": "4a0d0fa310438c7b112920ef155a2d98995998e1137e20671f4247682bca119d",
-      "bedrock-content": "b09b4194dc61aa5c5576b8c43bf7f7cc8c9e559421dc80b376802c31959ab165",
-      "bedrock-coordinates": "93e974d6fa209736ffc5852232ee8f35a9f6c11e3a3dc7af6306028533f1e808",
-      "bedrock-data-persistence": "98ce2fa4bff110b630dd8fc10397eccfa4694702f943c6dd09ac0352fef5da5b",
-      "bedrock-debug-logging": "b569c9373a33d6a196aab12ade8bda6027647ad3bac5c2e36c45063184db207e",
-      "bedrock-debug-profiling": "9c5f7984b7dc9e787c56ab056e4e5877f5164dbe88b1b64677150be308b7d0c7",
-      "bedrock-entity-creation": "6dd35918a57e4c2ef8051a50fe6237e142efb2732effac33b4934f5ff1c94c1a",
-      "bedrock-entity-lifecycle": "911f45642ecc30b61f510b939ef9c039060d7ffaaf8668d805d96f7f3d01ab14",
-      "bedrock-forms": "afdf43a7f89da44a1872a5c9fcba47dc071547a021710aa606bee806eca2f150",
-      "bedrock-game-results": "ddfe8aa73e73da787d52ff87c1d4ed6df8ffd854c7275a7f87312a924c053490",
-      "bedrock-game-time": "66e88eef6172d3fc5f7a2693306b693bdc8e984fdd721c952aaf72ce4bcc35c7",
-      "bedrock-git-workflow": "50b81b8dfaae74d74a9e950249ffb07d6dc04c301b652e86879d0e2daebbf88f",
-      "bedrock-onscreen-display": "b03eef9594403d1ca13bf0d1a198b839681bf52da6e67bc7fe8ea490cfd28f50",
-      "bedrock-player-attached-particles": "546038dbb4d6b592da20238b96762c718717eda2faf0b930b93bb808cdc9ab2b",
-      "bedrock-project-setup": "5f215bb642fde22843269faa112c267a5b2d446ccd2e12366dc285ce614a0919",
-      "bedrock-release-export": "7c224b7dcb0afda94d963be0b6dcbc456d6bd2bd32d2a10b52bad6a356574e14",
-      "bedrock-script-optimization": "7a205d7df2f369cd8da3f9b531db44d24dc7706eb24bedac0df7922765ea43f5",
-      "bedrock-sound": "f950d555580bc43167f75de7bd4da44d976530885a9feb7b034ac0a0751a4776",
-      "bedrock-teleport": "d5bfc9c2df425f240843724a7ea7070876bcf52d3cade4f8fcc109daba168141",
-      "bedrock-testing-policy": "4dce1a05405e550cfad363b6fa0f785a0b2ec8467ef3a125b3fc5e8c719ce0c7",
-      "bedrock-text-glyphs": "dcffc6512d3da8b0d65318988491b320ca8b9a41c0368f304cd70ece877e144f",
-      "bedrock-version-targeting": "421786a89dff76c84f1eb9c5d41664a08940355677095cdcb4314304bdf02ee4"
+      "bedrock-agent-team": "da53a579067a9148b7b3f790670bb39495b651aa618955a4cb904c965921927b",
+      "bedrock-analytics": "bada5d50f0942214b37d87fa54a6ced3373b623851f8b0016130d8eb59f2d603",
+      "bedrock-camera": "36cb84f8cd905c5058b85c05a0d5cd1f3a9ee29183eaab0cb3466c2ae08858e6",
+      "bedrock-content": "cc9acac696b85504c1039148a0493402ba962eb4ce8a0d75990bdbb653cb71fe",
+      "bedrock-coordinates": "3f2a9d98d1f682ef3ddb2bd0fe0be2a3f65702ce18cec99e81f50eff3cdfde65",
+      "bedrock-data-persistence": "ccccfe2153fab590ab0ca9a5746b5e8f1732eb1ab20248d4fec5584c27e0d631",
+      "bedrock-debug-logging": "6e6f2e0922047d336b4c8b0e12716afecd6d3019359ce00f4067a2be5cc09aa7",
+      "bedrock-debug-profiling": "10e84875485939e68a6b7c82cac0060b3134c916c59b944cf961fc5ea3549e41",
+      "bedrock-entity-creation": "6e3896823036163e7a3c5c56a8db42d34d44d9a5f15582f3a5c98ec9bcc6e5d7",
+      "bedrock-entity-lifecycle": "a539f1e63bec7fb733e50fbf6cc6280b87c919a2380e9d5abd5dfe6b38bc6a5a",
+      "bedrock-forms": "333d421833676346a6848264b80e65b428fc453fa8d305e685aae406ba26bf6c",
+      "bedrock-game-results": "595b724a15bc5b8dda169e8335b81a3f2407e3627c0713887465d8471fc280e4",
+      "bedrock-game-time": "9b3c1a6ebae92479c061eaf073d6e9bb00b5a0dfd1e20540a9b66cb50be38e0a",
+      "bedrock-git-workflow": "b77ca1b7eb328087a4bebf0799a8250e2ae38b65ffb70b0f674ec9531cad1cf6",
+      "bedrock-onscreen-display": "786bc995aa1afcf47f19fe7a6061881dd8ffbfb9e43642c15b11463f19f4e39e",
+      "bedrock-player-attached-particles": "3ef1ca12569c0d137e1935da06cd342dab0ad10bbeeb432e441e1e42fa9a5fb6",
+      "bedrock-project-setup": "e06caa0178aaa8ef4ce8620256372a665db7b573a310156ba7f928e86bf0787a",
+      "bedrock-release-export": "df208906518f8f04af3ac918580cab5bc2280756b4743a1b580ac76e569cf315",
+      "bedrock-script-optimization": "c7e84385ff9fdd899815760179f7f33d6c85c5f82def7776ad8104ae1064f1cd",
+      "bedrock-sound": "b7d83ae81ff9bf8cdec8828cc39b81b81cbf45b9245013131c0e548fff8d934e",
+      "bedrock-teleport": "9f78565ee01c5fac02a13995775a70f9355ae9718e419bcd5c924b16dc8cf53e",
+      "bedrock-testing-policy": "f18a5dbab956ed8816ea30e2b849b38e9521881a759bfb517bcfa000ba6eaa68",
+      "bedrock-text-glyphs": "ee0f5c1522f2120be9131156f5021a1cf96a023618a8de51998d28fa693edaf2",
+      "bedrock-version-targeting": "499a87a6201af05fc756fec106bfae5690e8cab620d7d17d266f4e81e99c9963"
     }
   },
   "modulesLock": {
     "modules": {
+      "analytics": {
+        "sha256": "e8598ca0898fdeb283fb21106384598209a2d4e25cd785173d5081a299e7c900",
+        "folderSha256": "1e068f0ea72d15b196df8070d0fae5a9b61ae4d7e34cbc043146e6b3b834688a",
+        "skill": [
+          "bedrock-analytics"
+        ],
+        "requires": [
+          "database",
+          "logging",
+          "time"
+        ]
+      },
       "coords": {
         "sha256": "2fda69e5991c6d395194e6a88b3b01a3048509282923f58d1a8687f3d8635354",
         "folderSha256": "28bcb33393db8ce028c9297c09d660bfade9cb15469f2d824aca0f348beefc6a",
@@ -159,20 +172,20 @@
     }
   },
   "probe": {
-    "archiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
-    "skillsLockTag": "v0.23.0",
-    "skillsLockCommit": "f5b8275dd690ecb3d14efb001865c9b178143b55",
-    "reportedTestRuns": 49,
-    "installedSkills": 22,
-    "installedModules": 9,
+    "archiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+    "skillsLockTag": "v0.35.0",
+    "skillsLockCommit": "1856f1875ef0fb7039710c3a215da2123f87e7ba",
+    "reportedTestRuns": 89,
+    "installedSkills": 24,
+    "installedModules": 10,
     "lockDrift": "LOCKS_MATCH_PACKAGED_FILES",
-    "sourceReview": "SOURCE_REPORT_AND_INDEX_REVIEWED_NOT_NATIVE_RUNTIME_REPLAYED",
+    "sourceReview": "SOURCE_HASHES_VERIFIED_OUTCOMES_NOT_REPLAYED",
     "originalClientTarget": "Minecraft Education 26.32"
   },
-  "note": "Both provided upstream ZIP source snapshots are indexed and source-reviewed independently: developer v0.27.0, Probe source reports with v0.23.0 installed skills. The 49 report verdicts are self-reported and individually scoped; no Minecraft session, exporter, script or P63 protocol was rerun by Lazy-Developer. Raw private source is not redistributed.",
+  "note": "2026-11-01: developer v0.35.0 and separately supplied Probe v0.35.0 ZIP are the pinned native publisher technical reference. Verified all 24 complete skill folder hashes and all 45 installed Probe module file locks. 89 reports exist; only 49 historically reviewed results are in curated metadata, with 40 new report outcomes pending review. Publisher commit in Probe lock was not independently verified against live upstream GitHub; reference is not an official Microsoft/Mojang rule, a gameplay check or executable proof.",
   "componentReview": {
-    "developerSkills": "SOURCE_REVIEWED",
-    "skillsProbe": "SOURCE_REVIEWED",
-    "sourceSelectionPolicy": "External source and test-report text reviewed, not gameplay tested. Map Audit still selects only the 16 exact Semantic IR-supported patterns; particle skill remains unrouted. Upstream Probe v0.23.0 installed skills differ from developer v0.27.0 release."
+    "developerSkills": "SOURCE_IDENTITY_REVIEWED",
+    "skillsProbe": "SOURCE_LOCK_VERIFIED_REPORT_OUTCOMES_PARTIAL",
+    "sourceSelectionPolicy": "Only reviewed exact typed-IR patterns from the current map may select publisher methods; no third-party code or skills are installed, and no external PASS certifies a map."
   }
 }

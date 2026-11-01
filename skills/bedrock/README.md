@@ -31,13 +31,10 @@ The existing `experiments/developer-practice-signals.json` remains the sole
 probe report attribution and current `pendingIntake`. This directory only
 owns **native upstream package identity/dependency relationships**.
 Its source archive SHA must equal the matching, independently pinned
-reviewed developer source or pending candidate. As of the 24 October 2026
-review, v0.27.0 is the **reviewed developer source** for 23 skills; the
-native source lock retains a separately reviewed Skills Probe source
-archive, still using the older installed skills lock v0.23.0.
+reviewed developer source or pending candidate. The 1 November 2026 supplied ZIPs pin developer v0.35.0 with 24 skill folders and 13 module manifests, and independent Probe v0.35.0 with 10 installed modules. Their 24 native skill-folder hashes and 45 installed module file SHA hashes match. The 89 Probe reports contain 49 historically curated source outcomes and 40 newly present reports pending review.
 Seventeen interpretation patterns now have source-grounded Map Audit
 reference consumers, five methods remain workflow/project reference, and
-`bedrock-player-attached-particles` is reviewed but **not yet routable**
+`bedrock-player-attached-particles` and `bedrock-analytics` are **not yet routable**
 without a precise canonical Semantic IR witness. The seventeenth is a
 conditional Daigon results-export *investigation* sourced from the native
 `bedrock-game-results` method and a typed `scriptEventReceive` subscription.

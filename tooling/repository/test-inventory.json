@@ -12039,8 +12039,8 @@
     "authority": "UNTRUSTED_ZIP_TAXONOMY_REFERENCE_NOT_ACTIVE_SKILLS_OR_GAMEPLAY_PROOF",
     "developer": {
       "manifest": "minecraft-bedrock-agent-skills/skills.json",
-      "version": "v0.30.0",
-      "archiveSha256": "5e4608858cd824d9f5476a6d89242084db6b6d80ce61fa0b5e4b0c079669f0d8",
+      "version": "v0.35.0",
+      "archiveSha256": "26c0a322cabed172ca74970413d5bb7a20d6f67181446df5f688e36057c54e21",
       "skills": [
         "bedrock-agent-team",
         "bedrock-analytics",
@@ -12151,9 +12151,9 @@
       }
     },
     "probe": {
-      "skillsLockTag": "v0.30.0",
-      "skillsLockCommit": "a0f17e6d27c5bb3bf16ecab44a249b7e3bd192fb",
-      "archiveSha256": "89ec46832abb7fbb1215ec5e460275f18b4071ce5ca1d4c3cb3a7f052077f5d5",
+      "skillsLockTag": "v0.35.0",
+      "skillsLockCommit": "1856f1875ef0fb7039710c3a215da2123f87e7ba",
+      "archiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
       "exampleIndex": "docs/examples/index.json",
       "exampleOwners": {
         "E1": "bedrock-script-optimization",
@@ -12174,7 +12174,7 @@
       "targetClient": "Minecraft Education 26.32",
       "matchedPublisherSkillFolderHashes": 24,
       "matchedInstalledModuleLockFiles": true,
-      "exampleIndexSha256": "5b187d61b1ab634ac83d1304dc31f02f533e74d5f14027b166f2fd86a7ed1630",
+      "exampleIndexSha256": "ab72ae2cc8b1dd997d695081c0e5c2acbc9300f9aba9644e2846179d2c91c458",
       "exampleDetails": {
         "E1": {
           "label": "Arena State & Performance",
@@ -12253,7 +12253,8 @@
             "P56I",
             "P56L",
             "P56X"
-          ]
+          ],
+          "report": "docs/test-runs/2026-10-22-visual-audit-lead.md"
         },
         "E7": {
           "label": "Game Results & Export",
