@@ -80,3 +80,33 @@ inspecting their original assertions: frozen map-audit benchmark scoring is
 `audit.evidence-integrity`; graph invalidation and task dependency planning
 are `tooling.graph`; work-session checkpoints are `tooling.projects`.
 Those changes do not edit tests, add cases, or claim executed correctness.
+
+
+## Mechanic-tag vocabulary (optional secondary navigation)
+
+`test-inventory.json` contains the one `mechanicTagVocabulary` alongside
+the existing primary area/feature taxonomy. Its 11 semantic namespaces
+(`map`, `world`, `lobby`, `player`, `arena`, `combat`, `entity`,
+`inventory`, `economy`, `gameplay` and `scoreboard`) describe **secondary
+mechanic topics**, not 11 more functional areas or physical source owners.
+Every existing tag has one namespace, readable label and precise meaning.
+The same `run-tests.mjs` validates registered, distinct and actually-used
+tags, requiring source-inspected test mappings and deterministic tag order.
+
+`--list-mechanics` now groups tag identities by namespace. A
+`--show-mechanic <tag>` query explains its meaning and lists source-classified
+test files. Multi-feature umbrella tags such as `entity.ai-navigation`,
+`economy.currency-rewards`, `combat.damage-lifecycle` and
+`world.interaction-ui` are intentionally retained: their cases cover
+different feature owners under one meaningful mechanic topic. A test may
+have multiple secondary tags or none. Do not assign extra tags merely to
+fill coverage; primary `functionalArea` / `featureId` and test `lane`
+remain unchanged.
+
+The former `map.chunk` tag was replaced by `world.chunk-readiness` for
+the four suites that actually inspect source/host chunk readiness and
+ticking-area lifecycle. This is a vocabulary correction, **not** a new
+checker, a new test, a proved runtime result or an alias to a missing
+primary test. No alternate tag aliases or compatibility registry were
+created. A previously saved `--show-mechanic map.chunk` query must use
+`world.chunk-readiness`.

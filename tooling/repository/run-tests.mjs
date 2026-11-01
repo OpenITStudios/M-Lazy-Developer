@@ -96,6 +96,35 @@ function loadInventory() {
     throw new Error("Missing canonical test feature catalog");
   }
   const validFeatures = new Set(Object.keys(featureCatalog));
+  // Mechanic tags are an optional, source-reviewed secondary vocabulary,
+  // not another implementation owner or an executed coverage certificate.
+  const tagGroups = data.mechanicTagVocabulary?.groups;
+  if (!Array.isArray(tagGroups) || tagGroups.length === 0) {
+    throw new Error("Missing canonical mechanic tag vocabulary");
+  }
+  const tagGroupIds = new Set();
+  const validTags = new Set();
+  for (const group of tagGroups) {
+    if (!group || typeof group.id !== "string" ||
+        !/^[a-z][a-z0-9-]*$/.test(group.id) ||
+        tagGroupIds.has(group.id) ||
+        typeof group.label !== "string" || !group.label.trim() ||
+        typeof group.scope !== "string" || !group.scope.trim() ||
+        !Array.isArray(group.tags) || group.tags.length === 0) {
+      throw new Error("Invalid mechanic tag group");
+    }
+    tagGroupIds.add(group.id);
+    for (const tag of group.tags) {
+      if (!tag || typeof tag.id !== "string" ||
+          !/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/.test(tag.id) ||
+          !tag.id.startsWith(group.id + ".") || validTags.has(tag.id) ||
+          typeof tag.label !== "string" || !tag.label.trim() ||
+          typeof tag.meaning !== "string" || !tag.meaning.trim()) {
+        throw new Error("Invalid, duplicate, or misgrouped mechanic tag");
+      }
+      validTags.add(tag.id);
+    }
+  }
   for (const [featureId, feature] of Object.entries(featureCatalog)) {
     if (!/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/.test(featureId) ||
         !feature || !validAreas.has(feature.area) ||
@@ -217,7 +246,8 @@ function loadInventory() {
         !Array.isArray(item.mechanicTags) ||
         new Set(item.mechanicTags).size !== item.mechanicTags.length ||
         item.mechanicTags.some(tag => typeof tag !== "string" ||
-          !/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)*$/.test(tag)) ||
+          !validTags.has(tag)) ||
+        item.mechanicTags.join("|") !== [...item.mechanicTags].sort().join("|") ||
         item.mechanicMappingBasis !== "source-case-inspected" ||
         !validRecommendations.has(item.recommendation) ||
         typeof item.rationale !== "string" || !item.rationale.trim() ||
@@ -256,6 +286,11 @@ function loadInventory() {
     feature => !data.tests.some(item => item.featureId === feature));
   if (unusedFeatures.length) {
     throw new Error("Unreferenced test feature(s): " + unusedFeatures.join(", "));
+  }
+  const unusedTags = [...validTags].filter(
+    tag => !data.tests.some(item => item.mechanicTags.includes(tag)));
+  if (unusedTags.length) {
+    throw new Error("Unreferenced mechanic tag(s): " + unusedTags.join(", "));
   }
   const discovered = new Set(discoverSourceTests());
   const missing = [...discovered].filter(path => !paths.has(path));
@@ -824,22 +859,31 @@ if (mode === "--acceptance" && args.length <= 1) {
     test.path + " [REFERENCE ONLY]");
   process.exit(0);
 } else if (mode === "--list-mechanics" && args.length === 1) {
-  const counts = new Map();
-  for (const test of registeredTests) {
-    for (const tag of test.mechanicTags) {
-      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  console.log("Optional secondary mechanic tags by thematic namespace. NO TESTS EXECUTED; a tag is not proof of a map mechanic.");
+  for (const group of inventory.mechanicTagVocabulary.groups) {
+    const tagged = registeredTests.filter(test => test.mechanicTags.some(tag =>
+      group.tags.some(entry => entry.id === tag)));
+    console.log(group.label + " [" + group.id + "]: " + group.tags.length +
+      " tags / " + tagged.length + " source-classified files.");
+    for (const tag of group.tags) {
+      const count = registeredTests.filter(test => test.mechanicTags.includes(tag.id)).length;
+      console.log("  " + tag.id + ": " + count + " files - " + tag.label);
     }
-  }
-  for (const [tag, count] of [...counts].sort(([a], [b]) => a.localeCompare(b))) {
-    console.log(tag + ": " + count + " source-classified files (NOT gameplay proof)");
   }
   process.exit(0);
 } else if (mode === "--show-mechanic" && args.length === 2) {
-  const matches = registeredTests.filter(test => test.mechanicTags.includes(args[1]));
-  if (!matches.length) {
-    console.error("Unknown/unmapped mechanic tag: " + args[1]);
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const group = inventory.mechanicTagVocabulary.groups.find(group =>
+    group.tags.some(tag => tag.id === args[1]));
+  if (!group) {
+    console.error("Unknown mechanic tag: " + args[1] + ". Use --list-mechanics.");
     process.exit(2);
   }
+  const tag = group.tags.find(tag => tag.id === args[1]);
+  const matches = registeredTests.filter(test => test.mechanicTags.includes(args[1]));
+  console.log(tag.id + ": " + tag.label + " [" + group.label + "]. NO TESTS EXECUTED.");
+  console.log(tag.meaning);
   for (const test of matches) console.log(test.path + " [" + test.featureId + "; " + test.featureMappingBasis + "]");
   process.exit(0);
 } else if (mode === "--list-lanes" && args.length === 1) {

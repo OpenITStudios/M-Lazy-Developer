@@ -1223,7 +1223,7 @@
       "rationale": "Chunk lifecycle and ticking-area methods retain source traceability.",
       "functionalArea": "world-interaction",
       "mechanicTags": [
-        "map.chunk"
+        "world.chunk-readiness"
       ],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "world.chunk-lifecycle",
@@ -4452,7 +4452,7 @@
       },
       "functionalArea": "world-interaction",
       "mechanicTags": [
-        "map.chunk"
+        "world.chunk-readiness"
       ],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "world.chunk-lifecycle",
@@ -9007,7 +9007,7 @@
       "rationale": "Unknown host readiness and probe failures are never converted into loaded evidence.",
       "functionalArea": "world-interaction",
       "mechanicTags": [
-        "map.chunk"
+        "world.chunk-readiness"
       ],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "world.chunk-lifecycle",
@@ -9407,7 +9407,7 @@
       },
       "functionalArea": "world-interaction",
       "mechanicTags": [
-        "map.chunk"
+        "world.chunk-readiness"
       ],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "world.chunk-lifecycle",
@@ -12627,5 +12627,322 @@
       "executableVerification": "NOT_EXECUTED",
       "conclusion": "No case deletion authorised from this corpus; full 385-file semantic comparison not claimed."
     }
+  },
+  "mechanicTagVocabulary": {
+    "rule": "Each tag is a source-inspected optional secondary mechanic grouping, not a primary functional area, feature, implementation owner, execution lane or gameplay proof. Every used tag must appear exactly once in these thematic groups; keep broad cross-feature tags only when the existing cases cover their stated meaning. Empty/unreviewed new tags and speculative aliases are not admitted. The namespaced tag id is the only search identity. Renamed source-backed map.chunk to world.chunk-readiness because all four current consumers are world chunk lifecycle/readiness suites.",
+    "groups": [
+      {
+        "id": "map",
+        "label": "Map content and formats",
+        "scope": "Read-only physical map/source formats, metadata and authored blocks/structures, not observed gameplay.",
+        "tags": [
+          {
+            "id": "map.blocks",
+            "label": "Map blocks and permissions",
+            "meaning": "Authored block content and education/permission constraints of map content."
+          },
+          {
+            "id": "map.database",
+            "label": "World database content",
+            "meaning": "World LevelDB records, state summaries and comparison evidence in map data."
+          },
+          {
+            "id": "map.manifest",
+            "label": "Pack manifests",
+            "meaning": "Behavior/resource pack identity, version and dependency declarations."
+          },
+          {
+            "id": "map.nbt",
+            "label": "NBT representation",
+            "meaning": "Native NBT records and byte-preserving serialization or parsing."
+          },
+          {
+            "id": "map.resource-pack",
+            "label": "Resource pack assets",
+            "meaning": "Animation/resource pack authored data and resource references."
+          },
+          {
+            "id": "map.structure",
+            "label": "Structure artifacts",
+            "meaning": "MCStructure decoding, commands and source-grounded structure placement/proof."
+          },
+          {
+            "id": "map.topology",
+            "label": "Map topology",
+            "meaning": "Arena region discovery, relative layout and topology source comparisons."
+          }
+        ]
+      },
+      {
+        "id": "world",
+        "label": "World state and interaction",
+        "scope": "World simulation dependencies, state effects and player-facing interaction surfaces.",
+        "tags": [
+          {
+            "id": "world.block-state",
+            "label": "Interactive block state",
+            "meaning": "Authored block-state transitions and interactive block conditions."
+          },
+          {
+            "id": "world.chunk-readiness",
+            "label": "Chunk lifecycle and readiness",
+            "meaning": "Chunk loading, simulation readiness, ticking areas and chunk-dependent runtime observations."
+          },
+          {
+            "id": "world.environment-hazards",
+            "label": "Environment hazards",
+            "meaning": "Environmental sources of damage, hazards and protected behavior."
+          },
+          {
+            "id": "world.interaction-ui",
+            "label": "Interaction and UI lifecycle",
+            "meaning": "Cross-feature umbrella for authored NPC dialogue, forms, inputs, camera/title feedback and interaction effects; not proof of displayed UI."
+          },
+          {
+            "id": "world.spatial-boundary",
+            "label": "Spatial boundaries",
+            "meaning": "Containment, permitted world mutation locations and spatial authority."
+          },
+          {
+            "id": "world.teleport",
+            "label": "Teleport transactions",
+            "meaning": "Teleport destination, state transitions and outcome reconciliation."
+          }
+        ]
+      },
+      {
+        "id": "lobby",
+        "label": "Pre-match entry",
+        "scope": "Lobby and join-pad signals. A secondary tag is not a primary lobby test or proof that a selected map has a lobby.",
+        "tags": [
+          {
+            "id": "lobby.join-pad",
+            "label": "Join-pad ownership",
+            "meaning": "Join-pad player entry, leave or membership evidence before match admission."
+          }
+        ]
+      },
+      {
+        "id": "player",
+        "label": "Player session and state",
+        "scope": "Identity, player lifecycle, permissions and persistent state across joins and sessions.",
+        "tags": [
+          {
+            "id": "player.disconnect",
+            "label": "Disconnect event",
+            "meaning": "Disconnect as a distinct lifecycle trigger and session-boundary event."
+          },
+          {
+            "id": "player.inventory-restore",
+            "label": "Inventory restoration",
+            "meaning": "Restore of player inventory across spawn, join or session transitions."
+          },
+          {
+            "id": "player.join",
+            "label": "Player joining",
+            "meaning": "Player join event and session admission, separate from spawn/readiness."
+          },
+          {
+            "id": "player.leave",
+            "label": "Player leaving",
+            "meaning": "Player leave, cleanup or stale-state handling."
+          },
+          {
+            "id": "player.permissions",
+            "label": "Player privileges",
+            "meaning": "Authorized versus privileged player capabilities and bypass conditions."
+          },
+          {
+            "id": "player.persistence",
+            "label": "Persistent player state",
+            "meaning": "Durable player data, lifecycle state and reconciliation behavior."
+          },
+          {
+            "id": "player.reconnect",
+            "label": "Player reconnect",
+            "meaning": "Reconnect identity and session-generation reattachment or reset."
+          },
+          {
+            "id": "player.respawn",
+            "label": "Player respawn",
+            "meaning": "Respawn event and recovery after player death."
+          },
+          {
+            "id": "player.session",
+            "label": "Session ownership",
+            "meaning": "Cross-feature player session identity, membership and generation-scoped ownership."
+          },
+          {
+            "id": "player.spawn",
+            "label": "Player spawn",
+            "meaning": "Spawn trigger and initial-versus-respawn source distinctions."
+          }
+        ]
+      },
+      {
+        "id": "arena",
+        "label": "Arena and match",
+        "scope": "Arena admission, capacity, lifecycle, per-arena state, replicas and repair admission.",
+        "tags": [
+          {
+            "id": "arena.admission",
+            "label": "Arena admission",
+            "meaning": "Source-backed entry membership decisions and roster ownership."
+          },
+          {
+            "id": "arena.capacity",
+            "label": "Arena capacity",
+            "meaning": "Supported versus declared player/arena limits and capacity overflow."
+          },
+          {
+            "id": "arena.cleanup-reset",
+            "label": "Arena cleanup and reset",
+            "meaning": "Terminal cleanup, reusable state reset and subsequent match readiness."
+          },
+          {
+            "id": "arena.entity-population",
+            "label": "Arena entity population",
+            "meaning": "Arena-scoped spawn and actor population evidence."
+          },
+          {
+            "id": "arena.isolation",
+            "label": "Arena state isolation",
+            "meaning": "Concurrent arenas' private state and global lease boundaries."
+          },
+          {
+            "id": "arena.layout",
+            "label": "Arena layout",
+            "meaning": "Arena region identity, spatial layout and replica consistency."
+          },
+          {
+            "id": "arena.lifecycle",
+            "label": "Match lifecycle",
+            "meaning": "Match phase, timer, terminal transition and replay ownership."
+          },
+          {
+            "id": "arena.multi-instance",
+            "label": "Multi-arena participation",
+            "meaning": "Multiple concurrent arena instances across session/validation scenarios."
+          },
+          {
+            "id": "arena.proof-gates",
+            "label": "Arena proof gates",
+            "meaning": "Arena-scope proof requirements and bounded audit admission."
+          },
+          {
+            "id": "arena.ready-gate",
+            "label": "Ready gating",
+            "meaning": "Player-ready sets, quorum and delayed-start validation."
+          },
+          {
+            "id": "arena.repair",
+            "label": "Arena repair",
+            "meaning": "Repair candidates and strategies affecting arena mechanics."
+          },
+          {
+            "id": "arena.start",
+            "label": "Arena starting",
+            "meaning": "Match activation, start ownership, countdown and deferred start effects."
+          },
+          {
+            "id": "arena.validation-baseline",
+            "label": "Arena validation baseline",
+            "meaning": "Reference snapshots or baselines; not independent runtime or safety proof."
+          }
+        ]
+      },
+      {
+        "id": "combat",
+        "label": "Combat lifecycle",
+        "scope": "Damage, attack, death and revival as cross-cutting combat transitions.",
+        "tags": [
+          {
+            "id": "combat.damage-lifecycle",
+            "label": "Combat damage and revival",
+            "meaning": "Damage/attack, combat termination, downed and revive transitions; umbrella across damage and revive features."
+          }
+        ]
+      },
+      {
+        "id": "entity",
+        "label": "Entity behavior",
+        "scope": "Minecraft entity behavior, navigation, targeting, spawning and authored loot.",
+        "tags": [
+          {
+            "id": "entity.ai-navigation",
+            "label": "AI, navigation and targeting",
+            "meaning": "Cross-feature umbrella for entity AI, navigation, pathfinding and target selection."
+          },
+          {
+            "id": "entity.loot",
+            "label": "Entity loot",
+            "meaning": "Entity-owned loot tables and item drop/loot sources."
+          },
+          {
+            "id": "entity.spawn",
+            "label": "Entity spawning",
+            "meaning": "Entity population, spawning and spawn-source evidence."
+          }
+        ]
+      },
+      {
+        "id": "inventory",
+        "label": "Inventory mechanics",
+        "scope": "Item ownership and inventory mutation lifecycles.",
+        "tags": [
+          {
+            "id": "inventory.item-flow",
+            "label": "Item flow",
+            "meaning": "Inventory item movement, restoration, allocation and lifetime."
+          }
+        ]
+      },
+      {
+        "id": "economy",
+        "label": "Economy and rewards",
+        "scope": "Currency, rewards, source transactions and delivery contracts; classification is not proof of awarded items.",
+        "tags": [
+          {
+            "id": "economy.currency-rewards",
+            "label": "Currency and reward flows",
+            "meaning": "Cross-feature umbrella for economy transactions, currency, and reward delivery evidence."
+          },
+          {
+            "id": "economy.reward-contract",
+            "label": "Reward contract",
+            "meaning": "Authored reward policies, overlap and terminal transaction order."
+          }
+        ]
+      },
+      {
+        "id": "gameplay",
+        "label": "Gameplay reconstruction",
+        "scope": "Player-facing gameplay progression and source-to-model/report relation.",
+        "tags": [
+          {
+            "id": "gameplay.progression",
+            "label": "Gameplay progression",
+            "meaning": "Progression counters, waves, objectives and completion state."
+          },
+          {
+            "id": "gameplay.source-to-report",
+            "label": "Source-to-report lineage",
+            "meaning": "Selected source evidence relationship through gameplay reconstruction to audit/report outputs."
+          }
+        ]
+      },
+      {
+        "id": "scoreboard",
+        "label": "Scoreboard mechanics",
+        "scope": "Scoreboard resources as specifically scoped game state, not independent arena semantics.",
+        "tags": [
+          {
+            "id": "scoreboard.arena-isolation",
+            "label": "Arena scoreboard isolation",
+            "meaning": "Arena-specific scoreboard writes and prevention of cross-arena interference."
+          }
+        ]
+      }
+    ]
   }
 }
