@@ -6192,15 +6192,15 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "read-assertions-before-decision",
+        "action": "revisit-on-relevant-source-change",
         "sourceBlobSha": "9100b70ac4699ef3c5c87fd1c2f59ba2d50b6dd3"
       },
       "recommendation": "keep",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
-      "functionalArea": "audit-diagnosis",
+      "rationale": "Primary feature recategorization at pinned unchanged source blob 9100b70ac4699ef3c5c87fd1c2f59ba2d50b6dd3: Source assertions inspect gamerule writers, natural vs manual spawn, conflicts and world:time/weather/difficulty/command-block state. analyzeWorldRuleAuthority produces world-rule behavior; world.blocks-rules is the established primary feature. The inspection source path is the implementation owner, not the primary audited mechanic. Static source review only; executable test behavior NOT EXECUTED.",
+      "functionalArea": "world-interaction",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "audit.source-inspection",
+      "featureId": "world.blocks-rules",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -7840,15 +7840,15 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "read-assertions-before-decision",
+        "action": "revisit-on-relevant-source-change",
         "sourceBlobSha": "1679d204dfe9ca9de629b8377ea79cb02a21e2d3"
       },
       "recommendation": "keep",
-      "rationale": "Runtime diagnosis requires explicit failed predicate and matched experiment identity.",
-      "functionalArea": "runtime-telemetry",
+      "rationale": "Primary feature recategorization at pinned unchanged source blob 1679d204dfe9ca9de629b8377ea79cb02a21e2d3: deriveReportClassificationFromRuntimeExperiment asserts reported impact/primaryFailure from evidenced runtime failure predicates and rejects success, absent and mismatched experiment identity. The primary output is report finding classification; runtime is the input evidence, not the category owner. Static source review only; executable test behavior NOT EXECUTED.",
+      "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "runtime.evidence",
+      "featureId": "report.findings",
       "featureMappingBasis": "source-case-inspected"
     },
     {

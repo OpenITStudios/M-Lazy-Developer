@@ -149,3 +149,27 @@ explicitly and never invokes Vitest, TypeScript or Minecraft. A lane
 named `runtime` or `acceptance` is **not** an observed runtime or
 acceptance result. Existing execution selection commands and CI policy
 remain unchanged.
+
+
+## Primary feature tie-breaker (source-to-assertion audit)
+
+Classify a source-test file by its **asserted semantic output**, not by the
+physical owner directory, the imported input's type or the presence of a
+generic `inspect`/`runtime` word in its path. The implementation owner remains
+the unchanged source package, and the lane remains only an execution-selection
+hint. Use the existing feature catalog; do not create new primary domains for
+each combined test case or mechanically infer the primary feature from a
+filename.
+
+For example, `inspection/world-rule-authority-analysis.test.ts` checks
+gamerules, natural spawning versus manual spawning, and difficulty/time/weather
+state: its primary feature is `world.blocks-rules` even though it invokes an
+inspection implementation. `reporting/report-runtime-classification.test.ts`
+checks report `impact` and `primaryFailure` projection, so it is
+`report.findings` despite consuming runtime experiment evidence.
+
+A source-file audit can confirm this primary category match and the exact
+test Git blob, **not** execution success, safety, exhaustive case equivalence
+or selected-map bug detection. Broad umbrella mechanic tags are optional
+cross-links; do not use them to manufacture primary coverage for
+`lobby-pre-match` or to split source suites without proven need.
