@@ -1,6 +1,6 @@
-import { buildGameplayAuditScenarioPreset } from "../../diagnostic-reasoning/src/index.js";
+import { buildGameplayAuditScenarioPreset } from "../../../diagnostic-reasoning/src/index.js";
 import { describe, expect, it } from "vitest";
-import { expandGameplayKnowledgeRequirementIds, knowledgeIdsForRequirement } from "../src/inspection/gameplay-scenario-knowledge.js";
+import { expandGameplayKnowledgeRequirementIds, knowledgeIdsForRequirement } from "../../src/inspection/gameplay-scenario-knowledge.js";
 
 describe("gameplay scenario knowledge selection", () => {
   it("expands direct requirements through the existing RIG prerequisite topology", () => {

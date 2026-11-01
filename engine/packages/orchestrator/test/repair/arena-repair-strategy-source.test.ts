@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BUILTIN_REPAIR_STRATEGY_SOURCES,
   validateRepairStrategySourceRegistry,
-} from "../src/repair/repair-strategy-source-registry.js";
+} from "../../src/repair/repair-strategy-source-registry.js";
 
 describe("arena repair strategy source coverage", () => {
   it("keeps physical arena divergence proposal-only until authored source is localized", () => {

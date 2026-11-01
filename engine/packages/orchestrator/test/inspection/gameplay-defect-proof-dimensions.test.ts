@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { assessGameplayDefectResolutionGate, automaticCounterProofSearch, requiredCounterProofDimensions } from "../src/inspection/gameplay-defect-resolution.js";
-import { dimensionEvidenceForRuntimeComponent } from "../src/inspection/gameplay-scenario-compiler.js";
-import type { GameplayWorldModel } from "../src/inspection/gameplay-world-model.js";
+import { assessGameplayDefectResolutionGate, automaticCounterProofSearch, requiredCounterProofDimensions } from "../../src/inspection/gameplay-defect-resolution.js";
+import { dimensionEvidenceForRuntimeComponent } from "../../src/inspection/gameplay-scenario-compiler.js";
+import type { GameplayWorldModel } from "../../src/inspection/gameplay-world-model.js";
 
 function graph(componentIds: readonly string[], domain?: string) {
   return {

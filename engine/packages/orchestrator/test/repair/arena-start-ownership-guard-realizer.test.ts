@@ -1,113 +1,117 @@
 import { describe, expect, it } from "vitest";
-import { SemanticGraph } from "../../graph/src/index.js";
+import { SemanticGraph } from "../../../graph/src/index.js";
 import {
   parseScriptFile,
-} from "../../../analyzers/scripts/src/index.js";
+} from "../../../../analyzers/scripts/src/index.js";
 import type {
   CausalChain,
   CausalIncident,
   DiagnosticRepairDecision,
   InvariantRegistrySnapshot,
-} from "../../project-model/src/index.js";
+} from "../../../project-model/src/index.js";
 import type {
   DiagnosticFinding,
-} from "../../diagnostics/src/index.js";
+} from "../../../diagnostics/src/index.js";
 import {
   BUILTIN_REPAIR_REALIZERS,
   BUILTIN_REPAIR_STRATEGY_SOURCES,
   deriveRepairOpportunityEnvelope,
   enumerateRepairStrategySources,
-  realizePersistenceIdempotencyGuardFromParsedScripts,
+  realizeArenaStartOwnershipGuardFromParsedScripts,
   type RepairStrategyProviderRegistry,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 const source = {
-  artifactId: "art-persistence",
-  relativePath: "scripts/persistence.ts",
+  artifactId: "art-arena-start",
+  relativePath: "scripts/arena-start.ts",
 };
 
 const text = [
-  'import { world } from "@minecraft/server";',
-  "function applyReward() {}",
-  "function recover(journalGeneration) {",
-  '  const appliedJournalGeneration = world.getDynamicProperty("journal.appliedGeneration");',
-  "  applyReward();",
-  '  world.setDynamicProperty("journal.appliedGeneration", journalGeneration);',
+  "class Arena {",
+  "  startOwner = null;",
+  "  generation = 0;",
+  '  state = "idle";',
+  "  start() {",
+  "    const arenaGeneration = this.generation;",
+  "    this.startOwner = arenaGeneration;",
+  '    this.state = "countdown";',
+  "  }",
   "}",
 ].join("\n");
 
 const parsed = parseScriptFile(
-  "persistence",
+  "arena-start",
   text,
   source,
 );
 const hint = parsed.repairTransformHints?.find(
   (item) =>
-    item.family ===
-      "persistence-idempotency-guard",
+    item.family === "arena-ownership-guard" &&
+    item.supportedPredicateIds.includes(
+      "arena-start-ownership-violation-observed",
+    ),
 )!;
 
 const chain: CausalChain = {
-  id: "chain-persistence",
+  id: "chain-start-owner",
   severity: "critical",
   confidence: "high",
-  title: "duplicate journal replay",
+  title: "duplicate arena start ownership",
   summary:
-    "Reload recovery can repeat an already applied side effect.",
+    "Concurrent start requests can replace the current start owner before countdown ownership stabilizes.",
   nodes: [{
-    id: "duplicate-apply",
+    id: "owner-violation",
     kind: "observed-state",
-    label: "duplicate apply after reload",
+    label: "multiple start owners",
     sourceRefs: [hint.source],
-    diagnosticIds: ["diag-persistence"],
+    diagnosticIds: ["diag-start-owner"],
   }, {
-    id: "missing-idempotency-guard",
+    id: "missing-owner-guard",
     kind: "missing-requirement",
-    label: "applied generation reconciliation",
+    label: "start owner acquisition guard",
   }],
   links: [{
-    from: "duplicate-apply",
-    to: "missing-idempotency-guard",
+    from: "owner-violation",
+    to: "missing-owner-guard",
     strength: "direct-evidence",
-    relationId:
-      "relation-persistence-idempotency",
+    relationId: "relation-arena-start-owner",
     rationale:
-      "Journal recovery must not re-apply a generation already marked applied.",
+      "Only one start owner may acquire a given arena generation.",
   }],
-  relatedDiagnosticIds: ["diag-persistence"],
+  relatedDiagnosticIds: ["diag-start-owner"],
 };
 
 const incident: CausalIncident = {
-  id: "incident-persistence",
-  scopeKey: "journal",
+  id: "incident-start-owner",
+  scopeKey: "arena",
   severity: "critical",
   confidence: "high",
   chainIds: [chain.id],
-  relatedDiagnosticIds: ["diag-persistence"],
+  relatedDiagnosticIds: ["diag-start-owner"],
   nodes: chain.nodes,
   links: chain.links,
   rootCauseCandidates: [{
-    id: "cause-persistence-idempotency",
-    label: "missing applied-generation guard",
+    id: "cause-start-owner",
+    label: "missing start ownership guard",
     evidenceLevel:
       "proven-with-observed-outcome",
     proof: {
       state: "causal",
       interventionIds: [
-        "exp:persistence-journal-recovery",
+        "exp:multi-arena-start",
       ],
       interventionProvenance: [{
         interventionId:
-          "exp:persistence-journal-recovery",
+          "exp:multi-arena-start",
         experimentRevision: "rev-1",
         predicateId:
-          "duplicate-apply-after-reload-observed",
+          "arena-start-ownership-violation-observed",
         controlledFactorIds: [
-          "idempotent-recovery-enabled",
+          "start-ownership-guard-enabled",
         ],
         controlledFactorContrasts: [{
           factorId:
-            "idempotent-recovery-enabled",
+            "start-ownership-guard-enabled",
           controlValue: true,
           treatmentValue: false,
         }],
@@ -116,19 +120,19 @@ const incident: CausalIncident = {
         expectedContrastDisposition: "matched",
         targetProfileFingerprint: "profile-a",
         fixtureFingerprint: "fixture-a",
-        evidenceIds: ["runtime:duplicate-apply"],
+        evidenceIds: ["runtime:start-owner"],
       }],
       targetProfileFingerprint: "profile-a",
     },
     severity: "critical",
     confidence: "high",
     chainIds: [chain.id],
-    relatedDiagnosticIds: ["diag-persistence"],
+    relatedDiagnosticIds: ["diag-start-owner"],
     causalPredicateIds: [
-      "duplicate-apply-after-reload-observed",
+      "arena-start-ownership-violation-observed",
     ],
     causalFactorIds: [
-      "idempotent-recovery-enabled",
+      "start-ownership-guard-enabled",
     ],
     support: {
       dependencyViolations: 1,
@@ -142,11 +146,11 @@ const incident: CausalIncident = {
 const decision: DiagnosticRepairDecision = {
   incidentId: incident.id,
   activeCandidateIds: [
-    "cause-persistence-idempotency",
+    "cause-start-owner",
   ],
   disposition: "repair-eligible",
   selectedCandidateId:
-    "cause-persistence-idempotency",
+    "cause-start-owner",
   effectiveEvidenceLevel:
     "proven-with-observed-outcome",
   proofState: "causal",
@@ -154,35 +158,35 @@ const decision: DiagnosticRepairDecision = {
     incident.rootCauseCandidates[0]!.proof!,
   claimStrength: "proven-runtime",
   reasons: [
-    "controlled journal reload experiment",
+    "controlled multi-arena start experiment",
   ],
 };
 
 const diagnostics: DiagnosticFinding[] = [{
-  id: "diag-persistence",
+  id: "diag-start-owner",
   code: "KNOWLEDGE_RELATION_VIOLATION",
   severity: "critical",
   message:
-    "Persistence recovery lacks applied-generation idempotency.",
+    "Arena start commit lacks exclusive owner acquisition.",
   source: hint.source,
 }];
 
 const invariants: InvariantRegistrySnapshot = {
   schemaVersion: 1,
-  revision: "inv-persistence-r1",
+  revision: "inv-start-owner-r1",
   profileKey: "bedrock",
   entries: [{
-    id: "invariant::persistence-idempotency",
+    id: "invariant::arena-start-owner",
     source: {
       kind: "knowledge-relation",
-      id: "relation-persistence-idempotency",
+      id: "relation-arena-start-owner",
       revision: "knowledge-r1",
     },
     enforcement: "runtime-state",
     minimumRepairClaim: "proven-runtime",
     stateRequirements: [{
-      id: "single-apply",
-      predicate: "single-apply-after-reload",
+      id: "single-start-owner",
+      predicate: "single-start-owner",
       expectedState: "present",
     }],
     temporalRequirements: [],
@@ -207,7 +211,7 @@ function enumeration() {
     decision,
     diagnostics,
     invariants,
-    "source-persistence-a",
+    "source-start-owner-a",
   );
   return enumerateRepairStrategySources(
     envelope,
@@ -220,48 +224,49 @@ function enumeration() {
 function graph() {
   const graph = new SemanticGraph();
   graph.addNode({
-    id: "script-file:persistence",
+    id: "script-file:arena-start",
     identity: {
       kind: "script_file",
       scope: "bp",
-      identifier: "persistence",
+      identifier: "arena-start",
     },
     kind: "script_file",
-    identifier: "persistence",
+    identifier: "arena-start",
     source,
   });
   graph.addNode({
-    id: "script-call:persistence:5",
+    id: "script-start-owner:arena:7",
     identity: {
       kind: "script_file",
       scope: "bp",
-      identifier: "persistence:call:5",
+      identifier: "arena:start-owner:7",
     },
     kind: "script_file",
-    identifier: "persistence:call:5",
+    identifier: "arena:start-owner:7",
     source: hint.source,
   });
   return graph;
 }
 
-describe("persistence idempotency guard realizer", () => {
-  it("realizes only the analyzer-authored applied-generation transform", () => {
+describe("arena start ownership guard realizer", () => {
+  it("realizes exclusive start-owner acquisition only from the authored sentinel/generation transform hint", () => {
     const enumResult = enumeration();
+
     expect(
       enumResult.applicableSources.find(
         (item) =>
           item.sourceId ===
-            "persistence-idempotency-guard-template",
+            "arena-ownership-guard-template",
       ),
     ).toMatchObject({
-      sourceVersion: "1",
+      sourceVersion: "3",
       selectionMode: "causal-auto",
       deterministic: true,
       automaticRealizationEligible: true,
     });
 
     const result =
-      realizePersistenceIdempotencyGuardFromParsedScripts(
+      realizeArenaStartOwnershipGuardFromParsedScripts(
         graph(),
         enumResult,
         BUILTIN_REPAIR_STRATEGY_SOURCES,
@@ -274,31 +279,32 @@ describe("persistence idempotency guard realizer", () => {
 
     expect(result.proposal).toMatchObject({
       sourceId:
-        "persistence-idempotency-guard-template",
+        "arena-ownership-guard-template",
+      sourceVersion: "3",
       realizerId:
-        "persistence-idempotency-guard-realizer",
+        "arena-start-ownership-guard-realizer",
       strategy: {
         changedNodeIds: [
-          "script-call:persistence:5",
-          "script-file:persistence",
+          "script-file:arena-start",
+          "script-start-owner:arena:7",
         ],
         supportingInvariantIds: [
-          "invariant::persistence-idempotency",
+          "invariant::arena-start-owner",
         ],
         causalBinding: {
           interventionIds: [
-            "exp:persistence-journal-recovery",
+            "exp:multi-arena-start",
           ],
           predicateIds: [
-            "duplicate-apply-after-reload-observed",
+            "arena-start-ownership-violation-observed",
           ],
           factorIds: [
-            "idempotent-recovery-enabled",
+            "start-ownership-guard-enabled",
           ],
         },
         validationObligations: {
           runtimeExperimentIds: [
-            "exp:persistence-journal-recovery",
+            "exp:multi-arena-start",
           ],
         },
       },
@@ -310,39 +316,43 @@ describe("persistence idempotency guard realizer", () => {
     ).toEqual({
       kind: "replace-text",
       source: hint.source,
-      expected: "applyReward();",
+      expected:
+        "this.startOwner = arenaGeneration;",
       replacement:
-        "if (appliedJournalGeneration !== journalGeneration) applyReward();",
+        "if (this.startOwner !== null) return; this.startOwner = arenaGeneration;",
     });
   });
 
-  it("does not realize when the authored marker relationship disappears", () => {
-    const withoutMarker = parseScriptFile(
-      "persistence",
+  it("blocks realization when the parsed source no longer contains the authored owner sentinel", () => {
+    const withoutSentinel = parseScriptFile(
+      "arena-start",
       [
-        'import { world } from "@minecraft/server";',
-        "function applyReward() {}",
-        "function recover(journalGeneration) {",
-        "  applyReward();",
-        '  world.setDynamicProperty("journal.appliedGeneration", journalGeneration);',
+        "class Arena {",
+        "  generation = 0;",
+        '  state = "idle";',
+        "  start() {",
+        "    const arenaGeneration = this.generation;",
+        "    this.startOwner = arenaGeneration;",
+        '    this.state = "countdown";',
+        "  }",
         "}",
       ].join("\n"),
       source,
     );
 
     expect(
-      realizePersistenceIdempotencyGuardFromParsedScripts(
+      realizeArenaStartOwnershipGuardFromParsedScripts(
         graph(),
         enumeration(),
         BUILTIN_REPAIR_STRATEGY_SOURCES,
         BUILTIN_REPAIR_REALIZERS,
-        [{ parsed: withoutMarker }],
+        [{ parsed: withoutSentinel }],
       ),
     ).toMatchObject({
       status: "blocked",
       reasons: expect.arrayContaining([
         expect.stringMatching(
-          /no analyzer-owned persistence idempotency/i,
+          /no analyzer-owned arena start ownership/i,
         ),
       ]),
     });

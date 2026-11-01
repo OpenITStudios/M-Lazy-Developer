@@ -3,8 +3,8 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { inspectDirectory } from "../src/inspection/inspect.js";
-import { buildFullMapReplicaReceipt } from "../src/arena/full-map-replica-receipt.js";
+import { inspectDirectory } from "../../src/inspection/inspect.js";
+import { buildFullMapReplicaReceipt } from "../../src/arena/full-map-replica-receipt.js";
 
 // Original engine/packages/orchestrator/test/evidence-integrity-inspection.test.ts [0041038d6eea3be6e1413a29ba9423729bc01521]
 {

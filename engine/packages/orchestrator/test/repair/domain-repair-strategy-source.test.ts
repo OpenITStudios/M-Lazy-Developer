@@ -6,10 +6,10 @@ import {
   assessRepairRealizerCoverage,
   enumerateRepairStrategySources,
   validateRepairStrategySourceRegistry,
-} from "../src/index.js";
+} from "../../src/index.js";
 import type {
   RepairStrategyProviderRegistry,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 describe("domain repair strategy source safety", () => {
   it("keeps domain remediation proposal-only when mutation is not deterministic", () => {

@@ -18,7 +18,7 @@ const acceptanceVitestFiles = [
   "engine/packages/orchestrator/test/diagnosis/cross-domain-reasoning-end-to-end.test.ts",
   "engine/packages/orchestrator/test/arena/arena-state-isolation-analysis.test.ts",
   "engine/packages/orchestrator/test/repair/repair-lifecycle.test.ts",
-  "engine/packages/orchestrator/test/project-lifecycle.test.ts",
+  "engine/packages/orchestrator/test/workflow/project-lifecycle.test.ts",
   "engine/packages/orchestrator/test/reliability/golden-diagnosis-benchmark.test.ts",
   "engine/packages/orchestrator/test/reliability/portfolio-release-gate.test.ts",
   "engine/packages/repair/test/report-lifecycle.test.ts",

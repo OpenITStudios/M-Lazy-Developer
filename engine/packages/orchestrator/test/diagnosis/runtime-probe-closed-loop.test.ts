@@ -2,14 +2,14 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import type { KnowledgeCatalog } from "../../knowledge/src/index.js";
-import type { RuntimeProbeBinding } from "../../project-model/src/index.js";
+import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
+import type { RuntimeProbeBinding } from "../../../project-model/src/index.js";
 import {
   createRuntimeProbeExecutor,
   executeRuntimeProbeBundle,
-} from "../../telemetry/src/index.js";
-import { inspectDirectory } from "../src/inspection/inspect.js";
-import { prepareRuntimeProbeBundle } from "../src/diagnosis/runtime-probe-bundle.js";
+} from "../../../telemetry/src/index.js";
+import { inspectDirectory } from "../../src/inspection/inspect.js";
+import { prepareRuntimeProbeBundle } from "../../src/diagnosis/runtime-probe-bundle.js";
 
 const catalog: KnowledgeCatalog = {
   schemaVersion: 1,

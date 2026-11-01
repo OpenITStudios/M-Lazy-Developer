@@ -17,6 +17,7 @@ src/
 ├── runtime/    script-authored runtime evidence projection
 ├── domains/
 │   ├── arena/
+│   ├── automation/
 │   ├── chunk/
 │   ├── cleanup/
 │   ├── combat/
@@ -24,6 +25,7 @@ src/
 │   ├── inventory/
 │   ├── lifecycle/
 │   ├── persistence/
+│   ├── progression/
 │   └── spatial/
 └── index.ts    sole cross-owner public entrypoint
 ```

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   projectLifecycleStatus,
-} from "../../project-model/src/index.js";
+} from "../../../project-model/src/index.js";
 import {
   approveProject,
   applyDrivePublishReceipt,
@@ -12,7 +12,7 @@ import {
   createProjectRecord,
   drivePublicationIsComplete,
   updateProjectRecord,
-} from "../src/workflow/index.js";
+} from "../../src/workflow/index.js";
 
 function baseProject() {
   return createProjectRecord({

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { parseEntityDefinition } from "../../../analyzers/entities/src/index.js";
-import type { KnowledgeCatalog } from "../../knowledge/src/index.js";
-import { analyzeEntityWithKnowledge } from "../src/inspection/entity-knowledge-analysis.js";
+import { parseEntityDefinition } from "../../../../analyzers/entities/src/index.js";
+import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
+import { analyzeEntityWithKnowledge } from "../../src/inspection/entity-knowledge-analysis.js";
 
 const catalog: KnowledgeCatalog = {
   schemaVersion: 1,

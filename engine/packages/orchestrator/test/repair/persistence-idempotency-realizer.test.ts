@@ -1,112 +1,113 @@
 import { describe, expect, it } from "vitest";
-import { SemanticGraph } from "../../graph/src/index.js";
+import { SemanticGraph } from "../../../graph/src/index.js";
 import {
   parseScriptFile,
-} from "../../../analyzers/scripts/src/index.js";
+} from "../../../../analyzers/scripts/src/index.js";
 import type {
   CausalChain,
   CausalIncident,
   DiagnosticRepairDecision,
   InvariantRegistrySnapshot,
-} from "../../project-model/src/index.js";
+} from "../../../project-model/src/index.js";
 import type {
   DiagnosticFinding,
-} from "../../diagnostics/src/index.js";
+} from "../../../diagnostics/src/index.js";
 import {
   BUILTIN_REPAIR_REALIZERS,
   BUILTIN_REPAIR_STRATEGY_SOURCES,
   deriveRepairOpportunityEnvelope,
   enumerateRepairStrategySources,
-  realizeArenaCapacityGuardFromParsedScripts,
+  realizePersistenceIdempotencyGuardFromParsedScripts,
   type RepairStrategyProviderRegistry,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 const source = {
-  artifactId: "art-arena",
-  relativePath: "scripts/arena.ts",
+  artifactId: "art-persistence",
+  relativePath: "scripts/persistence.ts",
 };
 
 const text = [
-  "function join(arena, player) {",
-  "  const maxPlayers = arena.maxPlayers;",
-  "  arena.members.add(player);",
+  'import { world } from "@minecraft/server";',
+  "function applyReward() {}",
+  "function recover(journalGeneration) {",
+  '  const appliedJournalGeneration = world.getDynamicProperty("journal.appliedGeneration");',
+  "  applyReward();",
+  '  world.setDynamicProperty("journal.appliedGeneration", journalGeneration);',
   "}",
 ].join("\n");
 
 const parsed = parseScriptFile(
-  "arena",
+  "persistence",
   text,
   source,
 );
 const hint = parsed.repairTransformHints?.find(
   (item) =>
     item.family ===
-      "arena-capacity-guard" &&
-    item.supportedPredicateIds.includes(
-      "arena-capacity-overflow-observed",
-    ),
+      "persistence-idempotency-guard",
 )!;
 
 const chain: CausalChain = {
-  id: "chain-capacity",
+  id: "chain-persistence",
   severity: "critical",
   confidence: "high",
-  title: "arena capacity overflow",
+  title: "duplicate journal replay",
   summary:
-    "Concurrent join burst can commit membership beyond the authored arena capacity.",
+    "Reload recovery can repeat an already applied side effect.",
   nodes: [{
-    id: "overflow",
+    id: "duplicate-apply",
     kind: "observed-state",
-    label: "capacity overflow",
+    label: "duplicate apply after reload",
     sourceRefs: [hint.source],
-    diagnosticIds: ["diag-capacity"],
+    diagnosticIds: ["diag-persistence"],
   }, {
-    id: "missing-capacity-guard",
+    id: "missing-idempotency-guard",
     kind: "missing-requirement",
-    label: "capacity guard",
+    label: "applied generation reconciliation",
   }],
   links: [{
-    from: "overflow",
-    to: "missing-capacity-guard",
+    from: "duplicate-apply",
+    to: "missing-idempotency-guard",
     strength: "direct-evidence",
-    relationId: "relation-arena-capacity",
+    relationId:
+      "relation-persistence-idempotency",
     rationale:
-      "Committed membership must remain bounded by the authored arena capacity.",
+      "Journal recovery must not re-apply a generation already marked applied.",
   }],
-  relatedDiagnosticIds: ["diag-capacity"],
+  relatedDiagnosticIds: ["diag-persistence"],
 };
 
 const incident: CausalIncident = {
-  id: "incident-capacity",
-  scopeKey: "arena",
+  id: "incident-persistence",
+  scopeKey: "journal",
   severity: "critical",
   confidence: "high",
   chainIds: [chain.id],
-  relatedDiagnosticIds: ["diag-capacity"],
+  relatedDiagnosticIds: ["diag-persistence"],
   nodes: chain.nodes,
   links: chain.links,
   rootCauseCandidates: [{
-    id: "cause-capacity-guard",
-    label: "missing atomic capacity guard",
+    id: "cause-persistence-idempotency",
+    label: "missing applied-generation guard",
     evidenceLevel:
       "proven-with-observed-outcome",
     proof: {
       state: "causal",
       interventionIds: [
-        "exp:arena-capacity",
+        "exp:persistence-journal-recovery",
       ],
       interventionProvenance: [{
         interventionId:
-          "exp:arena-capacity",
+          "exp:persistence-journal-recovery",
         experimentRevision: "rev-1",
         predicateId:
-          "arena-capacity-overflow-observed",
+          "duplicate-apply-after-reload-observed",
         controlledFactorIds: [
-          "capacity-guard-enabled",
+          "idempotent-recovery-enabled",
         ],
         controlledFactorContrasts: [{
           factorId:
-            "capacity-guard-enabled",
+            "idempotent-recovery-enabled",
           controlValue: true,
           treatmentValue: false,
         }],
@@ -115,19 +116,19 @@ const incident: CausalIncident = {
         expectedContrastDisposition: "matched",
         targetProfileFingerprint: "profile-a",
         fixtureFingerprint: "fixture-a",
-        evidenceIds: ["runtime:capacity"],
+        evidenceIds: ["runtime:duplicate-apply"],
       }],
       targetProfileFingerprint: "profile-a",
     },
     severity: "critical",
     confidence: "high",
     chainIds: [chain.id],
-    relatedDiagnosticIds: ["diag-capacity"],
+    relatedDiagnosticIds: ["diag-persistence"],
     causalPredicateIds: [
-      "arena-capacity-overflow-observed",
+      "duplicate-apply-after-reload-observed",
     ],
     causalFactorIds: [
-      "capacity-guard-enabled",
+      "idempotent-recovery-enabled",
     ],
     support: {
       dependencyViolations: 1,
@@ -141,11 +142,11 @@ const incident: CausalIncident = {
 const decision: DiagnosticRepairDecision = {
   incidentId: incident.id,
   activeCandidateIds: [
-    "cause-capacity-guard",
+    "cause-persistence-idempotency",
   ],
   disposition: "repair-eligible",
   selectedCandidateId:
-    "cause-capacity-guard",
+    "cause-persistence-idempotency",
   effectiveEvidenceLevel:
     "proven-with-observed-outcome",
   proofState: "causal",
@@ -153,35 +154,35 @@ const decision: DiagnosticRepairDecision = {
     incident.rootCauseCandidates[0]!.proof!,
   claimStrength: "proven-runtime",
   reasons: [
-    "controlled arena capacity experiment",
+    "controlled journal reload experiment",
   ],
 };
 
 const diagnostics: DiagnosticFinding[] = [{
-  id: "diag-capacity",
+  id: "diag-persistence",
   code: "KNOWLEDGE_RELATION_VIOLATION",
   severity: "critical",
   message:
-    "Arena membership commit lacks a capacity guard.",
+    "Persistence recovery lacks applied-generation idempotency.",
   source: hint.source,
 }];
 
 const invariants: InvariantRegistrySnapshot = {
   schemaVersion: 1,
-  revision: "inv-capacity-r1",
+  revision: "inv-persistence-r1",
   profileKey: "bedrock",
   entries: [{
-    id: "invariant::arena-capacity",
+    id: "invariant::persistence-idempotency",
     source: {
       kind: "knowledge-relation",
-      id: "relation-arena-capacity",
+      id: "relation-persistence-idempotency",
       revision: "knowledge-r1",
     },
     enforcement: "runtime-state",
     minimumRepairClaim: "proven-runtime",
     stateRequirements: [{
-      id: "capacity-bounded",
-      predicate: "arena-capacity-bounded",
+      id: "single-apply",
+      predicate: "single-apply-after-reload",
       expectedState: "present",
     }],
     temporalRequirements: [],
@@ -206,7 +207,7 @@ function enumeration() {
     decision,
     diagnostics,
     invariants,
-    "source-arena-a",
+    "source-persistence-a",
   );
   return enumerateRepairStrategySources(
     envelope,
@@ -219,39 +220,38 @@ function enumeration() {
 function graph() {
   const graph = new SemanticGraph();
   graph.addNode({
-    id: "script-file:arena",
+    id: "script-file:persistence",
     identity: {
       kind: "script_file",
       scope: "bp",
-      identifier: "arena",
+      identifier: "persistence",
     },
     kind: "script_file",
-    identifier: "arena",
+    identifier: "persistence",
     source,
   });
   graph.addNode({
-    id: "script-membership:arena:3",
+    id: "script-call:persistence:5",
     identity: {
       kind: "script_file",
       scope: "bp",
-      identifier: "arena:membership:3",
+      identifier: "persistence:call:5",
     },
     kind: "script_file",
-    identifier: "arena:membership:3",
+    identifier: "persistence:call:5",
     source: hint.source,
   });
   return graph;
 }
 
-describe("arena capacity guard realizer", () => {
-  it("realizes a terminal membership guard only from the analyzer-owned exact capacity hint", () => {
+describe("persistence idempotency guard realizer", () => {
+  it("realizes only the analyzer-authored applied-generation transform", () => {
     const enumResult = enumeration();
-
     expect(
       enumResult.applicableSources.find(
         (item) =>
           item.sourceId ===
-            "arena-capacity-guard-template",
+            "persistence-idempotency-guard-template",
       ),
     ).toMatchObject({
       sourceVersion: "1",
@@ -261,7 +261,7 @@ describe("arena capacity guard realizer", () => {
     });
 
     const result =
-      realizeArenaCapacityGuardFromParsedScripts(
+      realizePersistenceIdempotencyGuardFromParsedScripts(
         graph(),
         enumResult,
         BUILTIN_REPAIR_STRATEGY_SOURCES,
@@ -274,31 +274,31 @@ describe("arena capacity guard realizer", () => {
 
     expect(result.proposal).toMatchObject({
       sourceId:
-        "arena-capacity-guard-template",
+        "persistence-idempotency-guard-template",
       realizerId:
-        "arena-capacity-guard-realizer",
+        "persistence-idempotency-guard-realizer",
       strategy: {
         changedNodeIds: [
-          "script-file:arena",
-          "script-membership:arena:3",
+          "script-call:persistence:5",
+          "script-file:persistence",
         ],
         supportingInvariantIds: [
-          "invariant::arena-capacity",
+          "invariant::persistence-idempotency",
         ],
         causalBinding: {
           interventionIds: [
-            "exp:arena-capacity",
+            "exp:persistence-journal-recovery",
           ],
           predicateIds: [
-            "arena-capacity-overflow-observed",
+            "duplicate-apply-after-reload-observed",
           ],
           factorIds: [
-            "capacity-guard-enabled",
+            "idempotent-recovery-enabled",
           ],
         },
         validationObligations: {
           runtimeExperimentIds: [
-            "exp:arena-capacity",
+            "exp:persistence-journal-recovery",
           ],
         },
       },
@@ -310,22 +310,41 @@ describe("arena capacity guard realizer", () => {
     ).toEqual({
       kind: "replace-text",
       source: hint.source,
-      expected:
-        "arena.members.add(player);",
+      expected: "applyReward();",
       replacement:
-        "if (arena.members.size < maxPlayers) arena.members.add(player);",
+        "if (appliedJournalGeneration !== journalGeneration) applyReward();",
     });
   });
 
-  it("keeps arena start ownership proposal-only because capacity realization does not cover its predicate/factor", () => {
-    const enumResult = enumeration();
+  it("does not realize when the authored marker relationship disappears", () => {
+    const withoutMarker = parseScriptFile(
+      "persistence",
+      [
+        'import { world } from "@minecraft/server";',
+        "function applyReward() {}",
+        "function recover(journalGeneration) {",
+        "  applyReward();",
+        '  world.setDynamicProperty("journal.appliedGeneration", journalGeneration);',
+        "}",
+      ].join("\n"),
+      source,
+    );
 
     expect(
-      enumResult.applicableSources.find(
-        (item) =>
-          item.sourceId ===
-            "arena-ownership-guard-template",
+      realizePersistenceIdempotencyGuardFromParsedScripts(
+        graph(),
+        enumeration(),
+        BUILTIN_REPAIR_STRATEGY_SOURCES,
+        BUILTIN_REPAIR_REALIZERS,
+        [{ parsed: withoutMarker }],
       ),
-    ).toBeUndefined();
+    ).toMatchObject({
+      status: "blocked",
+      reasons: expect.arrayContaining([
+        expect.stringMatching(
+          /no analyzer-owned persistence idempotency/i,
+        ),
+      ]),
+    });
   });
 });

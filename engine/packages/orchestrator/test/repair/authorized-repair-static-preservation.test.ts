@@ -10,26 +10,26 @@ import { describe, expect, it } from "vitest";
 import {
   buildFilesystemInventory,
   CONTRACT_REGISTRY_REVISION,
-} from "../../project-model/src/index.js";
+} from "../../../project-model/src/index.js";
 import {
   authorizeRepair,
   createPatchTransaction,
   patchTransactionSemanticFingerprint,
-} from "../../repair/src/index.js";
+} from "../../../repair/src/index.js";
 import {
   applyAuthorizedRepair,
   semanticGraphFingerprint,
   type RepairProofBundle,
-} from "../src/index.js";
+} from "../../src/index.js";
 import {
   indexInspectionSources,
-} from "../src/inspection/inspect-source-index.js";
+} from "../../src/inspection/inspect-source-index.js";
 import {
   enrichInspectionSemanticGraph,
-} from "../src/inspection/inspect-graph-enrichment.js";
+} from "../../src/inspection/inspect-graph-enrichment.js";
 import {
   populateInspectionScriptImportGraph,
-} from "../src/inspection/inspect-script-import-graph.js";
+} from "../../src/inspection/inspect-script-import-graph.js";
 
 async function buildGraph(
   root: string,

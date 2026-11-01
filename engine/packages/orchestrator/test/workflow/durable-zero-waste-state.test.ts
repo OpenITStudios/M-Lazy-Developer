@@ -16,7 +16,7 @@ import {
 import {
   createWorkSessionCheckpoint,
   projectWorkspaceLayout,
-} from "../../project-model/src/index.js";
+} from "../../../project-model/src/index.js";
 import {
   loadSemanticProofClaimStore,
   loadWorkSessionCheckpoint,
@@ -24,7 +24,7 @@ import {
   parseWorkSessionCheckpoint,
   saveWorkSessionCheckpoint,
   upsertSemanticProofClaim,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 describe("durable zero-waste state stores", () => {
   it("roundtrips a work session checkpoint atomically", async () => {

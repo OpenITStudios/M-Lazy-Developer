@@ -3,9 +3,9 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { buildFilesystemInventory } from "../../project-model/src/index.js";
-import { indexInspectionSources } from "../src/inspection/inspect-source-index.js";
-import { enrichInspectionSemanticGraph } from "../src/inspection/inspect-graph-enrichment.js";
+import { buildFilesystemInventory } from "../../../project-model/src/index.js";
+import { indexInspectionSources } from "../../src/inspection/inspect-source-index.js";
+import { enrichInspectionSemanticGraph } from "../../src/inspection/inspect-graph-enrichment.js";
 
 // Original engine/packages/orchestrator/test/inspect-source-content-identity.test.ts, source blob 5f89c1a7e675ff7407bdb89ad7b350eb276b3340
 {

@@ -3133,95 +3133,6 @@
       }
     },
     {
-      "path": "engine/packages/orchestrator/test/arena-capacity-guard-realizer.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "read-assertions-before-decision",
-        "sourceBlobSha": "0a35af986648bad6681473319ab0fce0257931d4"
-      },
-      "recommendation": "keep",
-      "rationale": "Guard realization requires exact analyzer-owned capacity authority, not unrelated repair claims.",
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.capacity"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.capacity-stress",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena-generation-telemetry.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "e1bdec808c7f61f5fb53d7e39fa98c5789eb394e"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.lifecycle"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.lifecycle",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena-repair-strategy-source.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
-        "sourceBlobSha": "3a986b13853a5dcd56f852778722b3549f7a6c1e",
-        "consumerSymbol": "validateRepairStrategySourceRegistry"
-      },
-      "recommendation": "keep",
-      "rationale": "Two cases from engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts (blob 21967d1d12fd19ad597d5284293bd68bf3186a89) statically subsumed: proposal-only, deterministic false, identical 5 diagnostic codes and identical validateRepairStrategySourceRegistry(...).toEqual([]). Retained suite adds chunk remediation. Two redundant cases, four expect sites retired; Vitest NOT EXECUTED. Source case explicitly invokes validateRepairStrategySourceRegistry and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.repair"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.repair-strategy",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/arena-start-ownership-guard-realizer.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "183f4aec1f5ac657f37cd40ef961b7ae17085e6f"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "arena-match",
-      "mechanicTags": [
-        "arena.start"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "arena.start-ownership",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
       "path": "engine/packages/orchestrator/test/arena/arena-audit.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -3598,26 +3509,6 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
-      "path": "engine/packages/orchestrator/test/authorized-repair-static-preservation.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "source-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "read-assertions-before-decision",
-        "sourceBlobSha": "0ab403e48b66d592f658afcf37bdc5ba0174515b"
-      },
-      "recommendation": "keep",
-      "rationale": "Unauthorized graph topology changes trigger repair rollback.",
-      "functionalArea": "repair-preservation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "repair.authorization",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
       "path": "engine/packages/orchestrator/test/causal-inspection-integration.test.ts",
       "lane": "acceptance",
       "owner": "engine/packages/orchestrator",
@@ -3673,6 +3564,28 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "audit.proof-control",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/diagnosis/arena-generation-telemetry.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "9e5d508add4a07127fd222ede1c91c2914b2d74a"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "arena-match",
+      "mechanicTags": [
+        "arena.lifecycle"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "arena.lifecycle",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -4265,6 +4178,26 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-closed-loop.test.ts",
+      "lane": "runtime",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "ea64b7a966fd80898585c9700af1e65b90984595"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "runtime-telemetry",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "runtime.probes",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/diagnosis/runtime-probe-replay.test.ts",
       "lane": "runtime",
       "owner": "engine/packages/orchestrator",
@@ -4383,6 +4316,52 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/diagnosis/telemetry-continuity-causal.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "2217e313732c03acbf3318341fd0afc3c25f6765"
+      },
+      "recommendation": "keep",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
+      "functionalArea": "runtime-telemetry",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "runtime.telemetry",
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
+        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/telemetry-continuity-causal.test.ts",
+            "blobSha": "8beb82e60cdddc01923867823549b91f017533c7"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/telemetry-inspection.test.ts",
+            "blobSha": "024a60280fd6495207ad1a42056bdd563f930888"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/telemetry-temporal-causality.test.ts",
+            "blobSha": "d056b948df3dfad723b661a876c9256181255868"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/telemetry-text.test.ts",
+            "blobSha": "41920a34c243769a67278835e2abe43477ce252b"
+          }
+        ],
+        "originalTestCallSites": 16,
+        "originalExpectCallSites": 41,
+        "mergedSourceBlobSha": "2217e313732c03acbf3318341fd0afc3c25f6765",
+        "execution": "NOT_EXECUTED"
+      }
+    },
+    {
       "path": "engine/packages/orchestrator/test/diagnosis/telemetry-evidence.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -4417,230 +4396,6 @@
         "originalTestCallSites": 17,
         "originalExpectCallSites": 23,
         "mergedSourceBlobSha": "b974579917417a362f471aa72056dccc8c2bc6d4",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/domain-repair-strategy-source.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "82e741480c6f40ac5f7a944a5c83350f4c8242db"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "repair-preservation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "repair.strategies",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/durable-zero-waste-state.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "cf4dfb2213b6913b29aebad3807db4f63ff1ce8f"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "engineering-tooling",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.efficiency",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/entity-attack-knowledge.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "10585c7252af450e653c9adb04504be784bd8dbd"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "combat-entities",
-      "mechanicTags": [
-        "combat.damage-lifecycle"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "combat.damage",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/entity-targeting-knowledge.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "d8fd013305706084fc191c20d737757e11ac1efc"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "combat-entities",
-      "mechanicTags": [
-        "entity.ai-navigation"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "entity.targeting",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/evidence-integrity-inspection.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-merged-file-isolation-and-affected-import-closure",
-        "sourceBlobSha": "b6205c21a8ada9f4de536e1f2665d92436cfacf6"
-      },
-      "recommendation": "keep",
-      "rationale": "Owner-local feature/lane family: 3 -> 1. Source-level 8 registered it/test callsites and 30 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "audit.proof-control",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
-        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/evidence-integrity-inspection.test.ts",
-            "blobSha": "0041038d6eea3be6e1413a29ba9423729bc01521"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/full-map-replica-receipt.test.ts",
-            "blobSha": "c72f339302181175b18551757653fd43ab3b2280"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/inspection-decision-basis.test.ts",
-            "blobSha": "95cec9fcf5135321c07e3c27aaa429f87b5c2312"
-          }
-        ],
-        "originalTestCallSites": 8,
-        "originalExpectCallSites": 30,
-        "mergedSourceBlobSha": "b6205c21a8ada9f4de536e1f2665d92436cfacf6",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/gameplay-defect-proof-dimensions.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "6a879172810867deddd04f76f5cf9ddb9b83e7a0"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "gameplay.closure",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/gameplay-scenario-knowledge-selection.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "67fd143266a2e6675cd0b80e71f9c2446b9081e9"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "gameplay-interpretation",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "gameplay.knowledge",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspect-entity-knowledge.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "333cc946880bac0ed3a9cde448ec9ff56256c032"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "combat-entities",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "entity.evidence",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/inspect-source-content-identity.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "8a3467f9e8972345c0f649a523cbcdf3728b959d"
-      },
-      "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 24 it/test call sites and 82 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
-      "functionalArea": "map-content",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "map.source-index",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
-        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/inspect-source-content-identity.test.ts",
-            "blobSha": "5f89c1a7e675ff7407bdb89ad7b350eb276b3340"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/inspect-source-index-coverage.test.ts",
-            "blobSha": "47ecec0831d87ffaa1d3d8920320b7233472a410"
-          }
-        ],
-        "originalTestCallSites": 24,
-        "originalExpectCallSites": 82,
-        "mergedSourceBlobSha": "8a3467f9e8972345c0f649a523cbcdf3728b959d",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -4967,6 +4722,28 @@
       }
     },
     {
+      "path": "engine/packages/orchestrator/test/inspection/entity-attack-knowledge.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "5b408a795c3dd8d3708db2e2b35df059d82c8372"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "combat-entities",
+      "mechanicTags": [
+        "combat.damage-lifecycle"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "combat.damage",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/inspection/entity-event-evidence.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -5084,6 +4861,28 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/inspection/entity-targeting-knowledge.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "a8c4b0f06e16f2531623bdcebd5b4bc91a29b20a"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "combat-entities",
+      "mechanicTags": [
+        "entity.ai-navigation"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "entity.targeting",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/inspection/environment-hazard-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -5104,6 +4903,48 @@
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "world.blocks-rules",
       "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/inspection/evidence-integrity-inspection.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "high",
+        "action": "review-merged-file-isolation-and-affected-import-closure",
+        "sourceBlobSha": "7135684146e918d63c877e61d79d402061998ec1"
+      },
+      "recommendation": "keep",
+      "rationale": "Owner-local feature/lane family: 3 -> 1. Source-level 8 registered it/test callsites and 30 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
+      "functionalArea": "audit-diagnosis",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "audit.proof-control",
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
+        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/evidence-integrity-inspection.test.ts",
+            "blobSha": "0041038d6eea3be6e1413a29ba9423729bc01521"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/full-map-replica-receipt.test.ts",
+            "blobSha": "c72f339302181175b18551757653fd43ab3b2280"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspection-decision-basis.test.ts",
+            "blobSha": "95cec9fcf5135321c07e3c27aaa429f87b5c2312"
+          }
+        ],
+        "originalTestCallSites": 8,
+        "originalExpectCallSites": 30,
+        "mergedSourceBlobSha": "7135684146e918d63c877e61d79d402061998ec1",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-analysis-priority.test.ts",
@@ -5242,6 +5083,26 @@
         "mergedSourceBlobSha": "251de0364a476f9ad5dab44834d11adb91f7db4a",
         "execution": "NOT_EXECUTED"
       }
+    },
+    {
+      "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-proof-dimensions.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "high",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "048e6e1a1f63a5912fc9d1cda8118f1365146921"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "gameplay-interpretation",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "gameplay.closure",
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-defect-resolution-crosscheck.test.ts",
@@ -5406,6 +5267,26 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/inspection/gameplay-scenario-knowledge-selection.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "2cb464c2639dad857ec5d7a3ecf6a74f6c206643"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "gameplay-interpretation",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "gameplay.knowledge",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/inspection/gameplay-source-handoff.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -5465,6 +5346,64 @@
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "gameplay.intent",
       "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/inspection/inspect-entity-knowledge.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "e8d73214fc9cf837cb392f7ba10053a916b8cdc8"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "combat-entities",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "entity.evidence",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/inspection/inspect-source-content-identity.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "high",
+        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
+        "sourceBlobSha": "2eefc8947085c60e37044f24c14a5a56ec951c5e"
+      },
+      "recommendation": "keep",
+      "rationale": "Same-directory development family 2 -> 1, retaining 24 it/test call sites and 82 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "functionalArea": "map-content",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "map.source-index",
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "8787c8210af847a29927fc1122a2acfe30312cee",
+        "method": "same-directory-owner-feature-lane-deduplicated-imports-isolated-original-source-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/inspect-source-content-identity.test.ts",
+            "blobSha": "5f89c1a7e675ff7407bdb89ad7b350eb276b3340"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/inspect-source-index-coverage.test.ts",
+            "blobSha": "47ecec0831d87ffaa1d3d8920320b7233472a410"
+          }
+        ],
+        "originalTestCallSites": 24,
+        "originalExpectCallSites": 82,
+        "mergedSourceBlobSha": "2eefc8947085c60e37044f24c14a5a56ec951c5e",
+        "execution": "NOT_EXECUTED"
+      }
     },
     {
       "path": "engine/packages/orchestrator/test/inspection/inspect.test.ts",
@@ -5882,6 +5821,46 @@
       }
     },
     {
+      "path": "engine/packages/orchestrator/test/inspection/route-mutation-knowledge.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "5ec6f5aef4c1181355382e2149fc6944bed77607"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "audit-diagnosis",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "audit.falsification-search",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/inspection/runtime-probe-inspection.test.ts",
+      "lane": "runtime",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "413670a0c4701ec21bfeaa7f5563e866cd36a2b9"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "runtime-telemetry",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "runtime.probes",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/inspection/script-api-usage.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -6031,6 +6010,46 @@
         "originalTestCallSites": 9,
         "originalExpectCallSites": 16,
         "mergedSourceBlobSha": "b8caa69e0b62f8e187a4ac2448a3265a3180f0a7",
+        "execution": "NOT_EXECUTED"
+      }
+    },
+    {
+      "path": "engine/packages/orchestrator/test/inspection/structure-correlation.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-merged-file-isolation-and-affected-import-closure",
+        "sourceBlobSha": "06dd3b6e128121b38ec14e68045d92d78ea49b56"
+      },
+      "recommendation": "keep",
+      "rationale": "Owner-local feature/lane family: 2 -> 1. Source-level 3 registered it/test callsites and 6 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
+      "functionalArea": "map-content",
+      "mechanicTags": [
+        "map.structure"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "map.structure-proof",
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
+        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/structure-correlation.test.ts",
+            "blobSha": "732dce104f4038cc4d13e28adc33b0e0b6ef146f"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
+            "blobSha": "b80578a225c9ce448be1c4b85574032b7b5695e7"
+          }
+        ],
+        "originalTestCallSites": 3,
+        "originalExpectCallSites": 6,
+        "mergedSourceBlobSha": "06dd3b6e128121b38ec14e68045d92d78ea49b56",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -6547,90 +6566,6 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
-      "path": "engine/packages/orchestrator/test/persistence-idempotency-realizer.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "64b73accb17403808745e70f4644046da77c48a3"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "player-state-persistence",
-      "mechanicTags": [
-        "player.persistence"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "player.persistence-repair",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/project-drive-publish-executor.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "re-review original merged assertions and new per-project publication persistence cases before any consolidation",
-        "sourceBlobSha": "dc44ac1ccecc5c8dfb04d40137524b781ff03fb5"
-      },
-      "recommendation": "keep",
-      "rationale": "Original 7 merged test/assertion sites retained; three source-authored single-level, stale/Drive, and multi-level fail-closed persistence cases added. Exact TS/Vitest and Minecraft NOT EXECUTED.",
-      "functionalArea": "engineering-tooling",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.projects",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
-        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/project-drive-publish-executor.test.ts",
-            "blobSha": "6afe5f5f9a31fe069f8945c77c5e7ff0317a15c6"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/project-history-sync.test.ts",
-            "blobSha": "1c9c1892059476dd0fc40d4a8e6e2989b8747d20"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/project-publication-workflow.test.ts",
-            "blobSha": "e9d811ed33a9bcbced70b0077882460fce0633e4"
-          }
-        ],
-        "originalTestCallSites": 7,
-        "originalExpectCallSites": 19,
-        "mergedSourceBlobSha": "dc44ac1ccecc5c8dfb04d40137524b781ff03fb5",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/project-lifecycle.test.ts",
-      "lane": "acceptance",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "11fe94f2ffea98a0a7d0000d240aa7c502ec8af0"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "engineering-tooling",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.projects",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
       "path": "engine/packages/orchestrator/test/release/release-identity-analysis.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -6893,6 +6828,93 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/repair/arena-capacity-guard-realizer.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "source-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "read-assertions-before-decision",
+        "sourceBlobSha": "b0510f314f32d47a10a554c54f46ca5010d75e05"
+      },
+      "recommendation": "keep",
+      "rationale": "Guard realization requires exact analyzer-owned capacity authority, not unrelated repair claims.",
+      "functionalArea": "arena-match",
+      "mechanicTags": [
+        "arena.capacity"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "arena.capacity-stress",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/repair/arena-repair-strategy-source.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "source-reviewed",
+      "triage": {
+        "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "retain-case; revisit only upon changed consumer or demonstrable semantic redundancy",
+        "sourceBlobSha": "f2dfe0396a7bff901554d58da09b32c41ad23846",
+        "consumerSymbol": "validateRepairStrategySourceRegistry"
+      },
+      "recommendation": "keep",
+      "rationale": "Two cases from engine/packages/orchestrator/test/arena-repair-source-coverage.test.ts (blob 21967d1d12fd19ad597d5284293bd68bf3186a89) statically subsumed: proposal-only, deterministic false, identical 5 diagnostic codes and identical validateRepairStrategySourceRegistry(...).toEqual([]). Retained suite adds chunk remediation. Two redundant cases, four expect sites retired; Vitest NOT EXECUTED. Source case explicitly invokes validateRepairStrategySourceRegistry and retains its distinct deciding assertions; no duplicate-equivalence or deletion proof.",
+      "functionalArea": "arena-match",
+      "mechanicTags": [
+        "arena.repair"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "arena.repair-strategy",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/repair/arena-start-ownership-guard-realizer.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "f41ee60b0cc9a24c494f900b1223cc6111a567ac"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "arena-match",
+      "mechanicTags": [
+        "arena.start"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "arena.start-ownership",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/repair/authorized-repair-static-preservation.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "source-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "high",
+        "action": "read-assertions-before-decision",
+        "sourceBlobSha": "57d8ef69e0bc1e17b52891f1c9f48c2b02aa76f7"
+      },
+      "recommendation": "keep",
+      "rationale": "Unauthorized graph topology changes trigger repair rollback.",
+      "functionalArea": "repair-preservation",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "repair.authorization",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/repair/authorized-repair.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
@@ -6950,6 +6972,26 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/repair/domain-repair-strategy-source.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "27a19b75564986634df26fe74521969df05b1d59"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "repair-preservation",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "repair.strategies",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/repair/function-graph-mutation.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
@@ -6986,6 +7028,28 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "repair.mutations",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/repair/persistence-idempotency-realizer.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "165728e63b8cbe0962970f597bb63e8fbcc24149"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "player-state-persistence",
+      "mechanicTags": [
+        "player.persistence"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "player.persistence-repair",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -7520,6 +7584,28 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
+      "path": "engine/packages/orchestrator/test/repair/session-generation-guard-realizer.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "high",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "fd59b767ff9024e773765d041450a7b48e2d24d9"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "player-session",
+      "mechanicTags": [
+        "player.session"
+      ],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "player.generation-guard",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
       "path": "engine/packages/orchestrator/test/repair/source-mutation-detection.test.ts",
       "lane": "safety",
       "owner": "engine/packages/orchestrator",
@@ -7766,174 +7852,6 @@
       "featureMappingBasis": "source-case-inspected"
     },
     {
-      "path": "engine/packages/orchestrator/test/route-mutation-knowledge.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "3dc5e7b4c8c92f50acab104e543a1c56f7a1e8c7"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "audit-diagnosis",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "audit.falsification-search",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/runtime-probe-closed-loop.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "bf947ebfcfd9495e1ef8e1feb4a56daa2b5ca8ff"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/runtime-probe-inspection.test.ts",
-      "lane": "runtime",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "2feb37baee03f61453dcf0aa60efe5afc55ece38"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "runtime.probes",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/session-generation-guard-realizer.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "high",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "66c2f8ce30396090c62def0ac72868c5079eeb78"
-      },
-      "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "player-session",
-      "mechanicTags": [
-        "player.session"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "player.generation-guard",
-      "featureMappingBasis": "source-case-inspected"
-    },
-    {
-      "path": "engine/packages/orchestrator/test/structure-correlation.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "review-merged-file-isolation-and-affected-import-closure",
-        "sourceBlobSha": "4227d0c422a762846850039e7a1b1d263e5ff43b"
-      },
-      "recommendation": "keep",
-      "rationale": "Owner-local feature/lane family: 2 -> 1. Source-level 3 registered it/test callsites and 6 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
-      "functionalArea": "map-content",
-      "mechanicTags": [
-        "map.structure"
-      ],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "map.structure-proof",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
-        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/structure-correlation.test.ts",
-            "blobSha": "732dce104f4038cc4d13e28adc33b0e0b6ef146f"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/structure-runtime-analysis.test.ts",
-            "blobSha": "b80578a225c9ce448be1c4b85574032b7b5695e7"
-          }
-        ],
-        "originalTestCallSites": 3,
-        "originalExpectCallSites": 6,
-        "mergedSourceBlobSha": "4227d0c422a762846850039e7a1b1d263e5ff43b",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
-      "path": "engine/packages/orchestrator/test/telemetry-continuity-causal.test.ts",
-      "lane": "development",
-      "owner": "engine/packages/orchestrator",
-      "review": "case-inventory-reviewed",
-      "triage": {
-        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
-        "owner": "engine/packages/orchestrator",
-        "riskHint": "medium",
-        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
-        "sourceBlobSha": "2c55e9d0203b82cd28e5b7bfa1a54a6d8b168138"
-      },
-      "recommendation": "keep",
-      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
-      "functionalArea": "runtime-telemetry",
-      "mechanicTags": [],
-      "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "runtime.telemetry",
-      "featureMappingBasis": "source-case-inspected",
-      "consolidation": {
-        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
-        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
-        "sourceFiles": [
-          {
-            "path": "engine/packages/orchestrator/test/telemetry-continuity-causal.test.ts",
-            "blobSha": "8beb82e60cdddc01923867823549b91f017533c7"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/telemetry-inspection.test.ts",
-            "blobSha": "024a60280fd6495207ad1a42056bdd563f930888"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/telemetry-temporal-causality.test.ts",
-            "blobSha": "d056b948df3dfad723b661a876c9256181255868"
-          },
-          {
-            "path": "engine/packages/orchestrator/test/telemetry-text.test.ts",
-            "blobSha": "41920a34c243769a67278835e2abe43477ce252b"
-          }
-        ],
-        "originalTestCallSites": 16,
-        "originalExpectCallSites": 41,
-        "mergedSourceBlobSha": "2c55e9d0203b82cd28e5b7bfa1a54a6d8b168138",
-        "execution": "NOT_EXECUTED"
-      }
-    },
-    {
       "path": "engine/packages/orchestrator/test/workflow/context-compiler.test.ts",
       "lane": "development",
       "owner": "engine/packages/orchestrator",
@@ -8054,6 +7972,88 @@
         "mergedSourceBlobSha": "ce76b92fa4c51ab2128e2532fff3fd70ff8b16a6",
         "execution": "NOT_EXECUTED"
       }
+    },
+    {
+      "path": "engine/packages/orchestrator/test/workflow/durable-zero-waste-state.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "7f58857e83385b5aa872178c84328ee4601faaf4"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "engineering-tooling",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "tooling.efficiency",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "engine/packages/orchestrator/test/workflow/project-drive-publish-executor.test.ts",
+      "lane": "development",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "re-review original merged assertions and new per-project publication persistence cases before any consolidation",
+        "sourceBlobSha": "ac8a9361271316d540e4b3da10c9ebb311936207"
+      },
+      "recommendation": "keep",
+      "rationale": "Original 7 merged test/assertion sites retained; three source-authored single-level, stale/Drive, and multi-level fail-closed persistence cases added. Exact TS/Vitest and Minecraft NOT EXECUTED.",
+      "functionalArea": "engineering-tooling",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "tooling.projects",
+      "featureMappingBasis": "source-case-inspected",
+      "consolidation": {
+        "baseCommit": "3611a5f26615d8808e186579986e5704bf9fd453",
+        "method": "owner-feature-lane-cohesion-deduplicated-imports-and-lexically-isolated-original-test-bodies",
+        "sourceFiles": [
+          {
+            "path": "engine/packages/orchestrator/test/project-drive-publish-executor.test.ts",
+            "blobSha": "6afe5f5f9a31fe069f8945c77c5e7ff0317a15c6"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/project-history-sync.test.ts",
+            "blobSha": "1c9c1892059476dd0fc40d4a8e6e2989b8747d20"
+          },
+          {
+            "path": "engine/packages/orchestrator/test/project-publication-workflow.test.ts",
+            "blobSha": "e9d811ed33a9bcbced70b0077882460fce0633e4"
+          }
+        ],
+        "originalTestCallSites": 7,
+        "originalExpectCallSites": 19,
+        "mergedSourceBlobSha": "ac8a9361271316d540e4b3da10c9ebb311936207",
+        "execution": "NOT_EXECUTED"
+      }
+    },
+    {
+      "path": "engine/packages/orchestrator/test/workflow/project-lifecycle.test.ts",
+      "lane": "acceptance",
+      "owner": "engine/packages/orchestrator",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "engine/packages/orchestrator",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "a77a75c92c515b79b378cbd26e2a1cde33c749cb"
+      },
+      "recommendation": "keep",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "functionalArea": "engineering-tooling",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "tooling.projects",
+      "featureMappingBasis": "source-case-inspected"
     },
     {
       "path": "engine/packages/orchestrator/test/workflow/repository-task-plan.test.ts",

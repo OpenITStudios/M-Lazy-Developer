@@ -1,12 +1,12 @@
 // Consolidated same-owner development family, original lexical bodies preserved.
 import { describe, expect, it } from "vitest";
-import { executeProjectDrivePublishPlan } from "../src/workflow/project-drive-publish-executor.js";
+import { executeProjectDrivePublishPlan } from "../../src/workflow/project-drive-publish-executor.js";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { projectApprovedBugReportToHistoricalRegressions, syncApprovedProjectIssueHistory } from "../src/workflow/project-history-sync.js";
-import { approveAuditProjectAndPersist } from "../src/workflow/project-publication-workflow.js";
-import { assertProjectRecordWritable, loadProjectRecord, upsertProjectRecord } from "../src/workflow/project-record-store.js";
+import { projectApprovedBugReportToHistoricalRegressions, syncApprovedProjectIssueHistory } from "../../src/workflow/project-history-sync.js";
+import { approveAuditProjectAndPersist } from "../../src/workflow/project-publication-workflow.js";
+import { assertProjectRecordWritable, loadProjectRecord, upsertProjectRecord } from "../../src/workflow/project-record-store.js";
 
 // Source engine/packages/orchestrator/test/project-drive-publish-executor.test.ts; blob 6afe5f5f9a31fe069f8945c77c5e7ff0317a15c6
 {

@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { SemanticGraph } from "../../graph/src/index.js";
+import { SemanticGraph } from "../../../graph/src/index.js";
 import {
   parseScriptFile,
-} from "../../../analyzers/scripts/src/index.js";
+} from "../../../../analyzers/scripts/src/index.js";
 import type {
   CausalChain,
   CausalIncident,
   DiagnosticRepairDecision,
   InvariantRegistrySnapshot,
-} from "../../project-model/src/index.js";
+} from "../../../project-model/src/index.js";
 import type {
   DiagnosticFinding,
-} from "../../diagnostics/src/index.js";
+} from "../../../diagnostics/src/index.js";
 import {
   BUILTIN_REPAIR_REALIZERS,
   BUILTIN_REPAIR_STRATEGY_SOURCES,
@@ -19,7 +19,7 @@ import {
   enumerateRepairStrategySources,
   realizeSessionGenerationGuardFromParsedScripts,
   type RepairStrategyProviderRegistry,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 const source = {
   artifactId: "art-session",

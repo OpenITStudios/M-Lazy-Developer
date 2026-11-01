@@ -1,9 +1,9 @@
 // Source-only co-location: all original test statements retained in isolated lexical scopes.
 import { describe, expect, it } from "vitest";
-import { parseMcFunction } from "../../../analyzers/functions/src/index.js";
-import { analyzeStructureAndChunkRuntime } from "../src/inspection/structure-runtime-analysis.js";
-import type { ParsedStructureSummary } from "../src/inspection/structure-runtime-analysis.js";
-import type { McStructureSemantics } from "../../../adapters/mcstructure/src/index.js";
+import { parseMcFunction } from "../../../../analyzers/functions/src/index.js";
+import { analyzeStructureAndChunkRuntime } from "../../src/inspection/structure-runtime-analysis.js";
+import type { ParsedStructureSummary } from "../../src/inspection/structure-runtime-analysis.js";
+import type { McStructureSemantics } from "../../../../adapters/mcstructure/src/index.js";
 
 // Original engine/packages/orchestrator/test/structure-correlation.test.ts 732dce104f4038cc4d13e28adc33b0e0b6ef146f
 {

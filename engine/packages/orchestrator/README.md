@@ -47,6 +47,43 @@ Rules:
 
 This keeps current work practical without a risky mass-delete while CI/local verification is deferred.
 
+## Test layout and functional domains
+
+Physical test ownership mirrors the **canonical implementation family**, not the
+Minecraft gameplay category. The Orchestrator uses the following source-to-test
+navigation; a family may contain multiple functional areas, and a functional area
+may span several packages or families.
+
+| Implementation owner | Test owner | Responsibility |
+| --- | --- | --- |
+| `src/arena/` | `test/arena/` | Arena composition and proof |
+| `src/inspection/` | `test/inspection/` | Artifact/source inspection and gameplay understanding |
+| `src/diagnosis/` | `test/diagnosis/` | Diagnostic and runtime evidence composition |
+| `src/repair/` | `test/repair/` | Repair selection, realization and preservation |
+| `src/reliability/` | `test/reliability/` | Historical and regression-driven decisions |
+| `src/reporting/` | `test/reporting/` | Report adapters and projections |
+| `src/workflow/` | `test/workflow/` | Work sessions and project publication |
+| `src/release/` | `test/release/` | Release and artifact lifecycle |
+| `src/core/` | `test/core/` when needed | Shared contracts (no mandatory one-test-per-source-file rule) |
+| Root `src/map-audit-*.ts` | Root `test/map-audit-*.test.ts` | Canonical selected-map audit coordination |
+
+A truly cross-family acceptance suite such as
+`test/causal-inspection-integration.test.ts` may remain at the test root.
+Focused component suites belong to their implementation family, even when
+their functional area concerns a different gameplay domain (for example,
+arena-specific repair is still in `test/repair/`).
+
+`tooling/repository/test-inventory.json` independently classifies each
+physical suite by **functionalArea** (what behavior is covered), **featureId**
+(what capability is exercised) and **lane** (why/when it is selected).
+These are separate navigation dimensions, not competing file locations.
+`tooling/repository/run-tests.mjs` owns source-test discovery and selection
+through `--list-areas`, `--list-features` and `--list-lanes`.
+Retain existing positive/negative cases when moving a suite; repin the exact
+test Git blob in the inventory and update all explicit runner consumers.
+Do not create one small test file per implementation file solely for symmetry.
+This structural mapping does not imply tests, TypeScript or Minecraft ran.
+
 ## Physical layout
 
 Canonical implementations live primarily under the family directories above, **plus the established root `map-audit-*` production owners** documented in [Implementation Map](../../../docs/system/implementation-map.md). A verified re-export-only root stub must not receive new implementation logic. Classify by actual source contents and consumers before proposing any move, merge or deletion.
