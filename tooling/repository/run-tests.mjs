@@ -502,22 +502,31 @@ if (mode === "--acceptance" && args.length <= 1) {
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
 } else if (mode === "--list-areas" && args.length === 1) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
-  console.log("Area overview: source files are not executable case counts. NO TESTS EXECUTED.");
+  console.log("Primary functional-area mapping; secondary mechanic tags may cross areas. NO TESTS EXECUTED.");
   for (const area of inventory.functionalAreaTaxonomy.areas) {
     const files = registeredTests.filter(test => test.functionalArea === area);
     const features = new Set(files.map(test => test.featureId));
     const inspected = files.filter(test => test.featureMappingBasis === "source-case-inspected").length;
-    console.log(area + ": " + files.length + " source files / " +
-      features.size + " behavior features (" + inspected +
-      " source-case-inspected, " + (files.length - inspected) + " without evidence).");
+    console.log(area + ": " + files.length + " primary source-test files / " +
+      features.size + " primary behavior features (" + inspected +
+      " source-case-inspected, " + (files.length - inspected) + " without evidence)" +
+      (files.length === 0 ? " [NO PRIMARY TESTS]" : "") + ".");
   }
+  console.log("Areas with zero primary tests remain valid taxonomy entries, not evidence of absent mechanics. Use --list-mechanics for cross-area secondary tags.");
   process.exit(0);
 } else if (mode === "--show-area" && args.length === 2) {
-  if (!registeredTests.some(test => test.functionalArea === args[1])) {
-    console.error("Unknown/empty functional area: " + args[1]);
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  if (!inventory.functionalAreaTaxonomy.areas.includes(args[1])) {
+    console.error("Unknown functional area: " + args[1] + ". Use --list-areas.");
     process.exit(2);
   }
-  for (const test of registeredTests.filter(item => item.functionalArea === args[1])) {
+  const matches = registeredTests.filter(item => item.functionalArea === args[1]);
+  if (matches.length === 0) {
+    console.log(args[1] + ": 0 primary source-test files. No primary coverage is registered; this is not proof the underlying behavior is absent.");
+    console.log("Inspect cross-area secondary mechanic tags with --list-mechanics and --show-mechanic; tags are not primary test mappings. NO TESTS EXECUTED.");
+    process.exit(0);
+  }
+  for (const test of matches) {
     console.log(test.featureId + "  " + test.path + (test.mechanicTags.length ? " [" + test.mechanicTags.join(", ") + "]" : "") + " (" + test.featureMappingBasis + ")");
   }
   process.exit(0);
