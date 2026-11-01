@@ -32,7 +32,7 @@
       "note": "Complete original ZIP retained externally; historical auxiliary code references are not active source or gameplay proof."
     },
     "methodologyRecordsTracked": 24,
-    "developerWorkflowScriptSourcesTracked": 52,
+    "developerWorkflowScriptSourcesTracked": 58,
     "unroutedTechnicalSkillCount": 2
   },
   "recordStatusSemantics": {
@@ -1213,13 +1213,13 @@
     "identityWarning": "24/24 skill-folder and 45/45 installed module file identities matched supplied ZIPs. Upstream commit self-declared in lock, not independently checked against GitHub.",
     "licenseWarning": "No root LICENSE found; scripts, Minecraft packs, media and user-specific test harness are not vendored.",
     "executionBoundary": "Source inspection only; upstream test code, actual map-audit TypeScript and Minecraft gameplay NOT EXECUTED.",
-    "reportsIndexed": 49,
-    "evidenceScope": "49 historical report texts remain byte-identical in new ZIP, while 40 additional original report files are not curated as PASS/FAIL until individual review. A self-reported Probe PASS never proves the current selected map.",
+    "reportsIndexed": 74,
+    "evidenceScope": "49 unchanged historical curated reports plus 25 new scoped outcome/attempt reports; 15 other new documents are plans/templates/operator diagnostics/offline analyses, not a new map result.",
     "otherCodeSurfaces": {
-      "probePackScriptFiles": 106,
-      "probeToolScriptFiles": 35,
+      "probePackScriptFiles": 137,
+      "probeToolScriptFiles": 46,
       "duplicatedInstalledSkillScripts": 58,
-      "note": "v0.35.0 original archive has 137 pack TypeScript source files and 89 report files; historical individually pinned auxiliary code rows remain reference-only.",
+      "note": "Current original v0.35.0 ZIP code inventory: 137 Probe pack TS sources and 46 tool references, pinned by source SHA. Upstream scripts not run.",
       "installedSkillScriptIdentityNote": "Current probe ZIP contains 29 script files under .agents/skills/ and 29 mirrored under .claude/skills/, locked to v0.23.0. They are external instructions/scripts, not imported."
     },
     "sourcePackFiles": 137,
@@ -1227,14 +1227,139 @@
     "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified.",
     "probeToolScriptSourcesTracked": 35,
     "reportSourceIdentityPolicy": "49 SHA-pinned report texts, 22 originally indexed from previousArchiveSha256 and 27 newly indexed from current archive. All original 22 report digests were reobserved byte-for-byte in the new ZIP. Source-file references in older reports may differ from the latest 106-file code inventory and must remain historically pinned.",
-    "reportReviewMethod": "49 prior individually reviewed reports retained; the 40 new reports have no promoted outcome until scoped source and revision review.",
+    "reportReviewMethod": "Reviewed report headers, scope, decisive case outcomes, supplemental later sections and source revisions. Promoted only 25 source-reported scoped outcomes, not 15 non-outcome documents. Publisher claims not replayed or independently verified as Minecraft proof.",
     "archiveHistorySha256": [
       "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
       "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658"
     ],
     "zipEntries": 1334,
     "reportsAvailable": 89,
-    "reportsPendingSemanticReview": 40
+    "reportsPendingSemanticReview": 0,
+    "nonOutcomeReports": [
+      {
+        "sourcePath": "docs/test-runs/2026-10-24-window-loss-1.md",
+        "sourceSha256": "32be72d279a9af57868d23f49d602c37f350d076b05abc2deefe7fdc436ef010",
+        "kind": "OPERATOR_DIAGNOSTIC",
+        "reason": "Navigation/window failure diagnostic blocked; no map-mechanic verdict",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-24-window-loss-2.md",
+        "sourceSha256": "169aa62e8c0d182929d6e286e6de4edfbf9a7f7799ace7f51957538da8e86317",
+        "kind": "OPERATOR_DIAGNOSTIC",
+        "reason": "Navigation procedure passed, original window fault not reproduced",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-plan.md",
+        "sourceSha256": "16307c9320abbdea4858995ea81559d3686f42123223cc1270371c5d6a0e144f",
+        "kind": "PLAN_ONLY",
+        "reason": "Analytics benchmark plan without new game outcome",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-round2-plan.md",
+        "sourceSha256": "6218756903887179778fc8a9c395f90c5267203c14699d94fcb0ec05e794123c",
+        "kind": "PLAN_ONLY",
+        "reason": "Round-2 analytics plan, no new measurements",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-28-analytics-module-plan.md",
+        "sourceSha256": "de3ca3502217427411ae07d3669f43478c75279c41a35ac4224af876acec1d22",
+        "kind": "PLAN_ONLY",
+        "reason": "Analytics module test procedure without game outcome",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-28-analytics-module-run3-plan.md",
+        "sourceSha256": "5e2dade054cd0f755bb9adee490f254153f2fb849dab38fed70352ada95de2bd",
+        "kind": "PLAN_ONLY",
+        "reason": "Analytics module run-3 plan; distinct from actual result",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-29-analytics-general-plan.md",
+        "sourceSha256": "392dcfe9c44c5b260c45c99383a572a214d5b58f9540ec58643dd570e17505d7",
+        "kind": "PLAN_ONLY",
+        "reason": "General analytics test plan",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-29-rest-loop-api-plan.md",
+        "sourceSha256": "cd35f92ce7cba3f3e888c5932e7dbd6e64432517cf2f0a86db1a26598d192e12",
+        "kind": "PLAN_ONLY",
+        "reason": "Rest-loop API P64-P66 test plan",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-10-29-zero-loss-plan.md",
+        "sourceSha256": "b011e0aa982c581420e869368cde9e01f1fd3fe26699dfc1d8a0c281146adfd0",
+        "kind": "PLAN_ONLY",
+        "reason": "Zero-loss persistence test plan",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-11-01-batch-2-template.md",
+        "sourceSha256": "93186f4b759efc4111a92af90f4ce536e8acd2ccac20f7851b352323b4f8431d",
+        "kind": "TEMPLATE_ONLY",
+        "reason": "Blank P74-P78 measurement template",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-11-01-batch-3-tara-incomplete.md",
+        "sourceSha256": "6925b246c5ccb27c48123b343f83ef506e645479a91cc62a8f723e707ee74259",
+        "kind": "BLOCKED_BEFORE_GAMEPLAY",
+        "reason": "Batch 3 harness setup incomplete, never entered world",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-11-01-one-player-batch-1-plan.md",
+        "sourceSha256": "6a385a55e2bc9b931d054919ab13d8bd73ef98eba7828b94a25fc3513f33d165",
+        "kind": "PLAN_ONLY",
+        "reason": "One-player timing supplement and test plan",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-11-01-one-player-batch-1-template.md",
+        "sourceSha256": "dca611190407bac78a3a3a19a1f12f39429c24a004041a9524c596320fa36d49",
+        "kind": "TEMPLATE_ONLY",
+        "reason": "Blank one-player results template",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-11-01-p70-p71-harness-diagnosis.md",
+        "sourceSha256": "6cc870a26fd0d36e40122f296b34b03c04e86e5f0451e716d234584366561904",
+        "kind": "OFFLINE_ANALYSIS",
+        "reason": "P70/P71 interpretation of earlier captured evidence, no new gameplay",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      },
+      {
+        "sourcePath": "docs/test-runs/2026-11-01-p72-run4-results-analysis.md",
+        "sourceSha256": "c4c2bf5558d7ef0b2d50c200d06b94e41960c3dc71d73eb5a9d9688e694747f2",
+        "kind": "OFFLINE_ANALYSIS",
+        "reason": "P72 crash observations interpreted; no new gameplay executed",
+        "sourceArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+        "proof": "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT"
+      }
+    ],
+    "reviewedAdditionalReports": 40,
+    "newSourceScopedOutcomes": 25,
+    "newNonOutcomeDocuments": 15
   },
   "probeEvidence": [
     {
@@ -1731,6 +1856,26 @@
       ],
       "reportArchiveSha256": "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",
       "fixtureProvenance": "PINNED_HISTORICAL_SOURCE_REVISION"
+    },
+    {
+      "id": "probe.report.2026-10-19-t21-agent",
+      "sourcePath": "docs/test-runs/2026-10-19-t21-agent.md",
+      "sourceSha256": "f7694b06423f3afa6a4d939c4c2b0dfa181350a05faa603303eb9b37452b9139",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "T21 HUD/control absent and sidebar unobservable; visual missing-title observation cannot isolate cause",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-onscreen-display",
+        "src.bedrock-text-glyphs"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "d1cdd91391e14b392e907b37bcb485c977271c37",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
     },
     {
       "id": "probe.report.2026-10-21-p49-labels",
@@ -2355,10 +2500,468 @@
       "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
       "reportArchiveSha256": "77dd471ba1ac785e03aa7f700c28aca20c3a2af90fc2c9c8efe5072ecd37f658",
       "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-24-p63-diagnostic-test-1",
+      "sourcePath": "docs/test-runs/2026-10-24-p63-diagnostic-test-1.md",
+      "sourceSha256": "51dc1de5690fa598332deaf5e9278dd34d477696df510c9ddff43288edd145b7",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Finite delivery control passed; enabled reopen and cancellation not completed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "9c1cbb486f32b6d95f92b4163958b9f5bc18c529",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-24-p63-diagnostic-test-2",
+      "sourcePath": "docs/test-runs/2026-10-24-p63-diagnostic-test-2.md",
+      "sourceSha256": "b6aa720169425281c0facb621eb3e8d09bd200cfa55d2f1ba0f29085bfca1d46",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Absent-feet issue not reproduced once; restart and lifecycle tests unperformed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "9c1cbb486f32b6d95f92b4163958b9f5bc18c529",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-24-p63-lifecycle-finish-1",
+      "sourcePath": "docs/test-runs/2026-10-24-p63-lifecycle-finish-1.md",
+      "sourceSha256": "e47f5a35fd81a694f6f820fc6aafbd22791abbd84218e43acc1171e1a5efcef6",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Respawn and STOP observed; pending refresh and disabled reopen timing remain blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "9c1cbb486f32b6d95f92b4163958b9f5bc18c529",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-1",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-1.md",
+      "sourceSha256": "06702696b45940335fc4a2fcfecf44609681e9b177cb1092d2edffe97cc29bf9",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Benchmark run 1 blocked before native measurements",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "6c4f7df970d817964f05bc366a97181e4f271eb9",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-2",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-2.md",
+      "sourceSha256": "b1177900d891899208b209bbed5eb46c3cddc787d53c2060908ccb4f66b69295",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Benchmark run 2 blocked by missing required observation despite successful setup",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "ce0f299fe2f931c57a337f05df1be44d986f7d34",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-3",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-3.md",
+      "sourceSha256": "b08bc6bd87fbbb5b4e20127e6f02deadcf81d70a2e8f7c6d064055a4e74d91a1",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Benchmark run 3 blocked by missing shared ownership lock; no game commands",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "7dd7e3598fc9e0d56ee72da78ad5e92abf32163a",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-4",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-4.md",
+      "sourceSha256": "421cc94fb69069fc77d6a1d55e2f91361fca9c80ed1d8716d6cab4fffafa73c8",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Benchmark run 4 incomplete; required rows not measured",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-5",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-5.md",
+      "sourceSha256": "49226fd1a256d593acf4a9c8ad4f1d35d988a68242cedff69f76a2696b92592e",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Session and counters survived reload and ordinary reopen; leave callback not observed; no crash claim",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics",
+        "src.bedrock-data-persistence"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "529665cd9e03378340b7085d7711762839b05df5",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-6",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-6.md",
+      "sourceSha256": "5d2e6bff07bcd32a0e865fa06f79d069b80e44536f9e4c02101c9ad0926c9280",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Synthetic and export passed; native callbacks and flush timing failed, engine dispatch unmeasured",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics",
+        "src.bedrock-debug-profiling"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-7",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-7.md",
+      "sourceSha256": "dff2bdd8d3a7c4d35fd6b01118d9276aa6e3a98c34bd5bd5875f06ec35c2e2bc",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Tester ended run 7 before recording required evidence; not product failure",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-8",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-8.md",
+      "sourceSha256": "e4eed062929bdddfb8661a52dfb781dd3308ed2fb45f34f97526f12ac5acf7ef",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Run 8 failed to capture watch_ready prerequisite, leaving measurements blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-bench-run-9",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-bench-run-9.md",
+      "sourceSha256": "3250087903f7f399038ce143ae917bbe1b79b7d3208cf0dc60ecf0d0eef92e4d",
+      "status": "UPSTREAM_REPORTED_FAIL",
+      "summary": "Run 9 failed defined flush timing gate despite successful export and event controls",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "02826cc0a98008a341ce02c605884c73589f7dfb",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-module-run-1",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-module-run-1.md",
+      "sourceSha256": "ce7891ba9fcf9a7da6c01feacdc5de0332381fa0e7af4b8a2d0aace50e48dc17",
+      "status": "UPSTREAM_REPORTED_BLOCKED",
+      "summary": "Pre-release module run 1 export failed, preventing all ten game entries",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "165212db8046ebf44f1ad4cdaa2d161ba0a3ad60",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-module-run-2",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-module-run-2.md",
+      "sourceSha256": "6585570959422bec0b827c5e70543f3adb0ed99e6ec54fb58657c940b725608c",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Module run 2: six assigned PASS, four criteria BLOCKED",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "51b0c8fbd1dcd85790157d88bae648db708bd02a",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-analytics-module-run-3",
+      "sourcePath": "docs/test-runs/2026-10-28-analytics-module-run-3.md",
+      "sourceSha256": "921dc2fcc8907f335ac19a8c7459d9343d871b71ac227864fc4f0277941e2696",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "Module run 3 four assigned cases passed; not release or cross-map proof",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "3eedd848adedcf692810aea87dd3d82ad3055221",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-28-debug-log-capture-run-1",
+      "sourcePath": "docs/test-runs/2026-10-28-debug-log-capture-run-1.md",
+      "sourceSha256": "12cc6774443f2d7335753690011198e3bf60cc198f93a497d830351afb27375b",
+      "status": "UPSTREAM_REPORTED_PARTIAL",
+      "summary": "Console capture and reconnection passed; UI first-visible timing comparison unresolved",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-debug-profiling",
+        "src.bedrock-debug-logging"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "1891b45562e25a882859411f176101496297d6aa",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-29-analytics-general-run-A200-B4",
+      "sourcePath": "docs/test-runs/2026-10-29-analytics-general-run-A200-B4.md",
+      "sourceSha256": "7384cafff455ce7e5f4f7073534d710b63bc64bcb7182444e2c989d0604f1279",
+      "status": "UPSTREAM_REPORTED_PASS",
+      "summary": "A200+B4 four run entries plus cleanup passed for the scoped pre-release module",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "7c0c34eba86b56dc0460275021da31a71fe9a9a3",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-29-analytics-general-run-A50",
+      "sourcePath": "docs/test-runs/2026-10-29-analytics-general-run-A50.md",
+      "sourceSha256": "11d71f694789430d50195ae954385767ddb59b15a515d6e2a3227733b4d26258",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "A50 seed passed; history comparison failed; clean-flush timing blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics",
+        "src.bedrock-data-persistence"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "64fed300ec777caadcef7e09dca5cca5554e3ee9",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-29-analytics-general-run-B50",
+      "sourcePath": "docs/test-runs/2026-10-29-analytics-general-run-B50.md",
+      "sourceSha256": "a86e983353acff2eec535f2768eafdfbf9d7724ed86f50e622ddbf70fbda7a79",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "B50 dimension/export passed; Creative respawn preparation blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "108e1b7db3cd35267755638bebfcae1a99d0ecd4",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-29-rest-loop-api-results-1",
+      "sourcePath": "docs/test-runs/2026-10-29-rest-loop-api-results-1.md",
+      "sourceSha256": "7e8e85c9b984c9b22542bfe879a019f0b0ab58a71d45f68cc17c3d38792530d4",
+      "status": "UPSTREAM_REPORTED_PARTIAL",
+      "summary": "P64 core and P66 input passed; alpha and leave/reopen lifecycle evidence blocked",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-data-persistence",
+        "src.bedrock-player-attached-particles",
+        "src.bedrock-script-optimization"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "d981fc42d02ddb6c269d23215680a3c7dc88c442",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-10-29-zero-loss-results",
+      "sourcePath": "docs/test-runs/2026-10-29-zero-loss-results.md",
+      "sourceSha256": "f44176e1ff1df2cc547829982c91b9f425b1625bb130161fefdb724f44b5afbb",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Force-quit trials found loss of submitted records at tested phase; other integrity guards passed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-data-persistence",
+        "src.bedrock-analytics"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "c8c92393b3e714ac9de28287a207377cadca07d1",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-11-01-batch-2-ab-run1",
+      "sourcePath": "docs/test-runs/2026-11-01-batch-2-ab-run1.md",
+      "sourceSha256": "5fe253b7eb625bb35ed0388efc0a660a7b5568bbebe49d7b6537dae99f7f5d94",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "P74-P76 visual controls include multiple failures and blockers, with limited passes",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-onscreen-display",
+        "src.bedrock-text-glyphs"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "reportedRevisionPin": "33796b74a1d0b273abf0e0a7364429434b94faa4",
+      "revisionRole": "UPSTREAM_REPORTED_HEAD_NOT_INDEPENDENTLY_VERIFIED",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-11-01-batch-3-results",
+      "sourcePath": "docs/test-runs/2026-11-01-batch-3-results.md",
+      "sourceSha256": "a3f00b2775243fe48190371e900a372d3266d276a42f2ad1db42c385a4721b58",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "P76 popup hiding failed, P78 particle alpha passed, P77 tested force-quit durability failed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-onscreen-display",
+        "src.bedrock-text-glyphs",
+        "src.bedrock-data-persistence",
+        "src.bedrock-player-attached-particles"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
+    },
+    {
+      "id": "probe.report.2026-11-01-one-player-batch-1-results",
+      "sourcePath": "docs/test-runs/2026-11-01-one-player-batch-1-results.md",
+      "sourceSha256": "db5abea9b8ba8fec7792216699b9c609ec5e1757f70bbb222069f63b188e663e",
+      "status": "UPSTREAM_REPORTED_MIXED",
+      "summary": "Appended P70-P73 observations: visual and P72 closure blocked, P73 cases passed",
+      "proofAuthority": "HISTORICAL_EXTERNAL_SOURCE_OBSERVATION_NOT_SELECTED_MAP_PROOF",
+      "relatedSkillIds": [
+        "src.bedrock-entity-creation",
+        "src.bedrock-onscreen-display",
+        "src.bedrock-data-persistence",
+        "src.bedrock-script-optimization"
+      ],
+      "edition": "education",
+      "version": "26.32",
+      "targetBasis": "ORIGINAL_PROBE_TARGET_AND_REPORT_NOT_A_CROSS_VERSION_RUNTIME_CLAIM",
+      "reportArchiveSha256": "462fb6fe48b60f2bcf255f59d7ce0cb810c3a7ec598102c9e3888c68b341653b",
+      "evidenceCeiling": "UPSTREAM_REPORT_TEXT_ONLY_NOT_REPLAYED",
+      "fixtureProvenance": "RUN_SPECIFIC_REPORT_TEXT_SOURCE_ONLY"
     }
   ],
   "codeInventory": {
-    "scope": "Publisher v0.35.0: 26 module implementation and 11 external test source identities. Legacy individual auxiliary code SHA records retain historical provenance until re-pinned; active whole-skill identity uses the new native source lock.",
+    "scope": "Developer v0.35.0: 26 module implementation, 11 unit test, and 58 checked workflow-source entries; Probe v0.35.0: all 137 pack TypeScript and 46 tools source paths each SHA-pinned to supplied ZIP. Historical test reports preserve their own revision-specific fixture SHAs.",
     "codeModules": [
       {
         "path": "modules/coords/coords.ts",
@@ -2602,30 +3205,66 @@
       },
       {
         "path": "packs/BP/scripts/main.ts",
-        "sha256": "b23e005f074493faf07a180520a3570261e30793e6cfcd72e14e5a34a50d7da2",
+        "sha256": "9a8b8fcc97927fe22e5ed7b745a9fc4ce9937ebd0bcd8ab5b8a11d752c9f466c",
         "kind": "PROBE_CONFIGURATION_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/modules/analytics/analytics-events.ts",
+        "sha256": "7bc360bbb0ccea8794a50f41b6f1e1a88b0b30c7a6267949936d58589cd5a8a9",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-analytics"
+      },
+      {
+        "path": "packs/BP/scripts/modules/analytics/analytics-export.ts",
+        "sha256": "e1f0f46b33108a5ba93f9e923e2c94fbd011876e57312b9a2ae6189df959256b",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-analytics"
+      },
+      {
+        "path": "packs/BP/scripts/modules/analytics/analytics.ts",
+        "sha256": "3e4a0479c5947e8ddfe34e5778ab799ed134a78064f63418253365782f2b56bf",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-analytics"
+      },
+      {
+        "path": "packs/BP/scripts/modules/analytics/capture.ts",
+        "sha256": "6af57ee83b93cf6bb56f9899bb0d1b71585c71a61783cc5011d39fbbc42a679d",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-analytics"
+      },
+      {
+        "path": "packs/BP/scripts/modules/analytics/contract.ts",
+        "sha256": "ef43cd5a6af36c266664e7a0f935bb510df9e853712105d82eed9de63ee45d16",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-analytics"
+      },
+      {
+        "path": "packs/BP/scripts/modules/analytics/records.ts",
+        "sha256": "9362f8de78bd181ab2a7062255020e47116b3d9c6a398c8b6a4ae65b155ed86f",
+        "kind": "PROBE_MODULE_MIRROR",
+        "ownerSkill": "src.bedrock-analytics"
+      },
+      {
         "path": "packs/BP/scripts/modules/database/admins.ts",
-        "sha256": "513516ab7f9631272359330687637985886b8c7b77a6b42a550499945331ef65",
+        "sha256": "4370f446e8879b1da8847e0416d15d1742c0ac46521ec0b0df7559086e95fd28",
         "kind": "PROBE_DATABASE_MODULE",
         "ownerSkill": "src.bedrock-data-persistence"
       },
       {
         "path": "packs/BP/scripts/modules/database/players.ts",
-        "sha256": "78d008a06af1c365b32ac686179d94cbb8e81805774a1167149b7760a3e0e3d0",
+        "sha256": "7125270c3d5ee8f5c2d911492d5753a0f1c33ef9ebc7ac2b9ebf35d0698a823a",
         "kind": "PROBE_DATABASE_MODULE",
         "ownerSkill": "src.bedrock-data-persistence"
       },
       {
         "path": "packs/BP/scripts/modules/database/store.ts",
-        "sha256": "72c6eb6eae01e2dbdbc957314a6612478ce0a4b563f137c7c603a059b23ba2ac",
+        "sha256": "1c9ae0a226416ae8a396342315848c57150606b3f30e5f921fbeb575922749fe",
         "kind": "PROBE_DATABASE_MODULE",
         "ownerSkill": "src.bedrock-data-persistence"
       },
       {
         "path": "packs/BP/scripts/modules/database/world.ts",
-        "sha256": "729a864d0906fc7cea62c750d5f7cf9bc078cd2c6a73c6d300aeee5c2c4a9430",
+        "sha256": "6718e3e88c0d194e2c0a16a722b464e854cd94f9d90433e7b9cda7341cfbf5f6",
         "kind": "PROBE_DATABASE_MODULE",
         "ownerSkill": "src.bedrock-data-persistence"
       },
@@ -2720,8 +3359,68 @@
         "ownerSkill": "src.bedrock-game-time"
       },
       {
+        "path": "packs/BP/scripts/probe/analytics-general.test.ts",
+        "sha256": "77c1f69c541965f9fb2df0dc3903471debf9542a7f93e4f12bf9c4bee5f5ba26",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics-general.ts",
+        "sha256": "f40a31ffa6f64b97eee9a88dc5e55cff3b109fcc04fc9c11d856bd2de003742a",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics-module.test.ts",
+        "sha256": "288f5f5b66c4bcf1521a1dbe4cd8f28ea7a13acf990f08c02e6c8780522e2146",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics-module.ts",
+        "sha256": "73c28f7e2ca7664407d1ea9b553ecbbd5c07cbb891441c981fbd532545533a9b",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/analytics-export.ts",
+        "sha256": "815fe0445e3671ab65f57e88de23b091a40c6d69c7db6f485c75cf17e28cb55e",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/analytics-perf-probe.ts",
+        "sha256": "8cb999d4f52c88539fe5de14e2521d1a016c426bd6354587209336cf1c5ae152",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/bench.test.ts",
+        "sha256": "903fc8d7f0f7efbcf47f2b314afa870751e63823c2ed3faeee7e588c4e647cce",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/bench.ts",
+        "sha256": "0a3ae6bf62cd193b41c8fb1e7ee7ffe6ec06e80bb5bcc7d4af48303edc0b01fb",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/model.test.ts",
+        "sha256": "253286c3977e878dd36d3bd823a6058c4262bd01ab6e70589c5af4e79a67c083",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/model.ts",
+        "sha256": "ca9b3eadea43f3fa441ffba753adedafd5a6ce716b2ca2bf24fdd5981f238370",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/round2.test.ts",
+        "sha256": "c0e6feaf1988ae631e2a7a072ca8edbe522d334e7bb5e49429e9b4f44f77366b",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/analytics/round2.ts",
+        "sha256": "d4a3fbec3de9bd62e57194640491c5165e8e2c324bc048a19cd0d4f2eb9d3bb6",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/common/store.ts",
-        "sha256": "e06d5b206a4f7f5e6462ddb12a8926026c788e442798bf5255361d75580120bd",
+        "sha256": "f3348e832b60dc0d5f5fb4e1a4ac4d97ce664023aef02c95ecdcfc7d8332c5e8",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2761,7 +3460,7 @@
       },
       {
         "path": "packs/BP/scripts/probe/examples/game-results/adapter.ts",
-        "sha256": "39d4d5142c2472c3645ac2e7c4f08d5034e56bf32f83ed2b5a1dcf5f8062f1e1",
+        "sha256": "ba99580fc8e353c9731bbfb75d178bff2405e687c883d4b6b2a9f1f0a8dbd565",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -2916,7 +3615,17 @@
       },
       {
         "path": "packs/BP/scripts/probe/probes/aura.ts",
-        "sha256": "89987b40b25e2ec2271fab83440bb11df075138b6fb3013b00af27523baf47a2",
+        "sha256": "7e9537709333b6ab96502cdc703648e63225f49c305fdee5387dfaccd8ac170f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/batch-two.test.ts",
+        "sha256": "a5ef7d4950fd397eb0b80b28289147449329cb16776920fd9024b26a1e12cdb5",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/batch-two.ts",
+        "sha256": "62704517bef4132ff26f51fe5509393069c1e3b678783831357698d678f100fe",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -3045,6 +3754,21 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/probes/one-player-batch.test.ts",
+        "sha256": "cbcf73d98ef1aaa36d68812ea149fc636d2f8f85409c8b0d7102051377c43109",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/one-player-batch.ts",
+        "sha256": "183cc3d48dd3835050df9b7e2f756cfe7ddcded9860575b798b94839f58f6cfe",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/one-player-hud.test.ts",
+        "sha256": "f3da70def9a2f11f09823e22dcc1f3b075694c0879f9425b0c011434ec39452f",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/probe/probes/optimization-examples.ts",
         "sha256": "331aacbfc5334b42397376292eeee0e5b98c97163e3c5069f0dbef3f164e0001",
         "kind": "PROBE_FIXTURE_SOURCE"
@@ -3076,12 +3800,42 @@
       },
       {
         "path": "packs/BP/scripts/probe/probes/probes.ts",
-        "sha256": "36a1ca57cc573c444de06ef9935ea256e63d215409914b703aa5ed7637276b28",
+        "sha256": "2e12e033c7f597784b366b1e047c47ff1fe2d9570ff29e70a413d95b3210c01c",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
         "path": "packs/BP/scripts/probe/probes/reconcile.ts",
         "sha256": "a7b02545c79e0dc60fdd9063bd4076754a49f95b9c55a9482bcf5f168d321a49",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/rest-input.test.ts",
+        "sha256": "2e4b9187a38fe718aeb19bb8e2377eeb5a30f0fb661e1b81316e127640330c16",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/rest-input.ts",
+        "sha256": "494974f718b025b8204f708ab65947a99592e6af38319e264ff4a604a145de6b",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/rest-item-metadata.test.ts",
+        "sha256": "5d4c8b269c53ce99dae9273bfa5ec89e5042ed81a240951891b0ce19caa6cbac",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/rest-item-metadata.ts",
+        "sha256": "0224f7750e1c56b042e68e6f66ff7b4985556d27bad0070fba678b970418e2ec",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/rest-loop.ts",
+        "sha256": "e17108e74b001470c6dee4a2af37ac0f83ff0941f8ac798f770907a839a78c5b",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/probes/rest-particles.ts",
+        "sha256": "50f4a2a58fa637b3bb88d5109a2b05ac94c04b5799cda8e23c404d76ca595eee",
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
@@ -3130,6 +3884,16 @@
         "kind": "PROBE_FIXTURE_SOURCE"
       },
       {
+        "path": "packs/BP/scripts/probe/zero-loss.test.ts",
+        "sha256": "b9d9d210399854e99ef9d86e0eb62bb90f4a353de82ff49c33596c3675869ca0",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
+        "path": "packs/BP/scripts/probe/zero-loss.ts",
+        "sha256": "fe65b2b56eac986c27cb209874566e28c75b3d4e98a511b45cbd3c6a2fa08f57",
+        "kind": "PROBE_FIXTURE_SOURCE"
+      },
+      {
         "path": "packs/BP/scripts/types/runtime.d.ts",
         "sha256": "1c45cd83f0ef852ad0d51d280347581e9e8589ffdc9942ecb471d3fb9ced0d10",
         "kind": "PROBE_CONFIGURATION_SOURCE"
@@ -3162,13 +3926,19 @@
       },
       {
         "path": "skills/bedrock-debug-logging/scripts/check-logging.mjs",
-        "sha256": "86637b1e01dec8bbfe04dc0fc41217023bc1a0721f38136859af2d7e67c0c060",
+        "sha256": "d594a35632461675117f4542578464d58267dc7f6da9d5e555d0f30027cddf2e",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-debug-logging"
       },
       {
         "path": "skills/bedrock-debug-profiling/scripts/capture-common.mjs",
         "sha256": "02d148ba4fc4486cf9b9e156315d266f73cacd3b413d6e7680c50c6120d08b65",
+        "kind": "SKILL_TOOL_SOURCE_REFERENCE",
+        "ownerSkill": "src.bedrock-debug-profiling"
+      },
+      {
+        "path": "skills/bedrock-debug-profiling/scripts/debug-log-capture.mjs",
+        "sha256": "1a5475f6786a74671a9228a6e775a0ef324c2e4fe049caaee72b6b00c7e7fc08",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-debug-profiling"
       },
@@ -3294,7 +4064,7 @@
       },
       {
         "path": "skills/bedrock-testing-policy/scripts/pick-checks.mjs",
-        "sha256": "be30e014e3f297efb3853b2679e9a2fd7abfd8fa75effc4466cd72e2c451ff85",
+        "sha256": "a1bbc9e8df1bbb5c9512017fa71816ab9c8d4b7a89411640d7b826d3313bb59a",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-testing-policy"
       },
@@ -3324,7 +4094,7 @@
       },
       {
         "path": "skills/bedrock-version-targeting/scripts/version-info.mjs",
-        "sha256": "0f8d2092ac4331377886a4b926369d282328ab3afce7145ec3d5dd2f4dfc7c49",
+        "sha256": "f60c37ba750dd860312321c21e452958f5c8caf3dc4aa10023f30b048fbfbc87",
         "kind": "SKILL_TOOL_SOURCE_REFERENCE",
         "ownerSkill": "src.bedrock-version-targeting"
       },
@@ -3335,7 +4105,7 @@
       },
       {
         "path": "tools/check-skills.mjs",
-        "sha256": "391c887aed93fab2849801b0f15eac51cbbe0ba6b63ba150e31b3890aece6314",
+        "sha256": "ab506da8e78c23144c66e4990a480b6dbeb365ade496083842ab1ae811290fd6",
         "kind": "DEVELOPER_TOOL_SOURCE_REFERENCE"
       },
       {
@@ -3375,7 +4145,7 @@
       },
       {
         "path": "tools/tests/check-skills.test.mjs",
-        "sha256": "8562a91fa07a113f79c1c2e2e1205e1e4a242a9e8ab425b2c5d3f32538682d6e",
+        "sha256": "c8c76cb6ccee210800abd4285b04949ee2e39244ab9d475a2b02a9e72fde6397",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
@@ -3389,8 +4159,18 @@
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
+        "path": "tools/tests/debug-log-capture.test.mjs",
+        "sha256": "5000c0039c9b247c63d72586a41c2afc55a92f54e752f24adf4e790589dfceda",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
         "path": "tools/tests/education-lock.test.mjs",
         "sha256": "fc8653d295cf45e67ebedb73f35cc7dc99568bf26efab85ef6206837697df346",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/ensure-skills.test.mjs",
+        "sha256": "9c114de0d986a1080eba739958506da86c360423f9177f7f7c1b908c0232bd2a",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
@@ -3405,12 +4185,12 @@
       },
       {
         "path": "tools/tests/release.test.mjs",
-        "sha256": "b54a20f3d454b0f5724e075feda2609a55d189bed267b2bfa418d20d5e4c13fd",
+        "sha256": "9b434c6c0eabc908906608a1a91a55709be98e2ff49b2ba946d41ef229241b46",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
         "path": "tools/tests/sync.test.mjs",
-        "sha256": "d9045fc6af91e9059627aac3bdeeedf4d180bb91e330b1d99eeb9ec7d966554b",
+        "sha256": "f47495e3bdfa63e1bd44ce074d8acc7a4d0de2af422509c56e55b3f83d532dca",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
@@ -3419,8 +4199,23 @@
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
+        "path": "tools/tests/verify-quiet.test.mjs",
+        "sha256": "1a535842841b4c985cd0a3f6760c6d0673de856c9a88ddd34655837d6d17dcd1",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/version-info.test.mjs",
+        "sha256": "f7a354d4bb35fccc62a1a4b3d0b5e5db40c246ac6fa009f56842c35ef203d2a4",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
         "path": "tools/tests/versions.test.mjs",
         "sha256": "5067c555600c711e242abaa3c2f1e6c233842c8417de4699ab292bca7e3903da",
+        "kind": "DEVELOPER_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/world-pull.test.mjs",
+        "sha256": "fe07e7b3e35795ba7bb2269e2bb327a6f72e9c8b8e788fda8a479dc407fedf2b",
         "kind": "DEVELOPER_TOOL_TEST_SOURCE"
       },
       {
@@ -3430,6 +4225,16 @@
       }
     ],
     "probeToolSources": [
+      {
+        "path": "tools/batch2-capture.mjs",
+        "sha256": "97685f1dff71717f2ab1f31ae556fbcc4dd2a55aaa04cec20abcc385a90fb5eb",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/batch2-output.mjs",
+        "sha256": "d391cdb98b3a0342009ad7b251b1a50d5d133d8be8dfbbbb09592e6617b44faf",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
       {
         "path": "tools/build-bundles.mjs",
         "sha256": "07947c6c4ce49bb219ffe3ee2c258f43433e04316aee283f7afcc93e13addeb4",
@@ -3527,7 +4332,7 @@
       },
       {
         "path": "tools/examples/ui/layout.test.mjs",
-        "sha256": "6e071f25d6136988eb466b0ac2794d5ad92412dbd0f80eba064c6e73bd34cb8c",
+        "sha256": "a122dfad38ba058d7226ff6f72c66f32e41afcbd5e7399fa34c4bcac116315b9",
         "kind": "PROBE_TOOL_TEST_SOURCE"
       },
       {
@@ -3551,6 +4356,11 @@
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
+        "path": "tools/make-batch2-glyphs.mjs",
+        "sha256": "6cc09b74d6cc80f23fb4b9c9ce0b67062d29a90922c791231938db6e3dfe5ba4",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
         "path": "tools/make-cache-test-worlds.mjs",
         "sha256": "ffc3dbe1ce69317fbfb57e3e9dc2fcbf24b4bde1151a77d2c5cf51bc26280f48",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
@@ -3571,6 +4381,31 @@
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
       },
       {
+        "path": "tools/p70-capture-pair.mjs",
+        "sha256": "7debb3082a50da32e1d29c0326684e452d59a0918ddde57acb77b1ff4cbb68b6",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/p70-stage-world-packs.mjs",
+        "sha256": "7ea79ae95a32846bf1054fae710d13bd80f537223219a05bad9b121a05bf90df",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/p72-kill.mjs",
+        "sha256": "34e1d722c13bb55448c19df4cdbd5464144966e99455e961d255e3f4e1f6f5aa",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/p77-gate.mjs",
+        "sha256": "fe3c12ac10be528561957fb4d81e414aefcefb31a7b398f7e826e70e40e1fc40",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/p77-kill.mjs",
+        "sha256": "109cf9430f6a74bada9faacec042fe873cb00a60a8575af0181b833a71f08fa1",
+        "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
         "path": "tools/regolith/compile-scripts.js",
         "sha256": "a107db5e40dda40ded9542ce38a6ed333e4e62f760c900eb79f52572a2684699",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
@@ -3587,8 +4422,23 @@
       },
       {
         "path": "tools/sync.mjs",
-        "sha256": "2b50f07ae3d4cf00596bc0cc77cd8db3afef595633aa66a6954bcc63e9d56ee2",
+        "sha256": "1bd42c9ec7606832eb3d054c6c9dffd321b7ff73b1007fb7e2f18c6be044b121",
         "kind": "PROBE_TOOL_SOURCE_REFERENCE"
+      },
+      {
+        "path": "tools/tests/batch2-output.test.mjs",
+        "sha256": "b836d03451d724a3537fad99060bb2abaf6c7c8875573c5df61dbee9562a63dd",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/p70-stage-world-packs.test.mjs",
+        "sha256": "73e0b0375822e2e79700a9015fb5348b32f5d19261c8619f6de47d0ef50b8b2b",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
+      },
+      {
+        "path": "tools/tests/p77-gate.test.mjs",
+        "sha256": "fdb6a476d3de62e0f78d4ef1ba37e40cd5cf006ec179cd05558ea33d7d43d5a9",
+        "kind": "PROBE_TOOL_TEST_SOURCE"
       },
       {
         "path": "tools/verify-quiet.mjs",
@@ -3606,7 +4456,7 @@
         "kind": "PROBE_TOOL_TEST_SOURCE"
       }
     ],
-    "untrackedSourcePolicy": "The complete archive is pinned; selected auxiliary code records are not a claim of exhaustive v0.35.0 per-file re-review. 40 new Probe reports remain outcome-unreviewed and must not be treated as PASS."
+    "untrackedSourcePolicy": "All recorded source path/file SHA-256 pairs derive from the current original v0.35.0 developer and Probe ZIPs. Report fixture SHA identities remain historical and independent; upstream PASS is never executed M-Lazy/selected-map proof."
   },
   "probeExamples": {
     "schemaVersion": 1,

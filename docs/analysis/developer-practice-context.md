@@ -31,6 +31,8 @@ Stable document identity is this frontmatter `id`; update in place.
 
 **Current v0.35.0 technical reference (1 November 2026):** 24 matching publisher skill-folder hashes, 45 matching Probe installed module file SHA hashes, and 17 existing evidence-scoped map interpretation patterns. New analytics and particle methods remain unrouted without typed selected-map evidence. Probe includes 89 report texts, only 49 of which have historical curated outcomes; 40 require review before use. The source is publisher-authored, not official Microsoft/Mojang policy, executable verification or a new BUG acceptance requirement.
 
+**v0.35.0 follow-up source review (1 November 2026):** Of 40 new original Probe documents, 25 have bounded source-reported results or blocked attempts and 15 are plan/template/operator/offline records, all SHA-pinned in the existing curated JSON owner. The 49 previously curated reports remain unchanged. All are external-source claims, not Minecraft execution by M-Lazy-Developer. The existing `resource-context.ts` continues to require exact selected-map typed evidence before surfacing at most two relevant references; new analytics is still unrouted.
+
 ## Upstream ZIP intake in ChatGPT Chat — candidate before promotion
 
 The two independently versioned upstream sources feed **one existing REFERENCE
