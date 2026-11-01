@@ -28,10 +28,11 @@ import {
   syncApprovedProjectIssueHistory,
 } from "./project-history-sync.js";
 import {
+  assertProjectRecordWritable,
   saveProjectApprovalSnapshot,
   saveProjectDrivePublishReceipt,
   upsertProjectRecord,
-} from "./project-registry-store.js";
+} from "./project-record-store.js";
 
 export async function approveAndPersistProject(input: {
   readonly repositoryRoot: string;
@@ -67,6 +68,7 @@ export async function approveAndPersistProject(input: {
       snapshot,
     );
 
+  await assertProjectRecordWritable(input.repositoryRoot, approved);
   await saveProjectApprovalSnapshot(
     input.workspace,
     snapshot,
@@ -139,6 +141,7 @@ export async function approveAuditProjectAndPersist(input: {
     );
 
   // Immutable approved payload first. No tracked status has changed yet.
+  await assertProjectRecordWritable(input.repositoryRoot, approved);
   await saveProjectApprovalSnapshot(
     input.workspace,
     snapshot,
@@ -230,29 +233,21 @@ export async function recordAndPersistDrivePublication(input: {
       files: input.files,
     });
 
+  const published = drivePublicationIsComplete(input.snapshot, receipt)
+    ? applyDrivePublishReceipt(input.project, input.snapshot, receipt)
+    : undefined;
+  if (published !== undefined) {
+    await assertProjectRecordWritable(input.repositoryRoot, published);
+  }
   await saveProjectDrivePublishReceipt(
     input.workspace,
     receipt,
   );
 
-  if (
-    !drivePublicationIsComplete(
-      input.snapshot,
-      receipt,
-    )
-  ) {
-    return {
-      project: input.project,
-      receipt,
-    };
+  if (published === undefined) {
+    return { project: input.project, receipt };
   }
 
-  const published =
-    applyDrivePublishReceipt(
-      input.project,
-      input.snapshot,
-      receipt,
-    );
   await upsertProjectRecord(
     input.repositoryRoot,
     published,

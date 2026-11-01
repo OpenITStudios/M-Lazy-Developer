@@ -11,7 +11,9 @@ lifecycle: ACTIVE
 
 ## Authority
 
-Project identity, current version, and exact Drive binding belong to `workspace/projects/<project-id>/project.json`. There is no global project registry. See [Workspace](../../workspace/README.md) for the canonical single-level and multi-level directory contracts.
+Project identity, current version, and exact Drive binding belong to `workspace/projects/<project-id>/project.json`. There is no global project registry.
+
+The legacy TypeScript publication flow must update that existing per-project file rather than creating `workspace/project-registry.json`. It may hydrate omitted fields from an existing single-level record without altering the selected world identity. A multi-level record requires explicit level-scoped routing; until that adapter exists the legacy publication flow must fail closed rather than flatten levels or create another project owner. See [Workspace](../../workspace/README.md) for the canonical single-level and multi-level directory contracts.
 
 | Concern | Canonical owner |
 |---|---|

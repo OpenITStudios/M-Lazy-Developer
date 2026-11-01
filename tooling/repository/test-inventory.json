@@ -6577,11 +6577,11 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-merged-file-isolation-and-affected-import-closure",
-        "sourceBlobSha": "a18255029af3f4cd80a79488d3febe1c8b9b75d7"
+        "action": "re-review original merged assertions and new per-project publication persistence cases before any consolidation",
+        "sourceBlobSha": "dc44ac1ccecc5c8dfb04d40137524b781ff03fb5"
       },
       "recommendation": "keep",
-      "rationale": "Owner-local feature/lane family: 3 -> 1. Source-level 7 registered it/test callsites and 19 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
+      "rationale": "Original 7 merged test/assertion sites retained; three source-authored single-level, stale/Drive, and multi-level fail-closed persistence cases added. Exact TS/Vitest and Minecraft NOT EXECUTED.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -6606,7 +6606,7 @@
         ],
         "originalTestCallSites": 7,
         "originalExpectCallSites": 19,
-        "mergedSourceBlobSha": "a18255029af3f4cd80a79488d3febe1c8b9b75d7",
+        "mergedSourceBlobSha": "dc44ac1ccecc5c8dfb04d40137524b781ff03fb5",
         "execution": "NOT_EXECUTED"
       }
     },

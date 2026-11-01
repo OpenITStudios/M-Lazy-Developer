@@ -18,7 +18,7 @@ export * from "./zero-waste-execution-summary.js";
 export * from "./zero-waste-workflow.js";
 export * from "./map-audit-work-session.js";
 export * from "./project-lifecycle.js";
-export * from "./project-registry-store.js";
+export * from "./project-record-store.js";
 export * from "./project-history-sync.js";
 export * from "./project-drive-publish-plan.js";
 export * from "./project-publication-workflow.js";

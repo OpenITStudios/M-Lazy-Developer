@@ -1,11 +1,12 @@
 // Consolidated same-owner development family, original lexical bodies preserved.
 import { describe, expect, it } from "vitest";
 import { executeProjectDrivePublishPlan } from "../src/workflow/project-drive-publish-executor.js";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { projectApprovedBugReportToHistoricalRegressions, syncApprovedProjectIssueHistory } from "../src/workflow/project-history-sync.js";
 import { approveAuditProjectAndPersist } from "../src/workflow/project-publication-workflow.js";
+import { assertProjectRecordWritable, loadProjectRecord, upsertProjectRecord } from "../src/workflow/project-record-store.js";
 
 // Source engine/packages/orchestrator/test/project-drive-publish-executor.test.ts; blob 6afe5f5f9a31fe069f8945c77c5e7ff0317a15c6
 {
@@ -568,6 +569,126 @@ describe("project audit publication boundary", () => {
     ).rejects.toThrow(
       "Audit project approval requires SelectedMapAuditRun currentStage COMPLETE.",
     );
+  });
+});
+}
+
+
+{
+describe("canonical per-project publication persistence", () => {
+  const baseline = {
+    schemaVersion: 1,
+    projectId: "defense-v2",
+    projectName: "Defense V2",
+    taskClass: "DIAGNOSE",
+    revision: 1,
+    artifact: {
+      artifactId: "drive:world-1",
+      artifactFingerprint: "sha256:map",
+      version: "1.0.0",
+    },
+    publication: {
+      drive: {
+        mapFolder: { folderId: "folder-1" },
+        currentWorld: {
+          fileId: "world-1",
+          fileName: "Defense v1.0.0.mcworld",
+          artifactFingerprint: "sha256:map",
+          version: "1.0.0",
+        },
+      },
+    },
+  };
+
+  it("reads a canonical minimal record and writes approval only to its project", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-lazy-project-"));
+    const path = join(root, "workspace", "projects", "defense-v2", "project.json");
+    try {
+      await mkdir(join(root, "workspace", "projects", "defense-v2"), {
+        recursive: true,
+      });
+      await writeFile(path, JSON.stringify(baseline));
+      const current = await loadProjectRecord(root, "defense-v2");
+      expect(current?.publication.drive?.projectId).toBe("defense-v2");
+      expect(current?.publication.drive?.currentWorld?.fileId).toBe("world-1");
+      if (!current) throw new Error("Expected current project");
+      const approved = {
+        ...current,
+        revision: current.revision + 1,
+        publication: {
+          ...current.publication,
+          approvalSnapshotFingerprint: "sha256:approval",
+        },
+      };
+      await upsertProjectRecord(root, approved);
+      const saved = JSON.parse(await readFile(path, "utf8"));
+      expect(saved.revision).toBe(2);
+      expect(saved.publication.drive.currentWorld.fileId).toBe("world-1");
+      expect(saved.publication.approvalSnapshotFingerprint).toBe("sha256:approval");
+      await expect(readFile(join(root, "workspace", "project-registry.json")))
+        .rejects.toMatchObject({ code: "ENOENT" });
+      await expect(assertProjectRecordWritable(root, approved)).resolves.toBeUndefined();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects stale revision and conflicting Drive artifact evidence", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-lazy-project-"));
+    const dir = join(root, "workspace", "projects", "defense-v2");
+    const path = join(dir, "project.json");
+    try {
+      await mkdir(dir, { recursive: true });
+      await writeFile(path, JSON.stringify(baseline));
+      const current = await loadProjectRecord(root, "defense-v2");
+      if (!current) throw new Error("Expected current project");
+      await expect(upsertProjectRecord(root, {
+        ...current,
+        revision: 3,
+      })).rejects.toThrow("exactly one step");
+      await expect(upsertProjectRecord(root, {
+        ...current,
+        revision: 2,
+        artifact: {
+          ...current.artifact,
+          artifactFingerprint: "sha256:changed",
+        },
+      })).rejects.toThrow("does not match its current Drive world");
+      expect(JSON.parse(await readFile(path, "utf8"))).toEqual(baseline);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses to flatten multi-level projects or traverse workspace paths", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-lazy-project-"));
+    const dir = join(root, "workspace", "projects", "defense-v2");
+    const path = join(dir, "project.json");
+    try {
+      await mkdir(dir, { recursive: true });
+      const multiLevel = {
+        schemaVersion: 1,
+        projectId: "defense-v2",
+        projectName: "Defense V2",
+        taskClass: "DIAGNOSE",
+        levels: [{ level: 1, artifact: baseline.artifact }],
+      };
+      await writeFile(path, JSON.stringify(multiLevel));
+      await expect(loadProjectRecord(root, "defense-v2"))
+        .rejects.toThrow("refusing to flatten");
+      await expect(upsertProjectRecord(root, {
+        ...baseline,
+        revision: 2,
+        work: {},
+        knowledge: {},
+        publication: {},
+      })).rejects.toThrow("refusing to flatten");
+      await expect(loadProjectRecord(root, "../escape"))
+        .rejects.toThrow("Unsafe canonical projectId");
+      expect(JSON.parse(await readFile(path, "utf8"))).toEqual(multiLevel);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 }
