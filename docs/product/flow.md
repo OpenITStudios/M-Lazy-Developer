@@ -98,7 +98,7 @@ not routed to Map Audit**, because no precise supported particle-attachment
 witness exists yet. Its P63 source reports include scoped failures and
 blocked cases, not universal verified gameplay.
 
-Skills Probe remains independently locked to v0.23.0, and its new
+The active Skills Probe lock, current version and report inventory are read from the canonical source lock and curated metadata (older observations retain their historical revisions), and its new
 829-file source ZIP has **49 individually SHA-pinned narrative reports**.
 The 22 previously indexed report texts remain byte-identical; 27 new
 reports include 23 separate P63 attempts (13 overall FAIL and 10 BLOCKED,

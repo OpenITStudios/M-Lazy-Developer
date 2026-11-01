@@ -110,6 +110,49 @@ current-world gameplay proof. A genuinely new platform fact requires
 version-specific independent verification before entering `engine/knowledge/`;
 a demonstrated detector gap goes to the existing IMPROVE SYSTEM lane.
 
+### Incremental upstream adaptation
+
+Use this existing read-only inspector whenever a **new ZIP** is supplied
+(including an archive independently verified against an immutable upstream
+Git revision). It accepts ZIP file paths, **not** Git URLs. An upstream ref may
+first be inspected through authorized GitHub tools; the archive still needs an
+independently established matching identity. A URL alone, a reported release
+number, or a periodic schedule is not source verification.
+No GitHub workflow, background watcher or external compute is started by
+these instructions. `Local` remains the current active reference until the
+reviewed source and its affected consumers are committed together.
+
+```text
+new Developer ZIP and/or new Probe ZIP
+  → inspect-developer-upstream.mjs --mode diff
+  → compare independent source archive SHA, skill folders, module files
+  → NO_CHANGE: STOP without commit
+  → BLOCKED_SOURCE_INTEGRITY: investigate exact lock/source mismatch
+  → REVIEW_REQUIRED: review only impacted skill/module/report and consumers
+  → stage source identities as pendingIntake in existing curated owner if needed
+  → separately accept source-reviewed metadata (never implicit runtime PASS)
+  → update existing source-lock + curated data + affected consumer atomically
+  → verify GitHub Local HEAD and STOP
+```
+
+Use `--mode diff --skills-zip <developer.zip>` for Developer-only,
+`--mode diff --probe-zip <probe.zip>` (or `--mode probe`) for Probe-only,
+or both ZIPs together for a paired comparison. The released tags may differ:
+**never** back-project a Probe observation to an untested newer Developer
+revision. A same-release lock mismatch is a review blocker, not permission to
+rewrite the lock. All original negative reports and historically pinned
+fixture revisions remain intact. Non-outcome plans/templates are already
+accounted for and must not repeatedly reappear as unseen reports.
+
+The inspector only **proposes** what to review: no automatic downloads,
+version bump, `pendingIntake` write, source promotion, code installation,
+CI activation, detector creation or Minecraft gameplay verification. Use the
+existing `experiments/developer-practice-signals.json#pendingIntake` only
+when a real candidate is under review. Promote a developer revision and a
+Probe revision independently after source integrity and consumer proof; keep
+the other revision active when it is unchanged. All file/skill ownership,
+source revision and evidence boundaries must survive the change.
+
 ### Upgrades
 
 1. Obtain the source archives or immutable verified Git refs. Preserve each

@@ -257,7 +257,7 @@ export function readProbeExampleIndex(probe) {
 
 export function readProbeReport(probe, name) {
   assert(typeof name === "string" &&
-    /^docs\/test-runs\/[a-z0-9-]+\.md$/.test(name) &&
+    /^docs\/test-runs\/[A-Za-z0-9-]+\.md$/.test(name) &&
     probe.paths.includes(name), "Report must be an exact indexed ZIP path.");
   const bytes = probe.readEntry(name);
   assert(bytes.length <= 128 * 1024, "Probe report exceeds reference budget.");

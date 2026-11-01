@@ -33,7 +33,7 @@ function parseArguments(args) {
       ((options["--read-probe-example"] || options["--read-probe-report"] ||
         options["--mode"] === "probe") && !options["--probe-zip"]) ||
       ((options["--read-skill"] || options["--read-module"] ||
-        ["diff", "native", "lock"].includes(options["--mode"])) && !options["--skills-zip"])) {
+        ["native", "lock"].includes(options["--mode"])) && !options["--skills-zip"])) {
     throw new Error("Provide either or both --skills-zip and --probe-zip; use --mode diff|native|lock for skills or --mode probe for independent Skills Probe, and at most one --read-* selector.");
   }
   return options;
@@ -178,6 +178,28 @@ function compare(previous, current, pathKey = "path", hashKey = "sha256") {
   return { added: added.sort(), changed: changed.sort(), removed: removed.sort(), unchanged };
 }
 
+// Both reviewed outcome reports and reviewed non-outcome documents are already
+// accounted for. Do not rediscover 15 plans/templates as "new" each ZIP intake.
+function reviewedReportRecords(metadata) {
+  const paths = new Map();
+  for (const item of [
+    ...(metadata.probeEvidence ?? []),
+    ...(metadata.probeSnapshot?.nonOutcomeReports ?? []),
+  ]) {
+    if (typeof item?.sourcePath !== "string" ||
+        !/^docs\/test-runs\/[A-Za-z0-9-]+\.md$/.test(item.sourcePath) ||
+        !/^[a-f0-9]{64}$/.test(item.sourceSha256 ?? "") ||
+        paths.has(item.sourcePath)) {
+      throw new Error("Conflicting or invalid reviewed Probe report identity.");
+    }
+    paths.set(item.sourcePath, item.sourceSha256);
+  }
+  return [...paths].map(([sourcePath, sourceSha256]) => ({sourcePath, sourceSha256}));
+}
+
+const hasChanges = delta => delta !== null && delta !== undefined &&
+  ["added", "changed", "removed"].some(key => (delta[key]?.length ?? 0) > 0);
+
 const classify = {
   skills: /^skills\/[^/]+\/SKILL\.md$/,
   modules: /^modules\/[^/]+\/[^/]+\.ts$/,
@@ -199,8 +221,9 @@ async function main() {
     args["--probe-zip"] ? openArchive(args["--probe-zip"]) : Promise.resolve(null),
   ]);
   // Skills Probe evolves independently of the developer skills release.
-  // A probe-only input can be reviewed without pretending it matches v0.27.0.
+  // A Probe-only diff and the Probe report view share the same read-only owner.
   if (probe && (args["--mode"] === "probe" ||
+      (args["--mode"] === "diff" && !skills) ||
       args["--read-probe-example"] || args["--read-probe-report"])) {
     const index = readProbeExampleIndex(probe);
     if (args["--read-probe-report"]) {
@@ -222,11 +245,27 @@ async function main() {
     }
     const reportFiles = probe.paths.filter(path => classify.probeReports.test(path))
       .map(path => ({ path, sha256: sha(probe.readEntry(path)) }));
-    // Only path/hash deltas can be classified without reading the complete
-    // original report. Do not infer PASS or FAIL from prose keyword counts.
-    const reportDelta = compare(metadata.probeEvidence ?? [],
+    // Prior PASS/FAIL reports and previously excluded plans both count as reviewed
+    // source identities. Only changed reports need outcome/revision review.
+    const reportDelta = compare(reviewedReportRecords(metadata),
       new Map(reportFiles.map(file => [file.path, file.sha256])),
       "sourcePath", "sourceSha256");
+    const packDelta = compare(metadata.codeInventory?.probePackSources ?? [],
+      inventory(probe, probe.paths.filter(path => classify.probePack.test(path))));
+    const toolDelta = compare(metadata.codeInventory?.probeToolSources ?? [],
+      inventory(probe, probe.paths.filter(path => classify.probeTools.test(path))));
+    const probeLock = probe.readJson("skills-lock.json");
+    const probeModules = probe.readJson("modules-lock.json");
+    const probeIntegrity = verifyProbeLock(probe, probeLock, probeModules);
+    const identityChanged =
+      metadata.probeSnapshot?.archiveSha256 !== probe.archiveSha256 ||
+      metadata.probeSnapshot?.observedSkillsLockTag !== index.sourceSkillLockTag ||
+      metadata.probeSnapshot?.observedSkillsLockCommit !== index.sourceSkillLockCommit ||
+      metadata.probeExamples?.indexSha256 !== index.indexSha256;
+    const probeStatus = probeIntegrity.status !== "LOCKS_MATCH_PACKAGED_FILES"
+      ? "BLOCKED_SOURCE_INTEGRITY"
+      : identityChanged || hasChanges(reportDelta) || hasChanges(packDelta) ||
+        hasChanges(toolDelta) ? "REVIEW_REQUIRED" : "NO_CHANGE";
     const familyFor = path => {
       if (/\/p63-aura-/.test(path)) return "p63-aura-lifecycle";
       if (/\/p63-combined-/.test(path)) return "p63-combined";
@@ -246,8 +285,22 @@ async function main() {
     }
     process.stdout.write(JSON.stringify({
       ...index,
+      status: probeStatus,
       reportFiles,
       reportDelta,
+      sourceDeltas: {probePackSources: packDelta, probeTools: toolDelta},
+      reviewedReportCount: reviewedReportRecords(metadata).length,
+      probeIntegrity,
+      review: {
+        decision: probeStatus === "NO_CHANGE" ? "STOP_NO_COMMIT" :
+          probeStatus === "BLOCKED_SOURCE_INTEGRITY" ? "STOP_AND_INVESTIGATE_LOCK" :
+          "REVIEW_CHANGED_PROBE_SOURCE_ONLY",
+        candidateChanged: identityChanged || hasChanges(reportDelta) ||
+          hasChanges(packDelta) || hasChanges(toolDelta),
+        reportPaths: [...reportDelta.added, ...reportDelta.changed, ...reportDelta.removed].sort(),
+        promotion: "SOURCE_AND_OUTCOME_REVIEW_REQUIRED_NO_AUTOMATIC_WRITE",
+        sourceOnly: true,
+      },
       reportFamilyCounts: Object.fromEntries(
         Object.entries(familyCounts).sort(([a], [b]) => a.localeCompare(b))),
       sourceRevisionBoundary: {
@@ -259,7 +312,7 @@ async function main() {
     }, null, 2) + "\n");
     return;
   }
-  if (!skills) throw new Error("Skills ZIP required unless --mode probe or a probe read is selected.");
+  if (!skills) throw new Error("Skills ZIP required for native/lock or combined diff; use --mode probe or --mode diff with only a Probe ZIP.");
   const skillsManifest = skills.readJson("skills.json");
   const native = nativeSourceLayout(skills, skillsManifest);
   if (args["--read-skill"] || args["--read-module"]) {
@@ -324,7 +377,7 @@ async function main() {
     [...moduleAll].filter(([path]) => !/\.(?:test|spec)\.ts$/.test(path))));
   const moduleTestDelta = compare(before.unitTests ?? [], new Map(
     [...moduleAll].filter(([path]) => /\.(?:test|spec)\.ts$/.test(path))));
-  const probeReports = probe ? compare(metadata.probeEvidence ?? [],
+  const probeReports = probe ? compare(reviewedReportRecords(metadata),
     select(probe, classify.probeReports), "sourcePath", "sourceSha256") : null;
   const probePack = probe ? compare(before.probePackSources ?? [],
     select(probe, classify.probePack)) : null;
@@ -368,20 +421,87 @@ async function main() {
       reportsFound: probe.paths.filter(path => classify.probeReports.test(path)).length,
     } : null,
   };
-  const impactedSkills = new Set([...skillDelta.changed, ...skillDelta.removed].map(path =>
-    path.slice("skills/".length, -"/SKILL.md".length)));
+  // The developer can change scripts/references without changing SKILL.md.
+  // Include full native folder hashes, affected module owners, and reverse
+  // dependencies. This is a review scope, never a new gameplay detector.
+  const affectedSkillNames = new Set([
+    ...(nativeSkillChanges.added ?? []), ...(nativeSkillChanges.changed ?? []),
+    ...(nativeSkillChanges.removed ?? []),
+  ]);
+  const directlyChangedModules = new Set([
+    ...(nativeModuleChanges.added ?? []), ...(nativeModuleChanges.changed ?? []),
+    ...(nativeModuleChanges.removed ?? []),
+  ]);
+  const affectedModuleNames = new Set(directlyChangedModules);
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    for (const [name, item] of Object.entries(native.modulesLock.modules)) {
+      if (!affectedModuleNames.has(name) &&
+          item.requires.some(dep => affectedModuleNames.has(dep))) {
+        affectedModuleNames.add(name);
+        expanded = true;
+      }
+    }
+  }
+  for (const name of affectedModuleNames) {
+    const module = native.modulesLock.modules[name] ??
+      priorNative?.modulesLock?.modules?.[name];
+    for (const skill of module?.skill ?? []) affectedSkillNames.add(skill);
+  }
   const affectedPatterns = (metadata.patterns ?? [])
-    .filter(pattern => impactedSkills.has(pattern.sourceId?.replace(/^src\./, "")))
+    .filter(pattern => affectedSkillNames.has(pattern.sourceId?.replace(/^src\./, "")))
     .map(pattern => ({ id: pattern.id, sourceId: pattern.sourceId,
       action: "REVIEW_BEFORE_RETAINING_SOURCE_REVIEWED" }));
   const pending = metadata.pendingIntake;
   const recordedPendingMatches = pending?.status === "PENDING_SEMANTIC_REVIEW" &&
     pending?.inputs?.developerSkills?.archiveSha256 === skills.archiveSha256 &&
     (!probe || pending?.inputs?.skillsProbe?.archiveSha256 === probe.archiveSha256);
+
+  // Matching release tags are not enough to claim the independently supplied
+  // Probe lock contains the same developer source. When versions intentionally
+  // differ, keep both source revisions distinct instead of calling it drift.
+  const sameRelease = probe !== null && native.skillsLock.tag === lock.tag;
+  const differingSkillFolders = sameRelease
+    ? Object.entries(native.skillsLock.skills)
+        .filter(([name, hash]) => lock.skills?.[name] !== hash)
+        .map(([name]) => name)
+    : [];
+  const differingInstalledModuleFiles = [];
+  if (sameRelease) for (const [name, module] of Object.entries(native.modulesLock.modules)) {
+    const installed = probeModules.modules?.[name]?.files ?? {};
+    for (const [relative, digest] of Object.entries(module.files)) {
+      const path = "packs/BP/scripts/modules/" + name + "/" + relative;
+      if (installed[path] !== undefined && installed[path] !== digest)
+        differingInstalledModuleFiles.push(path);
+    }
+  }
+  const sourceIntegrityBlocked = probe !== null &&
+    (probeIntegrity.status !== "LOCKS_MATCH_PACKAGED_FILES" ||
+      differingSkillFolders.length > 0 ||
+      differingInstalledModuleFiles.length > 0);
+  const developerChanged =
+    skills.archiveSha256 !== metadata.sourceSnapshot?.archiveSha256 ||
+    priorNative?.skillsArchiveSha256 !== skills.archiveSha256 ||
+    hasChanges(skillDelta) || hasChanges(moduleDelta) ||
+    hasChanges(moduleTestDelta) || hasChanges(nativeSkillChanges) ||
+    hasChanges(nativeModuleChanges);
+  const probeChanged = probe !== null &&
+    (probe.archiveSha256 !== metadata.probeSnapshot?.archiveSha256 ||
+      lock.tag !== metadata.probeSnapshot?.observedSkillsLockTag ||
+      lock.commit !== metadata.probeSnapshot?.observedSkillsLockCommit ||
+      hasChanges(probeReports) || hasChanges(probePack) || hasChanges(probeTools));
+  const outsideIndexedOwnersChanged =
+    skills.archiveSha256 !== metadata.sourceSnapshot?.archiveSha256 &&
+    !hasChanges(skillDelta) && !hasChanges(moduleDelta) &&
+    !hasChanges(moduleTestDelta) && !hasChanges(nativeSkillChanges) &&
+    !hasChanges(nativeModuleChanges);
+  const status = sourceIntegrityBlocked ? "BLOCKED_SOURCE_INTEGRITY" :
+    developerChanged || probeChanged ? "REVIEW_REQUIRED" : "NO_CHANGE";
   const result = {
     schemaVersion: 1,
     authority: "REFERENCE",
-    status: "PENDING_SEMANTIC_REVIEW",
+    status,
     executableBehavior: "READ_ONLY_NO_UPSTREAM_CODE_EXECUTION",
     activeBaseline: {
       skillsSha256: metadata.sourceSnapshot?.archiveSha256,
@@ -392,8 +512,12 @@ async function main() {
     candidate: candidates,
     recordedPendingMatches,
     versionBoundary: {
-      skillsReleaseMatchesProbeLock:
-        probe ? candidates.developerSkills.releaseClaim === candidates.skillsProbe.observedSkillsLockTag : null,
+      skillsReleaseMatchesProbeLock: probe ? sameRelease : null,
+      matchingSkillFolderCount: probe && sameRelease ?
+        Object.keys(native.skillsLock.skills).length - differingSkillFolders.length : null,
+      differingSkillFolders,
+      differingInstalledModuleFiles,
+      note: "Different developer/Probe versions are independently reviewable; matching tags alone do not prove matching source bytes.",
       proof: "UPSTREAM_PROBE_REPORTS_NOT_LOCAL_MINECRAFT_OR_SELECTED_MAP_PROOF",
     },
     delta: {
@@ -417,7 +541,23 @@ async function main() {
       note: "Native structure is addressed from original ZIP; no byte-for-byte vendoring or implicit runtime execution.",
     },
     affectedPatterns,
-    decision: "REVIEW_PER_SOURCE_AND_CONSUMER_NO_AUTOMATIC_PROMOTION",
+    review: {
+      decision: status === "NO_CHANGE" ? "STOP_NO_COMMIT" :
+        status === "BLOCKED_SOURCE_INTEGRITY" ? "STOP_AND_INVESTIGATE_LOCK" :
+        "REVIEW_CHANGED_SOURCE_AND_CONSUMERS",
+      developerChanged, probeChanged,
+      outsideIndexedOwnersChanged,
+      affectedSkills: [...affectedSkillNames].sort(),
+      affectedModules: [...affectedModuleNames].sort(),
+      affectedReferencePatterns: affectedPatterns.map(pattern => pattern.id),
+      changedProbeReportPaths: probeReports === null ? [] :
+        [...probeReports.added, ...probeReports.changed, ...probeReports.removed].sort(),
+      promotion: "REVIEW_AND_ATOMIC_GITHUB_LOCAL_COMMIT_ONLY_NO_AUTO_PROMOTION",
+      sourceOnly: true,
+    },
+    decision: status === "NO_CHANGE" ? "STOP_NO_COMMIT" :
+      status === "BLOCKED_SOURCE_INTEGRITY" ? "STOP_LOCK_REVIEW" :
+      "REVIEW_PER_SOURCE_AND_CONSUMER_NO_AUTOMATIC_PROMOTION",
   };
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 }
