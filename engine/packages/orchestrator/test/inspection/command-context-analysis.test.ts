@@ -4,7 +4,7 @@ import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import { analyzeCommandContext, commandContextDiagnostics } from "../../src/inspection/command-context-analysis.js";
 import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
 import { analyzeScriptCommandMutationTransactions, scriptCommandMutationRuntimeEvidence } from "../../src/inspection/script-command-transaction-analysis.js";
-import { analyzeKnowledgeRuntime } from "../../src/knowledge-runtime-analysis.js";
+import { analyzeKnowledgeRuntime } from "../../src/inspection/knowledge-runtime-analysis.js";
 
 // Original suite: engine/packages/orchestrator/test/inspection/command-context-analysis.test.ts (blob a2ac42de1838deb1f2fc0ad2add3cd274a67e970)
 {

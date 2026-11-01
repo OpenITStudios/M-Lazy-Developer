@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveGameplayAnalysisPriorities } from "../../src/inspection/gameplay-analysis-priority.js";
 import { discoverGameplaySurfaces } from "../../src/inspection/gameplay-surface-discovery.js";
-import type { InspectArtifactResult } from "../../src/inspect-artifact.js";
+import type { InspectArtifactResult } from "../../src/inspection/inspect-artifact.js";
 import { compareGameplayUnderstandingFingerprints, deriveGameplayUnderstandingFingerprint } from "../../src/inspection/gameplay-understanding-fingerprint.js";
 
 // Original engine/packages/orchestrator/test/inspection/gameplay-analysis-priority.test.ts; source blob d4c8c1ade113c398980344ae3b0f19077ef29651

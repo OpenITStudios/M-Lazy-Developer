@@ -3,7 +3,7 @@ import { describe } from "vitest";
 import { expect } from "vitest";
 import { it } from "vitest";
 import { diffWorldDbNative } from "../../src/inspection/world-db-diff.js";
-import type { WorldDbNativeSummary } from "../../src/world-db-analysis.js";
+import type { WorldDbNativeSummary } from "../../src/inspection/world-db-analysis.js";
 import { worldDbRuntimeEvidence } from "../../src/inspection/world-db-runtime-evidence.js";
 
 // Original suite engine/packages/orchestrator/test/inspection/world-db-diff.test.ts, blob ab35fff102a9c2898a5a96807bbf64ecebf003a5

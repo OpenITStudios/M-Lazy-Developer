@@ -8,7 +8,7 @@ import { inspectDirectory } from "../src/inspection/inspect.js";
 import { telemetryRuntimeEvidence } from "../src/diagnosis/telemetry-evidence.js";
 import { knowledgeRuntimeDiagnostics } from "../../../analyzers/diagnostics/src/index.js";
 import { synthesizeCausalChains } from "../src/diagnosis/causal-analysis.js";
-import { parseTelemetryText } from "../src/telemetry-text.js";
+import { parseTelemetryText } from "../src/diagnosis/telemetry-text.js";
 
 // Original engine/packages/orchestrator/test/telemetry-continuity-causal.test.ts SHA 8beb82e60cdddc01923867823549b91f017533c7
 {

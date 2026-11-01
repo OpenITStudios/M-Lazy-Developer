@@ -1,9 +1,9 @@
 // Consolidated same-owner feature family preserving original source bodies.
 import { describe, expect, it } from "vitest";
 import { parseMcFunction } from "../../../../analyzers/functions/src/index.js";
-import { analyzeFunctionTopology } from "../../src/topology-analysis.js";
-import { analyzeStructureAndChunkRuntime } from "../../src/structure-runtime-analysis.js";
-import { derivePlacementProofs } from "../../src/structure-proof-analysis.js";
+import { analyzeFunctionTopology } from "../../src/inspection/topology-analysis.js";
+import { analyzeStructureAndChunkRuntime } from "../../src/inspection/structure-runtime-analysis.js";
+import { derivePlacementProofs } from "../../src/inspection/structure-proof-analysis.js";
 import { correlateRouteMutations, routeMutationRuntimeEvidence } from "../../src/inspection/route-mutation-analysis.js";
 import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import { analyzeScriptSpatialMutations } from "../../src/inspection/script-spatial-analysis.js";

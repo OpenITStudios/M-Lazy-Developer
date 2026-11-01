@@ -7,7 +7,7 @@ import { planReportCandidateReuse } from "../../src/reporting/report-candidate-r
 import { derivePrimaryFailureSignalsFromDiagnostics } from "../../src/reporting/report-classification-producers.js";
 import { deriveReportDefectClassification } from "../../src/reporting/report-defect-classification.js";
 import type { IntentDiagnosticGateResult } from "../../../diagnostic-reasoning/src/index.js";
-import type { GameplayIntentRuntimeAssessment } from "../../src/gameplay-intent-runtime-stage.js";
+import type { GameplayIntentRuntimeAssessment } from "../../src/inspection/gameplay-intent-runtime-stage.js";
 import { applyProposedBugReview, groupConfirmedDefects } from "../../../bug-report/src/index.js";
 import type { SemanticIr } from "../../../semantic-ir/src/index.js";
 import { bindSourceEvidenceSemanticOwners, resolveSourceSemanticOwner } from "../../src/reporting/report-source-owner.js";

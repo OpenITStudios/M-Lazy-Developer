@@ -7,7 +7,7 @@ import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js"
 import { confirmStaticIntentDefectForReport } from "../../src/reporting/static-report-confirmation-adapter.js";
 import { confirmTesterDefectForReport } from "../../src/reporting/tester-report-confirmation-adapter.js";
 import { confirmGameplayIntentRuntimeDefectForReport } from "../../src/reporting/report-confirmation-adapter.js";
-import type { GameplayIntentRuntimeAssessment } from "../../src/gameplay-intent-runtime-stage.js";
+import type { GameplayIntentRuntimeAssessment } from "../../src/inspection/gameplay-intent-runtime-stage.js";
 
 // Original suite engine/packages/orchestrator/test/reporting/static-report-confirmation-adapter.test.ts, blob a7c3d0181791b01ae0aab242b013c31e106ff918
 {

@@ -4814,11 +4814,11 @@
         "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "validate-merged-module-isolation-and-affected-selection",
-        "sourceBlobSha": "9736a0389edbbd3b324ffd1eb20711454c028393"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "33089b3e9006b9e8e07f91c70f4579a166f4e86f"
       },
       "recommendation": "keep",
-      "rationale": "Original source bodies, imports, bounded fixtures and positive/negative assertions retained as isolated lexical suites. Feature mapped from inspected consumer imports; Vitest/TypeScript performance and isolation NOT EXECUTED.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -4839,7 +4839,7 @@
         ],
         "originalTestCallSites": 16,
         "originalExpectCallSites": 33,
-        "mergedSourceBlobSha": "9736a0389edbbd3b324ffd1eb20711454c028393",
+        "mergedSourceBlobSha": "33089b3e9006b9e8e07f91c70f4579a166f4e86f",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -5111,12 +5111,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Same-directory development family 3 -> 1, retaining 5 it/test call sites and 13 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "2d382d6ae934f0caf8953bded33b56189aa4f793"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "77add7269011c3544c6f7c40f79655d52a1398c5"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
@@ -5142,7 +5142,7 @@
         ],
         "originalTestCallSites": 5,
         "originalExpectCallSites": 13,
-        "mergedSourceBlobSha": "2d382d6ae934f0caf8953bded33b56189aa4f793",
+        "mergedSourceBlobSha": "77add7269011c3544c6f7c40f79655d52a1398c5",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -5193,12 +5193,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "defer",
-      "rationale": "Four calibration report format and scoring scenarios; useful but not a core runtime/inspection release gate during architecture iteration.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "retain-for-targeted-validation",
-        "sourceBlobSha": "018cfa50df2d553093664b146fd8c2c380519f86"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "cb6e65ad24c0bcae863c73154d66873a02655150"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
@@ -5846,11 +5846,11 @@
         "basis": "pinned-source-family-consolidation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-merged-file-isolation-and-affected-import-closure",
-        "sourceBlobSha": "3af3d655780fe7857d895509fcf8ad543d12accc"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "d55865c2c9f5c8908313447a7324afb4c64d9e01"
       },
       "recommendation": "keep",
-      "rationale": "Owner-local feature/lane family: 3 -> 1. Source-level 17 registered it/test callsites and 24 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "world-interaction",
       "mechanicTags": [
         "world.spatial-boundary"
@@ -5877,7 +5877,7 @@
         ],
         "originalTestCallSites": 17,
         "originalExpectCallSites": 24,
-        "mergedSourceBlobSha": "3af3d655780fe7857d895509fcf8ad543d12accc",
+        "mergedSourceBlobSha": "d55865c2c9f5c8908313447a7324afb4c64d9e01",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -6043,11 +6043,11 @@
         "basis": "source-preserving-owner-feature-lane-consolidation",
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
-        "action": "validate-merged-module-isolation-and-affected-selection",
-        "sourceBlobSha": "79f4290441a47f679cdbecff7a14492bc4dbfd40"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "ab5f0eb19582a11801bf2c7eb634429a0cf219de"
       },
       "recommendation": "keep",
-      "rationale": "Original source bodies, imports, bounded fixtures and positive/negative assertions retained as isolated lexical suites. Feature mapped from inspected consumer imports; Vitest/TypeScript performance and isolation NOT EXECUTED.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "map-content",
       "mechanicTags": [
         "map.structure"
@@ -6074,7 +6074,7 @@
         ],
         "originalTestCallSites": 10,
         "originalExpectCallSites": 33,
-        "mergedSourceBlobSha": "79f4290441a47f679cdbecff7a14492bc4dbfd40",
+        "mergedSourceBlobSha": "ab5f0eb19582a11801bf2c7eb634429a0cf219de",
         "execution": "NOT_EXECUTED",
         "priorConsolidationRecords": [
           {
@@ -6133,11 +6133,11 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "f7ffa81fe9a811274c48489110e25580de43e080"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "df54703d0835ce3ffe5f7125a1b1cc46c1fe2331"
       },
       "recommendation": "keep",
-      "rationale": "Source-preserving 2-file family: 3 distinct it/test sites and 7 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "map-database",
       "mechanicTags": [
         "map.database"
@@ -6160,7 +6160,7 @@
         ],
         "originalTestCallSites": 3,
         "originalExpectCallSites": 7,
-        "mergedSourceBlobSha": "f7ffa81fe9a811274c48489110e25580de43e080",
+        "mergedSourceBlobSha": "df54703d0835ce3ffe5f7125a1b1cc46c1fe2331",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -7335,12 +7335,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Release ancestry and evidence revision continuity must fail closed on stale or missing authorization.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
-        "action": "revisit-on-relevant-source-change",
-        "sourceBlobSha": "abc7cf7b87fd8b2e4b3e8dd2fb0521c346deaca0"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "4e515a4091d5043490ff1c22362e6841729fbaf4"
       },
       "functionalArea": "repair-preservation",
       "mechanicTags": [],
@@ -7645,12 +7645,12 @@
         "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162",
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "25a059a73e88156db1a8db1fcbddc8fe148a636b",
         "consumerSymbol": "planReportCandidateReuse"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 4 -> 1, retaining 40 it/test call sites and 90 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Direct source review confirms production invocation of planReportCandidateReuse and distinct case scenarios; no semantic duplicate-deletion authorization.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -7679,7 +7679,7 @@
         ],
         "originalTestCallSites": 40,
         "originalExpectCallSites": 90,
-        "mergedSourceBlobSha": "7cd170a41097cd95c08422b6ab3273ced30af162",
+        "mergedSourceBlobSha": "25a059a73e88156db1a8db1fcbddc8fe148a636b",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -7689,13 +7689,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep",
-      "rationale": "Source-preserving 3-file family: 11 distinct it/test sites and 12 expect sites. Preserve separate proof boundaries and lexical scopes; TypeScript/Vitest NOT EXECUTED.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
-        "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "d01b3ff15895820abd15bfce8f971e8f1b932d51"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "22b5fd2fa70c4a077350f4a8158d7185ae603ef0"
       },
       "functionalArea": "reporting",
       "mechanicTags": [],
@@ -7721,7 +7721,7 @@
         ],
         "originalTestCallSites": 11,
         "originalExpectCallSites": 12,
-        "mergedSourceBlobSha": "d01b3ff15895820abd15bfce8f971e8f1b932d51",
+        "mergedSourceBlobSha": "22b5fd2fa70c4a077350f4a8158d7185ae603ef0",
         "execution": "NOT_EXECUTED"
       }
     },
@@ -7896,11 +7896,11 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
-        "action": "review-merged-file-isolation-and-affected-import-closure",
-        "sourceBlobSha": "cb6dbc6cbc83ecd742d8d5b8b1164ecaff87d0c4"
+        "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
+        "sourceBlobSha": "2c55e9d0203b82cd28e5b7bfa1a54a6d8b168138"
       },
       "recommendation": "keep",
-      "rationale": "Owner-local feature/lane family: 4 -> 1. Source-level 16 registered it/test callsites and 41 expect() callsites retained verbatim with lexical isolation; TypeScript/Vitest/Minecraft not executed, no measured runtime speedup.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -7929,7 +7929,7 @@
         ],
         "originalTestCallSites": 16,
         "originalExpectCallSites": 41,
-        "mergedSourceBlobSha": "cb6dbc6cbc83ecd742d8d5b8b1164ecaff87d0c4",
+        "mergedSourceBlobSha": "2c55e9d0203b82cd28e5b7bfa1a54a6d8b168138",
         "execution": "NOT_EXECUTED"
       }
     },

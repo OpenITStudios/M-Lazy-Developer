@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   appendDecisionLedgerEntry,
   createDecisionLedger,
-} from "../../src/decision-ledger.js";
+} from "../../src/workflow/decision-ledger.js";
 import {
   decideRepairReleaseWithLineage,
 } from "../../src/repair/repair-release-lineage.js";
 import type {
   RepairLifecycleState,
-} from "../../src/repair-lifecycle.js";
+} from "../../src/repair/repair-lifecycle.js";
 import type {
   RepairProofBundle,
-} from "../../src/repair-proof-bundle.js";
+} from "../../src/repair/repair-proof-bundle.js";
 import {
   CONTRACT_REGISTRY_REVISION,
 } from "../../../project-model/src/index.js";

@@ -1,13 +1,13 @@
 // Source-preserving same-owner, same-feature, same-lane suite.
 import { describe, expect, it } from "vitest";
 import { parseMcFunction } from "../../../../analyzers/functions/src/index.js";
-import { analyzeStructureAndChunkRuntime } from "../../src/structure-runtime-analysis.js";
+import { analyzeStructureAndChunkRuntime } from "../../src/inspection/structure-runtime-analysis.js";
 import { derivePlacementProofs } from "../../src/inspection/structure-proof-analysis.js";
 import { assessStructureTransitionResidue } from "../../src/inspection/structure-transition-residue.js";
 import type { McStructureModel } from "../../../../adapters/mcstructure/src/types.js";
 import { SemanticGraph } from "../../../graph/src/index.js";
 import type { SemanticNode } from "../../../graph/src/index.js";
-import { analyzeEmbeddedStructureCommands } from "../../src/embedded-structure-commands.js";
+import { analyzeEmbeddedStructureCommands } from "../../src/inspection/embedded-structure-commands.js";
 import { populateEmbeddedStructureCommandGraph } from "../../src/inspection/embedded-structure-graph.js";
 import { correlateEmbeddedCommandsWithNativeChunks } from "../../src/inspection/embedded-native-correlation.js";
 import { structureIdentifier } from "../../src/inspection/inspect-identifiers.js";
@@ -16,7 +16,7 @@ import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
 import { parseScriptFile } from "../../../../analyzers/scripts/src/index.js";
 import { correlateScriptStructureLoads } from "../../src/inspection/script-structure-correlation.js";
 import { scriptStructureRuntimeEvidence } from "../../src/inspection/script-structure-correlation.js";
-import { analyzeKnowledgeRuntime } from "../../src/knowledge-runtime-analysis.js";
+import { analyzeKnowledgeRuntime } from "../../src/inspection/knowledge-runtime-analysis.js";
 import { structureRuntimeEvidence } from "../../src/inspection/structure-runtime-evidence.js";
 
 // Original suite: engine/packages/orchestrator/test/inspection/structure-proof-analysis.test.ts (blob e12ba811a4741451628b7ab18f0b0c5008e05b3a)

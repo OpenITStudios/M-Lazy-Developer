@@ -6,7 +6,7 @@ import {
 } from "../../src/inspection/gameplay-calibration-corpus.js";
 import type {
   GameplayUnderstandingFingerprint,
-} from "../../src/gameplay-understanding-fingerprint.js";
+} from "../../src/inspection/gameplay-understanding-fingerprint.js";
 
 function fingerprint(
   nodes: number,
