@@ -62,12 +62,47 @@ function loadInventory() {
     throw new Error("Invalid functional area taxonomy");
   }
   const validAreas = new Set(data.functionalAreaTaxonomy.areas);
+  // Parents partition existing functional areas; they are navigation only.
+  const parents = data.functionalAreaTaxonomy.parents;
+  if (!Array.isArray(parents) || parents.length !== 6) {
+    throw new Error("Invalid functional area parent categories");
+  }
+  const seenParents = new Set();
+  const assignedAreas = new Set();
+  for (const parent of parents) {
+    if (!parent || typeof parent.id !== "string" ||
+        !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(parent.id) ||
+        seenParents.has(parent.id) ||
+        typeof parent.label !== "string" || !parent.label.trim() ||
+        typeof parent.scope !== "string" || !parent.scope.trim() ||
+        !Array.isArray(parent.areas) || parent.areas.length === 0) {
+      throw new Error("Invalid or duplicate parent category in test inventory");
+    }
+    seenParents.add(parent.id);
+    for (const area of parent.areas) {
+      if (typeof area !== "string" || !validAreas.has(area) ||
+          assignedAreas.has(area)) {
+        throw new Error("Unknown or multiply assigned functional area: " + area);
+      }
+      assignedAreas.add(area);
+    }
+  }
+  if (assignedAreas.size !== validAreas.size) {
+    throw new Error("Unassigned functional areas in parent categories");
+  }
   const featureCatalog = data.featureCatalog;
   if (!featureCatalog || typeof featureCatalog !== "object" ||
       Array.isArray(featureCatalog) || Object.keys(featureCatalog).length === 0) {
     throw new Error("Missing canonical test feature catalog");
   }
   const validFeatures = new Set(Object.keys(featureCatalog));
+  for (const [featureId, feature] of Object.entries(featureCatalog)) {
+    if (!/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/.test(featureId) ||
+        !feature || !validAreas.has(feature.area) ||
+        typeof feature.label !== "string" || !feature.label.trim()) {
+      throw new Error("Unmapped feature or invalid area/label: " + featureId);
+    }
+  }
   const upstream = data.upstreamCategoryCrosswalk;
   if (upstream?.schemaVersion !== 1 ||
       !Array.isArray(upstream.developer?.skills) ||
@@ -502,15 +537,20 @@ if (mode === "--acceptance" && args.length <= 1) {
   vitestFiles = matching.filter((path) => !nativeFiles.includes(path));
 } else if (mode === "--list-areas" && args.length === 1) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
-  console.log("Primary functional-area mapping; secondary mechanic tags may cross areas. NO TESTS EXECUTED.");
-  for (const area of inventory.functionalAreaTaxonomy.areas) {
-    const files = registeredTests.filter(test => test.functionalArea === area);
-    const features = new Set(files.map(test => test.featureId));
-    const inspected = files.filter(test => test.featureMappingBasis === "source-case-inspected").length;
-    console.log(area + ": " + files.length + " primary source-test files / " +
-      features.size + " primary behavior features (" + inspected +
-      " source-case-inspected, " + (files.length - inspected) + " without evidence)" +
-      (files.length === 0 ? " [NO PRIMARY TESTS]" : "") + ".");
+  console.log("Six navigation parents / 17 functional areas. Secondary mechanic tags may cross areas. NO TESTS EXECUTED.");
+  for (const parent of inventory.functionalAreaTaxonomy.parents) {
+    const groupFiles = registeredTests.filter(test => parent.areas.includes(test.functionalArea));
+    console.log(parent.label + " [" + parent.id + "]: " + groupFiles.length +
+      " primary source-test files across " + parent.areas.length + " areas.");
+    for (const area of parent.areas) {
+      const files = groupFiles.filter(test => test.functionalArea === area);
+      const features = new Set(files.map(test => test.featureId));
+      const inspected = files.filter(test => test.featureMappingBasis === "source-case-inspected").length;
+      console.log("  " + area + ": " + files.length + " primary source-test files / " +
+        features.size + " primary behavior features (" + inspected +
+        " source-case-inspected, " + (files.length - inspected) + " without evidence)" +
+        (files.length === 0 ? " [NO PRIMARY TESTS]" : "") + ".");
+    }
   }
   console.log("Areas with zero primary tests remain valid taxonomy entries, not evidence of absent mechanics. Use --list-mechanics for cross-area secondary tags.");
   process.exit(0);
@@ -520,6 +560,8 @@ if (mode === "--acceptance" && args.length <= 1) {
     console.error("Unknown functional area: " + args[1] + ". Use --list-areas.");
     process.exit(2);
   }
+  const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(args[1]));
+  console.log("Parent: " + parent.label + " [" + parent.id + "] / area: " + args[1] + ". NO TESTS EXECUTED.");
   const matches = registeredTests.filter(item => item.functionalArea === args[1]);
   if (matches.length === 0) {
     console.log(args[1] + ": 0 primary source-test files. No primary coverage is registered; this is not proof the underlying behavior is absent.");
@@ -531,18 +573,24 @@ if (mode === "--acceptance" && args.length <= 1) {
   }
   process.exit(0);
  } else if (mode === "--list-features" && args.length === 1) {
-  const catalog = JSON.parse(readFileSync(inventoryPath, "utf8")).featureCatalog;
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const catalog = inventory.featureCatalog;
+  const parentFor = area => inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(area)).id;
   for (const [feature, spec] of Object.entries(catalog).sort(([a], [b]) => a.localeCompare(b))) {
     console.log(feature + ": " + registeredTests.filter(test => test.featureId === feature).length +
-      " files [" + spec.area + "] " + spec.label);
+      " files [" + parentFor(spec.area) + " / " + spec.area + "] " + spec.label);
   }
   process.exit(0);
 } else if (mode === "--show-feature" && args.length === 2) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const spec = inventory.featureCatalog[args[1]];
   const matches = registeredTests.filter(test => test.featureId === args[1]);
-  if (!matches.length) {
+  if (!spec || !matches.length) {
     console.error("Unknown/unmapped feature: " + args[1]);
     process.exit(2);
   }
+  const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(spec.area));
+  console.log(args[1] + ": " + spec.label + " [" + parent.id + " / " + spec.area + "]. NO TESTS EXECUTED.");
   for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
   process.exit(0);
 } else if (mode === "--list-test-groups" && args.length === 1) {

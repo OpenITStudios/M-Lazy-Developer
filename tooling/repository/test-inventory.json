@@ -23,11 +23,11 @@
         "sourceBlobSha": "5b37da6bf144cdafb5cea73404ada6b674af612a"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "engineering-tooling",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\nPrimary taxonomy correction (same test source SHA): Source review: frozen map-audit scoring checks grounded positives/negatives, missing evidence, false negatives and forged receipts; the primary feature is reliability/benchmark assessment, not repository structure.",
+      "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.repository",
+      "featureId": "audit.reliability",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -2953,11 +2953,11 @@
         "consumerSymbol": "buildInvalidationPlan"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes buildInvalidationPlan consumer invocation and observed assertions; not a duplicate-removal authorization.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review establishes buildInvalidationPlan consumer invocation and observed assertions; not a duplicate-removal authorization.\nPrimary taxonomy correction (same test source SHA): Source review: buildInvalidationPlan asserts graph node and reverse-dependent invalidation. Its primary feature is graph dependency behavior, not repository tooling.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.repository",
+      "featureId": "tooling.graph",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -8351,11 +8351,11 @@
         "sourceBlobSha": "2c066bb838f567a7bee696432df872848405a0e8"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
-      "functionalArea": "engineering-tooling",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\nPrimary taxonomy correction (same test source SHA): Source review: SourceRef locator precision, validity and matching preserve selected-artifact evidence traceability, not repository build/test concerns.",
+      "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.repository",
+      "featureId": "audit.evidence-integrity",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -8453,11 +8453,11 @@
         "sourceBlobSha": "61c31ea597679c1663f197ae55a32b645fb10b34"
       },
       "recommendation": "keep",
-      "rationale": "Work-session references preserve monotonic progress and refuse silent artifact rebasing.",
+      "rationale": "Work-session references preserve monotonic progress and refuse silent artifact rebasing.\nPrimary taxonomy correction (same test source SHA): Source review: checkpoint revisions, work-session transitions, blockers and artifact rebasing belong to durable project/work-session continuity.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.repository",
+      "featureId": "tooling.projects",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -9925,11 +9925,11 @@
         "sourceBlobSha": "a4188a8cdea0a019cdeef1165f51d5c46507bf05"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\nPrimary taxonomy correction (same test source SHA): Source review: builtin capability dependencies, affected-source impact and ordered task graph planning are graph/dependency responsibilities.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
-      "featureId": "tooling.repository",
+      "featureId": "tooling.graph",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -10315,7 +10315,68 @@
       "platform-compatibility",
       "engineering-tooling"
     ],
-    "rule": "One inspected primary functional area and feature per source-test file; optional nonexclusive mechanic tags, including [] when no specific mechanic mapping is justified. SHA-bound source test categorization is not a selected-map bug-finding receipt or execution success."
+    "rule": "Exactly one evidence-reviewed primary functional area and feature per physical test file. Parent categories partition the 17 declared functional areas for navigation only and are derived through feature.area; no parent, path or test lane becomes another implementation or gameplay owner. Secondary mechanic tags may cross areas and empty primary areas remain visible. Source classification is not test execution or Minecraft gameplay proof.",
+    "parents": [
+      {
+        "id": "source-platform",
+        "label": "Source & Platform",
+        "scope": "Physical map/source formats, authored script parsing and edition compatibility; not the player-facing gameplay model.",
+        "areas": [
+          "map-database",
+          "map-content",
+          "gameplay-scripting",
+          "platform-compatibility"
+        ]
+      },
+      {
+        "id": "gameplay-systems",
+        "label": "Gameplay Systems",
+        "scope": "Player-facing lobby, session, match, persistence, combat/entity, economy and world-interaction behavior.",
+        "areas": [
+          "lobby-pre-match",
+          "player-session",
+          "arena-match",
+          "player-state-persistence",
+          "combat-entities",
+          "inventory-economy",
+          "world-interaction"
+        ]
+      },
+      {
+        "id": "gameplay-understanding",
+        "label": "Gameplay Understanding",
+        "scope": "Evidence-bounded reconstruction of authored intent, systems, scenarios and gameplay semantics.",
+        "areas": [
+          "gameplay-interpretation"
+        ]
+      },
+      {
+        "id": "audit-evidence",
+        "label": "Audit & Evidence",
+        "scope": "Source-scoped diagnosis, causal proof, runtime observations and their evidence boundaries.",
+        "areas": [
+          "audit-diagnosis",
+          "runtime-telemetry"
+        ]
+      },
+      {
+        "id": "repair-delivery",
+        "label": "Repair & Delivery",
+        "scope": "Authorized repair, preservation, verification and single-source report projections.",
+        "areas": [
+          "repair-preservation",
+          "reporting"
+        ]
+      },
+      {
+        "id": "engineering",
+        "label": "Engineering",
+        "scope": "Repository tools, developer task graphs, work-session/project continuity and publication tooling.",
+        "areas": [
+          "engineering-tooling"
+        ]
+      }
+    ]
   },
   "featureCatalog": {
     "arena.admission-authority": {
@@ -10556,7 +10617,7 @@
     },
     "audit.evidence-integrity": {
       "area": "audit-diagnosis",
-      "label": "Evidence recovery, consistency and traceability",
+      "label": "Source provenance precision, evidence recovery and traceability",
       "upstream": {
         "relation": "LAZY_INTERNAL_ONLY",
         "skills": [],
@@ -10613,7 +10674,7 @@
     },
     "audit.reliability": {
       "area": "audit-diagnosis",
-      "label": "Regression knowledge, retest and release assurance",
+      "label": "Regression and benchmark reliability, retest and release assurance",
       "upstream": {
         "relation": "TOPIC_REFERENCE_ONLY",
         "skills": [
@@ -11796,7 +11857,7 @@
     },
     "tooling.graph": {
       "area": "engineering-tooling",
-      "label": "Repository ownership and graph",
+      "label": "Semantic graphs, dependency planning and targeted invalidation",
       "upstream": {
         "relation": "LAZY_INTERNAL_ONLY",
         "skills": [],
@@ -11807,7 +11868,7 @@
     },
     "tooling.projects": {
       "area": "engineering-tooling",
-      "label": "Project workspace and publication",
+      "label": "Project and work-session lifecycle, workspace and publication",
       "upstream": {
         "relation": "TOPIC_REFERENCE_ONLY",
         "skills": [
@@ -11835,7 +11896,7 @@
     },
     "tooling.repository": {
       "area": "engineering-tooling",
-      "label": "Repository structure and build/test workflow",
+      "label": "Repository source/test tooling, CLI routing and affected-work plans",
       "upstream": {
         "relation": "TOPIC_REFERENCE_ONLY",
         "skills": [
