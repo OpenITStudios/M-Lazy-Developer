@@ -110,3 +110,42 @@ checker, a new test, a proved runtime result or an alias to a missing
 primary test. No alternate tag aliases or compatibility registry were
 created. A previously saved `--show-mechanic map.chunk` query must use
 `world.chunk-readiness`.
+
+
+## Read-only category-to-test navigation
+
+The **existing** `tooling/repository/run-tests.mjs` exposes a coherent
+drill-down from category to domain to feature to optional mechanic topic
+and then to the exact source-test path. The inventory remains the sole
+authority; these commands only read existing source metadata:
+
+```text
+--list-areas
+  -> --show-category gameplay-systems
+  -> --show-area arena-match
+  -> --show-feature arena.start-ownership
+  -> --show-mechanic arena.start
+  -> --show-test engine/packages/orchestrator/test/repair/arena-start-ownership-guard-realizer.test.ts
+```
+
+`--show-category` lists its existing domains and each domain's registered
+features. `--show-area` groups features rather than mixing file paths from
+different owners. `--show-feature` shows secondary mechanic tags when
+available and the complete list of its primary source-test files;
+`--show-mechanic` shows linked files **grouped by their own primary**
+domain and feature, including cross-domain relationships. Mechanics are
+optional: an untagged file remains reachable directly through its feature.
+`--show-test` shows that file's exact classification, source-review Git
+blob, implementation owner, selection lane and mechanic relations.
+
+**Evidence and status remain separate:** `functionalArea`, `featureId`
+and `mechanicTags` answer *what source behavior a file covers*;
+`owner` identifies the canonical implementation responsibility;
+`lane` answers *why the runner might select it*; `review`,
+`featureMappingBasis` and source blob SHA record source-inspection
+provenance, not correctness. The inventory has **no current execution
+receipt or PASS/FAIL authority**. Read-only navigation prints this limit
+explicitly and never invokes Vitest, TypeScript or Minecraft. A lane
+named `runtime` or `acceptance` is **not** an observed runtime or
+acceptance result. Existing execution selection commands and CI policy
+remain unchanged.

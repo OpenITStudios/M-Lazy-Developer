@@ -589,6 +589,31 @@ if (mode === "--acceptance" && args.length <= 1) {
   }
   console.log("Areas with zero primary tests remain valid taxonomy entries, not evidence of absent mechanics. Use --list-mechanics for cross-area secondary tags.");
   process.exit(0);
+} else if (mode === "--show-category" && args.length === 2) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.id === args[1]);
+  if (!parent) {
+    console.error("Unknown category: " + args[1] + ". Use --list-areas to see all categories.");
+    process.exit(2);
+  }
+  const categoryTests = registeredTests.filter(test => parent.areas.includes(test.functionalArea));
+  console.log("CATEGORY: " + parent.label + " [" + parent.id + "]");
+  console.log(parent.scope);
+  console.log("Primary source-test files: " + categoryTests.length + ". CLASSIFICATION ONLY; NO TESTS EXECUTED.");
+  for (const area of parent.areas) {
+    const areaTests = categoryTests.filter(test => test.functionalArea === area);
+    const features = Object.entries(inventory.featureCatalog)
+      .filter(([, spec]) => spec.area === area)
+      .sort(([a], [b]) => a.localeCompare(b));
+    console.log("  DOMAIN: " + area + " [" + areaTests.length + " files / " + features.length +
+      " features]" + (features.length === 0 ? " [NO PRIMARY FEATURE]" : ""));
+    for (const [id, spec] of features) {
+      const count = areaTests.filter(test => test.featureId === id).length;
+      console.log("    FEATURE: " + id + " [" + count + " files] " + spec.label);
+    }
+  }
+  console.log("Drill down: --show-area <domain>, then --show-feature <feature-id>.");
+  process.exit(0);
 } else if (mode === "--show-area" && args.length === 2) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
   if (!inventory.functionalAreaTaxonomy.areas.includes(args[1])) {
@@ -596,18 +621,27 @@ if (mode === "--acceptance" && args.length <= 1) {
     process.exit(2);
   }
   const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(args[1]));
-  console.log("Parent: " + parent.label + " [" + parent.id + "] / area: " + args[1] + ". NO TESTS EXECUTED.");
-  const matches = registeredTests.filter(item => item.functionalArea === args[1]);
-  if (matches.length === 0) {
-    console.log(args[1] + ": 0 primary source-test files. No primary coverage is registered; this is not proof the underlying behavior is absent.");
-    console.log("Inspect cross-area secondary mechanic tags with --list-mechanics and --show-mechanic; tags are not primary test mappings. NO TESTS EXECUTED.");
+  const matches = registeredTests.filter(test => test.functionalArea === args[1]);
+  const features = Object.entries(inventory.featureCatalog)
+    .filter(([, spec]) => spec.area === args[1])
+    .sort(([a], [b]) => a.localeCompare(b));
+  console.log("CATEGORY: " + parent.label + " [" + parent.id + "] > DOMAIN: " + args[1]);
+  console.log(matches.length + " primary source-test files / " + features.length +
+    " features. CLASSIFICATION ONLY; NO TESTS EXECUTED.");
+  if (features.length === 0) {
+    console.log("No primary feature or test is registered for this domain; this does not establish absence of the gameplay mechanic.");
+    console.log("Secondary cross-domain topics are separate: --list-mechanics and --show-mechanic <tag>.");
     process.exit(0);
   }
-  for (const test of matches) {
-    console.log(test.featureId + "  " + test.path + (test.mechanicTags.length ? " [" + test.mechanicTags.join(", ") + "]" : "") + " (" + test.featureMappingBasis + ")");
+  for (const [id, spec] of features) {
+    const owned = matches.filter(test => test.featureId === id);
+    const mechanicIds = new Set(owned.flatMap(test => test.mechanicTags));
+    console.log("  FEATURE: " + id + " (" + owned.length + " files / " +
+      mechanicIds.size + " secondary mechanic tags) - " + spec.label);
   }
+  console.log("Drill down: --show-feature <feature-id> for mechanics and exact test paths.");
   process.exit(0);
- } else if (mode === "--list-features" && args.length === 1) {
+} else if (mode === "--list-features" && args.length === 1) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
   const catalog = inventory.featureCatalog;
   const parentFor = area => inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(area)).id;
@@ -619,14 +653,66 @@ if (mode === "--acceptance" && args.length <= 1) {
 } else if (mode === "--show-feature" && args.length === 2) {
   const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
   const spec = inventory.featureCatalog[args[1]];
-  const matches = registeredTests.filter(test => test.featureId === args[1]);
+  const matches = registeredTests.filter(test => test.featureId === args[1])
+    .sort((a, b) => a.path.localeCompare(b.path));
   if (!spec || !matches.length) {
     console.error("Unknown/unmapped feature: " + args[1]);
     process.exit(2);
   }
   const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(spec.area));
-  console.log(args[1] + ": " + spec.label + " [" + parent.id + " / " + spec.area + "]. NO TESTS EXECUTED.");
-  for (const test of matches) console.log(test.path + " (" + test.featureMappingBasis + ")");
+  console.log("CATEGORY: " + parent.label + " > DOMAIN: " + spec.area + " > FEATURE: " + args[1]);
+  console.log(spec.label + " [" + matches.length + " source-test files]. CLASSIFICATION ONLY; NO TESTS EXECUTED.");
+  const mechanicIds = [...new Set(matches.flatMap(test => test.mechanicTags))].sort();
+  if (mechanicIds.length) {
+    console.log("SECONDARY MECHANIC TOPICS (optional and possibly cross-domain):");
+    for (const id of mechanicIds) {
+      const group = inventory.mechanicTagVocabulary.groups.find(group =>
+        group.tags.some(tag => tag.id === id));
+      const tag = group.tags.find(tag => tag.id === id);
+      const count = matches.filter(test => test.mechanicTags.includes(id)).length;
+      console.log("  " + id + " [" + count + " of " + matches.length + " feature files] - " + tag.label);
+    }
+  } else {
+    console.log("SECONDARY MECHANICS: none assigned; primary feature classification is still valid.");
+  }
+  console.log("SOURCE TEST FILES (lane is selection, never PASS/FAIL):");
+  for (const test of matches) {
+    console.log("  " + test.path + " [lane=" + test.lane +
+      "; tags=" + (test.mechanicTags.join(", ") || "none") + "]");
+  }
+  console.log("Drill down: --show-mechanic <tag> for cross-feature relations, or --show-test <exact-test-path>.");
+  process.exit(0);
+} else if (mode === "--show-test" && args.length === 2) {
+  const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
+  const test = registeredTests.find(item => item.path === args[1]);
+  if (!test) {
+    console.error("Unknown registered source-test path: " + args[1] + ". Use --show-feature or --show-mechanic.");
+    process.exit(2);
+  }
+  const feature = inventory.featureCatalog[test.featureId];
+  const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(test.functionalArea));
+  console.log("SOURCE-TEST CLASSIFICATION (READ-ONLY; NO TESTS EXECUTED)");
+  console.log("Category: " + parent.label + " [" + parent.id + "]");
+  console.log("Domain: " + test.functionalArea);
+  console.log("Primary feature: " + test.featureId + " - " + feature.label);
+  console.log("Test path: " + test.path);
+  console.log("Implementation owner: " + test.owner);
+  if (test.mechanicTags.length) {
+    console.log("Secondary mechanic topics:");
+    for (const id of test.mechanicTags) {
+      const group = inventory.mechanicTagVocabulary.groups.find(group => group.tags.some(tag => tag.id === id));
+      const tag = group.tags.find(tag => tag.id === id);
+      console.log("  " + id + " [" + group.label + "] - " + tag.label);
+    }
+  } else {
+    console.log("Secondary mechanic topics: none (optional).");
+  }
+  console.log("SOURCE EVIDENCE / INVENTORY REVIEW (not executable proof):");
+  console.log("  Git test blob SHA: " + test.triage.sourceBlobSha);
+  console.log("  Review: " + test.review + "; feature mapping: " + test.featureMappingBasis);
+  console.log("  Mechanic mapping: " + test.mechanicMappingBasis + "; triage: " + test.recommendation);
+  console.log("TEST SELECTION (not result): " + test.lane + " - " + inventory.lanes[test.lane]);
+  console.log("EXECUTION OUTCOME: NOT REPRESENTED IN THIS INVENTORY. No test, typecheck, or Minecraft run was invoked by this read-only command.");
   process.exit(0);
 } else if (mode === "--list-test-groups" && args.length === 1) {
   // Show human-readable topics first; E/G/P source identities remain in
@@ -881,10 +967,24 @@ if (mode === "--acceptance" && args.length <= 1) {
     process.exit(2);
   }
   const tag = group.tags.find(tag => tag.id === args[1]);
-  const matches = registeredTests.filter(test => test.mechanicTags.includes(args[1]));
-  console.log(tag.id + ": " + tag.label + " [" + group.label + "]. NO TESTS EXECUTED.");
+  const matches = registeredTests.filter(test => test.mechanicTags.includes(args[1]))
+    .sort((a, b) => a.functionalArea.localeCompare(b.functionalArea) ||
+      a.featureId.localeCompare(b.featureId) || a.path.localeCompare(b.path));
+  console.log("SECONDARY MECHANIC: " + tag.id + " - " + tag.label + " [" + group.label + "]");
   console.log(tag.meaning);
-  for (const test of matches) console.log(test.path + " [" + test.featureId + "; " + test.featureMappingBasis + "]");
+  console.log(matches.length + " linked source-test files across primary features. CLASSIFICATION ONLY; NO TESTS EXECUTED.");
+  let previous = "";
+  for (const test of matches) {
+    const id = test.functionalArea + "|" + test.featureId;
+    if (id !== previous) {
+      const parent = inventory.functionalAreaTaxonomy.parents.find(group => group.areas.includes(test.functionalArea));
+      console.log("  CATEGORY: " + parent.id + " > DOMAIN: " + test.functionalArea +
+        " > FEATURE: " + test.featureId + " (" + inventory.featureCatalog[test.featureId].label + ")");
+      previous = id;
+    }
+    console.log("    TEST: " + test.path + " [owner=" + test.owner + "; lane=" + test.lane + "]");
+  }
+  console.log("This secondary topic does not change any file's primary area or feature. Drill down: --show-test <exact-test-path>.");
   process.exit(0);
 } else if (mode === "--list-lanes" && args.length === 1) {
   const tests = registeredTests;
@@ -965,7 +1065,7 @@ if (mode === "--acceptance" && args.length <= 1) {
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
-  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --list-upstream-skills | --show-upstream-skill skill | --show-upstream-module module | --list-probe-examples | --show-probe-example example | --list-test-groups | --show-test-group skill/id|module/id|example/E1|probe/P52|internal[/area] | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
+  console.error("Usage: run-tests.mjs [--acceptance | --full | --lane safety|acceptance|runtime|regression|development | --list-lanes | --list-areas | --show-category parent-id | --show-area area | --list-features | --show-feature id | --list-mechanics | --show-mechanic tag | --show-test exact-repository-test-path | --list-upstream-skills | --show-upstream-skill skill | --show-upstream-module module | --list-probe-examples | --show-probe-example example | --list-test-groups | --show-test-group skill/id|module/id|example/E1|probe/P52|internal[/area] | --focus path/to/file.test.ts ... | --affected [--integration] [--plan] [--base-sha exact-commit] changed/source-or-bound-data ...]");
   process.exit(2);
 }
 
