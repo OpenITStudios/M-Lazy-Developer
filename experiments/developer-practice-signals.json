@@ -1220,13 +1220,13 @@
       "probeToolScriptFiles": 46,
       "duplicatedInstalledSkillScripts": 58,
       "note": "Current original v0.35.0 ZIP code inventory: 137 Probe pack TS sources and 46 tool references, pinned by source SHA. Upstream scripts not run.",
-      "installedSkillScriptIdentityNote": "Current probe ZIP contains 29 script files under .agents/skills/ and 29 mirrored under .claude/skills/, locked to v0.23.0. They are external instructions/scripts, not imported."
+      "installedSkillScriptIdentityNote": "The v0.35.0 Probe ZIP contains 29 direct skill-script files under .agents/skills/ and 29 mirrored under .claude/skills/ (excluding four project-template pack scripts per mirror). These external instructions/scripts are not installed or executed by M-Lazy-Developer."
     },
     "sourcePackFiles": 137,
     "databaseInstalledVersion": "2.1.1",
     "databaseProvenance": "Exact four *.ts files present in ZIP skills-probe-main.zip; independent upstream repository revisions not verified.",
-    "probeToolScriptSourcesTracked": 35,
-    "reportSourceIdentityPolicy": "49 SHA-pinned report texts, 22 originally indexed from previousArchiveSha256 and 27 newly indexed from current archive. All original 22 report digests were reobserved byte-for-byte in the new ZIP. Source-file references in older reports may differ from the latest 106-file code inventory and must remain historically pinned.",
+    "probeToolScriptSourcesTracked": 46,
+    "reportSourceIdentityPolicy": "Original report text SHA, archive origin and fixture/revision identities remain distinct. Current source-scoped outcomes/attempts, non-outcome documents and pending reviews are accounted separately. Older fixture pins must not be retroactively overwritten from newer Probe pack-source inventories. All upstream outcomes are publisher-reported, never replayed gameplay proof.",
     "reportReviewMethod": "Reviewed report headers, scope, decisive case outcomes, supplemental later sections and source revisions. Promoted only 25 source-reported scoped outcomes, not 15 non-outcome documents. Publisher claims not replayed or independently verified as Minecraft proof.",
     "archiveHistorySha256": [
       "04f7b3235e97dcfe879ec715385fcf8c4d85d4e863a2049ad72d887564731203",

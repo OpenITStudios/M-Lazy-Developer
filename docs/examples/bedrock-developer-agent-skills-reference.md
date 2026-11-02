@@ -11,7 +11,7 @@ lifecycle: ACTIVE
 
 ## Current source reference — 1 November 2026
 
-Publisher-declared developer v0.35.0 and independent Skills Probe v0.35.0 ZIPs are now pinned in `skills/bedrock/source-lock.json`; 24 skill folders and 45 Probe module files matched. `experiments/developer-practice-signals.json` remains the only curated reference owner: 17 original typed-source map investigation hints stay source-gated, while analytics/particles are unrouted. The 89 original Probe texts are accounted for by SHA: 49 historical reviewed outcomes, 25 new bounded outcome/attempt reports, and 15 non-outcome documents. They remain publisher-reported evidence only. This is developer-authored guidance, not official Minecraft policy or proof the current map is bug-free.
+Publisher-declared developer v0.35.0 and independent Skills Probe v0.35.0 ZIPs are now pinned in `skills/bedrock/source-lock.json`; 24 skill folders and 45 Probe module files matched. `experiments/developer-practice-signals.json` remains the only curated reference owner: 17 source-reviewed typed-source map investigation hints stay source-gated, while analytics/particles are unrouted. The 89 original Probe texts are accounted for by SHA: 49 historical reviewed outcomes, 25 new bounded outcome/attempt reports, and 15 non-outcome documents. They remain publisher-reported evidence only. This is developer-authored guidance, not official Minecraft policy or proof the current map is bug-free.
 
 ## Historical selective source intake — 24 October 2026
 

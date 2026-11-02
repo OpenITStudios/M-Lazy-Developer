@@ -130,7 +130,8 @@ The current supplied Skills Probe ZIP has a separate `skills-lock.json`
 three index `PASS` and eleven `pending` as published by that archive.
 The SHA-pinned **source-index metadata**, not raw third-party code, lives
 in the *existing* `experiments/developer-practice-signals.json#probeExamples`
-alongside the current 49-report `probeEvidence[]` source attributions. The index
+alongside the current 74 source-scoped outcome/attempt `probeEvidence[]` records
+and 15 separately classified non-outcome reports. The index
 is tied to the separately observed probe ZIP SHA and original target
 `education 26.32` / engine `1.26.30`. A PASS in the index does not
 mean the engineStatus is PASS or that another world was observed.
@@ -153,11 +154,11 @@ The command output is external reference text/data, never an observed
 Minecraft client execution. Do not run the upstream native-test pack,
 installer or experimental fixture through reference retrieval.
 
-The developer v0.27.0 methods and Probe v0.23.0 installed lock remain
-different revisions. The developer source has been reviewed, but the
-probe's experiment outcomes remain version-scoped and must not be presented
-as direct tests of v0.27.0. A newer technical skill without exact typed
-map-source witnesses remains unrouted.
+The earlier developer v0.27.0 and Probe v0.23.0 archives were different
+historical revisions. The current supplied Developer and Probe ZIPs both
+declare v0.35.0; their matching skill-folder and module identities establish
+source consistency, not independent replay of outcomes or Minecraft runtime
+proof. A technical skill without exact typed map-source witnesses stays unrouted.
 
 The current Resource Context retains the declared developer source release and
 the independently pinned Probe installed-skills tag **and commit**. Clean
@@ -780,8 +781,9 @@ not the final execution state. P30 failed twice in T11, T12 failed its
 visual criterion, and T20b could not finish reload. No result may be
 promoted into current-map expected behavior without independent grounding.
 
-The revised source selector supports an eligible intake path for **all 16
-developer-reference patterns**, including version-targeting via the
+At the historical 2026-10-21 review, the revised selector had eligible
+intake paths for **16 developer-reference patterns** (the active v0.35.0
+curated inventory now holds 17), including version-targeting via the
 selected pack's canonical manifest declaration. This is **conditional
 routing coverage**, not proof that every pattern triggers in actual maps,
 that its guidance is applicable to the live Minecraft client, or that any

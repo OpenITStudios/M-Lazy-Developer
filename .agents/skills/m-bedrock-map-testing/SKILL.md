@@ -37,7 +37,7 @@ master audit workflow, not a second checklist or a full-map automatic PASS.
 
 ## Capability gap and boundaries
 
-If a mechanic cannot be interpreted or tested, report a source-identified `capability-gap`. Do **not** switch to IMPROVE SYSTEM, modify a detector or suppress an independently proven finding without explicit user direction. Source reference selection retains its 16 reviewed patterns and rejects un-routed developer methods such as generic entity spawn → particles.
+If a mechanic cannot be interpreted or tested, report a source-identified `capability-gap`. Do **not** switch to IMPROVE SYSTEM, modify a detector or suppress an independently proven finding without explicit user direction. Source reference selection uses only current source-reviewed `patterns[]` in `experiments/developer-practice-signals.json` and rejects unrouted developer methods such as generic entity spawn → particles.
 
 ## STOP
 

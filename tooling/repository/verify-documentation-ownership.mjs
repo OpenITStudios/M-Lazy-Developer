@@ -198,6 +198,7 @@ const packSources = codeInventory.probePackSources ?? [];
 const developerTools = codeInventory.developerWorkflowSources ?? [];
 const probeTools = codeInventory.probeToolSources ?? [];
 const reports = developerMetadata.probeEvidence ?? [];
+const nonOutcomeReports = developerMetadata.probeSnapshot?.nonOutcomeReports ?? [];
 const sourceById = new Set(skillSources.map(item => item.id));
 const validSha = value => typeof value === "string" &&
   /^[a-f0-9]{64}$/.test(value);
@@ -269,7 +270,7 @@ if (!existsSync(nativeLockPath)) {
   const probeMatchesAccepted = lock.probe?.archiveSha256 === acceptedProbe?.archiveSha256 &&
     lock.probe?.skillsLockTag === acceptedProbe?.observedSkillsLockTag &&
     lock.probe?.skillsLockCommit === acceptedProbe?.observedSkillsLockCommit &&
-    lock.probe?.reportedTestRuns === acceptedProbe?.reportsIndexed;
+    lock.probe?.reportedTestRuns === acceptedProbe?.reportsAvailable;
   const expectedSkillsReview = skillsMatchAccepted
     ? "SOURCE_REVIEWED" : "PENDING_SEMANTIC_REVIEW";
   const expectedProbeReview = probeMatchesAccepted
@@ -378,6 +379,16 @@ const expectedCounts = [
   ["codeImplementationFiles", developerMetadata.sourceSnapshot?.codeImplementationFiles, (codeInventory.codeModules ?? []).length],
   ["codeUnitTestFiles", developerMetadata.sourceSnapshot?.codeUnitTestFiles, (codeInventory.unitTests ?? []).length],
   ["reportsIndexed", developerMetadata.probeSnapshot?.reportsIndexed, reports.length],
+  // All original docs/test-runs/*.md include outcomes, non-outcomes and
+  // explicitly pending reviews; only probeEvidence[] are scoped outcomes.
+  ["reportsAvailable", developerMetadata.probeSnapshot?.reportsAvailable,
+    reports.length + nonOutcomeReports.length +
+    (developerMetadata.probeSnapshot?.reportsPendingSemanticReview ?? 0)],
+  ["newNonOutcomeDocuments", developerMetadata.probeSnapshot?.newNonOutcomeDocuments,
+    nonOutcomeReports.length],
+  ["reviewedAdditionalReports", developerMetadata.probeSnapshot?.reviewedAdditionalReports,
+    (developerMetadata.probeSnapshot?.newSourceScopedOutcomes ?? 0) +
+    (developerMetadata.probeSnapshot?.newNonOutcomeDocuments ?? 0)],
   ["sourcePackFiles", developerMetadata.probeSnapshot?.sourcePackFiles, packSources.length],
   ["methodologyRecordsTracked", developerMetadata.sourceSnapshot?.methodologyRecordsTracked,
     skillSources.filter(item => item.methodology !== undefined).length],
@@ -391,6 +402,38 @@ for (const [name, declared, actual] of expectedCounts) {
     failures.push(developerMetadataPath + ": " + name +
       " must match its actual source inventory (" + actual + ").");
   }
+}
+// Source reports and non-outcome documents have disjoint evidence authority,
+// not two competing gameplay-verdict stores. Do not compare the raw ZIP
+// report count with the smaller curated outcome/attempt set.
+const pendingReportCount = developerMetadata.probeSnapshot?.reportsPendingSemanticReview;
+const newOutcomeCount = developerMetadata.probeSnapshot?.newSourceScopedOutcomes;
+if (!Array.isArray(nonOutcomeReports) ||
+    !Number.isSafeInteger(pendingReportCount) || pendingReportCount < 0 ||
+    !Number.isSafeInteger(newOutcomeCount) || newOutcomeCount < 0 ||
+    newOutcomeCount > reports.length) {
+  failures.push(developerMetadataPath +
+    ": invalid pending/non-outcome/source-scoped Probe report accounting.");
+}
+const observedReportPaths = new Set(reports.map(report => report.sourcePath));
+const nonOutcomePaths = new Set();
+for (const item of nonOutcomeReports) {
+  const reportName = typeof item.sourcePath === "string" &&
+    item.sourcePath.startsWith("docs/test-runs/")
+      ? item.sourcePath.slice("docs/test-runs/".length) : "";
+  if (!/^[A-Za-z0-9_.-]+[.]md$/.test(reportName) ||
+      observedReportPaths.has(item.sourcePath) ||
+      nonOutcomePaths.has(item.sourcePath) ||
+      !validSha(item.sourceSha256) ||
+      item.sourceArchiveSha256 !== developerMetadata.probeSnapshot?.archiveSha256 ||
+      typeof item.kind !== "string" || !item.kind.trim() ||
+      typeof item.reason !== "string" || !item.reason.trim() ||
+      item.proof !== "NON_OUTCOME_DOCUMENT_NOT_A_SELECTED_MAP_VERDICT") {
+    failures.push(developerMetadataPath +
+      ": non-outcome Probe text is unpinned, duplicated or misclassified: " +
+      String(item.sourcePath));
+  }
+  nonOutcomePaths.add(item.sourcePath);
 }
 if (developerMetadata.authority !== "REFERENCE" ||
     developerMetadata.usagePolicy !==
@@ -409,6 +452,7 @@ function requireUniqueExternalIds(label, values) {
 requireUniqueExternalIds("skill", skillSources.map(item => item.id));
 requireUniqueExternalIds("interpretation pattern", patterns.map(item => item.id));
 requireUniqueExternalIds("probe report", reports.map(item => item.id));
+requireUniqueExternalIds("probe report path", reports.map(item => item.sourcePath));
 requireUniqueExternalIds("module path", (codeInventory.codeModules ?? []).map(item => item.path));
 requireUniqueExternalIds("module test path", (codeInventory.unitTests ?? []).map(item => item.path));
 requireUniqueExternalIds("probe pack path", packSources.map(item => item.path));
@@ -588,6 +632,33 @@ for (const report of reports) {
         report.id + " / " + fixture.path);
     }
   }
+}
+// This test-selection crosswalk remains a navigation hint, not an
+// alternative reference authority. Its accepted developer/probe identities
+// and independent example index must follow the curated ZIP snapshots.
+const testInventoryPath = "tooling/repository/test-inventory.json";
+const upstreamCrosswalk = JSON.parse(
+  readFileSync(testInventoryPath, "utf8"),
+).upstreamCategoryCrosswalk;
+const currentSkillNames = skillSources.map(item =>
+  item.id.startsWith("src.") ? item.id.slice(4) : item.id
+).sort();
+const crosswalkSkillNames = [...(upstreamCrosswalk?.developer?.skills ?? [])].sort();
+const exampleOwners = upstreamCrosswalk?.probe?.exampleOwners ?? {};
+if (upstreamCrosswalk?.authority !==
+      "UNTRUSTED_ZIP_TAXONOMY_REFERENCE_NOT_ACTIVE_SKILLS_OR_GAMEPLAY_PROOF" ||
+    upstreamCrosswalk?.developer?.version !== developerMetadata.sourceSnapshot?.release ||
+    upstreamCrosswalk?.developer?.archiveSha256 !== developerMetadata.sourceSnapshot?.archiveSha256 ||
+    !upstreamCrosswalk?.developer?.manifest?.endsWith("/skills.json") ||
+    JSON.stringify(crosswalkSkillNames) !== JSON.stringify(currentSkillNames) ||
+    upstreamCrosswalk?.probe?.archiveSha256 !== developerMetadata.probeSnapshot?.archiveSha256 ||
+    upstreamCrosswalk?.probe?.skillsLockTag !== developerMetadata.probeSnapshot?.observedSkillsLockTag ||
+    upstreamCrosswalk?.probe?.skillsLockCommit !== developerMetadata.probeSnapshot?.observedSkillsLockCommit ||
+    upstreamCrosswalk?.probe?.exampleIndexSha256 !== probeExamples?.indexSha256 ||
+    Object.keys(exampleOwners).length !== (probeExamples?.entries?.length ?? 0) ||
+    (probeExamples?.entries ?? []).some(row => exampleOwners[row.id] !== row.skill)) {
+  failures.push(testInventoryPath +
+    ": upstream taxonomy crosswalk must match the accepted ZIP source identities and Probe index, never historical test execution.");
 }
 // Counts remain source-snapshot driven (expectedCounts), not hardcoded to
 // today's P63 corpus: future source revisions may legitimately add reports.

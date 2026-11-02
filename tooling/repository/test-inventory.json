@@ -12038,7 +12038,7 @@
     "schemaVersion": 1,
     "authority": "UNTRUSTED_ZIP_TAXONOMY_REFERENCE_NOT_ACTIVE_SKILLS_OR_GAMEPLAY_PROOF",
     "developer": {
-      "manifest": "minecraft-bedrock-agent-skills/skills.json",
+      "manifest": "minecraft-bedrock-agent-skills-main/skills.json",
       "version": "v0.35.0",
       "archiveSha256": "26c0a322cabed172ca74970413d5bb7a20d6f67181446df5f688e36057c54e21",
       "skills": [
@@ -12373,7 +12373,7 @@
     },
     "canonicalReviewedSourceLock": "skills/bedrock/source-lock.json",
     "canonicalCuratedInterpretations": "experiments/developer-practice-signals.json",
-    "note": "These two v0.30.0 uploaded snapshots are compared for taxonomy only. The separately reviewed earlier source-lock is unchanged. Example/P references denote comparable subject matter only, never a PASS, exact testcase equivalence, game execution, or a proposed new test."
+    "note": "The independently SHA-pinned v0.35.0 Developer Skills and Skills Probe ZIPs are external taxonomy/reference inputs only. Exact source and Probe index identities follow the reviewed native lock and curated reference owner; examples and reported outcomes cannot certify internal source tests, selected-map gameplay or a new test requirement."
   },
   "consolidationReview": {
     "parentCommit": "8787c8210af847a29927fc1122a2acfe30312cee",

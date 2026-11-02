@@ -182,10 +182,10 @@
     "sourceReview": "SOURCE_HASHES_VERIFIED_OUTCOMES_NOT_REPLAYED",
     "originalClientTarget": "Minecraft Education 26.32"
   },
-  "note": "2026-11-01: developer v0.35.0 and separately supplied Probe v0.35.0 ZIP are the pinned native publisher technical reference. Verified all 24 complete skill folder hashes and all 45 installed Probe module file locks. 89 reports exist; only 49 historically reviewed results are in curated metadata, with 40 new report outcomes pending review. Publisher commit in Probe lock was not independently verified against live upstream GitHub; reference is not an official Microsoft/Mojang rule, a gameplay check or executable proof.",
+  "note": "2026-11-02: the original Developer Skills and independent Skills Probe v0.35.0 ZIP SHA-256 identities were reobserved. The existing source review records 24 matching skill folders and 45 matching installed module file locks. All 89 Probe report texts are accounted for: 74 curated source-scoped outcome/attempt records (49 historical plus 25 new) and 15 non-outcome plan/template/operator/offline documents; none remains pending semantic classification. External outcome claims were not replayed, and the Probe lock's publisher commit was not independently authenticated against upstream GitHub. Neither archive is an official Microsoft/Mojang rule or proof of selected-map gameplay.",
   "componentReview": {
-    "developerSkills": "SOURCE_IDENTITY_REVIEWED",
-    "skillsProbe": "SOURCE_LOCK_VERIFIED_REPORT_OUTCOMES_PARTIAL",
+    "developerSkills": "SOURCE_REVIEWED",
+    "skillsProbe": "SOURCE_REVIEWED",
     "sourceSelectionPolicy": "Only reviewed exact typed-IR patterns from the current map may select publisher methods; no third-party code or skills are installed, and no external PASS certifies a map."
   }
 }
