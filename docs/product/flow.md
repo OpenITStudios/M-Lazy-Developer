@@ -611,6 +611,13 @@ Waiting Lobby, Match Start, Active Gameplay (LIVE scoring), Match Completion
 (FINAL score, rewards and result UI), Post-Match (return/replay) and cross-phase
 Recovery. This is navigation, NOT new game states, source proof or another
 runner. Unbound phases remain unresolved, not automatically safe or N/A.
+The same report shows exact selected-source game subjects (and bounded
+per-mode routing hints), source-authored `phase` labels that are NOT
+silently mapped to generic stages, and directed gameplay-journey
+candidates with source links, missing join proof and unknown scope.
+An absent lobby, numeric score or standard victory is not a bug without
+a proven selected-world requirement; these are conditional audit
+questions, not required implementation features.
 See [Flow-based operator navigation](../analysis/bug-finding-coverage.md#flow-based-operator-navigation-derived-not-another-test-catalog).
 
 ## Issue types

@@ -71,110 +71,248 @@ function authoredUiMessageRoutes(model: GameplayIntentModel): readonly {
  */
 
 /**
- * Human-only grouping of the existing selected-source Scenario Graph, QA-ID
- * decisions and feature evidence. A preset question or co-placed feature is
- * NOT proof of phase entry/exit, chronology, execution or whole-stage PASS.
- * Cross-phase routing remains owned by the existing diagnostic preset.
+ * Source-bound operator navigation over the EXISTING map audit report.
+ * QA preset questions are never treated as evidence that a map implements
+ * those phases. Exact selected-source subjects and directed source relations
+ * remain distinct from player chronology, actual UI and runtime proof.
+ *
+ * Keep game-subject scope independent: a feature shared by several games is
+ * not silently assigned to one mode. Source-defined phases are not coerced
+ * into generic lifecycle buckets based on lexical similarity.
  */
 function formatSourceBoundGameplayFlowReview(
   report: MapAuditOutputV2,
   intent: GameplayIntentModel,
 ): readonly string[] {
   type Stage = Exclude<GameplayFlowStage, "FULL_JOURNEY">;
-  const phases: readonly {stage: Stage; group: string; steps: string}[] = [
-    {stage: "ENTRY_JOIN", group: "A. Entry / Waiting Lobby",
-      steps: "Connect -> initial spawn -> main lobby -> arena selection -> waiting lobby"},
-    {stage: "READY_START", group: "B. Match Start",
-      steps: "Team/role -> ready conditions -> countdown/cancellation"},
-    {stage: "SETUP", group: "B. Match Start",
-      steps: "Arena reservation/readiness -> teleport -> kit/world setup -> start commit"},
-    {stage: "ACTIVE_GAMEPLAY", group: "C. Active Gameplay",
-      steps: "Preparation -> permitted input, combat, building or interaction"},
-    {stage: "PROGRESSION", group: "C. Active Gameplay",
-      steps: "Objective -> wave/level/checkpoint -> LIVE score and feedback"},
-    {stage: "TERMINAL", group: "D. Match Completion",
-      steps: "Win/lose/draw/timeout -> FINAL score -> reward -> result UI"},
-    {stage: "CLEANUP_REPLAY", group: "E. Post-Match",
-      steps: "Cancel pending work -> cleanup/reset -> return lobby -> replay"},
-    {stage: "RECOVERY", group: "F. Cross-Phase Recovery",
-      steps: "Disconnect/reconnect, death/respawn, reload, abort, session repair"},
+  const phases: readonly {
+    stage: Stage;
+    group: string;
+    questions: string;
+    relatedKinds: readonly ("mechanic" | "objective" | "outcome" | "lifecycle")[];
+  }[] = [
+    { stage: "ENTRY_JOIN", group: "A. Entry / Waiting Lobby",
+      questions: "Connect, spawn, lobby, selection and admission (if authored)",
+      relatedKinds: [] },
+    { stage: "READY_START", group: "B. Ready / Countdown",
+      questions: "Role selection, quorum, countdown, cancellation (if authored)",
+      relatedKinds: [] },
+    { stage: "SETUP", group: "B. Setup / Match Start",
+      questions: "Arena readiness, teleport, loadout and start commit (if authored)",
+      relatedKinds: [] },
+    { stage: "ACTIVE_GAMEPLAY", group: "C. Active Gameplay",
+      questions: "Permitted authored mechanics; preparation and interactions",
+      relatedKinds: ["mechanic"] },
+    { stage: "PROGRESSION", group: "C. Progression",
+      questions: "Objectives, waves, checkpoints and LIVE score if applicable",
+      relatedKinds: ["objective"] },
+    { stage: "TERMINAL", group: "D. Match Completion",
+      questions: "Authored exit/outcome; FINAL score, reward, result UI if applicable",
+      relatedKinds: ["outcome"] },
+    { stage: "CLEANUP_REPLAY", group: "E. Cleanup / Return / Replay",
+      questions: "Cancellation, reset, return and reuse when supported",
+      relatedKinds: [] },
+    { stage: "RECOVERY", group: "F. Cross-Phase Recovery",
+      questions: "Reconnect, death/respawn, reload and abort where supported",
+      relatedKinds: ["lifecycle"] },
   ];
-  const evidence = new Map(intent.evidence
+  const compact = (value: string): string =>
+    value.replace(/\s+/g, " ").trim().slice(0, 120);
+  const selectedEvidence = new Map(intent.evidence
     .filter(item => item.scope === "selected-artifact")
     .map(item => [item.id, item] as const));
-  const graphScenarios = report.gameplayStructure?.scenarios ?? [];
-  const presets = graphScenarios.filter(item => item.id.startsWith("preset:"));
-  const sourceFeatures = (report.gameplayStructure?.features ?? [])
+  const locatorFor = (ids: readonly string[]): readonly string[] =>
+    [...new Set(ids.flatMap(id => {
+      const locator = selectedEvidence.get(id)?.locator;
+      return locator && locator.trim() ? [locator] : [];
+    }))].sort();
+  const graph = report.gameplayStructure;
+  const sourceFeatures = (graph?.features ?? [])
     .filter(feature => feature.grounding === "SOURCE_EVIDENCED" &&
-      feature.sourceEvidenceIds.some(id => evidence.has(id)));
+      feature.sourceEvidenceIds.some(id => selectedEvidence.has(id)));
+  const sourcePhaseFeatures = sourceFeatures.filter(f => f.kind === "phase");
   const checks = report.qaCoverage?.checks ?? [];
+  const presetScenarios = (graph?.scenarios ?? []).filter(item =>
+    item.id.startsWith("preset:"));
   const out: string[] = [
     "",
-    "## Player Journey / Flow-Based QA (SOURCE ROUTING; NOT PLAYTEST)",
-    "World/pack initialization precedes player entry under LOAD/DISCOVERY. " +
-      "These are optional, map-evidenced subphases within the existing eight " +
-      "flow stages, NOT mandatory new runtime states.",
+    "## Player Journey / Source-Bound Flow QA (NOT AN EXECUTED PLAYTHROUGH)",
+    "Below is an INVESTIGATION PLAN, not a discovered fixed player sequence. " +
+      "World/pack initialization belongs to LOAD/DISCOVERY; optional lobby, " +
+      "score, reward, win and replay mechanics are not assumed present.",
   ];
+
+  // Source game subjects and scoped mode hints must not be blended:
+  // one game can have several hints, and one source subject can be shared.
+  const scopes = report.qaCoverage?.gameScopes ?? [];
+  const modes = report.qaCoverage?.modeClassifications ?? [];
+  if (scopes.length > 0) {
+    out.push("**Selected-source game subjects (direct authored edges only):**");
+    for (const group of scopes.slice(0, 8)) {
+      const attachedModes = modes.filter(mode =>
+        mode.gameSubjectId === group.gameSubjectId);
+      const sourceRelations = group.directRelations.filter(relation =>
+        relation.edgeEvidenceIds.some(id => selectedEvidence.has(id)));
+      const related = sourceRelations.slice(0, 3).map(relation => {
+        const subject = sourceFeatures.find(feature =>
+          feature.id === relation.relatedSubjectId);
+        return compact(subject?.label ?? relation.relatedSubjectId) +
+          " [" + relation.edgeKind + "; " + relation.relatedKind + "]";
+      });
+      const sourceLocations = locatorFor(group.sourceEvidenceIds);
+      out.push(
+        "- " + compact(group.gameLabel) + " [" + group.gameSubjectId + "]: " +
+          sourceRelations.length + " current direct relation(s)" +
+          (group.omittedDirectRelations > 0
+            ? "; +" + group.omittedDirectRelations + " omitted source relation(s)" : "") +
+          "; shared subject(s) " + group.sharedSubjectIds.length +
+          ". This does NOT establish gameplay or mode activation.",
+        attachedModes.length > 0
+          ? "  Mode hints (NOT runtime verification): " +
+            attachedModes.map(mode => compact(mode.modeId) + " [" +
+              mode.status + "; " + mode.mapType + "/" + mode.playerMode + "]").join("; ")
+          : "  Mode classification: UNRESOLVED for this source game.",
+        related.length > 0
+          ? "  Exact source-linked subjects: " + related.join("; ") + "."
+          : "  No exact source-linked feature shown; do not borrow sibling game mechanics.",
+        sourceLocations.length > 0
+          ? "  Game source: " + sourceLocations.slice(0, 2).join("; ") + "."
+          : "  Game source locator: UNRESOLVED.",
+      );
+    }
+    if (scopes.length > 8 || (report.qaCoverage?.omittedGameScopes ?? 0) > 0) {
+      out.push("Additional source game subjects not shown: " +
+        (scopes.length - 8 > 0 ? scopes.length - 8 : 0) +
+        "; upstream omitted: " + (report.qaCoverage?.omittedGameScopes ?? 0) +
+        ". Partial projection is not complete map coverage.");
+    }
+  } else {
+    out.push("No exact source-linked game-subject group is available. " +
+      "Do not infer a default minigame, waiting lobby or winning rule.");
+  }
+  const unscoped = report.qaCoverage?.unscopedActivitySubjectIds ?? [];
+  if (unscoped.length > 0) out.push(
+    "Unassigned source activity subjects: " + unscoped.length +
+      (report.qaCoverage?.omittedUnscopedActivities
+        ? "; +" + report.qaCoverage.omittedUnscopedActivities + " omitted"
+        : "") + ". These must not inherit a neighboring game's rules.");
+
+  out.push("**Canonical flow questions (optional mechanics require source evidence):**");
   for (const phase of phases) {
-    const primary = presets.filter(s => s.gameplayStage === phase.stage);
-    const cross = presets.filter(s =>
+    const primary = presetScenarios.filter(s =>
+      s.gameplayStage === phase.stage);
+    const cross = presetScenarios.filter(s =>
       s.gameplayStage !== phase.stage &&
       scenarioCrossPhaseReviewStages(
         s.label as GameplayAuditScenarioKind).includes(phase.stage));
-    const selected = [...primary, ...cross];
-    const ids = new Set(selected.map(s => s.id));
-    // Scenario co-placement is an investigation lead, not a causal link.
-    const contexts = sourceFeatures.filter(feature =>
-      feature.scenarioIds.some(id => ids.has(id)));
-    const locators = [...new Set(contexts.flatMap(feature =>
-      feature.sourceEvidenceIds.flatMap(id =>
-        evidence.get(id)?.locator ? [evidence.get(id)!.locator] : [])))].sort();
-    const qa = checks.filter(check => ids.has(check.scenarioId));
-    const violations = qa.filter(check =>
-      check.status === "QA_VIOLATION_PROVEN").length;
+    const scenarioIds = new Set([...primary, ...cross].map(s => s.id));
+    const linkedQa = checks.filter(check =>
+      scenarioIds.has(check.scenarioId));
+    const exactLabelPhases = sourcePhaseFeatures.filter(f =>
+      f.label.trim() === phase.stage);
+    // Kind-level evidence is ONLY a search lead for this operator topic.
+    // E.g. an outcome subject does not prove a final result, reward or
+    // that a win/loss path can be reached.
+    const typedLeads = sourceFeatures.filter(f =>
+      phase.relatedKinds.includes(f.kind as typeof phase.relatedKinds[number]));
     out.push(
-      "- **" + phase.group + " [" + phase.stage + "]**: " + phase.steps + ".",
-      "  Existing questions: " + primary.length + " primary / " + cross.length +
-        " cross-phase; selected-source feature contexts " + contexts.length +
-        "; linked QA ID(s) " + qa.length +
-        (violations ? "; exact PROVEN QA violations " + violations : "") +
-        ". Counts do not mean PASS.",
+      "- **" + phase.group + " [" + phase.stage + "]**: " + phase.questions + ".",
+      "  QA questions: " + primary.length + " primary / " + cross.length +
+        " cross-phase scenario(s), " + linkedQa.length +
+        " linked QA ID(s); shared pointers, NOT executed tests or PASS.",
+      "  Exact phase-label SOURCE candidate(s): " + exactLabelPhases.length +
+        (exactLabelPhases.length
+          ? " (" + exactLabelPhases.slice(0, 2)
+            .map(f => compact(f.label) + " @ " +
+              (locatorFor(f.sourceEvidenceIds)[0] ?? "UNKNOWN")).join("; ") + ")"
+          : "; phase activation/absence UNRESOLVED") + ".",
     );
-    out.push(locators.length
-      ? "  Source contexts (NOT phase proof): " +
-        locators.slice(0, 2).join("; ") +
-        (locators.length > 2 ? "; +" + (locators.length - 2) + " others." : ".")
-      : "  Exact source/phase binding UNRESOLVED; no witness does not mean NOT_APPLICABLE.");
+    if (typedLeads.length > 0) {
+      out.push("  Related typed SOURCE subject(s), NOT stage-bound: " +
+        typedLeads.slice(0, 3).map(f => compact(f.label) +
+          " [" + f.kind + "; " +
+          (locatorFor(f.sourceEvidenceIds)[0] ?? "UNKNOWN") + "]").join("; ") +
+        (typedLeads.length > 3
+          ? "; +" + (typedLeads.length - 3) + " more" : "") + ".");
+    }
   }
-  const journeys = report.gameplayStructure?.gameplayJourneyCandidates ?? [];
-  const transitions = new Set(journeys
-    .flatMap(j => j.interpretation?.relationships ?? [])
-    .filter(r => r.semanticRole === "STATE_TRANSITION_CANDIDATE" ||
-      r.semanticRole === "RESET_OR_RECOVERY_CANDIDATE")
-    .map(r => r.relationId));
-  const unresolvedJoins = journeys.filter(j =>
-    j.boundary === "SOURCE_JOIN_UNPROVEN" ||
-    j.interpretation?.sourceJoinGap !== undefined);
-  const unusual = graphScenarios.filter(s => !s.id.startsWith("preset:") &&
-    !phases.some(p => p.stage === s.gameplayStage));
-  const unplaced = sourceFeatures.filter(f =>
-    !f.scenarioIds.some(id => presets.some(s => s.id === id)));
-  const universalIds = checks.filter(c =>
+  const sourceDefined = sourcePhaseFeatures.filter(f =>
+    !phases.some(phase => phase.stage === f.label.trim()));
+  if (sourceDefined.length > 0) {
+    out.push(
+      "**Source-defined phase subjects (NOT forced into template):**",
+      ...sourceDefined.slice(0, 12).map(f =>
+        "- " + compact(f.label) + " [" + f.id + "] @ " +
+          (locatorFor(f.sourceEvidenceIds)[0] ?? "UNKNOWN") +
+          " — authored/inferred source label, NOT a verified player phase."),
+    );
+    if (sourceDefined.length > 12) out.push(
+      "Additional source-defined phase subjects: " +
+        (sourceDefined.length - 12) + " (retained in canonical graph).");
+  }
+
+  // Existing journey candidates encode exact directed selected-source edges
+  // and source-join gaps. Display their own order without interpreting it as
+  // a runtime sequence or attributing paths to unverified game modes.
+  const journeys = graph?.gameplayJourneyCandidates ?? [];
+  const currentJourneys = journeys.filter(journey =>
+    journey.interpretation?.steps.some(step =>
+      step.sourceEvidenceIds.some(id => selectedEvidence.has(id))));
+  out.push("**Directed selected-source journey candidates (NOT player chronology):**");
+  for (const journey of currentJourneys.slice(0, 5)) {
+    const interpretation = journey.interpretation!;
+    const steps = interpretation.steps
+      .slice(0, 7).map(step => compact(step.label) +
+        " [" + step.kind + "]").join(" -> ");
+    const relatedSource = interpretation.relationships
+      .slice(0, 3).map(relation => relation.kind + " @ " +
+        (locatorFor(relation.sourceEvidenceIds)[0] ?? "UNKNOWN"));
+    const touchedGames = scopes.filter(group =>
+      journey.subjectIds.includes(group.gameSubjectId));
+    out.push(
+      "- " + journey.id + " [" + journey.boundary + "]: " + steps +
+        (interpretation.steps.length > 7 ? " -> ... (truncated)" : ""),
+      "  Source-directed edges: " +
+        (relatedSource.length ? relatedSource.join("; ") : "UNRESOLVED") +
+        ". Gameplay timing, guards and actual path are NOT established.",
+      "  Source game-subject membership: " +
+        (touchedGames.length > 0
+          ? touchedGames.map(group => compact(group.gameLabel)).join("; ")
+          : "UNRESOLVED") +
+        "; mode/arena/player scope remains unverified.",
+    );
+    if (interpretation.sourceJoinGap) out.push(
+      "  Unproven source join at " + interpretation.sourceJoinGap.viaSubjectId +
+      ": " + interpretation.sourceJoinGap.missingProof +
+      ". Do NOT bridge across this gap.");
+    if (interpretation.missingUnderstanding.length > 0) out.push(
+      "  Pending understanding: " +
+      interpretation.missingUnderstanding.slice(0, 4).join("; ") +
+      (interpretation.missingUnderstanding.length > 4 ? "; ..." : "") + ".");
+  }
+  if (!currentJourneys.length) out.push(
+    "No current selected-source directed journey has an admissible " +
+    "interpretation. This is UNKNOWN, not proof that the map lacks gameplay.");
+  if (currentJourneys.length > 5 ||
+      (graph?.gameplayJourneyTruncated ?? false)) out.push(
+    "More journey candidates remain in the canonical graph: " +
+    Math.max(0, currentJourneys.length - 5) +
+    "; producer truncated=" + String(graph?.gameplayJourneyTruncated ?? false) +
+    ". Do not infer a complete player route from this preview.");
+  const unplaced = graph?.unplacedFeatureIds ?? [];
+  const unrepresented = journeys.length - currentJourneys.length;
+  const universalQa = checks.filter(c =>
     c.scenarioId === "preset:journey:full");
   out.push(
-    "Universal full-journey QA IDs: " + universalIds.length +
-      " shared requirement(s), counted once, NOT a per-stage PASS.",
-    "Directed source transition/reset CANDIDATES: " + transitions.size +
-      "; unproven cross-source joins: " + unresolvedJoins.length +
-      ". Source order is not chronological player play.",
-    "Noncanonical source-defined stages: " + unusual.length +
-      "; feature contexts without mapped preset: " + unplaced.length +
-      ". Do not force unknown behaviors into a named phase.",
-    "Distinguish LIVE score, FINAL result, reward commit, result presentation, " +
-      "and post-result cleanup/return/replay. Each requires its own guard, owner, " +
-      "failed/interrupted path and session-generation scope when applicable.",
-    "Unknown stages, mechanics and transitions remain explicit proof gaps; " +
-      "this read-only view cannot create findings, N/A verdicts or QA PASS.",
+    "Universal journey QA ID(s): " + universalQa.length +
+      " (counted once, never a phase PASS).",
+    "Unplaced source features: " + unplaced.length +
+      "; uninterpreted/unsourced directed journey candidates: " +
+      unrepresented + ". Resolve these through existing UNDERSTAND/PROVE owners.",
+    "A map without a lobby, numeric score, terminal victory, reward or replay " +
+      "may be valid. Absence is NOT_APPLICABLE only after positive current-map " +
+      "evidence; otherwise preserve UNKNOWN. No source or code label can " +
+      "manufacture player runtime or an approved game rule.",
     "",
   );
   return out;

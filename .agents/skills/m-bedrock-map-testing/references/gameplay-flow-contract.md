@@ -20,6 +20,15 @@ RECOVERY: disconnect/reconnect, death/respawn, reload, abort across phases
 ```
 
 Phases can branch, repeat, merge or be absent on positively grounded maps.
+A source `phase` label must not be force-mapped to a generic phase using
+text similarity. Show exact current-source game-subject links, phase
+subjects, directed transitions and unproven cross-source joins instead.
+For multi-minigame worlds preserve each game/mode source scope and
+the unassigned or shared subjects; never borrow the sibling game's
+lobby, score, completion, mechanics or cleanup. A legal non-scoring,
+direct-start or completion-without-victory design is supported when the
+selected artifact positively establishes it, not by searching for absent
+function names.
 Multi-arena ownership and session generations cross the entire journey.
 For every applicable phase and transition record entry trigger, guard,
 owner, created/consumed state, success/failure exit, next state, cleanup,

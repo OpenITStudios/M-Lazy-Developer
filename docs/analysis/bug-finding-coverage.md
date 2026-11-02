@@ -161,6 +161,27 @@ statuses, or map-specific gameplay facts.
 | Post-Match | `CLEANUP_REPLAY` | Callback cancellation, reset, return lobby, reusable arena |
 | Cross-Phase Recovery | `RECOVERY` | Disconnect, death/respawn, reload, abort across owned phases |
 
+When reconstructing a real selected-world ZIP, retain `game`, `phase`,
+`mechanic`, `objective`, and `outcome` as independently source-evidenced
+subjects. A `phase` label is not a generic `GameplayFlowStage` unless
+an exact author/source contract binds the identity; strings such as
+`Lobby`, `Result`, or `Score` are not sufficient to prove runtime entry,
+exit or success. Derived source journey candidates must show directed
+edge kinds, exact locators, join gaps and missing ownership without
+pretending to be a chronological playthrough. A map that intentionally
+starts directly, has no numeric score or concludes without a win/lose
+screen is not inherently defective. Source-bound absence requires
+positive coverage and any independent design rule; missing symbols
+alone leave `UNRESOLVED`.
+
+Minigame/source game subjects are distinct: route only exact authored,
+selected-artifact `game` relationships and report shared/unassigned
+subjects, with mode classifications labelled as routing hints. Never
+borrow one minigame's stage, score, outcome or resource authority to
+complete a sibling game. Operator counts of scenario relevance and
+typed `mechanic/objective/outcome/lifecycle` hints are questions and
+source discovery leads, not actual stage coverage or QA PASS.
+
 The primary `GameplayAuditScenario.flowStage` is unchanged. The existing
 diagnostic scenario preset supplies read-only cross-phase relevance for
 **already selected** scenarios via `scenarioCrossPhaseReviewStages()`.

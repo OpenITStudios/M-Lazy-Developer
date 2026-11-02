@@ -467,6 +467,9 @@ export function buildGameplayAuditScenarioPreset(
         "Are LIVE score events distinct from FINAL score, winner selection, one-shot reward settlement and result presentation?",
         "After end/abort, are pending callbacks, entities, world changes and ownership settled before return-to-lobby and arena reuse?",
         "Are reconnect, reload, parallel arenas and stale callbacks challenged at the phase where their ownership changes?",
+        "Is a waiting lobby or team selection actually authored, or does this map legitimately start without one?",
+        "Is numeric scoring or a one-shot reward actually part of this map, or is progress/exit intentionally non-scoring?",
+        "If no authored win/lose rule exists, can a lawful completion, exit or reset still be established without inventing victory?",
         // Existing canonical Universal QA source questions; never PASS claims.
         "U01: Does artifact identity, manifest, edition and source dependency graph match the selected world?",
         "U02: Is authored goal, action and success/failure route grounded in current source evidence?",
