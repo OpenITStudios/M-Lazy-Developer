@@ -60,3 +60,7 @@ Implement **a new renderer in its own module/namespace** consuming only `report.
 ## 1.3.0 source/HTML integrity revision (2026-11-02)
 
 Current Report Next design version is **1.3.0**. Source-aligned authored reports distinguish MAP_AUDIT, SOURCE_REVIEW and SYNTHETIC_DEMO; the only accepted MAP_AUDIT has an exact audit revision. The previous 1.0.0/1.1.0/1.2.0 locks above remain historical references, not active schema authority. Old offline HTML is untouched. The single renderer now distinguishes canonical JSON from tester state and verifies the embedded canonical JSON digest at browser open. No Approved Bug Report V2 conversion or migration is implied.
+
+## Desktop-first acceptance scope — Report Next 1.4.0 (2026-11-03)
+
+Desktop-only user priority: 1366×768 and 1920×1080. The original responsive CSS is retained, but mobile visual acceptance is no longer a release gate. This remains one versioned renderer, not a second desktop app. Canonical proof/evidence, approved Bug Report V2 ownership, and tester state are unchanged.

@@ -1,12 +1,12 @@
 {
   "schema": "m-lazy-report-next-golden/v1",
   "reportId": "design-example-not-a-real-audit",
-  "designVersion": "1.3.0",
-  "layoutBlob": "d26affc61be2f240425bd10ed6ba883042df7536",
+  "designVersion": "1.4.0",
+  "layoutBlob": "157500f56e4e3e973a543444465dcf471d7a2be1",
   "referenceBlob": "2cce615368348cae8d77137867442f3f793fa584",
-  "syntheticExampleBlob": "cadff6e39e95e782b049edf66cc2de6663748110",
-  "htmlSha256": "135cc582d8a54cee4073a0c6712e6b6f6766e693c959c0b8a52023953738cad1",
-  "jsonSha256": "4e5c77dd6e7d73b1660859b10e26cd93c52474c7f233c86d3dcc4172ccff757d",
-  "digest": "sha256:4e5c77dd6e7d73b1660859b10e26cd93c52474c7f233c86d3dcc4172ccff757d",
-  "notes": "Exact-source synthetic 1.3.0 golden rederived with SHA-256 independently checked against known vectors. No actual Node/browser/Minecraft audit execution claimed."
+  "syntheticExampleBlob": "0525dd6920e1a9f840c6335bb10d847b3f21045d",
+  "htmlSha256": "61585534f4af85a32820bcd03981d7d6236885d40b5a1f76803b7cc82f3ce620",
+  "jsonSha256": "f5ab9e8d33cb50333ab077b4227ebe7e1133b73ada9b8ca08769fee6ca4fbf50",
+  "digest": "sha256:f5ab9e8d33cb50333ab077b4227ebe7e1133b73ada9b8ca08769fee6ca4fbf50",
+  "notes": "Desktop-first v1.4.0 golden derived from exact staged source in isolated JavaScript. SHA-256 cross-checked against standard vectors; not browser/Node or Minecraft execution."
 }

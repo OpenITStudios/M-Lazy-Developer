@@ -1,12 +1,12 @@
 {
   "system": "M-Lazy-Developer / Report System Next",
   "namespace": "report-system-next",
-  "designVersion": "1.3.0",
-  "lifecycle": "DESIGN_LOCKED_SOURCE_BUILD",
+  "designVersion": "1.4.0",
+  "lifecycle": "DESIGN_LOCKED_DESKTOP_FIRST",
   "compatibility": {
-    "reportSchema": "m-lazy-report-next/v1.3",
+    "reportSchema": "m-lazy-report-next/v1.4",
     "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v1",
-    "templateId": "m-lazy-report-next/html-v1.3",
+    "templateId": "m-lazy-report-next/html-v1.4",
     "sourceExistingApprovedBugReportV2": "NOT_A_MUTATION_TARGET",
     "legacyReportPaths": "UNTOUCHED"
   },
@@ -116,7 +116,18 @@
     "responsiveBreakpointsPx": {
       "mobileMax": 700,
       "desktopReportMaxWidth": 1080
-    }
+    },
+    "desktopViewportTargetsPx": [
+      {
+        "width": 1366,
+        "height": 768
+      },
+      {
+        "width": 1920,
+        "height": 1080
+      }
+    ],
+    "mobileAcceptancePolicy": "PRESERVE_EXISTING_CSS_NOT_REQUIRED_FOR_RELEASE"
   },
   "vocabulary": {
     "reportTitle": "Bug Tracker Report",
@@ -180,7 +191,7 @@
       16,
       24
     ],
-    "reportWidthPx": 1080,
+    "reportWidthPx": 1200,
     "bodyTextPx": 14,
     "titleTextPx": 17
   },
@@ -213,7 +224,9 @@
     "proofIsNotRuntime": true,
     "auditSourceMustPreserveUnknowns": true,
     "browserRechecksCanonicalDigest": true,
-    "evidenceTierIndependentOfProofStatus": true
+    "evidenceTierIndependentOfProofStatus": true,
+    "desktopFirstFindingsRemainReachable": true,
+    "coverageGapsReadableOnDemand": true
   },
   "output": {
     "fileNames": {
@@ -245,8 +258,9 @@
     ],
     "rendering": [
       "GOLDEN_HTML_BYTE_SNAPSHOT",
-      "VISUAL_APPROVAL_DESKTOP",
-      "VISUAL_APPROVAL_MOBILE",
+      "DESKTOP_LAYOUT_1366x768",
+      "DESKTOP_LAYOUT_1920x1080",
+      "DESKTOP_KEYBOARD_FOCUS",
       "ACCESSIBILITY_REVIEW"
     ],
     "handoff": [

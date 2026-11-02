@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.3.0
+# Report System Next — LOCKED DESIGN 1.4.0
 
 ## 0. Ownership and scope
 
@@ -146,3 +146,11 @@ Canonical PROVEN/NEED_VALIDATION is a proof axis, independent from the evidence 
 Offline HTML keeps one canonical JCS report and a separate tester workspace. Download Report JSON and Save Tester Data must never be confused. Client-side SHA-256 comparison on opening prevents tester edits/export of a mismatched report and must visibly report unavailable crypto rather than claiming a PASS. SHA-256 detects accidental modification; it is not a publisher signature, gameplay test or external certification. Old HTML snapshots remain independent and unaffected.
 
 This is a versioned design/contract change only; executable browser and actual Minecraft audit acceptance remain separate.
+
+## Approved 1.4.0 addendum — desktop-first scope (2026-11-03)
+
+The user explicitly prioritizes desktop over mobile. This decision supersedes historical mobile layout and acceptance rows in sections 2, 5 and 7: **mobile visual approval is no longer required before release**. Keep the existing small-screen CSS fallback, but do not add new mobile layout variants, a mobile reporting application, or a mobile test campaign.
+
+The release-acceptance desktop viewport targets are **1366×768** and **1920×1080**. Approved max report width is **1200px**. Preserve the exact report hierarchy and all canonical material findings; optimize only spacing, desktop metric widths, search accessibility, and progressive disclosure of large missing-proof lists. Status/summary must remain visible even when the full gap list is collapsed. When zero guided retests are eligible, avoid displaying meaningless zero-only tester counters; keep all existing metric IDs available to the client, and explain explicitly that no Minecraft playtest has been performed.
+
+The 1.4.0 schema/layout versions are deliberate. Existing v1.0–v1.3 standalone HTML copies remain readable and unmodified; no automatic old authored JSON migration. Desktop acceptance, keyboard navigation, canonical parity, and offline Save/Reopen are distinct from runSelectedMapAudit() and live Minecraft proof.

@@ -9,7 +9,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../planning
 const here = dirname(fileURLToPath(import.meta.url));
 const pinned = {
   reference: "2cce615368348cae8d77137867442f3f793fa584",
-  report: "9842a2f0ca69233217a550f5b8f7e6813646449e",
+  report: "9bd86e9374dfe5339a55889585473f6fbd62cf83",
   workspace: "78cf4ae0abc9e5d3f468a47c34c4e031e21783ce"
 };
 const gitHash = value => {
@@ -39,6 +39,8 @@ const cssExtra = "[hidden]{display:none!important}"+
 ".proof-detail{margin:8px 0;border:1px solid var(--border);border-radius:6px;padding:10px}.proof-detail>summary{cursor:pointer;font-weight:600}.proof-detail li{padding:8px 0;overflow-wrap:anywhere}.proof-detail code{font-size:12px}.validation-panel{border-left:3px solid var(--warning);padding:8px 12px;background:var(--bg)}.coverage-note{font-size:13px;line-height:1.5;color:var(--muted)}"+
 ".pending-checks{padding:10px;border:1px solid var(--border);border-radius:6px;margin:12px 0}.pending-checks>summary{cursor:pointer;font-weight:700}.pending-check{border-top:1px solid var(--border);padding:10px 0}.audit-cues{font-size:13px;line-height:1.6}"+
 ".tester-tools{margin:8px 24px}.tester-tools>summary{cursor:pointer;padding:10px;font-weight:600}"+
+".coverage-details{margin:7px 0}.coverage-details>summary{cursor:pointer;font-weight:650;padding:5px 0}.coverage-details>summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}"+
+"@media(min-width:701px){.page{max-width:1200px;margin:16px auto}.hero{padding:14px 24px}.hero h1{font-size:20px}section{padding:13px 24px}.metrics{grid-template-columns:repeat(auto-fill,minmax(175px,1fr))}.metric{padding:9px 12px}.metric b{font-size:21px}.issue{margin:9px 0}.issue summary{padding:12px 16px}.issue h4{font-size:16px}.sourcebox{margin-top:8px}.controls{grid-template-columns:minmax(240px,2.3fr) repeat(3,minmax(125px,1fr)) auto}.tester-tools{margin:6px 24px}}"+
 ".alert{font-size:12px;color:var(--warning)}.subactions{padding:8px 24px;border-bottom:1px solid var(--border)}"+
 "@media(max-width:700px){.evidence-list{grid-template-columns:1fr}.save-status{padding:10px 16px}}";
 
@@ -156,12 +158,13 @@ function renderBody(report,lock,digest) {
   const labels={findings:"Findings",blocker:"Blocker",major:"Major",minor:"Minor",needsValidation:w.needsValidation,unrated:w.priorityUnset};
   const cards=lock.layout.summaryMetricOrder.filter(k=>k==="findings"||k==="needsValidation"||summary[k]>0).map(key=>
     '<div class="metric"><small>'+escape(labels[key])+'</small><b>'+summary[key]+"</b></div>").join("");
+  const hasGuidedRetest=issues.some(isRetestEligible);
   const outcomes=lock.layout.testerMetricOrder.map(key=>
     '<span class="chip-count">'+escape(w[key])+' <b id="metric-'+key+'">0</b></span>').join("");
   const select=(id,label,opts)=>'<label>'+escape(label)+'<select id="'+id+'">'+
     opts.map(([value,title])=>'<option value="'+value+'">'+escape(title)+'</option>').join("")+'</select></label>';
   const controls='<section aria-label="Finding controls"><h3>Find Findings</h3>'+
-    '<div class="controls"><label>Search findings<input type="search" id="find-search" placeholder="Title or finding ID"></label>'+
+    '<div class="controls"><label>Search findings<input type="search" id="find-search" placeholder="Title, finding ID, expected… ( / )"></label>'+
     select("find-kind","Kind",[["ALL","All kinds"],["BUG",w.sectionBugs],
       ["DESIGN_MISMATCH",w.sectionDesign],["DEV_NOTE",w.sectionNotes]])+
     select("find-severity","Severity",[["ALL","All severities"],...lock.layout.severityOrder.map(x=>[x,x])])+
@@ -191,7 +194,7 @@ function renderBody(report,lock,digest) {
         '</p><p><strong>Next:</strong> '+escape(x.nextCheck)+'</p></div>').join("")+'</details>':"";
     return '<div class="coverage-note"><strong>'+escape(map.name)+': </strong>'+
       (c?'<strong>'+escape(c.state)+'</strong> · '+escape(c.summary)+
-        (c.missingProof.length?'<ul class="source-list">'+c.missingProof.map(x=>'<li>'+escape(x)+'</li>').join("")+'</ul>':"")+
+        (c.missingProof.length?'<details class="coverage-details"><summary>Missing proof ('+c.missingProof.length+')</summary><ul class="source-list">'+c.missingProof.map(x=>'<li>'+escape(x)+'</li>').join("")+'</ul></details>':"")+
         list+'<p class="note">Source audit closure never certifies observed Minecraft gameplay or defect-free behavior.</p>'
         :escape(w.coverageMissing))+'</div>';
   }).join("");
@@ -227,8 +230,11 @@ function renderBody(report,lock,digest) {
   return header+identity+scopeNotice+'<section aria-label="Overview"><h3>Overview</h3><div class="metrics">'+
     cards+'</div></section><section aria-label="Audit Coverage"><h3>'+escape(w.auditCoverage)+
     '</h3>'+coverage+'</section><section aria-label="After-Fix Retest Results"><h3>After-Fix Retest Results</h3>'+
-    '<div class="retest">'+outcomes+
-    '</div><p class="note">Tester results only. This does not mean canonical Fixed.</p></section>'+
+    '<div class="retest"'+(hasGuidedRetest?"":' hidden')+'>'+outcomes+
+    '</div><p class="note">'+escape(hasGuidedRetest?
+      "Tester results are after-fix observations, not canonical Fixed.":
+      "No supported guided retest is available. No gameplay PASS is implied.")+
+    '</p></section>'+
     controls+index+mapSections+'<footer>Report System Next · Design Lock v'+lock.designVersion+
     ' · Canonical digest '+escape(digest)+
     ' · Unknown proof stays unknown. Review notes/screenshots before sharing.</footer>';

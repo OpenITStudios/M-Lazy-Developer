@@ -1,6 +1,6 @@
 {
-  "schema": "m-lazy-report-next/v1.3",
-  "layoutVersion": "1.3.0",
+  "schema": "m-lazy-report-next/v1.4",
+  "layoutVersion": "1.4.0",
   "reportId": "design-example-not-a-real-audit",
   "scope": "MAP",
   "maps": [

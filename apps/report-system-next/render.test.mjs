@@ -25,8 +25,8 @@ const inspect = output => {
 test("design remains immutable without a new approved version", async () => {
   const content = await readFile(new URL("layout.lock.json",root),"utf8");
   const lock = JSON.parse(content);
-  assert.equal(assertDesignLock(lock,content).designVersion,"1.3.0");
-  assert.throws(() => assertDesignLock(lock,content.replace('"1.3.0"','"2.0.0"')),
+  assert.equal(assertDesignLock(lock,content).designVersion,"1.4.0");
+  assert.throws(() => assertDesignLock(lock,content.replace('"1.4.0"','"2.0.0"')),
     /Design Lock mismatch/);
 });
 
@@ -40,7 +40,7 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.match(first.html,/Synthetic Report Demo/);
   assert.match(first.html,/Download Report JSON/);
   assert.match(first.html,/report-integrity/);
-  assert.equal(golden.designVersion,"1.3.0");
+  assert.equal(golden.designVersion,"1.4.0");
   assert.equal(golden.reportId,example.reportId);
   assert.equal(createHash("sha256").update(first.html,"utf8").digest("hex"),golden.htmlSha256);
   assert.equal(createHash("sha256").update(first.json,"utf8").digest("hex"),golden.jsonSha256);
@@ -261,4 +261,31 @@ test("source-only and demo cannot claim audit completeness or approved-ledger id
   data.maps[0].auditCoverage=null;
   data.reportKind="APPROVED_BUG_REPORT";
   await assert.rejects(()=>renderReportNext(data),/unsupported enum/);
+});
+
+test("desktop-first acceptance preserves proof and reduces unnecessary above-fold content",async()=>{
+  const layout=JSON.parse(await readFile(new URL("layout.lock.json",root),"utf8"));
+  assert.equal(layout.tokens.reportWidthPx,1200);
+  assert.deepEqual(layout.layout.desktopViewportTargetsPx,[
+    {width:1366,height:768},{width:1920,height:1080}
+  ]);
+  assert.equal(layout.acceptance.rendering.includes("VISUAL_APPROVAL_MOBILE"),false);
+  assert.ok(layout.acceptance.rendering.includes("DESKTOP_LAYOUT_1366x768"));
+  assert.ok(layout.acceptance.rendering.includes("DESKTOP_LAYOUT_1920x1080"));
+  const report=clone(example);
+  report.maps[0].auditCoverage={
+    state:"PARTIAL",summary:"Source audit unfinished",
+    missingProof:["Exact source graph proof needed","Minecraft runtime not executed"],
+    evidenceRefs:["EV-DEMO-01"],checks:[]
+  };
+  const output=await renderReportNext(report);
+  assert.match(output.html,/@media\(min-width:701px\)/);
+  assert.match(output.html,/max-width:1200px/);
+  assert.match(output.html,/class="coverage-details"/);
+  assert.match(output.html,/Missing proof \(2\)/);
+  assert.match(output.html,/Exact source graph proof needed/);
+  assert.match(output.html,/Minecraft runtime not executed/);
+  assert.match(output.html,/<div class="retest" hidden>/);
+  assert.match(output.html,/No supported guided retest/);
+  assert.equal(output.report.maps[0].auditCoverage.missingProof.length,2);
 });

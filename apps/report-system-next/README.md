@@ -2,7 +2,7 @@
 
 **Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.3.0** is pinned to Git blob `d26affc61be2f240425bd10ed6ba883042df7536`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.4.0** is pinned to Git blob `157500f56e4e3e973a543444465dcf471d7a2be1`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -78,3 +78,11 @@ Proof limit: synthetic source-level evaluation only; no Node, browser, real sele
 - Existing approved Bug Report V2 and v1.0-v1.2 self-contained HTML are unchanged. No migration or automatic publication occurs.
 
 **Proof ceiling:** source-level design/renderer review and deterministic synthetic derivation, distinct from actual Node/browser and `runSelectedMapAudit()` execution.
+
+## 1.4.0 — desktop-first design and acceptance
+
+Approved viewports: **1366×768 and 1920×1080**. Mobile is no longer an acceptance/release prerequisite; the historical responsive CSS is preserved solely as a graceful fallback, with no separate mobile renderer or QA campaign.
+
+The single renderer expands the desktop report width from 1080 to 1200px while reducing excess section/card padding. Summary metrics reflow inside a desktop grid. Audit status and conclusion remain visible; the complete missing-proof list moves into a keyboard-accessible disclosure that reports its count. All text and canonical JSON survive unchanged. Where no source-backed guided after-fix retest is eligible, the numeric tester strip is hidden (its stable DOM ID anchors remain for the current client) and an explicit no-test statement is shown.
+
+Required acceptance remains JSON/HTML source parity, 1366×768 and 1920×1080 layout, keyboard focus, source proof/unknown preservation, and portable tester HTML Save/Reopen. This is not Minecraft gameplay evidence.
