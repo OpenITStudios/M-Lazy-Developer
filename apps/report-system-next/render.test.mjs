@@ -24,8 +24,8 @@ const inspect = output => {
 test("design remains immutable without a new approved version", async () => {
   const content = await readFile(new URL("layout.lock.json",root),"utf8");
   const lock = JSON.parse(content);
-  assert.equal(assertDesignLock(lock,content).designVersion,"1.1.0");
-  assert.throws(() => assertDesignLock(lock,content.replace('"1.1.0"','"2.0.0"')),
+  assert.equal(assertDesignLock(lock,content).designVersion,"1.2.0");
+  assert.throws(() => assertDesignLock(lock,content.replace('"1.2.0"','"2.0.0"')),
     /Design Lock mismatch/);
 });
 
@@ -35,7 +35,7 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.equal(first.html,second.html);
   assert.equal(first.json,second.json);
   const golden = JSON.parse(await readFile(new URL("golden.json", import.meta.url), "utf8"));
-  assert.equal(golden.designVersion,"1.1.0");
+  assert.equal(golden.designVersion,"1.2.0");
   assert.equal(golden.reportId,example.reportId);
   assert.equal(createHash("sha256").update(first.html,"utf8").digest("hex"),golden.htmlSha256);
   assert.equal(createHash("sha256").update(first.json,"utf8").digest("hex"),golden.jsonSha256);
@@ -84,6 +84,7 @@ test("source evidence authority and retest eligibility remain separate", async (
   const report = clone(example);
   const f = issue(report);
   f.evidenceLevel = "RUNTIME_OBSERVED";
+  f.proofStatus = "PROVEN";
   f.severity = "MAJOR";
   f.validation = null;
   f.observed = "In the synthetic observed scenario, the wave does not advance.";
@@ -125,6 +126,7 @@ test("Test In-Game rejects technical copy and requires gameplay witness per step
   const report = clone(example);
   const finding = issue(report);
   finding.evidenceLevel = "SOURCE_VERIFIED";
+  finding.proofStatus = "PROVEN";
   finding.severity = "MAJOR";
   finding.validation = null;
   finding.observed = "In this synthetic design example, the next wave does not start.";

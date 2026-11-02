@@ -2,7 +2,7 @@
 
 **Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.1.0** is pinned to Git blob `01b700ffcaab61db6cdea17eb6171a36803f524e`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.2.0** is pinned to Git blob `182aa720441e4f52d3b6ec93bc22f85d74f447e3`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -57,3 +57,11 @@ Source commits establish the renderer code stored in GitHub, not that a report w
 - Previously saved v1.0.0 self-contained HTML is not changed or invalidated; old authored v1 JSON is not silently migrated.
 
 **Proof boundary:** this is source implementation with a synthetic renderer derivation, not a real browser acceptance or executed selected-world audit. Full Map Audit V2 → Report Next 1.1.0 source mapping remains unconnected.
+
+## Source-bound Map Audit reporting — v1.2.0
+
+The opt-in `--report-next` view of the SAME existing `npm run audit` entrypoint now projects `SelectedMapAuditRun` into a deterministic self-contained HTML report; `renderReportNext` keeps both HTML and canonical JSON outputs. Original Bug Tracker/approved Bug Report V2 and old HTML files are not modified.
+
+Audit `PROVEN/NEED_VALIDATION` is separate from evidence strength, severity and tester Passed/Failed. No severity is manufactured when the audit does not provide an assessed priority. Selected source references are verified against the current intent evidence model; missing source references remain marked `REFERENCE_UNRESOLVED` and disable guided retest. Source-derived reproduction cues are visible but are NOT invented Test In-Game instructions. Audit obligations, validation groups and blocked/unknown gameplay surfaces appear in collapsed **Unresolved Checks** under Audit Coverage, never as new BUGs or Developer Notes. A BLOCKED audit still produces an explicitly incomplete report, not a false PASS.
+
+Proof limit: synthetic source-level evaluation only; no Node, browser, real selected-world audit, live Minecraft observation or release acceptance was executed.

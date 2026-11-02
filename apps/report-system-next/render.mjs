@@ -9,7 +9,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../planning
 const here = dirname(fileURLToPath(import.meta.url));
 const pinned = {
   reference: "2cce615368348cae8d77137867442f3f793fa584",
-  report: "7d5da39cccee8e4a989b3d03b9628478ac0a348e",
+  report: "16fdb550cb9ae0a3393af579f639e79e8c8db471",
   workspace: "78cf4ae0abc9e5d3f468a47c34c4e031e21783ce"
 };
 const gitHash = value => {
@@ -37,6 +37,7 @@ const cssExtra = "[hidden]{display:none!important}"+
 ".evidence-item input{width:100%;border:1px solid var(--border);padding:8px}"+
 ".evidence-item button{align-self:start}.attachment-input{max-width:100%}.attachment-label{display:block;font-weight:700;font-size:12px;margin:8px 0}"+
 ".proof-detail{margin:8px 0;border:1px solid var(--border);border-radius:6px;padding:10px}.proof-detail>summary{cursor:pointer;font-weight:600}.proof-detail li{padding:8px 0;overflow-wrap:anywhere}.proof-detail code{font-size:12px}.validation-panel{border-left:3px solid var(--warning);padding:8px 12px;background:var(--bg)}.coverage-note{font-size:13px;line-height:1.5;color:var(--muted)}"+
+".pending-checks{padding:10px;border:1px solid var(--border);border-radius:6px;margin:12px 0}.pending-checks>summary{cursor:pointer;font-weight:700}.pending-check{border-top:1px solid var(--border);padding:10px 0}.audit-cues{font-size:13px;line-height:1.6}"+
 ".alert{font-size:12px;color:var(--warning)}.subactions{padding:8px 24px;border-bottom:1px solid var(--border)}"+
 "@media(max-width:700px){.evidence-list{grid-template-columns:1fr}.save-status{padding:10px 16px}}";
 
@@ -56,13 +57,14 @@ function findingCard(f,index,lock,evidence) {
     }).join("")+'</ul></details>';
   const evidenceLabel = note?"Reference" :
     ({SOURCE_VERIFIED:w.verifiedSource,PACKAGE_VERIFIED:w.packageVerified,
-      RUNTIME_OBSERVED:w.runtimeObserved,NEEDS_VALIDATION:w.needsValidation})[f.evidenceLevel];
+      RUNTIME_OBSERVED:w.runtimeObserved,NEEDS_VALIDATION:w.needsValidation,REFERENCE_UNRESOLVED:w.sourceReferenceUnresolved})[f.evidenceLevel];
   const tags='<div class="tags"><span class="tag">'+String(index+1).padStart(2,"0")+"</span>"+
+    (note?"":'<span class="tag">'+escape(f.proofStatus==="PROVEN"?w.auditProven:w.needsValidation)+"</span>")+
     (note||f.severity===null?"":'<span class="tag'+(f.severity==="MAJOR"?" major":"")+'">'+escape(f.severity)+"</span>")+
-    '<span class="tag'+(f.evidenceLevel==="NEEDS_VALIDATION"?" unknown":"")+'">'+escape(evidenceLabel)+"</span>"+
+    '<span class="tag'+(["NEEDS_VALIDATION","REFERENCE_UNRESOLVED"].includes(f.evidenceLevel)?" unknown":"")+'">'+escape(evidenceLabel)+"</span>"+
     (note?"":'<span class="tag" data-result-label>'+escape(ready?w.untested:w.notRetestable)+"</span>")+"</div>";
   const header='<summary>'+tags+'<h4>'+escape(f.title)+'</h4><p class="description">'+
-    escape(note?f.description:f.problem)+'</p><div class="id">'+escape(f.id)+'</div>'+
+    escape(note?f.description:(f.problem===f.title?"":f.problem))+'</p><div class="id">'+escape(f.id)+'</div>'+
     '<div class="disclosure">'+(note?"View Details ↓":"Test / Details ↓")+'</div></summary>';
   const notes=panel(w.testerNotes,'<label class="attachment-label" for="notes-'+escape(f.id)+'">'+escape(w.testerNotes)+
     '</label><textarea class="notes-field" id="notes-'+escape(f.id)+'" data-notes placeholder="Optional notes"></textarea>');
@@ -94,6 +96,13 @@ function findingCard(f,index,lock,evidence) {
           '<button type="button" class="secondary" data-result="FAILED" aria-pressed="false">'+w.failed+'</button>'+
           '</div><p class="note">This does not mark the canonical issue Fixed.</p>')
       : panel(w.notRetestable,'<p class="alert">Needs evidence or tester-followable instructions. Notes remain available.</p>');
+    const a=f.auditDetails;
+    const cues=a?panel(w.auditCues,
+      '<p class="note">Recorded source cues, not a verified Minecraft test.</p>'+
+      (a.reproductionCues.length?items(a.reproductionCues):"")+
+      (a.suspectedOutcome?'<p><strong>Suspected, not observed:</strong> '+escape(a.suspectedOutcome)+'</p>':"")+
+      (a.evidenceLimitation?'<p class="alert">'+escape(a.evidenceLimitation)+'</p>':"")+
+      '<p class="audit-cues">Flow: '+escape(a.gameplayFlow)+' · Domain: '+escape(a.failureDomain)+'</p>'):"";
     const t=f.technical;
     const technical=panel(w.technical,'<details><summary>'+w.technical+' ↓</summary>'+
       panel("Technical Analysis",t.analysis&&para(t.analysis))+
@@ -104,7 +113,7 @@ function findingCard(f,index,lock,evidence) {
     content=panel(f.kind==="BUG"?"Why This Is a Bug":"Why This Is a Mismatch",
       f.rationale&&para(f.rationale))+panel("Impact",f.impact&&para(f.impact))+
       validation+panel(w.testProcedure,procedure)+comparison+
-      panel(w.sourceEvidence,sourceEvidence)+result+notes+attachments+technical;
+      panel(w.sourceEvidence,sourceEvidence)+cues+result+notes+attachments+technical;
   }
   return '<details class="issue" data-finding="'+escape(f.id)+'" data-kind="'+escape(f.kind)+
     '" data-ready="'+String(ready)+'">'+header+'<div class="content">'+content+"</div></details>";
@@ -132,9 +141,10 @@ function renderBody(report,lock,digest) {
     findings:issues.length,blocker:issues.filter(f=>f.severity==="BLOCKER").length,
     major:issues.filter(f=>f.severity==="MAJOR").length,
     minor:issues.filter(f=>f.severity==="MINOR").length,
-    needsValidation:issues.filter(f=>f.evidenceLevel==="NEEDS_VALIDATION").length
+    needsValidation:issues.filter(f=>f.proofStatus==="NEED_VALIDATION").length,
+    unrated:issues.filter(f=>f.proofStatus==="PROVEN"&&f.severity===null).length
   };
-  const labels={findings:"Findings",blocker:"Blocker",major:"Major",minor:"Minor",needsValidation:w.needsValidation};
+  const labels={findings:"Findings",blocker:"Blocker",major:"Major",minor:"Minor",needsValidation:w.needsValidation,unrated:w.priorityUnset};
   const cards=lock.layout.summaryMetricOrder.map(key=>
     '<div class="metric"><small>'+escape(labels[key])+'</small><b>'+summary[key]+"</b></div>").join("");
   const outcomes=lock.layout.testerMetricOrder.map(key=>
@@ -156,7 +166,7 @@ function renderBody(report,lock,digest) {
   const identity=one
     ? '<section aria-label="Artifact identity"><span class="eyebrow">Map Report</span><h2>'+
       escape(report.maps[0].name)+'</h2><p class="meta">'+escape(artifact.edition)+
-      ' · v'+escape(artifact.version)+'</p><div class="sourcebox"><strong>Source:</strong> '+
+      ' · '+escape(artifact.version===null?'Version not established':'v'+artifact.version)+'</p><div class="sourcebox"><strong>Source:</strong> '+
       escape(artifact.sourceLabel)+'<br><strong>Fingerprint:</strong> '+escape(artifact.fingerprint)+
       (artifact.sourceUrl?'<br><a rel="noopener noreferrer" target="_blank" href="'+
         escape(artifact.sourceUrl)+'">Original World File ↗</a>':"")+"</div></section>"
@@ -164,16 +174,23 @@ function renderBody(report,lock,digest) {
       '<h2>Combined Report</h2><p>'+report.maps.length+" maps, each with its own source identity</p></section>";
   const coverage=report.maps.map(map=>{
     const c=map.auditCoverage;
+    const checks=c?.checks??[];
+    const list=checks.length?'<details class="pending-checks"><summary>'+escape(w.pendingChecks)+
+      ' ('+checks.length+')</summary>'+checks.map(x=>'<div class="pending-check"><strong>'+
+        escape(x.title)+'</strong> · <code>'+escape(x.id)+'</code><p>'+escape(x.reason)+
+        '</p><p><strong>Missing:</strong> '+escape(x.missingProof)+
+        '</p><p><strong>Next:</strong> '+escape(x.nextCheck)+'</p></div>').join("")+'</details>':"";
     return '<div class="coverage-note"><strong>'+escape(map.name)+': </strong>'+
       (c?'<strong>'+escape(c.state)+'</strong> · '+escape(c.summary)+
-        (c.missingProof.length?'<ul class="source-list">'+c.missingProof.map(x=>'<li>'+escape(x)+'</li>').join("")+'</ul>':"")
+        (c.missingProof.length?'<ul class="source-list">'+c.missingProof.map(x=>'<li>'+escape(x)+'</li>').join("")+'</ul>':"")+
+        list+'<p class="note">Source audit closure never certifies observed Minecraft gameplay or defect-free behavior.</p>'
         :escape(w.coverageMissing))+'</div>';
   }).join("");
   const index=one?"":'<section class="map-index" aria-label="Maps"><h3>Maps</h3>'+
     report.maps.map((m,i)=>'<a href="#map-'+i+'">'+escape(m.name)+" ↗</a>").join("")+"</section>";
   const mapSections=report.maps.map((map,i)=>{
     const inner=(one?"":'<div class="map-head"><h3>'+escape(map.name)+
-      '</h3><span>v'+escape(map.artifact.version)+'</span></div><p class="note">'+
+      '</h3><span>'+escape(map.artifact.version===null?'Version unknown':'v'+map.artifact.version)+'</span></div><p class="note">'+
       escape(map.artifact.sourceLabel)+" · "+escape(map.artifact.fingerprint)+"</p>")+
       renderMapGroups(map,lock);
     return '<div id="map-'+i+'" data-map>'+(one?inner:
@@ -220,7 +237,7 @@ export async function renderReportNext(input, { authorizeRuntimeEvidence } = {})
   const match=referenceText.match(/<style>([\s\S]*?)<\/style>/);
   if(!match)throw new Error("Locked reference stylesheet missing");
   const fileStem=report.scope==="MAP"
-    ?slug(report.maps[0].name)+"-v"+slug(report.maps[0].artifact.version)
+    ?slug(report.maps[0].name)+"-v"+slug(report.maps[0].artifact.version??"unknown")
     :"Combined-Report";
   const meta={digest,fileStem};
   const workspace={schema:wsSchema.properties.schema.const,reportId:report.reportId,

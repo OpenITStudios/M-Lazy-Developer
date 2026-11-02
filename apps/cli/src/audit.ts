@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { renderReportNext } from "../../report-system-next/render.mjs";
+import { projectSelectedMapAuditReportNext } from "../../report-system-next/from-selected-map-audit.mjs";
 import { performance } from "node:perf_hooks";
 import { resolve } from "node:path";
 import { createGzip } from "node:zlib";
@@ -35,6 +37,7 @@ async function main(): Promise<void> {
   const rawArgs = process.argv.slice(2);
   const auditArgs: string[] = [];
   let brief = false;
+  let reportNext = false;
   let handoff = false;
   let compact = false;
   let gzip = false;
@@ -68,6 +71,10 @@ async function main(): Promise<void> {
       if (compact) throw new Error("--compact may only be supplied once");
       compact = true;
       continue;
+    }
+    if (argument === "--report-next") {
+      if (reportNext) throw new Error("--report-next may only be supplied once");
+      reportNext = true;continue;
     }
     if (argument === "--brief" || argument === "--handoff") {
       if ((argument === "--brief" && brief) ||
@@ -110,6 +117,9 @@ async function main(): Promise<void> {
     }
     auditArgs.push(argument);
   }
+  if (reportNext && (brief || handoff || compact || gzip)) {
+    throw new Error("--report-next requires a standalone HTML output view");
+  }
   if (brief && handoff) {
     throw new Error("--brief and --handoff are alternative audit views");
   }
@@ -123,7 +133,7 @@ async function main(): Promise<void> {
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff] [--compact] [--gzip] [--timings] [--handoff-offset N] [--responses model.json] [target options]");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--responses model.json] [target options]");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -202,7 +212,9 @@ async function main(): Promise<void> {
       scope: "wall-clock process observations, not Minecraft runtime proof or speedup",
     }) + "\n");
   }
-  const output = handoff
+  const html = reportNext
+    ? (await renderReportNext(projectSelectedMapAuditReportNext(resolvedAudit))).html : undefined;
+  const output = html !== undefined ? html : handoff
     ? JSON.stringify(
         projectSelectedMapAuditModelHandoff(resolvedAudit, handoffOffset),
         null,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mivubi:report-system-next:report:v1.1",
-  "title": "M-Lazy Report Next Canonical Report v1",
+  "$id": "urn:mivubi:report-system-next:report:v1.2",
+  "title": "M-Lazy Report Next Canonical Report v1.2",
   "description": "Design-only locked format. Not a converter of existing Approved Bug Report V2.",
   "type": "object",
   "additionalProperties": false,
@@ -14,10 +14,10 @@
   ],
   "properties": {
     "schema": {
-      "const": "m-lazy-report-next/v1.1"
+      "const": "m-lazy-report-next/v1.2"
     },
     "layoutVersion": {
-      "const": "1.1.0"
+      "const": "1.2.0"
     },
     "reportId": {
       "type": "string",
@@ -109,14 +109,22 @@
           "pattern": "^sha256:[a-f0-9]{64}$"
         },
         "version": {
-          "type": "string",
-          "minLength": 1
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "edition": {
           "type": "string",
           "enum": [
             "BEDROCK",
-            "EDUCATION"
+            "EDUCATION",
+            "UNKNOWN"
           ]
         },
         "sourceLabel": {
@@ -157,7 +165,8 @@
             "SOURCE_STATIC",
             "PACKAGE_INSPECTION",
             "LIVE_MINECRAFT",
-            "TESTER_OBSERVATION"
+            "TESTER_OBSERVATION",
+            "REFERENCE_UNRESOLVED"
           ]
         },
         "description": {
@@ -245,7 +254,9 @@
         "evidenceRefs",
         "testProcedure",
         "technical",
-        "validation"
+        "validation",
+        "proofStatus",
+        "auditDetails"
       ],
       "properties": {
         "id": {
@@ -280,7 +291,8 @@
             "SOURCE_VERIFIED",
             "PACKAGE_VERIFIED",
             "RUNTIME_OBSERVED",
-            "NEEDS_VALIDATION"
+            "NEEDS_VALIDATION",
+            "REFERENCE_UNRESOLVED"
           ]
         },
         "title": {
@@ -337,7 +349,7 @@
         },
         "evidenceRefs": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "items": {
             "type": "string",
             "minLength": 1
@@ -365,18 +377,35 @@
               "type": "null"
             }
           ]
+        },
+        "proofStatus": {
+          "type": "string",
+          "enum": [
+            "PROVEN",
+            "NEED_VALIDATION"
+          ]
+        },
+        "auditDetails": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/auditDetails"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "allOf": [
         {
           "if": {
             "properties": {
-              "evidenceLevel": {
-                "const": "NEEDS_VALIDATION"
+              "proofStatus": {
+                "const": "NEED_VALIDATION"
               }
             },
             "required": [
-              "evidenceLevel"
+              "proofStatus"
             ]
           },
           "then": {
@@ -386,21 +415,40 @@
               },
               "validation": {
                 "$ref": "#/$defs/validation"
+              },
+              "evidenceLevel": {
+                "const": "NEEDS_VALIDATION"
               }
             }
           },
           "else": {
             "properties": {
               "severity": {
-                "type": "string",
-                "enum": [
-                  "BLOCKER",
-                  "MAJOR",
-                  "MINOR"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "BLOCKER",
+                      "MAJOR",
+                      "MINOR"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               },
               "validation": {
                 "type": "null"
+              },
+              "evidenceLevel": {
+                "type": "string",
+                "enum": [
+                  "SOURCE_VERIFIED",
+                  "PACKAGE_VERIFIED",
+                  "RUNTIME_OBSERVED",
+                  "REFERENCE_UNRESOLVED"
+                ]
               }
             }
           }
@@ -560,7 +608,8 @@
         "state",
         "summary",
         "missingProof",
-        "evidenceRefs"
+        "evidenceRefs",
+        "checks"
       ],
       "properties": {
         "state": {
@@ -584,10 +633,16 @@
         },
         "evidenceRefs": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "items": {
             "type": "string",
             "minLength": 1
+          }
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/check"
           }
         }
       }
@@ -612,6 +667,111 @@
         "nextCheck": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "reason",
+        "missingProof",
+        "nextCheck",
+        "evidenceRefs"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missingProof": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nextCheck": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "auditDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gameplayFlow",
+        "failureDomain",
+        "reproductionCues",
+        "suspectedOutcome",
+        "evidenceLimitation",
+        "proofCeiling",
+        "counterEvidence"
+      ],
+      "properties": {
+        "gameplayFlow": {
+          "type": "string",
+          "minLength": 1
+        },
+        "failureDomain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reproductionCues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "suspectedOutcome": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceLimitation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proofCeiling": {
+          "type": "string",
+          "enum": [
+            "PROVEN",
+            "NEEDS_DECIDING_PROOF"
+          ]
+        },
+        "counterEvidence": {
+          "type": "string",
+          "enum": [
+            "cleared",
+            "unresolved"
+          ]
         }
       }
     }

@@ -1,6 +1,6 @@
 {
-  "schema": "m-lazy-report-next/v1.1",
-  "layoutVersion": "1.1.0",
+  "schema": "m-lazy-report-next/v1.2",
+  "layoutVersion": "1.2.0",
   "reportId": "design-example-not-a-real-audit",
   "scope": "MAP",
   "maps": [
@@ -63,7 +63,9 @@
                 "reason": "This synthetic example has no verified selected-map gameplay observation.",
                 "missingProof": "A real selected-world artifact review and an independently supported behavior contradiction.",
                 "nextCheck": "Inspect the current artifact's wave progression sources before deciding whether Minecraft runtime observation is required."
-              }
+              },
+              "proofStatus": "NEED_VALIDATION",
+              "auditDetails": null
             },
             {
               "id": "DEV-DEMO-001",

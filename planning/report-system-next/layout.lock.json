@@ -1,12 +1,12 @@
 {
   "system": "M-Lazy-Developer / Report System Next",
   "namespace": "report-system-next",
-  "designVersion": "1.1.0",
-  "lifecycle": "DESIGN_LOCKED_SOURCE_BUILD",
+  "designVersion": "1.2.0",
+  "lifecycle": "DESIGN_LOCKED_AUDIT_BRIDGE",
   "compatibility": {
-    "reportSchema": "m-lazy-report-next/v1.1",
+    "reportSchema": "m-lazy-report-next/v1.2",
     "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v1",
-    "templateId": "m-lazy-report-next/html-v1.1",
+    "templateId": "m-lazy-report-next/html-v1.2",
     "sourceExistingApprovedBugReportV2": "NOT_A_MUTATION_TARGET",
     "legacyReportPaths": "UNTOUCHED"
   },
@@ -58,6 +58,7 @@
     "findingCardCollapsed": [
       "referenceNumber",
       "severityIfProven",
+      "proofStatus",
       "evidenceLevel",
       "testerResultIfEligible",
       "title",
@@ -74,7 +75,8 @@
       "testerResultIfEligible",
       "testerNotes",
       "attachments",
-      "technicalDisclosure"
+      "technicalDisclosure",
+      "sourceAuditCuesIfPresent"
     ],
     "technicalDisclosure": [
       "analysisIfPresent",
@@ -87,7 +89,8 @@
       "blocker",
       "major",
       "minor",
-      "needsValidation"
+      "needsValidation",
+      "unrated"
     ],
     "testerMetricOrder": [
       "passed",
@@ -145,7 +148,12 @@
     "auditCoverage": "Audit Coverage",
     "coverageMissing": "Audit completeness not established by this report.",
     "validationDetail": "What Needs Validation",
-    "sourceEvidence": "Source Evidence"
+    "sourceEvidence": "Source Evidence",
+    "auditProven": "Audit Proven",
+    "sourceReferenceUnresolved": "Source Reference Unresolved",
+    "priorityUnset": "Priority Unset",
+    "auditCues": "Source Audit Cues",
+    "pendingChecks": "Unresolved Checks"
   },
   "tokens": {
     "font": "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -197,7 +205,9 @@
     "resetBehavior": "PERSIST_EXPLICIT_EMPTY_WORKSPACE_OVERRIDE",
     "unprovenNeverHasFinalSeverity": true,
     "validationProofMustBeShown": true,
-    "auditCoverageMustBeSourceBacked": true
+    "auditCoverageMustBeSourceBacked": true,
+    "proofIsNotRuntime": true,
+    "auditSourceMustPreserveUnknowns": true
   },
   "output": {
     "fileNames": {

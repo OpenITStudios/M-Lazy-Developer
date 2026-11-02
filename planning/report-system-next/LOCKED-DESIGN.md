@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.1.0
+# Report System Next — LOCKED DESIGN 1.2.0
 
 ## 0. Ownership and scope
 
@@ -128,3 +128,11 @@ The original v1.0.0 design and immutable Git blobs remain historical. This appro
 6. The original pinned `reference.html` stylesheet remains the visual base; restrained CSS additions improve proof legibility. New layout/schema/example blobs and golden bytes are version-pinned in the implementation.
 
 Earlier sections document the 1.0.0 baseline and its former proof ceiling. Current 1.1.0 source-level implementation is described in `apps/report-system-next/README.md`; full browser acceptance and live selected-map reporting are not yet established.
+
+## Approved 1.2.0 audit-truth integration (2026-11-02)
+
+Source-bound Report Next 1.2.0 is an intentional versioned extension. Original v1 and v1.1 offline HTML copies remain unchanged. All canonical Map Audit V2 BUG and DESIGN_MISMATCH IDs and proof states must remain visible even when source evidence is unresolved. No final severity is inferred from PROVEN or from issue type; severity is null until separately grounded. Missing evidence is explicitly marked REFERENCE_UNRESOLVED, not promoted to actual Minecraft runtime observation. Audit source cues never constitute test procedures.
+
+Unclassified Audit Obligations, validation groups, and blocked/unknown gameplay surfaces belong to the Audit Coverage "Unresolved Checks" disclosure, never BUG or DEV_NOTE. Zero findings plus incomplete source closure is still incomplete. Reporter requires exact matching artifact ID, SHA-256 fingerprint and audit revision, and uses the existing single audit CLI as an opt-in read-only HTML projection. It does not modify canonical Bug Report V2, repair closure, tester results, old project outputs or GitHub CI policy.
+
+Actual browser handoff/Save as HTML, end-to-end execution on a real selected world and gameplay behavior remain NOT EXECUTED.

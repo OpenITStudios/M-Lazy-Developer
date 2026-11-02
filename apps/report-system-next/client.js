@@ -6,8 +6,8 @@
   const SNAP = document.getElementById("workspace-snapshot");
   const allIssues = REPORT.maps.flatMap(map => map.levels.flatMap(level => level.findings));
   const findingById = new Map(allIssues.map(f => [f.id, f]));
-  const isEligible = f => f.kind !== "DEV_NOTE" &&
-    f.evidenceLevel !== "NEEDS_VALIDATION" && Boolean(f.expected?.trim() &&
+  const isEligible = f => f.kind !== "DEV_NOTE" && f.proofStatus === "PROVEN" &&
+    !["NEEDS_VALIDATION","REFERENCE_UNRESOLVED"].includes(f.evidenceLevel) && Boolean(f.expected?.trim() &&
     f.observed?.trim() && f.testProcedure?.visibleOutcome?.trim() &&
     f.testProcedure.steps.length >= 2 && f.testProcedure.steps.length <= 5);
   const emptyWorkspace = () => ({

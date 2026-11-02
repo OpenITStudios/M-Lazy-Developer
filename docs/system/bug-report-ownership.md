@@ -33,7 +33,7 @@ Physical placement does not create ownership. A copy, preview, export, spreadshe
 
 `apps/report-system-next/` is a separately design-locked **renderer source**, not a new current-map gameplay authority, an approved-BUG state owner, or the current Bug Report V2 publisher. It requires independently supplied, evidence-bound `m-lazy-report-next/v1` input and has no authorized production replacement/migration for `workspace/projects/*/output/` or the existing Bug Tracker. Its offline tester workspace is distinct user-edited presentation state; Passed/Failed, notes, and screenshot attachments do not directly mutate `SelectedMapAuditRun`, `report/bug-report.json`, or repair completion.
 
-A future production connection must first trace exact Map Audit/approved-report producer → new-schema mapping → evidence and approval preservation → renderer consumer, then explicitly decide migration/version semantics. Until such integration is authorized and proved, preserve both established output authorities and do not describe the isolated renderer as the default report flow.
+An opt-in source-level 1.2.0 adapter now projects the actual `SelectedMapAuditRun` into Report Next through the existing audit CLI `--report-next`. It keeps canonical status and source references separate from tester results and never replaces existing project reports or Approved Bug Report V2. Live map/browser acceptance is NOT EXECUTED; the new output is not the default report flow or an automatic publisher.
 
 ## Authorities
 
