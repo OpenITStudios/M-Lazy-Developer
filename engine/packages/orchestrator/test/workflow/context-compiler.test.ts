@@ -1492,5 +1492,75 @@ describe("source-first Daigon export investigation reference", () => {
       .toBeUndefined(); // this authored fixture has no third-party report
   });
 
+
+  it("joins subscription and guard locations without treating them as independent proof", () => {
+    const guardSource = {
+      ...source,
+      range: { lineStart: 13, lineEnd: 13, columnStart: 4, columnEnd: 60 },
+    };
+    const splitSites = {
+      ...subscription,
+      // A production event region spans the entire .subscribe callback.
+      // Only the parser's narrow registration span and the exact guard
+      // span may authorize a source-scoped method reference.
+      source: {
+        ...source,
+        range: { lineStart: 12, lineEnd: 15, columnStart: 1, columnEnd: 5 },
+      },
+      scriptEventRegistrationSource: source,
+      scriptEventIdRejection: {
+        ...subscription.scriptEventIdRejection,
+        source: guardSource,
+      },
+    };
+    const prefix = "behavior_packs/demo/scripts/results.ts";
+    const bySubscription = context(splitSites, [prefix + ":12:20"]);
+    const byGuard = context(splitSites, [prefix + ":13:20"]);
+    expect(bySubscription?.items.map(item => item.patternId)).toEqual([
+      "developer.hint.game-results.daigon-export",
+    ]);
+    expect(byGuard?.items.map(item => item.patternId)).toEqual([
+      "developer.hint.game-results.daigon-export",
+    ]);
+    expect(byGuard?.items[0]?.matchingEvidenceIds)
+      .toEqual(bySubscription?.items[0]?.matchingEvidenceIds);
+    expect(byGuard?.items[0]?.matchingEvidenceIds).toEqual(["event:results"]);
+    for (const locator of [
+      prefix + ":11:20", prefix + ":12:90", prefix + ":13:90",
+      prefix + ":14:20", prefix + "@unverified",
+    ]) {
+      expect(context(splitSites, [locator])?.items).toEqual([]);
+    }
+    // An alternative strict-equality action is selection evidence, not an
+    // early-return rejection, and must still match the same source guard.
+    const selectedRegion = {
+      ...splitSites,
+      scriptEventIdRejection: undefined,
+      scriptEventIdSelection: {
+        ...splitSites.scriptEventIdRejection,
+        resolution: "local-literal" as const,
+      },
+    };
+    const selectedContext = (region: typeof selectedRegion | typeof splitSites) =>
+      compileDeveloperPracticeReferenceContext({
+        data,
+        semanticIr: {
+          schemaVersion: 1 as const,
+          execution: { regions: [region], edges: [] },
+          state: { surfaces: [], operations: [], authorityBindings: [] },
+          temporal: { relations: [] },
+        },
+        selectedArtifactId: "selected",
+        domains: ["scoring"],
+        sourceLocators: [prefix + ":13:20"],
+      });
+    expect(selectedContext(selectedRegion)?.items[0]?.patternId)
+      .toBe("developer.hint.game-results.daigon-export");
+    expect(selectedContext({
+      ...selectedRegion,
+      scriptEventIdRejection: splitSites.scriptEventIdRejection,
+    })?.items).toEqual([]);
+  });
+
 });
 }

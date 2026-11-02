@@ -439,6 +439,9 @@ describe("script analyzer", () => {
       '});',
     ].join("\n"), source);
     const event = parsed.events.find(item => item.event === "scriptEventReceive");
+    expect(event?.registrationSource?.range).toMatchObject({
+      lineStart: 3, lineEnd: 3,
+    });
     expect(event?.eventIdGuard).toMatchObject({
       expression: { kind: "identifier", name: "GAME_RESULTS_EVENT_ID" },
       syntax: "if-event-id-strict-neq-return",
@@ -454,6 +457,47 @@ describe("script analyzer", () => {
         'import { system } from "@minecraft/server";', snippet,
       ].join("\n"), source);
       expect(other.events[0]?.eventIdGuard).toBeUndefined();
+    }
+  });
+
+  it("records only a first strict source-owned positive ScriptEvent action branch", () => {
+    const input = [
+      'import { system } from "@minecraft/server";',
+      'import { ANALYTICS_EVENT_ID } from "./contract.js";',
+      "system.afterEvents.scriptEventReceive.subscribe((event) => {",
+      "  if (((event.id === ANALYTICS_EVENT_ID))) { emitAnalytics(); }",
+      "});",
+    ].join("\n");
+    const parsed = parseScriptFile("analytics", input, source);
+    expect(parsed.events[0]?.eventIdGuard).toMatchObject({
+      syntax: "if-event-id-strict-eq-action",
+      expression: { kind: "identifier", name: "ANALYTICS_EVENT_ID" },
+      source: { artifactId: source.artifactId, range: { lineStart: 4 } },
+    });
+    const rejectedWithElse = parseScriptFile("analytics", [
+      'import { system } from "@minecraft/server";',
+      'system.afterEvents.scriptEventReceive.subscribe((event) => {',
+      '  if (event.id !== "mivubi:get_analytics") return; else { emitAnalytics(); }',
+      '});',
+    ].join("\n"), source);
+    expect(rejectedWithElse.events[0]?.eventIdGuard?.syntax)
+      .toBe("if-event-id-strict-neq-return");
+    for (const branch of [
+      'if (event.id === "mivubi:get_analytics") return;',
+      'if (event.id === "mivubi:get_analytics") {}',
+      'if (event.id === "mivubi:get_analytics") { const status = "unknown"; }',
+      'if (event.id == "mivubi:get_analytics") emitAnalytics();',
+      'if (event.id === "mivubi:get_analytics" && ready) emitAnalytics();',
+      'if (other.id === "mivubi:get_analytics") emitAnalytics();',
+      'if (event.id === "mivubi:get_analytics") emitAnalytics(); else skip();',
+    ]) {
+      const rejected = parseScriptFile("other", [
+        'import { system } from "@minecraft/server";',
+        'system.afterEvents.scriptEventReceive.subscribe((event) => {',
+        "  " + branch,
+        '});',
+      ].join("\n"), source);
+      expect(rejected.events[0]?.eventIdGuard).toBeUndefined();
     }
   });
 

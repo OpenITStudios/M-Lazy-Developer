@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:10:typescript:" +
+  "m-bedrock-script-parser:11:typescript:" +
   ts.version;
 import type {
   SourceRef, SourceSequentialSite, SourceGenerationCapture,
@@ -2558,8 +2558,11 @@ export function parseScriptFile(
     return name && uniqueModuleBinding(name) && topLevelFunctionNames.has(name) ? name : undefined;
   };
 
-  // Only the callback's first strict event.id inequality with an immediate
-  // return is a filter witness; a string elsewhere is not a contract guard.
+  // A callback's FIRST strict event.id branch may explicitly reject
+  // all other IDs (return) or select one ID for a direct authored action.
+  // Nested/compound/loose comparisons, empty branches, local lookalikes and
+  // unresolved values remain UNKNOWN. These are source shape observations,
+  // not proof of event delivery, analytics persistence or an export result.
   const scriptEventIdGuard = (
     callback: ts.Node | undefined,
   ): ScriptEventSubscription["eventIdGuard"] | undefined => {
@@ -2572,24 +2575,36 @@ export function parseScriptFile(
     const parameter = callback.parameters[0]!.name;
     if (!ts.isIdentifier(parameter)) return undefined;
     const first = callback.body.statements[0];
-    if (!first || !ts.isIfStatement(first) || first.elseStatement) return undefined;
+    if (!first || !ts.isIfStatement(first)) return undefined;
+    const unwrap = (expression: ts.Expression): ts.Expression => {
+      let node = expression;
+      while (ts.isParenthesizedExpression(node)) node = node.expression;
+      return node;
+    };
+    const test = unwrap(first.expression);
+    if (!ts.isBinaryExpression(test)) return undefined;
+    const operator = test.operatorToken.kind;
     const branch = first.thenStatement;
-    const returned = ts.isBlock(branch) && branch.statements.length === 1
-      ? branch.statements[0] : branch;
-    if (!returned || !ts.isReturnStatement(returned) ||
-        returned.expression !== undefined) return undefined;
-    const test = ts.isParenthesizedExpression(first.expression)
-      ? first.expression.expression : first.expression;
-    if (!ts.isBinaryExpression(test) ||
-        test.operatorToken.kind !== ts.SyntaxKind.ExclamationEqualsEqualsToken)
-      return undefined;
-    const isEventId = (value: ts.Expression): boolean =>
-      ts.isPropertyAccessExpression(value) &&
-      ts.isIdentifier(value.expression) &&
-      value.expression.text === parameter.text &&
-      value.name.text === "id";
-    const operand = isEventId(test.left) ? test.right
-      : isEventId(test.right) ? test.left : undefined;
+    const statements = ts.isBlock(branch) ? branch.statements : [branch];
+    const soleStatement = statements.length === 1 ? statements[0] : undefined;
+    const rejectsOthers = operator === ts.SyntaxKind.ExclamationEqualsEqualsToken &&
+      soleStatement !== undefined && ts.isReturnStatement(soleStatement) &&
+      soleStatement.expression === undefined;
+    const selectsMatching = operator === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+      first.elseStatement === undefined &&
+      statements.some(statement => ts.isExpressionStatement(statement));
+    if (!rejectsOthers && !selectsMatching) return undefined;
+    const isEventId = (value: ts.Expression): boolean => {
+      const site = unwrap(value);
+      return ts.isPropertyAccessExpression(site) &&
+        ts.isIdentifier(site.expression) &&
+        site.expression.text === parameter.text &&
+        site.name.text === "id";
+    };
+    const left = unwrap(test.left);
+    const right = unwrap(test.right);
+    const operand = isEventId(left) ? right
+      : isEventId(right) ? left : undefined;
     if (!operand) return undefined;
     const expression: NonNullable<ScriptEventSubscription["eventIdGuard"]>["expression"] | undefined =
       ts.isStringLiteralLike(operand)
@@ -2601,7 +2616,9 @@ export function parseScriptFile(
     return expression === undefined ? undefined : {
       expression,
       source: lineSource(file, test, source),
-      syntax: "if-event-id-strict-neq-return",
+      syntax: rejectsOthers
+        ? "if-event-id-strict-neq-return"
+        : "if-event-id-strict-eq-action",
     };
   };
 
@@ -3910,6 +3927,15 @@ export function parseScriptFile(
 
         if (event) {
           const eventSource = lineSource(file, node, source);
+          // Keep the full expression for graph/ordering compatibility, but
+          // preserve the exact .subscribe callee for source-reference routing.
+          // A full callback range must not match unrelated sibling actions.
+          const registrationSource =
+            normalizedRoot === "system" &&
+            normalizedPhase === "afterEvents" &&
+            event === "scriptEventReceive"
+              ? lineSource(file, node.expression, source)
+              : undefined;
           const eventCallback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
           const namedEventCallback = namedCallback(node);
           const guardedCallback = eventCallback ??
@@ -3941,6 +3967,7 @@ export function parseScriptFile(
                   }
                 : {}),
             source: eventSource,
+            ...(registrationSource === undefined ? {} : { registrationSource }),
             ...(eventIdGuard === undefined ? {} : { eventIdGuard }),
             ...(sessionSites.length === 0 ? {} : { playerSessionSites: sessionSites }),
           });

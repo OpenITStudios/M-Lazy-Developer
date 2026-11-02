@@ -419,7 +419,14 @@ export function developerPracticeSignalsFromSemanticIr(
     // matching investigation. No export completion or map adoption is proven.
     if (region.ownerId === "system" &&
         region.label === "system.afterEvents.scriptEventReceive") {
-      const guard = region.scriptEventIdRejection;
+      const rejection = region.scriptEventIdRejection;
+      const selection = region.scriptEventIdSelection;
+      // A single authored callback may select OR reject a particular ID,
+      // never both. Keep the two kinds separate in canonical Semantic IR.
+      const guard = rejection !== undefined && selection === undefined
+        ? rejection
+        : selection !== undefined && rejection === undefined
+          ? selection : undefined;
       const signal = guard?.eventId === "daigon:get_all_scoring"
         ? "scriptevent:daigon:get_all_scoring"
         : guard?.eventId === "mivubi:get_analytics"
@@ -429,7 +436,25 @@ export function developerPracticeSignalsFromSemanticIr(
           guard?.source.artifactId === selectedArtifactId &&
           guard.source.relativePath === region.source.relativePath &&
           guard.valueSource.artifactId === selectedArtifactId) {
-        add(region.id, region.source, signal);
+        // Registration and filter are two PRECISE source locations for
+        // the same canonical region evidence ID. The old region.source can
+        // cover the whole callback body and must NOT be a matching signal:
+        // otherwise any unrelated sibling action could select this method.
+        const registration = region.scriptEventRegistrationSource;
+        if (registration?.artifactId === selectedArtifactId &&
+            registration.relativePath === guard.source.relativePath &&
+            registration.range?.lineStart !== undefined &&
+            registration.range?.columnStart !== undefined &&
+            registration.range?.lineEnd !== undefined &&
+            registration.range?.columnEnd !== undefined) {
+          add(region.id, registration, signal);
+        }
+        if (guard.source.range?.lineStart !== undefined &&
+            guard.source.range?.columnStart !== undefined &&
+            guard.source.range?.lineEnd !== undefined &&
+            guard.source.range?.columnEnd !== undefined) {
+          add(region.id, guard.source, signal);
+        }
       }
       continue;
     }
@@ -496,12 +521,25 @@ export function developerPracticeSignalsFromSemanticIr(
       add(call.id, call.source, "sendMessage");
     }
   }
-  const unique = new Map(cues.map(cue =>
-    [[cue.evidenceId, cue.sourcePath, cue.signal].join("::"), cue] as const));
+  // The same canonical evidence can have a registration site and a distinct
+  // source guard site. Retain distinct precise ranges while deduplicating
+  // identical source observations, without inventing new evidence IDs.
+  const unique = new Map(cues.map(cue => [
+    JSON.stringify([
+      cue.evidenceId, cue.sourcePath, cue.signal,
+      cue.range ?? null, cue.jsonPointer ?? null,
+    ]),
+    cue,
+  ] as const));
   return [...unique.values()].sort((a, b) =>
     a.evidenceId.localeCompare(b.evidenceId) ||
     a.signal.localeCompare(b.signal) ||
-    a.sourcePath.localeCompare(b.sourcePath));
+    a.sourcePath.localeCompare(b.sourcePath) ||
+    (a.range?.lineStart ?? 0) - (b.range?.lineStart ?? 0) ||
+    (a.range?.columnStart ?? 0) - (b.range?.columnStart ?? 0) ||
+    (a.range?.lineEnd ?? 0) - (b.range?.lineEnd ?? 0) ||
+    (a.range?.columnEnd ?? 0) - (b.range?.columnEnd ?? 0) ||
+    (a.jsonPointer ?? "").localeCompare(b.jsonPointer ?? ""));
 }
 
 /**
@@ -537,6 +575,10 @@ function sourceLocatorMatchesReferenceSignal(
   // A column constraint names one precise source site. Do not allow an
   // unrelated call elsewhere on the same minified source line.
   if (column !== 0) {
+    // A column-specific request cannot be matched to a source witness
+    // that only identifies the line. Do not guess positions in bundles.
+    if (range.columnStart === undefined || range.columnEnd === undefined)
+      return false;
     if (fromLine === range.lineStart &&
         range.columnStart !== undefined && column < range.columnStart)
       return false;

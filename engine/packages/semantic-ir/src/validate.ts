@@ -78,7 +78,29 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
     errors.push("Duplicate execution region id: " + duplicate);
   }
   for (const region of ir.execution.regions) {
-    const guard = region.scriptEventIdRejection;
+    const registration = region.scriptEventRegistrationSource;
+    if (registration !== undefined &&
+        (region.kind !== "event-source" ||
+         region.ownerId !== "system" ||
+         region.label !== "system.afterEvents.scriptEventReceive" ||
+         !region.source ||
+         registration.artifactId !== region.source.artifactId ||
+         registration.relativePath !== region.source.relativePath ||
+         registration.range?.lineStart === undefined ||
+         registration.range?.columnStart === undefined ||
+         registration.range?.lineEnd === undefined ||
+         registration.range?.columnEnd === undefined)) {
+      errors.push("Unowned or non-specific script-event registration: " + region.id);
+    }
+    const rejection = region.scriptEventIdRejection;
+    const selection = region.scriptEventIdSelection;
+    // One first-branch decision must not simultaneously claim that the same
+    // event ID is both rejected and selected. A forged/ambiguous IR fails closed.
+    if (rejection !== undefined && selection !== undefined) {
+      errors.push("Conflicting script-event ID branches: " + region.id);
+      continue;
+    }
+    const guard = rejection ?? selection;
     if (!guard) continue;
     if (region.kind !== "event-source" ||
         region.ownerId !== "system" ||
@@ -89,7 +111,9 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
         guard.valueSource.artifactId !== region.source.artifactId ||
         !guard.valueSource.relativePath ||
         !guard.eventId.trim()) {
-      errors.push("Unowned script-event ID rejection source: " + region.id);
+      errors.push("Unowned script-event ID " +
+        (selection === undefined ? "rejection" : "selection") +
+        " source: " + region.id);
     }
   }
   for (const duplicate of duplicateIds(ir.execution.edges)) {

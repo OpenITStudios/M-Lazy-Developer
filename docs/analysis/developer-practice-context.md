@@ -31,7 +31,9 @@ Stable document identity is this frontmatter `id`; update in place.
 
 **Current v0.35.0 technical reference (2 November 2026):** Both independently SHA-pinned developer and Skills Probe ZIPs match the 24 developer skill-folder and 45 installed module-file identities recorded in the existing native source lock. Eighteen conditional, source-reviewed map investigation patterns are curated: sixteen original, one Daigon results-export and one analytics session-export. Five skills remain developer workflow references, and player-attached particles remain unrouted technical reference. This is not official Microsoft/Mojang gameplay policy, a required map feature or runtime proof.
 
-**Probe evidence boundary:** All 89 source report documents are accounted for: 74 scoped outcomes/attempts (49 historical plus 25 newly reviewed) and 15 non-outcome plan/template/operator/offline documents. FAIL, MIXED, PARTIAL and BLOCKED statuses retain their original versions, revisions and client scope. The existing `resource-context.ts` still requires an exact selected-artifact typed witness for at most two applicable reference questions. Analytics now qualifies only through the source-owned strict `mivubi:get_analytics` event ID guard; never through a generic subscriber or lexical guess.
+**Probe evidence boundary:** All 89 source report documents are accounted for: 74 scoped outcomes/attempts (49 historical plus 25 newly reviewed) and 15 non-outcome plan/template/operator/offline documents. FAIL, MIXED, PARTIAL and BLOCKED statuses retain their original versions, revisions and client scope. The existing `resource-context.ts` still requires an exact selected-artifact typed witness for at most two applicable reference questions. Analytics qualifies only through a source-owned first strict `mivubi:get_analytics` event ID branch; never through a generic subscriber or lexical guess.
+
+**Source-first ScriptEvent proof boundaries (2 November 2026):** The existing script analyzer now keeps two exact locations for an imported-system `scriptEventReceive` callback: its narrow `.subscribe` callee (`registrationSource`) and its first `event.id` guard (`eventIdGuard.source`). The full authored subscription expression remains available for existing graph/ordering consumers, **not** as a reference-selection locator because that span can include unrelated callback actions. The source parser recognizes a first strict `!==` early-return rejection (optionally with `else`) and a first strict `===` branch containing directly authored expression work (without `else`); other compound/loose/nested/ambiguous conditions abstain. Canonical Semantic IR resolves immutable inline, local or uniquely imported string IDs and distinguishes `scriptEventIdRejection` from `scriptEventIdSelection`. Resource Context matches the same region evidence ID only at the exact narrow registration or guard span, with no duplicated proof or invented runtime observation. The two supported publisher IDs (`daigon:get_all_scoring`, `mivubi:get_analytics`) remain *optional source-reference questions*, not automatic BUG detectors, required features or verified Minecraft export behavior.
 
 ## Upstream ZIP intake in ChatGPT Chat — candidate before promotion
 
@@ -84,8 +86,8 @@ snapshot. The earlier 16 optional interpretation patterns retain their
 source-grounded selection and negative controls. On 2026-10-27 one
 additional, conditional Daigon results-export source question was admitted
 from the original `bedrock-game-results` method. Its source-first witness
-now requires a typed system `scriptEventReceive` callback whose first
-strict inequality return filters event.id against the resolved
+at that historical revision required a typed system `scriptEventReceive` callback whose first
+strict inequality return filtered event.id against the resolved
 `daigon:get_all_scoring` literal. The real developer implementation imports
 the unique exported `GAME_RESULTS_EVENT_ID` from a same-map module; an
 unresolved import or generic subscription cannot select the method. This yields **17** source

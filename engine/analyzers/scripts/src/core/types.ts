@@ -107,18 +107,25 @@ export interface ScriptEventSubscription {
   root: "world" | "system" | "unknown";
   phase: "beforeEvents" | "afterEvents" | "unknown";
   event: string;
+  /** Exact .subscribe callee, not the whole callback-body range.
+   * Source registration is not proof the event callback ran.
+   */
+  registrationSource?: SourceRef;
   executionRegion?: string;
   callbackRegion?: string;
   callbackSource?: SourceRef;
-  /** Exact source-level event ID rejection; neither event delivery nor
-   * imported constant identity is proven by parser syntax alone.
+  /** The callback's first exact event.id branch, never evidence that a
+   * source export ran. The canonical IR separately verifies the literal
+   * identity and distinguishes rejection from selection.
    */
   eventIdGuard?: {
     readonly expression:
       | { readonly kind: "literal"; readonly value: string }
       | { readonly kind: "identifier"; readonly name: string };
     readonly source: SourceRef;
-    readonly syntax: "if-event-id-strict-neq-return";
+    readonly syntax:
+      | "if-event-id-strict-neq-return"
+      | "if-event-id-strict-eq-action";
   };
   /** Authored callback evidence only: not cache eviction or spawn success. */
   playerSessionSites?: readonly {

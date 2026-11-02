@@ -1596,12 +1596,12 @@
       "owner": "engine/analyzers/scripts",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Large multi-case parser suite covering lexical shadowing, immutable aliases and Minecraft module semantics; not a disposable microtest.",
+      "rationale": "Large multi-case parser suite covering lexical shadowing, immutable aliases and Minecraft module semantics; not a disposable microtest.\n2026-11-02 source-guard integration: Authored first strict ScriptEvent ID selection/rejection AST regressions, including unsupported lookalikes; execution deferred. NOT EXECUTED.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/analyzers/scripts",
         "action": "revisit-on-relevant-source-change",
-        "sourceBlobSha": "0e01c7be0fb9bbc06f91d333a8053ba88bbfc910"
+        "sourceBlobSha": "c23020b516ffba48d7ea6f8a78f888bfad67bb7f"
       },
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
@@ -4608,10 +4608,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "bc249957417a81a46e3a2be8b640b6ca216efb11"
+        "sourceBlobSha": "49cb423b8d98d6a45d1a4a5d3aaa704cff3a4f5b"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 22 it/test call sites and 73 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 22 it/test call sites and 73 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\n2026-11-02 source-guard integration: Authored same-artifact imported ScriptEvent ID branch/registration source ownership and conflicting-IR regression; execution deferred. NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -7861,10 +7861,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "f5f606011caa656ba9ab5c5d905b95743e538259"
+        "sourceBlobSha": "8508cd4dc086ae1ae3f74e6c1c5ecea73bf36dcc"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.\n2026-11-02 source-guard integration: Authored exact subscription-callee/guard source location regression excluding unrelated callback-body and cross-artifact references; execution deferred. NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

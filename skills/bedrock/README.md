@@ -36,9 +36,14 @@ selected-artifact Semantic IR gating: sixteen original, conditional Daigon
 results export and conditional `mivubi:get_analytics` session export. Five
 methods remain developer workflow references; `bedrock-player-attached-particles`
 remains technical REFERENCE only until a precise supported BP rider/RP
-particle attachment witness exists. Neither export ID is automatic
-gameplay-contract adoption, console delivery or defect proof; no upstream
-code installation or Minecraft runtime verification is implied.
+particle attachment witness exists. For both export IDs, only a first strict
+source-owned event ID rejection (`!== return`) or positive conditional
+selection (`===` with authored work), resolved to a literal/immutable local/
+uniquely imported value, may select questions at an exact `.subscribe` or
+guard locator. An unrelated line inside the same callback cannot select the
+method. Neither pattern establishes gameplay-contract adoption, console
+delivery, defect proof or Minecraft runtime execution; no upstream code
+installation is implied.
 
 ## Read-only operator operations
 

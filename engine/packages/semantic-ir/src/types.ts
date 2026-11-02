@@ -16,21 +16,34 @@ export type ExecutionRegionKind =
   | "behavior-animation"
   | "dialogue-command";
 
+/** Resolved from the same selected-artifact strict ScriptEvent branch.
+ * A same-artifact identifier is source provenance, never observed gameplay.
+ */
+export interface SourceBoundScriptEventId {
+  readonly eventId: string;
+  readonly source: SourceRef;
+  readonly valueSource: SourceRef;
+  readonly resolution: "inline-literal" | "local-literal" | "unique-imported-literal";
+}
+
 export interface ExecutionRegion {
   id: string;
   kind: ExecutionRegionKind;
   ownerId: string;
   label: string;
   source?: SourceRef;
-  /** Source-owned strict event.id != value early-return check on an
-   * imported-system scriptEventReceive callback. Not runtime delivery.
+  /** Exact imported-system ScriptEvent .subscribe callee. The ordinary
+   * region.source still describes the full authored subscription expression.
    */
-  scriptEventIdRejection?: {
-    readonly eventId: string;
-    readonly source: SourceRef;
-    readonly valueSource: SourceRef;
-    readonly resolution: "inline-literal" | "local-literal" | "unique-imported-literal";
-  };
+  scriptEventRegistrationSource?: SourceRef;
+  /** Source-owned strict event.id !== value early-return branch from an
+   * imported-system scriptEventReceive callback. No runtime delivery.
+   */
+  scriptEventIdRejection?: SourceBoundScriptEventId;
+  /** A separate, first strict event.id === value conditional branch with
+   * authored expression work. Not execution, export delivery or a contract.
+   */
+  scriptEventIdSelection?: SourceBoundScriptEventId;
 }
 
 export type ExecutionEdgeKind =

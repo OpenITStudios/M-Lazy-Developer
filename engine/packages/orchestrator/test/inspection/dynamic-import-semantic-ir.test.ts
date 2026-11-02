@@ -1,7 +1,7 @@
 // Bounded same-directory feature family; preserve original lexical bodies.
 import { describe, expect, it } from "vitest";
 import { parseScriptFile, deriveCrossFileCallEdges } from "../../../../analyzers/scripts/src/index.js";
-import { semanticIrExecutionTraces } from "../../../semantic-ir/src/index.js";
+import { semanticIrExecutionTraces, validateSemanticIr } from "../../../semantic-ir/src/index.js";
 import { buildInspectionSemanticIr, scriptRegionId } from "../../src/diagnosis/semantic-ir-stage.js";
 import { sourceFlowCandidates } from "../../src/inspection/gameplay-scenario-compiler.js";
 import type { KnowledgeCatalog } from "../../../knowledge/src/index.js";
@@ -16,6 +16,68 @@ const parsed = (path: string, text: string, artifactId = "selected-map") => {
 };
 const build = (...scripts: ReturnType<typeof parsed>[]) =>
   buildInspectionSemanticIr({ parsedFunctions: [], parsedScripts: scripts });
+
+describe("source-owned first-branch ScriptEvent ID selection", () => {
+  const root = "behavior_packs/BP/scripts/";
+  const contract = parsed(root + "contract.ts",
+    'export const ANALYTICS_EVENT_ID = "mivubi:get_analytics";');
+  it("separates imported-constant equality selection from early-return rejection", () => {
+    const accepting = parsed(root + "analytics.ts", [
+      'import { system } from "@minecraft/server";',
+      'import { ANALYTICS_EVENT_ID } from "./contract.js";',
+      'system.afterEvents.scriptEventReceive.subscribe(event => {',
+      '  if (event.id === ANALYTICS_EVENT_ID) exportAnalytics();',
+      '});',
+    ].join("\n"));
+    const positiveIr = build(accepting, contract);
+    const chosen = positiveIr.execution.regions.find(region =>
+      region.label === "system.afterEvents.scriptEventReceive");
+    expect(chosen?.scriptEventRegistrationSource).toMatchObject({
+      relativePath: root + "analytics.ts",
+      range: { lineStart: 3, lineEnd: 3 },
+    });
+    expect(chosen?.scriptEventIdSelection).toMatchObject({
+      eventId: "mivubi:get_analytics",
+      resolution: "unique-imported-literal",
+      source: { relativePath: root + "analytics.ts", range: { lineStart: 4 } },
+      valueSource: { relativePath: root + "contract.ts" },
+    });
+    expect(chosen?.scriptEventIdRejection).toBeUndefined();
+    expect(validateSemanticIr(positiveIr).filter(message =>
+      message.includes("script-event ID"))).toEqual([]);
+
+    const rejecting = parsed(root + "analytics.ts", [
+      'import { system } from "@minecraft/server";',
+      'import { ANALYTICS_EVENT_ID } from "./contract.js";',
+      'system.afterEvents.scriptEventReceive.subscribe(event => {',
+      '  if (event.id !== ANALYTICS_EVENT_ID) return;',
+      '  exportAnalytics();',
+      '});',
+    ].join("\n"));
+    const negativeIr = build(rejecting, contract);
+    const guarded = negativeIr.execution.regions.find(region =>
+      region.label === "system.afterEvents.scriptEventReceive");
+    expect(guarded?.scriptEventIdRejection?.eventId).toBe("mivubi:get_analytics");
+    expect(guarded?.scriptEventIdSelection).toBeUndefined();
+
+    if (chosen?.scriptEventIdSelection !== undefined) {
+      const forged = {
+        ...positiveIr,
+        execution: {
+          ...positiveIr.execution,
+          regions: positiveIr.execution.regions.map(region =>
+            region.id !== chosen.id ? region : {
+              ...region,
+              scriptEventIdRejection: chosen.scriptEventIdSelection,
+            }),
+        },
+      };
+      expect(validateSemanticIr(forged)).toContain(
+        "Conflicting script-event ID branches: " + chosen.id
+      );
+    }
+  });
+});
 
 describe("manifest-rooted static module dependencies", () => {
   it("tracks side-effect-only static imports and direct state writes without timing claims", () => {

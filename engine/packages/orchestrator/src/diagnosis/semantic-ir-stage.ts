@@ -403,16 +403,18 @@ export function buildInspectionSemanticIr(
     }
   }
 
-  // Resolve the native developer's imported GAME_RESULTS_EVENT_ID through
-  // the current, same-artifact ESM and immutable safe-config owners.
+  // Resolve either exact source-owned ScriptEvent ID branch using the same
+  // immutable local/imported literal owner. A distinct positive condition is
+  // NOT a rejection, and neither branch establishes runtime delivery.
   const sourceScripts = input.parsedScripts.map(item => item.parsed);
   const resolvedImports = input.resolvedScriptImports ??
     resolveScriptImports(sourceScripts);
-  const eventIdRejection = (
+  const resolvedEventIdGuard = (
     parsed: ParsedScriptFile,
     guard: NonNullable<ParsedScriptFile["events"][number]["eventIdGuard"]>,
   ): NonNullable<ExecutionRegion["scriptEventIdRejection"]> | undefined => {
-    if (guard.syntax !== "if-event-id-strict-neq-return" ||
+    if ((guard.syntax !== "if-event-id-strict-neq-return" &&
+         guard.syntax !== "if-event-id-strict-eq-action") ||
         guard.source.artifactId !== parsed.source.artifactId ||
         guard.source.relativePath !== parsed.source.relativePath) return undefined;
     if (guard.expression.kind === "literal") {
@@ -582,7 +584,7 @@ export function buildInspectionSemanticIr(
           event.phase === "afterEvents" &&
           event.event === "scriptEventReceive" &&
           event.eventIdGuard !== undefined
-        ? eventIdRejection(parsed, event.eventIdGuard)
+        ? resolvedEventIdGuard(parsed, event.eventIdGuard)
         : undefined;
       ensureRegion({
         id: eventId,
@@ -590,7 +592,13 @@ export function buildInspectionSemanticIr(
         ownerId: event.root,
         label: event.root + "." + event.phase + "." + event.event,
         source: event.source,
-        ...(idGuard === undefined ? {} : { scriptEventIdRejection: idGuard }),
+        ...(event.registrationSource === undefined ? {} : {
+          scriptEventRegistrationSource: event.registrationSource,
+        }),
+        ...(idGuard === undefined ? {} :
+          event.eventIdGuard?.syntax === "if-event-id-strict-eq-action"
+            ? { scriptEventIdSelection: idGuard }
+            : { scriptEventIdRejection: idGuard }),
       });
 
       const to = event.callbackRegion
