@@ -272,6 +272,35 @@ original-map identity → Must Change and Must Preserve → guarded
 working-copy mutation → preservation/targeted proof. IMPROVE SYSTEM
 owns code/source improvements and its restricted benchmark operation.
 
+### Map-first testing with Skills Probe and explicit coverage limits
+
+For a selected world, the **logical process is**:
+
+```text
+LOAD + UNDERSTAND: identify this exact map/version and its authored
+  games, modes, phases, mechanics, transitions and ownership
+      ↓
+TEST: select applicable normal/negative/recovery cases from that map;
+  match source-reviewed Skills Probe methodology and negative controls;
+  perform only current-map checks that available tools truly support;
+  preserve counterproof and exact unavailable capabilities
+      ↓
+REPORT: game understanding → grounded BUG / DESIGN_MISMATCH findings
+  → uncovered mechanics / test-method and runtime-proof gaps
+```
+
+This does **not** add a fifth operator stage. `Skills Probe` today is
+independently locked upstream **source/test-reference evidence**, not
+automatically an executable selected-map Minecraft tester. A linked
+Probe PASS, example or method is not a current-map PASS. If a mechanic
+cannot be tested, do not create an ad hoc tester or force the claim;
+retain its existing Audit Obligation with source identity, reason,
+missing capability/proof and one narrow next check. A missing
+source-matched reference alone is `UNRESOLVED`, not definitive probe
+incapability. Existing proof decisions and Map Audit Output V2 remain
+the only report authorities. Universal coverage is a measurable goal,
+not a default claim.
+
 ### Native developer ZIP methods inside the two Lazy-Dev flows
 
 Adopt the **source-reviewed developer's method and its negative controls**, not the publisher's separate execution environment. `skills/bedrock/source-lock.json` holds skill/module source identities and `experiments/developer-practice-signals.json` holds reviewed methods and **independent** Skills Probe reports/installed lock.

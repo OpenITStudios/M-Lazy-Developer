@@ -207,6 +207,33 @@ capacity+1, interleaving, reconnect/reload, second run and cleanup inverse
 only where selected-source or universal obligations justify them.
 Deduplicate by first causal owner instead of combining all unrelated tests.
 
+**Skills Probe handoff for applicable mechanics (within A22/EVALUATE,
+not another checkpoint):** UNDERSTAND must identify the game/mode,
+source evidence, ownership and actual mechanics before any method or
+Probe reference is selected. Use existing source-typed reference matching
+and the independent Probe revision/fixture as optional testing guidance.
+Classify reference availability, actual selected-map proof and unresolved
+capability independently; a suitable reference is neither executable
+coverage nor gameplay correctness.
+
+The existing Audit Obligation owns unsupported or undecidable mechanisms.
+For each affected material feature record exact source/subject scope,
+which verification outcome cannot be established, the missing semantic
+or runtime capability, available negative control and the smallest
+deciding test. Use `detection-gap` for demonstrably missing semantic/
+checker coverage, `knowledge-gap` for missing applicable knowledge,
+`runtime-proof` for an irreducible observed-gameplay question, or the
+existing more specific obligation source where appropriate. A missing
+source-match in a bounded method lookup is `UNRESOLVED`, not proof
+that upstream Skills Probe has no such tool. Do not add a new probe
+implementation, fake a receipt, skip the mechanic or label it a BUG.
+
+On REPORT, show supported findings under Bug / Design Mismatch and
+unresolved coverage separately, without turning gaps into another issue
+type or pretending upstream example PASS tested the selected world.
+The intended 100% applicable coverage is an acceptance objective,
+never an assumed property of an upstream ZIP or a scenario count.
+
 **Presentation and proof:** source-authored phases and direct current-world
 Intent edges remain separate from the eight operator categories. A
 directed source relation or in-file lexical order cannot prove actual

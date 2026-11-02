@@ -302,6 +302,141 @@ function formatSourceBoundGameplayFlowReview(
   return out;
 }
 
+/**
+ * Read-only Skills Probe/QA coverage honesty. The selected-map method matches
+ * are existing bounded model task references, NEVER an executable tester.
+ * Canonical Audit Obligations own missing proof; absence of a matching
+ * external reference never proves a probe capability is absent.
+ */
+function formatSelectedMapProbeCoverage(
+  report: MapAuditOutputV2,
+  intent: GameplayIntentModel,
+  modelTaskPackets?: readonly AuditModelTaskPacket[],
+): readonly string[] {
+  const sourceEvidence = new Map(intent.evidence
+    .filter(item => item.scope === "selected-artifact")
+    .map(item => [item.id, item] as const));
+  const compact = (value: string): string =>
+    value.replace(/\s+/g, " ").trim().slice(0,190);
+  const sourceLocators = (ids: readonly string[]): readonly string[] =>
+    [...new Set(ids.flatMap(id => {
+      const location = sourceEvidence.get(id)?.locator;
+      return location && location.trim() ? [location] : [];
+    }))].sort();
+  const obligations = report.auditObligations ?? [];
+  const methodOrSemanticGaps = obligations.filter(item =>
+    item.source === "detection-gap" || item.source === "knowledge-gap");
+  const runtimeProofGaps = obligations.filter(item =>
+    item.source === "runtime-proof");
+  const otherObligations = obligations.length -
+    methodOrSemanticGaps.length - runtimeProofGaps.length;
+  const matched = (modelTaskPackets ?? []).flatMap(task =>
+    (task.developerPractice?.items ?? []).flatMap(guide => {
+      const ids = guide.matchingEvidenceIds.filter(id =>
+        sourceEvidence.has(id));
+      if (ids.length === 0) return [];
+      return [{
+        taskId: task.id,
+        patternId: guide.patternId,
+        sourceId: guide.sourceId,
+        locators: sourceLocators(ids),
+        upstream: guide.upstreamProbes ?? [],
+      }];
+    }));
+  const uniqueMethodMatches = [...new Map(matched
+    .map(item => [item.taskId + "::" + item.patternId, item] as const))
+    .values()].sort((a, b) =>
+      a.taskId.localeCompare(b.taskId) ||
+      a.patternId.localeCompare(b.patternId));
+  const qa = report.qaCoverage;
+  const out: string[] = [
+    "",
+    "## Skills Probe / QA Coverage (METHOD REFERENCES ARE NOT TEST EXECUTION)",
+    "Current-map understanding and QA questions are distinct from upstream " +
+      "Skills Probe sample results. The upstream versioned examples are " +
+      "source references; only a genuinely executed current-map check may " +
+      "claim execution or a measured gameplay result.",
+    "Selected QA requirements: " + (qa?.selected ?? "UNAVAILABLE") +
+      "; exact proven QA violations: " + (qa?.confirmedViolations ?? 0) +
+      "; whole-requirement PASS from QA routing: " + (qa?.proofBound ?? 0) +
+      ". These are not counts of Skills Probe tests run.",
+    "Outstanding canonical Audit Obligations: " + obligations.length +
+      " (semantic/knowledge gaps: " + methodOrSemanticGaps.length +
+      "; native-runtime proof gaps: " + runtimeProofGaps.length +
+      "; other audit/source obligations: " + otherObligations + ").",
+  ];
+  if (modelTaskPackets === undefined) {
+    out.push(
+      "Bounded source-matched Probe references are not part of this final " +
+      "report input. Their availability and selected-map execution remain " +
+      "UNVERIFIED, not unsupported.");
+  } else {
+    out.push(
+      "Matched developer/Probe source-reference guidance in current model " +
+        "tasks: " + uniqueMethodMatches.length + " task-method match(es) " +
+        "across " + modelTaskPackets.length +
+        " task(s). This is NOT an exhaustive Probe capability inventory.",
+    );
+    for (const item of uniqueMethodMatches.slice(0, 3)) {
+      out.push(
+        "- Reference " + compact(item.patternId) + " for " +
+          compact(item.taskId) + " (source method " +
+          compact(item.sourceId) + ").",
+        "  Current map source: " +
+          (item.locators.length
+            ? item.locators.slice(0, 2).map(compact).join("; ")
+            : "exact source locator not shown") +
+          ". Reference matched, NOT executed on this map.",
+      );
+      if (item.upstream.length > 0) {
+        const upstream = item.upstream[0]!;
+        out.push(
+          "  Upstream historical Probe report: " +
+            compact(upstream.id) + " [" + compact(upstream.status) +
+            "]; original fixture/revision only, NOT current-map proof.");
+      }
+    }
+    if (uniqueMethodMatches.length > 3) out.push(
+      "Additional matched reference pointers not displayed: " +
+        (uniqueMethodMatches.length - 3) + ".");
+    if (uniqueMethodMatches.length === 0) out.push(
+      "No current bounded model task has an eligible source-matched " +
+      "method reference. This does NOT demonstrate a missing or broken " +
+      "Skills Probe capability; investigate selected-map source and " +
+      "version compatibility before concluding that.");
+  }
+  for (const [label,items] of [
+    ["Checker / knowledge proof not yet established", methodOrSemanticGaps],
+    ["Actual Minecraft or other runtime proof still required", runtimeProofGaps],
+  ] as const) {
+    if (items.length === 0) continue;
+    out.push("**" + label + ":**");
+    for (const item of items.slice(0, 3)) {
+      const locators = sourceLocators(item.evidenceIds);
+      out.push(
+        "- " + compact(item.title) + " [" + compact(item.id) + "]" +
+          (locators.length
+            ? " @ " + locators.slice(0, 2).map(compact).join("; ")
+            : " [source locator still unresolved]"),
+        "  Missing: " + compact(item.missingProof),
+        "  Deciding check (NOT EXECUTED by this description): " +
+          compact(item.validationTest),
+      );
+    }
+    if (items.length > 3) out.push(
+      "Additional open obligations of this kind: " +
+        (items.length - 3) +
+        "; canonical full report retains each original ID.");
+  }
+  out.push(
+    "If current methods genuinely cannot resolve a mechanic, keep its " +
+      "original Audit Obligation and state the exact missing proof; never " +
+      "manufacture a Probe, runtime receipt, PASS, BUG or new test runner.",
+    "",
+  );
+  return out;
+}
+
 export function formatSelectedMapAuditFinalReport(input: {
   readonly report: MapAuditOutputV2;
   readonly intent: GameplayIntentModel;
@@ -607,6 +742,7 @@ export function formatSelectedMapAuditFinalReport(input: {
   };
   renderGroup("Bug", bugs);
   renderGroup("Design Mismatch", mismatches);
+  out.push(...formatSelectedMapProbeCoverage(report, intent));
 
   // Every still-material proof question uses ONE operator-facing label,
   // NEED_VALIDATION. Canonical audit obligations remain a distinct internal
@@ -1345,6 +1481,7 @@ export function formatSelectedMapAuditBrief(input: {
       "Overall map review and publication remain BLOCKED.",
     );
   }
+  out.push(...formatSelectedMapProbeCoverage(report, intent, modelTaskPackets));
   out.push("", "## Next Decision");
   if (firstTask !== undefined) {
     const locations = [...new Set([

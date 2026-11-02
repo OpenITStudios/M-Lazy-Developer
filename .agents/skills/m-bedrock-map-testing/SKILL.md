@@ -16,9 +16,9 @@ Normalize the request and present one small Pre-Audit plan; secure one user conf
 ## Four user-facing stages, one existing engine
 
 1. **LOAD = internal TARGET + DISCOVERY.** Fingerprint the selected archive, preserve safe/opaque source, inspect manifests, behavior/resource packs, scripts, functions, entity, world/NBT/LevelDB, structures and references. Produce selected-artifact source identities, inventory and unsupported-source gaps.
-2. **UNDERSTAND = internal UNDERSTAND + FORMALIZE.** Reconstruct the player journey (ENTRY/JOIN → READY/START → SETUP → ACTIVE GAMEPLAY → PROGRESSION → WIN/LOSE → CLEANUP/REPLAY → RECOVERY). Build authored/inferred/unknown objective, actor/state ownership, Semantic IR, Gameplay Intent, transitions, arena and multiplayer contracts. Consult only relevant reviewed `bedrock-*` methods and version-locked Probe examples through the existing `resource-context.ts`, matched to exact current-map source/IR; never infer map design from an upstream preference.
-3. **TEST = internal EVALUATE + PROVE.** Challenge normal path, recovery, edge cases, concurrency, permission/version and cross-system relations, then counter-prove each apparent contradiction. Differentiate `BUG`, `DESIGN_MISMATCH`, `PROVEN`, `NEED_VALIDATION` and unresolved Audit Obligations. Upstream Probe is an **external evidence pointer**, not native runtime proof for this map. If behavior cannot be proved from source, preserve one precise runtime-proof request without claiming it ran.
-4. **REPORT = internal REPORT.** One coherent Game Understanding → source-grounded findings → narrow unknown/next proof output. Use `MapAuditOutputV2` only when the actual canonical programmatic audit runs; otherwise report scoped ChatGPT findings with exact evidence and limits. No parallel issue store.
+2. **UNDERSTAND = internal UNDERSTAND + FORMALIZE.** Read the full material selected-map surface first; reconstruct **this map's** game/mode, player journey, objective, allowed actions, ownership, transitions, level/arena boundaries and optional mechanics. Preserve unresolved sources and the exact selected artifact identity. Only after this source-bound model exists, select relevant reviewed `bedrock-*` / Skills Probe methodology and its negative controls through the existing `resource-context.ts`. Reference snippets and old Probe fixtures never determine what mechanics must exist.
+3. **TEST = internal EVALUATE + PROVE.** For every applicable discovered mechanic/transition, route normal, failure, recovery, concurrency and boundary checks to available **source-verified Skills/Skills Probe methods** and existing Semantic IR/QA/PROVE owners. Run only a genuinely available, authorized current-map proof capability. A version-pinned upstream Probe example/report is an **investigation reference**, never a current-map execution receipt. Exhaust valid static evidence and counterproof; never promote a suggested Probe question to PASS, a BUG, or Minecraft execution. If a mechanism cannot be decided, retain the exact gap, missing capability/evidence and one narrow deciding test instead of fabricating a detector or probe result.
+4. **REPORT = internal REPORT.** Deliver **Game Understanding → verified Bug/Design Mismatch findings → uncovered/untested mechanisms and precise next-proof requests** in one existing report. Preserve `PROVEN` versus `NEED_VALIDATION`, the original Audit Obligations and exact source/probe/execution boundaries. Label absence of an applicable probe reference as **unverified coverage**, not a confirmed lack of Probe capability. Use `MapAuditOutputV2` only after its programmatic audit actually runs; otherwise clearly label the result ChatGPT source inspection. Do not build a separate gap database or bug store.
 
 The canonical existing `runSelectedMapAudit()` and detailed checkpoint/proof logic remain internal control contracts: `../../../docs/analysis/master-selected-map-audit-workflow.md`. Grouping does **not** erase gates, weaken coverage, or convert UNKNOWN into PASS. Present **LOAD/UNDERSTAND/TEST/REPORT** as the only top-level operator workflow.
 
@@ -35,9 +35,46 @@ selected-map witness gate. For required coverage/proof, follow
 `../../../docs/analysis/bug-finding-coverage.md` and the canonical
 master audit workflow, not a second checklist or a full-map automatic PASS.
 
-## Capability gap and boundaries
+## Probe coverage, applicability and capability gaps
 
-If a mechanic cannot be interpreted or tested, report a source-identified `capability-gap`. Do **not** switch to IMPROVE SYSTEM, modify a detector or suppress an independently proven finding without explicit user direction. Source reference selection uses only current source-reviewed `patterns[]` in `experiments/developer-practice-signals.json` and rejects unrouted developer methods such as generic entity spawn → particles.
+The order is mandatory: **pin map → discover/UNDERSTAND its actual game systems
+→ assign source-specific applicable QA checks → choose matching Skills Probe
+method/negative control → evaluate with available current-map proof
+→ report findings and uncovered proof**. Never select all 24 developer skills
+or assume every selected map has a lobby, currency, result screen or replay.
+
+For each applicable material requirement, account through the existing
+Scenario Graph, evidence and Audit Obligations for: selected-map source
+identity and scope; necessary verification question; source-matched
+developer/Probe method and its original client/version/lock when available;
+**what was actually executed** versus merely referenced; counterproof;
+and the exact remaining source/runtime proof. These dimensions are
+read-only routing/explanations, not additional state machines or checklists.
+
+- **Matched method**: a specific method/reference and upstream Probe report
+  may guide TEST, but does not establish that a test ran on this map.
+- **No eligible method reference**: report reference matching as unresolved;
+  a bounded reference selection or missing source witness alone does NOT
+  prove that Skills Probe cannot support the mechanic.
+- **Verified unsupported capability / missing semantic evidence**: preserve
+  the existing `detection-gap`, `knowledge-gap` or other appropriate
+  canonical Audit Obligation with a source locator, missing proof and
+  proposed narrow investigation. Do not create substitute probe scripts,
+  invent findings or start IMPROVE SYSTEM automatically.
+- **Requires actual game behavior**: keep the existing `runtime-proof`
+  obligation unless current-map runtime evidence genuinely exists. Never
+  use upstream Node PASS, engine PASS, an archived report, or a suggested
+  command as a live Minecraft result.
+
+The goal is comprehensive applicable coverage, **not a predefined promise
+of 100% Skills Probe compatibility**. A complete inventory and real
+current-map results are required to establish that level of coverage.
+Source reference selection uses reviewed `patterns[]` in
+`experiments/developer-practice-signals.json` through
+`resource-context.ts`; an unrouted developer reference is not gameplay
+proof.
+
+## STOP
 
 ## STOP
 

@@ -91,6 +91,61 @@ witness causes an **abstention**, not a fabricated mechanic or a second audit
 stage. The full decision/owner matrix lives only in
 [Product Flow](../product/flow.md#publisher-aligned-bedrock-skills-and-skills-probe-evidence).
 
+### Understand → Probe-aligned evaluation → honest reporting
+
+The user's three logical operations are **understand the selected map**,
+**test its supported mechanics using Skills/Skills Probe methods when
+actually applicable and executable**, then **report defects and coverage
+limitations**. They fit inside the four existing operator stages:
+LOAD fixes artifact identity; UNDERSTAND completes selected-map
+DISCOVERY/UNDERSTAND/FORMALIZE; TEST performs EVALUATE/PROVE; REPORT is
+the single existing output. Never introduce a parallel "Probe Test" lane,
+runner, bug status or persistent capability inventory.
+
+**UNDERSTAND gate before TEST routing:** inventory each material selected
+source and reconstruct independently scoped game/mode, objectives,
+actions, state owners, player-visible feedback, success/failure exits,
+transitions, repeated-run and recovery when evidenced. Ambiguities are
+not filled from an external Skills Probe example or an assumed standard
+minigame template. Model/coverage obligations remain explicit even if a
+suitable upstream probe method is unknown.
+
+**Probe-aligned TEST:** for each source-supported applicable behavior,
+try the existing source-matched reviewer method, independent Probe
+fixture/lock and negative control through `resource-context.ts`; use
+the existing source/semantic analyzers, counterproof and authorized
+current-map proof route. Distinguish these independent facts:
+
+1. **Method reference available:** matched current map's exact typed
+   source witness, relevant domain and version. This is not a test run.
+2. **Probe reports an upstream result:** keep original fixture,
+   release/commit, client, Node/engine/status and FAIL/BLOCKED/PARTIAL
+   cases; this is never current-map verification.
+3. **Current map check actually performed:** record only the specific
+   source/static execution or live-game observation that genuinely
+   occurred, on the pinned artifact. If no callable execution path exists,
+   say NOT EXECUTED for that claim rather than simulate its result.
+4. **Coverage proof still missing:** register the existing narrow
+   `detection-gap`, `knowledge-gap`, `runtime-proof`,
+   `scenario-coverage` or other correct Audit Obligation, with exact
+   source/subject, needed mechanism and deciding proof. A missing
+   reference does not itself establish unavailable probe functionality.
+
+**REPORT gate:** communicate Game Understanding first, then independently
+supported Bug/Design Mismatch issues (PROVEN or NEED_VALIDATION) and a
+distinct **Uncovered / Not Yet Tested** section derived from the same
+Audit Obligations and bounded matched reference context. Never fabricate
+a probe command, test receipt, PASS or new game behavior to fill a
+coverage hole. Do not silently build a detector or overwrite the original
+map. A demonstrated capability gap can become a separate user-authorized
+IMPROVE SYSTEM request after this report; it is not an automatic repair.
+
+**Coverage target:** every current-map material mechanic should eventually
+have adequate proof or a clearly scoped unsatisfied requirement. No
+claim that "Skills Probe covers everything" may be made from upstream
+source counts or positive examples alone; exact versioned execution
+and negative cases are needed.
+
 ## Operational decision order
 
 The short source-grounded decision cycle, including stage inputs and
