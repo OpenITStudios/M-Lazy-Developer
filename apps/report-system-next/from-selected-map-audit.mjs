@@ -132,7 +132,7 @@ export function projectSelectedMapAuditReportNext(run){
  const name=value(id.levelName,value(a.evidenceScope.selectedArtifact,id.artifactId));
  const release=id.releaseIdentityStatus==="consistent"&&id.releaseVersion?id.releaseVersion:null;
  const edition=a.auditTarget?.edition==="bedrock"?"BEDROCK":a.auditTarget?.edition==="education"?"EDUCATION":"UNKNOWN";
- return {schema:"m-lazy-report-next/v1.5",layoutVersion:"1.5.0",
+ return {schema:"m-lazy-report-next/v1.6",layoutVersion:"1.6.0",
   reportKind:"MAP_AUDIT",auditRevision:run.auditRevision,
   reportId:"selected-audit:"+fingerprint(id.artifactFingerprint)+":"+run.auditRevision,
   scope:"MAP",maps:[{mapId:id.artifactId,name,

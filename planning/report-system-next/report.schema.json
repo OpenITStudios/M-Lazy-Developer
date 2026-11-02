@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mivubi:report-system-next:report:v1.5",
-  "title": "M-Lazy Report Next Canonical Report v1.5",
+  "$id": "urn:mivubi:report-system-next:report:v1.6",
+  "title": "M-Lazy Report Next Canonical Report v1.6",
   "description": "Design-only locked format. Not a converter of existing Approved Bug Report V2.",
   "type": "object",
   "additionalProperties": false,
@@ -16,10 +16,10 @@
   ],
   "properties": {
     "schema": {
-      "const": "m-lazy-report-next/v1.5"
+      "const": "m-lazy-report-next/v1.6"
     },
     "layoutVersion": {
-      "const": "1.5.0"
+      "const": "1.6.0"
     },
     "reportId": {
       "type": "string",

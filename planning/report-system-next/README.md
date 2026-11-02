@@ -68,3 +68,7 @@ Desktop-only user priority: 1366×768 and 1920×1080. The original responsive CS
 ## Report Next v1.5.0 — desktop reader simplification
 
 Approved user intent: prioritize immediate readability and actionability over dense reporting metadata. The one existing renderer now owns the desktop-first flow and folded evidence/technical views. The JSON data authority, Map Audit V2 adapter, approved Bug Report V2 and offline tester state remain unchanged. Desktop visual checks should confirm a readable first finding without hidden proof, source confusion or a new mobile acceptance requirement.
+
+## Report Next v1.6.0 — explanation and confirmation without procedural clutter
+
+The approved reader now communicates each issue with problem, source-based cause, and a check path with an expected-versus-reported outcome. Reproduction cues from SelectedMapAuditRun are clearly marked unexecuted and never become a trusted guided Test In-Game or a canonical bug closure. The report-first HTML retains original evidence, approved bug ledger separation and offline tester integrity while moving optional controls off the main reading flow.

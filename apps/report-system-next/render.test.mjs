@@ -25,8 +25,8 @@ const inspect = output => {
 test("design remains immutable without a new approved version", async () => {
   const content = await readFile(new URL("layout.lock.json",root),"utf8");
   const lock = JSON.parse(content);
-  assert.equal(assertDesignLock(lock,content).designVersion,"1.5.0");
-  assert.throws(() => assertDesignLock(lock,content.replace('"1.5.0"','"2.0.0"')),
+  assert.equal(assertDesignLock(lock,content).designVersion,"1.6.0");
+  assert.throws(() => assertDesignLock(lock,content.replace('"1.6.0"','"2.0.0"')),
     /Design Lock mismatch/);
 });
 
@@ -40,7 +40,7 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.match(first.html,/Synthetic Report Demo/);
   assert.match(first.html,/Download Report JSON/);
   assert.match(first.html,/report-integrity/);
-  assert.equal(golden.designVersion,"1.5.0");
+  assert.equal(golden.designVersion,"1.6.0");
   assert.equal(golden.reportId,example.reportId);
   assert.equal(createHash("sha256").update(first.html,"utf8").digest("hex"),golden.htmlSha256);
   assert.equal(createHash("sha256").update(first.json,"utf8").digest("hex"),golden.jsonSha256);
@@ -51,7 +51,7 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.match(first.html,/id="report-meta"/);
   assert.match(first.html,/id="workspace-snapshot"/);
   assert.match(first.html,/data-ready="false"/);
-  assert.match(first.html,/Needs Validation/);
+  assert.match(first.html,/Needs confirmation/);
   assert.match(first.html,/data-kind="DEV_NOTE"/);
   assert.doesNotMatch(first.html,/data-result="PASSED" aria-pressed="false"/);
   inspect(first);
@@ -236,6 +236,8 @@ test("selected-map reporting keeps both finding lanes, unresolved work and no in
   assert.ok(projected.maps[0].auditCoverage.checks.some(x=>x.id==="obligation:OB-1"));
   const rendered=await renderReportNext(projected);
   assert.match(rendered.html,/Open checks/);
+  assert.match(rendered.html,/Source-derived verification steps/);
+  assert.match(rendered.html,/Observe whether: progression succeeds/);
   assert.match(rendered.html,/Source Reference Unresolved/);
   assert.doesNotMatch(rendered.html,/data-ready="true"/);
   assert.throws(()=>projectSelectedMapAuditReportNext({
@@ -248,7 +250,7 @@ test("pending proof may still cite inspected source and cannot gain final severi
   finding.evidenceLevel="SOURCE_VERIFIED";
   const output=await renderReportNext(data);
   assert.equal(output.report.maps[0].levels[0].findings[0].proofStatus,"NEED_VALIDATION");
-  assert.match(output.html,/Needs Validation/);
+  assert.match(output.html,/Needs confirmation/);
   finding.severity="MAJOR";
   await assert.rejects(()=>renderReportNext(data),/pending proof|unproven issue|expected exactly one finding variant/);
 });
@@ -286,7 +288,7 @@ test("desktop-first acceptance preserves proof and reduces unnecessary above-fol
   assert.match(output.html,/Exact source graph proof needed/);
   assert.match(output.html,/Minecraft runtime not executed/);
   assert.match(output.html,/<div class="retest" hidden>/);
-  assert.match(output.html,/No guided retest available/);
+  assert.match(output.html,/No verified gameplay reproduction procedure is available/);
   assert.equal(output.report.maps[0].auditCoverage.missingProof.length,2);
 });
 
@@ -295,14 +297,28 @@ test("desktop reader provides next actions and retains source evidence on demand
  const item=issue(report);
  item.validation.nextCheck="Inspect exact wave trigger references";
  const result=await renderReportNext(report);
- assert.match(result.html,/class="finding-next"/);
+ assert.match(result.html,/1\. What is the problem\?/);
  assert.match(result.html,/Inspect exact wave trigger references/);
  assert.match(result.html,/class="finding-content"/);
- assert.match(result.html,/class="evidence-disclosure"/);
+ assert.match(result.html,/Code, evidence and developer details/);
  assert.match(result.html,/class="technical-disclosure"/);
  assert.match(result.html,/id="find-proof"/);
- assert.match(result.html,/Advanced filters/);
+ assert.match(result.html,/Filter issues \(optional\)/);
  assert.ok(result.html.indexOf('class="audit-brief"')<
    result.html.indexOf('class="findings-workspace"'));
  inspect(result);
+});
+
+test("source-derived checks do not invent a Minecraft confirmation",async()=>{
+ const report=clone(example),finding=issue(report);
+ const output=await renderReportNext(report);
+ assert.match(output.html,/1\. What is the problem\?/);
+ assert.match(output.html,/2\. Why could it happen\?/);
+ assert.match(output.html,/3\. How to check it/);
+ assert.match(output.html,/Not reproduced in this attempt/);
+ assert.match(output.html,/No verified gameplay reproduction procedure is available/);
+ assert.doesNotMatch(output.html,/data-ready="true"/);
+ assert.doesNotMatch(output.html,/data-result="PASSED"/);
+ assert.equal(output.report.maps[0].levels[0].findings[0].testProcedure,null);
+ inspect(output);
 });

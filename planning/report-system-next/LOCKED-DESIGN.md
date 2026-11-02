@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.5.0
+# Report System Next — LOCKED DESIGN 1.6.0
 
 ## 0. Ownership and scope
 
@@ -167,3 +167,15 @@ Rules:
 4. Filter toolbar highlights search, issue kind and proof status. Severity and after-fix retest filters remain in an Advanced disclosure, not a second permanent toolbar. Saved portable HTML must reset all presentation-only filter/disclosure states.
 5. Never claim no approved issues because the separate approved ledger is not included; retain coverage PARTIAL/BLOCKED/UNKNOWN without implying a completed whole-world audit. Tester result does not mutate canonical Fixed. All original report data, evidence, unknowns and offline HTML save semantics remain.
 6. Versioned layout/source contract is v1.5.0. Older v1.0–v1.4 standalone HTML documents remain readable unchanged. Desktop remains the sole visual acceptance target (1366×768, 1920×1080); mobile has no release gate.
+
+## Approved 1.6.0 report-first problem / cause / verification design (2026-11-03)
+
+Explicit user decision: the HTML must immediately explain **what is wrong, why it can happen, and how someone can verify whether it is a bug**. This supersedes older procedural/dashboard-heavy content ordering. A source conclusion must not be shown as a Minecraft observation.
+
+- Collapsed issue: title, type, honest evidence status, grounded severity if any, concise problem and impact, canonical ID. Do not force a procedural Next Action on the summary.
+- Expanded issue: **1. What is the problem?** including Expected vs Recorded (or explicitly Suspected) behavior; **2. Why could it happen?** using only source-backed causal reasoning; **3. How to check it?** showing actual source-owned steps and observable criteria, including clear *supports the issue* and *not reproduced this attempt* interpretations. A single unsuccessful reproduction does not prove absence.
+- `auditDetails.reproductionCues` are sourced from current selected-audit `reproduceSteps`. Label them **source-derived, unexecuted guidance**, and NEVER convert them to `testProcedure` or enable Passed/Failed. If a validated player-followable testProcedure exists, show it with the source of authority and distinguish after-fix retest state from initial bug confirmation. Missing steps stay unknown; do not invent gameplay scripts.
+- Original source files and evidence IDs are in one technical disclosure. Tester notes/screenshots and any authorized after-fix controls are optional, collapsed separately. Search is immediate; type/proof/severity/retest filters are available only on demand.
+- Full audit coverage/unknown checks and original JSON remain intact. The source-only report cannot infer approved ledger counts or mutate canonical Fixed. Preserve design desktop targets 1366×768 and 1920×1080; mobile is not an acceptance gate.
+
+The change is a versioned authored schema/layout 1.6.0; old self-contained HTML versions 1.0–1.5 remain readable, not silently migrated. True source-to-browser acceptance and Minecraft gameplay remain separate test evidence.

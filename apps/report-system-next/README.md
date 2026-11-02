@@ -2,7 +2,7 @@
 
 **Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.5.0** is pinned to Git blob `1ea89d1db3d2164c8a690784e64cfe794c2682eb`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.6.0** is pinned to Git blob `7eb8ac2d721bc1126a91daf09e8dc75195a1bbb6`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -96,3 +96,14 @@ Each collapsed issue shows its kind, exact proof status, severity only when grou
 The main controls are search, type and proof status. Severity/retest filters remain accessible in Advanced filters. A saved portable HTML resets all visual filters/disclosures while retaining the complete source report and tester workspace. The existing one-renderer, offline SHA-256 report consistency, approved Bug Report V2 separation and no-forged-runtime-evidence boundaries stay unchanged.
 
 Desktop acceptance uses 1366×768 and 1920×1080. Mobile remains out of release-acceptance scope. Source review and any representative visual preview are not themselves an executed Minecraft or completed canonical TypeScript Map Audit.
+
+## 1.6.0 — direct issue explanation and reliable verification
+
+Every BUG and DESIGN_MISMATCH is presented as three reader questions:
+- **What is the problem?** Source-backed finding, expected versus recorded or explicitly suspected behavior, and impact.
+- **Why could it happen?** Canonical causal explanation when available, or a clearly identified unresolved hypothesis. No fabricated mechanism.
+- **How to check it?** Source-supplied reproduction cues or evidence-backed guided procedure, plus a clear expected-versus-reported outcome comparison. No claim that these steps have already run.
+
+Only a validated, source-backed Test In-Game procedure may enable after-fix Passed/Failed; source-audit `reproduceSteps` merely provide **unexecuted verification guidance**, never runtime evidence or a tester PASS. An unsuccessful attempt is labelled Not Reproduced, not a disproof. When no credible steps exist, show the audit's original next check or state that gameplay steps remain unknown.
+
+The main view is a concise summary and issue search. Source IDs/code locations and tester notes/screenshots use optional disclosures; filters and old approved issue state remain independent. Report Next 1.6.0 uses version-locked authored JSON and deterministic HTML. Old standalone HTML v1.0–v1.5 and Approved Bug Report V2 are not migrated or modified.

@@ -9,7 +9,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../planning
 const here = dirname(fileURLToPath(import.meta.url));
 const pinned = {
   reference: "2cce615368348cae8d77137867442f3f793fa584",
-  report: "76876959f3821da1ffbaa35306390bcdf43d2cf3",
+  report: "3a995d1c061569a0f4175dd6448740a0da0130ff",
   workspace: "78cf4ae0abc9e5d3f468a47c34c4e031e21783ce"
 };
 const gitHash = value => {
@@ -147,95 +147,128 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .report-footer{font-size:11px;color:#73829a;margin:14px 0;line-height:1.65;overflow-wrap:anywhere;padding:8px 4px}
 @media(max-width:1000px){.audit-brief,.finding-content{grid-template-columns:1fr}.controls{grid-template-columns:2fr 1fr 1fr}.controls>button{grid-column:1/-1}.finding-row{grid-template-columns:24px minmax(0,1fr)}.issue-open{display:none}}
 @media(max-width:700px){.page{width:100%;margin:0}.topbar{border-radius:0}.report-identity,.audit-brief,.findings-workspace{border-radius:0}.system-status{flex-direction:column;gap:3px}.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.controls{grid-template-columns:1fr}.advanced-fields{flex-wrap:wrap}.finding-content{padding:14px}}
+
+.issue-summary{font-size:13px;line-height:1.6;color:#3c5271;padding:8px 0;margin:0}
+.issue-summary strong{color:#1f385b;font-size:15px}.issue-summary small{display:block;font-size:11px;color:#73839b;margin-top:4px}
+.finding-description{font-size:13px;line-height:1.5;color:#526783;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:5px 0}
+.issue-summary-view{padding:2px 0}.issue-meta{font-size:11px}
+.explain-block{padding:0 0 19px;margin-bottom:18px;border-bottom:1px solid #e3e9f1}
+.explain-block h5{font-size:15px;text-transform:none;letter-spacing:-.005em;color:#203b60;margin:0 0 8px}
+.explain-block p,.explain-block li{font-size:14px;line-height:1.65;color:#3b506b;margin:7px 0}
+.explain-block p.caveat{font-size:12px;color:#738198}
+.verification-steps{padding-left:24px;margin:10px 0}.verification-steps li{padding-left:3px;margin:8px 0;overflow-wrap:anywhere}
+.verification-source{padding:9px 12px;background:#fff9ee;border-left:3px solid #d6a364;font-size:12px;color:#7c5d2c;border-radius:0 6px 6px 0;margin:9px 0}
+.verification-criteria{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.verification-criteria>div{border:1px solid #e1e8f0;border-radius:7px;padding:12px;background:#f9fbfd}
+.verification-criteria strong{font-size:12px;color:#3f6085}.verification-criteria p{font-size:13px;margin:7px 0 0}
+.technical-disclosure .technical-body{padding:4px 0 15px;border-top:1px solid #e3e9f1}
+.technical-body h6{color:#506b8a;font-size:12px;margin:12px 0 5px}
+.technical-body p{font-size:13px;line-height:1.6}
+.tester-panel .tester-disclosure>summary{cursor:pointer;font-size:13px;font-weight:700;color:#3d5b7d;line-height:1.5;padding:5px 0}
+.tester-panel .tester-content{border-top:1px solid #e4eaf2;margin-top:8px;padding-top:12px}
+.tester-panel{align-self:start}.finding-content{grid-template-columns:minmax(0,1.8fr) minmax(235px,.64fr)}
+.compact-search{grid-template-columns:minmax(260px,1fr) auto}
+.advanced-fields{flex-wrap:wrap}.advanced-fields label{width:180px}
+@media(max-width:1000px){.finding-content{grid-template-columns:1fr}.verification-criteria{grid-template-columns:1fr}}
+
+.system-status:not(:has(p[data-error=true])){display:none}.system-status:has(p[data-error=true]){border-radius:8px;margin-top:8px;background:#fff8f4;border-color:#f0d0c6}.tester-tools{margin:7px 0 0;background:transparent;border:none;padding:0}.tester-tools>summary{display:inline-block;padding:7px 2px;color:#53657c;font-weight:650}.tester-tools .subactions{flex-wrap:wrap}
+
 `;
 
 const panel = (title,content) => content
   ? '<div class="panel"><h5>'+escape(title)+'</h5>'+content+'</div>' : "";
 const para = value => "<p>"+escape(value)+"</p>";
 const items = values => '<ul class="source-list">'+values.map(x=>"<li>"+escape(x)+"</li>").join("")+"</ul>";
-function findingCard(f,index,lock,evidence) {
- const w=lock.vocabulary,note=f.kind==="DEV_NOTE",ready=isRetestEligible(f);
+function findingCard(f,index,lock,evidence){
+ const w=lock.vocabulary,note=f.kind==="DEV_NOTE",ready=isRetestEligible(f),a=f.auditDetails;
  const kindLabel=note?"Developer note":f.kind==="BUG"?"Bug":"Design mismatch";
- const proof=note?"":f.proofStatus==="PROVEN"?w.auditProven:w.needsValidation;
- const next=note?f.action:f.validation?.nextCheck || (ready?"Follow the guided retest procedure below.":"Collect deciding proof; no guided Minecraft retest is available.");
- const title=escape(f.title);
- const problem=note?f.description:f.problem;
+ const evidenceStatus=note?"":f.proofStatus==="NEED_VALIDATION"?"Needs confirmation":
+  f.evidenceLevel==="RUNTIME_OBSERVED"?"Runtime witness recorded":
+  f.evidenceLevel==="REFERENCE_UNRESOLVED"?"Evidence link incomplete":"Supported by source analysis";
  const meta=`<span class="issue-type">${escape(kindLabel)}</span>`+
-   (note?"":`<span class="proof-label${f.proofStatus==="NEED_VALIDATION"?" pending":""}">${escape(proof)}</span>`)+
-   (!note && f.severity ? `<span class="severity-label">${escape(f.severity)}</span>`:"")+
-   (!note && ready ? `<span class="proof-label" data-result-label>${escape(w.untested)}</span>`:"");
+  (note?"":`<span class="proof-label${f.proofStatus==="NEED_VALIDATION"?" pending":""}">${escape(evidenceStatus)}</span>`)+
+  (!note&&f.severity?`<span class="severity-label">${escape(f.severity)}</span>`:"")+
+  (!note&&ready?`<span class="proof-label" data-result-label>${escape(w.untested)}</span>`:"");
+ const brief=note?f.description:f.problem;
  const summary=`<summary class="finding-summary"><div class="finding-row">`+
-   `<span class="issue-number">${String(index+1).padStart(2,"0")}</span>`+
-   `<div class="finding-text"><div class="finding-meta">${meta}</div>`+
-   `<h4>${title}</h4>`+
-   (problem&&problem!==f.title?`<p class="description">${escape(problem)}</p>`:"")+
-   `<p class="finding-next"><strong>${escape(w.whatNext)}</strong><span>${escape(next)}</span></p>`+
-   `<div class="issue-id">${escape(f.id)}</div></div>`+
-   `<span class="issue-open" aria-hidden="true">Details <span class="chevron">⌄</span></span>`+
-   `</div></summary>`;
+  `<span class="issue-number">${String(index+1).padStart(2,"0")}</span>`+
+  `<div class="finding-text"><div class="finding-meta">${meta}</div>`+
+  `<h4>${escape(f.title)}</h4>`+
+  (brief&&brief!==f.title?`<p class="finding-description">${escape(brief)}</p>`:"")+
+  (!note&&f.impact?`<p class="finding-description"><strong>Impact:</strong> ${escape(f.impact)}</p>`:"")+
+  `<div class="issue-id">${escape(f.id)}</div></div>`+
+  `<span class="issue-open" aria-hidden="true">Read details <span class="chevron">⌄</span></span></div></summary>`;
  const evidenceRows=f.evidenceRefs.map(id=>{
   const item=evidence.get(id);
   return `<li><strong>${escape(id)}</strong> · ${escape(item.kind)}`+
-   (item.sourceOrigin?`<p>Origin: ${escape(item.sourceOrigin)}${item.sourceScope?" · "+escape(item.sourceScope):""}</p>`:"")+
+   (item.sourceOrigin?`<p>Source origin: ${escape(item.sourceOrigin)}</p>`:"")+
    `<p>${escape(item.description)}</p><code>${escape(item.locator.type)}: ${escape(item.locator.value)}</code></li>`;
  }).join("");
- const sourceEvidence=`<details class="evidence-disclosure"><summary>${escape(w.sourceEvidence)} (${f.evidenceRefs.length})</summary>`+
-   `<ul class="source-list">${evidenceRows}</ul></details>`;
- const notes=`<label for="notes-${escape(f.id)}">${escape(w.testerNotes)}</label>`+
-   `<textarea id="notes-${escape(f.id)}" data-notes placeholder="Write what you checked or observed…"></textarea>`;
- const attachments=`<label>Screenshots (optional)</label><input class="attachment-input" type="file" data-file-input multiple accept="image/png,image/jpeg,image/webp">`+
-   `<div data-evidence-list class="evidence-list"></div>`;
+ const noteInput=`<label for="notes-${escape(f.id)}">${escape(w.testerNotes)}</label>`+
+  `<textarea id="notes-${escape(f.id)}" class="notes-field" data-notes placeholder="Write your actual observations…"></textarea>`;
+ const upload=`<label>Optional screenshot</label><input class="attachment-input" type="file" data-file-input multiple accept="image/png,image/jpeg,image/webp">`+
+  `<div data-evidence-list class="evidence-list"></div>`;
  let main,aside;
  if(note){
-  main=`<div class="next-action-panel"><h5>Required action</h5><p>${escape(f.action)}</p></div>`+sourceEvidence;
-  aside=`<h5>Review notes</h5><p>These notes do not create or approve a gameplay bug.</p>${notes}${attachments}`;
- } else {
-  const check=f.validation
-   ? `<div class="next-action-panel pending"><h5>What needs validation</h5>`+
-     `<p>${escape(f.validation.reason)}</p>`+
-     `<p><span class="detail-key">Missing proof:</span> ${escape(f.validation.missingProof)}</p>`+
-     `<p><span class="detail-key">Next check:</span> ${escape(f.validation.nextCheck)}</p></div>`
-   : ready ? `<div class="next-action-panel"><h5>Guided after-fix test</h5><ol class="steps">`+
-     f.testProcedure.steps.map(step=>`<li>${escape(step.instruction)}</li>`).join("")+
-     `</ol><p><span class="detail-key">Visible outcome:</span> ${escape(f.testProcedure.visibleOutcome)}</p></div>`
-   : `<div class="next-action-panel"><h5>No guided retest available</h5>`+
-     `<p>Proof of this source finding does not establish a player-followable after-fix test. Do not mark it Passed or Failed.</p></div>`;
-  const facts=`<div class="detail-section"><h5>Expected versus recorded evidence</h5><div class="fact-pair">`+
-    `<div class="fact"><h6>Expected</h6><p>${escape(f.expected||"Not yet established")}</p></div>`+
-    `<div class="fact"><h6>Recorded evidence (not a tester result)</h6><p>${escape(f.observed||"Not yet established")}</p></div>`+
-    `</div></div>`;
-  const impact=f.impact?`<div class="detail-section"><h5>Player impact</h5><p>${escape(f.impact)}</p></div>`:"";
-  const rationale=f.rationale?`<div class="detail-section"><h5>Why this may matter</h5><p>${escape(f.rationale)}</p></div>`:"";
-  const a=f.auditDetails;
-  const auditCues=a?`<details class="technical-disclosure"><summary>Audit investigation notes</summary>`+
-    `<p class="note">These are source investigation cues, not executed Minecraft gameplay.</p>`+
-    (a.scenarioLabel?`<p>Scenario: ${escape(a.scenarioLabel)}</p>`:"")+
-    (a.affectedScope?`<p>Scope: ${escape(a.affectedScope)}</p>`:"")+
-    (a.proofNavigation?.missingClaims?.length?`<h5>Outstanding claims</h5>${items(a.proofNavigation.missingClaims)}`:"")+
-    (a.reproductionCues.length?`<h5>Source cues</h5>${items(a.reproductionCues)}`:"")+
-    (a.suspectedOutcome?`<p>Suspected, not observed: ${escape(a.suspectedOutcome)}</p>`:"")+
-    (a.evidenceLimitation?`<p>${escape(a.evidenceLimitation)}</p>`:"")+
-    `<p>Flow: ${escape(a.gameplayFlow)} · Domain: ${escape(a.failureDomain)}</p></details>`:"";
+  main=`<section class="explain-block"><h5>Developer note</h5><p>${escape(f.description)}</p>`+
+   `<p><strong>Suggested action:</strong> ${escape(f.action)}</p></section>`+
+   `<details class="technical-disclosure"><summary>Source references (${f.evidenceRefs.length})</summary><ul class="source-list">${evidenceRows}</ul></details>`;
+  aside=`<details class="tester-disclosure"><summary>Notes and screenshots (optional)</summary>`+
+   `<div class="tester-content">${noteInput}${upload}</div></details>`;
+ }else{
+  const observed=f.observed??a?.suspectedOutcome??null;
+  const observedTitle=f.observed?"Recorded source finding":
+   a?.suspectedOutcome?"Suspected result — not observed":"Observed behavior not established";
+  const whyText=f.rationale||f.technical.analysis||w.sourceCauseNotEstablished;
+  const whyQualifier=f.proofStatus==="NEED_VALIDATION"?"Working hypothesis; the deciding source proof is incomplete.":
+   f.evidenceLevel==="RUNTIME_OBSERVED"?"Runtime evidence is recorded with a separate witness; inspect its source provenance.":
+   "This explanation is based on source review, not on a reproduced Minecraft playtest.";
+  const what=`<section class="explain-block"><h5>1. What is the problem?</h5>`+
+   `<p>${escape(f.problem)}</p>`+
+   (f.impact?`<p><strong>Impact:</strong> ${escape(f.impact)}</p>`:"")+
+   `<div class="fact-pair"><div class="fact"><h6>Expected</h6><p>${escape(f.expected||"Not established")}</p></div>`+
+   `<div class="fact"><h6>${escape(observedTitle)}</h6><p>${escape(observed||"Not established")}</p></div></div></section>`;
+  const why=`<section class="explain-block"><h5>2. Why could it happen?</h5>`+
+   `<p>${escape(whyText)}</p><p class="caveat">${escape(whyQualifier)}</p></section>`;
+  const guided=ready?f.testProcedure.steps.map(s=>s.instruction):[];
+  const fromAudit=a?.reproductionCues?.filter(x=>typeof x==="string"&&x.trim())??[];
+  const steps=guided.length?guided:fromAudit;
+  const route=guided.length?"Evidence-backed gameplay procedure; this does not mean it was executed.":
+   fromAudit.length?w.sourceCheckNotExecuted:"No verified gameplay reproduction procedure is available.";
+  const procedure=steps.length?`<ol class="verification-steps">${steps.map(step=>`<li>${escape(step)}</li>`).join("")}</ol>`:
+   f.validation?.nextCheck?`<p><strong>First check:</strong> ${escape(f.validation.nextCheck)}</p>`:
+   `<p>${escape(w.sourceCheckMissing)}</p>`;
+  const confirmation=observed||"The suspected failure condition has not been established.";
+  const expected=f.expected||"The expected behavior is not yet established.";
+  const verify=`<section class="explain-block"><h5>3. How to check it</h5>`+
+   `<p class="verification-source">${escape(route)}</p>${procedure}`+
+   `<div class="verification-criteria"><div><strong>Supports this issue if…</strong><p>${escape(confirmation)}</p></div>`+
+   `<div><strong>Not reproduced in this attempt if…</strong><p>${escape(expected)}</p></div></div>`+
+   (f.validation?`<p><strong>Still requires proof:</strong> ${escape(f.validation.missingProof)}</p>`:"")+
+   `<p class="caveat">Record the map version, actual observations and screenshots. A source prediction or an unsuccessful attempt does not by itself prove or disprove gameplay behavior.</p></section>`;
+  const tier=({SOURCE_VERIFIED:w.verifiedSource,PACKAGE_VERIFIED:w.packageVerified,RUNTIME_OBSERVED:w.runtimeObserved,REFERENCE_UNRESOLVED:w.sourceReferenceUnresolved})[f.evidenceLevel];
   const t=f.technical;
-  const developer=`<details class="technical-disclosure"><summary>Developer details</summary>`+
-    (t.analysis?`<div class="detail-section"><h5>Analysis</h5><p>${escape(t.analysis)}</p></div>`:"")+
-    (t.relatedSources.length?`<div class="detail-section"><h5>Relevant code</h5>${items(t.relatedSources.map(x=>x.path+" — "+x.reason))}</div>`:"")+
-    (t.recommendedFix?`<div class="detail-section"><h5>Suggested fix</h5><p>${escape(t.recommendedFix)}</p></div>`:"")+
-    (t.mustPreserve.length?`<div class="detail-section"><h5>Must preserve</h5>${items(t.mustPreserve)}</div>`:"")+
-    `<p class="note">Evidence tier: ${escape(({SOURCE_VERIFIED:w.verifiedSource,PACKAGE_VERIFIED:w.packageVerified,RUNTIME_OBSERVED:w.runtimeObserved,REFERENCE_UNRESOLVED:w.sourceReferenceUnresolved})[f.evidenceLevel])}</p>`+
-    `</details>`;
-  main=check+facts+impact+rationale+sourceEvidence+auditCues+developer;
-  const result=ready?`<div class="detail-section"><h5>After-fix result</h5><div class="result-buttons">`+
-    `<button type="button" class="secondary" data-result="PASSED" aria-pressed="false">${escape(w.passed)}</button>`+
-    `<button type="button" class="secondary" data-result="FAILED" aria-pressed="false">${escape(w.failed)}</button>`+
-    `</div><p>Tester outcome only; canonical Fixed is unchanged.</p></div>`:"";
-  aside=`<h5>Tester workspace</h5><p>${ready?"Record the result after following the guided steps.":"Add notes or screenshots here; no Passed/Failed choice is authorized yet."}</p>`+
-    result+notes+attachments;
+  const details=`<details class="technical-disclosure"><summary>Code, evidence and developer details (${f.evidenceRefs.length})</summary>`+
+   `<div class="technical-body"><p>Evidence level: ${escape(tier)}</p>`+
+   `<h6>Original evidence references</h6><ul class="source-list">${evidenceRows}</ul>`+
+   (t.relatedSources.length?`<h6>Relevant code</h6>${items(t.relatedSources.map(v=>v.path+" — "+v.reason))}`:"")+
+   (t.recommendedFix?`<h6>Suggested correction</h6><p>${escape(t.recommendedFix)}</p>`:"")+
+   (t.mustPreserve.length?`<h6>Must preserve</h6>${items(t.mustPreserve)}`:"")+
+   (a?.evidenceLimitation?`<p>${escape(a.evidenceLimitation)}</p>`:"")+
+   (a?.proofNavigation?.missingClaims?.length?`<h6>Unresolved claims</h6>${items(a.proofNavigation.missingClaims)}`:"")+
+   `</div></details>`;
+  main=what+why+verify+details;
+  const retest=ready?`<div class="detail-section"><h5>After-fix retest only</h5>`+
+   `<div class="result-buttons"><button type="button" class="secondary" data-result="PASSED" aria-pressed="false">${escape(w.passed)}</button>`+
+   `<button type="button" class="secondary" data-result="FAILED" aria-pressed="false">${escape(w.failed)}</button></div>`+
+   `<p>These results measure a retest after repair, not whether the original issue is confirmed.</p></div>`:"";
+  aside=`<details class="tester-disclosure"><summary>Tester notes and screenshots (optional)</summary>`+
+   `<div class="tester-content"><p>Record only what you actually observed.</p>${retest}${noteInput}${upload}</div></details>`;
  }
  return `<details class="issue" data-finding="${escape(f.id)}" data-kind="${escape(f.kind)}" data-ready="${String(ready)}">`+
-   summary+`<div class="finding-content"><div class="finding-main">${main}</div><aside class="tester-panel">${aside}</aside></div></details>`;
+  `${summary}<div class="finding-content"><div class="finding-main">${main}</div>`+
+  `<aside class="tester-panel">${aside}</aside></div></details>`;
 }
-
 function renderMapGroups(map,lock){
  const evidenceById=new Map(map.evidence.map(e=>[e.id,e]));
  const titles={BUG:lock.vocabulary.sectionBugs,DESIGN_MISMATCH:lock.vocabulary.sectionDesign,DEV_NOTE:lock.vocabulary.sectionNotes};
@@ -252,6 +285,35 @@ function renderMapGroups(map,lock){
   return `<section class="issue-group" data-group-container aria-label="${escape(titles[kind])}">`+
    `<div class="group-heading"><h3>${escape(titles[kind])}</h3><span class="group-count">${total}</span></div>${levels}</section>`;
  }).join("");
+}
+
+function filterControlArea(w,lock){
+ const select=(id,label,choices)=>`<label for="${id}">${escape(label)}<select id="${id}">`+
+  choices.map(([key,text])=>`<option value="${escape(key)}">${escape(text)}</option>`).join("")+
+  `</select></label>`;
+ return `<div class="controls compact-search"><label for="find-search">Search issues`+
+  `<input id="find-search" type="search" placeholder="Search by problem, ID or keyword  / "></label>`+
+  `<button class="secondary" type="button" id="clear-filters">Clear</button></div>`+
+  `<details class="advanced-filters"><summary>Filter issues (optional)</summary>`+
+  `<div class="advanced-fields">`+
+  select("find-kind","Type",[["ALL","All types"],["BUG","Bugs"],["DESIGN_MISMATCH","Design mismatches"],["DEV_NOTE","Developer notes"]])+
+  select("find-proof","Review status",[["ALL","All statuses"],["PROVEN","Audit source-supported"],["NEED_VALIDATION","Needs confirmation"]])+
+  select("find-severity","Severity",[["ALL","All severities"],...lock.layout.severityOrder.map(x=>[x,x])])+
+  select("find-result","After-fix retest",[["ALL","All results"],["PASSED",w.passed],["FAILED",w.failed],["UNTESTED",w.untested],["NOT_RETESTABLE",w.notRetestable]])+
+  `</div></details>`;
+}
+
+function reportToolbar(lock,w){
+ return `<header class="topbar"><div class="brand">MIVUBI · ISSUE REPORT <small>v${escape(lock.designVersion)}</small></div>`+
+  `<div class="actions"><button id="save-html" class="primary" type="button">${escape(w.saveHtml)}</button></div></header>`+
+  `<details class="tester-tools"><summary>${escape(w.testerDataTools)} <span>Export / import</span></summary>`+
+  `<div class="actions subactions"><button type="button" class="secondary" id="download-report-json">${escape(w.downloadReportJson)}</button>`+
+  `<button type="button" class="secondary" id="save-json">${escape(w.saveJson)}</button>`+
+  `<button type="button" class="secondary" id="load-json">${escape(w.loadJson)}</button>`+
+  `<button type="button" class="secondary" id="reset-data">${escape(w.reset)}</button>`+
+  `<input id="json-file" hidden type="file" accept=".json,application/json"></div></details>`+
+  `<div class="system-status"><p id="report-integrity" role="status" aria-live="polite">Verifying report JSON…</p>`+
+  `<p id="save-status" role="status" aria-live="polite">Tester workspace not yet saved</p></div>`;
 }
 
 function renderBody(report,lock,digest){
@@ -277,27 +339,15 @@ function renderBody(report,lock,digest){
      (artifact.sourceUrl?`<dt>Original</dt><dd><a rel="noopener noreferrer" href="${escape(artifact.sourceUrl)}" target="_blank">Open source file</a></dd>`:"")+
      `</dl>`:
    report.maps.map(map=>`<p><strong>${escape(map.name)}</strong> — ${escape(map.artifact.sourceLabel)} · <code>${escape(map.artifact.fingerprint)}</code></p>`).join("");
- const head=`<header class="topbar"><div class="brand">REPORT SYSTEM NEXT <small>v${escape(lock.designVersion)}</small></div>`+
-   `<div class="actions"><button id="save-html" class="primary" type="button">${escape(w.saveHtml)}</button>`+
-   `<button id="download-report-json" class="secondary" type="button">${escape(w.downloadReportJson)}</button></div></header>`+
-   `<div class="system-status"><p id="report-integrity" role="status" aria-live="polite">Verifying report JSON…</p>`+
-   `<p id="save-status" role="status" aria-live="polite">Tester workspace not yet saved</p></div>`+
-   `<details class="tester-tools"><summary>${escape(w.testerDataTools)} <span>Import, export or reset your notes</span></summary>`+
-   `<div class="actions subactions"><button type="button" class="secondary" id="save-json">${escape(w.saveJson)}</button>`+
-   `<button type="button" class="secondary" id="load-json">${escape(w.loadJson)}</button>`+
-   `<button type="button" class="secondary" id="reset-data">${escape(w.reset)}</button>`+
-   `<input id="json-file" hidden type="file" accept=".json,application/json"></div></details>`;
+ const head=reportToolbar(lock,w);
  const identity=`<section class="report-identity" aria-label="Selected map identity"><div class="identity-head">`+
    `<div><span class="eyebrow">${escape(title)}</span><h1 id="report-main-title">${escape(mainName)}</h1>`+
    `<p class="meta">${escape(firstMeta)}</p></div>`+
    `<span class="coverage-pill" data-state="${escape(coverageState)}">${escape(coverageState)}</span></div>`+
    `<details class="source-details"><summary>${escape(w.sourceMetadata)}</summary><div class="sourcebox">${identitySource}</div></details></section>`;
- const counts=`<div class="stat-side"><div class="stat-grid" aria-label="Report finding counts">`+
-   `<div class="metric"><strong>${issues.length}</strong><span>Findings in this report</span></div>`+
-   `<div class="metric"><strong>${pending}</strong><span>Need validation</span></div>`+
-   `<div class="metric"><strong>${proven}</strong><span>Audit proven</span></div></div>`+
-  (hasRetest?"":`<p class="stat-note">No guided retest available. No gameplay PASS is implied.</p>`)+
-  `</div>`;
+ const counts=`<p class="issue-summary"><strong>${issues.length}</strong> recorded issues · `+
+   `<strong>${pending}</strong> need confirmation · <strong>${proven}</strong> audit-level findings`+
+   `<small>A source finding is not automatically a bug reproduced in Minecraft.</small></p>`;
  const coverageDetail=report.maps.map(map=>{
   const c=map.auditCoverage;
   if(!c)return `<p>Coverage for ${escape(map.name)}: not established.</p>`;
@@ -315,19 +365,7 @@ function renderBody(report,lock,digest){
   `<div class="section-kicker">${escape(w.auditStatus)}</div><h2>${escape(overallMessage)}</h2>`+
   `<p>${escape(summaryCov)}</p><p class="scope-caveat">${escape(caveat)}</p>${gaps}`+
   `</div>${counts}</section>`;
- const select=(id,label,choices)=>`<label for="${id}">${escape(label)}<select id="${id}">`+
-   choices.map(([val,name])=>`<option value="${escape(val)}">${escape(name)}</option>`).join("")+
-   `</select></label>`;
- const filters=`<div class="controls"><label for="find-search">Search findings<input id="find-search" type="search"`+
-  ` placeholder="Title, ID, or keyword  / "></label>`+
-  select("find-kind","Type",[["ALL","All types"],["BUG","Bugs"],["DESIGN_MISMATCH","Design mismatches"],["DEV_NOTE","Developer notes"]])+
-  select("find-proof","Proof status",[["ALL","All statuses"],["PROVEN","Audit proven"],["NEED_VALIDATION","Needs validation"]])+
-  `<button class="secondary" type="button" id="clear-filters">Clear</button></div>`+
-  `<details class="advanced-filters"><summary>${escape(w.moreFilters)} (severity and retest result)</summary>`+
-  `<div class="advanced-fields">`+
-   select("find-severity","Severity",[["ALL","All severities"],...lock.layout.severityOrder.map(x=>[x,x])])+
-   select("find-result","Retest result",[["ALL","All results"],["PASSED",w.passed],["FAILED",w.failed],["UNTESTED",w.untested],["NOT_RETESTABLE",w.notRetestable]])+
-   `</div></details>`;
+ const filters=filterControlArea(w,lock);
  const index=one?"":`<nav class="map-index" aria-label="Report maps">${report.maps.map((m,i)=>`<a href="#map-${i}">${escape(m.name)}</a>`).join("")}</nav>`;
  const mapSections=report.maps.map((map,i)=>{
   const sections=renderMapGroups(map,lock);
@@ -336,7 +374,7 @@ function renderBody(report,lock,digest){
  }).join("");
  const workspace=`<section class="findings-workspace" aria-label="Findings and review actions">`+
   `<div class="workspace-head"><h2>${escape(w.findingsHeading)} <span class="group-count">${all.length} entries</span></h2>`+
-  `<p class="help">Open any finding to see the next step and supporting evidence.</p></div>`+
+  `<p class="help">Open a finding to read the problem, likely cause and verification guidance.</p></div>`+
   filters+`<p class="match-count" id="match-count" role="status" aria-live="polite"></p>`+
   `<p id="no-matches" hidden>No entries match those filters.</p>`+
   index+mapSections+`</section>`;
