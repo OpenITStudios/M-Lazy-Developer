@@ -1,12 +1,12 @@
 {
   "system": "M-Lazy-Developer / Report System Next",
   "namespace": "report-system-next",
-  "designVersion": "1.6.0",
-  "lifecycle": "DESIGN_LOCKED_REPORT_FIRST_EXPLAIN_TEST",
+  "designVersion": "1.7.0",
+  "lifecycle": "DESIGN_LOCKED_APPROVED_LEDGER_AND_INITIAL_VERIFICATION",
   "compatibility": {
-    "reportSchema": "m-lazy-report-next/v1.6",
-    "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v1",
-    "templateId": "m-lazy-report-next/html-v1.6",
+    "reportSchema": "m-lazy-report-next/v1.7",
+    "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v2",
+    "templateId": "m-lazy-report-next/html-v1.7",
     "sourceExistingApprovedBugReportV2": "NOT_A_MUTATION_TARGET",
     "legacyReportPaths": "UNTOUCHED"
   },
@@ -67,7 +67,8 @@
       "howToVerifyWithExplicitProvenance",
       "expectedVersusObserved",
       "technicalSourceOnDemand",
-      "testerWorkspaceOnDemand"
+      "testerWorkspaceOnDemand",
+      "initialTesterConfirmationSeparateFromRepairRetest"
     ],
     "technicalDisclosure": [
       "analysisIfPresent",
@@ -189,7 +190,14 @@
     "sourceCauseNotEstablished": "The mechanism is not yet established. This is a hypothesis, not a confirmed cause.",
     "sourceClaimNotRuntime": "Source findings are not equivalent to an observed in-game failure.",
     "testerNotesOptional": "Record tester observations (optional)",
-    "issueSummary": "Issue summary"
+    "issueSummary": "Issue summary",
+    "approvedReportTitle": "Approved Bug Report",
+    "confirmationHeading": "Initial bug check (this attempt only)",
+    "confirmationReproduced": "Reproduced",
+    "confirmationNotReproduced": "Not reproduced",
+    "confirmationBlocked": "Blocked",
+    "confirmationUntested": "Not checked",
+    "approvedSourceCues": "Approved report reproduction guidance · NOT executed by this viewer"
   },
   "tokens": {
     "font": "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -257,13 +265,17 @@
     "verifyStepsLabelActualProvenance": true,
     "notReproducedIsNotBugAbsent": true,
     "testerInputsOnDemand": true,
-    "noInventedTestProcedure": true
+    "noInventedTestProcedure": true,
+    "approvedLedgerProjectionRequiresPinnedArtifactAndGitRef": true,
+    "initialConfirmationNeverChangesCanonicalApprovedFixed": true,
+    "ledgerReproductionStepsAreUnexecutedGuidance": true,
+    "historicalV1WorkspaceIsNotSilentlyMigrated": true
   },
   "output": {
     "fileNames": {
       "canonical": "<slug>-v<artifact-version>-Report.json",
       "html": "<slug>-v<artifact-version>-Tester-Report.html",
-      "workspace": "<slug>-v<artifact-version>-Tester-State.json",
+      "workspace": "<slug>-v<artifact-version>-Tester-State-v2.json",
       "combined": "Combined-Report"
     },
     "canonicalization": "RFC8785_JCS",
@@ -301,7 +313,8 @@
       "SAVE_AS_HTML",
       "REOPEN_ON_ANOTHER_BROWSER_CONTEXT",
       "PRESERVE_ATTACHMENTS",
-      "NO_CANONICAL_MUTATION"
+      "NO_CANONICAL_MUTATION",
+      "INITIAL_CONFIRMATION_SEPARATE_FROM_AFTER_FIX"
     ],
     "failClosedOn": [
       "UNKNOWN_SCHEMA",

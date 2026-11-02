@@ -6,6 +6,7 @@ import { Script } from "node:vm";
 import { renderReportNext } from "./render.mjs";
 import { assertDesignLock } from "./contract.mjs";
 import { projectSelectedMapAuditReportNext } from "./from-selected-map-audit.mjs";
+import { projectApprovedBugReportNext } from "./from-approved-bug-report.mjs";
 
 const root = new URL("../../planning/report-system-next/", import.meta.url);
 const example = JSON.parse(await readFile(new URL("example.report.json",root),"utf8"));
@@ -25,8 +26,8 @@ const inspect = output => {
 test("design remains immutable without a new approved version", async () => {
   const content = await readFile(new URL("layout.lock.json",root),"utf8");
   const lock = JSON.parse(content);
-  assert.equal(assertDesignLock(lock,content).designVersion,"1.6.0");
-  assert.throws(() => assertDesignLock(lock,content.replace('"1.6.0"','"2.0.0"')),
+  assert.equal(assertDesignLock(lock,content).designVersion,"1.7.0");
+  assert.throws(() => assertDesignLock(lock,content.replace('"1.7.0"','"2.0.0"')),
     /Design Lock mismatch/);
 });
 
@@ -40,7 +41,7 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.match(first.html,/Synthetic Report Demo/);
   assert.match(first.html,/Download Report JSON/);
   assert.match(first.html,/report-integrity/);
-  assert.equal(golden.designVersion,"1.6.0");
+  assert.equal(golden.designVersion,"1.7.0");
   assert.equal(golden.reportId,example.reportId);
   assert.equal(createHash("sha256").update(first.html,"utf8").digest("hex"),golden.htmlSha256);
   assert.equal(createHash("sha256").update(first.json,"utf8").digest("hex"),golden.jsonSha256);
@@ -262,6 +263,8 @@ test("source-only and demo cannot claim audit completeness or approved-ledger id
   await assert.rejects(()=>renderReportNext(data),/cannot claim complete Map Audit coverage/);
   data.maps[0].auditCoverage=null;
   data.reportKind="APPROVED_BUG_REPORT";
+  await assert.rejects(()=>renderReportNext(data),/requires one exact pinned project ledger/);
+  data.reportKind="FAKE_APPROVAL";
   await assert.rejects(()=>renderReportNext(data),/unsupported enum/);
 });
 
@@ -321,4 +324,58 @@ test("source-derived checks do not invent a Minecraft confirmation",async()=>{
  assert.doesNotMatch(output.html,/data-result="PASSED"/);
  assert.equal(output.report.maps[0].levels[0].findings[0].testProcedure,null);
  inspect(output);
+});
+
+test("approved V2 projector preserves source-approved findings, fixed flags and original check guidance",async()=>{
+  const sha="sha256:"+"a".repeat(64),commit="b".repeat(40);
+  const project={schemaVersion:1,projectId:"example-project",projectName:"Example World",
+    artifact:{artifactId:"demo-artifact",artifactFingerprint:sha,version:"1.0.0"}};
+  const issue={id:"BUG-DEMO-APPROVED",issueType:"BUG",fixed:false,severity:"major",
+    category:"wave",title:"Example approved wave issue",
+    problem:"The pending wave timeline is not restored.",expected:"Delayed waves persist.",
+    observed:"Source recovery only tracks last wave index.",
+    whyThisIsBug:"The current source recovery does not restore pending delay.",
+    impact:"Wave schedule can change.",aiAnalysis:"Source-level reasoning only.",
+    reproduction:["Enter the test arena.","Reload during a pending spawn delay.","Compare the wave sequence."],
+    relevantCode:[{file:"BP/scripts/wave.js",reason:"Source recovery reference."}],
+    suggestedFix:"Restore pending timeline.",mustPreserve:["Existing valid wave order"]};
+  const ledger={schema:"m-bedrock-bug-report/v2",
+    map:{name:"Example World",mapVersion:"1.0.0",
+      testedVersion:"Source review; SHA-256 "+"a".repeat(64),drive:null},bugs:[issue]};
+  const projection=projectApprovedBugReportNext(ledger,project,{sourceRevision:commit});
+  assert.equal(projection.reportKind,"APPROVED_BUG_REPORT");
+  assert.equal(projection.approvedSource.gitRevision,commit);
+  assert.equal(projection.maps[0].levels[0].findings[0].approvedFixed,false);
+  assert.equal(projection.maps[0].levels[0].findings[0].severity,"MAJOR");
+  assert.deepEqual(projection.maps[0].levels[0].findings[0].auditDetails.reproductionCues,issue.reproduction);
+  assert.equal(projection.maps[0].levels[0].findings[0].technical.recommendedFix,issue.suggestedFix);
+  assert.equal(projection.maps[0].levels[0].findings[0].testProcedure,null);
+  assert.equal(projection.maps[0].evidence[0].kind,"REFERENCE_UNRESOLVED");
+  const rendered=await renderReportNext(projection);
+  assert.match(rendered.fileStem,/-Approved$/);
+  assert.match(rendered.html,/Approved Bug Report/);
+  assert.match(rendered.html,/<strong>1<\/strong> approved issues/);
+  assert.match(rendered.html,/1<\/strong> open/);
+  assert.match(rendered.html,/Approved report reproduction guidance/);
+  assert.match(rendered.html,/data-confirmation="BLOCKED"/);
+  assert.doesNotMatch(rendered.html,/data-result="PASSED"/);
+  assert.equal(rendered.report.maps[0].levels[0].findings[0].approvedFixed,false);
+  inspect(rendered);
+  const wrongVersion=structuredClone(ledger);
+  wrongVersion.map.mapVersion="0.9.0";
+  assert.throws(()=>projectApprovedBugReportNext(wrongVersion,project,{sourceRevision:commit}),
+    /version\/name mismatch/);
+  const falseStatus=structuredClone(ledger);
+  falseStatus.bugs[0].fixed="false";
+  assert.throws(()=>projectApprovedBugReportNext(falseStatus,project,{sourceRevision:commit}),
+    /invalid approved issue severity\/state/);
+  const foreign=structuredClone(ledger);
+  foreign.map.testedVersion="Source review; SHA-256 "+"c".repeat(64);
+  assert.throws(()=>projectApprovedBugReportNext(foreign,project,{sourceRevision:commit}),
+    /matching unique selected-artifact SHA-256/);
+  assert.throws(()=>projectApprovedBugReportNext(ledger,project,{sourceRevision:"not-a-sha"}),
+    /exact Git commit SHA/);
+  const claim=structuredClone(example);
+  claim.maps[0].levels[0].findings[0].approvedFixed=true;
+  await assert.rejects(()=>renderReportNext(claim),/only the approved ledger/);
 });

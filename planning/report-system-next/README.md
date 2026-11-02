@@ -72,3 +72,7 @@ Approved user intent: prioritize immediate readability and actionability over de
 ## Report Next v1.6.0 — explanation and confirmation without procedural clutter
 
 The approved reader now communicates each issue with problem, source-based cause, and a check path with an expected-versus-reported outcome. Reproduction cues from SelectedMapAuditRun are clearly marked unexecuted and never become a trusted guided Test In-Game or a canonical bug closure. The report-first HTML retains original evidence, approved bug ledger separation and offline tester integrity while moving optional controls off the main reading flow.
+
+## 1.7.0 reader trust and initial verification
+
+Approved Bug Report V2 can now be projected read-only via its own opt-in source adapter; Map Audit keeps its independent source and proof. Both feed the same renderer. Initial bug reproduction is captured only as tester workspace v2 data, separate from approved Fixed and after-fix Passed/Failed. Source reproduction steps are displayed, not certified as run. Negative identity and real seven-issue reader acceptance are part of the bounded verification scope, with remaining desktop browser and Minecraft runtime proof explicitly separate.

@@ -255,3 +255,7 @@ The renderer may omit absent optional information, but it must not infer or inve
 ### Report Next 1.3.0 handoff boundary
 
 MAP_AUDIT has one original auditRevision; direct source reviews and synthetic previews cannot claim full Map Audit completion. Approval-ledger issue counts are independent and **not included** in the Map Audit projection. Canonical JSON export and mutable tester JSON export are distinct. Browser SHA-256 checks source/file consistency before mutable tester work but cannot authenticate a publisher or close gameplay/repair evidence. No approved Bug Report V2 or current project output is modified by these projections.
+
+### Report System Next 1.7.0 — no ledger authority merger
+
+One renderer accepts **two explicitly different projections**: the current `SelectedMapAuditRun` and an independently pinned canonical Approved Bug Report V2. The approved adapter requires the exact project identity, SHA-256, version and Git source revision, preserves `fixed` and severity, and never modifies the ledger or reinterprets its approval. Cited path references remain unverified by projection alone. Tester workspace v2's `confirmation` records only *this attempt* (Reproduced/Not Reproduced/Blocked); the original after-fix Passed/Failed remains a different field. Neither is a gameplay certification or canonical Fixed mutation.

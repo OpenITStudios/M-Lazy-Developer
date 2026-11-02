@@ -11,14 +11,14 @@
     f.observed?.trim() && f.testProcedure?.visibleOutcome?.trim() &&
     f.testProcedure.steps.length >= 2 && f.testProcedure.steps.length <= 5);
   const emptyWorkspace = () => ({
-    schema: "m-lazy-tester-workspace-next/v1",
+    schema: "m-lazy-tester-workspace-next/v2",
     reportId: REPORT.reportId,
     canonicalDigest: META.digest,
     entries: []
   });
   const safeJson = value => JSON.stringify(value).replaceAll("<", "\\u003c");
   const COPY_ID = SNAP.dataset.copyId || "original";
-  const KEY = "m-lazy-report-next:v1:" + META.digest + ":" + location.pathname + ":" + COPY_ID;
+  const KEY = "m-lazy-report-next:v2:" + META.digest + ":" + location.pathname + ":" + COPY_ID;
   const status = document.getElementById("save-status");
   const notice = (message, error = false) => {
     status.textContent = message;
@@ -64,7 +64,7 @@
   }
   function validateWorkspace(ws) {
     if (!ws || typeof ws !== "object" || Array.isArray(ws) ||
-        ws.schema !== "m-lazy-tester-workspace-next/v1" ||
+        ws.schema !== "m-lazy-tester-workspace-next/v2" ||
         ws.reportId !== REPORT.reportId || ws.canonicalDigest !== META.digest ||
         !Array.isArray(ws.entries) ||
         Object.keys(ws).sort().join("|") !== ["canonicalDigest","entries","reportId","schema"].join("|"))
@@ -73,10 +73,12 @@
     const entries = [];
     for (const entry of ws.entries) {
       if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
-          Object.keys(entry).sort().join("|") !== ["attachments","findingId","notes","result"].join("|"))
+          Object.keys(entry).sort().join("|") !== ["attachments","confirmation","findingId","notes","result"].join("|"))
         throw new Error("Malformed tester entry");
       const f = findingById.get(entry.findingId);
       if (!f || seen.has(entry.findingId) || typeof entry.notes !== "string" ||
+          ![null,"REPRODUCED","NOT_REPRODUCED","BLOCKED"].includes(entry.confirmation) ||
+          (f.kind === "DEV_NOTE" && entry.confirmation !== null) ||
           ![null,"PASSED","FAILED"].includes(entry.result) ||
           (entry.result && !isEligible(f)) || !Array.isArray(entry.attachments))
         throw new Error("Unknown ID, duplicate ID or unsupported test result");
@@ -92,7 +94,7 @@
           throw new Error("Invalid screenshot");
         return {name:a.name,mime:a.mime,caption:a.caption,dataUrl:a.dataUrl};
       });
-      entries.push({findingId:entry.findingId,result:entry.result,notes:entry.notes,attachments});
+      entries.push({findingId:entry.findingId,confirmation:entry.confirmation,result:entry.result,notes:entry.notes,attachments});
     }
     return {...emptyWorkspace(),entries};
   }
@@ -114,11 +116,11 @@
     notice("Browser storage unavailable; use Save as HTML before closing", true);
   }
   const peekState = id => WS.entries.find(item => item.findingId === id) ||
-    {findingId:id,result:null,notes:"",attachments:[]};
+    {findingId:id,confirmation:null,result:null,notes:"",attachments:[]};
   const state = id => {
     let entry = WS.entries.find(item => item.findingId === id);
     if (!entry) {
-      entry = {findingId:id,result:null,notes:"",attachments:[]};
+      entry = {findingId:id,confirmation:null,result:null,notes:"",attachments:[]};
       WS.entries.push(entry);
     }
     return entry;
@@ -157,6 +159,15 @@
     }
     for (const card of findings) {
       const entry = peekState(card.dataset.finding);
+      for(const button of card.querySelectorAll("[data-confirmation]")){
+        button.disabled=integrityState!=="VERIFIED";
+        button.setAttribute("aria-pressed",String(button.dataset.confirmation===entry.confirmation));
+      }
+      const currentConfirmation=card.querySelector("[data-confirmation-label]");
+      if(currentConfirmation)currentConfirmation.textContent=
+        entry.confirmation==="REPRODUCED"?"Reproduced in this attempt (tester note only)":
+        entry.confirmation==="NOT_REPRODUCED"?"Not reproduced in this attempt (not proof of absence)":
+        entry.confirmation==="BLOCKED"?"Blocked — prerequisites or observations unavailable":"Not checked";
       for(const button of card.querySelectorAll("[data-result]"))button.disabled=integrityState!=="VERIFIED";
       const editor=card.querySelector("[data-notes]");
       if(editor)editor.disabled=integrityState!=="VERIFIED";
@@ -258,6 +269,14 @@
   }
   document.querySelectorAll("[data-finding]").forEach(card => {
     const id = card.dataset.finding;
+    card.querySelectorAll("[data-confirmation]").forEach(button=>{
+      button.addEventListener("click",()=>{
+        if(card.dataset.kind==="DEV_NOTE"||!permitTesterChange())return;
+        const entry=state(id);
+        entry.confirmation=entry.confirmation===button.dataset.confirmation?null:button.dataset.confirmation;
+        save();refresh();
+      });
+    });
     card.querySelectorAll("[data-result]").forEach(button => {
       button.addEventListener("click", () => {
         if (card.dataset.ready !== "true"||!permitTesterChange()) return;

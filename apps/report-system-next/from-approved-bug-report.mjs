@@ -1,0 +1,71 @@
+/** Read-only Approved Bug Report V2 reader projection, separate from Map Audit. */
+export function projectApprovedBugReportNext(ledger,project,{sourceRevision}={}){
+ const text=(x,name)=>{if(typeof x!=="string"||!x.trim())throw Error("Missing "+name);return x.trim()};
+ const fingerprint=x=>{const s=text(x,"artifact SHA-256").replace(/^sha256:/i,"").toLowerCase();if(!/^[a-f0-9]{64}$/.test(s))throw Error("Invalid selected artifact SHA-256");return "sha256:"+s};
+ if(ledger?.schema!=="m-bedrock-bug-report/v2"||!Array.isArray(ledger.bugs)||!ledger.bugs.length)
+  throw Error("Requires one nonempty Approved Bug Report V2 ledger");
+ if(project?.schemaVersion!==1||!project.artifact||!/^[a-z0-9-]+$/.test(project.projectId??""))
+  throw Error("Requires pinned canonical project identity");
+ if(!/^[a-f0-9]{40}$/.test(sourceRevision??""))
+  throw Error("Approved sourceRevision must be one exact Git commit SHA");
+ const selected=fingerprint(project.artifact.artifactFingerprint),version=text(project.artifact.version,"project artifact version");
+ if(text(ledger.map?.mapVersion,"approved map version")!==version||
+    text(ledger.map?.name,"approved map name")!==text(project.projectName,"project name"))
+  throw Error("Approved ledger and selected project version/name mismatch");
+ const stated=text(ledger.map?.testedVersion,"approved source proof statement");
+ const hashes=[...stated.matchAll(/(?:SHA-256|sha256)\s*[:=]?\s*([a-f0-9]{64})/gi)].map(m=>"sha256:"+m[1].toLowerCase());
+ if(hashes.length!==1||hashes[0]!==selected)
+  throw Error("Approved ledger lacks a matching unique selected-artifact SHA-256");
+ const world=project.publication?.drive?.currentWorld;
+ if(world&&(fingerprint(world.artifactFingerprint)!==selected||world.version!==version||
+   text(ledger.map.drive,"approved world source").indexOf(world.fileId)<0))
+  throw Error("Current world publication pointer conflicts with approved ledger");
+ const evidence=[],refs=new Map(),seen=new Set(),issues=[];
+ for(const item of ledger.bugs){
+  const id=text(item.id,"approved issue ID"),kind=item.issueType;
+  if(seen.has(id)||!["BUG","DESIGN_MISMATCH"].includes(kind))throw Error("Duplicate/invalid approved issue ID: "+id);
+  seen.add(id);
+  if(typeof item.fixed!=="boolean"||!["blocker","major","minor"].includes(item.severity)||
+     !Array.isArray(item.reproduction)||!Array.isArray(item.relevantCode)||
+     !Array.isArray(item.mustPreserve))throw Error(id+": invalid approved issue severity/state or guidance");
+  const relatedSources=[],evidenceRefs=[];
+  for(const src of item.relevantCode){
+   const file=text(src.file,id+" code path"),reason=text(src.reason,id+" source reason");
+   if(!refs.has(file)){
+    const ref="LEDGER-SOURCE-"+String(refs.size+1).padStart(4,"0");refs.set(file,ref);
+    evidence.push({id:ref,kind:"REFERENCE_UNRESOLVED",
+      description:"Canonical approved report cites this file; the renderer did not re-open or re-execute the world. "+reason,
+      locator:{type:"FILE",value:file},sourceOrigin:"approved-bug-report-v2",sourceScope:"external-reference"});
+   }
+   const ref=refs.get(file);
+   if(!evidenceRefs.includes(ref))evidenceRefs.push(ref);
+   if(!relatedSources.some(x=>x.path===file))relatedSources.push({path:file,reason});
+  }
+  const steps=item.reproduction.map((s,i)=>text(s,id+" reproduction step "+(i+1)));
+  issues.push({id,kind,approvedFixed:item.fixed,severity:item.severity.toUpperCase(),
+   evidenceLevel:"REFERENCE_UNRESOLVED",proofStatus:"PROVEN",
+   title:text(item.title,id+" title"),problem:text(item.problem,id+" problem"),
+   rationale:text(item.whyThisIsBug,id+" rationale"),impact:text(item.impact,id+" impact"),
+   expected:text(item.expected,id+" expected"),observed:text(item.observed,id+" recorded source discrepancy"),
+   evidenceRefs,testProcedure:null,validation:null,
+   auditDetails:{gameplayFlow:"UNSPECIFIED",failureDomain:text(item.category,id+" category"),
+    reproductionCues:steps,suspectedOutcome:null,
+    evidenceLimitation:"Approved source/report references have not been independently reverified by this view. A source discrepancy is not an observed Minecraft gameplay test.",
+    proofCeiling:"PROVEN",counterEvidence:"cleared"},
+   technical:{analysis:typeof item.aiAnalysis==="string"&&item.aiAnalysis.trim()?item.aiAnalysis:null,
+    relatedSources,recommendedFix:typeof item.suggestedFix==="string"&&item.suggestedFix.trim()?item.suggestedFix:null,
+    mustPreserve:item.mustPreserve.map((s,i)=>text(s,id+" preservation "+i))}
+  });
+ }
+ const sourcePath="workspace/projects/"+project.projectId+"/report/bug-report.json";
+ return {schema:"m-lazy-report-next/v1.7",layoutVersion:"1.7.0",reportKind:"APPROVED_BUG_REPORT",
+  auditRevision:null,approvedSource:{gitRevision:sourceRevision,path:sourcePath},
+  reportId:"approved-v2:"+selected+":"+sourceRevision,scope:"MAP",
+  maps:[{mapId:project.projectId,name:ledger.map.name,
+   artifact:{artifactId:text(project.artifact.artifactId,"artifact ID"),
+    fingerprint:selected,version,edition:"UNKNOWN",
+    sourceLabel:"Approved Bug Report V2 pinned to Git revision "+sourceRevision.slice(0,12),
+    sourceUrl:ledger.map.drive??null},
+   evidence,levels:[{levelId:"map",label:"Map",findings:issues}],auditCoverage:null}]
+ };
+}

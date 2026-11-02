@@ -48,8 +48,8 @@ async function startPage({ snapshot, copyId = "original", pathname = "/source.ht
     ] }] }]
   };
   const correct="sha256:"+createHash("sha256").update(canonicalJson(report),"utf8").digest("hex");
-  const meta={digest:corruptDigest?"sha256:"+"f".repeat(64):correct,fileStem:"Synthetic-v1.3.0"};
-  const empty = {schema:"m-lazy-tester-workspace-next/v1",
+  const meta={digest:corruptDigest?"sha256:"+"f".repeat(64):correct,fileStem:"Synthetic-v1.7.0"};
+  const empty = {schema:"m-lazy-tester-workspace-next/v2",
     reportId:report.reportId,canonicalDigest:meta.digest,entries:[]};
   const ids = Object.fromEntries([
     "find-search","find-kind","find-proof","find-severity","find-result","match-count",
@@ -67,18 +67,22 @@ async function startPage({ snapshot, copyId = "original", pathname = "/source.ht
   const cards = report.maps[0].levels[0].findings.map(finding => {
     const buttons = (finding.id === "BUG-READY" ? ["PASSED","FAILED"] : [])
       .map(result=>new Node({dataset:{result}}));
+    const confirmation=(finding.kind==="DEV_NOTE"?[]:["REPRODUCED","NOT_REPRODUCED","BLOCKED"])
+      .map(value=>new Node({dataset:{confirmation:value}}));
+    const confirmationLabel=new Node();
     const note = new Node(), images = new Node(), file = new Node();
     const card = new Node({
       dataset:{finding:finding.id, kind:finding.kind, ready:String(finding.id === "BUG-READY")},
       selectors:{
         "[data-result-label]":new Node(),
+        "[data-confirmation-label]":confirmationLabel,
         "[data-notes]":note,
         "[data-evidence-list]":images,
         "[data-file-input]":file
       },
-      groups:{"[data-result]":buttons}
+      groups:{"[data-result]":buttons,"[data-confirmation]":confirmation}
     });
-    return {card,buttons,note,images,file};
+    return {card,buttons,confirmation,confirmationLabel,note,images,file};
   });
   const group = new Node({groups:{"[data-finding]":cards.map(x=>x.card)}});
   const container = new Node({groups:{"[data-group]":[group]}});
@@ -210,7 +214,7 @@ test("tester workflow: result, notes, screenshot, caption and offline handoff sn
   assert.equal(page.ids["match-count"].textContent,"Showing 0 of 3 entries");
   page.ids["save-html"].emit("click");
   assert.equal(page.downloads.length,1);
-  assert.equal(page.downloads[0].name,"Synthetic-v1.3.0-Tester-Report.html");
+  assert.equal(page.downloads[0].name,"Synthetic-v1.7.0-Tester-Report.html");
   const {copyId,state}=savedSnapshot(page.downloads[0]);
   const entry=state.entries.find(x=>x.findingId==="BUG-READY");
   assert.equal(entry.result,"PASSED");
@@ -283,10 +287,10 @@ test("canonical report JSON is separate from tester state; tampered digest block
   const page=await startPage();
   assert.match(page.ids["report-integrity"].textContent,/digest matches/i);
   page.ids["download-report-json"].emit("click");
-  assert.equal(page.downloads[0].name,"Synthetic-v1.3.0-Report.json");
+  assert.equal(page.downloads[0].name,"Synthetic-v1.7.0-Report.json");
   assert.equal(page.downloads[0].contents,canonicalJson(page.report));
   page.ids["save-json"].emit("click");
-  assert.equal(page.downloads[1].name,"Synthetic-v1.3.0-Tester-State.json");
+  assert.equal(page.downloads[1].name,"Synthetic-v1.7.0-Tester-State.json");
   const tampered=await startPage({corruptDigest:true});
   assert.match(tampered.ids["report-integrity"].textContent,/mismatch/i);
   tampered.cards[0].buttons[0].emit("click");
@@ -309,4 +313,41 @@ test("proof filter is independent of tester result and resettable",async()=>{
  page.ids["clear-filters"].emit("click");
  assert.equal(page.ids["find-proof"].value,"ALL");
  assert.equal(page.ids["match-count"].textContent,"Showing 3 of 3 entries");
+});
+
+test("initial reproduction is tester-only, separate from after-fix result and canonical source",async()=>{
+  const page=await startPage();
+  const pending=page.cards[1];
+  assert.equal(pending.buttons.length,0);
+  assert.equal(pending.confirmation.length,3);
+  pending.confirmation[0].emit("click");
+  assert.match(pending.confirmationLabel.textContent,/Reproduced in this attempt/);
+  assert.equal(page.ids["metric-passed"].textContent,"0");
+  page.ids["save-json"].emit("click");
+  const ws=JSON.parse(page.downloads.at(-1).contents);
+  const item=ws.entries.find(x=>x.findingId==="BUG-PENDING");
+  assert.equal(item.confirmation,"REPRODUCED");
+  assert.equal(item.result,null);
+  assert.equal(page.report.maps[0].levels[0].findings[1].proofStatus,"NEED_VALIDATION");
+  pending.confirmation[1].emit("click");
+  assert.match(pending.confirmationLabel.textContent,/not proof of absence/);
+  pending.confirmation[2].emit("click");
+  assert.match(pending.confirmationLabel.textContent,/Blocked/);
+  page.ids["save-html"].emit("click");
+  const snapshot=savedSnapshot(page.downloads.at(-1)).state;
+  assert.equal(snapshot.entries.find(x=>x.findingId==="BUG-PENDING").confirmation,"BLOCKED");
+  const reopened=await startPage({snapshot,copyId:"confirmed",pathname:"/second-reader.html"});
+  assert.match(reopened.cards[1].confirmationLabel.textContent,/Blocked/);
+  assert.equal(reopened.ids["metric-passed"].textContent,"0");
+  reopened.cards[1].confirmation[2].emit("click");
+  assert.equal(reopened.cards[1].confirmationLabel.textContent,"Not checked");
+});
+test("v1 tester workspace is rejected without silently changing new-format data",async()=>{
+  const page=await startPage();
+  page.ids["json-file"].files=[{text:JSON.stringify({
+    schema:"m-lazy-tester-workspace-next/v1",reportId:page.report.reportId,
+    canonicalDigest:page.meta.digest,entries:[]
+  })}];
+  page.ids["json-file"].emit("change");
+  assert.match(page.ids["save-status"].textContent,/rejected/i);
 });

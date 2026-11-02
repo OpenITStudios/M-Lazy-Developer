@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.6.0
+# Report System Next — LOCKED DESIGN 1.7.0
 
 ## 0. Ownership and scope
 
@@ -179,3 +179,16 @@ Explicit user decision: the HTML must immediately explain **what is wrong, why i
 - Full audit coverage/unknown checks and original JSON remain intact. The source-only report cannot infer approved ledger counts or mutate canonical Fixed. Preserve design desktop targets 1366×768 and 1920×1080; mobile is not an acceptance gate.
 
 The change is a versioned authored schema/layout 1.6.0; old self-contained HTML versions 1.0–1.5 remain readable, not silently migrated. True source-to-browser acceptance and Minecraft gameplay remain separate test evidence.
+
+## Approved 1.7.0 addendum — approved ledger and initial confirmation (2026-11-03)
+
+Following the reader-centered audit, the user approved source-correct issue provenance and a concrete way to test whether a bug initially reproduces. This remains **one deterministic HTML renderer**, not a combined approval/analysis store.
+
+1. **Authoritative sources stay separate.** `MAP_AUDIT` means a selected-artifact Map Audit projection (possibly partial/unproven). `APPROVED_BUG_REPORT` means an opt-in, read-only rendering of the canonical project `report/bug-report.json` schema `m-bedrock-bug-report/v2`. An approved input requires a pinned 40-hex Git sourceRevision, the original project's exact ID/version/fingerprint, and the same SHA-256 explicitly stated in the approved source ledger. It cannot claim source-audit COMPLETE or independent Minecraft execution. Old Approved Bug Report V2 is unchanged.
+2. **Approved issue fields survive.** Report reader preserves the actual issue kind, severity, original open/fixed flag, expected/observed discrepancy, why, impact, reproduction, cited code paths, recommended fix and Must Preserve. Never infer status from a test observation or overwrite canonical approved issues. The projection treats citation-only paths as unresolved until independently inspected; Git revision is a provenance pointer, not publisher authentication.
+3. **Verification guidance never fabricates gameplay.** Author-authored reproduction steps are usable **source guidance** to attempt; they do not independently prove the trigger is reachable, game behavior happened, or a fix passed. If prerequisites are unreachable or the decisive observation cannot be made, the attempt is Blocked. Not Reproduced on one attempt does not disprove the issue. Missing steps remain unknown, not populated by invented gameplay instructions.
+4. **Initial observation is independent of after-fix QA.** Tester workspace v2 stores a per-issue nullable `confirmation`: REPRODUCED, NOT_REPRODUCED, BLOCKED. This is *tester's observation only*. Optional after-fix `result` stays PASSED/FAILED/null only for source-eligible guided retests and never changes the issue Fixed owner. Neither grants runtime PROVEN to the immutable source report.
+5. **Reader remains report-first.** Approved reader shows only the approved count and open/fixed counts, not a misleading Map Audit progress dashboard. On a card, start with what/why/how, keep author source notes and repair guidance in details, and place both tester actions under one optional disclosure.
+6. **Versioning and desktop QA.** Contract/schema/layout are 1.7.0, tester workspace schema is v2. Older exported v1.0–v1.6 self-contained HTML is never rewritten or silently migrated; old workspace v1 import is rejected in the new reader. Desktop 1366×768 and 1920×1080 only. Real file:// Chromium and Minecraft gameplay proof must be separately observed, not inferred from authored tests.
+
+**Export identity:** the approved ledger report must be distinguishable from the independent Map Audit report even when they describe the same selected map/version; approved output filenames use an `-Approved` suffix. An unverified edition is omitted from the main header rather than represented as a meaningful gameplay claim.

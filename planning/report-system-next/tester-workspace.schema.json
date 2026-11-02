@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mivubi:report-system-next:tester-workspace:v1",
-  "title": "M-Lazy Report Next Tester Workspace v1",
+  "$id": "urn:mivubi:report-system-next:tester-workspace:v2",
+  "title": "M-Lazy Report Next Tester Workspace v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,7 +12,7 @@
   ],
   "properties": {
     "schema": {
-      "const": "m-lazy-tester-workspace-next/v1"
+      "const": "m-lazy-tester-workspace-next/v2"
     },
     "reportId": {
       "type": "string",
@@ -32,7 +32,8 @@
           "findingId",
           "result",
           "notes",
-          "attachments"
+          "attachments",
+          "confirmation"
         ],
         "properties": {
           "findingId": {
@@ -85,6 +86,14 @@
                 }
               }
             }
+          },
+          "confirmation": {
+            "enum": [
+              "REPRODUCED",
+              "NOT_REPRODUCED",
+              "BLOCKED",
+              null
+            ]
           }
         }
       }

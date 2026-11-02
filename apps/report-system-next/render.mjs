@@ -9,8 +9,8 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../planning
 const here = dirname(fileURLToPath(import.meta.url));
 const pinned = {
   reference: "2cce615368348cae8d77137867442f3f793fa584",
-  report: "3a995d1c061569a0f4175dd6448740a0da0130ff",
-  workspace: "78cf4ae0abc9e5d3f468a47c34c4e031e21783ce"
+  report: "e61c242cbc2e811859a28a6c217e7f8fcd7dec42",
+  workspace: "495417b137cfaa8e931e5a9935736b1bd4f5339d"
 };
 const gitHash = value => {
   const b = Buffer.from(value,"utf8");
@@ -173,16 +173,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 .system-status:not(:has(p[data-error=true])){display:none}.system-status:has(p[data-error=true]){border-radius:8px;margin-top:8px;background:#fff8f4;border-color:#f0d0c6}.tester-tools{margin:7px 0 0;background:transparent;border:none;padding:0}.tester-tools>summary{display:inline-block;padding:7px 2px;color:#53657c;font-weight:650}.tester-tools .subactions{flex-wrap:wrap}
 
+
+.coverage-pill[data-state="APPROVED LEDGER"]{background:#edf4ff;color:#2b568d}
+.initial-confirmation{border-bottom:1px solid #dce5f0;padding-bottom:12px;margin:0 0 14px}
+.initial-confirmation h5{font-size:12px;text-transform:none;color:#355274;margin-bottom:4px}
+.initial-confirmation p{font-size:11px;line-height:1.45}
+.confirmation-buttons{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.confirmation-buttons button{min-height:36px;font-size:11px;padding:8px 10px}
+.confirmation-buttons button[aria-pressed=true]{background:#dceafa;border-color:#3157a4;color:#244c79}
+.confirmation-value{font-weight:700;color:#315783!important}
+
 `;
 
 const panel = (title,content) => content
   ? '<div class="panel"><h5>'+escape(title)+'</h5>'+content+'</div>' : "";
 const para = value => "<p>"+escape(value)+"</p>";
 const items = values => '<ul class="source-list">'+values.map(x=>"<li>"+escape(x)+"</li>").join("")+"</ul>";
-function findingCard(f,index,lock,evidence){
- const w=lock.vocabulary,note=f.kind==="DEV_NOTE",ready=isRetestEligible(f),a=f.auditDetails;
+function findingCard(f,index,lock,evidence,reportKind){
+ const w=lock.vocabulary,note=f.kind==="DEV_NOTE",ready=isRetestEligible(f),a=f.auditDetails,approved=reportKind==="APPROVED_BUG_REPORT";
  const kindLabel=note?"Developer note":f.kind==="BUG"?"Bug":"Design mismatch";
- const evidenceStatus=note?"":f.proofStatus==="NEED_VALIDATION"?"Needs confirmation":
+ const evidenceStatus=note?"":approved?(f.approvedFixed?"Approved · marked fixed":"Approved · open"):f.proofStatus==="NEED_VALIDATION"?"Needs confirmation":
   f.evidenceLevel==="RUNTIME_OBSERVED"?"Runtime witness recorded":
   f.evidenceLevel==="REFERENCE_UNRESOLVED"?"Evidence link incomplete":"Supported by source analysis";
  const meta=`<span class="issue-type">${escape(kindLabel)}</span>`+
@@ -217,10 +227,10 @@ function findingCard(f,index,lock,evidence){
    `<div class="tester-content">${noteInput}${upload}</div></details>`;
  }else{
   const observed=f.observed??a?.suspectedOutcome??null;
-  const observedTitle=f.observed?"Recorded source finding":
+  const observedTitle=f.observed?(approved?"Approved ledger source finding":"Recorded source finding"):
    a?.suspectedOutcome?"Suspected result — not observed":"Observed behavior not established";
   const whyText=f.rationale||f.technical.analysis||w.sourceCauseNotEstablished;
-  const whyQualifier=f.proofStatus==="NEED_VALIDATION"?"Working hypothesis; the deciding source proof is incomplete.":
+  const whyQualifier=approved?"Approved source-based explanation; this viewer did not execute or reproduce Minecraft gameplay.":f.proofStatus==="NEED_VALIDATION"?"Working hypothesis; the deciding source proof is incomplete.":
    f.evidenceLevel==="RUNTIME_OBSERVED"?"Runtime evidence is recorded with a separate witness; inspect its source provenance.":
    "This explanation is based on source review, not on a reproduced Minecraft playtest.";
   const what=`<section class="explain-block"><h5>1. What is the problem?</h5>`+
@@ -234,7 +244,7 @@ function findingCard(f,index,lock,evidence){
   const fromAudit=a?.reproductionCues?.filter(x=>typeof x==="string"&&x.trim())??[];
   const steps=guided.length?guided:fromAudit;
   const route=guided.length?"Evidence-backed gameplay procedure; this does not mean it was executed.":
-   fromAudit.length?w.sourceCheckNotExecuted:"No verified gameplay reproduction procedure is available.";
+   fromAudit.length?(approved?w.approvedSourceCues:w.sourceCheckNotExecuted):"No verified gameplay reproduction procedure is available.";
   const procedure=steps.length?`<ol class="verification-steps">${steps.map(step=>`<li>${escape(step)}</li>`).join("")}</ol>`:
    f.validation?.nextCheck?`<p><strong>First check:</strong> ${escape(f.validation.nextCheck)}</p>`:
    `<p>${escape(w.sourceCheckMissing)}</p>`;
@@ -245,7 +255,7 @@ function findingCard(f,index,lock,evidence){
    `<div class="verification-criteria"><div><strong>Supports this issue if…</strong><p>${escape(confirmation)}</p></div>`+
    `<div><strong>Not reproduced in this attempt if…</strong><p>${escape(expected)}</p></div></div>`+
    (f.validation?`<p><strong>Still requires proof:</strong> ${escape(f.validation.missingProof)}</p>`:"")+
-   `<p class="caveat">Record the map version, actual observations and screenshots. A source prediction or an unsuccessful attempt does not by itself prove or disprove gameplay behavior.</p></section>`;
+   `<p class="caveat">Record the map version, actual observations and screenshots. If the required state cannot be reached or checked, mark Blocked. A source prediction or an unsuccessful attempt does not by itself prove or disprove gameplay behavior.</p></section>`;
   const tier=({SOURCE_VERIFIED:w.verifiedSource,PACKAGE_VERIFIED:w.packageVerified,RUNTIME_OBSERVED:w.runtimeObserved,REFERENCE_UNRESOLVED:w.sourceReferenceUnresolved})[f.evidenceLevel];
   const t=f.technical;
   const details=`<details class="technical-disclosure"><summary>Code, evidence and developer details (${f.evidenceRefs.length})</summary>`+
@@ -262,14 +272,20 @@ function findingCard(f,index,lock,evidence){
    `<div class="result-buttons"><button type="button" class="secondary" data-result="PASSED" aria-pressed="false">${escape(w.passed)}</button>`+
    `<button type="button" class="secondary" data-result="FAILED" aria-pressed="false">${escape(w.failed)}</button></div>`+
    `<p>These results measure a retest after repair, not whether the original issue is confirmed.</p></div>`:"";
+  const firstCheck=`<div class="initial-confirmation"><h5>${escape(w.confirmationHeading)}</h5>`+
+   `<p>This records only your attempt; it does not change the approved issue or mark it Fixed.</p>`+
+   `<div class="confirmation-buttons" role="group" aria-label="Initial bug check">`+
+   [["REPRODUCED",w.confirmationReproduced],["NOT_REPRODUCED",w.confirmationNotReproduced],["BLOCKED",w.confirmationBlocked]]
+     .map(([id,label])=>`<button type="button" class="secondary" data-confirmation="${id}" aria-pressed="false">${escape(label)}</button>`).join("")+
+   `</div><p class="confirmation-value" data-confirmation-label>${escape(w.confirmationUntested)}</p></div>`;
   aside=`<details class="tester-disclosure"><summary>Tester notes and screenshots (optional)</summary>`+
-   `<div class="tester-content"><p>Record only what you actually observed.</p>${retest}${noteInput}${upload}</div></details>`;
+   `<div class="tester-content"><p>Record only what you actually observed.</p>${firstCheck}${retest}${noteInput}${upload}</div></details>`;
  }
  return `<details class="issue" data-finding="${escape(f.id)}" data-kind="${escape(f.kind)}" data-ready="${String(ready)}">`+
   `${summary}<div class="finding-content"><div class="finding-main">${main}</div>`+
   `<aside class="tester-panel">${aside}</aside></div></details>`;
 }
-function renderMapGroups(map,lock){
+function renderMapGroups(map,lock,reportKind){
  const evidenceById=new Map(map.evidence.map(e=>[e.id,e]));
  const titles={BUG:lock.vocabulary.sectionBugs,DESIGN_MISMATCH:lock.vocabulary.sectionDesign,DEV_NOTE:lock.vocabulary.sectionNotes};
  return lock.layout.findingGroupOrder.map(kind=>{
@@ -279,7 +295,7 @@ function renderMapGroups(map,lock){
    total+=findings.length;
    if(!findings.length)return "";
    const levelName=map.levels.length>1?`<p class="level-name">${escape(level.label)}</p>`:"";
-   return `<div data-level>${levelName}<div data-group>${findings.map((item,i)=>findingCard(item,i,lock,evidenceById)).join("")}</div></div>`;
+   return `<div data-level>${levelName}<div data-group>${findings.map((item,i)=>findingCard(item,i,lock,evidenceById,reportKind)).join("")}</div></div>`;
   }).join("");
   if(!total)return "";
   return `<section class="issue-group" data-group-container aria-label="${escape(titles[kind])}">`+
@@ -317,22 +333,22 @@ function reportToolbar(lock,w){
 }
 
 function renderBody(report,lock,digest){
- const w=lock.vocabulary,one=report.scope==="MAP";
- const title=report.reportKind==="MAP_AUDIT"?w.mapAuditTitle:report.reportKind==="SOURCE_REVIEW"?w.sourceReviewTitle:w.demoTitle;
+ const w=lock.vocabulary,one=report.scope==="MAP",approved=report.reportKind==="APPROVED_BUG_REPORT";
+ const title=approved?w.approvedReportTitle:report.reportKind==="MAP_AUDIT"?w.mapAuditTitle:report.reportKind==="SOURCE_REVIEW"?w.sourceReviewTitle:w.demoTitle;
  const all=report.maps.flatMap(m=>m.levels.flatMap(l=>l.findings));
  const issues=all.filter(f=>f.kind!=="DEV_NOTE");
  const pending=issues.filter(f=>f.proofStatus==="NEED_VALIDATION").length;
  const proven=issues.filter(f=>f.proofStatus==="PROVEN").length;
  const hasRetest=issues.some(isRetestEligible);
  const first=report.maps[0],artifact=first.artifact,cov=first.auditCoverage;
- const coverageState=one?(cov?.state??"UNKNOWN"):"MULTI-MAP";
+ const coverageState=approved?"APPROVED LEDGER":one?(cov?.state??"UNKNOWN"):"MULTI-MAP";
  const mainName=one?first.name:`Combined report · ${report.maps.length} maps`;
- const firstMeta=one?`${artifact.edition} · ${artifact.version===null?"Version unknown":"v"+artifact.version}`:`Each map keeps its own source identity`;
- const summaryCov=one?(cov?.summary??"Audit coverage has not been established for this report."):"Coverage is reported separately for each map below.";
- const overallMessage=one?(coverageState==="COMPLETE"?"Source audit checks completed":
+ const firstMeta=one?`${artifact.edition==="UNKNOWN"?"":artifact.edition+" · "}${artifact.version===null?"Version unknown":"v"+artifact.version}`:`Each map keeps its own source identity`;
+ const summaryCov=approved?"Read-only approved issue ledger, not a new whole-map audit or Minecraft playtest.":one?(cov?.summary??"Audit coverage has not been established for this report."):"Coverage is reported separately for each map below.";
+ const overallMessage=approved?"Approved issues from the pinned source ledger":one?(coverageState==="COMPLETE"?"Source audit checks completed":
    coverageState==="BLOCKED"?"Audit blocked — proof required":
    coverageState==="PARTIAL"?"Audit incomplete — further checks needed":"Audit coverage not established"):"Review each map's audit status";
- const caveat=report.reportKind==="SYNTHETIC_DEMO"?"Synthetic demonstration. No selected map was audited.":
+ const caveat=approved?"Canonical approved issue status is separate from the tester’s initial reproduction attempt.":report.reportKind==="SYNTHETIC_DEMO"?"Synthetic demonstration. No selected map was audited.":
    `${title} only. ${w.unrelatedApprovedLedger}`;
  const identitySource=one?
    `<dl><dt>Source</dt><dd>${escape(artifact.sourceLabel)}</dd><dt>Fingerprint</dt><dd><code>${escape(artifact.fingerprint)}</code></dd>`+
@@ -345,7 +361,7 @@ function renderBody(report,lock,digest){
    `<p class="meta">${escape(firstMeta)}</p></div>`+
    `<span class="coverage-pill" data-state="${escape(coverageState)}">${escape(coverageState)}</span></div>`+
    `<details class="source-details"><summary>${escape(w.sourceMetadata)}</summary><div class="sourcebox">${identitySource}</div></details></section>`;
- const counts=`<p class="issue-summary"><strong>${issues.length}</strong> recorded issues · `+
+ const counts=approved?`<p class="issue-summary"><strong>${issues.length}</strong> approved issues · <strong>${issues.filter(f=>!f.approvedFixed).length}</strong> open · <strong>${issues.filter(f=>f.approvedFixed).length}</strong> marked fixed<small>From the canonical approved ledger. Tester results are separate.</small></p>`:`<p class="issue-summary"><strong>${issues.length}</strong> recorded issues · `+
    `<strong>${pending}</strong> need confirmation · <strong>${proven}</strong> audit-level findings`+
    `<small>A source finding is not automatically a bug reproduced in Minecraft.</small></p>`;
  const coverageDetail=report.maps.map(map=>{
@@ -359,7 +375,8 @@ function renderBody(report,lock,digest){
   return `<div><p><strong>${escape(map.name)}</strong> · ${escape(c.state)} · ${escape(c.summary)}</p>${missing}${checks}</div>`;
  }).join("");
  const openCounts=report.maps.reduce((acc,m)=>acc+(m.auditCoverage?.missingProof?.length??0)+(m.auditCoverage?.checks?.length??0),0);
- const gaps=`<details class="audit-extra"><summary>View proof gaps and audit details <span class="count">${openCounts?`(${openCounts} entries)`:""}</span></summary>`+
+ const gaps=approved?`<details class="audit-extra"><summary>Approved report source</summary><p>Git commit: <code>${escape(report.approvedSource.gitRevision)}</code></p><p>File: <code>${escape(report.approvedSource.path)}</code></p><p>Code paths are cited from the approved ledger, not independently re-inspected by this viewer.</p></details>`:
+  `<details class="audit-extra"><summary>View proof gaps and audit details <span class="count">${openCounts?`(${openCounts} entries)`:""}</span></summary>`+
   coverageDetail+`</details>`;
  const brief=`<section class="audit-brief" aria-label="Audit status"><div class="audit-message">`+
   `<div class="section-kicker">${escape(w.auditStatus)}</div><h2>${escape(overallMessage)}</h2>`+
@@ -368,7 +385,7 @@ function renderBody(report,lock,digest){
  const filters=filterControlArea(w,lock);
  const index=one?"":`<nav class="map-index" aria-label="Report maps">${report.maps.map((m,i)=>`<a href="#map-${i}">${escape(m.name)}</a>`).join("")}</nav>`;
  const mapSections=report.maps.map((map,i)=>{
-  const sections=renderMapGroups(map,lock);
+  const sections=renderMapGroups(map,lock,report.reportKind);
   const info=one?sections:`<details class="map-fold" data-map-fold><summary>${escape(map.name)} · ${escape(map.artifact.version??"version unknown")}</summary>${sections}</details>`;
   return `<div id="map-${i}" data-map>${info}</div>`;
  }).join("");
@@ -408,7 +425,7 @@ export async function renderReportNext(input, { authorizeRuntimeEvidence } = {})
   const match=referenceText.match(/<style>([\s\S]*?)<\/style>/);
   if(!match)throw new Error("Locked reference stylesheet missing");
   const fileStem=report.scope==="MAP"
-    ?slug(report.maps[0].name)+"-v"+slug(report.maps[0].artifact.version??"unknown")
+    ?slug(report.maps[0].name)+"-v"+slug(report.maps[0].artifact.version??"unknown")+(report.reportKind==="APPROVED_BUG_REPORT"?"-Approved":"")
     :"Combined-Report";
   const meta={digest,fileStem};
   const workspace={schema:wsSchema.properties.schema.const,reportId:report.reportId,
@@ -416,7 +433,7 @@ export async function renderReportNext(input, { authorizeRuntimeEvidence } = {})
   validateSchema(workspace,wsSchema);
   const html='<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'+
     '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-    '<title>'+escape(report.reportKind==="MAP_AUDIT"?lock.vocabulary.mapAuditTitle:
+    '<title>'+escape(report.reportKind==="APPROVED_BUG_REPORT"?lock.vocabulary.approvedReportTitle:report.reportKind==="MAP_AUDIT"?lock.vocabulary.mapAuditTitle:
       report.reportKind==="SOURCE_REVIEW"?lock.vocabulary.sourceReviewTitle:lock.vocabulary.demoTitle)+'</title><style>'+
     match[1]+cssExtra+'</style></head><body><main class="page">'+
     renderBody(report,lock,digest)+'</main>'+

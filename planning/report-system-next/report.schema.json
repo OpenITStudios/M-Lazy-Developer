@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mivubi:report-system-next:report:v1.6",
-  "title": "M-Lazy Report Next Canonical Report v1.6",
+  "$id": "urn:mivubi:report-system-next:report:v1.7",
+  "title": "M-Lazy Report Next Canonical Report v1.7",
   "description": "Design-only locked format. Not a converter of existing Approved Bug Report V2.",
   "type": "object",
   "additionalProperties": false,
@@ -16,10 +16,10 @@
   ],
   "properties": {
     "schema": {
-      "const": "m-lazy-report-next/v1.6"
+      "const": "m-lazy-report-next/v1.7"
     },
     "layoutVersion": {
-      "const": "1.6.0"
+      "const": "1.7.0"
     },
     "reportId": {
       "type": "string",
@@ -44,7 +44,8 @@
       "enum": [
         "MAP_AUDIT",
         "SOURCE_REVIEW",
-        "SYNTHETIC_DEMO"
+        "SYNTHETIC_DEMO",
+        "APPROVED_BUG_REPORT"
       ]
     },
     "auditRevision": {
@@ -57,6 +58,24 @@
           "type": "null"
         }
       ]
+    },
+    "approvedSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gitRevision",
+        "path"
+      ],
+      "properties": {
+        "gitRevision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   },
   "$defs": {
@@ -440,6 +459,9 @@
               "type": "null"
             }
           ]
+        },
+        "approvedFixed": {
+          "type": "boolean"
         }
       },
       "allOf": [

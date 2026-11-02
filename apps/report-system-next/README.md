@@ -2,7 +2,7 @@
 
 **Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.6.0** is pinned to Git blob `7eb8ac2d721bc1126a91daf09e8dc75195a1bbb6`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.7.0** is pinned to Git blob `a7bd63799a832bb0b6f1832e2c315be93582002b`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -107,3 +107,25 @@ Every BUG and DESIGN_MISMATCH is presented as three reader questions:
 Only a validated, source-backed Test In-Game procedure may enable after-fix Passed/Failed; source-audit `reproduceSteps` merely provide **unexecuted verification guidance**, never runtime evidence or a tester PASS. An unsuccessful attempt is labelled Not Reproduced, not a disproof. When no credible steps exist, show the audit's original next check or state that gameplay steps remain unknown.
 
 The main view is a concise summary and issue search. Source IDs/code locations and tester notes/screenshots use optional disclosures; filters and old approved issue state remain independent. Report Next 1.6.0 uses version-locked authored JSON and deterministic HTML. Old standalone HTML v1.0–v1.5 and Approved Bug Report V2 are not migrated or modified.
+
+## 1.7.0 — independently sourced approved issues and first-check outcomes
+
+**Two distinct input authorities, one renderer.** The existing `projectSelectedMapAuditReportNext(run)` still projects incomplete/proven audit findings and open audit obligations without approval or runtime claims. The new `projectApprovedBugReportNext(approvedLedger,project,{sourceRevision})` projects a separate *read-only approved V2 ledger* for reader/QA handoff, with pinned Git revision, selected-project fingerprint and map-version matching. This reader NEVER updates `report/bug-report.json`, Map Audit V2, or the map. The approved issue count does not imply whole-map audit completion. If the ledger and project disagree, projection fails closed; input must be fetched from the actual named GitHub source/ref, because a self-reported Git ref does not authenticate itself.
+
+Example in ChatGPT-connected source context (conceptual; only valid for actually fetched, matching pinned input):
+```js
+import { projectApprovedBugReportNext } from "./from-approved-bug-report.mjs";
+import { renderReportNext } from "./render.mjs";
+const approvedView=projectApprovedBugReportNext(approvedBugReportV2,selectedProject,{
+  sourceRevision: exactGitCommitSha
+});
+const {html,json,digest}=await renderReportNext(approvedView);
+```
+
+Approved issue `fixed` and `severity` are retained as separate canonical source fields. Paths, explanation, impact, recommendation, Must Preserve and authored reproduction steps are preserved. Cited code paths are **REFERENCE_UNRESOLVED** until independently inspected: conversion itself cannot prove source bytes or gameplay. Reproduction steps remain clearly labeled *approved report guidance, NOT executed by this viewer*; this cannot authorize after-fix Passed/Failed.
+
+**Tester workspace v2** records `confirmation: REPRODUCED | NOT_REPRODUCED | BLOCKED | null` for **this initial attempt only**, separately from optional after-fix `result: PASSED | FAILED | null`. Neither field updates approved Fixed or canonical proof. `Not Reproduced` does not establish issue absence; `Blocked` is not a failure. Notes and screenshots remain optional. The new workspace v2 is digest-bound, strictly validated and explicitly does not import v1 silently. Existing self-contained v1.0–v1.6 HTML snapshots remain readable with their own embedded clients.
+
+**Reader acceptance:** confirm original seven Defense Challenge v1.1.3 approved issues retain 2 BUG/5 DESIGN_MISMATCH, all 7 OPEN, severity, source paths and reproduction guidance. Verify separate negative identity cases (wrong fingerprint, version, gitRevision or synthetic unapproved Fixed), tester-state export/reopen, and no invented gameplay results. Execute actual desktop browser Save/Reopen before declaring a production-grade handoff; no mobile gate.
+
+**Handoff filename disambiguation:** approved source exports append `-Approved` to the map/version file stem, so they cannot silently share the Map Audit filename for the same version. Renderer metadata omits an unknown edition rather than presenting `UNKNOWN` as meaningful gameplay context.

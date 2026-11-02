@@ -1,12 +1,12 @@
 {
   "schema": "m-lazy-report-next-golden/v1",
   "reportId": "design-example-not-a-real-audit",
-  "designVersion": "1.6.0",
-  "layoutBlob": "7eb8ac2d721bc1126a91daf09e8dc75195a1bbb6",
+  "designVersion": "1.7.0",
+  "layoutBlob": "a7bd63799a832bb0b6f1832e2c315be93582002b",
   "referenceBlob": "2cce615368348cae8d77137867442f3f793fa584",
-  "syntheticExampleBlob": "6fad5c4e9f8d17323af6bc11544b218d1f7523fc",
-  "htmlSha256": "8ed7763b257916b7dc16f38a3f0722ba379d7f1060fb01eb2cbabbcb0aefce6c",
-  "jsonSha256": "20e443421389c58f14bc92a8aeb370daeaf5e14edc037bf2d16ba568ae9ec1fc",
-  "digest": "sha256:20e443421389c58f14bc92a8aeb370daeaf5e14edc037bf2d16ba568ae9ec1fc",
-  "notes": "v1.6.0 report-first synthetic golden derived from exact staged source with SHA256 standard-vector verification in isolated V8. Native Node, Chromium and gameplay NOT EXECUTED."
+  "syntheticExampleBlob": "fde12a0e4662b3b49d11c0e022e1b2bea1284b47",
+  "htmlSha256": "bf85ec5f50bc455cddae4d0bd041c7cc05267c0322d05f76136395721ee1fc1f",
+  "jsonSha256": "ef082d1b44c41bb56c65e4e7197cc48aa9b81d32b9ba724925dfd0e653574a2a",
+  "digest": "sha256:ef082d1b44c41bb56c65e4e7197cc48aa9b81d32b9ba724925dfd0e653574a2a",
+  "notes": "Exact v1.7.0 synthetic HTML/JSON golden derived in isolated V8; SHA256 validated against standard vectors. Approved V2 reader separately verified with seven Defense issues. Native Node/Chromium/gameplay not executed."
 }

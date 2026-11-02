@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
-export const DESIGN_VERSION = "1.6.0";
-export const DESIGN_BLOB_SHA = "7eb8ac2d721bc1126a91daf09e8dc75195a1bbb6";
+export const DESIGN_VERSION = "1.7.0";
+export const DESIGN_BLOB_SHA = "a7bd63799a832bb0b6f1832e2c315be93582002b";
 const kinds = ["BUG", "DESIGN_MISMATCH", "DEV_NOTE"];
 const evidenceLevels = ["SOURCE_VERIFIED","PACKAGE_VERIFIED","RUNTIME_OBSERVED","REFERENCE_UNRESOLVED"];
 const isObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -12,8 +12,8 @@ export function assertDesignLock(raw, sourceText) {
     .update("blob " + bytes.length + "\0")
     .update(bytes).digest("hex");
   if (sha !== DESIGN_BLOB_SHA || raw.designVersion !== DESIGN_VERSION ||
-    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.6" ||
-    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.6" ||
+    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.7" ||
+    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.7" ||
     raw.changePolicy?.renderer !== "ONE_DETERMINISTIC_RENDERER_ONLY") {
     throw new Error("Report Next Design Lock mismatch; renderer refuses unapproved layout changes.");
   }
@@ -126,11 +126,20 @@ function assertPlayerFollowableTest(finding, evidence) {
 
 export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) {
   validateSchema(report, schema);
-  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.6.0.");
+  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.7.0.");
   if(report.reportKind==="MAP_AUDIT"&&!report.auditRevision)
     throw Error("Map Audit requires an exact auditRevision");
   if(report.reportKind!=="MAP_AUDIT"&&report.auditRevision!==null)
     throw Error("Source reviews and demos cannot claim a canonical auditRevision");
+  // Approved issues are never a second Map Audit and must remain tied to a
+  // pinned GitHub ledger. A report alone cannot authenticate its own source.
+  if(report.reportKind==="APPROVED_BUG_REPORT"){
+    if(report.scope!=="MAP"||!report.approvedSource ||
+       !/^workspace\/projects\/[a-z0-9-]+\/report\/bug-report\.json$/.test(report.approvedSource.path))
+      throw Error("Approved Bug Report requires one exact pinned project ledger");
+  }else if(Object.hasOwn(report,"approvedSource")){
+    throw Error("Only Approved Bug Report may declare an approvedSource");
+  }
   const findingIds = new Set();
   const mapIds = new Set();
   for (const map of report.maps) {
@@ -172,6 +181,8 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
       throw Error("Source review and demo cannot claim complete Map Audit coverage");
     if(map.auditCoverage?.state==="COMPLETE"&&map.evidence.some(e=>e.kind==="REFERENCE_UNRESOLVED"))
       throw Error("Unresolved source reference prohibits complete audit coverage");
+    if(report.reportKind==="APPROVED_BUG_REPORT"&&map.auditCoverage!==null)
+      throw Error("Approved issue ledger cannot claim current Map Audit coverage");
     const levelIds = new Set();
     for (const level of map.levels) {
       if (levelIds.has(level.levelId)) throw new Error("Duplicate level ID in " + map.mapId);
@@ -183,7 +194,18 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
           if (!evidence.has(id)) throw new Error(finding.id + ": missing same-map evidence " + id);
           return evidence.get(id);
         });
+        if(report.reportKind==="APPROVED_BUG_REPORT"&&finding.kind==="DEV_NOTE")
+          throw Error("Approved Bug Report V2 issue projection cannot manufacture Developer Notes");
         if (finding.kind === "DEV_NOTE") continue;
+        if(report.reportKind==="APPROVED_BUG_REPORT"){
+          if(typeof finding.approvedFixed!=="boolean"||
+             finding.proofStatus!=="PROVEN"||!finding.severity||
+             finding.evidenceLevel!=="REFERENCE_UNRESOLVED"||
+             finding.validation!==null||finding.testProcedure!==null)
+            throw Error(finding.id+": approved ledger status must not forge new test or source proof");
+        }else if(Object.hasOwn(finding,"approvedFixed")){
+          throw Error(finding.id+": only the approved ledger owns its Fixed status");
+        }
         if (!evidenceLevels.includes(finding.evidenceLevel)) throw new Error("Unsupported evidence level");
         if(finding.proofStatus==="NEED_VALIDATION"){
           if(finding.severity!==null||!finding.validation)
