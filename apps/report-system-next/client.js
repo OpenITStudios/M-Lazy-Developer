@@ -75,6 +75,8 @@
   } catch {
     notice("Browser storage unavailable; use Save as HTML before closing", true);
   }
+  const peekState = id => WS.entries.find(item => item.findingId === id) ||
+    {findingId:id,result:null,notes:"",attachments:[]};
   const state = id => {
     let entry = WS.entries.find(item => item.findingId === id);
     if (!entry) {
@@ -106,8 +108,8 @@
     const tester = findings.filter(card => card.dataset.kind !== "DEV_NOTE");
     const ready = tester.filter(card => card.dataset.ready === "true");
     const counts = {
-      passed:ready.filter(card => state(card.dataset.finding).result === "PASSED").length,
-      failed:ready.filter(card => state(card.dataset.finding).result === "FAILED").length,
+      passed:ready.filter(card => peekState(card.dataset.finding).result === "PASSED").length,
+      failed:ready.filter(card => peekState(card.dataset.finding).result === "FAILED").length,
       notRetestable:tester.length - ready.length
     };
     counts.untested = ready.length - counts.passed - counts.failed;
@@ -115,7 +117,7 @@
       document.getElementById("metric-" + name).textContent = String(counts[name]);
     }
     for (const card of findings) {
-      const entry = state(card.dataset.finding);
+      const entry = peekState(card.dataset.finding);
       const resultLabel = card.querySelector("[data-result-label]");
       if (resultLabel) resultLabel.textContent = card.dataset.ready === "true"
         ? (entry.result === "PASSED" ? "Passed" :
@@ -159,10 +161,12 @@
     let visible = 0;
     for (const card of findings) {
       const finding = findingById.get(card.dataset.finding);
-      const value = ((finding.title || "") + " " + finding.id + " " +
-        (finding.problem || finding.description || "")).toLowerCase();
+      const value = [finding.title, finding.id, finding.problem, finding.description,
+        finding.rationale, finding.impact, finding.expected, finding.observed,
+        finding.validation?.reason, finding.validation?.missingProof,
+        finding.validation?.nextCheck].filter(Boolean).join(" ").toLowerCase();
       const status = card.dataset.ready === "true"
-        ? state(finding.id).result || "UNTESTED" : "NOT_RETESTABLE";
+        ? peekState(finding.id).result || "UNTESTED" : "NOT_RETESTABLE";
       const match = value.includes(search) &&
         (kind === "ALL" || finding.kind === kind) &&
         (severity === "ALL" || (finding.kind !== "DEV_NOTE" && finding.severity === severity)) &&
@@ -190,6 +194,20 @@
     document.getElementById("match-count").textContent =
       "Showing " + visible + " of " + findings.length + " entries";
     document.getElementById("no-matches").hidden = visible !== 0;
+  }
+  if (typeof document.addEventListener === "function") {
+    document.addEventListener("keydown", event => {
+      const t=event.target;
+      const editing=t?.matches?.("input,textarea,select,[contenteditable]") || t?.isContentEditable;
+      if (event.key === "/" && !editing && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        document.getElementById("find-search").focus();
+      } else if (event.key === "Escape" && document.activeElement?.id === "find-search") {
+        document.activeElement.value = "";
+        document.activeElement.blur();
+        refresh();
+      }
+    });
   }
   document.querySelectorAll("[data-finding]").forEach(card => {
     const id = card.dataset.finding;

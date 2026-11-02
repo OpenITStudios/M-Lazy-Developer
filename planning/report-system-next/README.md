@@ -1,8 +1,8 @@
 # Report System Next — Locked Design Entry
 
-**Work mode:** NEW SYSTEM DESIGN ONLY. This directory is a proposed, isolated reporting product contract, **not** an implementation of the older Bug Tracker and not a claim that a new report application runs.
+**Work mode:** Isolated reporting source development. This directory is a proposed, isolated reporting product contract, **not** an implementation of the older Bug Tracker and not a claim that a new report application runs.
 
-**Design version:** `1.0.0` — **layout and report structure frozen for implementation**. The immutable Git commit that first adds this pack, plus the verified blob identity below, is the baseline. New chats must not freely redesign it.
+**Design version:** `1.1.0` — **approved report UX and proof-integrity revision**. Earlier v1.0.0 locked blobs remain the historical design baseline; self-contained old HTML remains readable. The immutable Git commit that first adds this pack, plus the verified blob identity below, is the baseline. New chats must not freely redesign it.
 
 ## Start a new chat here
 
@@ -37,7 +37,7 @@ The initial `layout.lock.json` content is Git blob `c958b33054722c2884e791e5b4e8
 
 Implement **a new renderer in its own module/namespace** consuming only `report.schema.json`-valid inputs, producing identical canonical JSON and generated HTML for identical inputs under the same lock, then test against a golden output and `reference.html`. Do not point it at existing report files or rewrite old components during the design phase.
 
-**State:** DESIGN LOCKED; **new isolated renderer source authored** under [apps/report-system-next/](../../apps/report-system-next/). Browser acceptance, live Minecraft and full repository execution are not yet established. The locked layout/schema/reference files are unchanged.
+**State:** DESIGN LOCKED / SOURCE BUILD; **new isolated renderer source authored** under [apps/report-system-next/](../../apps/report-system-next/). Browser acceptance, live Minecraft and full repository execution are not yet established. The locked layout/schema/reference files are unchanged.
 
 ## Implementation route (for subsequent chats)
 
@@ -48,3 +48,11 @@ Implement **a new renderer in its own module/namespace** consuming only `report.
 - Any future design revision must retain the original immutable Git blob IDs and obtain explicit user approval for a new design version.
 
 **Current acceptance limit:** isolated source/JS checks and golden baseline authoring do not prove a packaged application or real-browser Save as HTML → reopen behavior.
+
+## Authorized 1.1.0 change (2026-11-02)
+
+- Unproven findings have no final severity, and must describe exactly why evidence is insufficient and what check is next.
+- Source evidence is readable on demand and coverage stays explicitly unknown unless independently supplied with same-map references.
+- Compact report navigation, search and offline handoff are preserved. No migration or replacement of Approved Bug Report V2 or current project outputs is authorized.
+- Current 1.1.0 layout Git blob: `01b700ffcaab61db6cdea17eb6171a36803f524e`; report schema blob: `7d5da39cccee8e4a989b3d03b9628478ac0a348e`. Historical original blobs above remain valid **for v1.0.0**, not the current version.
+- The isolated renderer is not an integrated `SelectedMapAuditRun` publisher; that source-to-report mapping requires separate, verified implementation.

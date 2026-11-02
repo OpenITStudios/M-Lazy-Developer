@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.0.0
+# Report System Next — LOCKED DESIGN 1.1.0
 
 ## 0. Ownership and scope
 
@@ -115,3 +115,16 @@ Never claim that a *Git file alone* technically enforces all of this. The lock i
 - JSON Schema Draft 2020-12 (https://json-schema.org/draft/2020-12)
 - RFC 8785 canonical JSON (https://www.rfc-editor.org/rfc/rfc8785.html)
 - WCAG 2.2 (https://www.w3.org/TR/WCAG22/)
+
+## Approved 1.1.0 addendum — source integrity and comfortable reading
+
+The original v1.0.0 design and immutable Git blobs remain historical. This approved version extends the same compact layout without changing legacy Bug Tracker or its project outputs.
+
+1. A `NEEDS_VALIDATION` finding MUST have `severity: null`, a written proof gap and one specific next check; proven issues have grounded severity and no pending validation object.
+2. Every citation is displayed as an expandable source record with ID, kind, description and locator; source strings are escaped and never run as code.
+3. Audit coverage is shown only from a separately supplied same-artifact, referenced record; missing coverage is explicitly **not established**, never reported as complete.
+4. The reader continues to see collapsed findings by default, Test In-Game/Expected/Observed/After-Fix results, and separate technical details. Search now includes explanation and validation text; keyboard shortcuts add no permanent UI controls.
+5. Offline Save as HTML, tester notes/screenshots, immutable report JSON, and exact digest binding stay unchanged. The v1.1.0 authored report schema changes; tester workspace format remains v1 and older self-contained report HTML snapshots remain readable. No automatic v1 JSON migration is permitted.
+6. The original pinned `reference.html` stylesheet remains the visual base; restrained CSS additions improve proof legibility. New layout/schema/example blobs and golden bytes are version-pinned in the implementation.
+
+Earlier sections document the 1.0.0 baseline and its former proof ceiling. Current 1.1.0 source-level implementation is described in `apps/report-system-next/README.md`; full browser acceptance and live selected-map reporting are not yet established.

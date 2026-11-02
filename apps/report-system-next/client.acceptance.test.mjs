@@ -37,13 +37,14 @@ function startPage({ snapshot, copyId = "original", pathname = "/source.html",
        observed:"Wave does not start",
        testProcedure:{steps:[{instruction:"Start match"},{instruction:"Observe wave"}],
                       visibleOutcome:"Next wave never appears"}},
-      {id:"BUG-PENDING", kind:"BUG", severity:"MINOR", evidenceLevel:"NEEDS_VALIDATION",
+      {id:"BUG-PENDING", kind:"BUG", severity:null, evidenceLevel:"NEEDS_VALIDATION",
+       validation:{reason:"No verified source",missingProof:"Missing evidence",nextCheck:"Inspect source"},
        title:"Unknown issue", problem:"Not observed", expected:"Normal continuation",
        observed:null, testProcedure:null},
       {id:"DEV-NOTE", kind:"DEV_NOTE", title:"Technical note", description:"For developer"}
     ] }] }]
   };
-  const meta = {digest: "sha256:" + "f".repeat(64), fileStem: "Synthetic-v1.0.0"};
+  const meta = {digest: "sha256:" + "f".repeat(64), fileStem: "Synthetic-v1.1.0"};
   const empty = {schema:"m-lazy-tester-workspace-next/v1",
     reportId:report.reportId,canonicalDigest:meta.digest,entries:[]};
   const ids = Object.fromEntries([
@@ -200,7 +201,7 @@ test("tester workflow: result, notes, screenshot, caption and offline handoff sn
   assert.equal(page.ids["match-count"].textContent,"Showing 0 of 3 entries");
   page.ids["save-html"].emit("click");
   assert.equal(page.downloads.length,1);
-  assert.equal(page.downloads[0].name,"Synthetic-v1.0.0-Tester-Report.html");
+  assert.equal(page.downloads[0].name,"Synthetic-v1.1.0-Tester-Report.html");
   const {copyId,state}=savedSnapshot(page.downloads[0]);
   const entry=state.entries.find(x=>x.findingId==="BUG-READY");
   assert.equal(entry.result,"PASSED");

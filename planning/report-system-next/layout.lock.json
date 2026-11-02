@@ -1,12 +1,12 @@
 {
   "system": "M-Lazy-Developer / Report System Next",
   "namespace": "report-system-next",
-  "designVersion": "1.0.0",
-  "lifecycle": "DESIGN_LOCKED_IMPLEMENTATION_NOT_STARTED",
+  "designVersion": "1.1.0",
+  "lifecycle": "DESIGN_LOCKED_SOURCE_BUILD",
   "compatibility": {
-    "reportSchema": "m-lazy-report-next/v1",
+    "reportSchema": "m-lazy-report-next/v1.1",
     "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v1",
-    "templateId": "m-lazy-report-next/html-v1",
+    "templateId": "m-lazy-report-next/html-v1.1",
     "sourceExistingApprovedBugReportV2": "NOT_A_MUTATION_TARGET",
     "legacyReportPaths": "UNTOUCHED"
   },
@@ -37,6 +37,7 @@
       "reportHeader",
       "artifactIdentity",
       "reportOverview",
+      "auditCoverage",
       "testerProgress",
       "findingControls",
       "bugFindings",
@@ -56,7 +57,7 @@
     ],
     "findingCardCollapsed": [
       "referenceNumber",
-      "severity",
+      "severityIfProven",
       "evidenceLevel",
       "testerResultIfEligible",
       "title",
@@ -66,8 +67,10 @@
     "findingCardExpanded": [
       "rationaleIfPresent",
       "impactIfPresent",
+      "validationReasonAndNextCheckIfNeeded",
       "testInGameIfSupported",
       "expectedAndObserved",
+      "evidenceDetailsOnDemand",
       "testerResultIfEligible",
       "testerNotes",
       "attachments",
@@ -95,7 +98,12 @@
     "searchFields": [
       "title",
       "findingId",
-      "problem"
+      "problem",
+      "rationale",
+      "impact",
+      "expected",
+      "observed",
+      "validation"
     ],
     "filterFields": [
       "kind",
@@ -133,7 +141,11 @@
     "loadJson": "Load JSON",
     "reset": "Reset Tester Data",
     "savedBrowser": "Autosaved in browser",
-    "fileStatus": "HTML download started; confirm file before sharing"
+    "fileStatus": "HTML download started; confirm file before sharing",
+    "auditCoverage": "Audit Coverage",
+    "coverageMissing": "Audit completeness not established by this report.",
+    "validationDetail": "What Needs Validation",
+    "sourceEvidence": "Source Evidence"
   },
   "tokens": {
     "font": "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -182,7 +194,10 @@
     "saveReportsDownloadStartedNotDiskVerified": true,
     "browserStorageFailure": "CONTINUE_IN_MEMORY_WARN_AND_OFFER_SAVE_HTML",
     "sameCopyRecovery": "SNAPSHOT_THEN_SAME_COPY_AUTOSAVE",
-    "resetBehavior": "PERSIST_EXPLICIT_EMPTY_WORKSPACE_OVERRIDE"
+    "resetBehavior": "PERSIST_EXPLICIT_EMPTY_WORKSPACE_OVERRIDE",
+    "unprovenNeverHasFinalSeverity": true,
+    "validationProofMustBeShown": true,
+    "auditCoverageMustBeSourceBacked": true
   },
   "output": {
     "fileNames": {

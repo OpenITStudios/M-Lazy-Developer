@@ -9,7 +9,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../planning
 const here = dirname(fileURLToPath(import.meta.url));
 const pinned = {
   reference: "2cce615368348cae8d77137867442f3f793fa584",
-  report: "cbc64bba748da661f2ec8f32a4af01a3c43e6230",
+  report: "7d5da39cccee8e4a989b3d03b9628478ac0a348e",
   workspace: "78cf4ae0abc9e5d3f468a47c34c4e031e21783ce"
 };
 const gitHash = value => {
@@ -36,6 +36,7 @@ const cssExtra = "[hidden]{display:none!important}"+
 ".evidence-item img{width:100%;height:150px;object-fit:contain;background:var(--bg)}"+
 ".evidence-item input{width:100%;border:1px solid var(--border);padding:8px}"+
 ".evidence-item button{align-self:start}.attachment-input{max-width:100%}.attachment-label{display:block;font-weight:700;font-size:12px;margin:8px 0}"+
+".proof-detail{margin:8px 0;border:1px solid var(--border);border-radius:6px;padding:10px}.proof-detail>summary{cursor:pointer;font-weight:600}.proof-detail li{padding:8px 0;overflow-wrap:anywhere}.proof-detail code{font-size:12px}.validation-panel{border-left:3px solid var(--warning);padding:8px 12px;background:var(--bg)}.coverage-note{font-size:13px;line-height:1.5;color:var(--muted)}"+
 ".alert{font-size:12px;color:var(--warning)}.subactions{padding:8px 24px;border-bottom:1px solid var(--border)}"+
 "@media(max-width:700px){.evidence-list{grid-template-columns:1fr}.save-status{padding:10px 16px}}";
 
@@ -43,13 +44,21 @@ const panel = (title,content) => content
   ? '<div class="panel"><h5>'+escape(title)+'</h5>'+content+'</div>' : "";
 const para = value => "<p>"+escape(value)+"</p>";
 const items = values => '<ul class="source-list">'+values.map(x=>"<li>"+escape(x)+"</li>").join("")+"</ul>";
-function findingCard(f,index,lock) {
+function findingCard(f,index,lock,evidence) {
   const w=lock.vocabulary,note=f.kind==="DEV_NOTE",ready=isRetestEligible(f);
+  const sourceEvidence='<details class="proof-detail"><summary>'+escape(w.sourceEvidence)+
+    ' ('+f.evidenceRefs.length+')</summary><ul class="source-list">'+
+    f.evidenceRefs.map(id=>{
+      const item=evidence.get(id);
+      return '<li><strong>'+escape(item.id)+'</strong> · '+escape(item.kind)+
+        '<p>'+escape(item.description)+'</p><code>'+escape(item.locator.type)+
+        ': '+escape(item.locator.value)+'</code></li>';
+    }).join("")+'</ul></details>';
   const evidenceLabel = note?"Reference" :
     ({SOURCE_VERIFIED:w.verifiedSource,PACKAGE_VERIFIED:w.packageVerified,
       RUNTIME_OBSERVED:w.runtimeObserved,NEEDS_VALIDATION:w.needsValidation})[f.evidenceLevel];
   const tags='<div class="tags"><span class="tag">'+String(index+1).padStart(2,"0")+"</span>"+
-    (note?"":'<span class="tag'+(f.severity==="MAJOR"?" major":"")+'">'+escape(f.severity)+"</span>")+
+    (note||f.severity===null?"":'<span class="tag'+(f.severity==="MAJOR"?" major":"")+'">'+escape(f.severity)+"</span>")+
     '<span class="tag'+(f.evidenceLevel==="NEEDS_VALIDATION"?" unknown":"")+'">'+escape(evidenceLabel)+"</span>"+
     (note?"":'<span class="tag" data-result-label>'+escape(ready?w.untested:w.notRetestable)+"</span>")+"</div>";
   const header='<summary>'+tags+'<h4>'+escape(f.title)+'</h4><p class="description">'+
@@ -63,8 +72,14 @@ function findingCard(f,index,lock) {
   let content;
   if(note) {
     content=panel("Action Required",para(f.action))+
-      panel("Evidence IDs",para(f.evidenceRefs.join(", ")))+notes+attachments;
+      panel(w.sourceEvidence,sourceEvidence)+notes+attachments;
   } else {
+    const validation=f.validation
+      ? panel(w.validationDetail,'<div class="validation-panel"><p><strong>Why:</strong> '+
+        escape(f.validation.reason)+'</p><p><strong>Missing proof:</strong> '+
+        escape(f.validation.missingProof)+'</p><p><strong>Next check:</strong> '+
+        escape(f.validation.nextCheck)+'</p></div>')
+      : "";
     const procedure=f.testProcedure
       ? '<ol class="steps">'+f.testProcedure.steps.map(x=>"<li>"+escape(x.instruction)+"</li>").join("")+"</ol>"+
         '<p class="note">Visible outcome: '+escape(f.testProcedure.visibleOutcome)+"</p>"
@@ -85,15 +100,17 @@ function findingCard(f,index,lock) {
       panel("Relevant Code",t.relatedSources.length?items(t.relatedSources.map(x=>x.path+" — "+x.reason)):"")+
       panel(w.recommendedFix,t.recommendedFix&&para(t.recommendedFix))+
       panel(w.preserve,t.mustPreserve.length?items(t.mustPreserve):"")+
-      panel("Evidence IDs",para(f.evidenceRefs.join(", ")))+'</details>');
+      '</details>');
     content=panel(f.kind==="BUG"?"Why This Is a Bug":"Why This Is a Mismatch",
       f.rationale&&para(f.rationale))+panel("Impact",f.impact&&para(f.impact))+
-      panel(w.testProcedure,procedure)+comparison+result+notes+attachments+technical;
+      validation+panel(w.testProcedure,procedure)+comparison+
+      panel(w.sourceEvidence,sourceEvidence)+result+notes+attachments+technical;
   }
   return '<details class="issue" data-finding="'+escape(f.id)+'" data-kind="'+escape(f.kind)+
     '" data-ready="'+String(ready)+'">'+header+'<div class="content">'+content+"</div></details>";
 }
 function renderMapGroups(map,lock) {
+  const evidence=new Map(map.evidence.map(item=>[item.id,item]));
   const titles={BUG:lock.vocabulary.sectionBugs,DESIGN_MISMATCH:lock.vocabulary.sectionDesign,
     DEV_NOTE:lock.vocabulary.sectionNotes};
   return lock.layout.findingGroupOrder.map(kind=>{
@@ -101,7 +118,7 @@ function renderMapGroups(map,lock) {
       const findings=level.findings.filter(f=>f.kind===kind);
       if(!findings.length)return "";
       return '<div data-level><p class="level-name">'+escape(level.label)+
-        '</p><div data-group>'+findings.map((f,i)=>findingCard(f,i,lock)).join("")+"</div></div>";
+        '</p><div data-group>'+findings.map((f,i)=>findingCard(f,i,lock,evidence)).join("")+"</div></div>";
     }).join("");
     return !levels?"":'<section aria-label="'+escape(titles[kind])+
       '" data-group-container><h3>'+escape(titles[kind])+'</h3>'+levels+"</section>";
@@ -145,6 +162,13 @@ function renderBody(report,lock,digest) {
         escape(artifact.sourceUrl)+'">Original World File ↗</a>':"")+"</div></section>"
     : '<section aria-label="Artifact identity"><span class="eyebrow">Combined Report</span>'+
       '<h2>Combined Report</h2><p>'+report.maps.length+" maps, each with its own source identity</p></section>";
+  const coverage=report.maps.map(map=>{
+    const c=map.auditCoverage;
+    return '<div class="coverage-note"><strong>'+escape(map.name)+': </strong>'+
+      (c?'<strong>'+escape(c.state)+'</strong> · '+escape(c.summary)+
+        (c.missingProof.length?'<ul class="source-list">'+c.missingProof.map(x=>'<li>'+escape(x)+'</li>').join("")+'</ul>':"")
+        :escape(w.coverageMissing))+'</div>';
+  }).join("");
   const index=one?"":'<section class="map-index" aria-label="Maps"><h3>Maps</h3>'+
     report.maps.map((m,i)=>'<a href="#map-'+i+'">'+escape(m.name)+" ↗</a>").join("")+"</section>";
   const mapSections=report.maps.map((map,i)=>{
@@ -166,7 +190,8 @@ function renderBody(report,lock,digest) {
     escape(w.loadJson)+'</button><button type="button" class="secondary" id="reset-data">'+
     escape(w.reset)+'</button><input id="json-file" hidden type="file" accept=".json,application/json"></div>';
   return header+identity+'<section aria-label="Overview"><h3>Overview</h3><div class="metrics">'+
-    cards+'</div></section><section aria-label="After-Fix Retest Results"><h3>After-Fix Retest Results</h3>'+
+    cards+'</div></section><section aria-label="Audit Coverage"><h3>'+escape(w.auditCoverage)+
+    '</h3>'+coverage+'</section><section aria-label="After-Fix Retest Results"><h3>After-Fix Retest Results</h3>'+
     '<div class="retest">'+outcomes+
     '</div><p class="note">Tester results only. This does not mean canonical Fixed.</p></section>'+
     controls+index+mapSections+'<footer>Report System Next · Design Lock v'+lock.designVersion+

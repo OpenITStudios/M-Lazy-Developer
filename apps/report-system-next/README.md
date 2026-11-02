@@ -1,8 +1,8 @@
 # Report System Next — New Isolated Renderer (Implementation Source)
 
-**Implementation scope:** new, independent reporting surface. It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
+**Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). The initial `layout.lock.json` is pinned to Git blob `c958b33054722c2884e791e5b4e811a7987d394d` and version **1.0.0**. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.1.0** is pinned to Git blob `01b700ffcaab61db6cdea17eb6171a36803f524e`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -46,3 +46,14 @@ Source commits establish the renderer code stored in GitHub, not that a report w
 **Recorded source-level acceptance (commit following 50754e7):** the original embedded client JavaScript was run in an isolated V8 DOM mock. Four interaction scenarios passed: portable snapshot Save/reopen/Reset, different-report JSON rejection, browser-storage quota fallback, and NEEDS_VALIDATION exclusion from Passed/Failed. The executable acceptance harness is now source-controlled for reproducibility. This does not establish browser-native download, cross-browser storage, accessibility, or real Minecraft behavior.
 
 **Remaining acceptance boundary:** execute the original new-system Node tests on one exact-head source snapshot, and validate the generated HTML in a real browser against the locked desktop/mobile reference. Independently exercise Save as HTML → reopen offline on another browser context, including image data/notes and failure handling. Do not report these as PASSED without actual execution.
+
+## Version 1.1.0 — source-reviewed reader improvements
+
+- Unproven issues carry null severity and explicit reason, missing proof and next check; no invented final severity.
+- Expandable source references show the evidence type, description and exact original locator. Technical guidance remains on demand.
+- Audit Coverage is explicitly unknown if no sourced coverage record is supplied; it is not proof of whole-map closure.
+- Search includes expected/observed, rationale and validation text. `/` focuses search and `Esc` clears focused search.
+- Tester state remains separate from immutable report JSON and offline HTML can be handed off without a server.
+- Previously saved v1.0.0 self-contained HTML is not changed or invalidated; old authored v1 JSON is not silently migrated.
+
+**Proof boundary:** this is source implementation with a synthetic renderer derivation, not a real browser acceptance or executed selected-world audit. Full Map Audit V2 → Report Next 1.1.0 source mapping remains unconnected.

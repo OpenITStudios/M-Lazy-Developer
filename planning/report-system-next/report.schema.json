@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mivubi:report-system-next:report:v1",
+  "$id": "urn:mivubi:report-system-next:report:v1.1",
   "title": "M-Lazy Report Next Canonical Report v1",
   "description": "Design-only locked format. Not a converter of existing Approved Bug Report V2.",
   "type": "object",
@@ -14,10 +14,10 @@
   ],
   "properties": {
     "schema": {
-      "const": "m-lazy-report-next/v1"
+      "const": "m-lazy-report-next/v1.1"
     },
     "layoutVersion": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "reportId": {
       "type": "string",
@@ -47,7 +47,8 @@
         "name",
         "artifact",
         "evidence",
-        "levels"
+        "levels",
+        "auditCoverage"
       ],
       "properties": {
         "mapId": {
@@ -74,6 +75,16 @@
           "items": {
             "$ref": "#/$defs/level"
           }
+        },
+        "auditCoverage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/auditCoverage"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -233,7 +244,8 @@
         "observed",
         "evidenceRefs",
         "testProcedure",
-        "technical"
+        "technical",
+        "validation"
       ],
       "properties": {
         "id": {
@@ -248,11 +260,18 @@
           ]
         },
         "severity": {
-          "type": "string",
-          "enum": [
-            "BLOCKER",
-            "MAJOR",
-            "MINOR"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "BLOCKER",
+                "MAJOR",
+                "MINOR"
+              ]
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "evidenceLevel": {
@@ -336,8 +355,57 @@
         },
         "technical": {
           "$ref": "#/$defs/technical"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/validation"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "evidenceLevel": {
+                "const": "NEEDS_VALIDATION"
+              }
+            },
+            "required": [
+              "evidenceLevel"
+            ]
+          },
+          "then": {
+            "properties": {
+              "severity": {
+                "type": "null"
+              },
+              "validation": {
+                "$ref": "#/$defs/validation"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "BLOCKER",
+                  "MAJOR",
+                  "MINOR"
+                ]
+              },
+              "validation": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
     },
     "testProcedure": {
       "type": "object",
@@ -482,6 +550,68 @@
             "type": "string",
             "minLength": 1
           }
+        }
+      }
+    },
+    "auditCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "summary",
+        "missingProof",
+        "evidenceRefs"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "COMPLETE",
+            "PARTIAL",
+            "BLOCKED"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missingProof": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "missingProof",
+        "nextCheck"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missingProof": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nextCheck": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

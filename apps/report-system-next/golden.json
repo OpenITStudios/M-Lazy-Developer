@@ -1,12 +1,12 @@
 {
   "schema": "m-lazy-report-next-golden/v1",
   "reportId": "design-example-not-a-real-audit",
-  "designVersion": "1.0.0",
-  "layoutBlob": "c958b33054722c2884e791e5b4e811a7987d394d",
+  "designVersion": "1.1.0",
+  "layoutBlob": "01b700ffcaab61db6cdea17eb6171a36803f524e",
   "referenceBlob": "2cce615368348cae8d77137867442f3f793fa584",
-  "syntheticExampleBlob": "13b78d7d8f5cde1d015ceda117709289e1feda8e",
-  "htmlSha256": "644856d8deff9ee64cdf473aa61b4ecf30cbc6af44b7df65f65bd70622ba17b4",
-  "jsonSha256": "7f6e25b0feccef6c0e963079e5806f6278286bbd7b56dca78ca033623319fd16",
-  "digest": "sha256:7f6e25b0feccef6c0e963079e5806f6278286bbd7b56dca78ca033623319fd16",
-  "notes": "Synthetic fixture only. Functional Save as HTML normalization now strips presentation-only open/filter state from portable copies; design lock, canonical JSON and UI section order remain unchanged. Golden HTML rebaselined after explicit source-level review, not a new layout version."
+  "syntheticExampleBlob": "2ad3dc219f5897ff66358841f536d09d7342ee76",
+  "htmlSha256": "0a2df326b76635ffffd74a7850ed5dfbad66e1b7d35c582e5cddcd83b22991bb",
+  "jsonSha256": "307b8fbe76ae81b8f543a7559f98846c38f7ddcb9fc8d0d6de667ea8c94dd601",
+  "digest": "sha256:307b8fbe76ae81b8f543a7559f98846c38f7ddcb9fc8d0d6de667ea8c94dd601",
+  "notes": "Synthetic v1.1.0 baseline recalculated from exact source with an isolated JavaScript renderer evaluation; NOT a browser/Node runtime acceptance or Minecraft test."
 }

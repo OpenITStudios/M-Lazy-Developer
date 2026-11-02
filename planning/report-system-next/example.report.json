@@ -1,6 +1,6 @@
 {
-  "schema": "m-lazy-report-next/v1",
-  "layoutVersion": "1.0.0",
+  "schema": "m-lazy-report-next/v1.1",
+  "layoutVersion": "1.1.0",
   "reportId": "design-example-not-a-real-audit",
   "scope": "MAP",
   "maps": [
@@ -34,7 +34,7 @@
             {
               "id": "BUG-DEMO-001",
               "kind": "BUG",
-              "severity": "MAJOR",
+              "severity": null,
               "evidenceLevel": "NEEDS_VALIDATION",
               "title": "Example wave fails to advance",
               "problem": "The example wave counter might remain unchanged after the last opponent is defeated.",
@@ -58,6 +58,11 @@
                 "mustPreserve": [
                   "Existing player score and wave progression semantics."
                 ]
+              },
+              "validation": {
+                "reason": "This synthetic example has no verified selected-map gameplay observation.",
+                "missingProof": "A real selected-world artifact review and an independently supported behavior contradiction.",
+                "nextCheck": "Inspect the current artifact's wave progression sources before deciding whether Minecraft runtime observation is required."
               }
             },
             {
@@ -72,7 +77,8 @@
             }
           ]
         }
-      ]
+      ],
+      "auditCoverage": null
     }
   ]
 }

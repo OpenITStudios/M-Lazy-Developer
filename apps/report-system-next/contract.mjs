@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
-export const DESIGN_VERSION = "1.0.0";
-export const DESIGN_BLOB_SHA = "c958b33054722c2884e791e5b4e811a7987d394d";
+export const DESIGN_VERSION = "1.1.0";
+export const DESIGN_BLOB_SHA = "01b700ffcaab61db6cdea17eb6171a36803f524e";
 const kinds = ["BUG", "DESIGN_MISMATCH", "DEV_NOTE"];
 const evidenceLevels = ["SOURCE_VERIFIED", "PACKAGE_VERIFIED", "RUNTIME_OBSERVED", "NEEDS_VALIDATION"];
 const isObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -12,8 +12,8 @@ export function assertDesignLock(raw, sourceText) {
     .update("blob " + bytes.length + "\0")
     .update(bytes).digest("hex");
   if (sha !== DESIGN_BLOB_SHA || raw.designVersion !== DESIGN_VERSION ||
-    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1" ||
-    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1" ||
+    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.1" ||
+    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.1" ||
     raw.changePolicy?.renderer !== "ONE_DETERMINISTIC_RENDERER_ONLY") {
     throw new Error("Report Next Design Lock mismatch; renderer refuses unapproved layout changes.");
   }
@@ -126,7 +126,7 @@ function assertPlayerFollowableTest(finding, evidence) {
 
 export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) {
   validateSchema(report, schema);
-  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.0.0.");
+  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.1.0.");
   const findingIds = new Set();
   const mapIds = new Set();
   for (const map of report.maps) {
@@ -151,6 +151,17 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
       }
       evidence.set(item.id, item);
     }
+    // Audit completion is upstream evidence, never a renderer inference.
+    if (map.auditCoverage !== null) {
+      const coverage = map.auditCoverage;
+      for (const id of coverage.evidenceRefs) {
+        if (!evidence.has(id)) throw new Error(map.mapId + ": audit coverage has missing source evidence " + id);
+      }
+      if (coverage.state === "COMPLETE" && coverage.missingProof.length)
+        throw new Error(map.mapId + ": complete audit coverage cannot list unresolved proof");
+      if (coverage.state !== "COMPLETE" && !coverage.missingProof.length)
+        throw new Error(map.mapId + ": incomplete audit coverage must name unresolved proof");
+    }
     const levelIds = new Set();
     for (const level of map.levels) {
       if (levelIds.has(level.levelId)) throw new Error("Duplicate level ID in " + map.mapId);
@@ -164,6 +175,12 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
         });
         if (finding.kind === "DEV_NOTE") continue;
         if (!evidenceLevels.includes(finding.evidenceLevel)) throw new Error("Unsupported evidence level");
+        if (finding.evidenceLevel === "NEEDS_VALIDATION") {
+          if (finding.severity !== null || !finding.validation)
+            throw new Error(finding.id + ": unproven issue cannot have final severity and needs a validation route");
+        } else if (!finding.severity || finding.validation !== null) {
+          throw new Error(finding.id + ": proven issue needs grounded severity and no pending validation route");
+        }
         const requiredProof = {
           SOURCE_VERIFIED: "SOURCE_STATIC",
           PACKAGE_VERIFIED: "PACKAGE_INSPECTION",
