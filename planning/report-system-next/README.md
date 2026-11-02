@@ -76,3 +76,7 @@ The approved reader now communicates each issue with problem, source-based cause
 ## 1.7.0 reader trust and initial verification
 
 Approved Bug Report V2 can now be projected read-only via its own opt-in source adapter; Map Audit keeps its independent source and proof. Both feed the same renderer. Initial bug reproduction is captured only as tester workspace v2 data, separate from approved Fixed and after-fix Passed/Failed. Source reproduction steps are displayed, not certified as run. Negative identity and real seven-issue reader acceptance are part of the bounded verification scope, with remaining desktop browser and Minecraft runtime proof explicitly separate.
+
+## Defense v1.1.3 source-bound reader acceptance
+
+Use [the verification readiness guide](defense-v1.1.3-reader-acceptance.md) for the pinned selected world and seven approved V2 issue IDs. It provides grounded prerequisites, trigger cues, expected-versus-reported outcomes, observability limits, and explicit Blocked conditions. This is a companion to the **one existing HTML renderer**, not a second bug authority, workflow, or Minecraft-gameplay certification.

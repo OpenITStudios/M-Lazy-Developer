@@ -129,3 +129,9 @@ Approved issue `fixed` and `severity` are retained as separate canonical source 
 **Reader acceptance:** confirm original seven Defense Challenge v1.1.3 approved issues retain 2 BUG/5 DESIGN_MISMATCH, all 7 OPEN, severity, source paths and reproduction guidance. Verify separate negative identity cases (wrong fingerprint, version, gitRevision or synthetic unapproved Fixed), tester-state export/reopen, and no invented gameplay results. Execute actual desktop browser Save/Reopen before declaring a production-grade handoff; no mobile gate.
 
 **Handoff filename disambiguation:** approved source exports append `-Approved` to the map/version file stem, so they cannot silently share the Map Audit filename for the same version. Renderer metadata omits an unknown edition rather than presenting `UNKNOWN` as meaningful gameplay context.
+
+## Desktop reader acceptance — exact Defense v1.1.3, read-only
+
+The bounded acceptance source is [Defense v1.1.3 reader / verification readiness](../../planning/report-system-next/defense-v1.1.3-reader-acceptance.md), based on the pinned current-world SHA-256, the original seven approved Bug Report V2 IDs, and direct .mcworld JavaScript/config examination. It distinguishes **MANUAL-READY**, **CONDITIONAL**, **SOURCE-CHECKABLE**, and **BLOCKED** cases without changing the approved ledger or selected map.
+
+The narrow `apps/report-system-next/defense-reader-acceptance.test.mjs` checks the real ledger provenance, issue IDs, all seven causes, severity, reproduction steps, source citations, and read-only output via the existing renderer. It deliberately forbids fabricated `Test In-Game` results. This is **source/report acceptance**, not gameplay or a native browser Save/Reopen proof. Desktop 1366×768 and 1920×1080 remain the only visual targets; mobile is not a release gate.

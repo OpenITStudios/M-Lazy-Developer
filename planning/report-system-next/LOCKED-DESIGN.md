@@ -192,3 +192,9 @@ Following the reader-centered audit, the user approved source-correct issue prov
 6. **Versioning and desktop QA.** Contract/schema/layout are 1.7.0, tester workspace schema is v2. Older exported v1.0–v1.6 self-contained HTML is never rewritten or silently migrated; old workspace v1 import is rejected in the new reader. Desktop 1366×768 and 1920×1080 only. Real file:// Chromium and Minecraft gameplay proof must be separately observed, not inferred from authored tests.
 
 **Export identity:** the approved ledger report must be distinguishable from the independent Map Audit report even when they describe the same selected map/version; approved output filenames use an `-Approved` suffix. An unverified edition is omitted from the main header rather than represented as a meaningful gameplay claim.
+
+## Reader acceptance from exact selected artifact (2026-11-03)
+
+The approved seven-issue Defense Challenge v1.1.3 case, at selected-world SHA-256 `14a0dcb7354a69edb9d83c0f8c1e9fd160c29238011aeb817bcdaf31c098fced`, is the source-grounded reader acceptance challenge. The file `defense-v1.1.3-reader-acceptance.md` describes setup, deciding observations, evidence needs, and Blocked gates. This is intentionally **outside** the generic v1.7.0 report schema; it adds no new template fields, issue status owners, approval records, or gameplay claims.
+
+The inspected world has debug-spawn disabled, so that command must never be presented as an ordinary tester shortcut. Score provenance, flag radius, and retry policy mismatches can be checked in source; player-facing behavior needs actual observation and, in some cases, instrumented conditions. Real production HTML Chromium Save/Reopen and native Minecraft execution remain separately unverified.
