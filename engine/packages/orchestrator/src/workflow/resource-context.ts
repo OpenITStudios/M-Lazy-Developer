@@ -413,17 +413,23 @@ export function developerPracticeSignalsFromSemanticIr(
     if (region.kind !== "event-source" || region.source === undefined) continue;
     // The imported system singleton and exact subscription are already
     // classified by the script parser and preserved in canonical Semantic IR.
-    // A generic subscription never establishes the native Daigon ID.
-    // Select its method only after the exact source-owned event.id guard is
-    // joined to an immutable inline/local/imported literal in canonical IR.
+    // A generic subscription never establishes an upstream export contract.
+    // Only an exact source-owned strict event.id filter whose inline/local/
+    // imported literal was resolved by canonical Semantic IR can select the
+    // matching investigation. No export completion or map adoption is proven.
     if (region.ownerId === "system" &&
         region.label === "system.afterEvents.scriptEventReceive") {
       const guard = region.scriptEventIdRejection;
-      if (guard?.eventId === "daigon:get_all_scoring" &&
-          guard.source.artifactId === selectedArtifactId &&
+      const signal = guard?.eventId === "daigon:get_all_scoring"
+        ? "scriptevent:daigon:get_all_scoring"
+        : guard?.eventId === "mivubi:get_analytics"
+          ? "scriptevent:mivubi:get_analytics"
+          : undefined;
+      if (signal !== undefined &&
+          guard?.source.artifactId === selectedArtifactId &&
           guard.source.relativePath === region.source.relativePath &&
           guard.valueSource.artifactId === selectedArtifactId) {
-        add(region.id, region.source, "scriptevent:daigon:get_all_scoring");
+        add(region.id, region.source, signal);
       }
       continue;
     }

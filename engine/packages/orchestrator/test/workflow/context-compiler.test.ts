@@ -1404,5 +1404,93 @@ describe("source-first Daigon export investigation reference", () => {
         sourceLocators, domains: ["scoring"],
       }));
   });
+
+  it("keeps Analytics export source-specific and separate from Daigon scoring", () => {
+    const analyticsSkill = {
+      ...data.sourceFiles[0]!,
+      id: "src.bedrock-analytics",
+      path: "skills/bedrock-analytics/SKILL.md",
+      methodology: {
+        ...data.sourceFiles[0]!.methodology,
+        sourceSections: ["5. Pull and read an export"],
+        objective: "Investigate only the selected map's analytics wiring.",
+        disconfirmingCase: "Analytics is not required in unrelated maps.",
+      },
+    };
+    const analyticsPattern = {
+      ...data.patterns[0]!,
+      id: "developer.hint.analytics.session-export",
+      sourceId: "src.bedrock-analytics",
+      domains: ["analytics", "session", "export"],
+      sourceSignals: ["scriptevent:mivubi:get_analytics"],
+      question: "Does this map author its analytics export and lifecycle?",
+    };
+    const withAnalytics = {
+      ...data,
+      sourceFiles: [...data.sourceFiles, analyticsSkill],
+      patterns: [...data.patterns, analyticsPattern],
+    };
+    const analyticsEvent = {
+      ...subscription,
+      scriptEventIdRejection: {
+        ...subscription.scriptEventIdRejection,
+        eventId: "mivubi:get_analytics",
+      },
+    };
+    type ScriptExportRegion = Omit<typeof analyticsEvent, "scriptEventIdRejection"> & {
+      scriptEventIdRejection?: (Omit<
+        typeof analyticsEvent.scriptEventIdRejection, "resolution"
+      > & { resolution: "inline-literal" | "local-literal" | "unique-imported-literal" }) | undefined;
+    };
+    const contextFor = (
+      event: ScriptExportRegion,
+      sourceLocators = ["behavior_packs/demo/scripts/results.ts:12:20"],
+      domains = ["analytics", "scoring"],
+    ) => compileDeveloperPracticeReferenceContext({
+      data: withAnalytics,
+      semanticIr: {
+        schemaVersion: 1 as const,
+        execution: { regions: [event], edges: [] },
+        state: { surfaces: [], operations: [], authorityBindings: [] },
+        temporal: { relations: [] },
+      },
+      selectedArtifactId: "selected",
+      domains, sourceLocators,
+    });
+    expect(contextFor(analyticsEvent)?.items.map(item => item.patternId))
+      .toEqual(["developer.hint.analytics.session-export"]);
+    expect(contextFor({
+      ...analyticsEvent,
+      scriptEventIdRejection: {
+        ...analyticsEvent.scriptEventIdRejection,
+        resolution: "unique-imported-literal",
+      },
+    })?.items.map(item => item.patternId))
+      .toEqual(["developer.hint.analytics.session-export"]);
+    expect(contextFor(subscription)?.items.map(item => item.patternId))
+      .toEqual(["developer.hint.game-results.daigon-export"]);
+    for (const event of [
+      { ...analyticsEvent, ownerId: "world" },
+      { ...analyticsEvent, label: "system.afterEvents.other" },
+      { ...analyticsEvent, scriptEventIdRejection: undefined },
+      { ...analyticsEvent, scriptEventIdRejection: {
+        ...analyticsEvent.scriptEventIdRejection,
+        eventId: "other:get_analytics",
+      } },
+      { ...analyticsEvent, scriptEventIdRejection: {
+        ...analyticsEvent.scriptEventIdRejection,
+        valueSource: { ...source, artifactId: "different-map" },
+      } },
+    ]) {
+      expect(contextFor(event)?.items ?? []).toEqual([]);
+    }
+    expect(contextFor(analyticsEvent, ["behavior_packs/demo/scripts/other.ts"])?.items ?? [])
+      .toEqual([]);
+    expect(contextFor(analyticsEvent, undefined, ["combat"])?.items ?? [])
+      .toEqual([]);
+    expect(contextFor(analyticsEvent)?.items[0]?.upstreamProbes)
+      .toBeUndefined(); // this authored fixture has no third-party report
+  });
+
 });
 }

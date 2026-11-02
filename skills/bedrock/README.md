@@ -31,15 +31,14 @@ probe report attribution and current `pendingIntake`. This directory only
 owns **native upstream package identity/dependency relationships**.
 Its source archive SHA must equal the matching, independently pinned
 reviewed developer source or pending candidate. The 1 November 2026 supplied ZIPs pin developer v0.35.0 with 24 skill folders and 13 module manifests, and independent Probe v0.35.0 with 10 installed modules. Their 24 native skill-folder hashes and 45 installed module file SHA hashes match. The 89 Probe reports comprise 49 previously curated historical outcomes, 25 newly reviewed bounded source-reported outcomes or blocked attempts, and 15 plan/template/operator/offline documents excluded from runtime-result selection.
-Seventeen interpretation patterns now have source-grounded Map Audit
-reference consumers, five methods remain workflow/project reference, and
-`bedrock-player-attached-particles` and `bedrock-analytics` are **not yet routable**
-without a precise canonical Semantic IR witness. The seventeenth is a
-conditional Daigon results-export *investigation* sourced from the native
-`bedrock-game-results` method and a typed `scriptEventReceive` subscription.
-It cannot turn a generic event subscription or any non-Daigon map into a
-contract failure, and it is not an executed export or runtime receipt. No 24-skill auto-install
-or P63 gameplay verification is implied.
+Eighteen source-reviewed Map Audit reference patterns now have exact
+selected-artifact Semantic IR gating: sixteen original, conditional Daigon
+results export and conditional `mivubi:get_analytics` session export. Five
+methods remain developer workflow references; `bedrock-player-attached-particles`
+remains technical REFERENCE only until a precise supported BP rider/RP
+particle attachment witness exists. Neither export ID is automatic
+gameplay-contract adoption, console delivery or defect proof; no upstream
+code installation or Minecraft runtime verification is implied.
 
 ## Read-only operator operations
 

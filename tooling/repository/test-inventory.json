@@ -7861,10 +7861,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "dcdc6c02351bd1213028e27db7f536d94bcd1c22"
+        "sourceBlobSha": "f5f606011caa656ba9ab5c5d905b95743e538259"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

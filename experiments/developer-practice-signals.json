@@ -15,11 +15,11 @@
     "pendingDocuments": 0,
     "sourceAttribution": "Publisher-declared user-supplied v0.35.0; live release SHA and redistribution licensing not independently authenticated. Not an official Microsoft/Mojang platform rule.",
     "binaryIncludedInRepo": false,
-    "normalizedPatternCount": 17,
-    "interpretationEligibleSkillCount": 17,
+    "normalizedPatternCount": 18,
+    "interpretationEligibleSkillCount": 18,
     "workflowOnlySkillCount": 5,
     "deferredSourceFilesTracked": 0,
-    "intakeEvidence": "24 current skill-source file SHA-256 records and original publisher skill-folder hashes pinned; existing 17 typed source interpretation questions retained, new analytics unrouted; no executable or Minecraft proof.",
+    "intakeEvidence": "Both v0.35.0 Developer and Probe ZIP source identities remain pinned. A current selected-source strict mivubi:get_analytics event ID guard now conditionally selects analytics reference investigation; particle rider/attachment remains unrouted without a precise typed witness. No third-party runtime or map defect proof inferred.",
     "codeReferencesTracked": 10,
     "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map.",
     "codeImplementationFiles": 26,
@@ -33,7 +33,7 @@
     },
     "methodologyRecordsTracked": 24,
     "developerWorkflowScriptSourcesTracked": 58,
-    "unroutedTechnicalSkillCount": 2
+    "unroutedTechnicalSkillCount": 1
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -74,9 +74,9 @@
       "sha256": "3b0973a99d1a7fc0c900e87c3dd6f6cf7a4d3eb549fd6439ff6c533a7067c754",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "REFERENCE_ONLY_NOT_ROUTED",
+      "auditUsage": "INTERPRETATION_CANDIDATE",
       "methodology": {
-        "applicability": "UNROUTED_TECHNICAL_REFERENCE",
+        "applicability": "MAP_SOURCE_INTERPRETATION",
         "sourceSections": [
           "1. Install and wiring",
           "2. Capture",
@@ -84,13 +84,13 @@
           "4. Performance rules",
           "5. Pull and read an export"
         ],
-        "objective": "Use analytics event, record and session-lifecycle methods as optional source-specific investigation references.",
+        "objective": "Investigate an exact selected-map mivubi:get_analytics ScriptEvent ID filter as potential analytics session/export wiring, not a mandatory game mechanic or scoring contract.",
         "investigationSteps": [
-          "Identify the selected map's authored analytics source.",
-          "Trace its storage, reload, lifecycle, events, and export ownership.",
-          "Retain external negative cases and do not convert instrumentation advice into a map requirement."
+          "Require an imported-system scriptEventReceive callback with a strict event.id early-return check resolving exactly to mivubi:get_analytics from a literal, unique immutable local or imported source; generic subscribers do not qualify.",
+          "Trace the selected map's own session, stage/task record ownership, storage and reload/leave/reopen lifecycle only where present in its authored sources.",
+          "Keep analytics separate from Daigon scoring and distinguish actual console delivery from source wiring; retain all original blocked/failed Probe report limitations."
         ],
-        "disconfirmingCase": "Missing the publisher's analytics module does not mean the selected map contains a bug.",
+        "disconfirmingCase": "The publisher module is not required in unrelated maps or maps with different intentional instrumentation. Probe measurements on Education 26.32 on one player do not prove this map's sessions, transport or runtime.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
@@ -1197,6 +1197,41 @@
           "GAME_RESULTS_MARKER",
           "recordLine",
           "exportLines"
+        ]
+      }
+    },
+    {
+      "id": "developer.hint.analytics.session-export",
+      "sourceId": "src.bedrock-analytics",
+      "heading": "5. Pull and read an export",
+      "kind": "DESIGN_INTERPRETATION_HINT",
+      "status": "SOURCE_REVIEWED",
+      "domains": [
+        "analytics",
+        "session",
+        "persistence",
+        "progression",
+        "export",
+        "telemetry"
+      ],
+      "sourceSignals": [
+        "scriptevent:mivubi:get_analytics"
+      ],
+      "question": "When the selected map expressly has a mivubi:get_analytics ScriptEvent ID guard, how does its authored analytics session/progress storage and export relate to its actual gameplay and separate scoring contract?",
+      "candidateRelations": [
+        "exact selected-source strict script event ID rejection → conditional investigation of analytics console-export adapter, not its execution",
+        "source-owned session, stage/task, leave/reopen handling → bounded persistence and lifecycle questions"
+      ],
+      "negativeControl": "A generic scriptEventReceive subscription, unresolved imported event ID, analytics-related variable name or unrelated map cannot inherit the publisher contract; upstream Probe PASS is not selected-map proof.",
+      "versionApplicability": "UPSTREAM_ANALYTICS_V035_PROBE_EDUCATION_26_32_SINGLE_PLAYER_SCOPE_NOT_GENERALIZED",
+      "prohibits": "Never infer required analytics, successful console export, session retention, scoring correctness or a map bug solely from an event ID, upstream ZIP or Probe status.",
+      "referenceCode": {
+        "path": "modules/analytics/contract.ts",
+        "sha256": "ef43cd5a6af36c266664e7a0f935bb510df9e853712105d82eed9de63ee45d16",
+        "symbols": [
+          "ANALYTICS_EVENT_ID",
+          "TYPES",
+          "validRecord"
         ]
       }
     }

@@ -85,32 +85,24 @@ claims keep their original client version, commit/lock, source path, report
 and unresolved conditions. Matching the current map's actual Edition,
 target and implementation remains a separate step.
 
-**Current snapshot separation:** all 23 developer skill documents are
-source-reviewed against the v0.27.0 ZIP. The existing sixteen interpretation
-patterns retain their exact selected-source Semantic IR admission. One
-additional, strictly conditional `bedrock-game-results` investigation
-requires an exact source-owned `scriptEventReceive` rejection guard for
-`daigon:get_all_scoring`, including a uniquely resolved imported constant:
-**17 reviewed reference patterns**. Generic subscriptions do not qualify. Five upstream team/project/testing/release methods
-remain non-audit workflows. The new
-`bedrock-player-attached-particles` method is **technical REFERENCE only,
-not routed to Map Audit**, because no precise supported particle-attachment
-witness exists yet. Its P63 source reports include scoped failures and
-blocked cases, not universal verified gameplay.
+**Current v0.35.0 snapshot:** The 24 developer skill folders and 45
+installed Probe module-file identities are source-pinned. The existing
+curated reference owner now holds 18 conditional, source-reviewed Map Audit
+patterns: sixteen original, one exact-ID Daigon results export and one
+exact-ID analytics session export. Five methods remain developer/workflow
+references. Player-attached particles remain technical-only until a typed
+BP rider/RP emitter witness exists. These are questions for source analysis,
+not required map features or automated defect verdicts.
 
-The active Skills Probe lock, current version and report inventory are read from the canonical source lock and curated metadata (older observations retain their historical revisions), and its new
-829-file source ZIP has **49 individually SHA-pinned narrative reports**.
-The 22 previously indexed report texts remain byte-identical; 27 new
-reports include 23 separate P63 attempts (13 overall FAIL and 10 BLOCKED,
-with some narrow successful subcases). Neither the report status nor a
-P63 later visual/user judgement certifies all lifecycle and strict spark
-criteria. The 14 clean examples remain source-index metadata, not replayed
-Minecraft tests; per-surface PASS/pending boundaries appear only on
-reviewed, selected-source matched references.
+The current Probe ZIP includes 1,036 files and 89
+`docs/test-runs/*.md` texts: 74 outcome/attempt reports and 15
+plan/template/operator/offline non-outcome documents. Its 14 indexed
+examples retain their original distinct Node/engine/status fields.
+Neither the examples nor Probe claims are current-map runtime proof.
 
 Every report retains its own original archive identity, reported source
-revision where available and family. The newest 106 pack TypeScript and
-35 source tool files are separately hashed; current code SHA must never
+revision where available and family. The current 137 Probe pack TypeScript and
+46 Probe tool source files are separately hashed; current code SHA must never
 silently replace a historical report fixture SHA. A future ZIP update
 reviews only changed source and its real consumers, not every Map Audit
 case or test suite.
@@ -290,7 +282,8 @@ Adopt the **source-reviewed developer's method and its negative controls**, not 
 | `bedrock-testing-policy` + Skills Probe | **IMPROVE SYSTEM: VERIFY** and **TEST MAP: TEST** | Focused positive/negative/runtime-boundary reasoning; Probe PASS/FAIL/BLOCKED/PARTIAL and original client/lock are not current-map gameplay proof, and broad CI is not assumed. |
 | `bedrock-release-export` | Existing report/export owners, **TEST MAP: REPORT** when relevant | Keep source and edition/release authority; no automatic release or upload. |
 | `bedrock-game-results` | **TEST MAP: UNDERSTAND / TEST**, conditional source-reference method | A typed system `scriptEventReceive` subscriber must have a strict early-return ID filter resolving to `daigon:get_all_scoring`, including the native imported constant. Only a results-related selected-source task can then select the reference question. The map must still expressly adopt Daigon's contract; output or BDS runtime cannot be inferred. |
-| 17 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + scoped current-map typed Semantic IR → relevant Resource Context hints (max two per task), not a global bug-coverage cap or automatic detector. |
+| `bedrock-analytics` | **TEST MAP: UNDERSTAND / TEST**, conditional source REFERENCE | Only an exact source-owned `system.afterEvents.scriptEventReceive` early-return ID filter resolving to `mivubi:get_analytics` may select analytics session/export investigation. No assertion of record delivery, scoring behavior or mandatory instrumentation. |
+| 18 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + scoped current-map typed Semantic IR → relevant Resource Context hints (max two per task), not a global bug-coverage cap or automatic detector. |
 | Un-routed `bedrock-player-attached-particles` | **REFERENCE ONLY** | Preserve scoped Probe negatives; abstain until a precise supported typed source witness exists. |
 
 The existing selected-map pipeline remains: immutable artifact → source inventory → Semantic IR / Gameplay Intent → authored game systems and player journey → cross-system negative-path test/counterproof → one evidence-grounded REPORT. These map onto **LOAD → UNDERSTAND → TEST → REPORT** while retaining internal admission and runtime-proof checkpoints. Any unsupported behavior becomes a source-identified `capability-gap`, never an automatic third work lane.
