@@ -47,6 +47,10 @@ export interface InspectionSemanticIrInput {
     parsed: ParsedScriptFile;
   }[];
   authoredBehaviorRelations?: readonly AuthoredBehaviorRelation[];
+  /** Exact authored RP/BP particle attachment sources, no runtime rider proof. */
+  playerParticleAttachments?: NonNullable<
+    SemanticIr["execution"]["playerParticleAttachments"]
+  >;
   /** Bound by the existing cross-file call analyzer from the same selected source. */
   crossFileCallEdges?: readonly CrossFileCallEdge[];
   /** Source-only manifest-root scope; absence means entry identity unknown. */
@@ -1509,6 +1513,10 @@ export function buildInspectionSemanticIr(
         a.executionRegionId.localeCompare(b.executionRegionId)),
       authoredBehaviorRelations: behaviorRelationships
         .sort((a, b) => a.id.localeCompare(b.id)),
+      ...(input.playerParticleAttachments === undefined ? {} : {
+        playerParticleAttachments: [...input.playerParticleAttachments]
+          .sort((a, b) => a.id.localeCompare(b.id)),
+      }),
     },
     state: {
       surfaces: [...surfaces.values()].sort(

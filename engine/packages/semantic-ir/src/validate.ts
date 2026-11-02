@@ -116,6 +116,31 @@ export function validateSemanticIr(ir: SemanticIr): string[] {
         " source: " + region.id);
     }
   }
+  // A reference pointer is a source join only when every BP/RP link
+  // retains its selected-artifact identity. Forged partial chains cannot
+  // become eligible reference signals or inferred gameplay.
+  for (const duplicate of duplicateIds(ir.execution.playerParticleAttachments ?? [])) {
+    errors.push("Duplicate player-particle source chain: " + duplicate);
+  }
+  for (const candidate of ir.execution.playerParticleAttachments ?? []) {
+    const sources = candidate.sources;
+    const artifactId = sources[0]?.artifactId;
+    if (candidate.proof !==
+          "AUTHORED_BP_RP_ATTACHMENT_CANDIDATE_NOT_GAMEPLAY_PROOF" ||
+        !candidate.id.trim() ||
+        !candidate.actorIdentifier.trim() ||
+        !candidate.family.trim() ||
+        !candidate.particleIdentifier.trim() ||
+        sources.length !== 6 ||
+        !artifactId?.trim() ||
+        sources.some(source =>
+          source.artifactId !== artifactId ||
+          !source.relativePath.trim() ||
+          !source.jsonPointer?.startsWith("/")) ||
+        new Set(sources.map(source => source.relativePath)).size !== 6) {
+      errors.push("Invalid authored player-particle source chain: " + candidate.id);
+    }
+  }
   for (const duplicate of duplicateIds(ir.execution.edges)) {
     errors.push("Duplicate execution edge id: " + duplicate);
   }

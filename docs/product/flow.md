@@ -87,12 +87,13 @@ target and implementation remains a separate step.
 
 **Current v0.35.0 snapshot:** The 24 developer skill folders and 45
 installed Probe module-file identities are source-pinned. The existing
-curated reference owner now holds 18 conditional, source-reviewed Map Audit
-patterns: sixteen original, one exact-ID Daigon results export and one
-exact-ID analytics session export. Five methods remain developer/workflow
-references. Player-attached particles remain technical-only until a typed
-BP rider/RP emitter witness exists. These are questions for source analysis,
-not required map features or automated defect verdicts.
+curated reference owner now holds 19 conditional, source-reviewed Map Audit
+patterns: sixteen original, one exact-ID Daigon results export, one exact-ID
+analytics session export and one BP/RP player-particle source-chain reference.
+Five methods remain developer/workflow references. All are questions for source
+analysis, not required map features or automated defect verdicts. A linked
+player rideable, actor and RP particle animation only suggests a possible
+attachment; actual addRider, rider seat, rendering and cleanup stay unproven.
 
 The current Probe ZIP includes 1,036 files and 89
 `docs/test-runs/*.md` texts: 74 outcome/attempt reports and 15
@@ -283,8 +284,8 @@ Adopt the **source-reviewed developer's method and its negative controls**, not 
 | `bedrock-release-export` | Existing report/export owners, **TEST MAP: REPORT** when relevant | Keep source and edition/release authority; no automatic release or upload. |
 | `bedrock-game-results` | **TEST MAP: UNDERSTAND / TEST**, conditional source-reference method | The selected map's imported-system `scriptEventReceive` callback must have a first strict `event.id` branch for the resolved `daigon:get_all_scoring` literal: `!==` with immediate return or `===` with directly authored branch work. Only exact registration/guard source locators may route the results-related question. Daigon contract adoption, console delivery and BDS runtime remain unproven. |
 | `bedrock-analytics` | **TEST MAP: UNDERSTAND / TEST**, conditional source REFERENCE | The same first-branch, strict `event.id` selection/rejection contract must resolve `mivubi:get_analytics` from the selected map; generic subscribers, nested/unresolved aliases and unrelated callback-body sites abstain. Session/export questions do not assert record delivery, scoring, or mandatory instrumentation. |
-| 18 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + scoped current-map typed Semantic IR → relevant Resource Context hints (max two per task), not a global bug-coverage cap or automatic detector. |
-| Un-routed `bedrock-player-attached-particles` | **REFERENCE ONLY** | Preserve scoped Probe negatives; abstain until a precise supported typed source witness exists. |
+| `bedrock-player-attached-particles` | **TEST MAP: UNDERSTAND / TEST**, conditional source REFERENCE | Only source-linked, uniquely identified BP player seat/family → BP actor → **world-listed** RP client entity/scripts.animate → controller state → animation particle timeline → particle definition may select the bounded method. Rider attachment, rendering, lifetime and cleanup remain UNKNOWN without map-specific source/runtime proof. Preserve original P63 negative/blocked reports. |
+| 19 source-reviewed `MAP_SOURCE_INTERPRETATION` methods | **TEST MAP: LOAD / UNDERSTAND / TEST** | Native skill/module identity + scoped selected-map Semantic IR or pack declarations → at most two relevant reference questions per task; neither full detector coverage nor a gameplay PASS. |
 
 The existing selected-map pipeline remains: immutable artifact → source inventory → Semantic IR / Gameplay Intent → authored game systems and player journey → cross-system negative-path test/counterproof → one evidence-grounded REPORT. These map onto **LOAD → UNDERSTAND → TEST → REPORT** while retaining internal admission and runtime-proof checkpoints. Any unsupported behavior becomes a source-identified `capability-gap`, never an automatic third work lane.
 

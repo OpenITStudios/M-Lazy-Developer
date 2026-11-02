@@ -1562,5 +1562,82 @@ describe("source-first Daigon export investigation reference", () => {
     })?.items).toEqual([]);
   });
 
+
+  it("routes particle investigation from exact selected-world BP/RP source links only", () => {
+    const src = (relativePath: string, jsonPointer: string) => ({
+      artifactId: "selected", relativePath, jsonPointer,
+    });
+    const links = [
+      src("behavior_packs/demo/entities/player.json",
+        "/minecraft:entity/components/minecraft:rideable/family_types"),
+      src("behavior_packs/demo/entities/glow.json",
+        "/minecraft:entity/components/minecraft:type_family/family"),
+      src("resource_packs/demo/entity/glow.json",
+        "/minecraft:client_entity/description/scripts/animate"),
+      src("resource_packs/demo/animation_controllers/glow.json",
+        "/animation_controllers/controller.animation.sample.feet/states/on/animations"),
+      src("resource_packs/demo/animations/glow.json",
+        "/animations/animation.sample.emit/particle_effects"),
+      src("resource_packs/demo/particles/glow.json",
+        "/particle_effect/description/identifier"),
+    ];
+    const attachment = {
+      id: "player-particle:sample:glow:sample:spark",
+      actorIdentifier: "sample:glow",
+      family: "sample_glow",
+      particleIdentifier: "sample:spark",
+      sources: links,
+      proof: "AUTHORED_BP_RP_ATTACHMENT_CANDIDATE_NOT_GAMEPLAY_PROOF" as const,
+    };
+    const particleData = {
+      ...data,
+      sourceFiles: [{
+        ...data.sourceFiles[0]!,
+        id: "src.bedrock-player-attached-particles",
+      }],
+      patterns: [{
+        ...data.patterns[0]!,
+        id: "developer.hint.particles.player-rider-bp-rp",
+        sourceId: "src.bedrock-player-attached-particles",
+        domains: ["particle", "entity"],
+        sourceSignals: ["bp-rp-player-particle-attachment"],
+      }],
+    };
+    const query = (candidate = attachment, locators = [
+      "resource_packs/demo/entity/glow.json#/minecraft:client_entity/description/scripts/animate",
+    ]) => compileDeveloperPracticeReferenceContext({
+      data: particleData,
+      semanticIr: {
+        schemaVersion: 1 as const,
+        execution: { regions: [], edges: [], playerParticleAttachments: [candidate] },
+        state: { surfaces: [], operations: [], authorityBindings: [] },
+        temporal: { relations: [] },
+      },
+      selectedArtifactId: "selected",
+      domains: ["particle"],
+      sourceLocators: locators,
+    });
+    expect(query()?.items.map(item => item.patternId))
+      .toEqual(["developer.hint.particles.player-rider-bp-rp"]);
+    expect(query()?.items[0]?.matchingEvidenceIds).toEqual([attachment.id]);
+    expect(query(attachment, [
+      "resource_packs/demo/animations/glow.json#/animations/animation.sample.emit/particle_effects",
+    ])?.items).toHaveLength(1);
+    expect(query(attachment, [
+      "resource_packs/demo/entity/glow.json#/minecraft:client_entity/description/other",
+    ])?.items).toEqual([]);
+    expect(query({
+      ...attachment,
+      sources: links.map(item => ({
+        ...item, artifactId: "other-map",
+      })),
+    })?.items).toEqual([]);
+    expect(query({ ...attachment, sources: links.slice(0, 5) })?.items).toEqual([]);
+    expect(query({
+      ...attachment, proof:
+        "EXTERNAL_RUNTIME_PROOF" as typeof attachment.proof,
+    })?.items).toEqual([]);
+  });
+
 });
 }

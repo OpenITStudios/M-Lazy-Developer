@@ -15,11 +15,11 @@
     "pendingDocuments": 0,
     "sourceAttribution": "Publisher-declared user-supplied v0.35.0; live release SHA and redistribution licensing not independently authenticated. Not an official Microsoft/Mojang platform rule.",
     "binaryIncludedInRepo": false,
-    "normalizedPatternCount": 18,
-    "interpretationEligibleSkillCount": 18,
+    "normalizedPatternCount": 19,
+    "interpretationEligibleSkillCount": 19,
     "workflowOnlySkillCount": 5,
     "deferredSourceFilesTracked": 0,
-    "intakeEvidence": "Both v0.35.0 Developer and Probe ZIP source identities remain pinned. A current selected-source strict mivubi:get_analytics event ID guard now conditionally selects analytics reference investigation; particle rider/attachment remains unrouted without a precise typed witness. No third-party runtime or map defect proof inferred.",
+    "intakeEvidence": "Native Developer v0.35.0 and independent Probe v0.35.0 SHA-256 source identities retained. All 24 skill methods are classified as 19 conditional typed/manifest-source map-investigation references and 5 development-workflow methods, with no generic particle or runtime proof promoted. Player-rider BP/RP chain routes only when the exact selected world has a unique authored attachment+particle source configuration and attached RP root. P63 failure, blocked, partial and revision-specific boundaries unchanged.",
     "codeReferencesTracked": 10,
     "codeReferencePolicy": "Hashes and symbols describe the supplied developer ZIP only; they do not prove a module is used by any selected map.",
     "codeImplementationFiles": 26,
@@ -33,7 +33,7 @@
     },
     "methodologyRecordsTracked": 24,
     "developerWorkflowScriptSourcesTracked": 58,
-    "unroutedTechnicalSkillCount": 1
+    "unroutedTechnicalSkillCount": 0
   },
   "recordStatusSemantics": {
     "PROVISIONAL": "Developer-origin assertion normalized as an investigation hint, not independently substantiated",
@@ -422,21 +422,21 @@
       "sha256": "23337d5b4f980a43bf015285a04367bd967779896a99dc827be118e5f5409688",
       "kind": "ACTIVE_SKILL",
       "scope": "DEVELOPER_REFERENCE",
-      "auditUsage": "REFERENCE_ONLY_NOT_ROUTED",
+      "auditUsage": "INTERPRETATION_CANDIDATE",
       "methodology": {
-        "applicability": "UNROUTED_TECHNICAL_REFERENCE",
+        "applicability": "MAP_SOURCE_INTERPRETATION",
         "sourceSections": [
           "Player and client definitions",
           "Finite effects and publication",
           "Dimension travel and cleanup"
         ],
-        "objective": "Trace exact player-bound emitter and rider ownership, finite effect emission, and lifecycle cleanup as version-scoped technical source evidence.",
+        "objective": "Investigate only a selected-artifact, uniquely linked BP player seat/family → BP actor → RP client animation controller/timeline/particle asset configuration. The authored chain does not establish that any player mounted an actor, the effect was visible, or cleanup worked.",
         "investigationSteps": [
-          "Locate the authored emitter definition, player seat owner and client-side animation/controller configuration before interpreting attachment.",
-          "Trace rider generation and readiness, finite-effect state transitions and actual cleanup callbacks separately from gameplay buff intent.",
-          "Keep cross-dimension, respawn, reload and client rendering claims scoped to their corresponding Skills Probe source revision and incomplete test criteria."
+          "Require the selected map's exact, unambiguous source chain: minecraft:player rideable seat/family, one matching BP entity family/identifier, one attached RP client_entity identifier, scripts.animate alias, controller state animation alias, animation particle_effect timeline alias and concrete RP particle identifier. Any missing, duplicate, unattached or oversized source abstains.",
+          "Inspect the selected map's script-owned addRider, getRiders, entity generation/owner/ready state, seat position and renderer publication separately; static BP/RP linkage proves only the proposed rendering architecture.",
+          "Investigate stop/death/leave/reconnect/dimension-travel cleanup, finite emitter lifetime and state exits only when sourced. Keep original Skills Probe P63 FAIL/BLOCKED/MIXED revisions and target Education 26.32; use exact-world runtime observations for actual rider/visual/cleanup claims."
         ],
-        "disconfirmingCase": "Generic entity spawning does not prove player-attached particles; P63 contains failing, blocked and intermittent-reload observations. No automatic map-audit routing or universal runtime claim is established.",
+        "disconfirmingCase": "A generic spawnParticle call, RP-only particle, ordinary mount, or matching identifier without player seat/family plus client/controller/animation/particle linkage cannot select this method. Even a complete authored chain is not proof of attach success, client rendering, cross-dimension cleanup or an overall P63 PASS.",
         "proofBoundary": "EXTERNAL_DEVELOPER_METHOD_NOT_SELECTED_MAP_BEHAVIOR_PROOF"
       }
     },
@@ -1234,6 +1234,35 @@
           "validRecord"
         ]
       }
+    },
+    {
+      "id": "developer.hint.particles.player-rider-bp-rp",
+      "sourceId": "src.bedrock-player-attached-particles",
+      "heading": "Player and client definitions",
+      "kind": "IMPLEMENTATION_PATTERN",
+      "status": "SOURCE_REVIEWED",
+      "domains": [
+        "entity",
+        "lifecycle",
+        "particle",
+        "effects",
+        "visual",
+        "client-feedback",
+        "teleport",
+        "spatial"
+      ],
+      "sourceSignals": [
+        "bp-rp-player-particle-attachment"
+      ],
+      "question": "Does this map's source-linked player seat/family, rider actor and RP animation→particle chain have authored ownership, ready-state, mount, finite-emitter, stop/reload and dimension-travel handling appropriate to its actual design?",
+      "candidateRelations": [
+        "unique BP minecraft:player rideable family/seat + BP actor family → eligible attachment configuration only",
+        "same selected-artifact RP client_entity scripts.animate → controller state → RP animation particle_effect alias → exact RP particle definition",
+        "separately inspect source-owned addRider/getRiders/cleanup/teleport and client renderer before any runtime claim"
+      ],
+      "negativeControl": "An RP particle without the BP player/family match, an ordinary entity mount, generic spawnParticle call, unattached/ambiguous RP pack or unknown controller alias is not evidence of a player-bound aura. A source-chain match is not verified rider placement or render success.",
+      "versionApplicability": "UPSTREAM_P63_EDUCATION_26_32_2_8_0_FEET_ONLY_SCOPED_FAIL_BLOCKED_PARTIAL_NOT_GENERALIZED",
+      "prohibits": "Never mark a selected-map bug, rider seat, emitter visibility, off-state clearing, reconnect/dimension restoration, pet displacement or server/client applicability PROVEN from static sources or an upstream Probe report. Check only exact selected-map design and actual runtime evidence."
     }
   ],
   "deferredSources": [],

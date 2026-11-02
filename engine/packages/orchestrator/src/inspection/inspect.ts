@@ -198,7 +198,18 @@ export async function inspectDirectory(
     for (const node of parsed.nodes) graph.addNode(node);
     sourceIndex = { ...parsed, graph };
   } else {
-    sourceIndex = await indexInspectionSources(root, artifactId, files);
+    sourceIndex = await indexInspectionSources(
+      root, artifactId, files, {
+        attachedBehaviorPackRoots: packs
+          .filter(pack => pack.root.startsWith("behavior_packs/") &&
+            pack.worldAttachment === "listed")
+          .map(pack => pack.root),
+        attachedResourcePackRoots: packs
+          .filter(pack => pack.root.startsWith("resource_packs/") &&
+            pack.worldAttachment === "listed")
+          .map(pack => pack.root),
+      },
+    );
     if (sourceInventoryReuse !== undefined &&
         sourceIndex.coverage.parseFailures.length === 0) {
       const { graph: indexedGraph, ...parsed } = sourceIndex;
@@ -328,6 +339,8 @@ export async function inspectDirectory(
     ],
     parsedScripts,
     crossFileCallEdges,
+    ...(sourceIndex.particleAttachmentCandidates === undefined ? {} :
+      { playerParticleAttachments: sourceIndex.particleAttachmentCandidates }),
     tickFunctionRegistrations,
     stateAuthorityContracts:
       target.stateAuthorityContracts ?? [],

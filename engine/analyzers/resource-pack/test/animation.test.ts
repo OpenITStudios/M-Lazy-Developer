@@ -3,7 +3,11 @@ import {
   assessAnimationControllers,
   parseAnimationControllers,
   parseResourcePackAnimations,
+  parseClientParticleSource,
+  parseParticleDefinitionSource,
+  derivePlayerParticleAttachmentCandidates,
 } from "../src/index.js";
+import { parseEntityDefinition } from "../../entities/src/index.js";
 
 const source = { artifactId: "fixture", relativePath: "resource_pack/animation_controllers/demo.json" };
 
@@ -66,5 +70,84 @@ describe("resource-pack animation analysis", () => {
       missingAnimations: ["animation.demo.missing"],
       molangExpressions: ["query.is_moving"],
     });
+  });
+
+  it("joins BP player rideable to an RP animation particle only with unique source IDs", () => {
+    const src = (path: string) => ({
+      artifactId: "selected", relativePath: path,
+    });
+    const player = parseEntityDefinition({
+      "minecraft:entity": {
+        description: { identifier: "minecraft:player" },
+        components: { "minecraft:rideable": {
+          family_types: ["sample_glow"], seat_count: 1, seats: [{ position: [0, -1, 0] }],
+        } },
+      },
+    }, src("behavior_packs/demo/entities/player.json"));
+    const actor = parseEntityDefinition({
+      "minecraft:entity": {
+        description: { identifier: "sample:glow" },
+        components: { "minecraft:type_family": { family: ["sample_glow"] } },
+      },
+    }, src("behavior_packs/demo/entities/glow.json"));
+    const client = parseClientParticleSource({
+      "minecraft:client_entity": { description: {
+        identifier: "sample:glow",
+        animations: {
+          feet: "controller.animation.sample.feet", emit: "animation.sample.emit",
+        },
+        particle_effects: { spark: "sample:spark" },
+        scripts: { animate: ["feet"] },
+      } },
+    }, src("resource_packs/demo/entity/glow.json"));
+    const controller = parseAnimationControllers({
+      animation_controllers: {
+        "controller.animation.sample.feet": {
+          states: { active: { animations: ["emit"] } },
+        },
+      },
+    }, src("resource_packs/demo/animation_controllers/glow.json"));
+    const animations = parseResourcePackAnimations({
+      animations: {
+        "animation.sample.emit": { particle_effects: {
+          "0.0": [{ effect: "spark" }],
+        } },
+      },
+    }, src("resource_packs/demo/animations/glow.json"));
+    const particle = parseParticleDefinitionSource({
+      particle_effect: { description: { identifier: "sample:spark" } },
+    }, src("resource_packs/demo/particles/spark.json"));
+    const input = {
+      entities: [player, actor],
+      clients: client ? [client] : [],
+      controllers: controller,
+      animations,
+      particles: particle ? [particle] : [],
+    };
+    const links = derivePlayerParticleAttachmentCandidates(input);
+    expect(links).toHaveLength(1);
+    expect(links[0]).toMatchObject({
+      actorIdentifier: "sample:glow",
+      particleIdentifier: "sample:spark",
+      proof: "AUTHORED_BP_RP_ATTACHMENT_CANDIDATE_NOT_GAMEPLAY_PROOF",
+    });
+    expect(links[0]?.sources).toHaveLength(6);
+    expect(links[0]?.sources[2]?.jsonPointer).toBe(
+      "/minecraft:client_entity/description/scripts/animate");
+    expect(derivePlayerParticleAttachmentCandidates({
+      ...input, entities: [player],
+    })).toEqual([]);
+    expect(derivePlayerParticleAttachmentCandidates({
+      ...input, entities: [player, actor, actor],
+    })).toEqual([]);
+    expect(derivePlayerParticleAttachmentCandidates({
+      ...input, clients: [...input.clients, ...input.clients],
+    })).toEqual([]);
+    expect(derivePlayerParticleAttachmentCandidates({
+      ...input, particles: [],
+    })).toEqual([]);
+    expect(derivePlayerParticleAttachmentCandidates({
+      ...input, animations: [],
+    })).toEqual([]);
   });
 });

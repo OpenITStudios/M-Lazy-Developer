@@ -18,6 +18,18 @@ import {
   ENTITY_PARSER_REVISION,
   parseEntityDefinition,
 } from "../../../../analyzers/entities/src/index.js";
+import {
+  parseResourcePackAnimations,
+  parseAnimationControllers,
+  parseClientParticleSource,
+  parseParticleDefinitionSource,
+  derivePlayerParticleAttachmentCandidates,
+  type ResourcePackAnimationDefinition,
+  type ResourcePackAnimationController,
+  type ResourcePackClientParticleSource,
+  type ResourcePackParticleSource,
+  type PlayerParticleAttachmentCandidate,
+} from "../../../../analyzers/resource-pack/src/index.js";
 import { parseDialogueDocument } from "../../../../analyzers/dialogue/src/index.js";
 import { dialogueDocumentDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
 import { embeddedStructureCommandDiagnostics } from "../../../../analyzers/diagnostics/src/index.js";
@@ -146,6 +158,11 @@ export interface InspectionSourceIndex {
     node: SemanticNode;
     parsed: ReturnType<typeof parseEntityDefinition>;
   }>;
+  /** Optional, source-only BP player/family → RP visual timeline candidates;
+   * this does not establish a mounted rider or active Minecraft particle.
+   * Unresolved/malformed/unattached resource packs abstain.
+   */
+  particleAttachmentCandidates?: readonly PlayerParticleAttachmentCandidate[];
   parsedDialogueDocuments: ReturnType<
     typeof parseDialogueDocument
   >[];
@@ -307,6 +324,10 @@ export async function indexInspectionSources(
   root: string,
   artifactId: string,
   files: readonly FileInventoryEntry[],
+  options: {
+    readonly attachedBehaviorPackRoots?: readonly string[];
+    readonly attachedResourcePackRoots?: readonly string[];
+  } = {},
 ): Promise<InspectionSourceIndex> {
   const graph = new SemanticGraph();
   const nodes: SemanticNode[] = [];
@@ -940,6 +961,79 @@ export async function indexInspectionSources(
     }
   }
 
+  // The existing inventory already enumerates RP files physically, but
+  // historically treats generic RP visuals as outside semantic source
+  // coverage. Enrich ONLY when there is an authored BP player rideable and
+  // an explicitly attached RP root from world_resource_packs.json. Parse
+  // bounded, source-local RP JSON; never execute upstream scripts or assume
+  // the emitted particle, mounted rider or visual cleanup actually occurred.
+  const attachedBpRoots = new Set(options.attachedBehaviorPackRoots ?? []);
+  const attachedEntities = parsedEntities
+    .map(item => item.parsed)
+    .filter(item => attachedBpRoots.has(
+      item.source.relativePath.replaceAll("\\", "/").split("/").slice(0, 2).join("/")
+    ));
+  const attachedRpRoots = new Set(options.attachedResourcePackRoots ?? []);
+  let particleAttachmentCandidates: readonly PlayerParticleAttachmentCandidate[] = [];
+  if (attachedBpRoots.size > 0 && attachedRpRoots.size > 0 &&
+      attachedEntities.some(item =>
+        item.identifier === "minecraft:player" &&
+        item.baseComponents.includes("minecraft:rideable"))) {
+    const resourceFiles = files.filter(file => {
+      const path = file.relativePath.replaceAll("\\", "/");
+      const segments = path.split("/");
+      return segments.length >= 4 &&
+        (segments[0] === "resource_packs" ||
+         segments[0] === "resource_pack") &&
+        attachedRpRoots.has(segments.slice(0, 2).join("/")) &&
+        ["entity", "animation_controllers", "animations", "particles"]
+          .includes(segments[2]!) &&
+        path.endsWith(".json");
+    });
+    // No partial "success" from truncated RP inventories: skip a corpus
+    // that exceeds the bounded candidate-analysis budget.
+    if (resourceFiles.length > 0 && resourceFiles.length <= 512 &&
+        resourceFiles.every(file => file.size <= 2_000_000)) {
+      const clients: ResourcePackClientParticleSource[] = [];
+      const controllers: ResourcePackAnimationController[] = [];
+      const animations: ResourcePackAnimationDefinition[] = [];
+      const particles: ResourcePackParticleSource[] = [];
+      let completeSourceRead = true;
+      for (const file of resourceFiles) {
+        try {
+          const path = file.relativePath.replaceAll("\\", "/");
+          const segment = path.split("/")[2];
+          const raw: unknown = JSON.parse(
+            await readFile(join(root, file.relativePath), "utf8"));
+          const source = { artifactId, relativePath: file.relativePath };
+          if (segment === "entity") {
+            const client = parseClientParticleSource(raw, source);
+            if (client) clients.push(client);
+          } else if (segment === "animation_controllers") {
+            controllers.push(...parseAnimationControllers(raw, source));
+          } else if (segment === "animations") {
+            animations.push(...parseResourcePackAnimations(raw, source));
+          } else if (segment === "particles") {
+            const particle = parseParticleDefinitionSource(raw, source);
+            if (particle) particles.push(particle);
+          }
+        } catch {
+          // A malformed/unavailable RP file prevents a complete source
+          // join; never infer absent relations or a clean runtime result.
+          completeSourceRead = false;
+          break;
+        }
+      }
+      if (completeSourceRead) {
+        particleAttachmentCandidates =
+          derivePlayerParticleAttachmentCandidates({
+            entities: attachedEntities,
+            clients, controllers, animations, particles,
+          });
+      }
+    }
+  }
+
   const failedPaths = new Set(parseFailures.map(item => item.relativePath));
   const unsupportedPaths = new Set(unsupportedRelevantFiles);
   const semanticGapPaths = new Set(semanticUnderstandingGaps);
@@ -977,6 +1071,8 @@ export async function indexInspectionSources(
     parsedScripts,
     scriptSourceMapNavigation,
     parsedEntities,
+    ...(particleAttachmentCandidates.length === 0 ? {} :
+      { particleAttachmentCandidates }),
     parsedDialogueDocuments,
     parsedStructureModels,
     parsedStructures,

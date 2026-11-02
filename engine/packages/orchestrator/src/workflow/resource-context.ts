@@ -484,6 +484,22 @@ export function developerPracticeSignalsFromSemanticIr(
       add(relation.id, relation.source, "native-entity-event");
     }
   }
+  // The player-attached particle method requires a complete, uniquely
+  // authored BP player/family → RP client/controller/timeline/particle source
+  // chain. This is ONLY a possible attachment configuration; addRider,
+  // settled seat, client emission and cleanup are still unknown.
+  for (const relation of ir.execution.playerParticleAttachments ?? []) {
+    if (relation.proof !==
+          "AUTHORED_BP_RP_ATTACHMENT_CANDIDATE_NOT_GAMEPLAY_PROOF" ||
+        relation.sources.length !== 6 ||
+        !relation.sources.every(source =>
+          source.artifactId === selectedArtifactId &&
+          source.relativePath.trim() &&
+          source.jsonPointer?.startsWith("/"))) continue;
+    for (const source of relation.sources) {
+      add(relation.id, source, "bp-rp-player-particle-attachment");
+    }
+  }
   // Only parser-classified Script API receivers can add lifecycle cues.
   // The canonical API symbol can be Entity.teleport for a Player receiver,
   // so retain receiverType rather than deciding from symbol spelling.

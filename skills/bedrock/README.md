@@ -31,12 +31,15 @@ probe report attribution and current `pendingIntake`. This directory only
 owns **native upstream package identity/dependency relationships**.
 Its source archive SHA must equal the matching, independently pinned
 reviewed developer source or pending candidate. The 1 November 2026 supplied ZIPs pin developer v0.35.0 with 24 skill folders and 13 module manifests, and independent Probe v0.35.0 with 10 installed modules. Their 24 native skill-folder hashes and 45 installed module file SHA hashes match. The 89 Probe reports comprise 49 previously curated historical outcomes, 25 newly reviewed bounded source-reported outcomes or blocked attempts, and 15 plan/template/operator/offline documents excluded from runtime-result selection.
-Eighteen source-reviewed Map Audit reference patterns now have exact
-selected-artifact Semantic IR gating: sixteen original, conditional Daigon
-results export and conditional `mivubi:get_analytics` session export. Five
-methods remain developer workflow references; `bedrock-player-attached-particles`
-remains technical REFERENCE only until a precise supported BP rider/RP
-particle attachment witness exists. For both export IDs, only a first strict
+Nineteen source-reviewed Map Audit reference patterns now have exact
+selected-artifact Semantic IR or pack-declaration gating: sixteen original,
+conditional Daigon results export, conditional `mivubi:get_analytics` session
+export, and conditional `bedrock-player-attached-particles` BP/RP source
+chain. Five methods remain developer workflow references. The particle method
+is eligible ONLY when the selected world explicitly lists the BP and RP and
+a uniquely matched player seat/family → BP actor → RP client →
+controller/animation timeline → particle definition is source-witnessed.
+Static linkage does not establish an active rider, rendering, or cleanup. For both export IDs, only a first strict
 source-owned event ID rejection (`!== return`) or positive conditional
 selection (`===` with authored work), resolved to a literal/immutable local/
 uniquely imported value, may select questions at an exact `.subscribe` or

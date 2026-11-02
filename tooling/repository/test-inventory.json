@@ -1040,10 +1040,10 @@
         "owner": "engine/analyzers/resource-pack",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b0d02303ba1d86afa6d6a46aed88f8bf11204130"
+        "sourceBlobSha": "5bc710cc102303b49e1701ab9ed4f3f5bb26d1e8"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\n2026-11-02 authored BP/RP particle source-bridge acceptance: Authored P63-inspired (not copied) negative/positive source tests for exact player rideable → BP actor → RP client/controller/timeline/particle joining; never gameplay proof. NOT EXECUTED.",
       "functionalArea": "map-content",
       "mechanicTags": [
         "map.resource-pack"
@@ -7861,10 +7861,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "8508cd4dc086ae1ae3f74e6c1c5ecea73bf36dcc"
+        "sourceBlobSha": "e6d34895556bd0df514c9c1773c657817209bdf3"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.\n2026-11-02 source-guard integration: Authored exact subscription-callee/guard source location regression excluding unrelated callback-body and cross-artifact references; execution deferred. NOT EXECUTED.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.\n2026-11-02 source-guard integration: Authored exact subscription-callee/guard source location regression excluding unrelated callback-body and cross-artifact references; execution deferred. NOT EXECUTED.\n2026-11-02 authored BP/RP particle source-bridge acceptance: Authored source-bound Resource Context admission test: exact six-source candidate and JSON-pointer domains, rejecting unrelated/forged/partial sources. No executable test performed. NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

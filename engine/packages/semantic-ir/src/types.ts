@@ -372,6 +372,19 @@ export interface AuthoredScriptApiPropertyRead {
   readonly source: SourceRef;
 }
 
+/** Exact, source-only BP player/family → BP actor → RP client/animation/
+ * particle-file chain. Distinct from proof that a rider actually mounted
+ * the player, emitted visible effects, or cleared on stop/teleport.
+ */
+export interface AuthoredPlayerParticleAttachment {
+  readonly id: string;
+  readonly actorIdentifier: string;
+  readonly family: string;
+  readonly particleIdentifier: string;
+  readonly sources: readonly SourceRef[];
+  readonly proof: "AUTHORED_BP_RP_ATTACHMENT_CANDIDATE_NOT_GAMEPLAY_PROOF";
+}
+
 export interface SemanticIr {
   schemaVersion: 1;
   execution: {
@@ -393,6 +406,10 @@ export interface SemanticIr {
     worldEffects?: readonly AuthoredWorldEffect[];
     controlFlow?: readonly SourceControlFlowRegion[];
     authoredBehaviorRelations?: readonly AuthoredBehaviorRelation[];
+    /** Non-executed, exact authored BP/RP source graph for optional developer
+     * investigation only. This is not a world effect or runtime emission.
+     */
+    playerParticleAttachments?: readonly AuthoredPlayerParticleAttachment[];
   };
   state: {
     surfaces: readonly StateSurface[];
