@@ -5,8 +5,8 @@
   "layoutBlob": "182aa720441e4f52d3b6ec93bc22f85d74f447e3",
   "referenceBlob": "2cce615368348cae8d77137867442f3f793fa584",
   "syntheticExampleBlob": "92dbff5d5f02e56e05e0b6712691333be99521fb",
-  "htmlSha256": "17935c9d043b069c6960d515e593c2d6633ab599d721412d33ad6875ba305a8c",
-  "jsonSha256": "20e295fdfc009ed66a903e79e3f26f912bb51e506c2c04b0142d10d36b8cac0e",
-  "digest": "sha256:20e295fdfc009ed66a903e79e3f26f912bb51e506c2c04b0142d10d36b8cac0e",
-  "notes": "Synthetic 1.2.0 baseline derived from isolated source JavaScript, not a browser/real Minecraft audit."
+  "htmlSha256": "5df75658ae6094e2c785a6d85ef53a88f840396a42bb115386c6458074a4abf3",
+  "jsonSha256": "28448d98d873f2c69cbbf41a8ffafa012bfffa28213c2f828bc67477ebf0c022",
+  "digest": "sha256:28448d98d873f2c69cbbf41a8ffafa012bfffa28213c2f828bc67477ebf0c022",
+  "notes": "Synthetic v1.2.0 baseline: exact canonical JSON and offline HTML digests recomputed with independently self-checked SHA-256 after exact-head source evaluation. Does not attest real selected-world, Node/Vitest, browser or Minecraft runtime."
 }

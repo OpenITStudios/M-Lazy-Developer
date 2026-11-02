@@ -89,6 +89,17 @@ export function projectSelectedMapAuditReportNext(run){
   add({id:"closure:"+rec.id,title:"Gameplay model "+rec.label,reason:value(rec.reason,"Surface is "+rec.status),
     missingProof:"Gameplay model boundary is unproven.",nextCheck:"Examine current-artifact evidence for "+rec.id+".",evidenceRefs:[]});
  const gaps=[],discovery=run.inspection?.gameplayDiscoveryClosure;
+ if(run.status!=="READY_FOR_REVIEW")
+  gaps.push("SelectedMapAuditRun status is "+(run.status??"not established"));
+ if(run.currentStage!=="COMPLETE"||run.allowedNextAction!=="PREPARE_REVIEW")
+  gaps.push("SelectedMapAuditRun has not completed its canonical review-stage requirements");
+ if(findings.some(f=>f.proofStatus==="NEED_VALIDATION"))
+  gaps.push("A canonical finding still has NEED_VALIDATION proof status");
+ if(findings.length===0&&a.qualityGates?.zeroFinding?.status!=="ELIGIBLE")
+  gaps.push("Zero-finding completeness has not passed the canonical quality gate");
+ if((a.honesty?.missingVisibleResidueIds?.length??0)>0||
+    (a.honesty?.missingProvenProjectionIds?.length??0)>0)
+  gaps.push("Canonical honesty assessment still reports missing material findings");
  if(!discovery||discovery.status!=="COMPLETE")gaps.push("Discovery closure: "+(discovery?.status??"unavailable"));
  for(const x of discovery?.reasons??[])gaps.push("Discovery: "+x);
  if(a.control?.status!=="READY_FOR_REVIEW")gaps.push("Audit control: "+(a.control?.status??"unavailable"));
@@ -107,7 +118,7 @@ export function projectSelectedMapAuditReportNext(run){
  if(notResolved.size)gaps.push(notResolved.size+" evidence reference(s) unresolved");
  if(checks.length)gaps.push(checks.length+" individual open checks; see Unresolved Checks");
  const missingProof=uniq(gaps),closed=!missingProof.length;
- const state=closed?"COMPLETE":a.control?.status==="BLOCKED"||!discovery||discovery.status==="OPEN"||
+ const state=closed?"COMPLETE":run.status==="BLOCKED"||a.control?.status==="BLOCKED"||!discovery||discovery.status==="OPEN"||
   a.gameplayClosure?.status==="OPEN"?"BLOCKED":"PARTIAL";
  const name=value(id.levelName,value(a.evidenceScope.selectedArtifact,id.artifactId));
  const release=id.releaseIdentityStatus==="consistent"&&id.releaseVersion?id.releaseVersion:null;

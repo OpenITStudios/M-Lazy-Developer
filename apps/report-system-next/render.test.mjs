@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { Script } from "node:vm";
 import { renderReportNext } from "./render.mjs";
 import { assertDesignLock } from "./contract.mjs";
+import { projectSelectedMapAuditReportNext } from "./from-selected-map-audit.mjs";
 
 const root = new URL("../../planning/report-system-next/", import.meta.url);
 const example = JSON.parse(await readFile(new URL("example.report.json",root),"utf8"));
@@ -172,4 +173,65 @@ test("invalid evidence, schema, and injected HTML never yield a publishable repo
   assert.equal(rendered.report.maps[0].levels[0].findings[0].title,
     "</ScRiPt><script>alert(1)</script>");
   inspect(rendered);
+});
+
+test("selected-map reporting keeps both finding lanes, unresolved work and no invented retest",async()=>{
+  const fingerprint="sha256:"+"a".repeat(64);
+  const id="synthetic-audit-map";
+  const proven={id:"ISSUE-PROVEN",issueType:"BUG",status:"PROVEN",
+    issue:"Synthetic source condition breaks progress",playerImpact:"Progress stops",
+    gameplayFlow:"PROGRESSION",failureDomain:"progression-wave-objective",
+    evidenceIds:["current-source"],expected:"Progress",actual:"Does not progress",
+    reproduceSteps:["Observe whether: progression succeeds"],
+    proofCeiling:"PROVEN",counterEvidence:"cleared"};
+  const pending={...proven,id:"ISSUE-PENDING",issueType:"DESIGN_MISMATCH",
+    status:"NEED_VALIDATION",evidenceIds:["unresolved-source"],
+    proofCeiling:"NEEDS_DECIDING_PROOF",counterEvidence:"unresolved",
+    validationReason:"Source proof not closed",missingProof:"Missing exact target",
+    validationTest:"Inspect the selected map's target"};
+  const audit={schemaVersion:1,policy:"selected-map-audit-single-entry",
+    auditRevision:"synthetic-revision",status:"BLOCKED",currentStage:"PROVE",
+    allowedNextAction:"RESOLVE_DEFECTS",
+    identity:{artifactId:id,artifactFingerprint:fingerprint,
+      releaseIdentityStatus:"unavailable"},
+    inspection:{artifactId:id,fingerprint,
+      gameplayDiscoveryClosure:{status:"PARTIAL",reasons:["Source gap"]},
+      gameplayIntent:{model:{artifactId:id,evidence:[{
+        id:"current-source",origin:"source-code",scope:"selected-artifact",
+        locator:"scripts/current.js:7",summary:"Authored condition only"
+      }]}}},
+    mapAuditReport:{schemaVersion:2,artifactId:id,artifactFingerprint:fingerprint,
+      auditRevision:"synthetic-revision",
+      evidenceScope:{mode:"selected-map-version-only",archiveSourcesUsed:false,
+        selectedArtifact:"Synthetic.mcworld"},
+      control:{status:"BLOCKED"},auditTarget:{edition:"unknown"},
+      bugs:[proven],designMismatches:[pending],
+      auditObligations:[{id:"OB-1",title:"Unclassified source gap",
+        reason:"Exact callback unknown",missingProof:"Missing target",
+        validationTest:"Trace exact callback",evidenceIds:["unresolved-source"]}],
+      validationTests:[],coverage:{disposition:"incomplete",records:[{
+        surface:"entry",status:"unknown",evidenceIds:["current-source"]
+      }]},gameplayClosure:{status:"OPEN",surfaceInventory:[]},
+      unresolved:{status:"HAS_UNRESOLVED",total:2,needValidationIds:["ISSUE-PENDING"],
+        staticProofPendingIds:[],runtimeRequiredIds:[],auditObligationIds:["OB-1"],
+        unknownSurfaceIds:[]},honesty:{status:"PASS"},
+      qualityGates:{vitalGameplay:{status:"OPEN"},
+        informationIntegrity:{status:"BLOCKED"},zeroFinding:{status:"NOT_APPLICABLE"}}}
+  };
+  const projected=projectSelectedMapAuditReportNext(audit);
+  const findings=projected.maps[0].levels[0].findings;
+  assert.equal(findings.length,2);
+  assert.deepEqual(findings.map(f=>f.proofStatus),["PROVEN","NEED_VALIDATION"]);
+  assert.ok(findings.every(f=>f.severity===null&&f.testProcedure===null));
+  assert.equal(findings[0].evidenceLevel,"REFERENCE_UNRESOLVED");
+  assert.equal(projected.maps[0].artifact.version,null);
+  assert.equal(projected.maps[0].auditCoverage.state,"BLOCKED");
+  assert.ok(projected.maps[0].auditCoverage.checks.some(x=>x.id==="obligation:OB-1"));
+  const rendered=await renderReportNext(projected);
+  assert.match(rendered.html,/Unresolved Checks/);
+  assert.match(rendered.html,/Source Reference Unresolved/);
+  assert.doesNotMatch(rendered.html,/data-ready="true"/);
+  assert.throws(()=>projectSelectedMapAuditReportNext({
+    ...audit,auditRevision:"stale-revision"
+  }),/revision mismatch/);
 });
