@@ -617,7 +617,13 @@ silently mapped to generic stages, and directed gameplay-journey
 candidates with source links, missing join proof and unknown scope.
 An absent lobby, numeric score or standard victory is not a bug without
 a proven selected-world requirement; these are conditional audit
-questions, not required implementation features.
+questions, not required implementation features. Per-player or per-level
+start/finish/retry loops can require repeated-run and countdown-cancel
+investigation without a physical arena; use exact source reset/recovery
+relations or jointly present reset, persistence and gameplay evidence
+to select an investigation, never to assert a successful second run.
+Live scores, best-time records, rewards and final victory are separate
+concepts with distinct source owners and proof requirements.
 See [Flow-based operator navigation](../analysis/bug-finding-coverage.md#flow-based-operator-navigation-derived-not-another-test-catalog).
 
 ## Issue types

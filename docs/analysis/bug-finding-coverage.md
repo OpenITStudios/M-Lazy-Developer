@@ -182,6 +182,19 @@ complete a sibling game. Operator counts of scenario relevance and
 typed `mechanic/objective/outcome/lifecycle` hints are questions and
 source discovery leads, not actual stage coverage or QA PASS.
 
+Replay/repeated-run applicability is not limited to multi-arena games.
+When independently selected-source reset/recovery relations exist, or
+when player/session persistence, inventory reset and an actual gameplay
+subject jointly establish a plausible per-level retry path, activate the
+existing `repeated-run` investigation. This is a source-bound question,
+not proof that replay exists, cleanup is complete or a shared writer belongs
+to the same attempt. Preserve `UNKNOWN` for unresolved source links.
+Likewise, a delayed per-player countdown may require stale-start checks
+after leave/abort even when no party/waiting arena exists. Test the
+`LIVE scoreboard -> finalized personal best/result -> persisted record
+-> clear temporary attempt` boundaries only when supported by selected
+artifact evidence; do not treat the word "score" as a reward transaction.
+
 The primary `GameplayAuditScenario.flowStage` is unchanged. The existing
 diagnostic scenario preset supplies read-only cross-phase relevance for
 **already selected** scenarios via `scenarioCrossPhaseReviewStages()`.

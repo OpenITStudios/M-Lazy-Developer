@@ -708,11 +708,39 @@ function scenarioSurfaceSignals(
 function sourceBoundPresetSignals(
   world: GameplayWorldModel,
   actorProgressionCue: boolean,
+  intent?: GameplayIntentModel,
 ): {
   hasPersistence: boolean;
   hasTransactionalGameplay: boolean;
   hasProgressionActorSurface: boolean;
+  hasRepeatedRunSurface: boolean;
 } {
+  const selectedEvidence = new Set((intent?.evidence ?? [])
+    .filter(evidence => evidence.scope === "selected-artifact")
+    .map(evidence => evidence.id));
+  const selectedSubject = (id: string) =>
+    intent?.nodes.some(node =>
+      node.id === id && node.status !== "hypothesis" &&
+      node.evidenceIds.some(evidenceId => selectedEvidence.has(evidenceId)));
+  // Reentry/replay may be player/level-scoped, without a physical arena.
+  // Prefer explicit selected-source reset/recovery relations. As a bounded
+  // investigation fallback, require independently observed inventory reset,
+  // persistent state AND a current authored gameplay subject. Each is only
+  // evidence of a potential repeat lifecycle, not proof of completed replay
+  // or that the two writers share the same session generation.
+  const sourceResetOrRecovery = (intent?.edges ?? []).some(edge =>
+    (edge.kind === "resets" || edge.kind === "recovers-to") &&
+    edge.status !== "hypothesis" &&
+    edge.evidenceIds.some(id => selectedEvidence.has(id)) &&
+    selectedSubject(edge.from) && selectedSubject(edge.to));
+  const playerScopedRepeatCandidate =
+    world.inventory.resetCandidates > 0 &&
+    (world.persistence?.properties ?? 0) > 0 &&
+    (intent?.nodes.some(node =>
+      (node.kind === "mechanic" || node.kind === "objective" ||
+       node.kind === "phase" || node.kind === "lifecycle") &&
+      node.status !== "hypothesis" &&
+      node.evidenceIds.some(id => selectedEvidence.has(id))) ?? false);
   return {
     // The world model always constructs a persistence summary. Its presence
     // is not proof that persistent gameplay properties were actually found.
@@ -725,6 +753,7 @@ function sourceBoundPresetSignals(
     hasProgressionActorSurface:
       world.progression.actorAccounting.counters > 0 ||
       (world.entities.definitions > 0 && actorProgressionCue),
+    hasRepeatedRunSurface: sourceResetOrRecovery || playerScopedRepeatCandidate,
   };
 }
 
@@ -792,7 +821,7 @@ function auditScenarioPresetFromModel(
   const surfaceSignals =
     scenarioSurfaceSignals(input.intent);
   const sourceSignals = sourceBoundPresetSignals(
-    input.world, surfaceSignals.progressionActor,
+    input.world, surfaceSignals.progressionActor, input.intent,
   );
 
   return buildGameplayAuditScenarioPreset({
@@ -812,7 +841,7 @@ function auditScenarioPresetFromModel(
     ...sourceSignals,
     hasDeferredWork: deferredWork,
     hasRepeatedRunSurface:
-      input.world.arenas.detected,
+      input.world.arenas.detected || sourceSignals.hasRepeatedRunSurface,
     hasSimulationDistanceDependency:
       input.world.entities.definitions > 0 &&
       (
@@ -1081,7 +1110,7 @@ export function refreshHiddenGameplayDefectsForWorld(
         }
       : scenarioSurfaceSignals(intent);
   const sourceSignals = sourceBoundPresetSignals(
-    world, refreshSurfaceSignals.progressionActor,
+    world, refreshSurfaceSignals.progressionActor, intent,
   );
   const auditScenarioPreset =
     buildGameplayAuditScenarioPreset({
@@ -1106,7 +1135,9 @@ export function refreshHiddenGameplayDefectsForWorld(
           (scenario) => scenario.kind === "deferred-ownership",
         ),
       hasRepeatedRunSurface:
-        world.arenas.detected,
+        world.arenas.detected || sourceSignals.hasRepeatedRunSurface ||
+        existing.auditScenarioPreset.scenarios.some(
+          scenario => scenario.kind === "repeated-run"),
       hasSimulationDistanceDependency:
         world.entities.definitions > 0 &&
         (

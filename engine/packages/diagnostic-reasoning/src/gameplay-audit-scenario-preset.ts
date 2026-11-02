@@ -389,7 +389,8 @@ export function scenarioCrossPhaseReviewStages(
     case "spatial-containment":
       return ["SETUP"];
     case "repeated-run":
-      return ["READY_START", "SETUP", "ACTIVE_GAMEPLAY"];
+      return ["ENTRY_JOIN", "READY_START", "SETUP",
+        "ACTIVE_GAMEPLAY", "PROGRESSION", "TERMINAL"];
     default:
       return [];
   }
@@ -724,6 +725,8 @@ export function buildGameplayAuditScenarioPreset(
           "Can payment or state consumption commit before item, upgrade, reward, or effect delivery succeeds?",
           "If delivery fails, is payment rolled back or safely reconciled?",
           "Can retry or reconnect duplicate delivery or consume payment twice?",
+          "Where an item/coin purchase exists, are payment debit, item grant and refund one recoverable transaction?",
+          "Where a course/level records points or personal best, is one completed attempt distinct from an intermediate score and a durable record?",
           "Do success and failure messages match the committed transaction result?",
         ],
       }),
@@ -779,6 +782,7 @@ export function buildGameplayAuditScenarioPreset(
           "Can success text be emitted before the underlying transaction or transition succeeds?",
           "Can failure and success messages both appear for one action?",
           "Can timer, score, wave, objective, queue, price, tier, or arena status become stale relative to canonical state?",
+          "Is a running score/time display distinguished from completed level statistics, leaderboard records and final outcome where authored?",
           "Can one arena or player receive feedback owned by another session?",
         ],
       }),
@@ -813,6 +817,8 @@ export function buildGameplayAuditScenarioPreset(
           "What ownership revision existed when the callback was scheduled?",
           "Is ownership revalidated before mutation commits?",
           "Can cleanup, reuse, reconnect, reload, or phase transition happen first?",
+          "If a player leaves or cancels during a personal or arena countdown, can an already scheduled start callback still teleport, allocate or activate the old session?",
+          "Can a completed or aborted run receive a delayed score, checkpoint, reward or UI update after its owner has changed?",
         ],
       }),
     );
@@ -898,9 +904,11 @@ export function buildGameplayAuditScenarioPreset(
         reason:
           "A successful first run does not prove cleanup; the second run exposes leaked entities, timers, score, inventory, structures, objectives, and ownership.",
         questions: [
-          "After completion/abort, is the arena/session baseline actually restored?",
+          "After completion/abort, is the arena, player or level session baseline actually restored according to its authored scope?",
+          "Can a player repeat a level without an arena match, preserving personal best while clearing per-attempt time, score, items and checkpoint state?",
+          "Can an abandoned countdown or run start or mutate the next player/session generation through a stale callback?",
           "Can any callback or state from Run 1 mutate Run 2?",
-          "Does Run 2 behave equivalently to a fresh run?",
+          "Does Run 2 behave equivalently to a fresh run, except for intentionally persisted records?",
         ],
       }),
     );
