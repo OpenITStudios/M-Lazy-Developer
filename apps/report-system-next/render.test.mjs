@@ -25,8 +25,8 @@ const inspect = output => {
 test("design remains immutable without a new approved version", async () => {
   const content = await readFile(new URL("layout.lock.json",root),"utf8");
   const lock = JSON.parse(content);
-  assert.equal(assertDesignLock(lock,content).designVersion,"1.4.0");
-  assert.throws(() => assertDesignLock(lock,content.replace('"1.4.0"','"2.0.0"')),
+  assert.equal(assertDesignLock(lock,content).designVersion,"1.5.0");
+  assert.throws(() => assertDesignLock(lock,content.replace('"1.5.0"','"2.0.0"')),
     /Design Lock mismatch/);
 });
 
@@ -40,7 +40,7 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.match(first.html,/Synthetic Report Demo/);
   assert.match(first.html,/Download Report JSON/);
   assert.match(first.html,/report-integrity/);
-  assert.equal(golden.designVersion,"1.4.0");
+  assert.equal(golden.designVersion,"1.5.0");
   assert.equal(golden.reportId,example.reportId);
   assert.equal(createHash("sha256").update(first.html,"utf8").digest("hex"),golden.htmlSha256);
   assert.equal(createHash("sha256").update(first.json,"utf8").digest("hex"),golden.jsonSha256);
@@ -80,7 +80,7 @@ test("combined reports normalize map order and preserve globally unique findings
   const reversed = await renderReportNext(b);
   assert.equal(first.html,reversed.html);
   assert.equal(first.json,reversed.json);
-  assert.match(first.html,/aria-label="Maps"/);
+  assert.match(first.html,/aria-label="Report maps"/);
   assert.match(first.html,/data-map-fold/);
   inspect(first);
 });
@@ -235,7 +235,7 @@ test("selected-map reporting keeps both finding lanes, unresolved work and no in
   assert.equal(projected.maps[0].auditCoverage.state,"BLOCKED");
   assert.ok(projected.maps[0].auditCoverage.checks.some(x=>x.id==="obligation:OB-1"));
   const rendered=await renderReportNext(projected);
-  assert.match(rendered.html,/Unresolved Checks/);
+  assert.match(rendered.html,/Open checks/);
   assert.match(rendered.html,/Source Reference Unresolved/);
   assert.doesNotMatch(rendered.html,/data-ready="true"/);
   assert.throws(()=>projectSelectedMapAuditReportNext({
@@ -250,7 +250,7 @@ test("pending proof may still cite inspected source and cannot gain final severi
   assert.equal(output.report.maps[0].levels[0].findings[0].proofStatus,"NEED_VALIDATION");
   assert.match(output.html,/Needs Validation/);
   finding.severity="MAJOR";
-  await assert.rejects(()=>renderReportNext(data),/pending proof|unproven issue/);
+  await assert.rejects(()=>renderReportNext(data),/pending proof|unproven issue|expected exactly one finding variant/);
 });
 test("source-only and demo cannot claim audit completeness or approved-ledger identity",async()=>{
   const data=clone(example);
@@ -279,13 +279,30 @@ test("desktop-first acceptance preserves proof and reduces unnecessary above-fol
     evidenceRefs:["EV-DEMO-01"],checks:[]
   };
   const output=await renderReportNext(report);
-  assert.match(output.html,/@media\(min-width:701px\)/);
+  assert.match(output.html,/\.audit-brief\{display:grid/);
   assert.match(output.html,/max-width:1200px/);
-  assert.match(output.html,/class="coverage-details"/);
+  assert.match(output.html,/class="audit-extra"/);
   assert.match(output.html,/Missing proof \(2\)/);
   assert.match(output.html,/Exact source graph proof needed/);
   assert.match(output.html,/Minecraft runtime not executed/);
   assert.match(output.html,/<div class="retest" hidden>/);
-  assert.match(output.html,/No supported guided retest/);
+  assert.match(output.html,/No guided retest available/);
   assert.equal(output.report.maps[0].auditCoverage.missingProof.length,2);
+});
+
+test("desktop reader provides next actions and retains source evidence on demand",async()=>{
+ const report=clone(example);
+ const item=issue(report);
+ item.validation.nextCheck="Inspect exact wave trigger references";
+ const result=await renderReportNext(report);
+ assert.match(result.html,/class="finding-next"/);
+ assert.match(result.html,/Inspect exact wave trigger references/);
+ assert.match(result.html,/class="finding-content"/);
+ assert.match(result.html,/class="evidence-disclosure"/);
+ assert.match(result.html,/class="technical-disclosure"/);
+ assert.match(result.html,/id="find-proof"/);
+ assert.match(result.html,/Advanced filters/);
+ assert.ok(result.html.indexOf('class="audit-brief"')<
+   result.html.indexOf('class="findings-workspace"'));
+ inspect(result);
 });

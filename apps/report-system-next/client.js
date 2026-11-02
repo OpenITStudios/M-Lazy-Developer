@@ -201,6 +201,7 @@
     }
     const search = document.getElementById("find-search").value.toLowerCase().trim();
     const kind = document.getElementById("find-kind").value;
+    const proof = document.getElementById("find-proof").value;
     const severity = document.getElementById("find-severity").value;
     const result = document.getElementById("find-result").value;
     let visible = 0;
@@ -214,6 +215,7 @@
         ? peekState(finding.id).result || "UNTESTED" : "NOT_RETESTABLE";
       const match = value.includes(search) &&
         (kind === "ALL" || finding.kind === kind) &&
+        (proof === "ALL" || (finding.kind !== "DEV_NOTE" && finding.proofStatus === proof)) &&
         (severity === "ALL" || (finding.kind !== "DEV_NOTE" && finding.severity === severity)) &&
         (result === "ALL" || (finding.kind !== "DEV_NOTE" && status === result));
       card.hidden = !match;
@@ -228,7 +230,7 @@
     for (const level of document.querySelectorAll("[data-level]")) {
       level.hidden = ![...level.querySelectorAll("[data-group]")].some(group => !group.hidden);
     }
-    const filtering = Boolean(search || kind !== "ALL" || severity !== "ALL" || result !== "ALL");
+    const filtering = Boolean(search || kind !== "ALL" || proof !== "ALL" || severity !== "ALL" || result !== "ALL");
     for (const map of document.querySelectorAll("[data-map]")) {
       map.hidden = ![...map.querySelectorAll("[data-level]")].some(level => !level.hidden);
       if (filtering && !map.hidden) {
@@ -293,13 +295,13 @@
       file.value = "";
     });
   });
-  for (const id of ["find-search","find-kind","find-severity","find-result"]) {
+  for (const id of ["find-search","find-kind","find-proof","find-severity","find-result"]) {
     const control = document.getElementById(id);
     control.addEventListener(id === "find-search" ? "input" : "change", refresh);
   }
   document.getElementById("clear-filters").addEventListener("click", () => {
     document.getElementById("find-search").value = "";
-    for (const id of ["find-kind","find-severity","find-result"]) {
+    for (const id of ["find-kind","find-proof","find-severity","find-result"]) {
       document.getElementById(id).value = "ALL";
     }
     refresh();
@@ -314,7 +316,7 @@
     for (const details of clone.querySelectorAll("details[open]")) details.removeAttribute("open");
     const search = clone.querySelector("#find-search");
     if (search) { search.value = ""; search.setAttribute("value", ""); }
-    for (const id of ["find-kind", "find-severity", "find-result"]) {
+    for (const id of ["find-kind", "find-proof", "find-severity", "find-result"]) {
       const select = clone.querySelector("#" + id);
       if (!select) continue;
       for (const option of select.querySelectorAll("option")) option.removeAttribute("selected");

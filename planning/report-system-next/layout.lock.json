@@ -1,12 +1,12 @@
 {
   "system": "M-Lazy-Developer / Report System Next",
   "namespace": "report-system-next",
-  "designVersion": "1.4.0",
-  "lifecycle": "DESIGN_LOCKED_DESKTOP_FIRST",
+  "designVersion": "1.5.0",
+  "lifecycle": "DESIGN_LOCKED_DESKTOP_READER",
   "compatibility": {
-    "reportSchema": "m-lazy-report-next/v1.4",
+    "reportSchema": "m-lazy-report-next/v1.5",
     "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v1",
-    "templateId": "m-lazy-report-next/html-v1.4",
+    "templateId": "m-lazy-report-next/html-v1.5",
     "sourceExistingApprovedBugReportV2": "NOT_A_MUTATION_TARGET",
     "legacyReportPaths": "UNTOUCHED"
   },
@@ -34,15 +34,11 @@
   },
   "layout": {
     "sections": [
-      "reportHeader",
-      "artifactIdentity",
-      "reportOverview",
-      "auditCoverage",
-      "testerProgress",
-      "findingControls",
-      "bugFindings",
-      "designMismatches",
-      "developerNotes",
+      "utilityHeader",
+      "mapIdentity",
+      "auditStatusAndSummary",
+      "findingsWorkspace",
+      "retestSummaryOnDemand",
       "reportFooter"
     ],
     "findingGroupOrder": [
@@ -57,25 +53,22 @@
     ],
     "findingCardCollapsed": [
       "referenceNumber",
-      "severityIfProven",
+      "issueType",
       "proofStatus",
-      "testerResultIfEligible",
-      "title",
-      "problem",
-      "findingId"
+      "severityIfKnown",
+      "conciseTitle",
+      "problemIfDistinct",
+      "nextAction",
+      "canonicalFindingId"
     ],
     "findingCardExpanded": [
-      "rationaleIfPresent",
-      "impactIfPresent",
-      "validationReasonAndNextCheckIfNeeded",
-      "testInGameIfSupported",
-      "expectedAndObserved",
-      "evidenceDetailsOnDemand",
-      "testerResultIfEligible",
-      "testerNotes",
-      "attachments",
+      "validationOrTestAction",
+      "expectedVersusEvidence",
+      "impactIfKnown",
+      "sourceEvidenceDisclosure",
+      "investigationDisclosure",
       "technicalDisclosure",
-      "sourceAuditCuesIfPresent"
+      "testerNotesAndAttachments"
     ],
     "technicalDisclosure": [
       "analysisIfPresent",
@@ -86,10 +79,7 @@
     "summaryMetricOrder": [
       "findings",
       "needsValidation",
-      "unrated",
-      "blocker",
-      "major",
-      "minor"
+      "proven"
     ],
     "testerMetricOrder": [
       "passed",
@@ -109,8 +99,9 @@
     ],
     "filterFields": [
       "kind",
-      "severity",
-      "testerResult"
+      "proofStatus",
+      "severityAdvanced",
+      "testerResultAdvanced"
     ],
     "defaultOpenState": "ALL_FINDING_CARDS_COLLAPSED",
     "responsiveBreakpointsPx": {
@@ -127,13 +118,21 @@
         "height": 1080
       }
     ],
-    "mobileAcceptancePolicy": "PRESERVE_EXISTING_CSS_NOT_REQUIRED_FOR_RELEASE"
+    "mobileAcceptancePolicy": "PRESERVE_EXISTING_CSS_NOT_REQUIRED_FOR_RELEASE",
+    "desktopReadOrder": [
+      "sourceAndAuditStatus",
+      "threeTruthfulCounts",
+      "searchAndFindings",
+      "actionableFindingDetails",
+      "technicalEvidenceOnDemand",
+      "testerProgressOnDemand"
+    ]
   },
   "vocabulary": {
-    "reportTitle": "Bug Tracker Report",
+    "reportTitle": "Map Review",
     "sectionBugs": "Bugs",
-    "sectionDesign": "Design Mismatches",
-    "sectionNotes": "Developer Notes",
+    "sectionDesign": "Design mismatches",
+    "sectionNotes": "Developer notes",
     "testProcedure": "Test In-Game",
     "expected": "Expected",
     "observed": "Observed / Evidence",
@@ -168,7 +167,17 @@
     "sourceReviewTitle": "Source Review",
     "demoTitle": "Synthetic Report Demo",
     "downloadReportJson": "Download Report JSON",
-    "unrelatedApprovedLedger": "Approved Bug Report V2 is a separate ledger; its issue count is not included here."
+    "unrelatedApprovedLedger": "Approved Bug Report V2 is a separate ledger; its issue count is not included here.",
+    "auditStatus": "Audit status",
+    "findingsHeading": "Findings",
+    "whatNext": "Next action",
+    "moreFilters": "Advanced filters",
+    "testerDataTools": "Tester data",
+    "sourceMetadata": "Source file & fingerprint",
+    "technicalDetails": "Developer details",
+    "reviewEvidence": "Source evidence",
+    "reviewStatus": "Proof status",
+    "reviewAction": "How to verify"
   },
   "tokens": {
     "font": "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -226,7 +235,11 @@
     "browserRechecksCanonicalDigest": true,
     "evidenceTierIndependentOfProofStatus": true,
     "desktopFirstFindingsRemainReachable": true,
-    "coverageGapsReadableOnDemand": true
+    "coverageGapsReadableOnDemand": true,
+    "auditedUnknownsAlwaysVisible": true,
+    "technicalEvidenceCollapsedByDefault": true,
+    "findingsAboveFoldPriority": true,
+    "testerInputsSeparateFromCanonical": true
   },
   "output": {
     "fileNames": {

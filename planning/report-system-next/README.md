@@ -64,3 +64,7 @@ Current Report Next design version is **1.3.0**. Source-aligned authored reports
 ## Desktop-first acceptance scope — Report Next 1.4.0 (2026-11-03)
 
 Desktop-only user priority: 1366×768 and 1920×1080. The original responsive CSS is retained, but mobile visual acceptance is no longer a release gate. This remains one versioned renderer, not a second desktop app. Canonical proof/evidence, approved Bug Report V2 ownership, and tester state are unchanged.
+
+## Report Next v1.5.0 — desktop reader simplification
+
+Approved user intent: prioritize immediate readability and actionability over dense reporting metadata. The one existing renderer now owns the desktop-first flow and folded evidence/technical views. The JSON data authority, Map Audit V2 adapter, approved Bug Report V2 and offline tester state remain unchanged. Desktop visual checks should confirm a readable first finding without hidden proof, source confusion or a new mobile acceptance requirement.

@@ -52,12 +52,12 @@ async function startPage({ snapshot, copyId = "original", pathname = "/source.ht
   const empty = {schema:"m-lazy-tester-workspace-next/v1",
     reportId:report.reportId,canonicalDigest:meta.digest,entries:[]};
   const ids = Object.fromEntries([
-    "find-search","find-kind","find-severity","find-result","match-count",
+    "find-search","find-kind","find-proof","find-severity","find-result","match-count",
     "no-matches","save-status","report-integrity","download-report-json","save-html","save-json","load-json",
     "json-file","reset-data","clear-filters",
     "metric-passed","metric-failed","metric-untested","metric-notRetestable"
   ].map(name => [name,new Node()]));
-  for (const name of ["find-kind","find-severity","find-result"]) ids[name].value="ALL";
+  for (const name of ["find-kind","find-proof","find-severity","find-result"]) ids[name].value="ALL";
   const snap = new Node({textContent:JSON.stringify(snapshot ?? empty),dataset:{copyId}});
   const data = {
     "report-data":new Node({textContent:JSON.stringify(report)}),
@@ -121,6 +121,7 @@ async function startPage({ snapshot, copyId = "original", pathname = "/source.ht
         "#workspace-snapshot":snapshotClone,
         "#find-search":filterSearch,
         "#find-severity":select,
+        "#find-proof":new Node({value:ids["find-proof"].value,selectors:{"option":new Node()}}),
         "#find-kind":new Node({value:ids["find-kind"].value,selectors:{"option":new Node()}}),
         "#find-result":new Node({value:ids["find-result"].value,selectors:{"option":new Node()}}),
         "#no-matches":noMatches,
@@ -292,4 +293,20 @@ test("canonical report JSON is separate from tester state; tampered digest block
   tampered.ids["save-html"].emit("click");
   assert.equal(tampered.downloads.length,0);
   assert.equal(tampered.ids["metric-passed"].textContent,"0");
+});
+
+test("proof filter is independent of tester result and resettable",async()=>{
+ const page=await startPage();
+ page.ids["find-proof"].value="PROVEN";
+ page.ids["find-proof"].emit("change");
+ assert.equal(page.ids["match-count"].textContent,"Showing 1 of 3 entries");
+ assert.equal(page.cards[0].card.hidden,false);
+ assert.equal(page.cards[1].card.hidden,true);
+ page.ids["find-proof"].value="NEED_VALIDATION";
+ page.ids["find-proof"].emit("change");
+ assert.equal(page.cards[0].card.hidden,true);
+ assert.equal(page.cards[1].card.hidden,false);
+ page.ids["clear-filters"].emit("click");
+ assert.equal(page.ids["find-proof"].value,"ALL");
+ assert.equal(page.ids["match-count"].textContent,"Showing 3 of 3 entries");
 });

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
-export const DESIGN_VERSION = "1.4.0";
-export const DESIGN_BLOB_SHA = "157500f56e4e3e973a543444465dcf471d7a2be1";
+export const DESIGN_VERSION = "1.5.0";
+export const DESIGN_BLOB_SHA = "1ea89d1db3d2164c8a690784e64cfe794c2682eb";
 const kinds = ["BUG", "DESIGN_MISMATCH", "DEV_NOTE"];
 const evidenceLevels = ["SOURCE_VERIFIED","PACKAGE_VERIFIED","RUNTIME_OBSERVED","REFERENCE_UNRESOLVED"];
 const isObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -12,8 +12,8 @@ export function assertDesignLock(raw, sourceText) {
     .update("blob " + bytes.length + "\0")
     .update(bytes).digest("hex");
   if (sha !== DESIGN_BLOB_SHA || raw.designVersion !== DESIGN_VERSION ||
-    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.4" ||
-    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.4" ||
+    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.5" ||
+    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.5" ||
     raw.changePolicy?.renderer !== "ONE_DETERMINISTIC_RENDERER_ONLY") {
     throw new Error("Report Next Design Lock mismatch; renderer refuses unapproved layout changes.");
   }
@@ -126,7 +126,7 @@ function assertPlayerFollowableTest(finding, evidence) {
 
 export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) {
   validateSchema(report, schema);
-  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.4.0.");
+  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.5.0.");
   if(report.reportKind==="MAP_AUDIT"&&!report.auditRevision)
     throw Error("Map Audit requires an exact auditRevision");
   if(report.reportKind!=="MAP_AUDIT"&&report.auditRevision!==null)

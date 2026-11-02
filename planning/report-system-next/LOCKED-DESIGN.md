@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.4.0
+# Report System Next — LOCKED DESIGN 1.5.0
 
 ## 0. Ownership and scope
 
@@ -154,3 +154,16 @@ The user explicitly prioritizes desktop over mobile. This decision supersedes hi
 The release-acceptance desktop viewport targets are **1366×768** and **1920×1080**. Approved max report width is **1200px**. Preserve the exact report hierarchy and all canonical material findings; optimize only spacing, desktop metric widths, search accessibility, and progressive disclosure of large missing-proof lists. Status/summary must remain visible even when the full gap list is collapsed. When zero guided retests are eligible, avoid displaying meaningless zero-only tester counters; keep all existing metric IDs available to the client, and explain explicitly that no Minecraft playtest has been performed.
 
 The 1.4.0 schema/layout versions are deliberate. Existing v1.0–v1.3 standalone HTML copies remain readable and unmodified; no automatic old authored JSON migration. Desktop acceptance, keyboard navigation, canonical parity, and offline Save/Reopen are distinct from runSelectedMapAudit() and live Minecraft proof.
+
+## Approved 1.5.0 desktop reading flow (2026-11-03)
+
+The user asked to substantially simplify and clarify HTML reading, not just adjust fonts or colors. The active report flow now has one primary decision path:
+**which map and audit source → which proof state and finding counts → which finding → exactly what check or retest should happen → where the backing evidence and tester notes are**.
+
+Rules:
+1. Keep map name, version, source proof status and three honest counts visible. Long fingerprints, full coverage evidence, audit obligations, technical call chains and advanced filters remain available in native collapsed details, never omitted from canonical JSON.
+2. A collapsed finding must expose the exact canonical issue ID, BUG / DESIGN_MISMATCH / DEV_NOTE, PROVEN / NEED_VALIDATION where applicable, grounded severity if any, one concise explanation and the source-owned next action. Never turn source investigation cues into executed gameplay steps.
+3. Expanded layout uses a readable desktop primary narrative column and a visually separate tester-notes panel. Show deciding validation proof or eligible after-fix test first, then Expected vs Recorded evidence and impact. Source IDs, the original locators, technical analysis and Must Preserve are still available on demand.
+4. Filter toolbar highlights search, issue kind and proof status. Severity and after-fix retest filters remain in an Advanced disclosure, not a second permanent toolbar. Saved portable HTML must reset all presentation-only filter/disclosure states.
+5. Never claim no approved issues because the separate approved ledger is not included; retain coverage PARTIAL/BLOCKED/UNKNOWN without implying a completed whole-world audit. Tester result does not mutate canonical Fixed. All original report data, evidence, unknowns and offline HTML save semantics remain.
+6. Versioned layout/source contract is v1.5.0. Older v1.0–v1.4 standalone HTML documents remain readable unchanged. Desktop remains the sole visual acceptance target (1366×768, 1920×1080); mobile has no release gate.

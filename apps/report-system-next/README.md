@@ -2,7 +2,7 @@
 
 **Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.4.0** is pinned to Git blob `157500f56e4e3e973a543444465dcf471d7a2be1`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.5.0** is pinned to Git blob `1ea89d1db3d2164c8a690784e64cfe794c2682eb`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -86,3 +86,13 @@ Approved viewports: **1366×768 and 1920×1080**. Mobile is no longer an accepta
 The single renderer expands the desktop report width from 1080 to 1200px while reducing excess section/card padding. Summary metrics reflow inside a desktop grid. Audit status and conclusion remain visible; the complete missing-proof list moves into a keyboard-accessible disclosure that reports its count. All text and canonical JSON survive unchanged. Where no source-backed guided after-fix retest is eligible, the numeric tester strip is hidden (its stable DOM ID anchors remain for the current client) and an explicit no-test statement is shown.
 
 Required acceptance remains JSON/HTML source parity, 1366×768 and 1920×1080 layout, keyboard focus, source proof/unknown preservation, and portable tester HTML Save/Reopen. This is not Minecraft gameplay evidence.
+
+## 1.5.0 — desktop reader hierarchy and actionable findings
+
+User-approved redesign replaces the old run of equally weighted report panels with **map and audit status → three honest counts → searchable findings → next action → optional evidence and tester notes**. The source artifact fingerprint, all missing proof and all audit obligations remain in canonical JSON and in keyboard-operable details; they are not deleted to make the page shorter.
+
+Each collapsed issue shows its kind, exact proof status, severity only when grounded, canonical ID, concise problem and **one next step**. Expansion leads with the proof gap or permitted guided retest, then Expected/Recorded evidence and player impact. Source locations, source investigation cues and developer repair notes are collapsed by default. Tester notes and screenshots live alongside the issue; editing them never approves an issue, certifies gameplay, or marks canonical Fixed.
+
+The main controls are search, type and proof status. Severity/retest filters remain accessible in Advanced filters. A saved portable HTML resets all visual filters/disclosures while retaining the complete source report and tester workspace. The existing one-renderer, offline SHA-256 report consistency, approved Bug Report V2 separation and no-forged-runtime-evidence boundaries stay unchanged.
+
+Desktop acceptance uses 1366×768 and 1920×1080. Mobile remains out of release-acceptance scope. Source review and any representative visual preview are not themselves an executed Minecraft or completed canonical TypeScript Map Audit.
