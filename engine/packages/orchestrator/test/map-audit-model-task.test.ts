@@ -788,6 +788,31 @@ describe("PROVE model evidence handoff", () => {
       .toEqual(["state-op:guard"]);
     expect(scoped?.developerPractice?.items[0]?.matchingSignals)
       .toEqual(["getDynamicProperty"]);
+    expect(scoped?.developerPractice?.items[0]?.matchingSourceLocators)
+      .toEqual([methodSourcePath + ":11:2"]);
+
+    // Some exact selected-source causal tasks have no classified Gameplay
+    // Intent node yet. They may receive a REFERENCE from their own evidence
+    // while the independent Knowledge lookup stays ungrounded/absent.
+    // Neither the packet's subject list nor its proof status may be faked.
+    const sourceOnly = deriveAuditModelTaskPackets({
+      ...input,
+      intent: { ...intent, nodes: [] },
+      developerPractice, semanticIr,
+    }).find(item => item.causalLinkId === id &&
+      item.kind === "COUNTERPROOF_SEARCH");
+    expect(sourceOnly?.knowledgeLookup?.grounding).toBe("GOAL_ONLY");
+    expect(sourceOnly?.developerPractice?.items.map(item => item.patternId))
+      .toEqual(["developer.hint.persistence.read"]);
+    expect(sourceOnly?.developerPractice?.items[0]?.matchingSourceLocators)
+      .toEqual([methodSourcePath + ":11:2"]);
+    const unowned = deriveAuditModelTaskPackets({
+      ...input,
+      intent: { ...intent, nodes: [], evidence: [] },
+      developerPractice, semanticIr,
+    }).find(item => item.causalLinkId === id &&
+      item.kind === "COUNTERPROOF_SEARCH");
+    expect(unowned?.developerPractice).toBeUndefined();
 
     // A genuine source mention in a model prompt does not authorize that
     // source as proof for a different causal-link target.

@@ -453,6 +453,25 @@ standalone developer advice with one source-grounded investigation
 path. Additional contexts remain omitted if no exact selected-map
 typed source cue exists.
 
+**Current source → consumer → report closure (19 conditional methods):**
+A selected-artifact model task may obtain its reference from a grounded
+Gameplay Intent subject **or** an already-admitted source evidence locator
+in that very task, even while its Intent subject remains unclassified.
+This fallback changes neither canonical Knowledge grounding nor checkpoint
+or proof status. Resource Context accepts only its original typed IR/manifest
+witnesses and the selected-source/domain match; task text alone cannot choose
+an upstream method. Each matched reference carries a bounded set of
+original map source locations (`path:line:column` for scripts or
+`path#/json/pointer` for BP/RP), the unchanged evidence ID, and any
+omitted-source-site count. The existing model-task view and
+`reporting/map-audit-brief.ts` surface this as **investigation navigation**,
+not a validated defect or Minecraft receipt. The player-attached particle
+method additionally requires a particle/rider/emitter-specific question;
+a generic entity/lifecycle/teleport task must not select it solely because
+a candidate RP particle lives in the same selected source file.
+No third publication lane, status, agent, registry, or report schema is
+introduced.
+
 The five team/release/setup/testing workflow methods are
 development-only provenance. The Daigon-specific results method is a
 conditional source-interpretation question, not a universal gameplay contract.

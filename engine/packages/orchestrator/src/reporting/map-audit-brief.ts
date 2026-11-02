@@ -1133,6 +1133,10 @@ export function formatSelectedMapAuditBrief(input: {
       const guide = firstTask.developerPractice.items[0]!;
       out.push(
         "**Developer reference (NOT proof):** " + concise(guide.question),
+        ...((guide.matchingSourceLocators ?? []).length === 0 ? [] : [
+          "**Selected source reference sites (NOT gameplay proof):** " +
+            (guide.matchingSourceLocators ?? []).slice(0, 3).map(concise).join("; "),
+        ]),
         ...(guide.methodology === undefined ? [] :
           guide.methodology.investigationSteps.slice(0, 3)
             .map((step, index) =>
@@ -2858,8 +2862,17 @@ export function formatSelectedMapAuditBrief(input: {
         ...(guide.probeMirrors ?? []).slice(0, 2).map(item =>
           "  Probe installed module mirror (EXTERNAL, NOT RUN): " +
             concise(item.path) + " / sha256:" + item.sha256),
-        "  Exact selected-IR sites: " +
+        "  Exact selected-IR evidence IDs: " +
           guide.matchingEvidenceIds.slice(0, 4).map(concise).join("; "),
+        ...((guide.matchingSourceLocators ?? []).length === 0 ? [] : [
+          "  Exact selected-source navigation (REFERENCE, NOT result): " +
+            (guide.matchingSourceLocators ?? []).slice(0, 4).map(concise).join("; "),
+        ]),
+        ...(guide.omittedMatchingSourceLocators === undefined ? [] : [
+          "  Additional distinct selected-source sites omitted: " +
+            guide.omittedMatchingSourceLocators +
+            " (not a missing proof, bug or evidence absence).",
+        ]),
         ...(guide.referenceCode === undefined ? [] : [
           "  External code example: " + concise(guide.referenceCode.path) +
             " / sha256:" + guide.referenceCode.sha256,

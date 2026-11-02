@@ -1242,14 +1242,15 @@
       "kind": "IMPLEMENTATION_PATTERN",
       "status": "SOURCE_REVIEWED",
       "domains": [
-        "entity",
-        "lifecycle",
         "particle",
-        "effects",
-        "visual",
-        "client-feedback",
-        "teleport",
-        "spatial"
+        "particles",
+        "rider",
+        "riders",
+        "emitter",
+        "emitters",
+        "aura",
+        "auras",
+        "attached-particle"
       ],
       "sourceSignals": [
         "bp-rp-player-particle-attachment"
@@ -1260,9 +1261,9 @@
         "same selected-artifact RP client_entity scripts.animate → controller state → RP animation particle_effect alias → exact RP particle definition",
         "separately inspect source-owned addRider/getRiders/cleanup/teleport and client renderer before any runtime claim"
       ],
-      "negativeControl": "An RP particle without the BP player/family match, an ordinary entity mount, generic spawnParticle call, unattached/ambiguous RP pack or unknown controller alias is not evidence of a player-bound aura. A source-chain match is not verified rider placement or render success.",
+      "negativeControl": "A generic actor, entity, lifecycle, teleport or visual question without explicit particle/rider focus must not select this publisher method, even if the same file contains an authored BP/RP chain. A generic particle call, ordinary mount, missing/unattached/ambiguous source or an upstream Probe PASS is not rider-placement or cleanup proof.",
       "versionApplicability": "UPSTREAM_P63_EDUCATION_26_32_2_8_0_FEET_ONLY_SCOPED_FAIL_BLOCKED_PARTIAL_NOT_GENERALIZED",
-      "prohibits": "Never mark a selected-map bug, rider seat, emitter visibility, off-state clearing, reconnect/dimension restoration, pet displacement or server/client applicability PROVEN from static sources or an upstream Probe report. Check only exact selected-map design and actual runtime evidence."
+      "prohibits": "Never infer attachment, actual addRider, seat occupancy, client rendering, finite emitter shutdown, cross-dimension/reconnect cleanup or a BUG from a source chain or external Probe report. A source-only question is relevant only with a particle/rider-specific audit concern."
     }
   ],
   "deferredSources": [],

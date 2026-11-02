@@ -211,7 +211,11 @@ Within Lazy-Developer:
 - `engine/packages/orchestrator/src/workflow/resource-context.ts` remains
   the **one consumer** for selected-source-matched developer methods and
   scoped clean examples; `map-audit-model-task.ts` is its existing
-  model-facing handoff. No new audit entrypoint or checkpoint exists.
+  model-facing handoff, including selected-artifact source evidence without
+  an optional Intent subject. `reporting/map-audit-brief.ts` shows
+  exact matching selected-source line/column or JSON Pointer navigation.
+  Every such hint stays REFERENCE, not the issue admission/proof owner.
+  No new audit entrypoint or checkpoint exists.
 - `engine/knowledge/` remains the independent authority for
   version-scoped Minecraft facts; publisher examples alone are insufficient
   for promotion.

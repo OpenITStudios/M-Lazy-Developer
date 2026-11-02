@@ -6353,10 +6353,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "231261dd2ff939f7ce2b32a2f715212a79c0b4aa"
+        "sourceBlobSha": "9235db187c16c911ab70cf37651e70b1814dd711"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\n2026-11-02 Developer ZIP evidence-to-report integration: Source-only fallback authoring: selected-artifact evidence may retrieve reference before Gameplay Intent node is classified; current Knowledge remains ungrounded and absent evidence abstains. Authored only; NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -7861,10 +7861,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "e6d34895556bd0df514c9c1773c657817209bdf3"
+        "sourceBlobSha": "361c815e1ebf311bf7673e42cc6b819b99728bab"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.\n2026-11-02 source-guard integration: Authored exact subscription-callee/guard source location regression excluding unrelated callback-body and cross-artifact references; execution deferred. NOT EXECUTED.\n2026-11-02 authored BP/RP particle source-bridge acceptance: Authored source-bound Resource Context admission test: exact six-source candidate and JSON-pointer domains, rejecting unrelated/forged/partial sources. No executable test performed. NOT EXECUTED.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 28 it/test call sites and 71 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\nOne source-backed Analytics/Daigon exact ScriptEvent reference regression was authored in the existing suite and re-pinned to its new Git blob. Execution, TypeScript/Vitest and Minecraft outcomes remain deferred.\n2026-11-02 source-guard integration: Authored exact subscription-callee/guard source location regression excluding unrelated callback-body and cross-artifact references; execution deferred. NOT EXECUTED.\n2026-11-02 authored BP/RP particle source-bridge acceptance: Authored source-bound Resource Context admission test: exact six-source candidate and JSON-pointer domains, rejecting unrelated/forged/partial sources. No executable test performed. NOT EXECUTED.\n2026-11-02 Developer ZIP evidence-to-report integration: Source-typed particle reference authoring: narrow particle domain, reject generic entity/lifecycle/teleport, and preserve exact selected JSON Pointer provenance. Authored only; NOT EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

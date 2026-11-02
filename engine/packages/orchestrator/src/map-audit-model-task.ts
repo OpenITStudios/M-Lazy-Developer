@@ -2027,14 +2027,19 @@ export function deriveAuditModelTaskPackets(input: {
               ? {}
               : { edition: input.knowledgeEdition }),
           });
-    // This entire enrichment is advisory. When there is no selected-source
-    // developer selector or grounded subject, do not tokenize, traverse every
-    // authored node, or rebuild manifest witnesses for each of thousands of
-    // unrelated proof tasks. Canonical Knowledge/proof tasks stay unchanged.
+    // Developer source methods are advisory: a task with a *current selected
+    // artifact's concrete evidence* can have no Gameplay Intent subject yet.
+    // Previously that source was invisible to the same canonical reference
+    // consumer because its optional Knowledge lookup was GOAL_ONLY/absent.
+    // Do not invent a subject or weaken Knowledge provenance to bridge it.
+    const scopedSourceLocators = unique(packet.evidenceContext.flatMap(item =>
+      item.kind === "selected-artifact-evidence" && item.locator
+        ? [item.locator] : []));
     let reference: CompiledDeveloperPracticeReferenceContext | undefined;
     if (selectDeveloperReference !== undefined &&
-        knowledgeLookup?.grounding === "SELECTED_ARTIFACT") {
-      const subjectIds = new Set(knowledgeLookup.matchedSubjectIds);
+        (knowledgeLookup?.grounding === "SELECTED_ARTIFACT" ||
+         scopedSourceLocators.length > 0)) {
+      const subjectIds = new Set(knowledgeLookup?.matchedSubjectIds ?? []);
       const authoredKinds = [...subjectIds]
         .flatMap(id => sourceNodePositionsById.get(id) ?? [])
         .sort((left, right) => left - right)
@@ -2046,20 +2051,17 @@ export function deriveAuditModelTaskPackets(input: {
         // Keep canonical hyphenated domain IDs untouched. Maintain original
         // full-array kind order, including any duplicated source subject ID.
         ...packet.knowledgeContext.map(item => item.domain.toLowerCase()),
-        ...[knowledgeLookup.query, ...authoredKinds]
+        ...[knowledgeLookup?.query ?? packet.decisionNeeded, ...authoredKinds]
           .join(" ").toLowerCase().split(/[^a-z0-9]+/g),
       ].filter(Boolean))];
       const versionQuestion = domains.some(term => [
         "manifest", "version", "versions", "edition", "compatibility",
         "compatible", "experiments", "experiment", "api",
       ].includes(term));
-      // A causal task can carry a precise authored guard/effect site when
-      // its broader Gameplay Intent subject only names the source file.
-      const scopedSourceLocators = unique(packet.evidenceContext.flatMap(item =>
-        item.kind === "selected-artifact-evidence" && item.locator
-          ? [item.locator] : []));
+      // A causal task can carry an exact authored guard/effect site even
+      // when its Gameplay Intent subject is not yet classified.
       const candidateSourceLocators = unique([
-        ...(knowledgeLookup.sourceLocators ?? []),
+        ...(knowledgeLookup?.sourceLocators ?? []),
         ...scopedSourceLocators,
       ]);
       const preciseSourceSite = (locator: string): boolean =>

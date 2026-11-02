@@ -1599,7 +1599,7 @@ describe("source-first Daigon export investigation reference", () => {
         ...data.patterns[0]!,
         id: "developer.hint.particles.player-rider-bp-rp",
         sourceId: "src.bedrock-player-attached-particles",
-        domains: ["particle", "entity"],
+        domains: ["particle", "particles", "rider", "aura", "emitter"],
         sourceSignals: ["bp-rp-player-particle-attachment"],
       }],
     };
@@ -1620,6 +1620,12 @@ describe("source-first Daigon export investigation reference", () => {
     expect(query()?.items.map(item => item.patternId))
       .toEqual(["developer.hint.particles.player-rider-bp-rp"]);
     expect(query()?.items[0]?.matchingEvidenceIds).toEqual([attachment.id]);
+    expect(query()?.items[0]?.matchingSourceLocators).toEqual([
+      "resource_packs/demo/entity/glow.json#/minecraft:client_entity/description/scripts/animate",
+    ]);
+    expect(query()?.items[0]?.matchingSourcePaths).toEqual([
+      "resource_packs/demo/entity/glow.json",
+    ]);
     expect(query(attachment, [
       "resource_packs/demo/animations/glow.json#/animations/animation.sample.emit/particle_effects",
     ])?.items).toHaveLength(1);
@@ -1633,6 +1639,19 @@ describe("source-first Daigon export investigation reference", () => {
       })),
     })?.items).toEqual([]);
     expect(query({ ...attachment, sources: links.slice(0, 5) })?.items).toEqual([]);
+    // Generic entity/cleanup questions do not silently receive a particle
+    // publisher method merely because the same authored file contains it.
+    expect(compileDeveloperPracticeReferenceContext({
+      data: particleData,
+      semanticIr: {
+        schemaVersion: 1 as const,
+        execution: { regions: [], edges: [], playerParticleAttachments: [attachment] },
+        state: { surfaces: [], operations: [], authorityBindings: [] },
+        temporal: { relations: [] },
+      },
+      selectedArtifactId: "selected", domains: ["entity", "lifecycle", "teleport"],
+      sourceLocators: ["resource_packs/demo/entity/glow.json"],
+    })?.items).toEqual([]);
     expect(query({
       ...attachment, proof:
         "EXTERNAL_RUNTIME_PROOF" as typeof attachment.proof,

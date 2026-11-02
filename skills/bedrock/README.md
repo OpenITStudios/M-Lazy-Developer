@@ -39,7 +39,15 @@ chain. Five methods remain developer workflow references. The particle method
 is eligible ONLY when the selected world explicitly lists the BP and RP and
 a uniquely matched player seat/family → BP actor → RP client →
 controller/animation timeline → particle definition is source-witnessed.
-Static linkage does not establish an active rider, rendering, or cleanup. For both export IDs, only a first strict
+Static linkage does not establish an active rider, rendering, or cleanup.
+The particle-specific source reference requires an explicit particle/rider/
+aura/emitter question in addition to the authored source chain; ordinary
+entity, teleport and lifecycle questions abstain even on that same file.
+Model tasks with actual selected-artifact source evidence can receive
+advisory source references before Gameplay Intent has classified a
+subject; Knowledge/proof status is unchanged. The report presents bounded
+selected-map source locators, never external ZIP paths as current map proof.
+For both export IDs, only a first strict
 source-owned event ID rejection (`!== return`) or positive conditional
 selection (`===` with authored work), resolved to a literal/immutable local/
 uniquely imported value, may select questions at an exact `.subscribe` or

@@ -402,7 +402,10 @@ A bounded operator decision should select **at most two** relevant patterns
 only when the selected-artifact evidence raises a specific question.
 Both the audit model-task path and the generic Context Compiler require an
 explicit selected-map source locator; without it the reference selector
-abstains instead of harvesting unrelated Semantic IR sites. A pattern whose
+abstains instead of harvesting unrelated Semantic IR sites. The model task
+may use an existing selected-artifact receipt directly when no Gameplay
+Intent node has been classified yet; this does not manufacture a subject,
+upgrade a Knowledge search, or permit ungrounded report findings. A pattern whose
 source lacks a pinned interpretation methodology also abstains. The CLI uses this vetted snapshot by default; API callers continue to opt
 in explicitly. The legacy `--developer-practice` flag remains accepted
 without changing behavior. Canonical Knowledge and selected-map evidence
@@ -467,10 +470,12 @@ The request must include:
 - the operator's precise question domain(s), e.g. `state` +
   `persistence`, `spatial`, or `scheduler`.
 - exact selected-map source locations: the model-task selector obtains these
-  from its already-grounded Knowledge lookup; the generic Context Compiler
-  reuses relevant selected-artifact Intent evidence/subject IDs unless the
-  caller explicitly provides a narrower source-locator set. No unscoped
-  whole-map reference retrieval occurs.
+  from its already-grounded Knowledge lookup **or the current task's own
+  selected-artifact evidence context when no Intent subject exists**; it
+  prioritizes a causal task's precise scoped source site. The generic Context
+  Compiler uses explicit selected-artifact references. No unscoped
+  whole-map reference retrieval, external report selection or inferred
+  Knowledge grounding occurs.
 
 The selector derives `SelectedArtifactReferenceSignal` from exact
 Semantic IR state operations, world effects, scheduler edges, parsed
@@ -545,7 +550,11 @@ typed signal+domain matches, and a
 default maximum of **two** reference patterns. It returns `REFERENCE`
 context with the original question, sample relation hypotheses,
 `negativeControl`, `prohibits`, matching selected-evidence IDs,
-source-file SHA, and source-archive SHA. A mismatch, absent typed IR source proof, workflow-only source or unknown
+up to eight distinct selected-map source locators (code `path:line:column`
+or BP/RP `path#/json/pointer`), the omitted-locator count if applicable,
+source-file SHA, and source-archive SHA. The existing read-only audit brief
+shows the matched map locations separately from upstream ZIP examples.
+A mismatch, absent typed IR source proof, workflow-only source or unknown
 source alias results in abstention.
 Selecting a hint **cannot** change Game Design closure or issue disposition.
 The CLI supplies the pinned curated snapshot to `runSelectedMapAudit()`

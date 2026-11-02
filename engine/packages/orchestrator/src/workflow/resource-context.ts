@@ -629,6 +629,13 @@ export interface CompiledDeveloperPracticeReferenceContext {
     readonly matchingEvidenceIds: readonly string[];
     readonly matchingSourcePaths: readonly string[];
     readonly matchingSignals: readonly string[];
+    /** Exact typed selected-source witness locations. For file-backed
+     * authored data use a JSON pointer, for code use line:column.
+     * These are navigation only: not selected-map gameplay or test proof.
+     */
+    readonly matchingSourceLocators?: readonly string[];
+    /** Additional distinct typed sites excluded by the output budget. */
+    readonly omittedMatchingSourceLocators?: number;
     /** Ordered, SHA-pinned developer method; selected ONLY with exact
      * current-map typed witness and never a new map design/proof rule.
      */
@@ -912,6 +919,18 @@ function compileDeveloperPracticeReferenceContextWithSignals(
     // The current ZIP intake is methodology-led. Legacy hint-only or
     // workflow-only records must not become map interpretation advice.
     if (!eligibleMethod || method === undefined) return [];
+    // An IR witness is more useful than a pattern ID to a map developer.
+    // Preserve its exact selected-artifact source site, never fabricate
+    // source locations from external ZIP report paths or inquiry text.
+    const matchingSourceLocators = sorted(matches.map(item =>
+      item.jsonPointer !== undefined
+        ? item.sourcePath + "#" + item.jsonPointer
+        : item.range?.lineStart !== undefined
+          ? item.sourcePath + ":" + item.range.lineStart +
+            (item.range.columnStart === undefined
+              ? "" : ":" + item.range.columnStart)
+          : item.sourcePath
+    ));
     const ownedModuleDirectories = new Set((data.codeInventory?.codeModules ?? [])
       .filter(item => item.ownerSkill === source.id &&
         item.usage === "SOURCE_IMPLEMENTATION_REFERENCE" &&
@@ -960,6 +979,10 @@ function compileDeveloperPracticeReferenceContextWithSignals(
       matchingEvidenceIds: sorted(matches.map(item => item.evidenceId)),
       matchingSourcePaths: sorted(matches.map(item => item.sourcePath)),
       matchingSignals: sorted(matches.map(item => item.signal)),
+      matchingSourceLocators: matchingSourceLocators.slice(0, 8),
+      ...(matchingSourceLocators.length <= 8 ? {} : {
+        omittedMatchingSourceLocators: matchingSourceLocators.length - 8,
+      }),
       ...(eligibleMethod && method !== undefined ? {
         methodology: {
           applicability: "MAP_SOURCE_INTERPRETATION" as const,
