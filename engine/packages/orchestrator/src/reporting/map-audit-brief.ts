@@ -18,6 +18,11 @@ import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import type { ReadyAuditCandidateGroup } from "../map-audit-candidate-grouping.js";
 import type { AuditValidationTestGroup } from "../map-audit-validation-plan.js";
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
+import {
+  scenarioCrossPhaseReviewStages,
+  type GameplayAuditScenarioKind,
+  type GameplayFlowStage,
+} from "../../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
 
 
 /**
@@ -64,6 +69,117 @@ function authoredUiMessageRoutes(model: GameplayIntentModel): readonly {
  * issue status and audit obligations retain distinct internal semantics.
  * Canonical V2 and detailed technical evidence are unchanged by this view.
  */
+
+/**
+ * Human-only grouping of the existing selected-source Scenario Graph, QA-ID
+ * decisions and feature evidence. A preset question or co-placed feature is
+ * NOT proof of phase entry/exit, chronology, execution or whole-stage PASS.
+ * Cross-phase routing remains owned by the existing diagnostic preset.
+ */
+function formatSourceBoundGameplayFlowReview(
+  report: MapAuditOutputV2,
+  intent: GameplayIntentModel,
+): readonly string[] {
+  type Stage = Exclude<GameplayFlowStage, "FULL_JOURNEY">;
+  const phases: readonly {stage: Stage; group: string; steps: string}[] = [
+    {stage: "ENTRY_JOIN", group: "A. Entry / Waiting Lobby",
+      steps: "Connect -> initial spawn -> main lobby -> arena selection -> waiting lobby"},
+    {stage: "READY_START", group: "B. Match Start",
+      steps: "Team/role -> ready conditions -> countdown/cancellation"},
+    {stage: "SETUP", group: "B. Match Start",
+      steps: "Arena reservation/readiness -> teleport -> kit/world setup -> start commit"},
+    {stage: "ACTIVE_GAMEPLAY", group: "C. Active Gameplay",
+      steps: "Preparation -> permitted input, combat, building or interaction"},
+    {stage: "PROGRESSION", group: "C. Active Gameplay",
+      steps: "Objective -> wave/level/checkpoint -> LIVE score and feedback"},
+    {stage: "TERMINAL", group: "D. Match Completion",
+      steps: "Win/lose/draw/timeout -> FINAL score -> reward -> result UI"},
+    {stage: "CLEANUP_REPLAY", group: "E. Post-Match",
+      steps: "Cancel pending work -> cleanup/reset -> return lobby -> replay"},
+    {stage: "RECOVERY", group: "F. Cross-Phase Recovery",
+      steps: "Disconnect/reconnect, death/respawn, reload, abort, session repair"},
+  ];
+  const evidence = new Map(intent.evidence
+    .filter(item => item.scope === "selected-artifact")
+    .map(item => [item.id, item] as const));
+  const graphScenarios = report.gameplayStructure?.scenarios ?? [];
+  const presets = graphScenarios.filter(item => item.id.startsWith("preset:"));
+  const sourceFeatures = (report.gameplayStructure?.features ?? [])
+    .filter(feature => feature.grounding === "SOURCE_EVIDENCED" &&
+      feature.sourceEvidenceIds.some(id => evidence.has(id)));
+  const checks = report.qaCoverage?.checks ?? [];
+  const out: string[] = [
+    "",
+    "## Player Journey / Flow-Based QA (SOURCE ROUTING; NOT PLAYTEST)",
+    "World/pack initialization precedes player entry under LOAD/DISCOVERY. " +
+      "These are optional, map-evidenced subphases within the existing eight " +
+      "flow stages, NOT mandatory new runtime states.",
+  ];
+  for (const phase of phases) {
+    const primary = presets.filter(s => s.gameplayStage === phase.stage);
+    const cross = presets.filter(s =>
+      s.gameplayStage !== phase.stage &&
+      scenarioCrossPhaseReviewStages(
+        s.label as GameplayAuditScenarioKind).includes(phase.stage));
+    const selected = [...primary, ...cross];
+    const ids = new Set(selected.map(s => s.id));
+    // Scenario co-placement is an investigation lead, not a causal link.
+    const contexts = sourceFeatures.filter(feature =>
+      feature.scenarioIds.some(id => ids.has(id)));
+    const locators = [...new Set(contexts.flatMap(feature =>
+      feature.sourceEvidenceIds.flatMap(id =>
+        evidence.get(id)?.locator ? [evidence.get(id)!.locator] : [])))].sort();
+    const qa = checks.filter(check => ids.has(check.scenarioId));
+    const violations = qa.filter(check =>
+      check.status === "QA_VIOLATION_PROVEN").length;
+    out.push(
+      "- **" + phase.group + " [" + phase.stage + "]**: " + phase.steps + ".",
+      "  Existing questions: " + primary.length + " primary / " + cross.length +
+        " cross-phase; selected-source feature contexts " + contexts.length +
+        "; linked QA ID(s) " + qa.length +
+        (violations ? "; exact PROVEN QA violations " + violations : "") +
+        ". Counts do not mean PASS.",
+    );
+    out.push(locators.length
+      ? "  Source contexts (NOT phase proof): " +
+        locators.slice(0, 2).join("; ") +
+        (locators.length > 2 ? "; +" + (locators.length - 2) + " others." : ".")
+      : "  Exact source/phase binding UNRESOLVED; no witness does not mean NOT_APPLICABLE.");
+  }
+  const journeys = report.gameplayStructure?.gameplayJourneyCandidates ?? [];
+  const transitions = new Set(journeys
+    .flatMap(j => j.interpretation?.relationships ?? [])
+    .filter(r => r.semanticRole === "STATE_TRANSITION_CANDIDATE" ||
+      r.semanticRole === "RESET_OR_RECOVERY_CANDIDATE")
+    .map(r => r.relationId));
+  const unresolvedJoins = journeys.filter(j =>
+    j.boundary === "SOURCE_JOIN_UNPROVEN" ||
+    j.interpretation?.sourceJoinGap !== undefined);
+  const unusual = graphScenarios.filter(s => !s.id.startsWith("preset:") &&
+    !phases.some(p => p.stage === s.gameplayStage));
+  const unplaced = sourceFeatures.filter(f =>
+    !f.scenarioIds.some(id => presets.some(s => s.id === id)));
+  const universalIds = checks.filter(c =>
+    c.scenarioId === "preset:journey:full");
+  out.push(
+    "Universal full-journey QA IDs: " + universalIds.length +
+      " shared requirement(s), counted once, NOT a per-stage PASS.",
+    "Directed source transition/reset CANDIDATES: " + transitions.size +
+      "; unproven cross-source joins: " + unresolvedJoins.length +
+      ". Source order is not chronological player play.",
+    "Noncanonical source-defined stages: " + unusual.length +
+      "; feature contexts without mapped preset: " + unplaced.length +
+      ". Do not force unknown behaviors into a named phase.",
+    "Distinguish LIVE score, FINAL result, reward commit, result presentation, " +
+      "and post-result cleanup/return/replay. Each requires its own guard, owner, " +
+      "failed/interrupted path and session-generation scope when applicable.",
+    "Unknown stages, mechanics and transitions remain explicit proof gaps; " +
+      "this read-only view cannot create findings, N/A verdicts or QA PASS.",
+    "",
+  );
+  return out;
+}
+
 export function formatSelectedMapAuditFinalReport(input: {
   readonly report: MapAuditOutputV2;
   readonly intent: GameplayIntentModel;
@@ -118,6 +234,7 @@ export function formatSelectedMapAuditFinalReport(input: {
     "**Map:** " + concise(report.evidenceScope.selectedArtifact),
     "**Versi:** " + concise(report.mapVersion), "",
   ];
+  out.push(...formatSourceBoundGameplayFlowReview(report, intent));
   // Derived QA IDs remain pending until requirement-specific PROVE evidence.
   const qa = report.qaCoverage;
   if (qa) {
@@ -740,6 +857,7 @@ export function formatSelectedMapAuditBrief(input: {
         : "See independently grounded win/lose conditions; runtime NOT proven."),
     "",
   ];
+  out.push(...formatSourceBoundGameplayFlowReview(report, intent));
   const playerSession = input.playerSessionLifecycle;
   if (playerSession && (
       playerSession.playerJoinSubscriptions +

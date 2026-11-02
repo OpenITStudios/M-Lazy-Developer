@@ -606,6 +606,12 @@ ENTRY / JOIN
 ```
 
 Domain analyzers are evidence providers attached to the relevant player-flow stage.
+The read-only human report groups the same canonical evidence under Entry /
+Waiting Lobby, Match Start, Active Gameplay (LIVE scoring), Match Completion
+(FINAL score, rewards and result UI), Post-Match (return/replay) and cross-phase
+Recovery. This is navigation, NOT new game states, source proof or another
+runner. Unbound phases remain unresolved, not automatically safe or N/A.
+See [Flow-based operator navigation](../analysis/bug-finding-coverage.md#flow-based-operator-navigation-derived-not-another-test-catalog).
 
 ## Issue types
 

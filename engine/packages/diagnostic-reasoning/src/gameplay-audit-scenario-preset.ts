@@ -344,6 +344,57 @@ function scenario(
   };
 }
 
+
+/**
+ * Extra phases in which an ALREADY SELECTED scenario needs investigation.
+ * Read-only navigation, not a new selection rule, gameplay proof or second
+ * primary flowStage. Unknown/non-preset labels have no secondary phase.
+ */
+export function scenarioCrossPhaseReviewStages(
+  kind: GameplayAuditScenarioKind,
+): readonly Exclude<GameplayFlowStage, "FULL_JOURNEY">[] {
+  switch (kind) {
+    case "solo":
+    case "two-player":
+      return ["READY_START", "ACTIVE_GAMEPLAY", "TERMINAL", "CLEANUP_REPLAY"];
+    case "max-party":
+      return ["READY_START", "PROGRESSION", "TERMINAL"];
+    case "party-capacity-plus-one":
+    case "arena-capacity-plus-one":
+      return ["ENTRY_JOIN"];
+    case "multi-arena-parallel":
+      return ["ENTRY_JOIN", "ACTIVE_GAMEPLAY", "PROGRESSION", "TERMINAL", "CLEANUP_REPLAY"];
+    case "arena-replica-integrity":
+      return ["READY_START", "CLEANUP_REPLAY"];
+    case "disconnect-reconnect":
+      return ["ENTRY_JOIN", "READY_START", "ACTIVE_GAMEPLAY", "TERMINAL", "CLEANUP_REPLAY"];
+    case "reload-recovery":
+      return ["SETUP", "ACTIVE_GAMEPLAY", "TERMINAL", "CLEANUP_REPLAY"];
+    case "deferred-ownership":
+      return ["READY_START", "ACTIVE_GAMEPLAY", "PROGRESSION", "TERMINAL", "CLEANUP_REPLAY"];
+    case "terminal-collision":
+      return ["PROGRESSION", "CLEANUP_REPLAY"];
+    case "transaction-atomicity":
+      return ["ACTIVE_GAMEPLAY", "TERMINAL"];
+    case "simulation-distance":
+      return ["PROGRESSION"];
+    case "progression-wave-integrity":
+      return ["ACTIVE_GAMEPLAY", "TERMINAL"];
+    case "information-correctness":
+      return ["ENTRY_JOIN", "READY_START", "ACTIVE_GAMEPLAY", "TERMINAL", "CLEANUP_REPLAY"];
+    case "player-capability-integrity":
+      return ["SETUP", "CLEANUP_REPLAY"];
+    case "world-rule-authority":
+      return ["ACTIVE_GAMEPLAY", "CLEANUP_REPLAY"];
+    case "spatial-containment":
+      return ["SETUP"];
+    case "repeated-run":
+      return ["READY_START", "SETUP", "ACTIVE_GAMEPLAY"];
+    default:
+      return [];
+  }
+}
+
 export function buildGameplayAuditScenarioPreset(
   input: GameplayAuditScenarioPresetInput,
 ): GameplayAuditScenarioPreset {
@@ -410,6 +461,12 @@ export function buildGameplayAuditScenarioPreset(
         "Does cleanup restore enough baseline state for another run?",
         "Are the spawn route, gameplay actions and access permissions reachable?",
         "Does player-facing feedback reflect the actual state and terminal result?",
+        "Do connection, initial spawn, main lobby, arena selection and waiting membership differ correctly from respawn and return-to-lobby?",
+        "Where authored, do waiting-lobby join pads, capacity, leave, ready set and countdown cancellation reconcile before start?",
+        "Can arena/setup readiness, teleport and loadout complete before gameplay starts, including leave during countdown?",
+        "Are LIVE score events distinct from FINAL score, winner selection, one-shot reward settlement and result presentation?",
+        "After end/abort, are pending callbacks, entities, world changes and ownership settled before return-to-lobby and arena reuse?",
+        "Are reconnect, reload, parallel arenas and stale callbacks challenged at the phase where their ownership changes?",
         // Existing canonical Universal QA source questions; never PASS claims.
         "U01: Does artifact identity, manifest, edition and source dependency graph match the selected world?",
         "U02: Is authored goal, action and success/failure route grounded in current source evidence?",

@@ -144,6 +144,39 @@ applicable technical checks
 
 Technical domains are invoked where they affect gameplay; they are not separate audit branches.
 
+
+### Flow-based operator navigation (derived, not another test catalog)
+
+The eight canonical player-flow stages stay authoritative. The existing
+Map Audit human brief/final report group their scenario/source/QA navigation
+for readability; they do **not** create new game states, test lanes, proof
+statuses, or map-specific gameplay facts.
+
+| Operator group | Canonical stages | Main coverage questions |
+| --- | --- | --- |
+| Entry / Waiting Lobby | `ENTRY_JOIN` | Connection vs respawn, main lobby, arena admission, waiting membership/leave |
+| Match Start | `READY_START`, `SETUP` | Roles, ready/countdown cancellation, arena readiness, start commit |
+| Active Gameplay | `ACTIVE_GAMEPLAY`, `PROGRESSION` | Permitted mechanics, objectives/waves, LIVE score and UI |
+| Match Completion | `TERMINAL` | Simultaneous end triggers, FINAL result, one-shot reward and result UI |
+| Post-Match | `CLEANUP_REPLAY` | Callback cancellation, reset, return lobby, reusable arena |
+| Cross-Phase Recovery | `RECOVERY` | Disconnect, death/respawn, reload, abort across owned phases |
+
+The primary `GameplayAuditScenario.flowStage` is unchanged. The existing
+diagnostic scenario preset supplies read-only cross-phase relevance for
+**already selected** scenarios via `scenarioCrossPhaseReviewStages()`.
+This never activates a new mechanic, duplicates an executable test or
+establishes gameplay success. Source-defined/nonstandard stages and unplaced
+features must remain visible instead of being misclassified. A generic stage
+with no exact source witness is **UNRESOLVED**, not automatically `NOT_APPLICABLE`.
+
+Score during gameplay, terminal result eligibility, one-shot reward commit,
+result presentation and subsequent cleanup/return are separate lifecycle
+operations even if they share state writers. Require transition trigger,
+guard, owner/session generation, success and failure exits, reset/persist
+contract and recovery path. Source-directed relations, graph co-placement,
+scenario counts and QA ID routing are **not** proof of chronological play or
+QA PASS; canonical PROVE/obligation/report rules remain unchanged.
+
 ## Vital-domain coverage
 
 Project the canonical audit into exactly eight vital domains:
