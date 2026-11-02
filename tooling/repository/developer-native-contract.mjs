@@ -203,11 +203,14 @@ export function readProbeExampleIndex(probe) {
     typeof lock.commit === "string" && /^[a-f0-9]{40}$/.test(lock.commit),
     "Probe source lock must name an exact skill release and commit.");
   const names = new Set();
+  // Preserve negative and incomplete upstream index statuses.
+  const validStatus = value => value === undefined || value === null ||
+    ["PASS", "FAIL", "pending", "BLOCKED", "PARTIAL"].includes(value);
   const entries = document.examples.map(example => {
     assert(typeof example.id === "string" && /^[A-Z]\d{1,3}$/.test(example.id) &&
       !names.has(example.id) &&
       validName(example.skill) && Object.hasOwn(lock.skills ?? {}, example.skill) &&
-      ["PASS", "pending"].includes(example.status) &&
+      example.status != null && validStatus(example.status) &&
       Array.isArray(example.probeIds) &&
       example.probeIds.every(id => typeof id === "string" && /^[A-Za-z0-9-]+$/.test(id)) &&
       Array.isArray(example.sourcePaths) &&
@@ -222,9 +225,7 @@ export function readProbeExampleIndex(probe) {
     }
     // These are independent status dimensions. A Node PASS or index PASS
     // does not imply a Minecraft-engine PASS (e.g. upstream E3).
-    const status = value => value === undefined || value === null ||
-      ["PASS", "FAIL", "pending", "BLOCKED", "PARTIAL"].includes(value);
-    assert(status(example.nodeStatus) && status(example.engineStatus),
+    assert(validStatus(example.nodeStatus) && validStatus(example.engineStatus),
       "Invalid per-surface probe status: " + example.id);
     return {
       id: example.id, skill: example.skill,

@@ -200,6 +200,78 @@ function reviewedReportRecords(metadata) {
 const hasChanges = delta => delta !== null && delta !== undefined &&
   ["added", "changed", "removed"].some(key => (delta[key]?.length ?? 0) > 0);
 
+// Bounded current vs curated upstream index delta. Original example status,
+// Node status and engine status are independent source claims, never map PASS.
+function probeExampleDelta(metadata, index) {
+  const old = metadata.probeExamples;
+  const canon = item => ({
+    id:item.id,skill:item.skill,status:item.status,
+    nodeStatus:item.nodeStatus ?? null,engineStatus:item.engineStatus ?? null,
+    probeIds:item.probeIds ?? [],report:item.report ?? null,
+    sourcePath:item.sourcePath ?? item.sourcePaths?.[0] ?? null,
+  });
+  const hash = item => sha(Buffer.from(JSON.stringify(canon(item))));
+  const before = old?.entries ?? [];
+  const prev = new Map(before.map(item=>[item.id,item]));
+  const next = new Map(index.entries.map(item=>[item.id,item]));
+  const delta = compare(before.map(item=>({id:item.id,sha256:hash(item)})),
+    new Map(index.entries.map(item=>[item.id,hash(item)])),"id","sha256");
+  const statusTransitions = delta.changed.flatMap(id=>{
+    const a=prev.get(id),b=next.get(id);
+    if(!a||!b) return [];
+    const previous=[a.status,a.nodeStatus ?? null,a.engineStatus ?? null];
+    const candidate=[b.status,b.nodeStatus ?? null,b.engineStatus ?? null];
+    return JSON.stringify(previous)===JSON.stringify(candidate) ? [] : [{
+      id,previous:{status:previous[0],nodeStatus:previous[1],engineStatus:previous[2]},
+      candidate:{status:candidate[0],nodeStatus:candidate[1],engineStatus:candidate[2]},
+    }];
+  });
+  return {
+    ...delta,statusTransitions,
+    targetChanged:old?.target?.client!==index.target.client ||
+      old?.target?.engine!==index.target.engine,
+    oldTarget:old?.target ?? null,newTarget:index.target,
+    indexShaChanged:old?.indexSha256!==index.indexSha256,
+    proof:"UPSTREAM_PROBE_INDEX_DELTA_NOT_CURRENT_MAP_TEST",
+  };
+}
+
+// Probe-only source MUST be comparable to our pinned Developer baseline
+// when both claim the same release, even when the Probe ZIP validates itself.
+// A different declared release requires review, not forced equivalence.
+function probeDeveloperAlignment(metadata,native,lock,modules) {
+  const baselineOK=!!native &&
+    native.skillsArchiveSha256===metadata.sourceSnapshot?.archiveSha256 &&
+    native.probe?.archiveSha256===metadata.probeSnapshot?.archiveSha256;
+  const sameTag=baselineOK && native.skillsLock?.tag===lock.tag;
+  const expected=native?.skillsLock?.skills ?? {},actual=lock.skills ?? {};
+  const names=new Set([...Object.keys(expected),...Object.keys(actual)]);
+  const mismatchedSkills=sameTag ? [...names]
+    .filter(name=>expected[name]!==actual[name]).sort() : [];
+  const sourceFiles=new Map((metadata.codeInventory?.codeModules ?? [])
+    .filter(item=>item.usage==="SOURCE_IMPLEMENTATION_REFERENCE" &&
+      /^modules\/[^/]+\/[^/]+\.ts$/.test(item.path) &&
+      /^[a-f0-9]{64}$/.test(item.sha256))
+    .map(item=>["packs/BP/scripts/"+item.path,item.sha256]));
+  const comparableFiles=Object.values(modules.modules ?? {})
+    .flatMap(item=>Object.entries(item.files ?? {}))
+    .filter(([path])=>sourceFiles.has(path));
+  const mismatchedModules=sameTag ? comparableFiles
+    .filter(([path,digest])=>sourceFiles.get(path)!==digest)
+    .map(([path])=>path).sort():[];
+  const status=!native?"BASELINE_UNAVAILABLE":
+    !baselineOK?"BLOCKED_REFERENCE_BASELINE":
+    !sameTag?"DIFFERENT_VERSIONS_REVIEW_REQUIRED":
+    mismatchedSkills.length||mismatchedModules.length
+      ?"BLOCKED_SOURCE_INTEGRITY":"SAME_TAG_SOURCE_IDENTITIES_MATCH";
+  return {
+    status,activeTag:native?.skillsLock?.tag ?? null,probeTag:lock.tag ?? null,
+    mismatchedSkills,mismatchedModules,
+    checkedMatchedModuleFiles:sameTag?comparableFiles.length:0,
+    proof:"SOURCE_LOCK_COMPARISON_NOT_SELECTED_MAP_EXECUTION",
+  };
+}
+
 const classify = {
   skills: /^skills\/[^/]+\/SKILL\.md$/,
   modules: /^modules\/[^/]+\/[^/]+\.ts$/,
@@ -215,6 +287,16 @@ async function main() {
   if (metadata.authority !== "REFERENCE" ||
       metadata.usagePolicy !== "CONTEXT_HINT_ONLY_NOT_GAME_DESIGN_OR_DEFECT_PROOF") {
     throw new Error("Refusing comparison against a non-reference metadata owner.");
+  }
+  let priorNative;
+  try {
+    priorNative = JSON.parse(await readFile("skills/bedrock/source-lock.json", "utf8"));
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  if (priorNative && (priorNative.schemaVersion !== 1 ||
+      priorNative.authority !== "REFERENCE_NOT_EXECUTABLE")) {
+    throw new Error("Invalid native Bedrock reference lock.");
   }
   const [skills, probe] = await Promise.all([
     args["--skills-zip"] ? openArchive(args["--skills-zip"]) : Promise.resolve(null),
@@ -257,15 +339,21 @@ async function main() {
     const probeLock = probe.readJson("skills-lock.json");
     const probeModules = probe.readJson("modules-lock.json");
     const probeIntegrity = verifyProbeLock(probe, probeLock, probeModules);
+    const alignment = probeDeveloperAlignment(metadata,priorNative,probeLock,probeModules);
+    const exampleDelta = probeExampleDelta(metadata,index);
     const identityChanged =
       metadata.probeSnapshot?.archiveSha256 !== probe.archiveSha256 ||
       metadata.probeSnapshot?.observedSkillsLockTag !== index.sourceSkillLockTag ||
       metadata.probeSnapshot?.observedSkillsLockCommit !== index.sourceSkillLockCommit ||
       metadata.probeExamples?.indexSha256 !== index.indexSha256;
-    const probeStatus = probeIntegrity.status !== "LOCKS_MATCH_PACKAGED_FILES"
+    const probeStatus = probeIntegrity.status !== "LOCKS_MATCH_PACKAGED_FILES" ||
+        ["BLOCKED_SOURCE_INTEGRITY","BLOCKED_REFERENCE_BASELINE"].includes(alignment.status)
       ? "BLOCKED_SOURCE_INTEGRITY"
       : identityChanged || hasChanges(reportDelta) || hasChanges(packDelta) ||
-        hasChanges(toolDelta) ? "REVIEW_REQUIRED" : "NO_CHANGE";
+        hasChanges(toolDelta) || hasChanges(exampleDelta) ||
+        exampleDelta.indexShaChanged || exampleDelta.targetChanged ||
+        alignment.status !== "SAME_TAG_SOURCE_IDENTITIES_MATCH"
+      ? "REVIEW_REQUIRED" : "NO_CHANGE";
     const familyFor = path => {
       if (/\/p63-aura-/.test(path)) return "p63-aura-lifecycle";
       if (/\/p63-combined-/.test(path)) return "p63-combined";
@@ -287,7 +375,7 @@ async function main() {
       ...index,
       status: probeStatus,
       reportFiles,
-      reportDelta,
+      reportDelta, exampleDelta, alignment,
       sourceDeltas: {probePackSources: packDelta, probeTools: toolDelta},
       reviewedReportCount: reviewedReportRecords(metadata).length,
       probeIntegrity,
@@ -296,7 +384,12 @@ async function main() {
           probeStatus === "BLOCKED_SOURCE_INTEGRITY" ? "STOP_AND_INVESTIGATE_LOCK" :
           "REVIEW_CHANGED_PROBE_SOURCE_ONLY",
         candidateChanged: identityChanged || hasChanges(reportDelta) ||
-          hasChanges(packDelta) || hasChanges(toolDelta),
+          hasChanges(packDelta) || hasChanges(toolDelta) ||
+          hasChanges(exampleDelta) || exampleDelta.indexShaChanged ||
+          exampleDelta.targetChanged,
+        changedExamples: [...exampleDelta.added,...exampleDelta.changed,...exampleDelta.removed].sort(),
+        changedExampleStatuses: exampleDelta.statusTransitions,
+        targetChanged: exampleDelta.targetChanged,
         reportPaths: [...reportDelta.added, ...reportDelta.changed, ...reportDelta.removed].sort(),
         promotion: "SOURCE_AND_OUTCOME_REVIEW_REQUIRED_NO_AUTOMATIC_WRITE",
         sourceOnly: true,
@@ -377,24 +470,15 @@ async function main() {
     [...moduleAll].filter(([path]) => !/\.(?:test|spec)\.ts$/.test(path))));
   const moduleTestDelta = compare(before.unitTests ?? [], new Map(
     [...moduleAll].filter(([path]) => /\.(?:test|spec)\.ts$/.test(path))));
+  const currentProbeIndex = probe ? readProbeExampleIndex(probe) : null;
+  const exampleDelta = currentProbeIndex ? probeExampleDelta(metadata,currentProbeIndex) : null;
   const probeReports = probe ? compare(reviewedReportRecords(metadata),
     select(probe, classify.probeReports), "sourcePath", "sourceSha256") : null;
   const probePack = probe ? compare(before.probePackSources ?? [],
     select(probe, classify.probePack)) : null;
   const probeTools = probe ? compare(before.probeToolSources ?? [],
     select(probe, classify.probeTools)) : null;
-  // The native source lock lives inside the separate Bedrock skill domain.
-  // It is provenance only, not the internal .agents skill registry.
-  let priorNative;
-  try {
-    priorNative = JSON.parse(await readFile("skills/bedrock/source-lock.json", "utf8"));
-  } catch (error) {
-    if (error?.code !== "ENOENT") throw error;
-  }
-  if (priorNative && (priorNative.schemaVersion !== 1 ||
-      priorNative.authority !== "REFERENCE_NOT_EXECUTABLE")) {
-    throw new Error("Invalid native Bedrock reference lock.");
-  }
+  // Active native reference lock was read before either intake route.
   const nativeSkillChanges = priorNative?.skillsLock?.skills
     ? compare(Object.entries(priorNative.skillsLock.skills).map(([path, sha256]) => ({path, sha256})),
         new Map(Object.entries(native.skillsLock.skills)))
@@ -490,7 +574,8 @@ async function main() {
     (probe.archiveSha256 !== metadata.probeSnapshot?.archiveSha256 ||
       lock.tag !== metadata.probeSnapshot?.observedSkillsLockTag ||
       lock.commit !== metadata.probeSnapshot?.observedSkillsLockCommit ||
-      hasChanges(probeReports) || hasChanges(probePack) || hasChanges(probeTools));
+      hasChanges(probeReports) || hasChanges(probePack) || hasChanges(probeTools) ||
+      hasChanges(exampleDelta) || exampleDelta?.targetChanged || exampleDelta?.indexShaChanged);
   const outsideIndexedOwnersChanged =
     skills.archiveSha256 !== metadata.sourceSnapshot?.archiveSha256 &&
     !hasChanges(skillDelta) && !hasChanges(moduleDelta) &&
@@ -524,7 +609,7 @@ async function main() {
       skills: skillDelta,
       moduleImplementations: moduleDelta,
       moduleTests: moduleTestDelta,
-      probeReports,
+      probeReports, probeExamples: exampleDelta,
       probePackSources: probePack,
       probeTools,
     },
@@ -552,6 +637,10 @@ async function main() {
       affectedReferencePatterns: affectedPatterns.map(pattern => pattern.id),
       changedProbeReportPaths: probeReports === null ? [] :
         [...probeReports.added, ...probeReports.changed, ...probeReports.removed].sort(),
+      changedProbeExamples: exampleDelta === null ? [] :
+        [...exampleDelta.added,...exampleDelta.changed,...exampleDelta.removed].sort(),
+      changedProbeExampleStatuses: exampleDelta?.statusTransitions ?? [],
+      probeTargetChanged: exampleDelta?.targetChanged ?? false,
       promotion: "REVIEW_AND_ATOMIC_GITHUB_LOCAL_COMMIT_ONLY_NO_AUTO_PROMOTION",
       sourceOnly: true,
     },

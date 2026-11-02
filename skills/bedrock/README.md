@@ -168,6 +168,31 @@ Probe revision independently after source integrity and consumer proof; keep
 the other revision active when it is unchanged. All file/skill ownership,
 source revision and evidence boundaries must survive the change.
 
+### Adaptation to independent Developer Skills and Skills Probe updates
+
+Keep each upstream ZIP's exact archive SHA, native skill/module locks, target
+version and negative report revision distinct. The existing read-only
+`inspect-developer-upstream.mjs` now reports changed example IDs, separate
+index/Node/engine status transitions and target changes, not just an archive
+version string. Negative examples with `FAIL`, `PARTIAL`, or `BLOCKED`
+remain valid upstream reference records without turning into selected-map
+defect or runtime proof.
+
+A **Probe-only** ZIP must compare its installed skill folder hashes against
+the active Developer Skills baseline when both declare the same release.
+Matching installed module source-file pairs are also checked by SHA;
+optional uninstalled modules are not automatically defects. A same-tag
+mismatch or contradictory active lock blocks source promotion; differing
+versions require explicit review rather than presumed equivalence.
+Unknown baseline is not a `NO_CHANGE` decision.
+
+No background watcher, network auto-download, installer or new runner is
+introduced. On a genuine new ZIP, use the one existing diff/lock intake,
+review only affected skills/modules/examples and source-matched consumers,
+then atomically update the active native lock and curated metadata. Keep
+old FAIL/BLOCKED and revision pins. Probe PASS never certifies current
+map gameplay.
+
 ### Upgrades
 
 1. Obtain the source archives or immutable verified Git refs. Preserve each

@@ -247,7 +247,7 @@ export interface DeveloperPracticeReferenceData {
     readonly entries: readonly {
       readonly id: string;
       readonly skill: string;
-      readonly status: "PASS" | "pending";
+      readonly status: "PASS" | "FAIL" | "pending" | "BLOCKED" | "PARTIAL";
       readonly nodeStatus: string | null;
       readonly engineStatus: string | null;
       readonly probeIds: readonly string[];
@@ -687,7 +687,7 @@ export interface CompiledDeveloperPracticeReferenceContext {
      */
     readonly cleanExamples?: readonly {
       readonly id: string;
-      readonly status: "PASS" | "pending";
+      readonly status: "PASS" | "FAIL" | "pending" | "BLOCKED" | "PARTIAL";
       readonly nodeStatus: string | null;
       readonly engineStatus: string | null;
       readonly sourcePath: string;
@@ -1062,7 +1062,7 @@ function compileDeveloperPracticeReferenceContextWithSignals(
         cleanExamples: cleanIndex.entries
           .filter(entry => entry.skill === source.id.replace(/^src\./, "") &&
             /^[A-Z]\d{1,3}$/.test(entry.id) &&
-            ["PASS", "pending"].includes(entry.status) &&
+            ["PASS", "FAIL", "pending", "BLOCKED", "PARTIAL"].includes(entry.status) &&
             typeof entry.sourcePath === "string" &&
             entry.sourcePath.length > 0 &&
             Array.isArray(entry.probeIds))

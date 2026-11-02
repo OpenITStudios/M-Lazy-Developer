@@ -377,6 +377,20 @@ function formatSelectedMapProbeCoverage(
         "across " + modelTaskPackets.length +
         " task(s). This is NOT an exhaustive Probe capability inventory.",
     );
+    const revisionPairs = [...new Set(modelTaskPackets
+      .filter(task => (task.developerPractice?.items.length ?? 0) > 0)
+      .map(task => (task.developerPractice!.developerSourceRelease ?? "UNKNOWN") +
+        " | " + (task.developerPractice!.probeInstalledSkillsLockTag ?? "UNKNOWN")))].sort();
+    for (const pair of revisionPairs.slice(0, 2)) {
+      const [developerTag, probeTag] = pair.split(" | ");
+      out.push("Developer Skills / Skills Probe source versions: " + pair +
+        (developerTag === probeTag
+          ? " — matching declared tags, NOT native Minecraft or source-byte proof."
+          : " — DIFFERENT/UNKNOWN releases; explicit compatibility review required."));
+    }
+    if (revisionPairs.length > 2) out.push(
+      "Additional independent revision pairs not shown: " + (revisionPairs.length - 2) + ".");
+
     for (const item of uniqueMethodMatches.slice(0, 3)) {
       out.push(
         "- Reference " + compact(item.patternId) + " for " +
