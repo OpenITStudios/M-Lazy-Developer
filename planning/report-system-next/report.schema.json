@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mivubi:report-system-next:report:v1.2",
-  "title": "M-Lazy Report Next Canonical Report v1.2",
+  "$id": "urn:mivubi:report-system-next:report:v1.3",
+  "title": "M-Lazy Report Next Canonical Report v1.3",
   "description": "Design-only locked format. Not a converter of existing Approved Bug Report V2.",
   "type": "object",
   "additionalProperties": false,
@@ -10,14 +10,16 @@
     "layoutVersion",
     "reportId",
     "scope",
-    "maps"
+    "maps",
+    "reportKind",
+    "auditRevision"
   ],
   "properties": {
     "schema": {
-      "const": "m-lazy-report-next/v1.2"
+      "const": "m-lazy-report-next/v1.3"
     },
     "layoutVersion": {
-      "const": "1.2.0"
+      "const": "1.3.0"
     },
     "reportId": {
       "type": "string",
@@ -36,6 +38,25 @@
       "items": {
         "$ref": "#/$defs/map"
       }
+    },
+    "reportKind": {
+      "type": "string",
+      "enum": [
+        "MAP_AUDIT",
+        "SOURCE_REVIEW",
+        "SYNTHETIC_DEMO"
+      ]
+    },
+    "auditRevision": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "$defs": {
@@ -198,6 +219,32 @@
               "minLength": 1
             }
           }
+        },
+        "sourceOrigin": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceScope": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "selected-artifact",
+                "external-reference",
+                "runtime"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -291,7 +338,6 @@
             "SOURCE_VERIFIED",
             "PACKAGE_VERIFIED",
             "RUNTIME_OBSERVED",
-            "NEEDS_VALIDATION",
             "REFERENCE_UNRESOLVED"
           ]
         },
@@ -415,9 +461,6 @@
               },
               "validation": {
                 "$ref": "#/$defs/validation"
-              },
-              "evidenceLevel": {
-                "const": "NEEDS_VALIDATION"
               }
             }
           },
@@ -440,15 +483,6 @@
               },
               "validation": {
                 "type": "null"
-              },
-              "evidenceLevel": {
-                "type": "string",
-                "enum": [
-                  "SOURCE_VERIFIED",
-                  "PACKAGE_VERIFIED",
-                  "RUNTIME_OBSERVED",
-                  "REFERENCE_UNRESOLVED"
-                ]
               }
             }
           }
@@ -772,6 +806,83 @@
             "cleared",
             "unresolved"
           ]
+        },
+        "scenarioLabel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "affectedScope": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contributingDomains": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "informationMismatch": {
+          "type": "boolean"
+        },
+        "playerFacingEvidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "knowledgeRequirementIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "validationGroupKey": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoning": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proofNavigation": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     }
@@ -780,25 +891,26 @@
     {
       "if": {
         "properties": {
-          "scope": {
-            "const": "MAP"
+          "reportKind": {
+            "const": "MAP_AUDIT"
           }
         },
         "required": [
-          "scope"
+          "reportKind"
         ]
       },
       "then": {
         "properties": {
-          "maps": {
-            "maxItems": 1
+          "auditRevision": {
+            "type": "string",
+            "minLength": 1
           }
         }
       },
       "else": {
         "properties": {
-          "maps": {
-            "minItems": 2
+          "auditRevision": {
+            "type": "null"
           }
         }
       }

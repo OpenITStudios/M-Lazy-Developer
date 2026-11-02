@@ -1,12 +1,12 @@
 {
   "system": "M-Lazy-Developer / Report System Next",
   "namespace": "report-system-next",
-  "designVersion": "1.2.0",
-  "lifecycle": "DESIGN_LOCKED_AUDIT_BRIDGE",
+  "designVersion": "1.3.0",
+  "lifecycle": "DESIGN_LOCKED_SOURCE_BUILD",
   "compatibility": {
-    "reportSchema": "m-lazy-report-next/v1.2",
+    "reportSchema": "m-lazy-report-next/v1.3",
     "testerWorkspaceSchema": "m-lazy-tester-workspace-next/v1",
-    "templateId": "m-lazy-report-next/html-v1.2",
+    "templateId": "m-lazy-report-next/html-v1.3",
     "sourceExistingApprovedBugReportV2": "NOT_A_MUTATION_TARGET",
     "legacyReportPaths": "UNTOUCHED"
   },
@@ -59,7 +59,6 @@
       "referenceNumber",
       "severityIfProven",
       "proofStatus",
-      "evidenceLevel",
       "testerResultIfEligible",
       "title",
       "problem",
@@ -86,11 +85,11 @@
     ],
     "summaryMetricOrder": [
       "findings",
+      "needsValidation",
+      "unrated",
       "blocker",
       "major",
-      "minor",
-      "needsValidation",
-      "unrated"
+      "minor"
     ],
     "testerMetricOrder": [
       "passed",
@@ -140,8 +139,8 @@
     "recommendedFix": "Recommended Fix",
     "preserve": "Must Preserve",
     "saveHtml": "Save as HTML",
-    "saveJson": "Save JSON",
-    "loadJson": "Load JSON",
+    "saveJson": "Save Tester Data",
+    "loadJson": "Load Tester Data",
     "reset": "Reset Tester Data",
     "savedBrowser": "Autosaved in browser",
     "fileStatus": "HTML download started; confirm file before sharing",
@@ -153,7 +152,12 @@
     "sourceReferenceUnresolved": "Source Reference Unresolved",
     "priorityUnset": "Priority Unset",
     "auditCues": "Source Audit Cues",
-    "pendingChecks": "Unresolved Checks"
+    "pendingChecks": "Unresolved Checks",
+    "mapAuditTitle": "Map Audit Report",
+    "sourceReviewTitle": "Source Review",
+    "demoTitle": "Synthetic Report Demo",
+    "downloadReportJson": "Download Report JSON",
+    "unrelatedApprovedLedger": "Approved Bug Report V2 is a separate ledger; its issue count is not included here."
   },
   "tokens": {
     "font": "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -207,7 +211,9 @@
     "validationProofMustBeShown": true,
     "auditCoverageMustBeSourceBacked": true,
     "proofIsNotRuntime": true,
-    "auditSourceMustPreserveUnknowns": true
+    "auditSourceMustPreserveUnknowns": true,
+    "browserRechecksCanonicalDigest": true,
+    "evidenceTierIndependentOfProofStatus": true
   },
   "output": {
     "fileNames": {

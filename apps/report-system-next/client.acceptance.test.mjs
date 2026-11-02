@@ -2,6 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
+import { createHash } from "node:crypto";
+import { TextEncoder } from "node:util";
+import { canonicalJson } from "./contract.mjs";
 
 const client = await readFile(new URL("./client.js", import.meta.url), "utf8");
 
@@ -27,8 +30,8 @@ class Node {
   click() { this.emit("click"); }
 }
 
-function startPage({ snapshot, copyId = "original", pathname = "/source.html",
-                     storage = new Map(), storageFailure = false } = {}) {
+async function startPage({ snapshot, copyId = "original", pathname = "/source.html",
+                     storage = new Map(), storageFailure = false, corruptDigest = false } = {}) {
   const report = {
     reportId: "synthetic-client-acceptance",
     maps: [{ levels: [{ findings: [
@@ -37,19 +40,20 @@ function startPage({ snapshot, copyId = "original", pathname = "/source.html",
        observed:"Wave does not start",
        testProcedure:{steps:[{instruction:"Start match"},{instruction:"Observe wave"}],
                       visibleOutcome:"Next wave never appears"}},
-      {id:"BUG-PENDING", kind:"BUG", severity:null, proofStatus:"NEED_VALIDATION", evidenceLevel:"NEEDS_VALIDATION",
+      {id:"BUG-PENDING", kind:"BUG", severity:null, proofStatus:"NEED_VALIDATION", evidenceLevel:"REFERENCE_UNRESOLVED",
        validation:{reason:"No verified source",missingProof:"Missing evidence",nextCheck:"Inspect source"},
        title:"Unknown issue", problem:"Not observed", expected:"Normal continuation",
        observed:null, testProcedure:null},
       {id:"DEV-NOTE", kind:"DEV_NOTE", title:"Technical note", description:"For developer"}
     ] }] }]
   };
-  const meta = {digest: "sha256:" + "f".repeat(64), fileStem: "Synthetic-v1.2.0"};
+  const correct="sha256:"+createHash("sha256").update(canonicalJson(report),"utf8").digest("hex");
+  const meta={digest:corruptDigest?"sha256:"+"f".repeat(64):correct,fileStem:"Synthetic-v1.3.0"};
   const empty = {schema:"m-lazy-tester-workspace-next/v1",
     reportId:report.reportId,canonicalDigest:meta.digest,entries:[]};
   const ids = Object.fromEntries([
     "find-search","find-kind","find-severity","find-result","match-count",
-    "no-matches","save-status","save-html","save-json","load-json",
+    "no-matches","save-status","report-integrity","download-report-json","save-html","save-json","load-json",
     "json-file","reset-data","clear-filters",
     "metric-passed","metric-failed","metric-untested","metric-notRetestable"
   ].map(name => [name,new Node()]));
@@ -163,11 +167,15 @@ function startPage({ snapshot, copyId = "original", pathname = "/source.html",
     }
   };
   runInNewContext(client,{
-    document,location:{pathname},localStorage,
-    URL:urls,Blob:MockBlob,FileReader:MockFileReader,
+    document,location:{pathname},localStorage,TextEncoder,
+    crypto:{subtle:{digest:async(_,b)=>{
+      const h=createHash("sha256").update(b).digest();
+      return h.buffer.slice(h.byteOffset,h.byteOffset+h.byteLength);
+    }}},URL:urls,Blob:MockBlob,FileReader:MockFileReader,
     setTimeout:()=>{},confirm:()=>true,
     Map,Set,JSON,Date,Math,Object,Array,String
   });
+  await Promise.resolve();await Promise.resolve();await Promise.resolve();
   return {ids,cards,downloads,storage,meta,report};
 }
 function savedSnapshot(download) {
@@ -178,8 +186,8 @@ function savedSnapshot(download) {
   return {copyId:match[1],state:JSON.parse(match[2])};
 }
 
-test("tester workflow: result, notes, screenshot, caption and offline handoff snapshot",()=>{
-  const page=startPage();
+test("tester workflow: result, notes, screenshot, caption and offline handoff snapshot",async()=>{
+  const page=await startPage();
   assert.equal(page.ids["metric-untested"].textContent,"1");
   assert.equal(page.ids["metric-notRetestable"].textContent,"1");
   const card=page.cards[0];
@@ -201,24 +209,24 @@ test("tester workflow: result, notes, screenshot, caption and offline handoff sn
   assert.equal(page.ids["match-count"].textContent,"Showing 0 of 3 entries");
   page.ids["save-html"].emit("click");
   assert.equal(page.downloads.length,1);
-  assert.equal(page.downloads[0].name,"Synthetic-v1.2.0-Tester-Report.html");
+  assert.equal(page.downloads[0].name,"Synthetic-v1.3.0-Tester-Report.html");
   const {copyId,state}=savedSnapshot(page.downloads[0]);
   const entry=state.entries.find(x=>x.findingId==="BUG-READY");
   assert.equal(entry.result,"PASSED");
   assert.equal(entry.notes,"Reproduced after repair");
   assert.equal(entry.attachments[0].caption,"Near bridge");
-  const reopened=startPage({snapshot:state,copyId,pathname:"/recipient.html"});
+  const reopened=await startPage({snapshot:state,copyId,pathname:"/recipient.html"});
   assert.equal(reopened.ids["metric-passed"].textContent,"1");
   assert.equal(reopened.cards[0].images.children.length,1);
   reopened.ids["reset-data"].emit("click");
   assert.equal(reopened.ids["metric-passed"].textContent,"0");
-  const resetReopen=startPage({snapshot:state,copyId,
+  const resetReopen=await startPage({snapshot:state,copyId,
     pathname:"/recipient.html",storage:reopened.storage});
   assert.equal(resetReopen.ids["metric-passed"].textContent,"0");
 });
 
-test("portable HTML resets presentation-only expanded and filtered state",()=>{
-  const page=startPage();
+test("portable HTML resets presentation-only expanded and filtered state",async()=>{
+  const page=await startPage();
   page.ids["find-search"].value="nonexistent";
   page.ids["find-severity"].value="MAJOR";
   page.ids["find-search"].emit("input");
@@ -233,8 +241,8 @@ test("portable HTML resets presentation-only expanded and filtered state",()=>{
   assert.ok(savedSnapshot(page.downloads[0]).state);
 });
 
-test("invalid or different-report JSON cannot replace current tester work",()=>{
-  const page=startPage();
+test("invalid or different-report JSON cannot replace current tester work",async()=>{
+  const page=await startPage();
   page.cards[0].buttons[1].emit("click");
   assert.equal(page.ids["metric-failed"].textContent,"1");
   page.ids["json-file"].files=[{text:JSON.stringify({
@@ -247,8 +255,8 @@ test("invalid or different-report JSON cannot replace current tester work",()=>{
   assert.match(page.ids["save-status"].textContent,/rejected/i);
 });
 
-test("browser quota failure preserves in-memory results for portable Save as HTML",()=>{
-  const page=startPage({storageFailure:true});
+test("browser quota failure preserves in-memory results for portable Save as HTML",async()=>{
+  const page=await startPage({storageFailure:true});
   page.cards[0].buttons[0].emit("click");
   assert.equal(page.ids["metric-passed"].textContent,"1");
   assert.match(page.ids["save-status"].textContent,/Save as HTML/);
@@ -257,8 +265,8 @@ test("browser quota failure preserves in-memory results for portable Save as HTM
     x=>x.findingId==="BUG-READY").result,"PASSED");
 });
 
-test("unverified gameplay issue never gains a Passed/Failed result",()=>{
-  const page=startPage();
+test("unverified gameplay issue never gains a Passed/Failed result",async()=>{
+  const page=await startPage();
   assert.equal(page.cards[1].buttons.length,0);
   assert.equal(page.ids["metric-notRetestable"].textContent,"1");
   page.cards[1].note.value="Need a live test before conclusion";
@@ -268,4 +276,20 @@ test("unverified gameplay issue never gains a Passed/Failed result",()=>{
   const item=ws.entries.find(x=>x.findingId==="BUG-PENDING");
   assert.equal(item.result,null);
   assert.match(item.notes,/live test/);
+});
+
+test("canonical report JSON is separate from tester state; tampered digest blocks editing",async()=>{
+  const page=await startPage();
+  assert.match(page.ids["report-integrity"].textContent,/digest matches/i);
+  page.ids["download-report-json"].emit("click");
+  assert.equal(page.downloads[0].name,"Synthetic-v1.3.0-Report.json");
+  assert.equal(page.downloads[0].contents,canonicalJson(page.report));
+  page.ids["save-json"].emit("click");
+  assert.equal(page.downloads[1].name,"Synthetic-v1.3.0-Tester-State.json");
+  const tampered=await startPage({corruptDigest:true});
+  assert.match(tampered.ids["report-integrity"].textContent,/mismatch/i);
+  tampered.cards[0].buttons[0].emit("click");
+  tampered.ids["save-html"].emit("click");
+  assert.equal(tampered.downloads.length,0);
+  assert.equal(tampered.ids["metric-passed"].textContent,"0");
 });

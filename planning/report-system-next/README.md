@@ -56,3 +56,7 @@ Implement **a new renderer in its own module/namespace** consuming only `report.
 - Compact report navigation, search and offline handoff are preserved. No migration or replacement of Approved Bug Report V2 or current project outputs is authorized.
 - Current 1.1.0 layout Git blob: `01b700ffcaab61db6cdea17eb6171a36803f524e`; report schema blob: `7d5da39cccee8e4a989b3d03b9628478ac0a348e`. Historical original blobs above remain valid **for v1.0.0**, not the current version.
 - The isolated renderer is not an integrated `SelectedMapAuditRun` publisher; that source-to-report mapping requires separate, verified implementation.
+
+## 1.3.0 source/HTML integrity revision (2026-11-02)
+
+Current Report Next design version is **1.3.0**. Source-aligned authored reports distinguish MAP_AUDIT, SOURCE_REVIEW and SYNTHETIC_DEMO; the only accepted MAP_AUDIT has an exact audit revision. The previous 1.0.0/1.1.0/1.2.0 locks above remain historical references, not active schema authority. Old offline HTML is untouched. The single renderer now distinguishes canonical JSON from tester state and verifies the embedded canonical JSON digest at browser open. No Approved Bug Report V2 conversion or migration is implied.

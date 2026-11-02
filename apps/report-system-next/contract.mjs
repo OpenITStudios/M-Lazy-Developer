@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 
-export const DESIGN_VERSION = "1.2.0";
-export const DESIGN_BLOB_SHA = "182aa720441e4f52d3b6ec93bc22f85d74f447e3";
+export const DESIGN_VERSION = "1.3.0";
+export const DESIGN_BLOB_SHA = "d26affc61be2f240425bd10ed6ba883042df7536";
 const kinds = ["BUG", "DESIGN_MISMATCH", "DEV_NOTE"];
-const evidenceLevels = ["SOURCE_VERIFIED","PACKAGE_VERIFIED","RUNTIME_OBSERVED","NEEDS_VALIDATION","REFERENCE_UNRESOLVED"];
+const evidenceLevels = ["SOURCE_VERIFIED","PACKAGE_VERIFIED","RUNTIME_OBSERVED","REFERENCE_UNRESOLVED"];
 const isObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
 
 export function assertDesignLock(raw, sourceText) {
@@ -12,8 +12,8 @@ export function assertDesignLock(raw, sourceText) {
     .update("blob " + bytes.length + "\0")
     .update(bytes).digest("hex");
   if (sha !== DESIGN_BLOB_SHA || raw.designVersion !== DESIGN_VERSION ||
-    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.2" ||
-    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.2" ||
+    raw.compatibility?.reportSchema !== "m-lazy-report-next/v1.3" ||
+    raw.compatibility?.templateId !== "m-lazy-report-next/html-v1.3" ||
     raw.changePolicy?.renderer !== "ONE_DETERMINISTIC_RENDERER_ONLY") {
     throw new Error("Report Next Design Lock mismatch; renderer refuses unapproved layout changes.");
   }
@@ -126,7 +126,11 @@ function assertPlayerFollowableTest(finding, evidence) {
 
 export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) {
   validateSchema(report, schema);
-  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.2.0.");
+  if (report.layoutVersion !== DESIGN_VERSION) throw new Error("Report layout version is not locked v1.3.0.");
+  if(report.reportKind==="MAP_AUDIT"&&!report.auditRevision)
+    throw Error("Map Audit requires an exact auditRevision");
+  if(report.reportKind!=="MAP_AUDIT"&&report.auditRevision!==null)
+    throw Error("Source reviews and demos cannot claim a canonical auditRevision");
   const findingIds = new Set();
   const mapIds = new Set();
   for (const map of report.maps) {
@@ -164,6 +168,10 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
       if (coverage.state !== "COMPLETE" && !coverage.missingProof.length)
         throw new Error(map.mapId + ": incomplete audit coverage must name unresolved proof");
     }
+    if(map.auditCoverage?.state==="COMPLETE"&&report.reportKind!=="MAP_AUDIT")
+      throw Error("Source review and demo cannot claim complete Map Audit coverage");
+    if(map.auditCoverage?.state==="COMPLETE"&&map.evidence.some(e=>e.kind==="REFERENCE_UNRESOLVED"))
+      throw Error("Unresolved source reference prohibits complete audit coverage");
     const levelIds = new Set();
     for (const level of map.levels) {
       if (levelIds.has(level.levelId)) throw new Error("Duplicate level ID in " + map.mapId);
@@ -177,12 +185,13 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
         });
         if (finding.kind === "DEV_NOTE") continue;
         if (!evidenceLevels.includes(finding.evidenceLevel)) throw new Error("Unsupported evidence level");
-        if (finding.proofStatus === "NEED_VALIDATION") {
-          if (finding.severity !== null || !finding.validation || finding.evidenceLevel !== "NEEDS_VALIDATION")
-            throw new Error(finding.id+": pending proof cannot have final severity or omit deciding check");
-        } else if (finding.validation !== null || finding.evidenceLevel === "NEEDS_VALIDATION") {
-          throw new Error(finding.id+": PROVEN finding must remain independent from evidence gaps");
-        }
+        if(finding.proofStatus==="NEED_VALIDATION"){
+          if(finding.severity!==null||!finding.validation)
+            throw Error(finding.id+": unproven issue cannot carry severity or omit deciding check");
+          if(map.auditCoverage?.state==="COMPLETE")
+            throw Error(finding.id+": unproven issue contradicts COMPLETE audit coverage");
+        }else if(finding.validation!==null)
+          throw Error(finding.id+": PROVEN issue cannot carry a pending validation route");
         if (finding.auditDetails) {
           if (finding.auditDetails.proofCeiling !== (finding.proofStatus==="PROVEN"?"PROVEN":"NEEDS_DECIDING_PROOF") ||
               finding.auditDetails.counterEvidence !== (finding.proofStatus==="PROVEN"?"cleared":"unresolved"))
@@ -201,13 +210,14 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
           throw new Error(finding.id + ": runtime claim lacks live Minecraft evidence");
         if (finding.evidenceLevel === "REFERENCE_UNRESOLVED" && finding.testProcedure !== null)
           throw new Error(finding.id+": unresolved evidence cannot authorize retest");
-        if (["SOURCE_VERIFIED","PACKAGE_VERIFIED","RUNTIME_OBSERVED"].includes(finding.evidenceLevel)) {
-          if (!witnesses.some(x=>x.kind==="AUTHORED_DESIGN") ||
-              !witnesses.some(x=>["SOURCE_STATIC","PACKAGE_INSPECTION","LIVE_MINECRAFT"].includes(x.kind)) ||
-              witnesses.some(x=>x.kind==="REFERENCE_UNRESOLVED"))
-            throw new Error(finding.id+": verified claim lacks coherent selected-artifact evidence");
-          if (!finding.expected?.trim() || !finding.observed?.trim())
-            throw new Error(finding.id+": verified finding missing expected/actual");
+        if(["SOURCE_VERIFIED","PACKAGE_VERIFIED","RUNTIME_OBSERVED"].includes(finding.evidenceLevel)){
+          if(witnesses.some(x=>x.kind==="REFERENCE_UNRESOLVED"))
+            throw Error(finding.id+": inspected evidence includes unresolved source reference");
+          if(finding.proofStatus==="PROVEN" &&
+              (!witnesses.some(x=>x.kind==="AUTHORED_DESIGN") ||
+               !witnesses.some(x=>["SOURCE_STATIC","PACKAGE_INSPECTION","LIVE_MINECRAFT"].includes(x.kind)) ||
+               !finding.expected?.trim() || !finding.observed?.trim()))
+            throw Error(finding.id+": PROVEN claim lacks grounded Expected and Observed");
         }
         for (const related of finding.technical.relatedSources) {
           if (!map.evidence.some(x => x.locator.type === "FILE" && x.locator.value === related.path))
@@ -231,7 +241,7 @@ export function assertReport(report, schema, { authorizeRuntimeEvidence } = {}) 
 
 export function isRetestEligible(issue) {
   return issue.kind !== "DEV_NOTE" && issue.proofStatus === "PROVEN" &&
-    !["NEEDS_VALIDATION","REFERENCE_UNRESOLVED"].includes(issue.evidenceLevel) &&
+    issue.evidenceLevel !== "REFERENCE_UNRESOLVED" &&
     Boolean(issue.expected?.trim() && issue.observed?.trim() &&
       issue.testProcedure?.visibleOutcome?.trim() &&
       issue.testProcedure.steps.length >= 2 &&

@@ -1,4 +1,4 @@
-# Report System Next — LOCKED DESIGN 1.2.0
+# Report System Next — LOCKED DESIGN 1.3.0
 
 ## 0. Ownership and scope
 
@@ -136,3 +136,13 @@ Source-bound Report Next 1.2.0 is an intentional versioned extension. Original v
 Unclassified Audit Obligations, validation groups, and blocked/unknown gameplay surfaces belong to the Audit Coverage "Unresolved Checks" disclosure, never BUG or DEV_NOTE. Zero findings plus incomplete source closure is still incomplete. Reporter requires exact matching artifact ID, SHA-256 fingerprint and audit revision, and uses the existing single audit CLI as an opt-in read-only HTML projection. It does not modify canonical Bug Report V2, repair closure, tester results, old project outputs or GitHub CI policy.
 
 Actual browser handoff/Save as HTML, end-to-end execution on a real selected world and gameplay behavior remain NOT EXECUTED.
+
+## Approved 1.3.0 addendum — JSON truth and reader experience
+
+The user's approved improvements establish three allowed report origins: MAP_AUDIT, SOURCE_REVIEW and SYNTHETIC_DEMO. Only genuine canonical Map Audit source may carry auditRevision or be represented as source-audit COMPLETE. Approved Bug Report V2 is outside this renderer and not silently counted as zero.
+
+Canonical PROVEN/NEED_VALIDATION is a proof axis, independent from the evidence tier. A pending source-backed hypothesis may reference inspected source without becoming a confirmed defect. Unresolved proof keeps severity null. Exact source scenario, affected scope, citations, reasoning, and proof navigation remain in the authored JSON; evidence level is shown on demand, not as a duplicate status badge.
+
+Offline HTML keeps one canonical JCS report and a separate tester workspace. Download Report JSON and Save Tester Data must never be confused. Client-side SHA-256 comparison on opening prevents tester edits/export of a mismatched report and must visibly report unavailable crypto rather than claiming a PASS. SHA-256 detects accidental modification; it is not a publisher signature, gameplay test or external certification. Old HTML snapshots remain independent and unaffected.
+
+This is a versioned design/contract change only; executable browser and actual Minecraft audit acceptance remain separate.

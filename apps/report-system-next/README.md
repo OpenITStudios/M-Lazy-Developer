@@ -2,7 +2,7 @@
 
 **Implementation scope:** versioned, independent reporting surface (reader UX and proof integrity). It does **not** import, update, regenerate or replace the old Bug Tracker, Approved Bug Report V2, existing `workspace/projects/*/output/`, or its canonical source.
 
-**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.2.0** is pinned to Git blob `182aa720441e4f52d3b6ec93bc22f85d74f447e3`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
+**Design authority:** [planning/report-system-next/](../../planning/report-system-next/). Current layout **1.3.0** is pinned to Git blob `d26affc61be2f240425bd10ed6ba883042df7536`. The original v1.0.0 baseline blob `c958b33054722c2884e791e5b4e811a7987d394d` remains in Git history. The original reference HTML and both JSON Schemas are also pinned to their approved blob identities in `render.mjs`. If any locked input changes without a new authorized version, the renderer refuses generation.
 
 ## Existing new-only files
 
@@ -67,3 +67,14 @@ Audit `PROVEN/NEED_VALIDATION` is separate from evidence strength, severity and 
 Proof limit: synthetic source-level evaluation only; no Node, browser, real selected-world audit, live Minecraft observation or release acceptance was executed.
 
 **Publication safety:** source-audit completeness additionally requires the real run's review stage and READY status, absence of pending finding proof, and the canonical zero-finding eligibility gate when no findings exist. This is not permission to publish a report as a released/current project Bug Tracker.
+
+## 1.3.0 — source truth and comfortable handoff
+
+- New report JSON explicitly states MAP_AUDIT, SOURCE_REVIEW or SYNTHETIC_DEMO; only Map Audit has an exact auditRevision. Approved Bug Report V2 is a separate, uncounted ledger, not a zero count or invented report type.
+- Source evidence tier is independent from PROVEN / NEED_VALIDATION. A pending issue may have inspected source but cannot claim final severity or completed retest. Source-specific scenario, affected scope, causal reasoning, evidence provenance and proof navigation survive the projection.
+- HTML shows report kind and PARTIAL/BLOCKED coverage before issue counts. Repeated proof/evidence labels and zero-only severity cards are reduced; evidence and technical proof remain expandable.
+- **Download Report JSON** exports the JCS canonical report; **Save Tester Data** exports the separate mutable workspace. Save as HTML remains the primary portable tester handoff.
+- Browser re-hashes the embedded JSON using SHA-256 before permitting tester edits or export. On mismatch or unavailable browser SHA-256, editing/export is visibly blocked. This validates local file consistency only, not publisher authentication or Minecraft gameplay.
+- Existing approved Bug Report V2 and v1.0-v1.2 self-contained HTML are unchanged. No migration or automatic publication occurs.
+
+**Proof ceiling:** source-level design/renderer review and deterministic synthetic derivation, distinct from actual Node/browser and `runSelectedMapAudit()` execution.

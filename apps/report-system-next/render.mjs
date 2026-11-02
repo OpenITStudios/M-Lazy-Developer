@@ -9,7 +9,7 @@ const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../planning
 const here = dirname(fileURLToPath(import.meta.url));
 const pinned = {
   reference: "2cce615368348cae8d77137867442f3f793fa584",
-  report: "16fdb550cb9ae0a3393af579f639e79e8c8db471",
+  report: "9842a2f0ca69233217a550f5b8f7e6813646449e",
   workspace: "78cf4ae0abc9e5d3f468a47c34c4e031e21783ce"
 };
 const gitHash = value => {
@@ -38,6 +38,7 @@ const cssExtra = "[hidden]{display:none!important}"+
 ".evidence-item button{align-self:start}.attachment-input{max-width:100%}.attachment-label{display:block;font-weight:700;font-size:12px;margin:8px 0}"+
 ".proof-detail{margin:8px 0;border:1px solid var(--border);border-radius:6px;padding:10px}.proof-detail>summary{cursor:pointer;font-weight:600}.proof-detail li{padding:8px 0;overflow-wrap:anywhere}.proof-detail code{font-size:12px}.validation-panel{border-left:3px solid var(--warning);padding:8px 12px;background:var(--bg)}.coverage-note{font-size:13px;line-height:1.5;color:var(--muted)}"+
 ".pending-checks{padding:10px;border:1px solid var(--border);border-radius:6px;margin:12px 0}.pending-checks>summary{cursor:pointer;font-weight:700}.pending-check{border-top:1px solid var(--border);padding:10px 0}.audit-cues{font-size:13px;line-height:1.6}"+
+".tester-tools{margin:8px 24px}.tester-tools>summary{cursor:pointer;padding:10px;font-weight:600}"+
 ".alert{font-size:12px;color:var(--warning)}.subactions{padding:8px 24px;border-bottom:1px solid var(--border)}"+
 "@media(max-width:700px){.evidence-list{grid-template-columns:1fr}.save-status{padding:10px 16px}}";
 
@@ -52,6 +53,8 @@ function findingCard(f,index,lock,evidence) {
     f.evidenceRefs.map(id=>{
       const item=evidence.get(id);
       return '<li><strong>'+escape(item.id)+'</strong> · '+escape(item.kind)+
+        (item.sourceOrigin?'<p class="note">Origin: '+escape(item.sourceOrigin)+
+          (item.sourceScope?' · '+escape(item.sourceScope):"")+'</p>':"")+
         '<p>'+escape(item.description)+'</p><code>'+escape(item.locator.type)+
         ': '+escape(item.locator.value)+'</code></li>';
     }).join("")+'</ul></details>';
@@ -61,8 +64,8 @@ function findingCard(f,index,lock,evidence) {
   const tags='<div class="tags"><span class="tag">'+String(index+1).padStart(2,"0")+"</span>"+
     (note?"":'<span class="tag">'+escape(f.proofStatus==="PROVEN"?w.auditProven:w.needsValidation)+"</span>")+
     (note||f.severity===null?"":'<span class="tag'+(f.severity==="MAJOR"?" major":"")+'">'+escape(f.severity)+"</span>")+
-    '<span class="tag'+(["NEEDS_VALIDATION","REFERENCE_UNRESOLVED"].includes(f.evidenceLevel)?" unknown":"")+'">'+escape(evidenceLabel)+"</span>"+
-    (note?"":'<span class="tag" data-result-label>'+escape(ready?w.untested:w.notRetestable)+"</span>")+"</div>";
+    ""+
+    (note||!ready?"":'<span class="tag" data-result-label>'+escape(w.untested)+'</span>')+"</div>";
   const header='<summary>'+tags+'<h4>'+escape(f.title)+'</h4><p class="description">'+
     escape(note?f.description:(f.problem===f.title?"":f.problem))+'</p><div class="id">'+escape(f.id)+'</div>'+
     '<div class="disclosure">'+(note?"View Details ↓":"Test / Details ↓")+'</div></summary>';
@@ -99,6 +102,9 @@ function findingCard(f,index,lock,evidence) {
     const a=f.auditDetails;
     const cues=a?panel(w.auditCues,
       '<p class="note">Recorded source cues, not a verified Minecraft test.</p>'+
+      (a.scenarioLabel?'<p>Scenario: '+escape(a.scenarioLabel)+'</p>':"")+
+      (a.affectedScope?'<p>Affected scope: '+escape(a.affectedScope)+'</p>':"")+
+      (a.proofNavigation?.missingClaims?.length?items(a.proofNavigation.missingClaims):"")+
       (a.reproductionCues.length?items(a.reproductionCues):"")+
       (a.suspectedOutcome?'<p><strong>Suspected, not observed:</strong> '+escape(a.suspectedOutcome)+'</p>':"")+
       (a.evidenceLimitation?'<p class="alert">'+escape(a.evidenceLimitation)+'</p>':"")+
@@ -113,6 +119,7 @@ function findingCard(f,index,lock,evidence) {
     content=panel(f.kind==="BUG"?"Why This Is a Bug":"Why This Is a Mismatch",
       f.rationale&&para(f.rationale))+panel("Impact",f.impact&&para(f.impact))+
       validation+panel(w.testProcedure,procedure)+comparison+
+      panel("Evidence Level",para(evidenceLabel))+
       panel(w.sourceEvidence,sourceEvidence)+cues+result+notes+attachments+technical;
   }
   return '<details class="issue" data-finding="'+escape(f.id)+'" data-kind="'+escape(f.kind)+
@@ -135,6 +142,8 @@ function renderMapGroups(map,lock) {
 }
 function renderBody(report,lock,digest) {
   const w=lock.vocabulary;
+  const reportTitle=report.reportKind==="MAP_AUDIT"?w.mapAuditTitle:
+    report.reportKind==="SOURCE_REVIEW"?w.sourceReviewTitle:w.demoTitle;
   const all=report.maps.flatMap(m=>m.levels.flatMap(l=>l.findings));
   const issues=all.filter(f=>f.kind!=="DEV_NOTE");
   const summary={
@@ -145,7 +154,7 @@ function renderBody(report,lock,digest) {
     unrated:issues.filter(f=>f.proofStatus==="PROVEN"&&f.severity===null).length
   };
   const labels={findings:"Findings",blocker:"Blocker",major:"Major",minor:"Minor",needsValidation:w.needsValidation,unrated:w.priorityUnset};
-  const cards=lock.layout.summaryMetricOrder.map(key=>
+  const cards=lock.layout.summaryMetricOrder.filter(k=>k==="findings"||k==="needsValidation"||summary[k]>0).map(key=>
     '<div class="metric"><small>'+escape(labels[key])+'</small><b>'+summary[key]+"</b></div>").join("");
   const outcomes=lock.layout.testerMetricOrder.map(key=>
     '<span class="chip-count">'+escape(w[key])+' <b id="metric-'+key+'">0</b></span>').join("");
@@ -197,16 +206,25 @@ function renderBody(report,lock,digest) {
       '<details class="map-fold" data-map-fold><summary>'+escape(map.name)+
       ' — Show Findings ↓</summary>'+inner+'</details>')+"</div>";
   }).join("");
-  const header='<header class="hero"><div><h1>'+escape(w.reportTitle)+
+  const header='<header class="hero"><div><h1>'+escape(reportTitle)+
     '</h1><small>Report System Next · Locked layout v'+escape(lock.designVersion)+
     '</small></div><div class="actions"><button type="button" class="primary" id="save-html">'+
-    escape(w.saveHtml)+'</button><button type="button" class="secondary" id="save-json">'+
-    escape(w.saveJson)+'</button></div></header>'+
+    escape(w.saveHtml)+'</button><button type="button" class="secondary" id="download-report-json">'+
+    escape(w.downloadReportJson)+'</button></div></header>'+
     '<p id="save-status" class="save-status" aria-live="polite" role="status">Not yet autosaved in browser</p>'+
-    '<div class="actions subactions"><button type="button" class="secondary" id="load-json">'+
-    escape(w.loadJson)+'</button><button type="button" class="secondary" id="reset-data">'+
-    escape(w.reset)+'</button><input id="json-file" hidden type="file" accept=".json,application/json"></div>';
-  return header+identity+'<section aria-label="Overview"><h3>Overview</h3><div class="metrics">'+
+    '<p class="save-status" id="report-integrity" role="status" aria-live="polite">Checking report JSON consistency…</p>'+
+    '<details class="tester-tools"><summary>Tester Data · Export / Import / Reset</summary>'+
+    '<div class="actions subactions"><button type="button" class="secondary" id="save-json">'+
+    escape(w.saveJson)+'</button><button type="button" class="secondary" id="load-json">'+escape(w.loadJson)+
+    '</button><button type="button" class="secondary" id="reset-data">'+escape(w.reset)+
+    '</button><input id="json-file" hidden type="file" accept=".json,application/json"></div></details>';
+  const scopeNotice=report.reportKind==="SYNTHETIC_DEMO"?
+    '<p class="save-status"><strong>Synthetic demo.</strong> No current selected map was audited.</p>':
+    '<p class="save-status"><strong>'+
+      escape(report.reportKind==="MAP_AUDIT"?"Canonical Map Audit V2":"Direct source review only")+
+      '</strong> · '+escape(one?(report.maps[0].auditCoverage?.state??"UNKNOWN"):"Per-map coverage")+
+      '. '+escape(w.unrelatedApprovedLedger)+'</p>';
+  return header+identity+scopeNotice+'<section aria-label="Overview"><h3>Overview</h3><div class="metrics">'+
     cards+'</div></section><section aria-label="Audit Coverage"><h3>'+escape(w.auditCoverage)+
     '</h3>'+coverage+'</section><section aria-label="After-Fix Retest Results"><h3>After-Fix Retest Results</h3>'+
     '<div class="retest">'+outcomes+
@@ -245,7 +263,8 @@ export async function renderReportNext(input, { authorizeRuntimeEvidence } = {})
   validateSchema(workspace,wsSchema);
   const html='<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'+
     '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-    '<title>'+escape(lock.vocabulary.reportTitle)+'</title><style>'+
+    '<title>'+escape(report.reportKind==="MAP_AUDIT"?lock.vocabulary.mapAuditTitle:
+      report.reportKind==="SOURCE_REVIEW"?lock.vocabulary.sourceReviewTitle:lock.vocabulary.demoTitle)+'</title><style>'+
     match[1]+cssExtra+'</style></head><body><main class="page">'+
     renderBody(report,lock,digest)+'</main>'+
     '<script id="report-data" type="application/json">'+scriptJson(report)+'</script>'+

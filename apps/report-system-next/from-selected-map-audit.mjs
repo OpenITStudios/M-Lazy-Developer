@@ -35,6 +35,7 @@ export function projectSelectedMapAuditReportNext(run){
   const e=original.get(code),kind=classify(e);
   if(kind==="REFERENCE_UNRESOLVED")notResolved.add(code);
   const result={id:code,kind,
+   sourceOrigin:e?.origin??null,sourceScope:e?.scope??null,
    description:e?(kind==="REFERENCE_UNRESOLVED"?"Not confirmed selected-artifact evidence: ":"Selected map source, not live gameplay: ")+
     value(e.summary,"No description in source."):"Referenced by audit but absent from selected-artifact source evidence.",
    locator:{type:kind==="REFERENCE_UNRESOLVED"?"OTHER":e.origin==="world-db"?"NBT":e.origin==="structure"?"WORLD":"FILE",
@@ -50,7 +51,8 @@ export function projectSelectedMapAuditReportNext(run){
   if(pending&&(!f.validationReason||!f.missingProof||!f.validationTest))throw Error(f.id+": missing canonical validation route");
   const design=ev.some(e=>e.kind==="AUTHORED_DESIGN"),source=ev.some(e=>e.kind==="SOURCE_STATIC"),
     pkg=ev.some(e=>e.kind==="PACKAGE_INSPECTION"),gap=!refs.length||ev.some(e=>e.kind==="REFERENCE_UNRESOLVED")||!design||(!source&&!pkg);
-  const level=pending?"NEEDS_VALIDATION":gap?"REFERENCE_UNRESOLVED":source?"SOURCE_VERIFIED":"PACKAGE_VERIFIED";
+  const level=(!refs.length||ev.some(e=>e.kind==="REFERENCE_UNRESOLVED")||(!pending&&gap))?
+    "REFERENCE_UNRESOLVED":source?"SOURCE_VERIFIED":pkg?"PACKAGE_VERIFIED":"REFERENCE_UNRESOLVED";
   const issue=value(f.issue,"Finding "+f.id+" has no described issue");
   return {id:f.id,kind,proofStatus:f.status,severity:null,evidenceLevel:level,title:issue,problem:issue,
    rationale:value(f.causalExplanation,null),impact:value(f.playerImpact,null),expected:value(f.expected,null),
@@ -61,7 +63,14 @@ export function projectSelectedMapAuditReportNext(run){
     suspectedOutcome:pending?value(f.actual,null):null,
     evidenceLimitation:gap?(!refs.length?"Canonical finding has no source evidence IDs.":
       "Selected-artifact source evidence or approved design could not be resolved for every claim."):null,
-    proofCeiling:f.proofCeiling,counterEvidence:f.counterEvidence},
+    proofCeiling:f.proofCeiling,counterEvidence:f.counterEvidence,
+    scenarioLabel:value(f.scenarioLabel,null),affectedScope:value(f.affectedScope,null),
+    contributingDomains:uniq(f.contributingDomains??[]),
+    informationMismatch:f.informationMismatch===true,
+    playerFacingEvidenceIds:uniq(f.playerFacingEvidenceIds??[]),
+    knowledgeRequirementIds:uniq(f.knowledgeRequirementIds??[]),
+    validationGroupKey:value(f.validationGroupKey,null),
+    reasoning:f.reasoning??null,proofNavigation:f.proofNavigation??null},
    technical:{analysis:value(f.causalExplanation,null),recommendedFix:null,relatedSources:[],mustPreserve:[]}};
  });
  const checks=[],checkIds=new Set();
@@ -123,7 +132,8 @@ export function projectSelectedMapAuditReportNext(run){
  const name=value(id.levelName,value(a.evidenceScope.selectedArtifact,id.artifactId));
  const release=id.releaseIdentityStatus==="consistent"&&id.releaseVersion?id.releaseVersion:null;
  const edition=a.auditTarget?.edition==="bedrock"?"BEDROCK":a.auditTarget?.edition==="education"?"EDUCATION":"UNKNOWN";
- return {schema:"m-lazy-report-next/v1.2",layoutVersion:"1.2.0",
+ return {schema:"m-lazy-report-next/v1.3",layoutVersion:"1.3.0",
+  reportKind:"MAP_AUDIT",auditRevision:run.auditRevision,
   reportId:"selected-audit:"+fingerprint(id.artifactFingerprint)+":"+run.auditRevision,
   scope:"MAP",maps:[{mapId:id.artifactId,name,
    artifact:{artifactId:id.artifactId,fingerprint:fingerprint(id.artifactFingerprint),

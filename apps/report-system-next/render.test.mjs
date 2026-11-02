@@ -25,8 +25,8 @@ const inspect = output => {
 test("design remains immutable without a new approved version", async () => {
   const content = await readFile(new URL("layout.lock.json",root),"utf8");
   const lock = JSON.parse(content);
-  assert.equal(assertDesignLock(lock,content).designVersion,"1.2.0");
-  assert.throws(() => assertDesignLock(lock,content.replace('"1.2.0"','"2.0.0"')),
+  assert.equal(assertDesignLock(lock,content).designVersion,"1.3.0");
+  assert.throws(() => assertDesignLock(lock,content.replace('"1.3.0"','"2.0.0"')),
     /Design Lock mismatch/);
 });
 
@@ -36,7 +36,11 @@ test("new synthetic report yields byte-stable JSON and offline HTML", async () =
   assert.equal(first.html,second.html);
   assert.equal(first.json,second.json);
   const golden = JSON.parse(await readFile(new URL("golden.json", import.meta.url), "utf8"));
-  assert.equal(golden.designVersion,"1.2.0");
+  assert.equal(first.report.reportKind,"SYNTHETIC_DEMO");
+  assert.match(first.html,/Synthetic Report Demo/);
+  assert.match(first.html,/Download Report JSON/);
+  assert.match(first.html,/report-integrity/);
+  assert.equal(golden.designVersion,"1.3.0");
   assert.equal(golden.reportId,example.reportId);
   assert.equal(createHash("sha256").update(first.html,"utf8").digest("hex"),golden.htmlSha256);
   assert.equal(createHash("sha256").update(first.json,"utf8").digest("hex"),golden.jsonSha256);
@@ -224,6 +228,9 @@ test("selected-map reporting keeps both finding lanes, unresolved work and no in
   assert.deepEqual(findings.map(f=>f.proofStatus),["PROVEN","NEED_VALIDATION"]);
   assert.ok(findings.every(f=>f.severity===null&&f.testProcedure===null));
   assert.equal(findings[0].evidenceLevel,"REFERENCE_UNRESOLVED");
+  assert.equal(projected.reportKind,"MAP_AUDIT");
+  assert.equal(projected.auditRevision,"synthetic-revision");
+  assert.equal(findings[1].proofStatus,"NEED_VALIDATION");
   assert.equal(projected.maps[0].artifact.version,null);
   assert.equal(projected.maps[0].auditCoverage.state,"BLOCKED");
   assert.ok(projected.maps[0].auditCoverage.checks.some(x=>x.id==="obligation:OB-1"));
@@ -234,4 +241,24 @@ test("selected-map reporting keeps both finding lanes, unresolved work and no in
   assert.throws(()=>projectSelectedMapAuditReportNext({
     ...audit,auditRevision:"stale-revision"
   }),/revision mismatch/);
+});
+
+test("pending proof may still cite inspected source and cannot gain final severity",async()=>{
+  const data=clone(example),finding=issue(data);
+  finding.evidenceLevel="SOURCE_VERIFIED";
+  const output=await renderReportNext(data);
+  assert.equal(output.report.maps[0].levels[0].findings[0].proofStatus,"NEED_VALIDATION");
+  assert.match(output.html,/Needs Validation/);
+  finding.severity="MAJOR";
+  await assert.rejects(()=>renderReportNext(data),/pending proof|unproven issue/);
+});
+test("source-only and demo cannot claim audit completeness or approved-ledger identity",async()=>{
+  const data=clone(example);
+  data.reportKind="SOURCE_REVIEW";
+  data.maps[0].auditCoverage={state:"COMPLETE",summary:"False closure",
+    missingProof:[],evidenceRefs:["EV-DEMO-01"],checks:[]};
+  await assert.rejects(()=>renderReportNext(data),/cannot claim complete Map Audit coverage/);
+  data.maps[0].auditCoverage=null;
+  data.reportKind="APPROVED_BUG_REPORT";
+  await assert.rejects(()=>renderReportNext(data),/unsupported enum/);
 });

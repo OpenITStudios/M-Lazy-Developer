@@ -24,6 +24,44 @@
     status.textContent = message;
     status.dataset.error = error ? "true" : "false";
   };
+
+  const canonical=value=>{
+    if(value===null||["boolean","string"].includes(typeof value))return JSON.stringify(value);
+    if(typeof value==="number"){if(!Number.isFinite(value))throw Error("Invalid report number");return JSON.stringify(value);}
+    if(Array.isArray(value))return "["+value.map(canonical).join(",")+"]";
+    if(value&&typeof value==="object")return "{"+Object.keys(value).sort().map(key=>
+      JSON.stringify(key)+":"+canonical(value[key])).join(",")+"}";
+    throw Error("Unsupported report JSON value");
+  };
+  const canonicalReportJson=canonical(REPORT);
+  let integrityState="CHECKING";
+  const integrityNode=document.getElementById("report-integrity");
+  const permitTesterChange=()=>{
+    if(integrityState==="VERIFIED")return true;
+    notice("Report checksum unverified; tester edits and exports are disabled",true);
+    return false;
+  };
+  async function verifyDigest(){
+    if(!globalThis.crypto?.subtle||typeof TextEncoder!=="function"){
+      integrityState="UNAVAILABLE";
+      integrityNode.textContent="Browser SHA-256 unavailable. Tester edits/exports disabled.";
+      integrityNode.dataset.error="true";refresh();return;
+    }
+    try{
+      const hash=await globalThis.crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonicalReportJson));
+      const actual="sha256:"+Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,"0")).join("");
+      integrityState=actual===META.digest?"VERIFIED":"MISMATCH";
+      integrityNode.textContent=integrityState==="VERIFIED"?
+        "JSON digest matches (file consistency only, not publisher authentication).":
+        "Canonical report JSON checksum mismatch. Tester edits/exports disabled.";
+      integrityNode.dataset.error=integrityState==="VERIFIED"?"false":"true";
+    }catch{
+      integrityState="UNAVAILABLE";
+      integrityNode.textContent="Report SHA-256 verification failed. Tester edits/exports disabled.";
+      integrityNode.dataset.error="true";
+    }
+    refresh();
+  }
   function validateWorkspace(ws) {
     if (!ws || typeof ws !== "object" || Array.isArray(ws) ||
         ws.schema !== "m-lazy-tester-workspace-next/v1" ||
@@ -86,6 +124,7 @@
     return entry;
   };
   function save() {
+    if(!permitTesterChange())return false;
     try {
       localStorage.setItem(KEY, JSON.stringify(WS));
       notice("Autosaved in browser · Use Save as HTML to share");
@@ -108,8 +147,8 @@
     const tester = findings.filter(card => card.dataset.kind !== "DEV_NOTE");
     const ready = tester.filter(card => card.dataset.ready === "true");
     const counts = {
-      passed:ready.filter(card => peekState(card.dataset.finding).result === "PASSED").length,
-      failed:ready.filter(card => peekState(card.dataset.finding).result === "FAILED").length,
+      passed:integrityState==="VERIFIED"?ready.filter(card => peekState(card.dataset.finding).result === "PASSED").length:0,
+      failed:integrityState==="VERIFIED"?ready.filter(card => peekState(card.dataset.finding).result === "FAILED").length:0,
       notRetestable:tester.length - ready.length
     };
     counts.untested = ready.length - counts.passed - counts.failed;
@@ -118,8 +157,14 @@
     }
     for (const card of findings) {
       const entry = peekState(card.dataset.finding);
+      for(const button of card.querySelectorAll("[data-result]"))button.disabled=integrityState!=="VERIFIED";
+      const editor=card.querySelector("[data-notes]");
+      if(editor)editor.disabled=integrityState!=="VERIFIED";
+      const file=card.querySelector("[data-file-input]");
+      if(file)file.disabled=integrityState!=="VERIFIED";
       const resultLabel = card.querySelector("[data-result-label]");
-      if (resultLabel) resultLabel.textContent = card.dataset.ready === "true"
+      if (resultLabel) resultLabel.textContent=integrityState!=="VERIFIED"?"Integrity unverified":
+        card.dataset.ready === "true"
         ? (entry.result === "PASSED" ? "Passed" :
           entry.result === "FAILED" ? "Failed" : "Untested") : "Not Retestable";
       for (const button of card.querySelectorAll("[data-result]")) {
@@ -213,7 +258,7 @@
     const id = card.dataset.finding;
     card.querySelectorAll("[data-result]").forEach(button => {
       button.addEventListener("click", () => {
-        if (card.dataset.ready !== "true") return;
+        if (card.dataset.ready !== "true"||!permitTesterChange()) return;
         const entry = state(id);
         entry.result = entry.result === button.dataset.result ? null : button.dataset.result;
         save(); refresh();
@@ -221,11 +266,13 @@
     });
     const notes = card.querySelector("[data-notes]");
     if (notes) notes.addEventListener("input", () => {
+      if(!permitTesterChange())return;
       state(id).notes = notes.value;
       save();
     });
     const file = card.querySelector("[data-file-input]");
     if (file) file.addEventListener("change", () => {
+      if(!permitTesterChange())return;
       for (const image of file.files || []) {
         if (!["image/png","image/jpeg","image/webp"].includes(image.type) ||
             image.size > 8 * 1024 * 1024) {
@@ -258,6 +305,7 @@
     refresh();
   });
   document.getElementById("save-html").addEventListener("click", () => {
+    if(!permitTesterChange())return;
     const clone = document.documentElement.cloneNode(true);
     // Restore the *approved default view* in portable copies. Tester
     // observations are in the snapshot; expanded cards and active filters
@@ -276,6 +324,11 @@
     }
     const noMatches = clone.querySelector("#no-matches");
     if (noMatches) noMatches.setAttribute("hidden", "");
+    const recipientIntegrity = clone.querySelector("#report-integrity");
+    if(recipientIntegrity){
+      recipientIntegrity.textContent="Rechecking canonical JSON…";
+      recipientIntegrity.removeAttribute("data-error");
+    }
     const recipientStatus = clone.querySelector("#save-status");
     if (recipientStatus) {
       recipientStatus.textContent = "Loading saved tester results";
@@ -290,12 +343,20 @@
     notice("HTML download started; confirm the file before sharing");
   });
   document.getElementById("save-json").addEventListener("click", () => {
+    if(!permitTesterChange())return;
     download(META.fileStem + "-Tester-State.json",
       JSON.stringify(WS,null,2), "application/json");
     notice("JSON download started");
   });
-  document.getElementById("load-json").addEventListener("click", () =>
-    document.getElementById("json-file").click());
+  document.getElementById("download-report-json").addEventListener("click", () => {
+    if(!permitTesterChange())return;
+    download(META.fileStem+"-Report.json",canonicalReportJson,"application/json;charset=utf-8");
+    notice("Canonical Report JSON download started; tester notes are separate");
+  });
+  document.getElementById("load-json").addEventListener("click", () => {
+    if(!permitTesterChange())return;
+    document.getElementById("json-file").click();
+  });
   document.getElementById("json-file").addEventListener("change", event => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -303,6 +364,7 @@
     const reader = new FileReader();
     reader.onerror = () => notice("Unable to open tester JSON", true);
     reader.onload = () => {
+      if(!permitTesterChange())return;
       let candidate;
       try { candidate = validateWorkspace(JSON.parse(reader.result)); }
       catch { notice("Tester JSON rejected: wrong report, evidence or format", true); return; }
@@ -313,10 +375,12 @@
     reader.readAsText(file);
   });
   document.getElementById("reset-data").addEventListener("click", () => {
+    if(!permitTesterChange())return;
     if (!confirm("Reset all tester data for this report?")) return;
     WS = emptyWorkspace();
     save(); // Explicit empty override prevents an embedded snapshot resurfacing.
     refresh();
   });
   refresh();
+  void verifyDigest();
 })();

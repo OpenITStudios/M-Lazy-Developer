@@ -31,9 +31,9 @@ Physical placement does not create ownership. A copy, preview, export, spreadshe
 
 ### Isolated Report System Next boundary
 
-`apps/report-system-next/` is a separately design-locked **renderer source**, not a new current-map gameplay authority, an approved-BUG state owner, or the current Bug Report V2 publisher. It requires independently supplied, evidence-bound `m-lazy-report-next/v1` input and has no authorized production replacement/migration for `workspace/projects/*/output/` or the existing Bug Tracker. Its offline tester workspace is distinct user-edited presentation state; Passed/Failed, notes, and screenshot attachments do not directly mutate `SelectedMapAuditRun`, `report/bug-report.json`, or repair completion.
+`apps/report-system-next/` is a separately design-locked **renderer source**, not a new current-map gameplay authority, an approved-BUG state owner, or the current Bug Report V2 publisher. It requires independently supplied, evidence-bound versioned Report Next input and has no authorized production replacement/migration for `workspace/projects/*/output/` or the existing Bug Tracker. Its offline tester workspace is distinct user-edited presentation state; Passed/Failed, notes, and screenshot attachments do not directly mutate `SelectedMapAuditRun`, `report/bug-report.json`, or repair completion.
 
-An opt-in source-level 1.2.0 adapter now projects the actual `SelectedMapAuditRun` into Report Next through the existing audit CLI `--report-next`. It keeps canonical status and source references separate from tester results and never replaces existing project reports or Approved Bug Report V2. Live map/browser acceptance is NOT EXECUTED; the new output is not the default report flow or an automatic publisher.
+An opt-in source-level 1.3.0 adapter now projects the actual `SelectedMapAuditRun` into Report Next through the existing audit CLI `--report-next`. It keeps canonical status and source references separate from tester results and never replaces existing project reports or Approved Bug Report V2. Live map/browser acceptance is NOT EXECUTED; the new output is not the default report flow or an automatic publisher.
 
 ## Authorities
 
@@ -251,3 +251,7 @@ Approved Bug Report V2 presentation does not own new gameplay facts.
 Canonical HTML presentation, Map Report / Combined Report scope, tester interaction, Save behavior, lane order, and UI vocabulary are owned by [Bug Tracker UI](./bug-tracker-ui.md).
 
 The renderer may omit absent optional information, but it must not infer or invent missing report content.
+
+### Report Next 1.3.0 handoff boundary
+
+MAP_AUDIT has one original auditRevision; direct source reviews and synthetic previews cannot claim full Map Audit completion. Approval-ledger issue counts are independent and **not included** in the Map Audit projection. Canonical JSON export and mutable tester JSON export are distinct. Browser SHA-256 checks source/file consistency before mutable tester work but cannot authenticate a publisher or close gameplay/repair evidence. No approved Bug Report V2 or current project output is modified by these projections.
