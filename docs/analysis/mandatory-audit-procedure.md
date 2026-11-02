@@ -142,6 +142,89 @@ Applicable technical checks
 
 A map may merge or omit stages. Applicability is derived from the selected artifact, not forced from this template.
 
+### Map-specific Game Flow Standard — mandatory applicability and identity contract
+
+This is the normative UNDERSTAND/FORMALIZE and A22 routing rule, **not** an
+additional audit stage, duplicate scenario registry, runner, output schema or
+proof owner. The eight `GameplayFlowStage` names are a chronological
+**question-navigation template**. The selected map may omit or merge them,
+branch, loop, change mode, start directly, have no numerical score or
+victory screen, or continue without a conventional match end.
+
+**Authoritative input:** lock one immutable `.mcworld` identity/version and
+fingerprint. Index current world metadata/DB, active pack manifests and
+dependencies, scripts, functions, entities, UI, structure/topology and
+available authored design before interpreting gameplay. Inaccessible,
+unparsed, disabled or ambiguous material remains an evidence gap; a search
+that found no symbol is not a complete-absence proof.
+
+**Game scope first:** reconstruct each independently sourced minigame and
+mode, player/team/role, level/checkpoint, session/generation, arena and
+relevant world resources. Shared main lobby, scoreboard, inventory, entity
+population, queue or reset is a separate owner requiring positive shared
+witnesses. Never copy the victory, score, role, checkpoint or cleanup
+rules from one minigame to another based on same file, name or coordinate.
+
+**Material stage/transition contract:** use EXISTING Gameplay Intent,
+Semantic IR, Scenario Graph and coverage records for each discovered
+material subject. No new persisted registry is created.
+
+| Dimension | Required source-grounded accounting |
+| --- | --- |
+| Identity | Artifact fingerprint/version, exact source/evidence ID, source locator and known game/mode/role/player/level/arena/session scope |
+| Design | Player objective, permitted actions and independent intended behavior, or explicit unknown if only implementation hints exist |
+| Entry | Trigger, prerequisites, permission/role, guard, resource readiness, participation/generation owner |
+| Mutation | State/resource writers and readers, local/world effects, UI attempts versus delivery, player-visible impact |
+| Transition | From, trigger, branch/loop, guard, owner, resulting state, success/failure exit and exact source relation |
+| Interruption | Cancel/abort, death/respawn, disconnect/rejoin, reload, timeout and overlapping asynchronous work when supported |
+| Result | Current progress/live score, terminal/final result, reward transaction, persistence and UI as distinct *optional* operations |
+| Cleanup | Release/cancel/restore/preserve under correct owner, second-run equivalence and return/replay when authored |
+| Proof | Current map evidence, competing counterproof, outstanding unknown link and smallest deciding validation |
+
+**Applicability is not yes/no.** Reuse the existing descriptive coverage
+labels, not new stored statuses:
+
+- `REQUIRED`: pin/source accounting, applicable player journey, state
+  ownership, source completeness and proof/obligation closure. Does **not**
+  require a lobby, party, final score, reward, win or replay.
+- `CONDITIONAL_ACTIVE`: current selected artifact positively supports
+  the relevant mechanic/mode/dependency. Route bounded feature-specific
+  scenario questions with evidence IDs and exact game scope.
+- `NOT_APPLICABLE`: affirmative current-artifact and/or independently
+  approved design evidence rules out the mechanic within the adequately
+  inspected game/mode scope. Missing name, missing parser output, unexamined
+  pack, generic player-mode label or old QA cannot justify N/A.
+- `UNRESOLVED`: incomplete artifact/parse, ambiguous design, absent
+  source relation, conflicting ownership or insufficient proof. Preserve
+  the existing Audit Obligation/Detection Gap; neither skip nor invent BUG.
+
+**Scenario selection:** universal accounting + supported feature + exactly
+source-bound map type/player mode + material regression/risk. The generic
+`solo` question accepts either an authored solo run or a valid minimum
+party rejection; a `terminal-collision` question is not proof that the
+map has two terminal triggers. Challenge applicable normal/negative paths,
+capacity+1, interleaving, reconnect/reload, second run and cleanup inverse
+only where selected-source or universal obligations justify them.
+Deduplicate by first causal owner instead of combining all unrelated tests.
+
+**Presentation and proof:** source-authored phases and direct current-world
+Intent edges remain separate from the eight operator categories. A
+directed source relation or in-file lexical order cannot prove actual
+player chronology, delivery, game outcome or execution. Counts of chosen
+scenario questions, QA IDs, graph nodes and file names are not PASS. The
+canonical PROVE gate alone admits BUG / DESIGN_MISMATCH with
+PROVEN / NEED_VALIDATION; other missing work stays an Audit Obligation.
+Runtime-only claims require actual Minecraft evidence or an exact narrow
+proof request. Do not infer safety from lack of findings.
+
+**Closure:** every material discovered surface and source-specific game/
+mode branch has an accountable owner and justified route, explicit
+positive N/A, or a preserved unresolved obligation. Every claimed
+cross-game link has an exact shared-owner witness, and every lifecycle
+entry/exit has a valid or unresolved transition. All unresolved proof and
+coverage gaps remain visible; existing audit admission gates decide
+publication. A documented unknown is *not* a tested gameplay behavior.
+
 ## Issue taxonomy rule
 
 Only causal gameplay findings may be classified as issues. Discovery gaps, model gaps, unresolved runtime dependencies, incomplete counter-proof, negative-space risks, temporal risks, and unclassified replica divergence remain `Audit Obligation` until they establish a player-visible causal contradiction.
@@ -1498,9 +1581,10 @@ After UNDERSTAND reconstructs the player journey, state, ownership, progression,
 
 ```text
 family
-→ trigger evidence
-→ applicable: yes / no
-→ reason
+→ selected-artifact trigger and contrary evidence
+→ applicability: REQUIRED / CONDITIONAL_ACTIVE / NOT_APPLICABLE / UNRESOLVED
+→ game/mode/player/arena/level/session scope
+→ reason and exact missing source/proof
 → owned surfaces/resources
 → required joins
 ```
@@ -1532,7 +1616,10 @@ Activate only when the selected artifact contains the trigger:
 
 ### Not-applicable proof
 
-`not applicable` must be supported by discovery/model evidence. Do not run a family merely because it exists in this procedure.
+`NOT_APPLICABLE` requires affirmative selected-source/design evidence
+and adequate coverage; ambiguous or missing source stays `UNRESOLVED`.
+Do not run a family solely because it appears in the template, and do not
+skip it solely because a string, filename or standard phase name is absent.
 
 ### Join selection
 

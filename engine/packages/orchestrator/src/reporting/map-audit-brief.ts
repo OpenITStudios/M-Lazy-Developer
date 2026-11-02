@@ -19,9 +19,9 @@ import type { ReadyAuditCandidateGroup } from "../map-audit-candidate-grouping.j
 import type { AuditValidationTestGroup } from "../map-audit-validation-plan.js";
 import type { MapAuditOutputV2 } from "../map-audit-output-v2.js";
 import {
+  CANONICAL_PLAYER_FLOW_STAGES,
   scenarioCrossPhaseReviewStages,
   type GameplayAuditScenarioKind,
-  type GameplayFlowStage,
 } from "../../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
 
 
@@ -84,38 +84,33 @@ function formatSourceBoundGameplayFlowReview(
   report: MapAuditOutputV2,
   intent: GameplayIntentModel,
 ): readonly string[] {
-  type Stage = Exclude<GameplayFlowStage, "FULL_JOURNEY">;
-  const phases: readonly {
-    stage: Stage;
-    group: string;
-    questions: string;
-    relatedKinds: readonly ("mechanic" | "objective" | "outcome" | "lifecycle")[];
-  }[] = [
-    { stage: "ENTRY_JOIN", group: "A. Entry / Waiting Lobby",
-      questions: "Connect, spawn, lobby, selection and admission (if authored)",
-      relatedKinds: [] },
-    { stage: "READY_START", group: "B. Ready / Countdown",
-      questions: "Role selection, quorum, countdown, cancellation (if authored)",
-      relatedKinds: [] },
-    { stage: "SETUP", group: "B. Setup / Match Start",
-      questions: "Arena readiness, teleport, loadout and start commit (if authored)",
-      relatedKinds: [] },
-    { stage: "ACTIVE_GAMEPLAY", group: "C. Active Gameplay",
-      questions: "Permitted authored mechanics; preparation and interactions",
-      relatedKinds: ["mechanic"] },
-    { stage: "PROGRESSION", group: "C. Progression",
-      questions: "Objectives, waves, checkpoints and LIVE score if applicable",
-      relatedKinds: ["objective"] },
-    { stage: "TERMINAL", group: "D. Match Completion",
-      questions: "Authored exit/outcome; FINAL score, reward, result UI if applicable",
-      relatedKinds: ["outcome"] },
-    { stage: "CLEANUP_REPLAY", group: "E. Cleanup / Return / Replay",
-      questions: "Cancellation, reset, return and reuse when supported",
-      relatedKinds: [] },
-    { stage: "RECOVERY", group: "F. Cross-Phase Recovery",
-      questions: "Reconnect, death/respawn, reload and abort where supported",
-      relatedKinds: ["lifecycle"] },
-  ];
+  type Stage = (typeof CANONICAL_PLAYER_FLOW_STAGES)[number];
+  // Only operator-friendly labels are local. Canonical stage names and
+  // ordering come from one diagnostic owner; not a second stage registry.
+  const descriptions: Record<Stage, {
+    readonly group: string;
+    readonly questions: string;
+  }> = {
+    ENTRY_JOIN: {group: "A. Entry / Waiting Lobby",
+      questions: "Connect, spawn, selection and waiting if authored"},
+    READY_START: {group: "B. Ready / Countdown",
+      questions: "Role, quorum, countdown, cancellation if authored"},
+    SETUP: {group: "B. Setup / Match Start",
+      questions: "Arena readiness, teleport, loadout and start commit if authored"},
+    ACTIVE_GAMEPLAY: {group: "C. Active Gameplay",
+      questions: "Permitted inputs and mechanics actually found"},
+    PROGRESSION: {group: "C. Progression",
+      questions: "Objectives, stages, checkpoints and live score when applicable"},
+    TERMINAL: {group: "D. Completion / Exit",
+      questions: "Authored exit, final result, reward and UI when applicable"},
+    CLEANUP_REPLAY: {group: "E. Cleanup / Return / Replay",
+      questions: "Cancellation, release, restore, return and reuse if authored"},
+    RECOVERY: {group: "F. Cross-Phase Recovery",
+      questions: "Reconnect, respawn, reload and interruption at relevant boundaries"},
+  };
+  const phases = CANONICAL_PLAYER_FLOW_STAGES.map(stage => ({
+    stage, ...descriptions[stage],
+  }));
   const compact = (value: string): string =>
     value.replace(/\s+/g, " ").trim().slice(0, 120);
   const selectedEvidence = new Map(intent.evidence
@@ -137,9 +132,10 @@ function formatSourceBoundGameplayFlowReview(
   const out: string[] = [
     "",
     "## Player Journey / Source-Bound Flow QA (NOT AN EXECUTED PLAYTHROUGH)",
-    "Below is an INVESTIGATION PLAN, not a discovered fixed player sequence. " +
-      "World/pack initialization belongs to LOAD/DISCOVERY; optional lobby, " +
-      "score, reward, win and replay mechanics are not assumed present.",
+    "Ordered stages are an applicability/reachability INVESTIGATION PLAN, " +
+      "not an observed player sequence. World/pack initialization belongs " +
+      "to LOAD/DISCOVERY. Lobby, scoring, results, rewards, replay and " +
+      "multiplayer are conditional on the selected map.",
   ];
 
   // Source game subjects and scoped mode hints must not be blended:
@@ -210,11 +206,6 @@ function formatSourceBoundGameplayFlowReview(
       scenarioIds.has(check.scenarioId));
     const exactLabelPhases = sourcePhaseFeatures.filter(f =>
       f.label.trim() === phase.stage);
-    // Kind-level evidence is ONLY a search lead for this operator topic.
-    // E.g. an outcome subject does not prove a final result, reward or
-    // that a win/loss path can be reached.
-    const typedLeads = sourceFeatures.filter(f =>
-      phase.relatedKinds.includes(f.kind as typeof phase.relatedKinds[number]));
     out.push(
       "- **" + phase.group + " [" + phase.stage + "]**: " + phase.questions + ".",
       "  QA questions: " + primary.length + " primary / " + cross.length +
@@ -227,14 +218,6 @@ function formatSourceBoundGameplayFlowReview(
               (locatorFor(f.sourceEvidenceIds)[0] ?? "UNKNOWN")).join("; ") + ")"
           : "; phase activation/absence UNRESOLVED") + ".",
     );
-    if (typedLeads.length > 0) {
-      out.push("  Related typed SOURCE subject(s), NOT stage-bound: " +
-        typedLeads.slice(0, 3).map(f => compact(f.label) +
-          " [" + f.kind + "; " +
-          (locatorFor(f.sourceEvidenceIds)[0] ?? "UNKNOWN") + "]").join("; ") +
-        (typedLeads.length > 3
-          ? "; +" + (typedLeads.length - 3) + " more" : "") + ".");
-    }
   }
   const sourceDefined = sourcePhaseFeatures.filter(f =>
     !phases.some(phase => phase.stage === f.label.trim()));
@@ -309,10 +292,11 @@ function formatSourceBoundGameplayFlowReview(
     "Unplaced source features: " + unplaced.length +
       "; uninterpreted/unsourced directed journey candidates: " +
       unrepresented + ". Resolve these through existing UNDERSTAND/PROVE owners.",
-    "A map without a lobby, numeric score, terminal victory, reward or replay " +
-      "may be valid. Absence is NOT_APPLICABLE only after positive current-map " +
-      "evidence; otherwise preserve UNKNOWN. No source or code label can " +
-      "manufacture player runtime or an approved game rule.",
+    "Applicability: REQUIRED for selected-map identity and complete source/flow " +
+      "accounting; CONDITIONAL_ACTIVE only with current-artifact evidence; " +
+      "NOT_APPLICABLE requires affirmative source/design evidence plus adequate " +
+      "coverage; otherwise UNRESOLVED. These are routing labels, not new " +
+      "proof states. No phase name, code label or QA count proves gameplay PASS.",
     "",
   );
   return out;

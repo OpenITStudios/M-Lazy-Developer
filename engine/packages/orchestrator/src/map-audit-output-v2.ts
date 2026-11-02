@@ -1,4 +1,5 @@
 import { operatorMapTestStageFor, type OperatorMapTestStage } from "./map-audit-admission.js";
+import { CANONICAL_PLAYER_FLOW_STAGES } from "../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
 import type {
   GameDesignMapClassification,
 } from "../../game-design-spec/src/index.js";
@@ -398,17 +399,6 @@ export interface MapAuditOutputV2 {
   readonly qualityGates: MapAuditQualityGates;
   readonly fullMapReplica?: FullMapReplicaReceipt;
 }
-
-const PLAYER_FLOW = [
-  "ENTRY_JOIN",
-  "READY_START",
-  "SETUP",
-  "ACTIVE_GAMEPLAY",
-  "PROGRESSION",
-  "TERMINAL",
-  "CLEANUP_REPLAY",
-  "RECOVERY",
-] as const;
 
 function nodeText(
   node: GameplayIntentNode | undefined,
@@ -1276,7 +1266,7 @@ export function projectMapAuditOutputV2(input: {
       preserveRules,
       progressionRules,
     },
-    gameplayFlow: PLAYER_FLOW,
+    gameplayFlow: CANONICAL_PLAYER_FLOW_STAGES,
     gameplayFlowBasis: "AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY",
     ...(input.gameplayStructure === undefined
       ? {}

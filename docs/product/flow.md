@@ -606,6 +606,11 @@ ENTRY / JOIN
 ```
 
 Domain analyzers are evidence providers attached to the relevant player-flow stage.
+The [Map-specific Game Flow Standard](../analysis/mandatory-audit-procedure.md#map-specific-game-flow-standard--mandatory-applicability-and-identity-contract)
+requires source-bound per-game identity, conditional mechanic applicability
+and accounted transitions before a scenario is treated as relevant.
+The canonical stage order is report navigation only, not observed gameplay
+or a fixed runtime state machine.
 The read-only human report groups the same canonical evidence under Entry /
 Waiting Lobby, Match Start, Active Gameplay (LIVE scoring), Match Completion
 (FINAL score, rewards and result UI), Post-Match (return/replay) and cross-phase

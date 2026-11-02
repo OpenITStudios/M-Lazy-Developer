@@ -38,16 +38,23 @@ export type GameplayAuditScenarioProofMode =
   | "static-first"
   | "runtime-only-if-irreducible";
 
+/**
+ * Canonical order for QA navigation only, never required player states.
+ * FULL_JOURNEY is an investigation, not a chronological step.
+ */
+export const CANONICAL_PLAYER_FLOW_STAGES = [
+  "ENTRY_JOIN",
+  "READY_START",
+  "SETUP",
+  "ACTIVE_GAMEPLAY",
+  "PROGRESSION",
+  "TERMINAL",
+  "CLEANUP_REPLAY",
+  "RECOVERY",
+] as const;
 export type GameplayFlowStage =
   | "FULL_JOURNEY"
-  | "ENTRY_JOIN"
-  | "READY_START"
-  | "SETUP"
-  | "ACTIVE_GAMEPLAY"
-  | "PROGRESSION"
-  | "TERMINAL"
-  | "CLEANUP_REPLAY"
-  | "RECOVERY";
+  | (typeof CANONICAL_PLAYER_FLOW_STAGES)[number];
 
 /** A source-grounded question contract, not a PASS/FAIL, finding or test receipt. */
 export interface GameplayAuditDetectionIndicator {
@@ -454,19 +461,19 @@ export function buildGameplayAuditScenarioPreset(
       kind: "full-journey",
       flowStage: "FULL_JOURNEY",
       reason:
-        "Every audit must trace one complete player journey through cleanup and replay.",
+        "Every audit must account for source-supported player actions, legal branches, loops, exits and recovery; replay is conditional.",
       questions: [
-        "Can every required gameplay stage be reached in order?",
+        "Which source-supported phases and branches can be reached, and which entry/exit links remain unresolved?",
         "Where lobby/join pads, team selection or ready gates exist, are admission, occupancy, start, exit and rejoin counted and owned correctly?",
         "Does each stage have a valid success, failure, and exit path?",
-        "Does cleanup restore enough baseline state for another run?",
+        "When replay/retry is authored, is the correct session, player, level or arena baseline restored?",
         "Are the spawn route, gameplay actions and access permissions reachable?",
-        "Does player-facing feedback reflect the actual state and terminal result?",
-        "Do connection, initial spawn, main lobby, arena selection and waiting membership differ correctly from respawn and return-to-lobby?",
+        "Does feedback reflect committed state and an authored result only when a result exists?",
+        "Where a lobby/arena is authored, are connection, first spawn, waiting, respawn and return states distinguished?",
         "Where authored, do waiting-lobby join pads, capacity, leave, ready set and countdown cancellation reconcile before start?",
-        "Can arena/setup readiness, teleport and loadout complete before gameplay starts, including leave during countdown?",
-        "Are LIVE score events distinct from FINAL score, winner selection, one-shot reward settlement and result presentation?",
-        "After end/abort, are pending callbacks, entities, world changes and ownership settled before return-to-lobby and arena reuse?",
+        "Where a countdown/setup is authored, does it settle correctly before active play or on cancellation?",
+        "When scoring/result/reward exists, are live score, final result, reward and presentation independently owned?",
+        "Where exit/abort/return/reuse exists, are callbacks, resources and ownership settled before restart?",
         "Are reconnect, reload, parallel arenas and stale callbacks challenged at the phase where their ownership changes?",
         "Is a waiting lobby or team selection actually authored, or does this map legitimately start without one?",
         "Is numeric scoring or a one-shot reward actually part of this map, or is progress/exit intentionally non-scoring?",
@@ -490,8 +497,8 @@ export function buildGameplayAuditScenarioPreset(
       reason:
         "Solo play exposes hidden assumptions about party members, ownership, voting, wipe, rewards, and progression.",
       questions: [
-        "Does any mechanic incorrectly assume another active player exists?",
-        "Can one player start, fail, recover, finish, and replay normally?",
+        "Does one-player admission follow the authored minimum-party policy without partial state mutation?",
+        "If solo is allowed, are its valid paths reachable; otherwise is rejection/queueing correct and recoverable?",
       ],
     }),
     scenario({
@@ -499,11 +506,11 @@ export function buildGameplayAuditScenarioPreset(
       kind: "terminal-collision",
       flowStage: "TERMINAL",
       reason:
-        "Terminal events commonly race with timers, death, cleanup, rewards, or delayed work.",
+        "When terminal/exit paths are authored, investigate conflicting outcomes and delayed work without assuming victory or rewards.",
       questions: [
-        "Can two terminal conditions become true in the same tick/window?",
-        "Which owner wins and are all other pending mutations invalidated?",
-        "Can reward, respawn, timeout, or cleanup commit after terminal ownership changes?",
+        "If multiple authored exit conditions exist, can they become true in the same tick/window?",
+        "Where exits overlap, which owner settles the result and invalidates stale mutations?",
+        "Which authored reward, respawn, timeout or cleanup effects can commit after session ownership changes?",
         "Can an ordinary player trigger more than one terminal path for the same session/arena generation, and are terminal scopes guarded by exactly-once ownership?",
       ],
     }),

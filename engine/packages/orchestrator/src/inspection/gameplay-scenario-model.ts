@@ -12,6 +12,7 @@ import {
   type SemanticIr,
 } from "../../../semantic-ir/src/index.js";
 import type { ArenaRegionPlan } from "../../../../analyzers/topology/src/index.js";
+import { CANONICAL_PLAYER_FLOW_STAGES } from "../../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
 import {
   reconcileSourceStateOutcomes,
   reconcileSourceResourceOutcomes,
@@ -1224,6 +1225,16 @@ export function deriveGameplayArchitectureNavigation(
     string,
     { scenarioIds: string[]; componentIds: string[]; causalLinkIds: string[] }
   >();
+  // Canonical questions before named source stages; custom names remain
+  // separate. This sorting is NOT evidence of chronological gameplay.
+  const stageRank = new Map<string, number>(
+    ["FULL_JOURNEY", ...CANONICAL_PLAYER_FLOW_STAGES]
+      .map((stage, index) => [stage, index] as const),
+  );
+  const compareStages = (left: string, right: string): number =>
+    (stageRank.get(left) ?? Number.MAX_SAFE_INTEGER) -
+      (stageRank.get(right) ?? Number.MAX_SAFE_INTEGER) ||
+    left.localeCompare(right);
 
   for (const scenario of graph.scenarios) {
     const group = stageGroups.get(scenario.gameplayStage) ?? {
@@ -1418,7 +1429,7 @@ export function deriveGameplayArchitectureNavigation(
   const navigation: Omit<GameplayArchitectureNavigation, "architectureReconciliation" | "gameplayStructure"> = {
     schemaVersion: 1,
     policy: "derived-gameplay-architecture-navigation",
-    stages: [...stageGroups].sort(([a], [b]) => a.localeCompare(b))
+    stages: [...stageGroups].sort(([a], [b]) => compareStages(a, b))
       .map(([name, group]) => ({
         name,
         scenarioIds: sorted(group.scenarioIds),
