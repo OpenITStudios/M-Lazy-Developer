@@ -337,6 +337,62 @@ describe("script analyzer", () => {
     expect(timer?.callbackSource?.range?.lineStart).toBe(6);
   });
 
+  it("resolves single-assignment event handlers across complex same-block setup", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world, system } from "@minecraft/server";',
+      'var itemHandler;',
+      'function initialize() {',
+      '  itemHandler = (event) => { world.sendMessage(event.itemStack.typeId); };',
+      '  const helper = (n) => n + 1;',
+      '  registerCleanup(() => helper(3));',
+      '  system.runInterval(() => helper(4), 20);',
+      '  const other = () => {};',
+      '  world.afterEvents.playerSpawn.subscribe(other);',
+      '  world.afterEvents.itemUse.subscribe(itemHandler);',
+      '}',
+    ].join("\n"), source);
+    const event = parsed.events.find(item => item.event === "itemUse");
+    expect(event?.callbackRegion).toMatch(/^callback@/);
+    expect(event?.callbackSource?.range?.lineStart).toBe(4);
+  });
+
+  it("rejects module-handler rebinding through destructuring or iterable assignment", () => {
+    for (const mutation of [
+      '({ handler } = source);',
+      '({ chosen: handler } = source);',
+      '[handler] = source;',
+      'for (handler of values) {}',
+    ]) {
+      const parsed = parseScriptFile("scripts/main", [
+        'import { world } from "@minecraft/server";',
+        'var handler;',
+        'function initialize() {',
+        '  handler = (event) => {};',
+        '  world.afterEvents.itemUse.subscribe(handler);',
+        '}',
+        'function otherPath() {',
+        '  ' + mutation,
+        '}',
+      ].join("\n"), source);
+      expect(parsed.events.find(event => event.event === "itemUse")?.callbackRegion)
+        .toBeUndefined();
+    }
+  });
+
+  it("does not resolve an otherwise unique handler when direct eval can mutate it", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'var handler;',
+      'function initialize() {',
+      '  handler = (event) => {};',
+      '  eval("handler = anotherHandler");',
+      '  world.afterEvents.itemUse.subscribe(handler);',
+      '}',
+    ].join("\n"), source);
+    expect(parsed.events.find(item => item.event === "itemUse")?.callbackRegion)
+      .toBeUndefined();
+  });
+
   it("resolves bundled registration handlers cleared only in a separate teardown function", () => {
     const parsed = parseScriptFile("scripts/main", [
       'import { world } from "@minecraft/server";',

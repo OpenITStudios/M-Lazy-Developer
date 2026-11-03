@@ -2453,6 +2453,29 @@ export function parseScriptFile(
     }
   }
   const allModuleHandlerWrites = new Map<string, ts.Node[]>();
+  // Destructuring and for-of/in can rebind a lexical variable without an
+  // Identifier on the immediate assignment LHS. Treat these as conflicting
+  // writes rather than claiming a uniquely authored callback.
+  const destructuredWriteNames = (target: ts.Node): string[] => {
+    if (ts.isIdentifier(target)) return [target.text];
+    if (ts.isParenthesizedExpression(target) || ts.isSpreadElement(target)) {
+      return destructuredWriteNames(target.expression);
+    }
+    if (ts.isArrayLiteralExpression(target)) {
+      return target.elements.flatMap(destructuredWriteNames);
+    }
+    if (ts.isObjectLiteralExpression(target)) {
+      return target.properties.flatMap(property =>
+        ts.isShorthandPropertyAssignment(property)
+          ? [property.name.text]
+          : ts.isPropertyAssignment(property)
+            ? destructuredWriteNames(property.initializer)
+            : ts.isSpreadAssignment(property)
+              ? destructuredWriteNames(property.expression)
+              : []);
+    }
+    return [];
+  };
   const recordHandlerWrites = (node: ts.Node): void => {
     const write = ts.isBinaryExpression(node) &&
       ts.isIdentifier(node.left) &&
@@ -2464,10 +2487,20 @@ export function parseScriptFile(
           (node.operator === ts.SyntaxKind.PlusPlusToken ||
            node.operator === ts.SyntaxKind.MinusMinusToken)
           ? node.operand.text : undefined;
-    if (write && uninitializedModuleHandlers.has(write)) {
-      const entries = allModuleHandlerWrites.get(write) ?? [];
+    const patternNames = ts.isBinaryExpression(node) &&
+      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+      !ts.isIdentifier(node.left)
+      ? destructuredWriteNames(node.left)
+      : (ts.isForOfStatement(node) || ts.isForInStatement(node)) &&
+        !ts.isVariableDeclarationList(node.initializer)
+        ? destructuredWriteNames(node.initializer)
+        : [];
+    for (const name of new Set([...(write ? [write] : []), ...patternNames])) {
+      if (!uninitializedModuleHandlers.has(name)) continue;
+      const entries = allModuleHandlerWrites.get(name) ?? [];
       entries.push(node);
-      allModuleHandlerWrites.set(write, entries);
+      allModuleHandlerWrites.set(name, entries);
     }
     ts.forEachChild(node, recordHandlerWrites);
   };
@@ -2625,8 +2658,26 @@ export function parseScriptFile(
     // Only other static function-valued assignments and native event
     // registrations may intervene. A cleanup call, await, dynamic write,
     // or conditional branch between assignment and subscribe is ambiguous.
-    const safeBetween = block.statements.slice(assignIndex + 1, callIndex)
-      .every((intervening) => {
+    // With a single source write, other statements in the SAME block cannot
+    // change this unique module variable through lexical assignment. Bundlers
+    // commonly emit helper declarations, subscriptions, intervals and reset
+    // registrations between callback creation and its event registration.
+    // Those are not new callback owners. Indirect eval/with is dynamic source
+    // mutation and must NOT be treated as static identity evidence.
+    // When a teardown reset exists, keep the stricter intervening-call gate:
+    // a function could invoke the reset owner before registration.
+    const hasDynamicWrite = (node: ts.Node): boolean => {
+      if (ts.isWithStatement(node)) return true;
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) &&
+          (node.expression.text === "eval" || node.expression.text === "Function")) {
+        return true;
+      }
+      return ts.forEachChild(node, hasDynamicWrite) ?? false;
+    };
+    const between = block.statements.slice(assignIndex + 1, callIndex);
+    const safeBetween = writes.length === 1
+      ? between.every(intervening => !hasDynamicWrite(intervening))
+      : between.every((intervening) => {
         if (!ts.isExpressionStatement(intervening)) return false;
         const expr = intervening.expression;
         if (ts.isBinaryExpression(expr) &&
