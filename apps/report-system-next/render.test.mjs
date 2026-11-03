@@ -279,6 +279,47 @@ test("selected-map reporting keeps both finding lanes, unresolved work and no in
       {findingId:"FOREIGN-ISSUE",test:"Read unrelated code."}]}]}}),/Foreign or missing per-finding verification assertion/);
   assert.throws(()=>projectSelectedMapAuditReportNext({...audit,mapAuditReport:{
     ...audit.mapAuditReport,validationTests:[{...plan,verificationMode:"UNKNOWN_MODE"}]}}),/Invalid or unbound canonical validation group/);
+  // Two issues sharing one prerequisite must each keep their own deciding
+  // assertion. A partial, repeated or foreign test plan must fail closed.
+  const second={...pending,id:"ISSUE-PENDING-2",
+    validationTest:"Check whether the second player retains arena ownership"};
+  const pairedAudit={...audit,mapAuditReport:{...audit.mapAuditReport,
+    designMismatches:[pending,second]}};
+  const grouped={...plan,findingIds:["ISSUE-PENDING","ISSUE-PENDING-2"],
+    assertions:[
+      {findingId:"ISSUE-PENDING",test:"Count the delayed entities after the restart."},
+      {findingId:"ISSUE-PENDING-2",test:"Check whether the second player retains arena ownership."}
+    ]};
+  const groupedReport=projectSelectedMapAuditReportNext({...pairedAudit,mapAuditReport:{
+    ...pairedAudit.mapAuditReport,validationTests:[grouped]}});
+  const groupedCheck=groupedReport.maps[0].auditCoverage.checks.find(x=>x.id==="validation:controlled-reload");
+  assert.ok(groupedCheck);
+  assert.match(groupedCheck.reason,/Issue types: DESIGN_MISMATCH/);
+  assert.match(groupedCheck.reason,/Gameplay flows: PROGRESSION/);
+  assert.match(groupedCheck.nextCheck,/ISSUE-PENDING: Count the delayed entities/);
+  assert.match(groupedCheck.nextCheck,/ISSUE-PENDING-2: Check whether the second player/);
+  assert.deepEqual(groupedReport.maps[0].levels[0].findings.map(f=>f.proofStatus),
+    ["PROVEN","NEED_VALIDATION","NEED_VALIDATION"]);
+  for(const broken of [
+    {...grouped,assertions:grouped.assertions.slice(0,1)},
+    {...grouped,assertions:[grouped.assertions[0],grouped.assertions[0]]}
+  ]){
+    assert.throws(()=>projectSelectedMapAuditReportNext({...pairedAudit,mapAuditReport:{
+      ...pairedAudit.mapAuditReport,validationTests:[broken]}}),
+    /Missing or duplicate per-finding verification assertion/);
+  }
+  for(const broken of [
+    {...plan,findingIds:["ISSUE-PROVEN"],assertions:[
+      {findingId:"ISSUE-PROVEN",test:"Do not retest this proven issue."}],issueTypes:["BUG"]},
+    {...plan,issueTypes:["BUG"]},
+    {...plan,gameplayFlows:["TERMINAL"]},
+    {...plan,missingProof:[]},
+    {...plan,missingProof:["","Observable entity count"]}
+  ]){
+    assert.throws(()=>projectSelectedMapAuditReportNext({...audit,mapAuditReport:{
+      ...audit.mapAuditReport,validationTests:[broken]}}),
+    /Invalid or unbound canonical validation group|Missing or invalid canonical verification prerequisites/);
+  }
   assert.throws(()=>projectSelectedMapAuditReportNext({
     ...audit,auditRevision:"stale-revision"
   }),/revision mismatch/);

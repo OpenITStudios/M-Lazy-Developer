@@ -46,6 +46,8 @@ export function projectSelectedMapAuditReportNext(run){
  const ids=new Set();
  for(const {f,kind} of lanes){if(!f.id||ids.has(f.id)||f.issueType!==kind||!["PROVEN","NEED_VALIDATION"].includes(f.status))
   throw Error("Duplicate/mismatched canonical finding");ids.add(f.id)}
+ const pendingById=new Map(lanes.filter(({f})=>f.status==="NEED_VALIDATION")
+  .map(({f,kind})=>[f.id,{kind,gameplayFlow:f.gameplayFlow}]));
  const findings=lanes.map(({f,kind})=>{
   const pending=f.status==="NEED_VALIDATION",refs=uniq(f.evidenceIds??[]),ev=refs.map(cite);
   if(pending&&(!f.validationReason||!f.missingProof||!f.validationTest))throw Error(f.id+": missing canonical validation route");
@@ -84,7 +86,16 @@ export function projectSelectedMapAuditReportNext(run){
  for(const t of a.validationTests??[]){
   const findingIds=uniq(t.findingIds??[]);
   const mode=t.verificationMode;
-  if(!t.key||!findingIds.length||!findingIds.every(id=>ids.has(id))||
+  const issueTypes=uniq(t.issueTypes??[]);
+  const gameplayFlows=uniq(t.gameplayFlows??[]);
+  const actualIssueTypes=uniq(findingIds.map(id=>pendingById.get(id)?.kind));
+  const actualGameplayFlows=uniq(findingIds.map(id=>pendingById.get(id)?.gameplayFlow));
+  if(!t.key||!Array.isArray(t.findingIds)||!findingIds.length||
+     findingIds.length!==t.findingIds.length||
+     !findingIds.every(id=>pendingById.has(id))||
+     !Array.isArray(t.issueTypes)||!Array.isArray(t.gameplayFlows)||
+     JSON.stringify(issueTypes)!==JSON.stringify(actualIssueTypes)||
+     JSON.stringify(gameplayFlows)!==JSON.stringify(actualGameplayFlows)||
      !["STATIC_PROOF_COMPLETION","NARROW_RUNTIME_VERIFICATION"].includes(mode)||
      t.broadPlaythroughAllowed!==false||
      !Array.isArray(t.assertions)||!Array.isArray(t.missingProof)||
@@ -95,15 +106,22 @@ export function projectSelectedMapAuditReportNext(run){
     throw Error("Foreign or missing per-finding verification assertion in "+t.key);
    return a;
   });
+  if(assertions.length!==findingIds.length||
+     new Set(assertions.map(a=>a.findingId)).size!==findingIds.length)
+   throw Error("Missing or duplicate per-finding verification assertion in "+t.key);
+  const proof=t.missingProof.filter(x=>typeof x==="string"&&x.trim());
+  if(!proof.length||proof.length!==t.missingProof.length)
+   throw Error("Missing or invalid canonical verification prerequisites in "+t.key);
   const modeMeaning=mode==="NARROW_RUNTIME_VERIFICATION"
    ?"Narrow Minecraft runtime observation required; not executed by this report."
    :"Selected-source/static/formal proof required; no Minecraft gameplay is claimed.";
-  const proof=t.missingProof.filter(x=>typeof x==="string"&&x.trim());
   const detail=assertions.filter(x=>x.test!==t.test||assertions.length>1)
    .map(x=>x.findingId+": "+x.test);
   add({id:"validation:"+t.key,title:"Validation group "+t.key,
-   reason:modeMeaning+" Finding IDs: "+findingIds.join(", ")+". Broad playthrough is not authorized.",
-   missingProof:proof.length?proof.join(" | "):"Canonical validation group supplies no deciding proof prerequisites.",
+   reason:modeMeaning+" Finding IDs: "+findingIds.join(", ")+
+    ". Issue types: "+issueTypes.join(", ")+". Gameplay flows: "+gameplayFlows.join(", ")+
+    ". Broad playthrough is not authorized.",
+   missingProof:proof.join(" | "),
    nextCheck:t.test+(detail.length?" | Per-finding assertions: "+detail.join(" | "):""),
    evidenceRefs:[]});
  }
