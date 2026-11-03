@@ -9,6 +9,7 @@ import { SemanticGraph } from "../../../graph/src/index.js";
 import { analyzeInspectionScriptCompatibility } from "./inspect-script-compatibility.js";
 import { populateInspectionScriptImportGraph } from "./inspect-script-import-graph.js";
 import { enrichInspectionSemanticGraph } from "./inspect-graph-enrichment.js";
+import { deriveOwnedGameplaySourceSignals } from "./owned-gameplay-source-signals.js";
 import { analyzeInspectionEntityKnowledge } from "./inspect-entity-knowledge-stage.js";
 import { analyzeInspectionRuntimeState } from "./inspect-runtime-analysis-stage.js";
 import { analyzeInspectionEducation } from "./inspect-education-stage.js";
@@ -356,6 +357,26 @@ export async function inspectDirectory(
       files,
     );
 
+  enrichInspectionSemanticGraph({
+    graph,
+    nodes,
+    artifactId,
+    parsedFunctions,
+    parsedEntities,
+    parsedDialogueDocuments,
+    parsedStructureModels,
+    tickFunctionRegistrations,
+  });
+
+  populateInspectionScriptImportGraph(
+    graph,
+    parsedScripts,
+    resolvedScriptImports,
+  );
+  // Reuse exact SAME-pack graph edges in the source-to-meaning handoff;
+  // no text similarity or synthetic references may imply gameplay behavior.
+  const ownedSource = deriveOwnedGameplaySourceSignals({ artifactId, graph, nodes });
+
   const gameplaySurfaceSignals = [
     ...deriveGameplayIntentSurfaceSignals({
       functions: parsedFunctions.map(
@@ -374,6 +395,7 @@ export async function inspectDirectory(
         parsedEntities,
     }),
     ...gameplayResourceText.signals,
+    ...ownedSource.signals,
   ];
 
   const gameplayIntent = buildGameplayIntentModel({
@@ -384,6 +406,7 @@ export async function inspectDirectory(
     contractScripts: contractSources,
     supplementalSignals:
       gameplaySurfaceSignals,
+    supplementalRelations: ownedSource.relations,
     playerFacingTextCues: gameplayResourceText.playerFacingCues,
     selectedPackAttachments: packs.map(pack => ({
       root: pack.root,
@@ -441,22 +464,6 @@ export async function inspectDirectory(
     },
   );
 
-  enrichInspectionSemanticGraph({
-    graph,
-    nodes,
-    artifactId,
-    parsedFunctions,
-    parsedEntities,
-    parsedDialogueDocuments,
-    parsedStructureModels,
-    tickFunctionRegistrations,
-  });
-
-  populateInspectionScriptImportGraph(
-    graph,
-    parsedScripts,
-    resolvedScriptImports,
-  );
 
   diagnostics.push(
     ...analyzeInspectionScriptCompatibility(

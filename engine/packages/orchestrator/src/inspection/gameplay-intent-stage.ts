@@ -46,6 +46,8 @@ export interface GameplayIntentStageInput {
     parsed: ParsedScriptFile;
   }[];
   supplementalSignals?: readonly GameplayIntentSignal[];
+  /** Only separately selected-artifact source-bound authored reference facts. */
+  supplementalRelations?: readonly GameplayIntentRelationSignal[];
   /** Literal current-world .lang text: source cue, never keyword-inferred intent. */
   playerFacingTextCues?: readonly GameplayResourceTextEntry[];
   /** Selected world pack-list attachment declarations, not client activation. */
@@ -116,12 +118,19 @@ export function buildGameplayIntentModel(
   ], selectedCalls);
   const supplementalSignals =
     input.supplementalSignals ?? [];
+  const supplementalRelations = (input.supplementalRelations ?? []).filter(item =>
+    input.artifactId !== undefined &&
+    (item.locator.startsWith("behavior_packs/") ||
+     item.locator.startsWith("behavior_pack/")) &&
+    item.evidenceOrigin === "source-code" &&
+    item.status === "inferred");
   const extracted = {
     ...extractedBase,
     signals: [
       ...extractedBase.signals,
       ...supplementalSignals,
     ],
+    relations: [...extractedBase.relations, ...supplementalRelations],
   };
   const selectedArtifactSourcePaths = new Set([
     ...selectedScripts.map(item => item.parsed.source.relativePath),
@@ -636,6 +645,12 @@ export function buildGameplayIntentModel(
       selectedSourceLocator(relation.locator)
         ? "selected-artifact" as const
         : undefined;
+    // External/derived supplemental relationships cannot author a gameplay
+    // edge just by reusing an existing subject name. The exact referenced
+    // JSON source site must exist in THIS selected artifact inventory.
+    if (supplementalRelations.includes(relation) && relationScope === undefined) {
+      continue;
+    }
     evidence.set(id, {
       id,
       origin: relation.evidenceOrigin,
