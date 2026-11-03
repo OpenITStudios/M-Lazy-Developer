@@ -33,6 +33,43 @@ describe("script safe config analysis", () => {
     expect(result.resolvedArenaConcurrencyLimit).toBeUndefined();
   });
 
+  it("recognizes a generated ARENA_IDS roster without claiming concurrency or spatial proof", () => {
+    const result = analyzeScriptSafeConfig([
+      parsed("generated", [
+        "const ARENA_GRID = { columns: 3, rows: 2 };",
+        "var ARENA_IDS = Array.from({ length: ARENA_GRID.columns * ARENA_GRID.rows }, (_, index) => `arena_${index + 1}`);",
+      ].join("\n")),
+    ]);
+    expect(result.resolvedArenaCount).toBe(6);
+    expect(result.arenaIdCandidates?.[0]?.arenaIds).toEqual([
+      "arena_1", "arena_2", "arena_3", "arena_4", "arena_5", "arena_6",
+    ]);
+    expect(result.resolvedArenaConcurrencyLimit).toBeUndefined();
+    expect(result.resolvedArenaLayout).toBeUndefined();
+    expect(result.arenaCountConflict).toBe(false);
+  });
+
+  it("rejects duplicate, mutated or conflicting ARENA_IDS sources", () => {
+    const duplicate = analyzeScriptSafeConfig([
+      parsed("duplicate", 'const ARENA_IDS = ["arena_1", "arena_1"];'),
+    ]);
+    expect(duplicate.resolvedArenaCount).toBeUndefined();
+    expect(duplicate.arenaCountConflict).toBe(true);
+    const mutated = analyzeScriptSafeConfig([
+      parsed("mutable", [
+        'var ARENA_IDS = ["arena_1", "arena_2"];',
+        'ARENA_IDS.push("arena_3");',
+      ].join("\n")),
+    ]);
+    expect(mutated.resolvedArenaCount).toBeUndefined();
+    const conflict = analyzeScriptSafeConfig([
+      parsed("alpha", 'const ARENA_IDS = ["arena_a", "arena_b"];'),
+      parsed("beta", 'const ARENA_IDS = ["arena_a", "arena_c"];'),
+    ]);
+    expect(conflict.arenaCountConflict).toBe(true);
+    expect(conflict.resolvedArenaCount).toBeUndefined();
+  });
+
   it("fails closed on equal-count arena ID/offset key mismatches", () => {
     const result = analyzeScriptSafeConfig([
       parsed("drift", [
@@ -165,8 +202,8 @@ describe("script safe config analysis", () => {
       parsed(
         "main",
         [
-          "import { BASE_COUNT as N, ARENA_OFFSETS } from '../config';",
-          "const ARENA_COUNT = N * 2;",
+          "import { BASE_COUNT as N, ARENA_OFFSETS } from './config';",
+          "const ARENA_COUNT = N - 1;",
           "const COPY = ARENA_OFFSETS;",
         ].join("\n"),
       ),
@@ -198,7 +235,7 @@ describe("script safe config analysis", () => {
       parsed(
         "main",
         [
-          "import { shift as makeArena } from '../config';",
+          "import { shift as makeArena } from './config';",
           "const ARENA_CENTERS = [{ x: 0, y: 0, z: 0 }, { x: 100, y: 0, z: 0 }].map(makeArena);",
         ].join("\n"),
       ),
@@ -226,14 +263,14 @@ describe("script safe config analysis", () => {
       parsed(
         "a",
         [
-          "import { B } from '../b';",
+          "import { B } from './b';",
           "export const A = B;",
         ].join("\n"),
       ),
       parsed(
         "b",
         [
-          "import { A } from '../a';",
+          "import { A } from './a';",
           "export const B = A;",
         ].join("\n"),
       ),

@@ -90,7 +90,9 @@ export interface ScriptSafeConfigAnalysis {
   arenaLayoutConflict: boolean;
 }
 
-const ARENA_ENABLED_IDS_NAME = /^ENABLED_ARENA_IDS$/;
+// Both names denote an authored arena roster, not physical replicas or a
+// concurrency guarantee. Every item still needs to be static and unique.
+const ARENA_ENABLED_IDS_NAME = /^(?:ENABLED_ARENA_IDS|ARENA_IDS)$/;
 const ARENA_KEYED_OFFSETS_NAME = /^ARENA_OFFSETS$/;
 
 function asEnabledArenaIds(value: SafeConfigValue): string[] | undefined {
@@ -772,6 +774,28 @@ export function analyzeScriptSafeConfig(
           source: binding.source,
         });
       }
+    }
+  }
+
+  // Preserve rejection provenance for named arena authority sources. A
+  // mutable or unsupported arena configuration must not silently disappear
+  // from the reasoned count, even if it never became a compiled binding.
+  for (const script of scripts) {
+    for (const rejected of script.safeConfigRejected ?? []) {
+      const name = rejected.name;
+      if (!name || !(
+        ARENA_ENABLED_IDS_NAME.test(name) ||
+        ARENA_KEYED_OFFSETS_NAME.test(name) ||
+        ARENA_COUNT_NAME.test(name) ||
+        ARENA_CONCURRENCY_NAME.test(name) ||
+        ARENA_ABSOLUTE_LAYOUT_NAME.test(name)
+      )) continue;
+      failedBindings.push({
+        scriptId: script.identifier,
+        name,
+        reason: rejected.reason,
+        source: rejected.source,
+      });
     }
   }
 
