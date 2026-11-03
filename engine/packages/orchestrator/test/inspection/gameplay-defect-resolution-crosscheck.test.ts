@@ -922,7 +922,7 @@ describe("gameplay discovery closure", () => {
     expect(result.unsupportedRelevantSourcePaths).toEqual(["feature_rules/ore.json"]);
   });
 
-  it("opens when gameplay sources are indexed but not semantically understood", () => {
+  it("keeps source-accounted A2 closed while retaining indexed semantic gaps for A7", () => {
     const result =
       assessGameplayDiscoveryClosure({
         discoveredSurfaceIds: [
@@ -939,10 +939,11 @@ describe("gameplay discovery closure", () => {
         unresolvedReferences: 0,
       });
 
-    expect(result.status).toBe("PARTIAL");
-    expect(
-      result.semanticUnderstandingGaps,
-    ).toBe(1);
+    expect(result.status).toBe("COMPLETE");
+    expect(result.semanticUnderstandingGaps).toBe(1);
+    expect(result.semanticUnderstandingGapPaths)
+      .toEqual(["loot_tables/reward.json"]);
+    expect(result.reasons.join(" ")).toContain("remain A7 UNDERSTAND obligations");
   });
 
   it("keeps A2 source completeness independent from A7 gameplay-intent unknowns", () => {

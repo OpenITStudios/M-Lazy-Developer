@@ -51,7 +51,13 @@ describe("inspectDirectory", () => {
     const result = await inspectDirectory(root);
     expect(result.packs[0]?.type).toBe("behavior_pack");
     expect(result.functions).toBe(1);
-    expect(result.structures).toBe(1);
+    // The fixture's `.mcstructure` is opaque text, not valid NBT. Keep its
+    // physical presence and parse failure, but do not call it parsed structure.
+    expect(result.structures).toBe(0);
+    expect(result.fileInventory.some(item =>
+      item.relativePath === "behavior_packs/demo/structures/test.mcstructure"
+    )).toBe(true);
+    expect(result.gameplayDiscoveryClosure.status).not.toBe("COMPLETE");
     expect(result.unresolvedReferences).toBeGreaterThan(0);
     expect(result.semanticIr.executionRegions).toBeGreaterThan(0);
     expect(result.semanticIr.executionEdges).toBeGreaterThan(0);
@@ -641,6 +647,9 @@ describe("inspectDirectory", () => {
         artifactId: "selected-world",
         parsedScripts: [],
         supplementalSignals: signals,
+        // Authorize the locale source from independent physical inventory;
+        // a supplemental signal is never its own source truth.
+        selectedSourceInventoryPaths: [path],
       });
       const phases = model.nodes.filter(node =>
         node.id.startsWith("phase:localized:"));
