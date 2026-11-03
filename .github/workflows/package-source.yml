@@ -1,12 +1,9 @@
 # Exact-commit source/dependency transport FOR ChatGPT Chat, not test CI.
-# Local pushes refresh the runnable package; Verify, PR and scheduled CI stay disabled.
+# No automatic packaging or CI on Local pushes. Optional manual transport is dormant.
 # Never run a selected-map audit, TypeScript/Vitest suite or user-map code here.
 name: Package Source Snapshot
 
 on:
-  push:
-    branches:
-      - Local
   workflow_dispatch:
 
 permissions:
