@@ -347,6 +347,7 @@ export function resolveConfirmedDefectGroup(
   const matching = narrative.reproduction === undefined ? [] :
     group.defects.filter((item) =>
       item.foundBy === foundBy &&
+      item.expected.authority === narrative.expectedAuthority &&
       item.reproductionProvenance !== undefined &&
       Array.isArray(item.reproduction) &&
       item.reproduction.length === narrative.reproduction!.length &&

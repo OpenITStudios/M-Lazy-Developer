@@ -221,6 +221,17 @@ export function buildBugReportFromConfirmedDefects(
     }
 
     resolvedDefects = resolution.defects;
+    // A chosen canonical narrative can change Expected authority and
+    // reproduction context after the individual inputs passed admission.
+    // Validate the resulting canonical defects, not only their inputs.
+    for (const defect of resolvedDefects) {
+      for (const error of validateConfirmedDefect(defect)) {
+        issues.push({
+          code: "invalid-defect-group-resolution",
+          message: defect.semanticKey + ": " + error,
+        });
+      }
+    }
   } catch (error) {
     issues.push({
       code: "invalid-defect-group-resolution",

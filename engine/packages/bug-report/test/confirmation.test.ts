@@ -1,6 +1,6 @@
 // Related decision paths share bounded behavior matrices; other regression suites remain isolated.
 import { describe, expect, it } from "vitest";
-import { classifyBugCandidate, classifyBugSeverity, highestBugSeverity, routeBugFinderCategory, shouldIncludeInDefaultBugReport, BUG_REPORT_V2_SCHEMA, projectBugReportPreview, renderBugReportPreviewMarkdown, projectConfirmedDefects, allocateBugIds, buildBugReportFromConfirmedDefects, deriveRepairUnitIdsFromSourceEvidence, groupConfirmedDefects, deriveConfirmedDefectSemanticKey, reconcileCanonicalBugReport, reviewBugReportReadiness, resolveConfirmedDefectGroup, applyProposedBugReview, buildBugReportFromApprovedBugSet, projectProposedBugSet } from "../src/index.js";
+import { classifyBugCandidate, classifyBugSeverity, highestBugSeverity, routeBugFinderCategory, shouldIncludeInDefaultBugReport, BUG_REPORT_V2_SCHEMA, projectBugReportPreview, renderBugReportPreviewMarkdown, projectConfirmedDefects, allocateBugIds, buildBugReportFromConfirmedDefects, deriveRepairUnitIdsFromSourceEvidence, groupConfirmedDefects, deriveConfirmedDefectSemanticKey, validateConfirmedDefect, reconcileCanonicalBugReport, reviewBugReportReadiness, resolveConfirmedDefectGroup, applyProposedBugReview, buildBugReportFromApprovedBugSet, projectProposedBugSet } from "../src/index.js";
 import type { BugImpactAssessment, BugReportV2, ConfirmedDefect, BugReportV2Bug } from "../src/index.js";
 
 // Consolidated suite from engine/packages/bug-report/test/decision.test.ts
@@ -1033,6 +1033,119 @@ function defect(
 }
 
 describe("canonical defect group resolution", () => {
+  it("rechecks source-bound AI Bug Trigger evidence at confirmed-defect admission", () => {
+    const original = defect("quality", {
+      foundBy: "ai",
+      confirmation: {
+        basis: "authored-contract-violation",
+        evidence: "Current selected source contradicts the intended cleanup.",
+      },
+      sourceEvidence: [{
+        source: { artifactId: "map", relativePath: "scripts/cleanup.ts" },
+        reason: "Owns cleanup and retained state.",
+      }],
+      reproduction: [
+        "Enter the selected arena.",
+        "Complete the encounter.",
+        "Confirm match-owned state persists.",
+      ],
+      reproductionProvenance: {
+        gameplayBasis: "authored-gameplay",
+        stepEvidence: {
+          startingCondition: ["req:cleanup"],
+          actions: [["req:cleanup"]],
+          observableFailure: ["obs:quality"],
+        },
+      },
+    });
+    expect(validateConfirmedDefect(original)).toEqual([]);
+    const trace = original.reproductionProvenance!;
+    const changed = (patch: Partial<typeof trace>) => ({
+      ...original, reproductionProvenance: { ...trace, ...patch },
+    });
+    const changedTrace = (patch: Partial<typeof trace.stepEvidence>) =>
+      changed({ stepEvidence: { ...trace.stepEvidence, ...patch } });
+    expect(validateConfirmedDefect(changedTrace({
+      startingCondition: ["obs:quality"],
+    }))).toContain(
+      "reproductionProvenance starting condition lacks the matching gameplay basis.",
+    );
+    expect(validateConfirmedDefect(changedTrace({
+      actions: [["obs:quality"]],
+    }))).toContain(
+      "reproductionProvenance player action lacks the matching gameplay basis.",
+    );
+    expect(validateConfirmedDefect(changedTrace({
+      observableFailure: ["req:cleanup"],
+    }))).toContain(
+      "reproductionProvenance observable failure lacks observed defect evidence.",
+    );
+    expect(validateConfirmedDefect(changedTrace({
+      actions: [],
+    }))).toContain(
+      "reproductionProvenance must match 2-5 canonical reproduction steps.",
+    );
+    expect(validateConfirmedDefect(changedTrace({
+      startingCondition: [],
+    }))).toContain(
+      "reproductionProvenance must cite non-empty evidence per step.",
+    );
+    expect(validateConfirmedDefect(changed({
+      gameplayBasis: "runtime-gameplay",
+    }))).toContain(
+      "reproductionProvenance starting condition lacks the matching gameplay basis.",
+    );
+    expect(validateConfirmedDefect({
+      ...original, foundBy: "tester",
+    })).toContain(
+      "reproductionProvenance requires AI-authored Bug Trigger evidence.",
+    );
+    expect(validateConfirmedDefect({
+      ...original, reproductionProvenance: null as any,
+    })).toContain(
+      "reproductionProvenance must be an evidence-bound object.",
+    );
+    expect(validateConfirmedDefect({
+      ...original, reproductionProvenance: undefined,
+    })).toEqual([]);
+  });
+
+  it("revalidates canonical merged narratives instead of trusting their original defects", () => {
+    const defects = [defect("inventory"), defect("scoreboard")];
+    expect(defects.every(item => validateConfirmedDefect(item).length === 0)).toBe(true);
+    const group = groupConfirmedDefects(defects)[0]!;
+    const result = buildBugReportFromConfirmedDefects({
+      map: {
+        name: "Source QA", mapVersion: "1.0.0",
+        drive: "https://drive.google.com/file/d/test/view",
+        baseVersion: "1.20.0", testedVersion: "1.20.0",
+      },
+      repairBy: "developer",
+      defects,
+      groupResolutions: [{
+        groupKey: group.key,
+        narrative: {
+          title: "",
+          problem: "Match-owned state is retained.",
+          expected: { statement: "Cleanup removes match state." },
+          observed: { statement: "State remains in inventory and scoreboard." },
+          expectedAuthority: "explicit-requirement",
+          primaryFailure: "player-owned-state",
+          reproduction: [
+            "Complete a match.",
+            "Return to the lobby.",
+            "Confirm the previous state remains.",
+          ],
+        },
+      }],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.some(issue =>
+        issue.code === "invalid-defect-group-resolution" &&
+        issue.message.includes("title must be non-empty"))).toBe(true);
+    }
+  });
   it("requires explicit canonical narrative while merging semantic evidence", () => {
     const group = groupConfirmedDefects([
       defect("inventory"),

@@ -248,6 +248,57 @@ export function validateConfirmedDefect(
   if (defect.observed.evidenceIds.length === 0) {
     errors.push("observed.evidenceIds must contain defect evidence.");
   }
+
+  // The source-bound Bug Trigger compiler owns per-step provenance.
+  // Check the same ownership constraints again at the confirmed-defect
+  // boundary, including direct low-level callers and regrouped defects.
+  // Source evidence is not a witnessed Minecraft test.
+  const provenance = defect.reproductionProvenance;
+  if (provenance !== undefined) {
+    if (provenance === null || typeof provenance !== "object") {
+      errors.push("reproductionProvenance must be an evidence-bound object.");
+    } else {
+    if (defect.foundBy !== "ai") {
+      errors.push("reproductionProvenance requires AI-authored Bug Trigger evidence.");
+    }
+    if (provenance.gameplayBasis !== "authored-gameplay" &&
+        provenance.gameplayBasis !== "runtime-gameplay") {
+      errors.push("reproductionProvenance has no supported AI gameplay basis.");
+    }
+    const steps = defect.reproduction;
+    const trace = provenance.stepEvidence;
+    if (!Array.isArray(steps) || steps.length < 2 || steps.length > 5 ||
+        !trace || !Array.isArray(trace.startingCondition) ||
+        !Array.isArray(trace.actions) ||
+        !Array.isArray(trace.observableFailure) ||
+        trace.actions.length !== steps.length - 2) {
+      errors.push("reproductionProvenance must match 2-5 canonical reproduction steps.");
+    } else {
+      const expected = new Set(defect.expected.evidenceIds);
+      const observed = new Set(defect.observed.evidenceIds);
+      const setup = provenance.gameplayBasis === "authored-gameplay"
+        ? expected : observed;
+      const validGroup = (ids: readonly string[]) =>
+        ids.length > 0 && ids.every(id =>
+          typeof id === "string" && id.trim().length > 0);
+      if (!validGroup(trace.startingCondition) ||
+          trace.actions.some(ids => !Array.isArray(ids) || !validGroup(ids)) ||
+          !validGroup(trace.observableFailure)) {
+        errors.push("reproductionProvenance must cite non-empty evidence per step.");
+      } else {
+        if (!trace.startingCondition.some(id => setup.has(id))) {
+          errors.push("reproductionProvenance starting condition lacks the matching gameplay basis.");
+        }
+        if (trace.actions.some(ids => !ids.some(id => setup.has(id)))) {
+          errors.push("reproductionProvenance player action lacks the matching gameplay basis.");
+        }
+        if (!trace.observableFailure.some(id => observed.has(id))) {
+          errors.push("reproductionProvenance observable failure lacks observed defect evidence.");
+        }
+      }
+    }
+    }
+  }
   if (
     defect.foundBy === "ai" &&
     (defect.sourceEvidence?.length ?? 0) === 0

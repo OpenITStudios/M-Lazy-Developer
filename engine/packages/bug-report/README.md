@@ -52,9 +52,12 @@ and confirmed-defect evidence gate own those links; they are **source
 references, not a Minecraft playtest result or after-fix verification**.
 
 This field is optional: existing V2 reports without it remain valid.
-Grouped defects retain it only when the approved canonical reproduction
-steps and original cited provenance match; otherwise it is omitted instead
-of reconstructed. The Report Next v1.7 approved projection exposes
+The confirmed-defect owner checks the matching Expected/Observed basis for
+each referenced step before canonical promotion. This is a source-ownership
+check, not a new in-game observation or independent re-verification of
+every cited source ID. Grouped defects retain it only when the approved
+canonical reproduction steps, source authority and original cited
+provenance match; otherwise it is omitted instead of reconstructed. The Report Next v1.7 approved projection exposes
 the cited IDs as `REFERENCE_UNRESOLVED` evidence, keeps
 `testProcedure: null`, and cannot change canonical `fixed` state.
 No legacy issue is backfilled with invented evidence.
