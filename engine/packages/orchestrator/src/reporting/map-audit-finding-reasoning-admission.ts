@@ -12,6 +12,8 @@ export interface MapAuditFindingReasoningCandidate {
   projection: FindingReportProjection;
   assessment: CrossDomainHypothesisAssessment;
   probe?: MinimalProbeRecommendation;
+  /** Exact source IDs owned by each derived observation, supplied by its producer. */
+  evidenceOriginsById?: ReadonlyMap<string, readonly string[]>;
 }
 
 export interface MapAuditFindingReasoningAdmission {
@@ -50,7 +52,11 @@ export function admitMapAuditFindingReasoning(
         ...candidate.assessment.supportingEvidenceIds,
         ...candidate.assessment.eliminatingEvidenceIds,
       ];
-      if (!reasoningEvidence.some((id) => findingEvidence.has(id))) {
+      if (!reasoningEvidence.some((id) =>
+        findingEvidence.has(id) ||
+        candidate.evidenceOriginsById?.get(id)?.some(
+          (sourceId) => findingEvidence.has(sourceId)) === true
+      )) {
         reasons.push("Reasoning evidence does not intersect the owning audit finding.");
       }
       if (
@@ -112,6 +118,8 @@ export function admitMapAuditFindingReasoning(
       continue;
     }
 
+    // Keep the existing observation-ID chain stable for monotonicity checks.
+    // Provenance is consulted only for admission and never upgrades proof.
     admitted[candidate.causalLinkId] =
       projectMapAuditFindingReasoning(candidate);
   }

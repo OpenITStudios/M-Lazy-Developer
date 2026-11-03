@@ -132,3 +132,24 @@ describe("reasoning classification follows the audit issue lane", () => {
   });
 });
 }
+
+
+describe("derived observation provenance stays scoped to its owning finding",()=>{
+ const candidate=(sourceEvidenceIds:readonly string[])=>({
+  causalLinkId:"link:1",
+  projection:{reportClassification:"LIKELY BUG" as const,diagnosticDisposition:"confirmed-defect" as const,proofConfidence:"high" as const,reasons:[]},
+  assessment:{hypothesisId:"h",disposition:"supported" as const,supportingEvidenceIds:["causal-link:composite"],eliminatingEvidenceIds:[],missingRequiredPredicates:["runtime"],reasons:[],domains:["static" as const],corroborationCount:1,confidence:"high" as const,nextPredicate:"runtime"},
+  evidenceOriginsById:new Map([["causal-link:composite",sourceEvidenceIds]]),
+ });
+ const owner:any={causalLinkId:"link:1",status:"NEED_VALIDATION",issueType:"BUG",evidenceIds:["e:one"]};
+ it("admits only exact source provenance without rewriting observation IDs",()=>{
+  const result=admitMapAuditFindingReasoning([owner],[candidate(["e:one","e:other"])]);
+  expect(result.rejected).toEqual([]);
+  expect(result.admitted["link:1"]?.evidenceChain).toEqual(["causal-link:composite"]);
+ });
+ it("rejects another finding's provenance even when the label resembles the source",()=>{
+  const result=admitMapAuditFindingReasoning([owner],[candidate(["e:other"])]);
+  expect(result.admitted).toEqual({});
+  expect(result.rejected[0]?.reasons).toContain("Reasoning evidence does not intersect the owning audit finding.");
+ });
+});

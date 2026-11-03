@@ -16,6 +16,11 @@ import type {
 import type { RuntimeScope } from "../../../project-model/src/index.js";
 import { assessRuntimeGenerationIntegrity } from "./runtime-generation-integrity.js";
 
+/** Transient provenance: derived observation IDs need original source links. */
+export interface CausalLinkEvidenceObservation extends CrossDomainEvidenceObservation {
+  readonly sourceEvidenceIds: readonly string[];
+}
+
 function evidenceId(prefix: string, ids: readonly string[]): string {
   return prefix + ":" + ids.slice().sort().join("+");
 }
@@ -27,13 +32,13 @@ export function constructCausalLinkEvidence(input: {
   runtimeProbeTranscript?: RuntimeProbeTranscript;
   expectedArtifactId?: string;
   expectedRuntimeScope?: RuntimeScope;
-}): CrossDomainEvidenceObservation[] {
+}): CausalLinkEvidenceObservation[] {
   const link = input.graph.causalLinks.find(
     (item) => item.id === input.construction.causalLinkId,
   );
   if (!link) return [];
 
-  const output: CrossDomainEvidenceObservation[] = [];
+  const output: CausalLinkEvidenceObservation[] = [];
   const contradictionPredicate =
     "causal-link:" + link.id + ":contradiction:none";
   output.push({
@@ -48,6 +53,7 @@ export function constructCausalLinkEvidence(input: {
       link.evidenceIds.length > 0 ? link.evidenceIds : [link.id],
     ),
     domain: "static",
+    sourceEvidenceIds: link.evidenceIds,
   });
 
   if (link.impactPathComponentIds.length > 0) {
@@ -65,6 +71,7 @@ export function constructCausalLinkEvidence(input: {
           : [link.id],
       ),
       domain: "static",
+      sourceEvidenceIds: link.impactPathEvidenceIds,
     });
   }
 
@@ -90,6 +97,7 @@ export function constructCausalLinkEvidence(input: {
           : [requirementId],
       ),
       domain: "knowledge",
+      sourceEvidenceIds: receipt?.evidenceIds ?? [],
     });
 
     for (const knowledgeId of receipt?.knowledgeIds ?? []) {
@@ -108,6 +116,7 @@ export function constructCausalLinkEvidence(input: {
             : [knowledgeId],
         ),
         domain: "knowledge",
+        sourceEvidenceIds: receipt?.evidenceIds ?? [],
       });
     }
   }
@@ -127,6 +136,7 @@ export function constructCausalLinkEvidence(input: {
       counterProofIds.length > 0 ? counterProofIds : [link.id],
     ),
     domain: "static",
+    sourceEvidenceIds: counterProofIds,
   });
 
   const runtimePredicate =
@@ -159,6 +169,7 @@ export function constructCausalLinkEvidence(input: {
           ? "runtime-artifact-mismatch:" + link.id
           : "runtime-unobserved:" + link.id,
         domain: "runtime",
+        sourceEvidenceIds: [],
       });
     } else {
       const decisiveStates = [...new Set(
@@ -181,6 +192,7 @@ export function constructCausalLinkEvidence(input: {
           ),
         ),
         domain: "runtime",
+        sourceEvidenceIds: [],
       });
     }
   }

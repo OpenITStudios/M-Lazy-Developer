@@ -130,12 +130,19 @@ export function reasonAboutCausalLinkFinding(input: {
     input.probeCandidates ?? canonicalProbeCandidates,
   )[0];
 
+  // Bind derived observation IDs to exact original citations; never infer
+  // this relation by splitting composite labels or borrowing another issue.
+  const evidenceOriginsById = new Map(
+    evidence.filter((item) => item.evidenceId !== undefined)
+      .map((item) => [item.evidenceId!, item.sourceEvidenceIds] as const),
+  );
   const admission = admitMapAuditFindingReasoning(
     [input.finding],
     [{
       causalLinkId: construction.causalLinkId,
       projection,
       assessment,
+      evidenceOriginsById,
       ...(probe ? { probe } : {}),
     }],
   );
