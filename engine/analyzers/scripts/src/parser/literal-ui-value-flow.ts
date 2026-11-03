@@ -225,7 +225,16 @@ export function createBoundedLiteralUiFlowResolver(
     if (!target || !param || !ts.isIdentifier(param) ||
         !bodyExpr.arguments[0] ||
         !containsParam(bodyExpr.arguments[0]!, param.text)) return undefined;
-    const paramRefs = identifiers.get(param.text) ?? [];
+    // A helper's formal parameter belongs to this declaration, not to any
+    // same-named parameters in unrelated functions or class methods. Keep
+    // the exact single-read requirement within the helper's own body.
+    const within = (node: ts.Node, ancestor: ts.Node): boolean => {
+      let current: ts.Node | undefined = node;
+      while (current && current !== ancestor) current = current.parent;
+      return current === ancestor;
+    };
+    const paramRefs = (identifiers.get(param.text) ?? []).filter(ref =>
+      ref === param || within(ref, fn.body!));
     if (paramRefs.length !== 2 || !paramRefs.includes(param)) return undefined;
     const use = paramRefs.find(item => item !== param);
     if (!use) return undefined;
@@ -279,10 +288,9 @@ export function createBoundedLiteralUiFlowResolver(
        ((ts.isIdentifier(member.name) ||
          ts.isStringLiteralLike(member.name)) &&
         member.name.text === methodName)));
-    if (declarations.length !== 1 ||
-        !ts.isMethodDeclaration(declarations[0]) ||
-        !declarations[0].body) return undefined;
-    const target = declarations[0];
+    const [target] = declarations;
+    if (declarations.length !== 1 || !target ||
+        !ts.isMethodDeclaration(target) || !target.body) return undefined;
     const classNames = new Set<string>();
     if (cls.name) classNames.add(cls.name.text);
     if (ts.isVariableDeclaration(cls.parent) &&

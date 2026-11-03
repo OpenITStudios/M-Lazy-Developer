@@ -48,6 +48,21 @@ describe("script analyzer", () => {
   });
 
 
+  it("does not confuse one helper parameter with same-named unrelated helper and method formals", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'function announce(payload) { world.sendMessage(payload); }',
+      'function unrelated(payload) { return payload; }',
+      'class Other { static forward(payload) { return payload; } }',
+      'announce({ translate: "expected.forwarding" });',
+    ].join("\n"), source);
+    const match = parsed.literalTranslationReferences?.find(item =>
+      item.key === "expected.forwarding");
+    expect(match?.forwardedUiSendCall?.executionRegion).toBe("function:announce");
+    expect(match?.forwardedUiSendCall?.hops.map(item => item.kind))
+      .toEqual(["simple-helper-parameter"]);
+  });
+
   it("binds uniquely forwarded const and one-statement helper translations to typed UI call sites", () => {
     const parsed = parseScriptFile("scripts/main", [
       'import { world } from "@minecraft/server";',
