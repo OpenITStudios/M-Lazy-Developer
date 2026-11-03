@@ -1659,6 +1659,29 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("Pemeriksaan belum selesai");
   });
 
+  it("separates native-only observations from in-scope source obligations without changing audit status", () => {
+    const runtime: any = {
+      id: "external:reconciliation", source: "runtime-proof", stage: "PROVE",
+      title: "Native client reconciliation", reason: "Needs native observation",
+      missingProof: "Observed Minecraft client result",
+      validationTest: "Requires an external Minecraft session",
+      subjectIds: [], componentIds: [], evidenceIds: [],
+    };
+    const source: any = {
+      ...runtime, id: "source:callback", source: "detection-gap", stage: "UNDERSTAND",
+      title: "Source callback owner", missingProof: "Exact source target",
+      validationTest: "Trace callback assignment in source",
+    };
+    const report = formatSelectedMapAuditFinalReport({
+      report: { ...base, auditObligations: [runtime, source] }, intent,
+    });
+    expect(report).toContain("**Batas cakupan QA ChatGPT:** 1 kewajiban bukti Minecraft-native di luar cakupan");
+    expect(report).toContain("1 kewajiban lain masih perlu penanganan bukti source");
+    expect(report).toContain("OUTSIDE ChatGPT QA scope (not an executable task)");
+    expect(report).toContain("Pemeriksaan belum selesai");
+    expect(report).not.toContain("## Safe");
+  });
+
   it("includes grounded explanation, readable reproduce, retest and conditional Notes", () => {
     const report = formatSelectedMapAuditFinalReport({
       report: {
@@ -1688,7 +1711,7 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("Hasil yang mendukung dugaan");
     expect(report).toContain("Hasil yang tidak mendukung dugaan");
     expect(report).toContain("Notes:");
-    expect(report).toContain("Hasil Minecraft langsung masih diperlukan");
+    expect(report).toContain("Pengamatan Minecraft langsung berada di luar cakupan QA ChatGPT");
     expect(report).not.toContain("## Safe");
   });
 

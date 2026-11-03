@@ -362,7 +362,7 @@ function formatSelectedMapProbeCoverage(
       ". These are not counts of Skills Probe tests run.",
     "Outstanding canonical Audit Obligations: " + obligations.length +
       " (semantic/knowledge gaps: " + methodOrSemanticGaps.length +
-      "; native-runtime proof gaps: " + runtimeProofGaps.length +
+      "; external-only native-runtime evidence limits (outside ChatGPT QA): " + runtimeProofGaps.length +
       "; other audit/source obligations: " + otherObligations + ").",
   ];
   if (modelTaskPackets === undefined) {
@@ -421,7 +421,7 @@ function formatSelectedMapProbeCoverage(
   }
   for (const [label,items] of [
     ["Checker / knowledge proof not yet established", methodOrSemanticGaps],
-    ["Actual Minecraft or other runtime proof still required", runtimeProofGaps],
+    ["Minecraft-native observation — OUTSIDE ChatGPT QA scope (not an executable task)", runtimeProofGaps],
   ] as const) {
     if (items.length === 0) continue;
     out.push("**" + label + ":**");
@@ -662,7 +662,8 @@ export function formatSelectedMapAuditFinalReport(input: {
       ];
     const notes: string[] = [];
     if (needsRuntime) {
-      notes.push("Hasil Minecraft langsung masih diperlukan untuk memutuskan bagian ini.");
+      notes.push("Pengamatan Minecraft langsung berada di luar cakupan QA ChatGPT; " +
+        "bukti source tidak membuktikan perilaku native yang belum teramati.");
     } else if (sourceFirst) {
       notes.push("Pemeriksaan source perlu dituntaskan sebelum meminta playtest.");
     }
@@ -952,6 +953,15 @@ export function formatSelectedMapAuditFinalReport(input: {
         : "masih ada tahapan atau bukti audit yang belum ditutup.") +
       " Semua NEED_VALIDATION adalah hal yang belum terbukti, bukan Bug " +
       "atau Design Mismatch yang telah dikonfirmasi.");
+    const externalOnly = obligations.filter(item => item.source === "runtime-proof").length;
+    if (externalOnly > 0) {
+      out.push("**Batas cakupan QA ChatGPT:** " + externalOnly +
+        " kewajiban bukti Minecraft-native di luar cakupan eksekusi ChatGPT; " +
+        (obligations.length - externalOnly) +
+        " kewajiban lain masih perlu penanganan bukti source/semantik/" +
+        "campuran sesuai identitas masing-masing. Angka canonical tidak diubah, " +
+        "bukan PASS dan bukan pengujian yang di-skip.");
+    }
     if ((report.control.blockingCheckpointIds?.length ?? 0) > 0) {
       out.push("**Tahap yang belum selesai:** " +
         report.control.blockingCheckpointIds.map(concise).join("; "));
