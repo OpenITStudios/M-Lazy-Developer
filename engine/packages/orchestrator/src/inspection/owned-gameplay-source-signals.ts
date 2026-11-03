@@ -453,7 +453,8 @@ function sourceResourceUses(input: {
           decl.name.text === identifier.text &&
           !!decl.initializer && ts.isNewExpression(decl.initializer) &&
           ts.isIdentifier(decl.initializer.expression) &&
-          stacks.has(decl.initializer.expression.text));
+          stacks.has(decl.initializer.expression.text) &&
+          !isShadowed(decl.initializer.expression));
       return defs.length === 1;
     };
     const visit = (node: ts.Node): void => {
@@ -480,7 +481,7 @@ function sourceResourceUses(input: {
         }
       }
       if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) &&
-          stacks.has(node.expression.text)) {
+          stacks.has(node.expression.text) && !isShadowed(node.expression)) {
         const id = idFor(node.arguments?.[0]);
         if (id) addUse(node, "ItemStack construction", [id],
           "Source constructs an ItemStack with an authored item ID");

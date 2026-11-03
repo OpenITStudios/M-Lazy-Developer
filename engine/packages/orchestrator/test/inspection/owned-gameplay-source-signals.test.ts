@@ -219,6 +219,25 @@ describe("script source usage binds exact authored BP resource identity", () => 
       graph: graphWith(...fixture), nodes: fixture,
       scripts: [scriptEntry(scriptCode, artifactId)]});
 
+  it("rejects shadowed ItemStack imports rather than inventing Minecraft resource use", () => {
+    const output = derive([
+      'import { ItemStack as Stack } from "@minecraft/server";',
+      'function viaParameter(Stack) {',
+      '  const fake = new Stack("demo:wand", 1);',
+      '  fake.setCanDestroy(["demo:ore"]);',
+      '}',
+      'function viaLocal() {',
+      '  const Stack = CustomConstructor;',
+      '  const fake = new Stack("demo:wand", 1);',
+      '  fake.setCanDestroy(["demo:ore"]);',
+      '}',
+    ].join("\n"));
+    expect(output.signals.filter(item =>
+      item.subjectKey.startsWith("resource:bp-script-use:"))).toEqual([]);
+    expect(output.relations.filter(item =>
+      item.fromSubjectKey.startsWith("resource:bp-script-use:"))).toEqual([]);
+  });
+
   it("connects typed local call, item construction, type guard and owned ItemStack destroy permissions", () => {
     const output = derive([
       'import { ItemStack as Stack } from "@minecraft/server";',
