@@ -375,7 +375,7 @@ export async function inspectDirectory(
   );
   // Reuse exact SAME-pack graph edges in the source-to-meaning handoff;
   // no text similarity or synthetic references may imply gameplay behavior.
-  const ownedSource = deriveOwnedGameplaySourceSignals({ artifactId, graph, nodes });
+  const ownedSource = deriveOwnedGameplaySourceSignals({ artifactId, graph, nodes, scripts: parsedScripts });
 
   const gameplaySurfaceSignals = [
     ...deriveGameplayIntentSurfaceSignals({
