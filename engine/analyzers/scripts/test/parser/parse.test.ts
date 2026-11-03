@@ -337,6 +337,69 @@ describe("script analyzer", () => {
     expect(timer?.callbackSource?.range?.lineStart).toBe(6);
   });
 
+  it("resolves bundled registration handlers cleared only in a separate teardown function", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'var handler;',
+      'var otherHandler;',
+      'function initialize() {',
+      '  if (handler) return;',
+      '  handler = (event) => { world.sendMessage(event.player.name); };',
+      '  otherHandler = (event) => { world.sendMessage("other"); };',
+      '  world.afterEvents.playerSpawn.subscribe(otherHandler);',
+      '  world.afterEvents.playerLeave.subscribe(handler);',
+      '}',
+      'function shutdown() {',
+      '  if (handler) world.afterEvents.playerLeave.unsubscribe(handler);',
+      '  handler = void 0;',
+      '}',
+    ].join("\n"), source);
+    const event = parsed.events.find(item => item.event === "playerLeave");
+    expect(event?.callbackRegion).toMatch(/^callback@/);
+    expect(event?.callbackSource?.range?.lineStart).toBe(6);
+  });
+
+  it("rejects mutable handler resets inside registration, multiple value owners or dynamic teardown writes", () => {
+    const snippets = [
+      [
+        'var handler;',
+        'function setup() {',
+        '  handler = (event) => {};',
+        '  handler = void 0;',
+        '  world.afterEvents.playerSpawn.subscribe(handler);',
+        '}',
+      ],
+      [
+        'var handler;',
+        'function setup() { handler = (event) => {}; world.afterEvents.playerSpawn.subscribe(handler); }',
+        'function shutdown() { handler = anotherHandler; }',
+      ],
+      [
+        'var handler;',
+        'function setup() { handler = (event) => {}; world.afterEvents.playerSpawn.subscribe(handler); }',
+        'function shutdown() { handler = void 0; }',
+        'function resetAgain() { handler = void 0; }',
+      ],
+      [
+        'var handler;',
+        'function setup() {',
+        '  handler = (event) => {};',
+        '  someHelper();',
+        '  world.afterEvents.playerSpawn.subscribe(handler);',
+        '}',
+        'function shutdown() { handler = void 0; }',
+      ],
+    ];
+    for (const snippet of snippets) {
+      const parsed = parseScriptFile("scripts/main", [
+        'import { world } from "@minecraft/server";',
+        ...snippet,
+      ].join("\n"), source);
+      expect(parsed.events.find(event => event.event === "playerSpawn")?.callbackRegion)
+        .toBeUndefined();
+    }
+  });
+
   it("never resolves reordered, reassigned, conditional, shadowed or out-of-block mutable handlers", () => {
     const fragments = [
       [

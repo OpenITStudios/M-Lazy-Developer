@@ -2599,7 +2599,14 @@ export function parseScriptFile(
         !uninitializedModuleHandlers.has(argument.text) ||
         isShadowed(argument)) return undefined;
     const writes = allModuleHandlerWrites.get(argument.text) ?? [];
-    if (writes.length !== 1) return undefined;
+    const functionWrites = writes.filter((write): write is ts.BinaryExpression =>
+      ts.isBinaryExpression(write) &&
+      write.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      (ts.isArrowFunction(write.right) || ts.isFunctionExpression(write.right)));
+    // Only one source function value may ever own this registration.
+    // A later teardown `handler = void 0` is not a second function owner,
+    // but must be proven outside this synchronous registration block.
+    if (functionWrites.length !== 1) return undefined;
     const statement = call.parent;
     if (!ts.isExpressionStatement(statement) ||
         statement.expression !== call || !ts.isBlock(statement.parent)) {
@@ -2608,19 +2615,69 @@ export function parseScriptFile(
     const block = statement.parent;
     const callIndex = block.statements.indexOf(statement);
     if (callIndex <= 0) return undefined;
-    const assignment = writes[0];
-    if (!assignment || !ts.isBinaryExpression(assignment) ||
-        assignment.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
-        !(ts.isArrowFunction(assignment.right) ||
-          ts.isFunctionExpression(assignment.right)) ||
-        !ts.isExpressionStatement(assignment.parent) ||
+    const assignment = functionWrites[0]!;
+    if (!ts.isExpressionStatement(assignment.parent) ||
         assignment.parent.expression !== assignment ||
-        assignment.parent.parent !== block ||
-        block.statements.indexOf(assignment.parent) >= callIndex) return undefined;
-    // The same-block assignment dominates the subscription absent a branch
-    // that exits or throws before registration. This is source resolution,
-    // never evidence that initialization actually ran.
-    return assignment.right;
+        assignment.parent.parent !== block) return undefined;
+    const assignIndex = block.statements.indexOf(assignment.parent);
+    if (assignIndex < 0 || assignIndex >= callIndex) return undefined;
+
+    // Only other static function-valued assignments and native event
+    // registrations may intervene. A cleanup call, await, dynamic write,
+    // or conditional branch between assignment and subscribe is ambiguous.
+    const safeBetween = block.statements.slice(assignIndex + 1, callIndex)
+      .every((intervening) => {
+        if (!ts.isExpressionStatement(intervening)) return false;
+        const expr = intervening.expression;
+        if (ts.isBinaryExpression(expr) &&
+            expr.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+            ts.isIdentifier(expr.left) && expr.left.text !== argument.text &&
+            (ts.isArrowFunction(expr.right) ||
+             ts.isFunctionExpression(expr.right))) return true;
+        return ts.isCallExpression(expr) &&
+          ts.isPropertyAccessExpression(expr.expression) &&
+          expr.expression.name.text === "subscribe";
+      });
+    if (!safeBetween) return undefined;
+
+    const enclosingFunction = (node: ts.Node): ts.Node | undefined => {
+      let current = node.parent;
+      while (current && current !== file) {
+        if (ts.isFunctionLike(current)) return current;
+        current = current.parent;
+      }
+      return undefined;
+    };
+    const registrationOwner = enclosingFunction(assignment);
+    const resetOwnerSet = new Set<ts.Node>();
+    for (const write of writes) {
+      if (write === assignment) continue;
+      if (!ts.isBinaryExpression(write) ||
+          write.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+          !ts.isVoidExpression(write.right) ||
+          !ts.isNumericLiteral(write.right.expression) ||
+          Number(write.right.expression.text) !== 0) return undefined;
+      const owner = enclosingFunction(write);
+      if (!owner || owner === registrationOwner ||
+          !ts.isFunctionDeclaration(owner) || !owner.name) return undefined;
+      resetOwnerSet.add(owner);
+    }
+    // Multiple independently callable reset owners cannot be accounted for
+    // without interprocedural ordering proof. Keep that scope unresolved.
+    if (resetOwnerSet.size > 1) return undefined;
+    const resetOwner = [...resetOwnerSet][0];
+    if (resetOwner && ts.isFunctionDeclaration(resetOwner) &&
+        resetOwner.name && block.statements.slice(assignIndex + 1, callIndex)
+          .some(intervening => ts.isExpressionStatement(intervening) &&
+            ts.isCallExpression(intervening.expression) &&
+            ts.isIdentifier(intervening.expression.expression) &&
+            intervening.expression.expression.text === resetOwner.name!.text)) {
+      return undefined;
+    }
+    // Source identity of the registration callback, NOT proof that the
+    // event was delivered or the cleanup/re-init lifecycle is correct.
+    return ts.isArrowFunction(assignment.right) ||
+      ts.isFunctionExpression(assignment.right) ? assignment.right : undefined;
   };
   const namedCallback = (call: ts.CallExpression): string | undefined => {
     const name = directCallbackName(call);
