@@ -502,16 +502,20 @@ describe("report defect collector", () => {
           reproduced: true,
           evidence: "State persists after two repeated match completions.",
         },
-        defect: defect("tester-cleanup", {
-          impactEvidenceIds: ["tester:observation"],
-          primaryEvidenceIds: ["requirement:cleanup"],
-          reproduction: [
-            "Complete a match normally.",
-            "Return to the lobby.",
-            "Start another match.",
-            "Confirm the previous match state remains active.",
-          ],
-        }),
+        defect: {
+          ...defect("tester-cleanup", {
+            impactEvidenceIds: ["tester:observation"],
+            primaryEvidenceIds: ["requirement:cleanup"],
+            reproduction: [
+              "Complete a match normally.",
+              "Return to the lobby.",
+              "Start another match.",
+              "Confirm the previous match state remains active.",
+            ],
+          }),
+          // Untrusted candidate data must not manufacture source provenance.
+          reproductionProvenance: { gameplayBasis: "live-runtime-certified" },
+        } as any,
       },
     ]);
 
@@ -520,6 +524,7 @@ describe("report defect collector", () => {
     expect(
       result.confirmed.map((item) => item.foundBy),
     ).toEqual(["ai", "ai", "tester"]);
+    expect(result.confirmed[2]?.reproductionProvenance).toBeUndefined();
   });
 
   it("ignores caller-supplied AI broken invariant identity", () => {
@@ -624,7 +629,16 @@ describe("report defect collector", () => {
       },
     };
     expect(describeAuditReportCandidate(complete).nextEvidenceNeed).toBe("none");
-    expect(collectConfirmedDefects([complete]).confirmed).toHaveLength(1);
+    const collected = collectConfirmedDefects([complete]);
+    expect(collected.confirmed).toHaveLength(1);
+    expect(collected.confirmed[0]?.reproductionProvenance).toEqual({
+      gameplayBasis: "authored-gameplay",
+      stepEvidence: {
+        startingCondition: ["intent:evidence"],
+        actions: [["intent:evidence"]],
+        observableFailure: ["static:cleanup"],
+      },
+    });
 
     const technical = {
       ...common,

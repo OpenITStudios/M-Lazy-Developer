@@ -946,6 +946,7 @@ interface BugReportSchema {
       readonly properties?: {
         readonly whyThisIsBug?: { readonly type?: string; readonly minLength?: number };
         readonly impact?: { readonly type?: string; readonly minLength?: number };
+        readonly reproductionProvenance?: { readonly $ref?: string };
         readonly severity?: EnumSchema;
         readonly category?: EnumSchema;
         readonly foundBy?: EnumSchema;
@@ -987,6 +988,9 @@ describe("Bug Report V2 schema/runtime parity", () => {
     expect(definition?.properties?.impact).toEqual({ type: "string", minLength: 1 });
     expect(definition?.required).not.toContain("whyThisIsBug");
     expect(definition?.required).not.toContain("impact");
+    expect(definition?.properties?.reproductionProvenance)
+      .toEqual({ $ref: "#/$defs/reproductionProvenance" });
+    expect(definition?.required).not.toContain("reproductionProvenance");
   });
 });
 }
@@ -1085,6 +1089,48 @@ describe("bug report v2", () => {
         (bug) => bug.issueType === "DESIGN_MISMATCH",
       ),
     ).toBe(true);
+  });
+
+  it("round-trips optional authored step provenance without upgrading gameplay proof", () => {
+    const legacy = report();
+    const metadata = {
+      gameplayBasis: "authored-gameplay" as const,
+      stepEvidence: {
+        startingCondition: ["gameplay:join-setup"],
+        actions: [["gameplay:restart-action"]],
+        observableFailure: ["selected-source:stale-session"],
+      },
+    };
+    const enriched: BugReportV2 = {
+      ...legacy,
+      bugs: legacy.bugs.map((bug, index) =>
+        index === 1 ? { ...bug, reproductionProvenance: metadata } : bug),
+    };
+    const serialized = serializeBugReportV2(enriched);
+    expect(serialized.ok).toBe(true);
+    if (!serialized.ok || !serialized.json) return;
+    const parsed = parseBugReportV2Json(serialized.json);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.report.bugs[0]?.reproductionProvenance).toEqual(metadata);
+    expect(parsed.report.bugs[1]?.reproductionProvenance).toBeUndefined();
+    expect(parsed.report.bugs[0]?.fixed).toBe(true);
+
+    const invalidCount = JSON.parse(serialized.json);
+    invalidCount.bugs[0].reproductionProvenance.stepEvidence.actions = [];
+    expect(parseBugReportV2Json(JSON.stringify(invalidCount)).ok).toBe(false);
+    const foreignProperty = JSON.parse(serialized.json);
+    foreignProperty.bugs[0].reproductionProvenance.fakeProof = true;
+    expect(parseBugReportV2Json(JSON.stringify(foreignProperty)).ok).toBe(false);
+    const missingWitness = JSON.parse(serialized.json);
+    missingWitness.bugs[0].reproductionProvenance.stepEvidence.observableFailure = [];
+    expect(parseBugReportV2Json(JSON.stringify(missingWitness)).ok).toBe(false);
+    const noReproduction = JSON.parse(serialized.json);
+    delete noReproduction.bugs[0].reproduction;
+    expect(parseBugReportV2Json(JSON.stringify(noReproduction)).ok).toBe(false);
+    const wrongBasis = JSON.parse(serialized.json);
+    wrongBasis.bugs[0].reproductionProvenance.gameplayBasis = "live-minecraft-certified";
+    expect(parseBugReportV2Json(JSON.stringify(wrongBasis)).ok).toBe(false);
   });
 
   it("derives report progress from per-bug fixed checkboxes", () => {

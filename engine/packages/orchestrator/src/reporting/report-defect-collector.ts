@@ -13,6 +13,7 @@ import {
   type BugReportV2Map,
   type BugReportV2RepairBy,
   type BugTriggerDraft,
+  type BugReportV2ReproductionProvenance,
 } from "../../../bug-report/src/index.js";
 import {
   buildContradictionRegistry,
@@ -120,7 +121,10 @@ export type ConfirmedDefectDraft = Omit<
   | "primaryFailure"
   | "expected"
   | "observed"
+  | "reproductionProvenance"
 > & {
+  // Only the validated BugTrigger compiler may supply persisted provenance.
+  readonly reproductionProvenance?: never;
   readonly expectedStatement?: string;
   readonly observedStatement: string;
   readonly classificationSignals:
@@ -682,6 +686,7 @@ function aiBugTrigger(
   candidate: RuntimeReportCandidate | StaticReportCandidate,
 ): {
   readonly steps?: readonly string[];
+  readonly reproductionProvenance?: BugReportV2ReproductionProvenance;
   readonly issues: readonly string[];
 } {
   if (candidate.bugTrigger === undefined) {
@@ -799,6 +804,10 @@ function aiBugTrigger(
 
   return {
     steps: compiled.steps,
+    reproductionProvenance: {
+      gameplayBasis: compiled.gameplayBasis,
+      stepEvidence: compiled.stepEvidence,
+    },
     issues: [],
   };
 }
@@ -872,6 +881,7 @@ function collectOne(
 
   const trigger: {
     readonly steps?: readonly string[];
+    readonly reproductionProvenance?: BugReportV2ReproductionProvenance;
     readonly issues: readonly string[];
   } =
     candidate.route === "tester"
@@ -929,6 +939,8 @@ function collectOne(
       _observedStatement,
     reproduction:
       rawReproduction,
+    reproductionProvenance:
+      _untrustedReproductionProvenance,
     ...defectDraft
   } = candidate.defect;
 
@@ -983,6 +995,9 @@ function collectOne(
       : trigger.steps === undefined
         ? {}
         : { reproduction: trigger.steps }),
+    ...(candidate.route !== "tester" && trigger.reproductionProvenance !== undefined
+      ? { reproductionProvenance: trigger.reproductionProvenance }
+      : {}),
   };
 
   return {

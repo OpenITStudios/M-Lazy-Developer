@@ -342,6 +342,21 @@ export function resolveConfirmedDefectGroup(
         : { causalIncidentId }),
     });
 
+  // A consolidated issue may choose newly authored reproduction steps.
+  // Never borrow step-specific proof from a different trigger or origin.
+  const matching = narrative.reproduction === undefined ? [] :
+    group.defects.filter((item) =>
+      item.foundBy === foundBy &&
+      item.reproductionProvenance !== undefined &&
+      Array.isArray(item.reproduction) &&
+      item.reproduction.length === narrative.reproduction!.length &&
+      item.reproduction.every((step, index) =>
+        step === narrative.reproduction![index]));
+  const distinctProvenance = new Set(matching.map((item) =>
+    JSON.stringify(item.reproductionProvenance)));
+  const reproductionProvenance = distinctProvenance.size === 1
+    ? matching[0]!.reproductionProvenance : undefined;
+
   return {
     semanticKey,
     subjectIds,
@@ -381,6 +396,9 @@ export function resolveConfirmedDefectGroup(
       : {
           reproduction: [...narrative.reproduction],
         }),
+    ...(reproductionProvenance === undefined
+      ? {}
+      : { reproductionProvenance }),
     ...(narrative.aiAnalysis === undefined
       ? {}
       : { aiAnalysis: narrative.aiAnalysis }),

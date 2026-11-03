@@ -102,6 +102,9 @@ export function projectConfirmedDefects(
     ...(defect.reproduction === undefined
       ? {}
       : { reproduction: defect.reproduction }),
+    ...(defect.reproductionProvenance === undefined
+      ? {}
+      : { reproductionProvenance: defect.reproductionProvenance }),
     ...(
       defect.aiAnalysis === undefined &&
       defect.engineeringAnalysis === undefined

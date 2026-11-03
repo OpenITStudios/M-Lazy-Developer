@@ -10,6 +10,7 @@ import type {
 } from "./promote-v2.js";
 import type {
   BugReportV2FoundBy,
+  BugReportV2ReproductionProvenance,
 } from "./v2.js";
 import type {
   ExpectedBehaviorAuthority,
@@ -198,6 +199,7 @@ export interface ConfirmedDefect {
   readonly expected: ConfirmedDefectExpectedBasis;
   readonly observed: ConfirmedDefectObservation;
   readonly reproduction?: readonly string[];
+  readonly reproductionProvenance?: BugReportV2ReproductionProvenance;
   readonly aiAnalysis?: string;
   readonly engineeringAnalysis?: string;
   readonly sourceEvidence?: readonly ConfirmedDefectSourceEvidence[];

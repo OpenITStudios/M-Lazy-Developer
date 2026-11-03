@@ -89,6 +89,47 @@
         }
       }
     },
+    "reproductionProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gameplayBasis",
+        "stepEvidence"
+      ],
+      "properties": {
+        "gameplayBasis": {
+          "enum": [
+            "authored-gameplay",
+            "runtime-gameplay",
+            "tester-gameplay"
+          ]
+        },
+        "stepEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "startingCondition",
+            "actions",
+            "observableFailure"
+          ],
+          "properties": {
+            "startingCondition": {
+              "$ref": "#/$defs/stringList"
+            },
+            "actions": {
+              "type": "array",
+              "maxItems": 3,
+              "items": {
+                "$ref": "#/$defs/stringList"
+              }
+            },
+            "observableFailure": {
+              "$ref": "#/$defs/stringList"
+            }
+          }
+        }
+      }
+    },
     "bug": {
       "type": "object",
       "additionalProperties": false,
@@ -164,6 +205,9 @@
         },
         "reproduction": {
           "$ref": "#/$defs/stringList"
+        },
+        "reproductionProvenance": {
+          "$ref": "#/$defs/reproductionProvenance"
         },
         "aiAnalysis": {
           "type": "string",

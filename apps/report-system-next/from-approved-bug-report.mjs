@@ -46,6 +46,34 @@ export function projectApprovedBugReportNext(ledger,project,{sourceRevision}={})
    if(!relatedSources.some(x=>x.path===file))relatedSources.push({path:file,reason});
   }
   const steps=(item.reproduction??[]).map((s,i)=>text(s,id+" reproduction step "+(i+1)));
+  // Expose original AI Bug Trigger step citations as unresolved source evidence,
+  // never as re-verified runtime evidence or an executable after-fix retest.
+  if(item.reproductionProvenance!==undefined){
+   const provenance=item.reproductionProvenance,trace=provenance?.stepEvidence;
+   if(!["authored-gameplay","runtime-gameplay","tester-gameplay"].includes(provenance?.gameplayBasis)||
+      !Array.isArray(trace?.startingCondition)||!Array.isArray(trace?.actions)||
+      !Array.isArray(trace?.observableFailure)||steps.length<2||steps.length>5||
+      trace.actions.length!==steps.length-2)
+    throw Error(id+": invalid persisted Bug Trigger source provenance");
+   const groups=[trace.startingCondition,...trace.actions,trace.observableFailure];
+   if(groups.some(xs=>!Array.isArray(xs)||!xs.length||
+      xs.some(x=>typeof x!=="string"||!x.trim())))
+    throw Error(id+": invalid per-step Bug Trigger evidence IDs");
+   for(const [index,sourceIds] of groups.entries()){
+    const role=index===0?"starting condition":index===groups.length-1?
+      "observable failure":"player action "+index;
+    for(const sourceId of sourceIds){
+     const ref="LEDGER-TRIGGER-"+String(evidence.length+1).padStart(4,"0");
+     evidence.push({id:ref,kind:"REFERENCE_UNRESOLVED",
+      description:"Approved Bug Trigger "+provenance.gameplayBasis+
+       " source reference for step "+(index+1)+" ("+role+
+       "); original evidence ID is not independently reverified by this view.",
+      locator:{type:"OTHER",value:sourceId},
+      sourceOrigin:"approved-bug-report-v2-trigger",sourceScope:"external-reference"});
+     evidenceRefs.push(ref);
+    }
+   }
+  }
   issues.push({id,kind,approvedFixed:item.fixed,severity:item.severity.toUpperCase(),
    evidenceLevel:"REFERENCE_UNRESOLVED",proofStatus:"PROVEN",
    title:text(item.title,id+" title"),problem:text(item.problem,id+" problem"),

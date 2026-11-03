@@ -42,6 +42,23 @@ Confirmed Defect
 - imported/legacy reports are compatibility/reference input, not parallel authority;
 - HTML/preview are derived projections, never canonical state.
 
+## Optional Bug Trigger provenance in V2 JSON
+
+Approved Bug Report V2 may persist `reproductionProvenance` alongside
+`reproduction`. It records the original, evidence-bound Bug Trigger
+`gameplayBasis` and the source evidence IDs for the starting condition,
+each player action, and observable failure. The existing authoring compiler
+and confirmed-defect evidence gate own those links; they are **source
+references, not a Minecraft playtest result or after-fix verification**.
+
+This field is optional: existing V2 reports without it remain valid.
+Grouped defects retain it only when the approved canonical reproduction
+steps and original cited provenance match; otherwise it is omitted instead
+of reconstructed. The Report Next v1.7 approved projection exposes
+the cited IDs as `REFERENCE_UNRESOLVED` evidence, keeps
+`testProcedure: null`, and cannot change canonical `fixed` state.
+No legacy issue is backfilled with invented evidence.
+
 ## Creation boundary
 
 `createBugReportV2()` and direct confirmed-defect projection are low-level primitives. Normal audit publication uses `buildBugReportFromApprovedBugSet()`.

@@ -88,6 +88,9 @@ function toV2Bug(
     ...(bug.reproduction === undefined
       ? {}
       : { reproduction: bug.reproduction }),
+    ...(bug.reproductionProvenance === undefined
+      ? {}
+      : { reproductionProvenance: bug.reproductionProvenance }),
     ...(bug.aiAnalysis === undefined
       ? {}
       : { aiAnalysis: bug.aiAnalysis }),

@@ -1308,6 +1308,52 @@ describe("canonical defect group resolution", () => {
     expect(resolved.suggestedFix).toBeUndefined();
   });
 
+  it("retains only source-bound provenance matching the canonical reproduction", () => {
+    const steps = [
+      "Finish a match and return to the lobby.",
+      "Confirm the match-owned state remains after cleanup.",
+    ];
+    const provenance = {
+      gameplayBasis: "authored-gameplay" as const,
+      stepEvidence: {
+        startingCondition: ["authored:finish-match"],
+        actions: [],
+        observableFailure: ["source:stale-state"],
+      },
+    };
+    const source = [
+      defect("one", { foundBy: "ai", reproduction: steps,
+        confirmation: { basis: "authored-contract-violation", evidence: "Selected source contradiction" },
+        reproductionProvenance: provenance }),
+      defect("two", { foundBy: "ai", reproduction: steps,
+        confirmation: { basis: "authored-contract-violation", evidence: "Selected source contradiction" },
+        reproductionProvenance: provenance }),
+    ];
+    const narrative = {
+      title: "Canonical cleanup defect",
+      problem: "Cleanup retains match-owned state.",
+      expected: { statement: "State clears after cleanup." },
+      observed: { statement: "State remains after cleanup." },
+      expectedAuthority: "explicit-requirement" as const,
+      primaryFailure: "player-owned-state" as const,
+      reproduction: steps,
+    };
+    const group = groupConfirmedDefects(source)[0]!;
+    const retained = resolveConfirmedDefectGroup(group, narrative);
+    expect(retained.reproductionProvenance).toEqual(provenance);
+    const replaced = resolveConfirmedDefectGroup(group, { ...narrative,
+      reproduction: ["Start a fresh match.", steps[1]!] });
+    expect(replaced.reproductionProvenance).toBeUndefined();
+    const other = {
+      ...source[1]!,
+      reproductionProvenance: { ...provenance,
+        stepEvidence: { ...provenance.stepEvidence, observableFailure: ["source:other-witness"] } },
+    };
+    const conflicted = resolveConfirmedDefectGroup(
+      groupConfirmedDefects([source[0]!, other])[0]!, narrative);
+    expect(conflicted.reproductionProvenance).toBeUndefined();
+  });
+
   it("refuses incompatible defects even when caller constructs a group manually", () => {
     const group = {
       key: "manual",

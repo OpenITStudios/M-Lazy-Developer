@@ -5,6 +5,7 @@ import {
   type BugSeverity,
 } from "./vocabulary.js";
 import type { BugReportParseIssue } from "./parse.js";
+import type { BugTriggerGameplayBasis, BugTriggerStepEvidence } from "./bug-trigger.js";
 
 export const BUG_REPORT_V2_SCHEMA = "m-bedrock-bug-report/v2" as const;
 
@@ -35,6 +36,7 @@ export const BUG_REPORT_V2_LABELS = {
   expected: "Expected",
   observed: "Observed",
   reproduction: "Reproduction",
+  reproductionProvenance: "Reproduction Source Evidence (Unverified Reference)",
   aiAnalysis: "AI Analysis",
   relevantCode: "Relevant Code",
   suggestedFix: "Suggested Fix",
@@ -92,6 +94,12 @@ export interface BugReportV2RelevantCode {
   readonly reason: string;
 }
 
+/** Optional source-bound authoring provenance; NEVER a gameplay test result. */
+export interface BugReportV2ReproductionProvenance {
+  readonly gameplayBasis: BugTriggerGameplayBasis;
+  readonly stepEvidence: BugTriggerStepEvidence;
+}
+
 export interface BugReportV2Bug {
   readonly id: string;
   readonly fixed: boolean;
@@ -106,6 +114,7 @@ export interface BugReportV2Bug {
   readonly expected: string;
   readonly observed: string;
   readonly reproduction?: readonly string[];
+  readonly reproductionProvenance?: BugReportV2ReproductionProvenance;
   readonly aiAnalysis?: string;
   readonly relevantCode?: readonly BugReportV2RelevantCode[];
   readonly suggestedFix?: string;
@@ -297,6 +306,64 @@ function parseRelevantCode(
   return parsed.length === value.length ? parsed : undefined;
 }
 
+function parseReproductionProvenance(
+  value: unknown,
+  reproduction: readonly string[] | undefined,
+  path: string,
+  issues: BugReportParseIssue[],
+): BugReportV2ReproductionProvenance | undefined {
+  if (value === undefined) return undefined;
+  if (!object(value)) {
+    issues.push({ code: "invalid-type", path, message: "Expected reproduction provenance object." });
+    return undefined;
+  }
+  rejectUnknown(value, ["gameplayBasis", "stepEvidence"], path, issues);
+  const gameplayBasis = value.gameplayBasis;
+  const basisValid = ["authored-gameplay", "runtime-gameplay", "tester-gameplay"]
+    .includes(gameplayBasis as string);
+  if (!basisValid) {
+    issues.push({ code: "invalid-value", path: path + ".gameplayBasis",
+      message: "Unknown gameplay evidence basis." });
+  }
+  const raw = value.stepEvidence;
+  if (!object(raw)) {
+    issues.push({ code: "invalid-type", path: path + ".stepEvidence",
+      message: "Expected step-by-step source evidence." });
+    return undefined;
+  }
+  rejectUnknown(raw, ["startingCondition", "actions", "observableFailure"],
+    path + ".stepEvidence", issues);
+  const startingCondition = stringList(raw.startingCondition,
+    path + ".stepEvidence.startingCondition", issues);
+  const observableFailure = stringList(raw.observableFailure,
+    path + ".stepEvidence.observableFailure", issues);
+  let actions: readonly (readonly string[])[] | undefined;
+  if (!Array.isArray(raw.actions)) {
+    issues.push({ code: "invalid-type", path: path + ".stepEvidence.actions",
+      message: "Expected one source-evidence list per authored player action." });
+  } else {
+    const parsed = raw.actions.map((entry, index) =>
+      stringList(entry, path + ".stepEvidence.actions[" + index + "]", issues));
+    if (parsed.every((entry) => entry !== undefined)) {
+      actions = parsed as readonly (readonly string[])[];
+    }
+  }
+  if (reproduction === undefined || reproduction.length < 2 ||
+      reproduction.length > 5 || actions?.length !== reproduction.length - 2) {
+    issues.push({ code: "semantic-error", path,
+      message: "Reproduction evidence must match the setup, actions and outcome of 2-5 reproduction steps." });
+  }
+  if (!basisValid || !startingCondition || !actions || !observableFailure ||
+      reproduction === undefined || reproduction.length < 2 ||
+      reproduction.length > 5 || actions.length !== reproduction.length - 2) {
+    return undefined;
+  }
+  return {
+    gameplayBasis: gameplayBasis as BugTriggerGameplayBasis,
+    stepEvidence: { startingCondition, actions, observableFailure },
+  };
+}
+
 function parseBug(
   value: unknown,
   index: number,
@@ -328,6 +395,7 @@ function parseBug(
       "expected",
       "observed",
       "reproduction",
+      "reproductionProvenance",
       "aiAnalysis",
       "relevantCode",
       "suggestedFix",
@@ -393,6 +461,10 @@ function parseBug(
     path + ".reproduction",
     issues,
   );
+  const reproductionProvenance = parseReproductionProvenance(
+    value.reproductionProvenance, reproduction,
+    path + ".reproductionProvenance", issues,
+  );
   const mustPreserve = stringList(
     value.mustPreserve,
     path + ".mustPreserve",
@@ -444,6 +516,7 @@ function parseBug(
     expected,
     observed,
     ...(reproduction === undefined ? {} : { reproduction }),
+    ...(reproductionProvenance === undefined ? {} : { reproductionProvenance }),
     ...(aiAnalysis === undefined ? {} : { aiAnalysis }),
     ...(relevantCode === undefined ? {} : { relevantCode }),
     ...(suggestedFix === undefined ? {} : { suggestedFix }),

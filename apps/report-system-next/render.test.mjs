@@ -416,6 +416,11 @@ test("approved V2 projector preserves source-approved findings, fixed flags and 
     whyThisIsBug:"The current source recovery does not restore pending delay.",
     impact:"Wave schedule can change.",aiAnalysis:"Source-level reasoning only.",
     reproduction:["Enter the test arena.","Reload during a pending spawn delay.","Compare the wave sequence."],
+    reproductionProvenance:{gameplayBasis:"authored-gameplay",stepEvidence:{
+      startingCondition:["gameplay:arena-entry"],
+      actions:[["selected-source:reload-trigger"]],
+      observableFailure:["selected-source:wave-observation"]
+    }},
     relevantCode:[{file:"BP/scripts/wave.js",reason:"Source recovery reference."}],
     suggestedFix:"Restore pending timeline.",mustPreserve:["Existing valid wave order"]};
   const ledger={schema:"m-bedrock-bug-report/v2",
@@ -430,6 +435,17 @@ test("approved V2 projector preserves source-approved findings, fixed flags and 
   assert.equal(projection.maps[0].levels[0].findings[0].technical.recommendedFix,issue.suggestedFix);
   assert.equal(projection.maps[0].levels[0].findings[0].testProcedure,null);
   assert.equal(projection.maps[0].evidence[0].kind,"REFERENCE_UNRESOLVED");
+  const stepProof=projection.maps[0].evidence.filter(x=>
+    x.sourceOrigin==="approved-bug-report-v2-trigger");
+  assert.deepEqual(stepProof.map(x=>x.locator.value),[
+    "gameplay:arena-entry","selected-source:reload-trigger","selected-source:wave-observation"]);
+  assert.ok(stepProof.every(x=>x.kind==="REFERENCE_UNRESOLVED"&&
+    x.sourceScope==="external-reference"&&
+    projection.maps[0].levels[0].findings[0].evidenceRefs.includes(x.id)));
+  assert.match(stepProof[0].description,/step 1 \(starting condition\)/);
+  assert.match(stepProof[1].description,/step 2 \(player action 1\)/);
+  assert.match(stepProof[2].description,/step 3 \(observable failure\)/);
+  assert.equal(projection.maps[0].levels[0].findings[0].testProcedure,null);
   const rendered=await renderReportNext(projection);
   assert.match(rendered.fileStem,/-Approved$/);
   assert.match(rendered.html,/Approved Bug Report/);
@@ -448,6 +464,10 @@ test("approved V2 projector preserves source-approved findings, fixed flags and 
   falseStatus.bugs[0].fixed="false";
   assert.throws(()=>projectApprovedBugReportNext(falseStatus,project,{sourceRevision:commit}),
     /invalid approved issue severity\/state/);
+  const malformedTrace=structuredClone(ledger);
+  malformedTrace.bugs[0].reproductionProvenance.stepEvidence.actions=[];
+  assert.throws(()=>projectApprovedBugReportNext(malformedTrace,project,{sourceRevision:commit}),
+    /invalid persisted Bug Trigger source provenance/);
   const foreign=structuredClone(ledger);
   foreign.map.testedVersion="Source review; SHA-256 "+"c".repeat(64);
   assert.throws(()=>projectApprovedBugReportNext(foreign,project,{sourceRevision:commit}),
