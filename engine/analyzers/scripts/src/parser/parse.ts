@@ -2319,16 +2319,19 @@ export function parseScriptFile(
     deriveScriptProgressionCounterEvidence(
       text,
       source,
+      file,
     );
   const progressionActorSpawnEvidence =
     deriveScriptProgressionActorSpawnEvidence(
       text,
       source,
+      file,
     );
   const progressionActorRegistryEvidence =
     deriveScriptProgressionActorRegistryEvidence(
       text,
       source,
+      file,
     );
   const persistentDataLifecycleEvidence =
     derivePersistentDataLifecycleEvidence(

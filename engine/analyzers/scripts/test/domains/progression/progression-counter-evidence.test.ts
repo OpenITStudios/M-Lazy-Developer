@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import ts from "typescript";
 import {
   deriveScriptProgressionActiveCallEvidence,
   deriveScriptProgressionActiveEventEvidence,
@@ -9,6 +10,8 @@ import {
   deriveScriptProgressionActiveTransitionEvidence,
   deriveScriptProgressionStateTransitionEvidence,
   deriveScriptProgressionActorRegistryEvidence,
+  deriveScriptProgressionActorSpawnEvidence,
+  deriveScriptProgressionCounterEvidence,
   deriveScriptProgressionRuntimeEvidenceBundle,
 } from "../../../src/domains/progression/progression-counter-evidence.js";
 
@@ -484,5 +487,50 @@ describe("shared progression AST projection", () => {
     expect(bundle.activeTransition.events).toEqual([]);
     expect(bundle.stateTransitions).toEqual([]);
     expect(bundle.advances).toEqual([]);
+  });
+});
+
+
+describe("exact-source AST reuse for progression source indexing", () => {
+  it("uses an equivalent parsed AST without changing any detector output", () => {
+    const text = [
+      "function begin(arena, dimension) {",
+      "  arena.remainingEnemies++;",
+      "  const actor = dimension.spawnEntity('demo:zombie', { x: 0, y: 0, z: 0 });",
+      "  arena.enemyRegistryByGeneration.get(arena.generation).add(actor.id);",
+      "}",
+      "function finish(arena, entity) {",
+      "  arena.remainingEnemies--;",
+      "  arena.enemyRegistryByGeneration.get(arena.generation).delete(entity.id);",
+      "  if (arena.enemyRegistryByGeneration.get(arena.generation).size === 0) nextWave();",
+      "}",
+    ].join("\n");
+    const file = ts.createSourceFile(source.relativePath, text,
+      ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    for (const detector of [
+      deriveScriptProgressionCounterEvidence,
+      deriveScriptProgressionActorSpawnEvidence,
+      deriveScriptProgressionActorRegistryEvidence,
+    ]) {
+      const independent = detector(text, source);
+      expect(independent.length).toBeGreaterThan(0);
+      expect(detector(text, source, file)).toEqual(independent);
+      expect(detector(text, source,
+        ts.createSourceFile(source.relativePath, "unrelated();",
+          ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)))
+        .toEqual(independent);
+      expect(detector(text, source,
+        ts.createSourceFile("another-map/main.ts", text,
+          ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)))
+        .toEqual(independent);
+      expect(detector(text, source,
+        ts.createSourceFile(source.relativePath, text,
+          ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)))
+        .toEqual(independent);
+      expect(detector(text, source,
+        ts.createSourceFile(source.relativePath, text,
+          ts.ScriptTarget.Latest, true, ts.ScriptKind.JS)))
+        .toEqual(independent);
+    }
   });
 });

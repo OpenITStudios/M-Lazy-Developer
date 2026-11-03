@@ -108,6 +108,29 @@ function scriptKind(path: string): ts.ScriptKind {
   return ts.ScriptKind.JS;
 }
 
+/** Use the parser's transient AST only when it represents exactly the
+ * current source. Standalone detector calls retain independent parsing.
+ * This never caches ASTs across maps or audits.
+ */
+function exactProgressionSourceFile(
+  text: string,
+  source: SourceRef,
+  parsedFile?: ts.SourceFile,
+): ts.SourceFile {
+  if (parsedFile?.text === text &&
+      parsedFile.fileName === source.relativePath &&
+      (parsedFile as ts.SourceFile & { scriptKind?: ts.ScriptKind }).scriptKind ===
+        scriptKind(source.relativePath) &&
+      (parsedFile.statements.length === 0 ||
+       parsedFile.statements[0]?.parent === parsedFile)) {
+    return parsedFile;
+  }
+  return ts.createSourceFile(
+    source.relativePath, text, ts.ScriptTarget.Latest,
+    true, scriptKind(source.relativePath),
+  );
+}
+
 function nodeSource(
   file: ts.SourceFile,
   node: ts.Node,
@@ -754,14 +777,9 @@ function completionCounter(
 export function deriveScriptProgressionCounterEvidence(
   text: string,
   source: SourceRef,
+  parsedFile?: ts.SourceFile,
 ): ScriptProgressionCounterEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  const file = exactProgressionSourceFile(text, source, parsedFile);
   const output:
     ScriptProgressionCounterEvidence[] = [];
 
@@ -2191,14 +2209,9 @@ function deriveScriptProgressionActiveEventEvidenceFromSourceFile(
 export function deriveScriptProgressionActorSpawnEvidence(
   text: string,
   source: SourceRef,
+  parsedFile?: ts.SourceFile,
 ): ScriptProgressionActorSpawnEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  const file = exactProgressionSourceFile(text, source, parsedFile);
   const output:
     ScriptProgressionActorSpawnEvidence[] = [];
 
@@ -2279,14 +2292,9 @@ function actorRegistryCollection(
 export function deriveScriptProgressionActorRegistryEvidence(
   text: string,
   source: SourceRef,
+  parsedFile?: ts.SourceFile,
 ): ScriptProgressionActorRegistryEvidence[] {
-  const file = ts.createSourceFile(
-    source.relativePath,
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(source.relativePath),
-  );
+  const file = exactProgressionSourceFile(text, source, parsedFile);
   const actorVariables = new Map<string, string>();
   const output: ScriptProgressionActorRegistryEvidence[] = [];
 

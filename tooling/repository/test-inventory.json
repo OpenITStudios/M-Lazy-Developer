@@ -1474,10 +1474,10 @@
         "owner": "engine/analyzers/scripts",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "296ced1792ce29e52a29b7db1f6ec1d522c5eafc"
+        "sourceBlobSha": "c6ca35710133e1b393d9fb9c615a5937f5b03bb5"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Preserves independent progression evidence detectors and exact-source AST reuse with negative tests for foreign path, different bytes, unsupported syntax kind, and missing AST parent links. 19 domain tests plus 79 parser tests executed in a ChatGPT source workspace; source/static evidence only, not gameplay execution.",
       "functionalArea": "inventory-economy",
       "mechanicTags": [
         "gameplay.progression"
