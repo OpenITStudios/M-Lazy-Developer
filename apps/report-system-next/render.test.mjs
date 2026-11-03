@@ -241,6 +241,44 @@ test("selected-map reporting keeps both finding lanes, unresolved work and no in
   assert.match(rendered.html,/Observe whether: progression succeeds/);
   assert.match(rendered.html,/Source Reference Unresolved/);
   assert.doesNotMatch(rendered.html,/data-ready="true"/);
+  // Preserve exact source-owned test scope, missing prerequisites and
+  // per-finding checks in the canonical JSON, without authorizing a retest.
+  const plan={key:"controlled-reload",verificationMode:"NARROW_RUNTIME_VERIFICATION",
+    broadPlaythroughAllowed:false,findingIds:["ISSUE-PENDING"],
+    issueTypes:["DESIGN_MISMATCH"],gameplayFlows:["PROGRESSION"],
+    test:"Compare one controlled restart with an un-restarted session.",
+    assertions:[{findingId:"ISSUE-PENDING",test:"Count the delayed entities after the restart."}],
+    missingProof:["Authorized reload trigger","Observable entity count"]};
+  const withPlan={...audit,mapAuditReport:{...audit.mapAuditReport,
+    validationTests:[plan]}};
+  const planned=projectSelectedMapAuditReportNext(withPlan);
+  const check=planned.maps[0].auditCoverage.checks.find(x=>x.id==="validation:controlled-reload");
+  assert.ok(check);
+  assert.match(check.reason,/Narrow Minecraft runtime observation required; not executed/);
+  assert.match(check.reason,/Broad playthrough is not authorized/);
+  assert.equal(check.missingProof,"Authorized reload trigger | Observable entity count");
+  assert.match(check.nextCheck,/Compare one controlled restart/);
+  assert.match(check.nextCheck,/ISSUE-PENDING: Count the delayed entities/);
+  assert.equal(planned.maps[0].levels[0].findings[1].testProcedure,null);
+  assert.equal(planned.maps[0].levels[0].findings[1].proofStatus,"NEED_VALIDATION");
+  assert.equal(planned.maps[0].auditCoverage.state,"BLOCKED");
+  const sourcePlan={...plan,verificationMode:"STATIC_PROOF_COMPLETION",
+    test:"Trace the selected-artifact scheduler's source state.",
+    assertions:[{findingId:"ISSUE-PENDING",test:"Trace the selected-artifact scheduler's source state."}],
+    missingProof:["Exact selected-world source transition"]};
+  const staticReport=projectSelectedMapAuditReportNext({...audit,mapAuditReport:{
+    ...audit.mapAuditReport,validationTests:[sourcePlan]}});
+  const staticCheck=staticReport.maps[0].auditCoverage.checks.find(x=>x.id==="validation:controlled-reload");
+  assert.ok(staticCheck);
+  assert.match(staticCheck.reason,/Selected-source\/static\/formal proof required/);
+  assert.doesNotMatch(staticCheck.reason,/Narrow Minecraft runtime observation/);
+  assert.equal(staticCheck.missingProof,"Exact selected-world source transition");
+  assert.doesNotMatch(staticCheck.nextCheck,/Per-finding assertions/);
+  assert.throws(()=>projectSelectedMapAuditReportNext({...audit,mapAuditReport:{
+    ...audit.mapAuditReport,validationTests:[{...plan,assertions:[
+      {findingId:"FOREIGN-ISSUE",test:"Read unrelated code."}]}]}}),/Foreign or missing per-finding verification assertion/);
+  assert.throws(()=>projectSelectedMapAuditReportNext({...audit,mapAuditReport:{
+    ...audit.mapAuditReport,validationTests:[{...plan,verificationMode:"UNKNOWN_MODE"}]}}),/Invalid or unbound canonical validation group/);
   assert.throws(()=>projectSelectedMapAuditReportNext({
     ...audit,auditRevision:"stale-revision"
   }),/revision mismatch/);

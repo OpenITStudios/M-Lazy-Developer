@@ -78,9 +78,35 @@ export function projectSelectedMapAuditReportNext(run){
   const refs=uniq(x.evidenceRefs??[]);refs.forEach(cite);checks.push({...x,id:key,evidenceRefs:refs})}
  for(const o of a.auditObligations??[])add({id:"obligation:"+o.id,title:o.title,reason:o.reason,
     missingProof:o.missingProof,nextCheck:o.validationTest,evidenceRefs:o.evidenceIds});
- for(const t of a.validationTests??[])add({id:"validation:"+t.key,title:"Validation group "+t.key,
-    reason:"Open validation for finding IDs: "+(t.findingIds??[]).join(", "),
-    missingProof:"Deciding proof is not recorded as complete.",nextCheck:value(t.test,"No deciding test recorded."),evidenceRefs:[]});
+ // The canonical validation group already owns proof mode, precise missing
+ // prerequisites and each finding's deciding assertion. Preserve them in
+ // existing JSON check fields instead of replacing them with generic copy.
+ for(const t of a.validationTests??[]){
+  const findingIds=uniq(t.findingIds??[]);
+  const mode=t.verificationMode;
+  if(!t.key||!findingIds.length||!findingIds.every(id=>ids.has(id))||
+     !["STATIC_PROOF_COMPLETION","NARROW_RUNTIME_VERIFICATION"].includes(mode)||
+     t.broadPlaythroughAllowed!==false||
+     !Array.isArray(t.assertions)||!Array.isArray(t.missingProof)||
+     !value(t.test,null))
+   throw Error("Invalid or unbound canonical validation group: "+(t.key??"unknown"));
+  const assertions=t.assertions.map(a=>{
+   if(!a||!findingIds.includes(a.findingId)||!value(a.test,null))
+    throw Error("Foreign or missing per-finding verification assertion in "+t.key);
+   return a;
+  });
+  const modeMeaning=mode==="NARROW_RUNTIME_VERIFICATION"
+   ?"Narrow Minecraft runtime observation required; not executed by this report."
+   :"Selected-source/static/formal proof required; no Minecraft gameplay is claimed.";
+  const proof=t.missingProof.filter(x=>typeof x==="string"&&x.trim());
+  const detail=assertions.filter(x=>x.test!==t.test||assertions.length>1)
+   .map(x=>x.findingId+": "+x.test);
+  add({id:"validation:"+t.key,title:"Validation group "+t.key,
+   reason:modeMeaning+" Finding IDs: "+findingIds.join(", ")+". Broad playthrough is not authorized.",
+   missingProof:proof.length?proof.join(" | "):"Canonical validation group supplies no deciding proof prerequisites.",
+   nextCheck:t.test+(detail.length?" | Per-finding assertions: "+detail.join(" | "):""),
+   evidenceRefs:[]});
+ }
  const unresolved=a.unresolved??{};
  for(const [label,group] of [["finding",unresolved.needValidationIds],["static",unresolved.staticProofPendingIds],
     ["runtime",unresolved.runtimeRequiredIds],["obligation",unresolved.auditObligationIds],
