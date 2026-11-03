@@ -2,6 +2,36 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("Map Audit Output V2 naming contract", () => {
+  it("keeps source-only reconstruction fields and incomplete-proof reasons schema-bound", () => {
+    const root = schema.properties.gameplayStructure.properties;
+    const mechanic = root.mechanicReconstructions.items;
+    expect(mechanic.additionalProperties).toBe(false);
+    expect(mechanic.properties.disconnectedSourceFlowIds.items.type).toBe("string");
+    expect(mechanic.properties.sourceGuardedTransitionContexts.items.additionalProperties)
+      .toBe(false);
+    expect(mechanic.properties.sourceGuardedTransitionContextOmitted.minimum).toBe(0);
+    const flow = root.sourceFlowCandidates.items;
+    expect(flow.properties.sourceTraceStatus.enum).toEqual([
+      "SOURCE_ROOT_TRACE", "DISCONNECTED_SOURCE_REGION",
+    ]);
+    expect(flow.properties.sourceHandoffs.items.properties.registrationRegionId.type)
+      .toBe("string");
+    expect(root.effectSlices.items.properties.worldEffectKind.enum)
+      .toContain("audio-feedback");
+    expect(root.uninterpretedSourceFlows.items.properties.effectPaths.items
+      .properties.worldEffectKind.enum).toContain("audio-feedback");
+    expect(schema.properties.auditObligations.items.properties
+      .omittedSourceProofRequirements.minimum).toBe(0);
+    const requiredSourceClaims = schema.properties.auditObligations.items.properties
+      .sourceProofRequirements.items;
+    expect(requiredSourceClaims.additionalProperties).toBe(false);
+    expect(requiredSourceClaims.required).toEqual([
+      "unknownId", "sourceEvidenceIds", "missingClaims",
+    ]);
+    expect(schema.properties.gameplayClosure.properties.surfaceInventory.items
+      .allOf[0].then.required).toContain("reason");
+  });
+
   it("keeps every canonical Game Reconstruction projection in the strict report schema", () => {
     const view = schema.properties.gameplayStructure;
     const projections = [

@@ -102,12 +102,19 @@ export function buildIntentClosureSurfaces(
       kind: node.kind,
       status,
       material,
-      ...(unknownIds.length === 0
+      ...(status !== "unknown"
         ? {}
         : {
-            reason:
-              "Gameplay intent remains unresolved: " +
-              unknownIds.join(", "),
+            // Every UNKNOWN surface must tell the operator why it is
+            // unresolved. An inferred node with no explicit unknown ID
+            // is still NOT an authored gameplay fact.
+            reason: unknownIds.length > 0
+              ? "Gameplay intent remains unresolved: " + unknownIds.join(", ")
+              : node.status === "hypothesis"
+                ? "This source subject is only a gameplay hypothesis; " +
+                  "its authored meaning has not been established."
+                : "This material source subject was inferred, not " +
+                  "independently established as an authored gameplay rule.",
           }),
       evidenceIds: [...node.evidenceIds],
     };

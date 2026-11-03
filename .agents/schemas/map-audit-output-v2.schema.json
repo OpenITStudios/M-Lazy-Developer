@@ -2096,6 +2096,49 @@
               "type": "string"
             },
             "uniqueItems": true
+          },
+          "omittedSourceProofRequirements": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sourceProofRequirements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "unknownId",
+                "sourceEvidenceIds",
+                "missingClaims"
+              ],
+              "properties": {
+                "unknownId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sourceEvidenceIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "missingClaims": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "sourceResolvedClaims": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -4081,6 +4124,7 @@
                   "teleport",
                   "block-mutation",
                   "structure-load",
+                  "audio-feedback",
                   "dialogue",
                   "entity-event"
                 ]
@@ -4738,6 +4782,66 @@
                     }
                   }
                 }
+              },
+              "disconnectedSourceFlowIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "sourceGuardedTransitionContexts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "readOperationId",
+                    "writeOperationId",
+                    "executionRegionId",
+                    "featureRegionEvidenceIds",
+                    "sharedSourceFlowIds",
+                    "candidateStatus"
+                  ],
+                  "properties": {
+                    "readOperationId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "writeOperationId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "executionRegionId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "featureRegionEvidenceIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "sharedSourceFlowIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "candidateStatus": {
+                      "enum": [
+                        "GUARDED_SOURCE_CANDIDATE",
+                        "UNRESOLVED"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "sourceGuardedTransitionContextOmitted": {
+                "type": "integer",
+                "minimum": 0
               }
             }
           }
@@ -5455,6 +5559,10 @@
                     },
                     "proof": {
                       "const": "RESOLVED_SOURCE_EDGE_NOT_RUNTIME_EXECUTION"
+                    },
+                    "registrationRegionId": {
+                      "type": "string",
+                      "minLength": 1
                     }
                   }
                 }
@@ -5463,6 +5571,12 @@
                 "type": "integer",
                 "minimum": 0,
                 "description": "Exact edge handoffs truncated from this source-flow navigation view; not proof of absence."
+              },
+              "sourceTraceStatus": {
+                "enum": [
+                  "SOURCE_ROOT_TRACE",
+                  "DISCONNECTED_SOURCE_REGION"
+                ]
               }
             }
           }
@@ -5696,6 +5810,7 @@
                         "teleport",
                         "block-mutation",
                         "structure-load",
+                        "audio-feedback",
                         "dialogue",
                         "entity-event",
                         null

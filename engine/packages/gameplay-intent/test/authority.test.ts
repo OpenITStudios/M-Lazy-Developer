@@ -528,6 +528,21 @@ describe("gameplay model closure", () => {
 
     expect(surfaces[0]?.status).toBe("unknown");
     expect(surfaces[0]?.material).toBe(true);
+    expect(surfaces[0]?.reason).toContain("inferred");
+  });
+
+  it("explains hypothetical surfaces without promoting them to gameplay proof", () => {
+    const hypothetical: GameplayIntentModel = {
+      ...intent,
+      nodes: [{
+        id: "mechanic:unverified",
+        kind: "mechanic", label: "Possible mechanic",
+        status: "hypothesis", evidenceIds: [],
+      }],
+    };
+    const [surface] = buildIntentClosureSurfaces(hypothetical);
+    expect(surface?.status).toBe("unknown");
+    expect(surface?.reason).toContain("hypothesis");
   });
 
   it("retains unowned source gaps in whole-game closure without inventing mechanics", () => {
