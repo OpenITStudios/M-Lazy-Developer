@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { SemanticGraph } from "../../../graph/src/index.js";
 import type { GameplayIntentModel } from "../../../gameplay-intent/src/index.js";
+import type { ExecutionRegion } from "../../../semantic-ir/src/index.js";
 import { compileContextPack } from "../../src/workflow/context-compiler.js";
 import type { RetrievalResult } from "../../../analysis-planner/src/index.js";
 import { compileResourceContext, compileSectionContext, compileDeveloperPracticeReferenceContext, prepareDeveloperPracticeReferenceSelector } from "../../src/workflow/resource-context.js";
@@ -1320,7 +1321,7 @@ describe("source-first Daigon export investigation reference", () => {
       prohibits: "No Daigon bug without map-specific contractual proof.",
     }],
   };
-  const context = (event: typeof subscription, sourceLocators: string[], domains = ["scoring"]) =>
+  const context = (event: ExecutionRegion, sourceLocators: string[], domains = ["scoring"]) =>
     compileDeveloperPracticeReferenceContext({
       data,
       semanticIr: {
@@ -1345,11 +1346,12 @@ describe("source-first Daigon export investigation reference", () => {
   });
 
   it("refuses a spoofed event root, another map/source, or an unrelated question", () => {
+    const { scriptEventIdRejection: _missingGuard, ...withoutGuard } = subscription;
     for (const event of [
       { ...subscription, ownerId: "world" },
       { ...subscription, label: "system.afterEvents.anotherEvent" },
       { ...subscription, source: { ...source, artifactId: "other-map" } },
-      { ...subscription, scriptEventIdRejection: undefined },
+      withoutGuard,
       { ...subscription, scriptEventIdRejection: {
         ...subscription.scriptEventIdRejection, eventId: "other:export",
       } },
@@ -1437,13 +1439,9 @@ describe("source-first Daigon export investigation reference", () => {
         eventId: "mivubi:get_analytics",
       },
     };
-    type ScriptExportRegion = Omit<typeof analyticsEvent, "scriptEventIdRejection"> & {
-      scriptEventIdRejection?: (Omit<
-        typeof analyticsEvent.scriptEventIdRejection, "resolution"
-      > & { resolution: "inline-literal" | "local-literal" | "unique-imported-literal" }) | undefined;
-    };
+
     const contextFor = (
-      event: ScriptExportRegion,
+      event: ExecutionRegion,
       sourceLocators = ["behavior_packs/demo/scripts/results.ts:12:20"],
       domains = ["analytics", "scoring"],
     ) => compileDeveloperPracticeReferenceContext({
@@ -1469,10 +1467,11 @@ describe("source-first Daigon export investigation reference", () => {
       .toEqual(["developer.hint.analytics.session-export"]);
     expect(contextFor(subscription)?.items.map(item => item.patternId))
       .toEqual(["developer.hint.game-results.daigon-export"]);
+    const { scriptEventIdRejection: _missingAnalyticsGuard, ...withoutAnalyticsGuard } = analyticsEvent;
     for (const event of [
       { ...analyticsEvent, ownerId: "world" },
       { ...analyticsEvent, label: "system.afterEvents.other" },
-      { ...analyticsEvent, scriptEventIdRejection: undefined },
+      withoutAnalyticsGuard,
       { ...analyticsEvent, scriptEventIdRejection: {
         ...analyticsEvent.scriptEventIdRejection,
         eventId: "other:get_analytics",
@@ -1533,9 +1532,9 @@ describe("source-first Daigon export investigation reference", () => {
     }
     // An alternative strict-equality action is selection evidence, not an
     // early-return rejection, and must still match the same source guard.
+    const { scriptEventIdRejection: _noRejection, ...withoutRejection } = splitSites;
     const selectedRegion = {
-      ...splitSites,
-      scriptEventIdRejection: undefined,
+      ...withoutRejection,
       scriptEventIdSelection: {
         ...splitSites.scriptEventIdRejection,
         resolution: "local-literal" as const,

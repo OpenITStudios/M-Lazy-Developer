@@ -205,7 +205,8 @@ describe("knowledge runtime diagnostics", () => {
     expect(fromScope({})?.data?.presentPredicates)
       .toEqual(["alpha-child", "beta-only", "committed", "operation-only", "verified"]);
     expect(findings.some(item =>
-      item.data?.presentPredicates?.includes("unscoped-only")))
+      Array.isArray(item.data?.presentPredicates) &&
+      item.data.presentPredicates.includes("unscoped-only")))
       .toBe(false);
     expect(fromScope({ arenaId: "beta", playerKey: "p" })?.code)
       .toBe("KNOWLEDGE_RELATION_VIOLATION");

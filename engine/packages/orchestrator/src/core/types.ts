@@ -69,7 +69,7 @@ import type { MultiplayerStateValidationPlan } from "../inspection/multiplayer-s
 import type { DeveloperToolReleaseAnalysis } from "../inspection/developer-tool-release-analysis.js";
 import type { GameplayReachabilityGraph } from "../../../diagnostic-reasoning/src/index.js";
 import type { CapabilityExposureSummary } from "../inspection/capability-exposure-stage.js";
-import type { AuditRiskAssessment } from "../../../diagnostic-reasoning/src/index.js";
+import type { GameplayAnalysisPriority } from "../inspection/gameplay-analysis-priority.js";
 import type { GameplayDiscoveryClosure } from "../inspection/gameplay-discovery-closure.js";
 import type { MandatoryAuditProcedureReceipt } from "../inspection/mandatory-audit-procedure.js";
 import type { ArenaStressPlan } from "../arena/arena-stress-plan.js";
@@ -217,7 +217,7 @@ export interface InspectDirectoryResult {
   capabilityExposure:
     CapabilityExposureSummary;
   analysisPriorities:
-    readonly AuditRiskAssessment[];
+    readonly GameplayAnalysisPriority[];
   mandatoryAuditProcedure:
     MandatoryAuditProcedureReceipt;
   /**

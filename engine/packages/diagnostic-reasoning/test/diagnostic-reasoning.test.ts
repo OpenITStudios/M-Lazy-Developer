@@ -71,6 +71,7 @@ const readyContract = {
   authorityEvidenceIds: ["artifact:test:contract"],
   implementationEvidenceIds: [],
   playerFacingClaimEvidenceIds: [],
+  mapNativePlayerFacingCandidates: [],
   designChallenge: {
     disposition: "grounded-design" as const,
     reasons: ["synthetic approved-design fixture"],

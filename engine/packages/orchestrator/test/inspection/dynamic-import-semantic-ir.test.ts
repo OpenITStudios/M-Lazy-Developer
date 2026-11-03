@@ -60,7 +60,8 @@ describe("source-owned first-branch ScriptEvent ID selection", () => {
     expect(guarded?.scriptEventIdRejection?.eventId).toBe("mivubi:get_analytics");
     expect(guarded?.scriptEventIdSelection).toBeUndefined();
 
-    if (chosen?.scriptEventIdSelection !== undefined) {
+    const selectedGuard = chosen?.scriptEventIdSelection;
+    if (chosen && selectedGuard !== undefined) {
       const forged = {
         ...positiveIr,
         execution: {
@@ -68,7 +69,7 @@ describe("source-owned first-branch ScriptEvent ID selection", () => {
           regions: positiveIr.execution.regions.map(region =>
             region.id !== chosen.id ? region : {
               ...region,
-              scriptEventIdRejection: chosen.scriptEventIdSelection,
+              scriptEventIdRejection: selectedGuard,
             }),
         },
       };

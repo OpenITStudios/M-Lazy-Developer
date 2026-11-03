@@ -70,7 +70,7 @@ export function assessQaPositiveSourceCoverage(input: {
       subjects.some(id => {
         const nodes = intent.nodes.filter(node => node.id === id);
         return nodes.length !== 1 || nodes[0]?.status === "hypothesis" ||
-          !nodes[0].evidenceIds.some(uniqueSelected);
+          !nodes[0]?.evidenceIds.some(uniqueSelected);
       })) {
     reasons.push("QA rule subject ownership is missing, duplicated or outside selected source.");
   }

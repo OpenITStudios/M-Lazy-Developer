@@ -1107,7 +1107,7 @@ describe("canonical defect group resolution", () => {
     );
     expect(validateConfirmedDefect({
       ...original, reproductionProvenance: undefined,
-    })).toEqual([]);
+    } as unknown as Parameters<typeof validateConfirmedDefect>[0])).toEqual([]);
   });
 
   it("revalidates canonical merged narratives instead of trusting their original defects", () => {

@@ -357,7 +357,7 @@ export function deriveUnknownGameplayEvidenceInquiry(
       origin: item.origin as "game-design-spec" | "dialogue" | "translation",
       locator: item.locator,
       summary: item.summary.slice(0, 180),
-      approval: isSelectedArtifactApprovedDesignEvidence(item)
+      approval: item.origin === "game-design-spec" && item.designStatus === "approved"
         ? "approved" as const
         : item.origin === "game-design-spec"
           ? "draft" as const : "player-facing-cue" as const,

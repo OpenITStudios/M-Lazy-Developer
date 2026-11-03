@@ -288,7 +288,7 @@ export function buildGameplayIntentModel(
               edge.targetRegion === forwarded.executionRegion &&
               sameExactCallSource(edge.source, hop.declarationSource) &&
               edge.targetSource?.artifactId === input.artifactId &&
-              edge.targetSource.relativePath === script.source.relativePath)
+              edge.targetSource?.relativePath === script.source.relativePath)
               .length === 1);
         const matchingUiCalls = sourceUiCall === undefined ||
           !exactCallRegion || !validHops || !validMethodHops

@@ -415,7 +415,7 @@ export interface GameplayWorldModel {
       scriptId: string;
       propertyId: string;
       growth: "append-without-clear" | "append-with-clear" | "no-append" | "unknown";
-      scope: "player" | "entity" | "arena" | "session" | "world" | "unknown";
+      scope: "player" | "entity" | "item" | "arena" | "session" | "world" | "unknown";
       lifetime: "round" | "match" | "player-session" | "world" | "unknown";
     }[];
   };

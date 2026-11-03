@@ -158,8 +158,8 @@ export function correlateUiSourceGameplaySteps(
     readonly kind: Binding["sourceStepKind"];
     readonly regionId: string;
     readonly source: SourceRef;
-    readonly lexicalGuards?: readonly AuthoredBranchGuard[];
-    readonly precedenceGuards?: readonly AuthoredBranchGuard[];
+    readonly lexicalGuards?: readonly AuthoredBranchGuard[] | undefined;
+    readonly precedenceGuards?: readonly AuthoredBranchGuard[] | undefined;
   };
 
   const siteLocator = (source: SourceRef): string | undefined => {

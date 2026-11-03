@@ -933,7 +933,7 @@ export interface GameplayArchitectureNavigation {
         "world-global" | "module-shared" | "unknown";
       readonly surface?: "dynamic-property" | "scoreboard" |
         "world-property" | "world-command" | "world-player-enumeration" |
-        "entity-tag" | "module-state";
+        "dimension-entity-enumeration" | "entity-tag" | "module-state";
       readonly reason?: string;
       readonly sourcePath?: string | null;
       /** Exact operation site; do not infer coordinates from script names. */
@@ -1180,7 +1180,7 @@ export function deriveGameplayArchitectureNavigation(
         "world-global" | "module-shared" | "unknown";
       readonly surface?: "dynamic-property" | "scoreboard" |
         "world-property" | "world-command" | "world-player-enumeration" |
-        "entity-tag" | "module-state";
+        "dimension-entity-enumeration" | "entity-tag" | "module-state";
       readonly reason?: string;
       readonly sourcePath?: string | null;
       /** Exact operation site; do not infer coordinates from script names. */

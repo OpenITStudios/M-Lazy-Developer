@@ -17,6 +17,7 @@ export interface PersistenceSourceProperty {
   scope:
     | "player"
     | "entity"
+    | "item"
     | "arena"
     | "session"
     | "world"

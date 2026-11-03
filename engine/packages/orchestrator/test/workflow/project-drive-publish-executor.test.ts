@@ -577,10 +577,10 @@ describe("project audit publication boundary", () => {
 {
 describe("canonical per-project publication persistence", () => {
   const baseline = {
-    schemaVersion: 1,
+    schemaVersion: 1 as const,
     projectId: "defense-v2",
     projectName: "Defense V2",
-    taskClass: "DIAGNOSE",
+    taskClass: "DIAGNOSE" as const,
     revision: 1,
     artifact: {
       artifactId: "drive:world-1",

@@ -76,6 +76,7 @@ export interface MandatoryAuditStateRecord {
   readonly persistenceScope:
     | "player"
     | "entity"
+    | "item"
     | "arena"
     | "session"
     | "world"
@@ -238,6 +239,7 @@ export interface MandatoryAuditPersistenceProjection {
   readonly scope:
     | "player"
     | "entity"
+    | "item"
     | "arena"
     | "session"
     | "world"

@@ -435,10 +435,12 @@ export function buildInspectionSemanticIr(
       typeof item.expression.value === "string");
     const imported = (parsed.safeConfigImports ?? [])
       .filter(item => item.localName === identifier && item.kind === "named");
-    if (locals.length === 1 && imported.length === 0) {
+    const local = locals.length === 1 ? locals[0] : undefined;
+    if (local !== undefined && local.expression.kind === "literal" &&
+        typeof local.expression.value === "string" && imported.length === 0) {
       return {
-        eventId: locals[0]!.expression.value as string,
-        source: guard.source, valueSource: locals[0]!.source,
+        eventId: local.expression.value,
+        source: guard.source, valueSource: local.source,
         resolution: "local-literal",
       };
     }
@@ -463,11 +465,13 @@ export function buildInspectionSemanticIr(
       item.name === exported[0]!.localName &&
       item.expression.kind === "literal" &&
       typeof item.expression.value === "string");
-    if (values.length !== 1 ||
-        values[0]!.source.artifactId !== parsed.source.artifactId) return undefined;
+    const value = values.length === 1 ? values[0] : undefined;
+    if (value === undefined || value.source.artifactId !== parsed.source.artifactId ||
+        value.expression.kind !== "literal" ||
+        typeof value.expression.value !== "string") return undefined;
     return {
-      eventId: values[0]!.expression.value as string,
-      source: guard.source, valueSource: values[0]!.source,
+      eventId: value.expression.value,
+      source: guard.source, valueSource: value.source,
       resolution: "unique-imported-literal",
     };
   };

@@ -1247,7 +1247,7 @@ function deriveSourceInvestigation(
       unknownId: unknown.id,
       question: unknown.question,
       entryRegionId: unknown.sourceEntryRegionId!,
-      sourceTraceStatus: flow.sourceTraceStatus ?? "UNKNOWN",
+      sourceTraceStatus: flow.sourceTraceStatus ?? ("UNKNOWN" as const),
       steps,
       omittedSteps: matchedSteps.length - steps.length,
       ...((graph.reviewedSourceRelationships ?? [])

@@ -289,7 +289,7 @@ export function validateConfirmedDefect(
         if (!trace.startingCondition.some(id => setup.has(id))) {
           errors.push("reproductionProvenance starting condition lacks the matching gameplay basis.");
         }
-        if (trace.actions.some(ids => !ids.some(id => setup.has(id)))) {
+        if (trace.actions.some(ids => !ids.some((id: string) => setup.has(id)))) {
           errors.push("reproductionProvenance player action lacks the matching gameplay basis.");
         }
         if (!trace.observableFailure.some(id => observed.has(id))) {
