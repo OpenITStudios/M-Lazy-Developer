@@ -1742,6 +1742,26 @@ describe("gameplay world model", () => {
     expect(requestedOnly.arenas.count).toBeUndefined();
     expect(requestedOnly.arenas.requestedConcurrentArenas).toBe(6);
     expect(requestedOnly.gameplayClosure.unknownSurfaceIds).toContain("runtime:arena");
+    const authoredRosterOnly = deriveGameplayWorldModel({
+      ...source,
+      arena: {
+        autoDetected: false,
+        capacity: {
+          resources: [],
+          evidence: { ...capacityEvidence, requestedConcurrentArenas: 30, declaredArenaCount: 30 },
+        },
+      },
+    });
+    expect(authoredRosterOnly.arenas.detected).toBe(true);
+    expect(authoredRosterOnly.arenas.declaredArenaCount).toBe(30);
+    expect(authoredRosterOnly.arenas.count).toBeUndefined();
+    expect(authoredRosterOnly.arenas.safeConcurrentArenas).toBeUndefined();
+    const physicalSurface = authoredRosterOnly.gameplayClosure.surfaces.find(
+      (surface) => surface.id === "runtime:arena",
+    );
+    expect(physicalSurface?.status).toBe("unknown");
+    expect(physicalSurface?.boundaries).toContain("declaredArenaCount=30");
+    expect(authoredRosterOnly.gameplayClosure.unknownSurfaceIds).toContain("runtime:arena-capacity");
     const unresolvedCapacity = deriveGameplayWorldModel({
       ...source,
       arena: {

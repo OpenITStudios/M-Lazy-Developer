@@ -309,6 +309,8 @@ export interface MapAuditOutputV2 {
   readonly multiArena: {
     readonly detected: boolean;
     readonly visibleArenaCount: number | null;
+    /** Authored arena IDs; not a physical or active arena count. */
+    readonly declaredArenaCount?: number | null;
     readonly declaredConcurrentArenaLimit: number | null;
     readonly safeConcurrentArenaLimit: number | null;
     readonly queueBehavior: string;
@@ -1278,6 +1280,8 @@ export function projectMapAuditOutputV2(input: {
       detected: world.arenas.detected,
       visibleArenaCount:
         world.arenas.count ?? null,
+      declaredArenaCount:
+        world.arenas.declaredArenaCount ?? null,
       declaredConcurrentArenaLimit:
         world.arenas.declaredConcurrentArenaLimit ??
         null,

@@ -215,6 +215,14 @@
           ],
           "minimum": 0
         },
+        "declaredArenaCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Source-declared arena roster count; not physical replica or concurrency proof."
+        },
         "declaredConcurrentArenaLimit": {
           "type": [
             "integer",

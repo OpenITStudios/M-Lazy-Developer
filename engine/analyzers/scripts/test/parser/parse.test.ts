@@ -317,6 +317,75 @@ describe("script analyzer", () => {
     }
   });
 
+  it("resolves uniquely assigned bundled module callbacks only at their proven same-block registration", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world, system } from "@minecraft/server";',
+      'var spawnHandler;',
+      'var timerHandler;',
+      'function setup() {',
+      '  spawnHandler = (event) => { world.sendMessage(event.player.name); };',
+      '  timerHandler = () => { world.sendMessage("tick"); };',
+      '  world.afterEvents.playerSpawn.subscribe(spawnHandler);',
+      '  system.runInterval(timerHandler, 20);',
+      '}',
+    ].join("\n"), source);
+    const event = parsed.events.find(item => item.event === "playerSpawn");
+    const timer = parsed.deferredCallbacks.find(item => item.scheduler === "runInterval");
+    expect(event?.callbackRegion).toMatch(/^callback@/);
+    expect(event?.callbackSource?.range?.lineStart).toBe(5);
+    expect(timer?.callbackRegion).toMatch(/^callback@/);
+    expect(timer?.callbackSource?.range?.lineStart).toBe(6);
+  });
+
+  it("never resolves reordered, reassigned, conditional, shadowed or out-of-block mutable handlers", () => {
+    const fragments = [
+      [
+        'var handler;',
+        'function setup() {',
+        '  world.afterEvents.playerSpawn.subscribe(handler);',
+        '  handler = (event) => {};',
+        '}',
+      ],
+      [
+        'var handler;',
+        'function setup() {',
+        '  handler = (event) => {};',
+        '  handler = (event) => {};',
+        '  world.afterEvents.playerSpawn.subscribe(handler);',
+        '}',
+      ],
+      [
+        'var handler;',
+        'function setup(guard) {',
+        '  if (guard) handler = (event) => {};',
+        '  world.afterEvents.playerSpawn.subscribe(handler);',
+        '}',
+      ],
+      [
+        'var handler;',
+        'function setup(handler) {',
+        '  handler = (event) => {};',
+        '  world.afterEvents.playerSpawn.subscribe(handler);',
+        '}',
+      ],
+      [
+        'var handler;',
+        'function setup() {',
+        '  handler = (event) => {};',
+        '  function register() { world.afterEvents.playerSpawn.subscribe(handler); }',
+        '}',
+      ],
+    ];
+    for (const sourceLines of fragments) {
+      const parsed = parseScriptFile("scripts/main", [
+        'import { world } from "@minecraft/server";',
+        ...sourceLines,
+      ].join("\n"), source);
+      expect(parsed.events.find(event => event.event === "playerSpawn")?.callbackRegion)
+        .toBeUndefined();
+    }
+  });
+
   it("does not resolve callback aliases with conflicting module bindings", () => {
     const parsed = parseScriptFile("scripts/main", [
       'import { world, system } from "@minecraft/server";',

@@ -2436,6 +2436,44 @@ export function parseScriptFile(
       }
     }
   }
+  // A bundler may lower a callback to `var handler;` and assign its
+  // function once inside the same setup block, directly before subscribe().
+  // Only a unique source-level assignment and a same-block ordered call can
+  // establish the callback identity. Dynamic, conditional, or reassigned
+  // handlers must remain unresolved rather than inventing gameplay edges.
+  const uninitializedModuleHandlers = new Set<string>();
+  for (const statement of file.statements) {
+    if (!ts.isVariableStatement(statement) ||
+        (statement.declarationList.flags & ts.NodeFlags.Const)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (ts.isIdentifier(declaration.name) && !declaration.initializer &&
+          uniqueModuleBinding(declaration.name.text)) {
+        uninitializedModuleHandlers.add(declaration.name.text);
+      }
+    }
+  }
+  const allModuleHandlerWrites = new Map<string, ts.Node[]>();
+  const recordHandlerWrites = (node: ts.Node): void => {
+    const write = ts.isBinaryExpression(node) &&
+      ts.isIdentifier(node.left) &&
+      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+        ? node.left.text
+        : (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+          ts.isIdentifier(node.operand) &&
+          (node.operator === ts.SyntaxKind.PlusPlusToken ||
+           node.operator === ts.SyntaxKind.MinusMinusToken)
+          ? node.operand.text : undefined;
+    if (write && uninitializedModuleHandlers.has(write)) {
+      const entries = allModuleHandlerWrites.get(write) ?? [];
+      entries.push(node);
+      allModuleHandlerWrites.set(write, entries);
+    }
+    ts.forEachChild(node, recordHandlerWrites);
+  };
+  if (uninitializedModuleHandlers.size > 0) {
+    ts.forEachChild(file, recordHandlerWrites);
+  }
   const bindsName = (binding: ts.BindingName, name: string): boolean =>
     ts.isIdentifier(binding)
       ? binding.text === name
@@ -2552,6 +2590,37 @@ export function parseScriptFile(
   const constCallback = (call: ts.CallExpression): ts.ArrowFunction | ts.FunctionExpression | undefined => {
     const name = directCallbackName(call);
     return name && uniqueModuleBinding(name) ? topLevelConstCallbacks.get(name) : undefined;
+  };
+  const uniquelyAssignedModuleCallback = (
+    call: ts.CallExpression,
+  ): ts.ArrowFunction | ts.FunctionExpression | undefined => {
+    const argument = call.arguments[0];
+    if (!argument || !ts.isIdentifier(argument) ||
+        !uninitializedModuleHandlers.has(argument.text) ||
+        isShadowed(argument)) return undefined;
+    const writes = allModuleHandlerWrites.get(argument.text) ?? [];
+    if (writes.length !== 1) return undefined;
+    const statement = call.parent;
+    if (!ts.isExpressionStatement(statement) ||
+        statement.expression !== call || !ts.isBlock(statement.parent)) {
+      return undefined;
+    }
+    const block = statement.parent;
+    const callIndex = block.statements.indexOf(statement);
+    if (callIndex <= 0) return undefined;
+    const assignment = writes[0];
+    if (!assignment || !ts.isBinaryExpression(assignment) ||
+        assignment.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+        !(ts.isArrowFunction(assignment.right) ||
+          ts.isFunctionExpression(assignment.right)) ||
+        !ts.isExpressionStatement(assignment.parent) ||
+        assignment.parent.expression !== assignment ||
+        assignment.parent.parent !== block ||
+        block.statements.indexOf(assignment.parent) >= callIndex) return undefined;
+    // The same-block assignment dominates the subscription absent a branch
+    // that exits or throws before registration. This is source resolution,
+    // never evidence that initialization actually ran.
+    return assignment.right;
   };
   const namedCallback = (call: ts.CallExpression): string | undefined => {
     const name = directCallbackName(call);
@@ -3811,7 +3880,8 @@ export function parseScriptFile(
 
       const scheduler = deferredScheduler(node, file, typedMethodSites);
       if (scheduler) {
-        const callback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
+        const callback = callbackNode(node) ?? localConstCallback(node) ??
+          constCallback(node) ?? uniquelyAssignedModuleCallback(node);
         const namedScheduledCallback = namedCallback(node);
         const promiseResolver = callback === undefined &&
           namedScheduledCallback === undefined && externalPromiseResolver(node);
@@ -3936,7 +4006,8 @@ export function parseScriptFile(
             event === "scriptEventReceive"
               ? lineSource(file, node.expression, source)
               : undefined;
-          const eventCallback = callbackNode(node) ?? localConstCallback(node) ?? constCallback(node);
+          const eventCallback = callbackNode(node) ?? localConstCallback(node) ??
+            constCallback(node) ?? uniquelyAssignedModuleCallback(node);
           const namedEventCallback = namedCallback(node);
           const guardedCallback = eventCallback ??
             (namedEventCallback ? localCallableDeclarations.get(namedEventCallback) : undefined);

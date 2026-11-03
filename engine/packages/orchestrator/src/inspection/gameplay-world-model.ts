@@ -130,8 +130,12 @@ export interface GameplayWorldModel {
   stateClosure:
     ReturnType<typeof assessGameplayStateClosure>;
   arenas: {
+    /** Arena semantics from physical topology or authored source roster. */
     detected: boolean;
+    /** Physical/source-layout evidence only; never inferred from a roster. */
     count?: number;
+    /** Distinct static arena IDs authored in selected source; not physical/active proof. */
+    declaredArenaCount?: number;
     basis?: "topology" | "script-config" | "reconciled";
     replicaBaselineId?: string;
     layoutStatus?: ArenaLayoutReconciliation["status"];
@@ -1163,6 +1167,9 @@ function summarizeSubjects(
 export function deriveGameplayWorldModel(
   source: GameplayWorldModelSource,
 ): GameplayWorldModel {
+  // The source-declared roster does not establish replica world geometry,
+  // actual simultaneous starts, or safe capacity. Preserve that distinction.
+  const declaredArenaCount = source.arena.capacity?.evidence.declaredArenaCount;
   const arenaCount =
     source.arena.spatialLayout !== undefined
       ? 1 + source.arena.spatialLayout.replicas.length
@@ -1175,7 +1182,8 @@ export function deriveGameplayWorldModel(
 
   const arenaDetected =
     source.arena.autoDetected ||
-    arenaCount !== undefined;
+    arenaCount !== undefined ||
+    declaredArenaCount !== undefined;
   if (arenaDetected) {
     runtimeSurfaces.push({
       id: "runtime:arena",
@@ -1189,13 +1197,15 @@ export function deriveGameplayWorldModel(
       ...(arenaCount === undefined
         ? {
             reason:
-              "Arena behavior is detected, but concrete arena topology/count is not yet grounded.",
+              declaredArenaCount === undefined
+                ? "Arena behavior is detected, but concrete arena topology/count is not yet grounded."
+                : "Authored arena roster is detected, but physical replica topology and playability remain unproven.",
           }
         : {}),
-      boundaries:
-        arenaCount === undefined
-          ? []
-          : ["visibleArenaCount=" + arenaCount],
+      boundaries: [
+        ...(arenaCount === undefined ? [] : ["visibleArenaCount=" + arenaCount]),
+        ...(declaredArenaCount === undefined ? [] : ["declaredArenaCount=" + declaredArenaCount]),
+      ],
     });
 
     const requested =
@@ -1234,6 +1244,9 @@ export function deriveGameplayWorldModel(
         ...(arenaCount === undefined
           ? []
           : ["visibleArenaCount=" + arenaCount]),
+        ...(declaredArenaCount === undefined
+          ? []
+          : ["declaredArenaCount=" + declaredArenaCount]),
         ...(requested === undefined
           ? []
           : ["requestedConcurrentArenas=" + requested]),
@@ -1807,12 +1820,13 @@ export function deriveGameplayWorldModel(
     gameplayClosure,
     stateClosure,
     arenas: {
-      detected:
-        source.arena.autoDetected ||
-        arenaCount !== undefined,
+      detected: arenaDetected,
       ...(arenaCount === undefined
         ? {}
         : { count: arenaCount }),
+      ...(declaredArenaCount === undefined
+        ? {}
+        : { declaredArenaCount }),
       ...(source.arena.spatialLayout === undefined
         ? {}
         : {
