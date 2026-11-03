@@ -36,6 +36,7 @@ import type { ScriptSafeConfigAnalysis } from "../inspection/script-safe-config-
 import type { ArenaLayoutReconciliation } from "../arena/arena-layout-reconciliation.js";
 import type { ArenaLifecycleAnalysis } from "../arena/arena-lifecycle-analysis.js";
 import type { ArenaCleanupSurfaceAnalysis } from "../arena/arena-cleanup-surface-analysis.js";
+import type { ArenaResetClosureAssessment } from "../arena/arena-reset-closure-analysis.js";
 import type { ArenaStateIsolationAnalysis } from "../arena/arena-state-isolation-analysis.js";
 import type { ArenaGlobalStateAnalysis } from "../arena/arena-global-state-analysis.js";
 import type { ScriptSpatialAnalysis } from "../inspection/script-spatial-analysis.js";
@@ -343,6 +344,8 @@ export interface InspectDirectoryResult {
     layoutReconciliation?: ArenaLayoutReconciliation;
     lifecycle?: ArenaLifecycleAnalysis;
     cleanupSurfaces?: ArenaCleanupSurfaceAnalysis;
+    /** Source-only arena reset/reuse analysis, never live reset proof. */
+    resetClosure?: ArenaResetClosureAssessment;
     stateIsolation?: ArenaStateIsolationAnalysis;
     globalState?: ArenaGlobalStateAnalysis;
     stressPlan?: ArenaStressPlan;
