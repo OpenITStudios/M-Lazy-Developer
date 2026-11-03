@@ -196,6 +196,15 @@ export function challengeGameplayDiscovery(input: {
   }
 
   for (const edge of input.semanticIr.execution.edges) {
+    // Native Promise executor resolvers and runtime-provided Bedrock modules
+    // are intentionally external targets. They stay UNOBSERVED in the IR,
+    // but cannot be resolved to another authored function in this ZIP.
+    // The selected-map source gate already excludes precisely these IDs from
+    // unresolved-source-link accounting; Discovery must agree with that
+    // authoritative boundary rather than invent a missing callback owner.
+    if (edge.resolution === "unresolved" &&
+        (edge.externalPromiseResolver === true ||
+         edge.externalRuntimeModule !== undefined)) continue;
     if (edge.resolution === "resolved" && matchesSource(edge.id, edge.source)) {
       continue;
     }
@@ -214,6 +223,12 @@ export function challengeGameplayDiscovery(input: {
   }
 
   for (const relation of input.semanticIr.temporal.relations) {
+    // An exact Promise resolver is a platform callback, not an authored
+    // source target. Its native delivery remains unverified; do not
+    // manufacture a Discovery link whose implementation cannot exist.
+    if (relation.resolution === "unresolved" &&
+        (relation.externalPromiseResolver === true ||
+         relation.externalRuntimeModule !== undefined)) continue;
     // A generation guard proves a scheduling safety property, not that
     // the temporal relation has a gameplay/scenario owner.
     const relatedEvidence = matchesSource(relation.id, relation.source);

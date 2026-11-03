@@ -76,6 +76,38 @@ const emptyGraph: GameplayScenarioGraph = {
 };
 
 describe("gameplay discovery challenger", () => {
+  it("does not misclassify native Promise resolvers as missing authored callback targets", () => {
+    const source = { artifactId: "test", relativePath: "scripts/main.js" };
+    const unresolved = (id: string, platform: "promise" | "module" | "ordinary") => ({
+      id, from: "function:delay", kind: "deferred" as const,
+      targetLabel: platform, resolution: "unresolved" as const, source,
+      ...(platform === "promise" ? { externalPromiseResolver: true as const } : {}),
+      ...(platform === "module" ? { externalRuntimeModule: "@minecraft/server" as const } : {}),
+    });
+    const ir = {
+      schemaVersion: 1,
+      execution: {
+        regions: [], edges: [
+          unresolved("edge:promise", "promise"),
+          unresolved("edge:module", "module"),
+          unresolved("edge:ordinary", "ordinary"),
+        ],
+      },
+      temporal: { relations: [
+        { ...unresolved("time:promise", "promise"), kind: "deferred" },
+        { ...unresolved("time:module", "module"), kind: "deferred" },
+        { ...unresolved("time:ordinary", "ordinary"), kind: "deferred" },
+      ] },
+      state: { surfaces: [], operations: [], authorityBindings: [] },
+    } as unknown as SemanticIr;
+    const gaps = challengeGameplayDiscovery({
+      semanticIr: ir, intent: emptyIntent, graph: emptyGraph,
+    });
+    expect(gaps.map(gap => gap.id)).toEqual([
+      "discovery-challenge:edge:edge:ordinary",
+      "discovery-challenge:temporal:time:ordinary",
+    ]);
+  });
   it("does not close return/release evidence using intent records without a proven scenario", () => {
     const source = { artifactId: "a", relativePath: "scripts/finish.js" };
     const ir = {
