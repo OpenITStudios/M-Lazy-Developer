@@ -32,13 +32,16 @@ export function projectApprovedBugReportNext(ledger,project,{sourceRevision}={})
   const relatedSources=[],evidenceRefs=[];
   for(const src of item.relevantCode??[]){
    const file=text(src.file,id+" code path"),reason=text(src.reason,id+" source reason");
-   if(!refs.has(file)){
-    const ref="LEDGER-SOURCE-"+String(refs.size+1).padStart(4,"0");refs.set(file,ref);
+   // The same file may support different approved issues for different reasons.
+   // Source citations remain unverified in the read-only projection.
+   const sourceKey=JSON.stringify([file,reason]);
+   if(!refs.has(sourceKey)){
+    const ref="LEDGER-SOURCE-"+String(refs.size+1).padStart(4,"0");refs.set(sourceKey,ref);
     evidence.push({id:ref,kind:"REFERENCE_UNRESOLVED",
       description:"Canonical approved report cites this file; the renderer did not re-open or re-execute the world. "+reason,
       locator:{type:"FILE",value:file},sourceOrigin:"approved-bug-report-v2",sourceScope:"external-reference"});
    }
-   const ref=refs.get(file);
+   const ref=refs.get(sourceKey);
    if(!evidenceRefs.includes(ref))evidenceRefs.push(ref);
    if(!relatedSources.some(x=>x.path===file))relatedSources.push({path:file,reason});
   }

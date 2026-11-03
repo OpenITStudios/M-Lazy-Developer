@@ -40,6 +40,7 @@ test("pinned Defense v1.1.3 reader source is complete and unmutated",()=>{
 test("real approved projection preserves all seven root causes, source paths and observations",async()=>{
  const view=projectApprovedBugReportNext(ledger,project,{sourceRevision:pinned});
  const sourceIssues=view.maps[0].levels[0].findings;
+ const sourceEvidence=new Map(view.maps[0].evidence.map(e=>[e.id,e]));
  assert.equal(view.reportKind,"APPROVED_BUG_REPORT");
  assert.equal(sourceIssues.length,7);
  for(const item of ledger.bugs){
@@ -49,6 +50,13 @@ test("real approved projection preserves all seven root causes, source paths and
   assert.equal(displayed.severity,item.severity.toUpperCase());
   assert.equal(displayed.rationale,item.whyThisIsBug);
   assert.equal(displayed.technical.recommendedFix,item.suggestedFix);
+  // The same file can support distinct causal reasons across approved issues.
+  // Every issue must preserve its own referenced reason, not the first file occurrence.
+  const citations=displayed.evidenceRefs.map(ref=>sourceEvidence.get(ref));
+  for(const source of item.relevantCode){
+   const matches=citations.filter(e=>e?.locator.type==="FILE"&&e.locator.value===source.file);
+   assert.ok(matches.some(e=>e.description.includes(source.reason)),item.id+" lost "+source.reason);
+  }
   assert.deepEqual(displayed.auditDetails.reproductionCues,item.reproduction);
   assert.equal(displayed.testProcedure,null);
   assert.notEqual(displayed.evidenceLevel,"RUNTIME_OBSERVED");

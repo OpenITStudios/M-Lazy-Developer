@@ -208,6 +208,10 @@ describe("Map Audit Output V2 projection", () => {
       },
     };
     const report = projectMapAuditOutputV2(projectionInput);
+    expect(report.bugs[0]?.issue).toBe("Progression does not complete.");
+    expect(report.bugs[0]?.playerImpact).toBe("Progression blocks.");
+    expect(report.bugs[1]?.issue).toBe("Progression does not complete.");
+    expect(report.bugs[1]?.playerImpact).toBe("Progression blocks.");
     expect(report.auditRevision).toBe("b".repeat(64));
     expect(() => projectMapAuditOutputV2({
       ...projectionInput, auditRevision: "stale-revision",

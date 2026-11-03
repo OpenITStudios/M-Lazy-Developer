@@ -540,7 +540,9 @@ function projectFinding(
       finding.informationMismatch,
     playerFacingEvidenceIds:
       [...finding.playerFacingEvidenceIds],
-    issue: finding.gameplayConsequence,
+    // Report the exact source discrepancy as the problem and its separate
+    // player-facing consequence as impact; neither is an executed playtest.
+    issue: finding.actualOutcome,
     playerImpact: finding.gameplayConsequence,
     ...(finding.scenarioLabel.trim()
       ? { scenarioLabel: finding.scenarioLabel.trim() } : {}),
