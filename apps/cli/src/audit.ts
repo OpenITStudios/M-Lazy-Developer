@@ -1,82 +1,16 @@
 import { readFile } from "node:fs/promises";
-import { createHash } from "node:crypto";
-import { renderReportNext } from "../../report-system-next/render.mjs";
-import { projectSelectedMapAuditReportNext } from "../../report-system-next/from-selected-map-audit.mjs";
 import { performance } from "node:perf_hooks";
 import { resolve } from "node:path";
 import { createGzip } from "node:zlib";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import {
-  runSelectedMapAudit,
-  applySelectedMapAuditModelResponses,
-  projectSelectedMapAuditModelHandoff,
-  formatSelectedMapAuditFinalReport,
-  type InspectTargetProfile,
-  type SelectedMapAuditModelResponseBatch,
-  type SelectedMapAuditRuntimeTarget,
-  type SelectedMapAuditInput,
+import type {
+  InspectTargetProfile,
+  SelectedMapAuditModelResponseBatch,
+  SelectedMapAuditRuntimeTarget,
+  SelectedMapAuditInput,
 } from "../../../engine/packages/orchestrator/src/index.js";
-import { loadKnowledgeDirectory } from "../../../engine/packages/knowledge/src/index.js";
-import { parseCliTargetOptions } from "./target-options.js";
-
-/**
- * ChatGPT portable audits must use the same exact Local commit, Node runtime,
- * and dependency lock as the source package. The GitHub package is a transport,
- * not evidence that gameplay or runSelectedMapAudit() has executed.
- *
- * Keep normal repository development invocation unchanged when no portable
- * provenance is present. Fail closed for every portable CLI invocation.
- */
-async function verifyPortableSource(expectedSourceSha: string | undefined): Promise<void> {
-  let metadata: string | undefined;
-  try {
-    metadata = await readFile(resolve(".portable-provenance.json"), "utf8");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
-  if (metadata === undefined) {
-    if (expectedSourceSha !== undefined) {
-      throw new Error("Expected a ChatGPT portable package, but .portable-provenance.json is missing");
-    }
-    return;
-  }
-  if (expectedSourceSha === undefined) {
-    throw new Error("Portable audits require --expected-source-sha from the current GitHub Local HEAD");
-  }
-  if (!/^[0-9a-f]{40}$/.test(expectedSourceSha)) {
-    throw new Error("--expected-source-sha must be an exact 40-character commit SHA");
-  }
-  const provenance = JSON.parse(metadata) as {
-    repository?: string;
-    branch?: string;
-    commit?: string;
-    nodeVersion?: string;
-    platform?: string;
-    architecture?: string;
-    packageLockSha256?: string;
-    canonicalAuditEntrypoint?: { loadable?: boolean };
-  };
-  if (provenance.repository !== "OpenITStudios/M-Lazy-Developer" ||
-      provenance.branch !== "Local" ||
-      provenance.commit !== expectedSourceSha) {
-    throw new Error("Portable source provenance does not match the selected GitHub Local HEAD");
-  }
-  if (provenance.canonicalAuditEntrypoint?.loadable !== true) {
-    throw new Error("Portable package did not prove the canonical audit module can be imported");
-  }
-  if (provenance.nodeVersion !== process.version ||
-      provenance.platform !== process.platform ||
-      provenance.architecture !== process.arch) {
-    throw new Error("Portable dependency/runtime identity differs from the packaged Node target");
-  }
-  const lockSha256 = createHash("sha256")
-    .update(await readFile(resolve("package-lock.json")))
-    .digest("hex");
-  if (provenance.packageLockSha256 !== lockSha256) {
-    throw new Error("Portable dependency lock differs from the packaged provenance");
-  }
-}
+import { verifyPortableSource } from "./portable-source.js";
 
 function runtimeTarget(
   target: InspectTargetProfile,
@@ -195,6 +129,10 @@ async function main(): Promise<void> {
   if (offsetSupplied && !handoff) {
     throw new Error("--handoff-offset requires --handoff");
   }
+  // Verify all packaged source bytes before importing the engine, loaders,
+  // CLI target parser or renderer. A mutated transport must fail closed.
+  await verifyPortableSource(expectedSourceCommit);
+  const { parseCliTargetOptions } = await import("./target-options.js");
   const { positionals, target, telemetryPath, arenaRegionContractsPath } =
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
@@ -212,8 +150,17 @@ async function main(): Promise<void> {
     );
   }
 
-  await verifyPortableSource(expectedSourceCommit);
-  const knowledge = await loadKnowledgeDirectory(resolve("engine/knowledge"));
+  const [orchestrator, knowledgeLoader] = await Promise.all([
+    import("../../../engine/packages/orchestrator/src/index.js"),
+    import("../../../engine/packages/knowledge/src/index.js"),
+  ]);
+  const {
+    runSelectedMapAudit,
+    applySelectedMapAuditModelResponses,
+    projectSelectedMapAuditModelHandoff,
+    formatSelectedMapAuditFinalReport,
+  } = orchestrator;
+  const knowledge = await knowledgeLoader.loadKnowledgeDirectory(resolve("engine/knowledge"));
   // Curated developer methodology is available by default, but remains
   // advisory and selected-source-scoped. Never execute the upstream ZIP.
   // The previous --developer-practice flag remains a compatible no-op.
@@ -280,7 +227,10 @@ async function main(): Promise<void> {
     }) + "\n");
   }
   const html = reportNext
-    ? (await renderReportNext(projectSelectedMapAuditReportNext(resolvedAudit))).html : undefined;
+    ? (await (await import("../../report-system-next/render.mjs")).renderReportNext(
+        (await import("../../report-system-next/from-selected-map-audit.mjs"))
+          .projectSelectedMapAuditReportNext(resolvedAudit),
+      )).html : undefined;
   const output = html !== undefined ? html : handoff
     ? JSON.stringify(
         projectSelectedMapAuditModelHandoff(resolvedAudit, handoffOffset),

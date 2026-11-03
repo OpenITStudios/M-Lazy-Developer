@@ -102,7 +102,10 @@ jobs:
           AUDIT_ENTRYPOINT_OUTCOME: ${{ steps.audit-entrypoint.outcome }}
         run: |
           set -euo pipefail
-          git diff --exit-code -- package.json package-lock.json
+          # Snapshot must represent actual GitHub HEAD, not an npm-modified tree.
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+          git diff --cached --exit-code
           mkdir -p .portable-node "$RUNNER_TEMP/portable-source"
           cp "$(command -v node)" .portable-node/node
           chmod 755 .portable-node/node
@@ -110,11 +113,30 @@ jobs:
           import { createHash } from 'node:crypto';
           import { readFileSync, writeFileSync } from 'node:fs';
           import { join } from 'node:path';
+          import { execFileSync } from 'node:child_process';
           const lockSha256 = createHash('sha256')
             .update(readFileSync('package-lock.json')).digest('hex');
+          const trackedFiles = execFileSync('git', ['ls-files', '-z'], {
+            encoding: 'utf8',
+          }).split('\0').filter(Boolean).filter(path => {
+            const parts = path.split('/');
+            return !parts.includes('.git') && !parts.includes('node_modules') &&
+              !parts.includes('.portable-node') &&
+              !(parts[0] === 'workspace' && parts[1] === 'projects') &&
+              !/\.(?:mcworld|mcpack|mcaddon)$/i.test(path);
+          }).sort();
+          // The exact tracked source is hashed before packaging. This is a
+          // transport/integrity receipt, NOT a compiled or gameplay PASS.
+          const sourceManifest = {
+            policy: 'tracked-source-sha256',
+            fileCount: trackedFiles.length,
+            hashes: Object.fromEntries(trackedFiles.map(path => [path,
+              createHash('sha256').update(readFileSync(path)).digest('hex'),
+            ])),
+          };
           const ready = process.env.LEVELDB_SMOKE_OUTCOME === 'success';
           const provenance = {
-            schemaVersion: 2,
+            schemaVersion: 3,
             repository: process.env.GITHUB_REPOSITORY,
             branch: process.env.GITHUB_REF_NAME,
             commit: process.env.GITHUB_SHA,
@@ -123,6 +145,7 @@ jobs:
             platform: process.platform,
             architecture: process.arch,
             packageLockSha256: lockSha256,
+            sourceManifest,
             dependencyInstall: 'npm ci --ignore-scripts --include=optional',
             canonicalAuditEntrypoint: {
               module: 'engine/packages/orchestrator/src/map-audit-pipeline.ts',
