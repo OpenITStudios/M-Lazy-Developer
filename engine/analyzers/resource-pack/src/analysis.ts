@@ -118,11 +118,11 @@ export function derivePlayerParticleAttachmentCandidates(input: {
     if (output.length >= 24) break;
     if (client.identifier === "minecraft:player" ||
         uniqueByIdentifier(input.clients, client.identifier) !== client) continue;
-    const actor = uniqueByIdentifier(
-      input.entities.filter(item => item.identifier !== undefined)
-        as (ParsedEntityDefinition & { identifier: string })[],
-      client.identifier,
+    const actorsWithId = input.entities.filter(
+      (item): item is ParsedEntityDefinition & { identifier: string } =>
+        item.identifier !== undefined,
     );
+    const actor = uniqueByIdentifier(actorsWithId, client.identifier);
     if (!actor) continue;
     const actorFamilies = strings(
       object(actor.baseComponentData["minecraft:type_family"])?.family);

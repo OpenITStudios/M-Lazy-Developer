@@ -15,9 +15,9 @@ import {
   updateProjectRecord,
 } from "./project-lifecycle.js";
 import {
-  loadProjectRegistry,
+  loadProjectRecord,
   upsertProjectRecord,
-} from "./project-registry-store.js";
+} from "./project-record-store.js";
 import type {
   SelectedMapAuditRun,
 } from "../map-audit-pipeline.js";
@@ -218,15 +218,11 @@ export async function saveSelectedMapAuditProjectContinuity(input: {
     await loadWorkSessionCheckpoint(
       input.workspace,
     );
-  const registry =
-    await loadProjectRegistry(
-      input.repositoryRoot,
-    );
   const previousProject =
     input.previousProject ??
-    registry.projects.find(
-      (item) =>
-        item.projectId === input.projectId,
+    await loadProjectRecord(
+      input.repositoryRoot,
+      input.projectId,
     );
 
   const session =

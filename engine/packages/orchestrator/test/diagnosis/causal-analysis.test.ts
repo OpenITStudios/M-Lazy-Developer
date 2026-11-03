@@ -468,7 +468,7 @@ describe("causal comparison-to-retest", () => {
     const after = result({ confidence: "high", observedOutcomes: 1,
       corroboratedRisks: 2, candidate: "new-cause" });
     const reasons = causalRetestReasons(compareCausalAnalysis(before, after));
-    expect(reasons.map((reason) => reason.weight).toEqual([5, 4, 3, 2]);
+    expect(reasons.map((reason) => reason.weight)).toEqual([5, 4, 3, 2]);
     expect(reasons.every((reason) => reason.kind === "causal-regression")).toBe(true);
     expect(reasons.some((reason) => reason.detail.includes("new-cause"))).toBe(true);
   });

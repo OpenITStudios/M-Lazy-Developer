@@ -165,7 +165,7 @@ export function parseClientParticleSource(
   const root = asRecord(raw) ?? {};
   const description = asRecord(asRecord(root["minecraft:client_entity"])?.description);
   const identifier = description?.identifier;
-  if (typeof identifier !== "string" || !identifier.trim()) return undefined;
+  if (!description || typeof identifier !== "string" || !identifier.trim()) return undefined;
   const animationAliases = Object.fromEntries(
     Object.entries(asRecord(description.animations) ?? {})
       .filter((item): item is [string, string] =>
@@ -187,7 +187,7 @@ export function parseClientParticleSource(
         const keys = Object.keys(entry ?? {});
         if (keys.length === 1 && typeof entry?.[keys[0]!] === "string" &&
             animationAliases[keys[0]!]) {
-          activeAliases.add(keys[0]!]);
+          activeAliases.add(keys[0]!);
         }
       }
     }
