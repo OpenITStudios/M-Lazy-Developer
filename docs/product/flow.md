@@ -11,6 +11,12 @@ lifecycle: ACTIVE
 
 **Current operator: ChatGPT Chat.** The user provides an accessible selected `.mcworld` map (normally by Google Drive link), and ChatGPT examines source evidence using GitHub `Local` knowledge/policies. The workflow below defines an evidence-first analysis contract, not proof that repository TypeScript or Minecraft executed. Reserve `SelectedMapAuditRun` and engine-owned checkpoint/quality receipts for genuine programmatic execution.
 
+## Executable production map audits in ChatGPT Chat
+
+For a full selected-map test, source reading is not an alternative to an available engine invocation. Pin both the GitHub `Local` commit and the selected `.mcworld` SHA-256, retrieve the existing GitHub source snapshot at that commit, verify its tar checksum, `.portable-provenance.json` and Node/dependency environment, and execute the canonical `apps/cli/src/audit.ts` using both `--expected-source-sha` and `--expected-sha256`. The lightweight GitHub `Package Source Snapshot` refreshes source/dependencies after `Local` pushes; it never runs a selected map or the suspended test CI. An older snapshot can only provide historical-engine evidence.
+
+A `BLOCKED` canonical report is a real but incomplete engine execution, not a complete audit; retain the report, exact open obligations, model handoff, and the next deciding source/proof operation. An unavailable current package is an explicit delivery blocker; it must never be silently replaced by a handful of isolated source tests. A source-only inspection can still independently establish bounded facts. No ChatGPT tool without a Minecraft runtime may certify a live player session, multiplayer network timing, client rendering or Education import.
+
 ## Single source of truth
 
 For gameplay audit, one exact selected `.mcworld` is the only current gameplay authority.

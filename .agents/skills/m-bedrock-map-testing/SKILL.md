@@ -13,6 +13,17 @@ description: >
 
 Normalize the request and present one small Pre-Audit plan; secure one user confirmation when beginning a production full audit. Pin the exact map identity/version before inspecting it. Read one selected map and its source/IR only; symptoms, old QA, other maps, Skills and Probe reports do not define Expected Behavior. Do not modify engine or original map. If only direct ChatGPT source examination occurs, present that as a scoped static/source result, **never** as an executed `runSelectedMapAudit()` or Minecraft gameplay.
 
+## Mandatory ChatGPT executable preflight (before interpreting the map)
+
+For every requested **full production map audit**:
+1. Identify the immutable selected `.mcworld` bytes and SHA-256; pin the current GitHub `Local` HEAD. Do not start with isolated examples and later describe them as a complete engine test.
+2. Look for the existing GitHub `Package Source Snapshot` artifact named `lazy-developer-portable` **at that exact HEAD**. It is source/dependency transport, not a tested-map receipt. Download it into ChatGPT, verify the artifact tar SHA-256, safe extraction, `.portable-provenance.json` commit/lock/Node/entrypoint and native LevelDB capability before relying on it. An artifact from an older HEAD may only support a clearly dated historical-engine comparison.
+3. When the package is valid, run the canonical `apps/cli/src/audit.ts` through its included `tsx` inside ChatGPT with `--expected-source-sha <current Local SHA>` and `--expected-sha256 <selected mcworld SHA-256>`; preserve its complete canonical JSON and exit status. Exit `0` permits inspection of admission; exit `2` is an **incomplete but emitted** audit and must retain the report; exit `1` is a processing failure and must not be described as coverage. Do not turn successful module import or archive packaging into an engine execution result.
+4. Inspect the real output's stage, reasons, unresolved source call edges, `auditObligations`, findings and model handoff; use the existing `--handoff` / `--responses` continuation for source-verifiable open tasks when possible. Work on blocker causes, not aggregate counts; do not silently drop any obligation or fabricate source/runtime proof. If an available step is still runnable, continue it before stopping.
+5. If there is no exact-HEAD package or it fails, investigate the existing delivery/provenance route rather than assuming ChatGPT cannot run Node. Complete all independent direct-artifact source inspections but label them separate from a current `runSelectedMapAudit()` result. A requested full audit stays **INCOMPLETE** until the real canonical run and its applicable coverage/proof gates close; irreducible native multiplayer/render/network behavior remains explicitly `NEED_VALIDATION`, not skipped or passed.
+
+This is the existing TEST MAP lane and existing canonical engine, not a second checker, new operator workspace, substitute dataset or separate audit authority. Never ask for the user's PC, Work, Codex, or a manual checkout. The GitHub snapshot job may transfer code/dependencies, but it must not process selected maps or execute test CI.
+
 ## Four user-facing stages, one existing engine
 
 1. **LOAD = internal TARGET + DISCOVERY.** Fingerprint the selected archive, preserve safe/opaque source, inspect manifests, behavior/resource packs, scripts, functions, entity, world/NBT/LevelDB, structures and references. Produce selected-artifact source identities, inventory and unsupported-source gaps.
@@ -78,4 +89,4 @@ proof.
 
 ## STOP
 
-Stop when scoped findings/unknowns are documented or the single production report is admission-ready. Do not promise that runtime, TypeScript, multiplayer, or Minecraft Education execution happened unless it actually did.
+Stop only after every currently executable applicable audit operation has been attempted and the canonical report remains losslessly available. Never close a full-map request with source-only tests while an exact-HEAD portable engine could have been run; any remaining stage block must carry precise evidence and a next deciding operation. Do not promise that runtime, TypeScript, multiplayer, or Minecraft Education execution happened unless it actually did.
