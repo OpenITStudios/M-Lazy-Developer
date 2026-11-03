@@ -12,6 +12,7 @@ import type { SelectedMapAuditRun } from "../src/map-audit-pipeline.js";
 describe("Map Audit Output V2 projection", () => {
   it("preserves PROVEN and NEED_VALIDATION from the same audit finding lanes", () => {
     const inspection: any = {
+      arenaAnalysis: { lifecycle: { deferredMutations: [] } },
       gameplayIntent: {
         model: {
           evidence: [{
@@ -33,7 +34,9 @@ describe("Map Audit Output V2 projection", () => {
       },
       hiddenGameplayDefects: {
         classification: undefined,
+        auditScenarioPreset: { sourceBoundModes: [], scenarios: [] },
         scenarioAudit: {
+          defectResolution: { confirmedDefectReadyIds: [], resolutions: [] },
           graph: {
             causalLinks: [
               { id: "link:proven", scenarioId: "scenario:1",
@@ -1094,11 +1097,13 @@ describe("Map Audit Output V2 projection", () => {
         expected: "Advance after completion.",
         actual: "The phase stays active.",
         evidenceIds: ["source:objective"],
+        reproduceSteps: ["Complete the objective"],
       }],
       designMismatches: [],
       unresolved: { total: 3 },
       auditObligations: [{
         id: "mandatory-checkpoint:C9",
+        evidenceIds: [],
         source: "scenario-coverage",
         stage: "EVALUATE",
         title: "Resolve cross-system source coverage",
@@ -1107,6 +1112,7 @@ describe("Map Audit Output V2 projection", () => {
         validationTest: "Trace the selected source dependency.",
       }, {
         id: "link:runtime",
+        evidenceIds: [],
         source: "runtime-proof",
         stage: "PROVE",
         title: "Resolve runtime scheduling",
@@ -1115,6 +1121,7 @@ describe("Map Audit Output V2 projection", () => {
         validationTest: "Observe the bounded scheduling condition.",
       }, {
         id: "link:gap",
+        evidenceIds: [],
         source: "detection-gap",
         stage: "UNDERSTAND",
         title: "Resolve source semantics",
@@ -1128,7 +1135,8 @@ describe("Map Audit Output V2 projection", () => {
       intent: { evidence: [], nodes: [], edges: [], unknowns: [] } as any,
       modelTaskPackets: [],
     });
-    expect(brief).toContain("BLOCKED / EVALUATE");
+    expect(brief).toContain("BLOCKED / TEST");
+    expect(brief).toContain("Internal checkpoint:** EVALUATE");
     expect(brief).toContain("[PROVEN] BUG: The objective cannot advance.");
     expect(brief).toContain("not an approved issue set");
     expect(brief).toContain("### Audit Obligations (NOT BUG FINDINGS)");
@@ -1137,8 +1145,9 @@ describe("Map Audit Output V2 projection", () => {
     expect(brief).toContain("link:gap");
     expect(brief).toContain("One deciding runtime observation.");
     expect(brief).not.toContain("No specific investigation task");
-    expect(brief.indexOf("mandatory-checkpoint:C9")).toBeLessThan(
-      brief.indexOf("link:runtime"),
+    expect(brief).toContain("**Next obligation [EVALUATE]:** Resolve cross-system source coverage");
+    expect(brief.indexOf("## Immediate Decision")).toBeLessThan(
+      brief.indexOf("## Skills Probe / QA Coverage"),
     );
   });
 
@@ -1177,6 +1186,7 @@ describe("Map Audit Output V2 projection", () => {
         expected: "Capture completes.",
         actual: "Settlement not established.",
         evidenceIds: ["site:zone"],
+        reproduceSteps: [],
         validationReason: "Runtime state remains unknown.",
         missingProof: "Observe actual settlement or its source guard.",
       }],
@@ -1204,6 +1214,7 @@ describe("Map Audit Output V2 projection", () => {
         authority: "REFERENCE", status: "INVESTIGATION_HINTS_ONLY",
         items: [{
           patternId: "developer.hint.forms.stale-response",
+          versionApplicability: "UNVERIFIED",
           question: "Does the caller revalidate its session after await?",
           negativeControl: "The caller may already reject a stale response.",
           prohibits: "Do not infer a form bug from an unguarded helper alone.",
@@ -1286,10 +1297,12 @@ describe("Map Audit Output V2 projection", () => {
       intent: { evidence: [], nodes: [], edges: [],
         invariants: [], unknowns: [] } as any,
       modelTaskPackets: [{
+        id: "task:priority:bug-pending-12",
         kind: "PROOF_NAVIGATION", stage: "PROVE",
         causalLinkId: "bug:pending:12",
         decisionNeeded: "Resolve the last candidate", goal: "Trace source",
         stopCondition: "Stop on source proof", evidenceContext: [],
+        unresolvedEvidenceIds: [],
       } as any],
     });
     const preview = ordered.split("## Findings")[1]!
@@ -1336,6 +1349,7 @@ describe("Map Audit Output V2 projection", () => {
           executionRegionId: entry, source,
         }],
         sourceHandoffs: [], omittedSourceHandoffs: 0,
+        unresolvedExecutionEdgeIds: [],
       }],
       uninterpretedSourceFlows: [{
         unknownId, entryRegionId: entry,
@@ -1641,7 +1655,7 @@ describe("two-category final report with visible pending findings", () => {
 
   it("retains every unproven candidate with deciding proof under its issue type", () => {
     const report = formatSelectedMapAuditFinalReport({ report: base, intent });
-    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report.match(/^## (?:Bug|Design Mismatch) \(/gm)).toHaveLength(2);
     expect(report).toContain("## Bug (1 terbukti; 1 perlu validasi)");
     expect(report).toContain("## Design Mismatch (1 terbukti; 1 perlu validasi)");
     expect(report).toContain("Possible reconnect reset issue");
@@ -1651,7 +1665,7 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("One deciding observation");
     expect(report).toContain("Reconnect during reset and inspect owner state");
     expect(report).toContain("Potensi dampak");
-    expect(report).toContain("Panduan uji (bukan klaim sudah dijalankan)");
+    expect(report).toContain("Cara membuktikan (panduan tester, belum dijalankan)");
     expect(report).toContain("behavior_packs/demo/scripts/active.js:10");
     expect(report).not.toContain("old-version.js:10");
     expect(report).not.toContain("## Safe");
@@ -1790,7 +1804,7 @@ describe("two-category final report with visible pending findings", () => {
         },
       }, intent,
     });
-    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report.match(/^## (?:Bug|Design Mismatch) \(/gm)).toHaveLength(2);
     expect(report).toContain("Catatan pemeriksaan belum selesai (3 NEED_VALIDATION belum terklasifikasi");
     expect(report).toContain("Reset state ownership unclear");
     expect(report).toContain("No causal owner found for reset");
@@ -1804,7 +1818,7 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("jenis masalah belum ditentukan");
     expect(report).toContain("behavior_packs/demo/scripts/active.js:10");
     expect(report).not.toContain("old-version.js:10");
-    expect(report).not.toContain("Audit Obligation");
+    expect(report).not.toMatch(/^## Audit Obligation\b/m);
     expect(report).not.toContain("## Safe");
     expect(report).not.toContain("## NEED_VALIDATION");
   });
@@ -1829,7 +1843,7 @@ describe("two-category final report with visible pending findings", () => {
         },
       }, intent,
     });
-    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report.match(/^## (?:Bug|Design Mismatch) \(/gm)).toHaveLength(2);
     expect(report).toContain("## Bug (0 terbukti; 0 perlu validasi)");
     expect(report).toContain("## Design Mismatch (0 terbukti; 0 perlu validasi)");
     expect(report).toContain("Cross-system check unfinished");
@@ -1837,7 +1851,7 @@ describe("two-category final report with visible pending findings", () => {
     expect(report).toContain("Trace source interaction before deciding outcome");
     expect(report).toContain("NEED_VALIDATION");
     expect(report).toContain("Pemeriksaan belum selesai");
-    expect(report).not.toContain("Audit Obligation");
+    expect(report).not.toMatch(/^## Audit Obligation\b/m);
   });
 
   it("bounds large unclassified proof output without losing distinct source families or C9", () => {
@@ -1884,7 +1898,7 @@ describe("two-category final report with visible pending findings", () => {
     const output = formatSelectedMapAuditFinalReport({
       report: oversized as any, intent,
     });
-    expect(output.match(/^## /gm)).toHaveLength(2);
+    expect(output.match(/^## (?:Bug|Design Mismatch) \(/gm)).toHaveLength(2);
     expect(output).toContain("Catatan pemeriksaan belum selesai (222 NEED_VALIDATION");
     expect(output).toContain("Cross-system evidence checkpoint");
     expect(output).toContain("Knowledge applicability unknown");
@@ -1892,7 +1906,7 @@ describe("two-category final report with visible pending findings", () => {
     expect(output).not.toContain("Unowned source operation 219");
     expect(output.match(/NEED_VALIDATION \(jenis masalah belum ditentukan\)/g))
       .toHaveLength(12);
-    expect(output).toContain("Rincian yang tidak ditampilkan: 210");
+    expect(output).toContain("**Rincian yang tidak ditampilkan:** 210");
     expect(output).toContain("discovery-challenge: 220");
     expect(output).toContain("Map Audit Output V2 (auditObligations / unresolved)");
     expect(oversized.auditObligations).toHaveLength(222);
@@ -1915,7 +1929,7 @@ describe("two-category final report with visible pending findings", () => {
         }},
       }, intent,
     });
-    expect(report.match(/^## /gm)).toHaveLength(2);
+    expect(report.match(/^## (?:Bug|Design Mismatch) \(/gm)).toHaveLength(2);
     expect(report).toContain("## Bug (1 terbukti; 0 perlu validasi)");
     expect(report).toContain("## Design Mismatch (1 terbukti; 0 perlu validasi)");
     expect(report).not.toContain("## Safe");

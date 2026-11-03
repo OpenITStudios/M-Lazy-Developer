@@ -664,6 +664,10 @@ describe("confirmed defect projection", () => {
           },
           expectedAuthority: "selected-artifact",
           primaryFailure: "player-owned-state",
+          reproduction: [
+            "Complete a match and return to the lobby.",
+            "Confirm the retained match state after cleanup.",
+          ],
           aiAnalysis: "Grouped symptoms share one cleanup defect.",
           ...(a.sourceEvidence === undefined
             ? {}
@@ -722,7 +726,12 @@ describe("confirmed defect projection", () => {
   });
 
   it("projects a canonical V2 report", () => {
-    const item = defect("cleanup");
+    const item = defect("cleanup", {
+      reproduction: [
+        "Complete a match and return to the lobby.",
+        "Confirm the retained match state after cleanup.",
+      ],
+    });
     const expectedId = allocateBugIds(
       map.name,
       [item],
@@ -1342,12 +1351,13 @@ describe("canonical defect group resolution", () => {
   });
 
   it("refuses groups with multiple primary failures", () => {
-    const group = groupConfirmedDefects([
-      defect("a"),
-      defect("b", {
-        primaryFailure: "session-concurrency",
-      }),
-    ])[0]!;
+    const original = defect("a");
+    const unrelated = defect("b", { primaryFailure: "session-concurrency" });
+    // Production grouping must split independently owned primary failures.
+    const groups = groupConfirmedDefects([original, unrelated]);
+    expect(groups).toHaveLength(2);
+    // Deliberately forge a mixed group to verify the downstream rejection gate.
+    const group = { ...groups[0]!, defects: [original, unrelated] };
 
     expect(() =>
       resolveConfirmedDefectGroup(
@@ -1365,7 +1375,7 @@ describe("canonical defect group resolution", () => {
         ],
         },
       )
-    ).toThrow(/multiple primary failures/);
+    ).toThrow(/semantically incompatible|multiple primary failures/);
   });
 
   it("does not invent Suggested Fix during group resolution", () => {

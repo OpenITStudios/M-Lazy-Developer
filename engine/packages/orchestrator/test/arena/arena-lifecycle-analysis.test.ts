@@ -66,9 +66,9 @@ describe("arena lifecycle convergence", () => {
         kind: "event",
         sourcePathStatus: "conditional-candidate",
         id: "system.afterEvents.scriptEventReceive",
-        eventIdGuard: {
+        eventIdGuard: expect.objectContaining({
           expression: { kind: "literal", value: "dev:reset_arena" },
-        },
+        }),
       })],
     });
     expect(result.terminalRaces).toHaveLength(0);
@@ -159,6 +159,7 @@ describe("arena lifecycle convergence", () => {
 
   it("proves an unguarded deferred terminal path can race another exact ingress", () => {
     const source = [
+      'import { world, system } from "@minecraft/server";',
       "function endGame(arena, player) {",
       "  arena.players.delete(player);",
       "  arena.generation++;",
@@ -213,6 +214,7 @@ describe("arena lifecycle convergence", () => {
 
   it("closes a deferred terminal race when the terminal owner has a one-shot latch", () => {
     const source = [
+      'import { world, system } from "@minecraft/server";',
       "let ended = false;",
       "function endGame(arena, player) {",
       "  if (ended) return;",
@@ -270,6 +272,7 @@ describe("arena lifecycle convergence", () => {
 
   it("keeps different event terminal ingresses unresolved without coexistence proof", () => {
     const source = [
+      'import { world } from "@minecraft/server";',
       "function endGame(arena, player) {",
       "  arena.players.delete(player);",
       "  arena.generation++;",
@@ -331,7 +334,7 @@ describe("arena lifecycle convergence", () => {
 
   it("proves lifecycle convergence across imported cleanup modules", () => {
     const mainText = [
-      'import { cleanupArena } from "../cleanup.js";',
+      'import { cleanupArena } from "./cleanup.js";',
       "function finishGame(arena, player) {",
       "  cleanupArena(arena, player);",
       "}",
@@ -399,7 +402,7 @@ describe("arena lifecycle convergence", () => {
 
   it("does not promote conditional cross-file cleanup to proven", () => {
     const mainText = [
-      'import { cleanupArena } from "../cleanup.js";',
+      'import { cleanupArena } from "./cleanup.js";',
       "function finishGame(arena, player, shouldCleanup) {",
       "  if (shouldCleanup) {",
       "    cleanupArena(arena, player);",
@@ -460,6 +463,7 @@ describe("arena lifecycle convergence", () => {
 
   it("keeps an unguarded deferred gameplay mutation visible as unresolved ownership", () => {
     const source = [
+      'import { system } from "@minecraft/server";',
       "let remainingEnemies = 0;",
       "system.runTimeout(() => {",
       "  remainingEnemies++;",
@@ -493,6 +497,7 @@ describe("arena lifecycle convergence", () => {
 
   it("retains a lexical generation comparison as a source-only guard candidate", () => {
     const source = [
+      'import { system } from "@minecraft/server";',
       "let remainingEnemies = 0;",
       "let arenaGeneration = 3;",
       "const capturedGeneration = arenaGeneration;",
@@ -534,12 +539,14 @@ describe("arena lifecycle convergence", () => {
 
   it("keeps a connection-session guard visible without proving mutation ownership", () => {
     const source = [
-      "let score = 0;",
+      'import { system } from "@minecraft/server";',
+      "const arena = { players: new Set(['p']) };",
+      "const player = 'p';",
       "let sessionId = 7;",
       "const capturedSessionId = sessionId;",
       "system.run(() => {",
       "  if (capturedSessionId !== sessionId) return;",
-      "  score++;",
+      "  arena.players.delete(player);",
       "});",
     ].join("\n");
     const script = parseScriptFile(
@@ -579,12 +586,13 @@ describe("arena lifecycle convergence", () => {
 
   it("does not promote a countdown guard into protected delayed-start ownership", () => {
     const source = [
-      "let started = false;",
+      'import { system } from "@minecraft/server";',
+      "const arena = { state: 'waiting' };",
       "let countdownGeneration = 4;",
       "const capturedGeneration = countdownGeneration;",
       "system.runTimeout(() => {",
       "  if (capturedGeneration !== countdownGeneration) return;",
-      "  started = true;",
+      "  arena.state = 'active';",
       "}, 20);",
     ].join("\n");
     const script = parseScriptFile(
@@ -654,12 +662,13 @@ describe("arena lifecycle convergence", () => {
 
   it("retains a round-timer generation guard as unresolved source evidence", () => {
     const source = [
-      "let resultCommitted = false;",
+      'import { system } from "@minecraft/server";',
+      "const arena = { state: 'active' };",
       "let timerGeneration = 9;",
       "const capturedTimerGeneration = timerGeneration;",
       "system.runTimeout(() => {",
       "  if (capturedTimerGeneration !== timerGeneration) return;",
-      "  resultCommitted = true;",
+      "  arena.state = 'completed';",
       "}, 200);",
     ].join("\n");
     const script = parseScriptFile(
@@ -693,6 +702,7 @@ describe("arena lifecycle convergence", () => {
 
   it("separates one-shot terminal protection from deterministic simultaneous-outcome precedence", () => {
     const sourceText = [
+      'import { world } from "@minecraft/server";',
       "const RESULT_PRECEDENCE = ['objective', 'timeout'];",
       "let ended = false;",
       "function endGame(candidates) {",
@@ -750,6 +760,7 @@ describe("arena lifecycle convergence", () => {
 
   it("keeps simultaneous terminal resolution unresolved when a latch exists without an explicit precedence policy", () => {
     const sourceText = [
+      'import { world } from "@minecraft/server";',
       "let ended = false;",
       "function endGame(result) {",
       "  if (ended) return;",

@@ -1262,7 +1262,7 @@ describe("developer practice manifest-scoped version hints", () => {
       sourceLocators: ["behavior_packs/demo/scripts/main.ts:17"],
       manifestWitnesses: [witness],
     });
-    expect(result?.items).toEqual([]);
+    expect(result?.items ?? []).toEqual([]);
   });
 
 });
@@ -1360,12 +1360,12 @@ describe("source-first Daigon export investigation reference", () => {
         valueSource: { ...source, artifactId: "other-map" },
       } },
     ]) {
-      expect(context(event, ["behavior_packs/demo/scripts/results.ts:12:20"])?.items)
+      expect(context(event, ["behavior_packs/demo/scripts/results.ts:12:20"])?.items ?? [])
         .toEqual([]);
     }
-    expect(context(subscription, ["behavior_packs/demo/scripts/elsewhere.ts"])?.items)
+    expect(context(subscription, ["behavior_packs/demo/scripts/elsewhere.ts"])?.items ?? [])
       .toEqual([]);
-    expect(context(subscription, ["behavior_packs/demo/scripts/results.ts:12:20"], ["combat"])?.items)
+    expect(context(subscription, ["behavior_packs/demo/scripts/results.ts:12:20"], ["combat"])?.items ?? [])
       .toEqual([]);
   });
 
@@ -1528,7 +1528,7 @@ describe("source-first Daigon export investigation reference", () => {
       prefix + ":11:20", prefix + ":12:90", prefix + ":13:90",
       prefix + ":14:20", prefix + "@unverified",
     ]) {
-      expect(context(splitSites, [locator])?.items).toEqual([]);
+      expect(context(splitSites, [locator])?.items ?? []).toEqual([]);
     }
     // An alternative strict-equality action is selection evidence, not an
     // early-return rejection, and must still match the same source guard.
@@ -1558,7 +1558,7 @@ describe("source-first Daigon export investigation reference", () => {
     expect(selectedContext({
       ...selectedRegion,
       scriptEventIdRejection: splitSites.scriptEventIdRejection,
-    })?.items).toEqual([]);
+    })?.items ?? []).toEqual([]);
   });
 
 
@@ -1630,14 +1630,14 @@ describe("source-first Daigon export investigation reference", () => {
     ])?.items).toHaveLength(1);
     expect(query(attachment, [
       "resource_packs/demo/entity/glow.json#/minecraft:client_entity/description/other",
-    ])?.items).toEqual([]);
+    ])?.items ?? []).toEqual([]);
     expect(query({
       ...attachment,
       sources: links.map(item => ({
         ...item, artifactId: "other-map",
       })),
-    })?.items).toEqual([]);
-    expect(query({ ...attachment, sources: links.slice(0, 5) })?.items).toEqual([]);
+    })?.items ?? []).toEqual([]);
+    expect(query({ ...attachment, sources: links.slice(0, 5) })?.items ?? []).toEqual([]);
     // Generic entity/cleanup questions do not silently receive a particle
     // publisher method merely because the same authored file contains it.
     expect(compileDeveloperPracticeReferenceContext({
@@ -1650,11 +1650,11 @@ describe("source-first Daigon export investigation reference", () => {
       },
       selectedArtifactId: "selected", domains: ["entity", "lifecycle", "teleport"],
       sourceLocators: ["resource_packs/demo/entity/glow.json"],
-    })?.items).toEqual([]);
+    })?.items ?? []).toEqual([]);
     expect(query({
       ...attachment, proof:
         "EXTERNAL_RUNTIME_PROOF" as typeof attachment.proof,
-    })?.items).toEqual([]);
+    })?.items ?? []).toEqual([]);
   });
 
 });

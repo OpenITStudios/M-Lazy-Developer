@@ -433,6 +433,7 @@ export function developerPracticeSignalsFromSemanticIr(
           ? "scriptevent:mivubi:get_analytics"
           : undefined;
       if (signal !== undefined &&
+          region.source.artifactId === selectedArtifactId &&
           guard?.source.artifactId === selectedArtifactId &&
           guard.source.relativePath === region.source.relativePath &&
           guard.valueSource.artifactId === selectedArtifactId) {
