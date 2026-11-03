@@ -1903,6 +1903,18 @@ export function buildGameplayIntentModel(
         anchors.add(mutation.executionRegion);
       }
     }
+    // A direct authored this.* mutation is material source evidence even
+    // when its value is computed (e.g. score += points). Its exact method
+    // owner may anchor the *source-call graph*, but never proves reward,
+    // score settlement or a successful gameplay objective.
+    for (const mutation of script.authoredPropertyMutations ?? []) {
+      if (mutation.source.artifactId === script.source.artifactId &&
+          mutation.source.relativePath === path &&
+          mutation.targetExpression.startsWith("this.") &&
+          uniqueMethod(mutation.executionRegion)) {
+        anchors.add(mutation.executionRegion);
+      }
+    }
     if (anchors.size === 0) continue;
     // This is a bounded *source navigation neighborhood*, not a causal
     // player sequence. One/two-hop ancestors and callees allow the result

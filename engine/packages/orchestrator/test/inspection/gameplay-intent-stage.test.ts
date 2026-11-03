@@ -434,7 +434,7 @@ describe("gameplay intent stage", () => {
     ]));
     expect(intent.evidence.filter(record =>
       unknown?.evidenceIds?.includes(record.id)).every(record =>
-        record.locator === origin.relativePath &&
+        record.locator.startsWith(origin.relativePath + ":") &&
         record.scope === "selected-artifact")).toBe(true);
     expect(intent.nodes.some(node =>
       node.kind === "mechanic" && node.label === "Helper")).toBe(false);
@@ -464,7 +464,8 @@ describe("gameplay intent stage", () => {
       .toBeGreaterThan(0);
     expect(unclassified.every(item => (item.evidenceIds ?? []).every(id =>
       result.evidence.some(item => item.id === id &&
-        item.scope === "selected-artifact" && item.locator === path)))).toBe(true);
+        item.scope === "selected-artifact" &&
+        item.locator.startsWith(path + ":"))))).toBe(true);
     expect(result.nodes.some(node => node.kind === "mechanic" &&
       node.label === "Do It")).toBe(false);
     expect(buildGameplayIntentModel({
@@ -716,19 +717,18 @@ describe("gameplay intent stage", () => {
       contractScripts: [{ parsed: authoredParsed }],
     });
 
-    expect(
-      model.nodes.some(
-        (node) =>
-          node.id === "state:session-phase-active",
-      ),
-    ).toBe(true);
-
-    expect(
-      model.nodes.some(
-        (node) =>
-          node.id === "state:transitions-active",
-      ),
-    ).toBe(false);
+    const authored = model.nodes.filter(node =>
+      node.id.startsWith("state:session-phase-active:site:") &&
+      node.id.includes("src%2Fdomain%2Fsession-state-machine.ts"));
+    const runtime = model.nodes.filter(node =>
+      node.id.startsWith("state:transitions-active:site:") &&
+      node.id.includes("scripts%2Fdomain%2Fsession-state-machine.js"));
+    expect(authored).toHaveLength(1);
+    expect(runtime).toHaveLength(1);
+    expect(authored[0]?.status).toBe("authored");
+    // Independent compiled and original source declarations retain their
+    // identities. Treating them as identical would erase source ownership.
+    expect(authored[0]?.id).not.toBe(runtime[0]?.id);
   });
 
   it("promotes typed authored transition invariants only from authored source input", () => {
@@ -780,8 +780,9 @@ describe("gameplay intent stage", () => {
     expect(
       model.invariants.find(
         (invariant) =>
-          invariant.id ===
-          "inv:allowed-transitions:state:session-phase-active",
+          invariant.id.startsWith(
+            "inv:allowed-transitions:state:session-phase-active:site:") &&
+          invariant.id.includes("src%2Fsession-state-machine.ts"),
       )?.status,
     ).toBe("authored");
   });
@@ -835,13 +836,22 @@ describe("gameplay intent stage", () => {
       })),
     };
 
+    const authoredSource = {
+      artifactId: "art_test", relativePath:
+        "behavior_packs/demo/src/session-state-machine.ts",
+    };
     const authoredParsed: ParsedScriptFile = {
       ...parsed(),
-      source: {
-        artifactId: "art_test",
-        relativePath:
-          "behavior_packs/demo/src/session-state-machine.ts",
-      },
+      source: authoredSource,
+      guardedOutcomes: (parsed().guardedOutcomes ?? []).map(item => ({
+        ...item, conditionSource: authoredSource,
+        outcomeSource: { ...authoredSource, ...(item.outcomeSource.range === undefined
+          ? {} : {range: item.outcomeSource.range}) },
+      })),
+      returnOutcomes: (parsed().returnOutcomes ?? []).map(item => ({
+        ...item, source: { ...authoredSource, ...(item.source.range === undefined
+          ? {} : {range: item.source.range}) },
+      })),
     };
 
     const model = buildGameplayIntentModel({
@@ -853,8 +863,9 @@ describe("gameplay intent stage", () => {
     expect(
       model.invariants.find(
         (invariant) =>
-          invariant.id ===
-          "inv:admissible-policy:outcome:decide-reconnect-cleanup",
+          invariant.id.startsWith(
+            "inv:admissible-policy:outcome:decide-reconnect-cleanup:site:") &&
+          invariant.id.includes("src%2Fsession-state-machine.ts"),
       )?.status,
     ).toBe("authored");
   });
@@ -924,15 +935,18 @@ describe("gameplay intent stage", () => {
       contractScripts: [{ parsed: authoredParsed }],
     });
 
-    const matching = model.edges.filter(
-      (edge) =>
-        edge.kind === "requires" &&
-        edge.from === "lifecycle:decide-reconnect" &&
-        edge.to === "lifecycle:cleanup-session",
-    );
-
-    expect(matching).toHaveLength(1);
-    expect(matching[0]?.evidenceIds).toHaveLength(2);
+    const matching = model.edges.filter(edge =>
+      edge.kind === "requires" &&
+      edge.from.startsWith("lifecycle:decide-reconnect:site:") &&
+      edge.to.startsWith("lifecycle:cleanup-session:site:"));
+    expect(matching).toHaveLength(2);
+    expect(matching.every(edge => edge.status === "inferred" &&
+      edge.evidenceIds.length === 1)).toBe(true);
+    // Identical names in compiled and authored source remain two distinct
+    // claims; a shared semantic label must not merge their evidence.
+    expect(new Set(matching.map(edge => edge.id)).size).toBe(2);
+    expect(matching.some(edge => edge.from.includes("scripts%2Frecovery.js"))).toBe(true);
+    expect(matching.some(edge => edge.from.includes("src%2Frecovery.ts"))).toBe(true);
   });
 
   it("preserves typed authored spatial route profiles", () => {
@@ -1118,9 +1132,15 @@ describe("exact Semantic IR provenance in Gameplay Intent", () => {
             ":" + item.source.range?.columnStart,
         }));
     }
-    expect(model.edges.filter(edge => edge.evidenceIds.some(id =>
-      [...returns.map(item => item.id), release!.id].includes(id))))
-      .toHaveLength(0);
+    const effectEdges = model.edges.filter(edge => edge.evidenceIds.some(id =>
+      [...returns.map(item => item.id), release!.id].includes(id)));
+    expect(effectEdges).toHaveLength(3);
+    // A source-inferred cleanup-to-outcome link and explicit guards are
+    // valid authored evidence, not observed execution or player outcomes.
+    expect(effectEdges.map(edge => edge.kind).sort())
+      .toEqual(["produces", "requires", "requires"]);
+    expect(effectEdges.some(edge => edge.kind === "produces" &&
+      edge.status === "inferred")).toBe(true);
 
     const mismatched = buildGameplayIntentModel({
       id: "intent:wrong-ir", parsedScripts: [{ parsed }],
