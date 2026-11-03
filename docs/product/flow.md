@@ -17,6 +17,12 @@ For a full selected-map test, source reading is not an alternative to an availab
 
 A `BLOCKED` canonical report is a real but incomplete engine execution, not a complete audit; retain the report, exact open obligations, model handoff, and the next deciding source/proof operation. An unavailable current package is an explicit delivery blocker; it must never be silently replaced by a handful of isolated source tests. A source-only inspection can still independently establish bounded facts. No ChatGPT tool without a Minecraft runtime may certify a live player session, multiplayer network timing, client rendering or Education import.
 
+## Product acceptance scope: ChatGPT only
+
+The operator has explicitly excluded live Minecraft gameplay, import/play, live multiplayer networking and visual performance measurements from this product's QA scope. These may be explained as external verification limits, but they are neither tasks to execute nor prerequisites to completing the ChatGPT-source audit. Source-driven gameplay reasoning remains mandatory: inspect the selected archive, call the exact-HEAD canonical engine, follow callback/state/resource/control edges, test deterministic behavior where possible, evaluate normal/negative/recovery/boundary cases, and preserve source-grounded findings and counterproof.
+
+The existing canonical report remains the unmodified source of truth. If its `control.status` is `BLOCKED`, report that fact unchanged, then present separate operator summaries of open source-verifiable obligations, unresolved source ambiguity and **external-only Minecraft claims**. Never hide or count outside-scope proof as PASS, and never let live-game absence justify omitting an achievable source/artefact check.
+
 ## Single source of truth
 
 For gameplay audit, one exact selected `.mcworld` is the only current gameplay authority.

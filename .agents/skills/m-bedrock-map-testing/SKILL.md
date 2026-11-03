@@ -24,6 +24,16 @@ For every requested **full production map audit**:
 
 This is the existing TEST MAP lane and existing canonical engine, not a second checker, new operator workspace, substitute dataset or separate audit authority. Never ask for the user's PC, Work, Codex, or a manual checkout. The GitHub snapshot job may transfer code/dependencies, but it must not process selected maps or execute test CI.
 
+## Fixed user-authorized scope: complete ChatGPT source/artefact QA
+
+The user has explicitly excluded live Minecraft execution from M-Lazy-Developer's ChatGPT QA workflow. This is a scope boundary, NOT an instruction to skip difficult source checks.
+
+**In scope (mandatory when applicable):** read-only selected-world ZIP/manifest/JSON/NBT/LevelDB/structures, full canonical source engine, exact callback/control/dataflow/state/resource edges, authored objectives/arena IDs and physical evidence available from archive, round/reconnect/cleanup/persistence static and deterministic simulation checks, compiler/tests, independent counterexamples, evidence-traced bug/design mismatch validation, all resolvable source obligations, and schema-correct canonical reporting.
+
+**Out of scope (do not schedule or require):** launching Minecraft, real client animation/rendering/audio perception, real network-latency and FPS/TPS measurements, actual multi-client play sessions and Minecraft import/play acceptance. A source/model simulation is allowed but must not be relabeled as actual in-game behavior. Keep native-only uncertainties in existing canonical `runtime-proof` / `NEED_VALIDATION` output for truthfulness; in operator summaries classify them **EXTERNAL_ONLY / OUT_OF_SCOPE_FOR_CHATGPT**, not as ChatGPT tests omitted. This label is an explanation, not a new schema status, proof type or source authority. Never suppress evidence, alter official `BLOCKED` status, or mark unresolved source obligations safe.
+
+**Completion criterion:** every ChatGPT-callable source and artefact inspection and every applicable source-verifiable proof attempt has been performed; all material source paths have a source-bound finding, reasoned safe/negative disposition, or an explicitly unresolved *source* reason. Separate remaining source ambiguities from excluded Minecraft-only observation. Do not stop because the native game is unavailable or claim 100% real-world behavior without live evidence.
+
 ## Four user-facing stages, one existing engine
 
 1. **LOAD = internal TARGET + DISCOVERY.** Fingerprint the selected archive, preserve safe/opaque source, inspect manifests, behavior/resource packs, scripts, functions, entity, world/NBT/LevelDB, structures and references. Produce selected-artifact source identities, inventory and unsupported-source gaps.
@@ -72,10 +82,12 @@ read-only routing/explanations, not additional state machines or checklists.
   canonical Audit Obligation with a source locator, missing proof and
   proposed narrow investigation. Do not create substitute probe scripts,
   invent findings or start IMPROVE SYSTEM automatically.
-- **Requires actual game behavior**: keep the existing `runtime-proof`
-  obligation unless current-map runtime evidence genuinely exists. Never
-  use upstream Node PASS, engine PASS, an archived report, or a suggested
-  command as a live Minecraft result.
+- **Requires actual game behavior only**: retain the existing `runtime-proof`
+  obligation as an honest external evidence limit, but do not require or
+  schedule Minecraft tests within ChatGPT QA. Explain `OUT_OF_SCOPE_FOR_CHATGPT`
+  in the operator view; distinguish mixed source/runtime questions because
+  any source-resolvable portion remains mandatory. Node/engine/source results
+  must never be presented as observed Minecraft gameplay.
 
 The goal is comprehensive applicable coverage, **not a predefined promise
 of 100% Skills Probe compatibility**. A complete inventory and real
@@ -89,4 +101,4 @@ proof.
 
 ## STOP
 
-Stop only after every currently executable applicable audit operation has been attempted and the canonical report remains losslessly available. Never close a full-map request with source-only tests while an exact-HEAD portable engine could have been run; any remaining stage block must carry precise evidence and a next deciding operation. Do not promise that runtime, TypeScript, multiplayer, or Minecraft Education execution happened unless it actually did.
+Stop only after every available ChatGPT-native, source/artefact-verifiable audit operation has been attempted and the canonical report remains losslessly available. An exact-HEAD portable engine MUST run if accessible. Remaining source-decidable gaps require source investigation, not a Minecraft handoff. Record any still-ambiguous source proof separately from excluded native game observations. Preserve canonical BLOCKED where present; never claim multiplayer runtime, performance or Minecraft Education gameplay was observed.
