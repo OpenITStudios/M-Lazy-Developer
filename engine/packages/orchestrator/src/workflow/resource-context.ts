@@ -748,6 +748,15 @@ interface DeveloperPracticeReferenceQuery {
 /** Authorize reference retrieval only from selected-map typed IR. This one-run
  * selector precomputes the unchanged typed witnesses; neither a filename nor
  * an external ZIP can supply a new witness. No persisted cache or policy. */
+/** A one-run, bounded line lookup over actual typed IR witnesses. A wide or
+ * unpositioned witness remains available for the original exact-source match;
+ * no source site, version or gameplay proof is inferred from this index. */
+interface PreparedDeveloperReferenceSource {
+  readonly all: SelectedArtifactReferenceSignal[];
+  readonly byLine: Map<number, SelectedArtifactReferenceSignal[]>;
+  readonly broad: SelectedArtifactReferenceSignal[];
+}
+
 export function prepareDeveloperPracticeReferenceSelector(
   semanticIr: SemanticIr,
   selectedArtifactId: string,
@@ -757,11 +766,26 @@ export function prepareDeveloperPracticeReferenceSelector(
     semanticIr, selectedArtifactId,
   );
   // One-run source witness index, never an authored or runtime proof cache.
-  const observedBySource = new Map<string, SelectedArtifactReferenceSignal[]>();
+  const observedBySource = new Map<string, PreparedDeveloperReferenceSource>();
   for (const item of observations) {
-    const group = observedBySource.get(item.sourcePath);
-    if (group) group.push(item);
-    else observedBySource.set(item.sourcePath, [item]);
+    let group = observedBySource.get(item.sourcePath);
+    if (!group) {
+      group = { all: [], byLine: new Map(), broad: [] };
+      observedBySource.set(item.sourcePath, group);
+    }
+    group.all.push(item);
+    const from = item.range?.lineStart;
+    const to = item.range?.lineEnd ?? from;
+    // Avoid allocating an unbounded number of buckets for long source spans.
+    if (from === undefined || to === undefined || to < from || to - from > 64) {
+      group.broad.push(item);
+      continue;
+    }
+    for (let line = from; line <= to; line += 1) {
+      const candidates = group.byLine.get(line);
+      if (candidates) candidates.push(item);
+      else group.byLine.set(line, [item]);
+    }
   }
   // Many obligations ask identical source-scoped reference questions. Reuse
   // only their immutable reference projection, bounded within this selector.
@@ -811,7 +835,7 @@ export function compileDeveloperPracticeReferenceContext(
 function compileDeveloperPracticeReferenceContextWithSignals(
   input: DeveloperPracticeReferenceQuery,
   allObserved: readonly SelectedArtifactReferenceSignal[],
-  observedBySource?: ReadonlyMap<string, readonly SelectedArtifactReferenceSignal[]>,
+  observedBySource?: ReadonlyMap<string, PreparedDeveloperReferenceSource>,
 ): CompiledDeveloperPracticeReferenceContext | undefined {
   const { data, selectedArtifactId } = input;
   if (data.authority !== "REFERENCE" ||
@@ -826,11 +850,37 @@ function compileDeveloperPracticeReferenceContextWithSignals(
   const observed = observedBySource === undefined
     ? allObserved.filter(item => locators.some(locator =>
         sourceLocatorMatchesReferenceSignal(locator, item)))
-    : [...observedBySource.entries()].flatMap(([sourcePath, witnesses]) =>
-        locators.some(locator => sourceLocatorMatchesSourcePath(locator, sourcePath))
-          ? witnesses.filter(item => locators.some(locator =>
-              sourceLocatorMatchesReferenceSignal(locator, item)))
-          : [])
+    : [...observedBySource.entries()].flatMap(([sourcePath, source]) => {
+        const matching = locators.filter(locator =>
+          sourceLocatorMatchesSourcePath(locator, sourcePath));
+        if (matching.length === 0) return [];
+        const candidates = new Set<SelectedArtifactReferenceSignal>();
+        for (const locator of matching) {
+          const suffix = locator.slice(sourcePath.length);
+          const position = /^:([1-9]\d*)(?::([1-9]\d*))?$/.exec(suffix);
+          const localized = /^#L([1-9]\d*)(?:-L?([1-9]\d*))?(?::([1-9]\d*))?$/.exec(suffix);
+          if (!position && !localized) {
+            // Explicit whole-file, JSON pointer or unresolved source symbol:
+            // only the original precise witness predicate may decide.
+            for (const item of source.all) candidates.add(item);
+            break;
+          }
+          const from = Number((position ?? localized)![1]);
+          const to = Number(localized?.[2] ?? from);
+          if (to < from) continue;
+          if (to - from > 64) {
+            for (const item of source.all) candidates.add(item);
+            break;
+          }
+          for (const item of source.broad) candidates.add(item);
+          for (let line = from; line <= to; line += 1) {
+            for (const item of source.byLine.get(line) ?? []) candidates.add(item);
+          }
+        }
+        // Preserve source-array tie ordering, even for repeated witness IDs.
+        return source.all.filter(item => candidates.has(item) && matching.some(locator =>
+          sourceLocatorMatchesReferenceSignal(locator, item)));
+      })
       // Retain the original global IR witness order after source pruning.
       .sort((a, b) => a.evidenceId.localeCompare(b.evidenceId) ||
         a.signal.localeCompare(b.signal) ||

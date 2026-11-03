@@ -1369,6 +1369,64 @@ describe("source-first Daigon export investigation reference", () => {
       .toEqual([]);
   });
 
+  it("retains precise references for overlapping locators, wide spans and independent files", () => {
+    const wideSource = {
+      ...source,
+      range: { lineStart: 10, lineEnd: 100, columnStart: 1, columnEnd: 65 },
+    };
+    const wide = {
+      ...subscription,
+      id: "event:wide",
+      source: wideSource,
+      scriptEventIdRejection: {
+        ...subscription.scriptEventIdRejection,
+        source: wideSource,
+        valueSource: wideSource,
+      },
+    };
+    const alternateSource = {
+      ...source, relativePath: "behavior_packs/demo/scripts/results.ts-other",
+      range: { lineStart: 12, lineEnd: 12, columnStart: 1, columnEnd: 65 },
+    };
+    const alternate = {
+      ...subscription,
+      id: "event:alternate",
+      source: alternateSource,
+      scriptEventIdRejection: {
+        ...subscription.scriptEventIdRejection,
+        source: alternateSource,
+        valueSource: alternateSource,
+      },
+    };
+    const ir = {
+      schemaVersion: 1 as const,
+      execution: { regions: [subscription, wide, alternate], edges: [] },
+      state: { surfaces: [], operations: [], authorityBindings: [] },
+      temporal: { relations: [] },
+    };
+    const prepared = prepareDeveloperPracticeReferenceSelector(ir, "selected");
+    for (const sourceLocators of [
+      ["behavior_packs/demo/scripts/results.ts:12:20"],
+      ["behavior_packs/demo/scripts/results.ts:12:200"],
+      ["behavior_packs/demo/scripts/results.ts:90"],
+      ["behavior_packs/demo/scripts/results.ts#L10-L14"],
+      ["behavior_packs/demo/scripts/results.ts#L40-L100"],
+      ["behavior_packs/demo/scripts/results.ts#L10-L120"],
+      ["behavior_packs/demo/scripts/results.ts#L200"],
+      ["behavior_packs/demo/scripts/results.ts"],
+      ["behavior_packs/demo/scripts/results.ts@ambiguous"],
+      ["behavior_packs/demo/scripts/results.ts-other:12:20"],
+      ["behavior_packs/demo/scripts/results.ts:12:20",
+        "behavior_packs/demo/scripts/results.ts-other:12:20"],
+      [],
+    ]) {
+      const input = { data, domains: ["scoring"], sourceLocators };
+      expect(prepared(input)).toEqual(compileDeveloperPracticeReferenceContext({
+        ...input, selectedArtifactId: "selected", semanticIr: ir,
+      }));
+    }
+  });
+
   it("keeps bounded prepared selectors identical to direct source proof", () => {
     const semanticIr = {
       schemaVersion: 1 as const,
