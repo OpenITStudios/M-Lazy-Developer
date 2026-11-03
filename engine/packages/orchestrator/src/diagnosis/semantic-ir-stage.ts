@@ -306,7 +306,7 @@ export function buildInspectionSemanticIr(
 
   const addEdge = (
     edge: Omit<ExecutionEdge, "id">,
-    occurrence?: number,
+    occurrence?: number | string,
   ): string => {
     const id = [
       "exec-edge",
@@ -665,6 +665,9 @@ export function buildInspectionSemanticIr(
         source: callback.source,
         scheduler: callback.scheduler,
         ...(callback.externalPromiseResolver ? { externalPromiseResolver: true as const } : {}),
+        ...(callback.forwardedArgumentSource === undefined ? {} : {
+          forwardedArgumentSource: callback.forwardedArgumentSource,
+        }),
         guardEvidence: callback.guardEvidence,
         guardIdentifiers: callback.guardIdentifiers,
         ...(callback.generationGuardSource === undefined ? {} : {
@@ -679,7 +682,8 @@ export function buildInspectionSemanticIr(
         ...(callback.sourceDirectMutationSites === undefined ? {} : {
           sourceDirectMutationSites: callback.sourceDirectMutationSites,
         }),
-      });
+      }, callback.forwardedArgumentSource === undefined
+        ? undefined : sourceToken(callback.forwardedArgumentSource));
     }
 
     // Project only parser-confirmed lifecycle/teleport API call sites.
@@ -1484,6 +1488,9 @@ export function buildInspectionSemanticIr(
         externalRuntimeModule: edge.externalRuntimeModule,
       }),
       ...(edge.externalPromiseResolver ? { externalPromiseResolver: true as const } : {}),
+      ...(edge.forwardedArgumentSource === undefined ? {} : {
+        forwardedArgumentSource: edge.forwardedArgumentSource,
+      }),
       kind: temporalKind(edge),
       source: edge.source,
       ...(edge.guardEvidence === undefined

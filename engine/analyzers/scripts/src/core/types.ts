@@ -386,6 +386,8 @@ export interface ScriptDeferredCallback {
    * Source-only callback ownership; NOT runtime execution proof.
    */
   externalPromiseResolver?: true;
+  /** Exact source actual argument of an exhaustively resolved local wrapper. */
+  forwardedArgumentSource?: SourceRef;
 }
 
 export interface ScriptEntityEventTrigger {

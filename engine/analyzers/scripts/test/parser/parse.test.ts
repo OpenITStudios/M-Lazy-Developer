@@ -295,6 +295,47 @@ describe("script analyzer", () => {
     expect(timeout?.callbackRegion).toBeUndefined();
   });
 
+  it("resolves a finite local scheduler wrapper to every authored callback without assigning a single target", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { system } from "@minecraft/server";',
+      'function runWork() {',
+      '  const schedule = (callback, ticks) => { system.runTimeout(callback, ticks); };',
+      '  const visit = () => { schedule(visit, 1); };',
+      '  const start = () => { schedule(() => {}, 3); };',
+      '  schedule(visit, 2);',
+      '  schedule(() => {}, 4);',
+      '}',
+    ].join("\n"), source);
+    const edges = parsed.deferredCallbacks.filter(item => item.scheduler === "runTimeout");
+    expect(edges).toHaveLength(4);
+    expect(edges.every(edge => edge.callbackRegion?.startsWith("callback@") &&
+      edge.forwardedArgumentSource?.range?.lineStart)).toBe(true);
+    expect(edges.map(edge => edge.forwardedArgumentSource?.range?.lineStart))
+      .toEqual([4, 5, 6, 7]);
+  });
+
+  it("fails closed on escaping or dynamically sourced local scheduler callbacks", () => {
+    for (const extra of [
+      '  consume(schedule);',
+      '  const uncertain = externalCallback; schedule(uncertain, 2);',
+      '  const alias = schedule;',
+      '  function bad(schedule) { schedule(() => {}, 1); }',
+    ]) {
+      const parsed = parseScriptFile("scripts/main", [
+        'import { system } from "@minecraft/server";',
+        'function runWork() {',
+        '  const schedule = (callback, ticks) => system.runTimeout(callback, ticks);',
+        '  schedule(() => {}, 1);',
+        extra,
+        '}',
+      ].join("\n"), source);
+      const edges = parsed.deferredCallbacks.filter(item => item.scheduler === "runTimeout");
+      expect(edges).toHaveLength(1);
+      expect(edges[0]?.callbackRegion).toBeUndefined();
+      expect(edges[0]?.forwardedArgumentSource).toBeUndefined();
+    }
+  });
+
   it("identifies only an exact Promise executor resolver as an external native callback", () => {
     const script = [
       'import { system } from "@minecraft/server";',

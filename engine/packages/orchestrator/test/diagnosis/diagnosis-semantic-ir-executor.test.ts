@@ -462,6 +462,28 @@ describe("inspection semantic IR", () => {
     expect(a2TemporalMissingSources).not.toContain(temporal);
   });
 
+  it("retains all bounded higher-order scheduler callsite witnesses, including same-line calls", () => {
+    const src = { artifactId: "selected", relativePath: "scripts/forward.js" };
+    const parsed = parseScriptFile("forward", [
+      'import { system } from "@minecraft/server";',
+      'function runWork() {',
+      '  const schedule = (callback, ticks) => { system.runTimeout(callback, ticks); };',
+      '  const visit = () => {};',
+      '  schedule(visit, 1); schedule(visit, 2);',
+      '}',
+    ].join("\n"), src);
+    const ir = buildInspectionSemanticIr({ parsedScripts: [{ parsed }], parsedFunctions: [] });
+    const edges = ir.execution.edges.filter(edge => edge.scheduler === "runTimeout");
+    expect(edges).toHaveLength(2);
+    expect(new Set(edges.map(edge => edge.id)).size).toBe(2);
+    expect(edges.every(edge => edge.resolution === "resolved" &&
+      edge.forwardedArgumentSource?.range?.lineStart === 5)).toBe(true);
+    expect(edges.map(edge => edge.forwardedArgumentSource?.range?.columnStart))
+      .toEqual([12, 32]);
+    expect(ir.temporal.relations.filter(relation => relation.id.startsWith("time:") &&
+      relation.forwardedArgumentSource?.range?.lineStart === 5)).toHaveLength(2);
+  });
+
   it("links event, deferred callback, state operations and mcfunction calls without guessing unresolved targets", () => {
     const script = parseScriptFile(
       "main",

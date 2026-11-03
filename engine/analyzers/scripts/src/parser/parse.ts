@@ -2730,6 +2730,120 @@ export function parseScriptFile(
     return ts.isArrowFunction(assignment.right) ||
       ts.isFunctionExpression(assignment.right) ? assignment.right : undefined;
   };
+  /** One local const wrapper forwards its own parameter directly to a
+   * Minecraft scheduler. Resolve the complete finite set of authored callers
+   * rather than pretending a parameter has one callback implementation.
+   * On ANY escape, shadow, unsupported argument or reassignment keep the
+   * original unresolved edge. No execution/delivery is inferred.
+   */
+  const forwardedSchedulerCallbacks = (schedulerCall: ts.CallExpression):
+    readonly { callback: ts.ArrowFunction | ts.FunctionExpression;
+      argumentSource: SourceRef }[] | undefined => {
+    const parameter = schedulerCall.arguments[0];
+    if (!parameter || !ts.isIdentifier(parameter)) return undefined;
+    let wrapper: ts.Node | undefined = schedulerCall.parent;
+    while (wrapper && wrapper !== file && !ts.isFunctionLike(wrapper)) {
+      wrapper = wrapper.parent;
+    }
+    if (!wrapper || !(ts.isArrowFunction(wrapper) || ts.isFunctionExpression(wrapper)) ||
+        wrapper.parameters.length < 1 ||
+        !ts.isIdentifier(wrapper.parameters[0]!.name) ||
+        wrapper.parameters[0]!.name.text !== parameter.text ||
+        !ts.isBlock(wrapper.body)) return undefined;
+    const declaration = wrapper.parent;
+    if (!ts.isVariableDeclaration(declaration) ||
+        declaration.initializer !== wrapper ||
+        !ts.isIdentifier(declaration.name)) return undefined;
+    const list = declaration.parent;
+    const statement = list.parent;
+    const scope = statement.parent;
+    if (!ts.isVariableDeclarationList(list) ||
+        !(list.flags & ts.NodeFlags.Const) ||
+        !ts.isVariableStatement(statement) ||
+        !ts.isBlock(scope)) return undefined;
+    const wrapperName = declaration.name.text;
+    // Parameter must be used only at the selected scheduler expression;
+    // reassigned or aliased parameters have unknown callback ownership.
+    let parameterUses = 0;
+    const countParameterUses = (node: ts.Node): void => {
+      if (ts.isIdentifier(node) && node.text === parameter.text) {
+        parameterUses += 1;
+      }
+      ts.forEachChild(node, countParameterUses);
+    };
+    countParameterUses(wrapper.body);
+    if (parameterUses !== 1) return undefined;
+
+    const invoked: ts.CallExpression[] = [];
+    let ambiguous = false;
+    const findWrapperCalls = (node: ts.Node): void => {
+      if (ambiguous) return;
+      if (ts.isIdentifier(node) && node.text === wrapperName &&
+          node !== declaration.name) {
+        if (ts.isCallExpression(node.parent) &&
+            node.parent.expression === node) {
+          invoked.push(node.parent);
+        } else ambiguous = true;
+      }
+      // A nested binding with the wrapper name means a string-equal call
+      // cannot be safely bound without an exact lexical-symbol proof.
+      if (node !== declaration &&
+          ((ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) &&
+            node.name.text === wrapperName) ||
+           (ts.isParameter(node) && ts.isIdentifier(node.name) &&
+            node.name.text === wrapperName) ||
+           (ts.isFunctionDeclaration(node) && node.name?.text === wrapperName))) {
+        ambiguous = true;
+      }
+      ts.forEachChild(node, findWrapperCalls);
+    };
+    findWrapperCalls(scope);
+    if (ambiguous || invoked.length === 0 || invoked.length > 64) return undefined;
+
+    const lookupCallback = (argument: ts.Expression, call: ts.CallExpression):
+      ts.ArrowFunction | ts.FunctionExpression | undefined => {
+      if (ts.isArrowFunction(argument) || ts.isFunctionExpression(argument)) return argument;
+      if (!ts.isIdentifier(argument)) return undefined;
+      let lexical: ts.Node | undefined = call.parent;
+      while (lexical) {
+        if (ts.isBlock(lexical)) {
+          const definitions = lexical.statements
+            .filter(ts.isVariableStatement)
+            .filter(stmt => !!(stmt.declarationList.flags & ts.NodeFlags.Const))
+            .flatMap(stmt => [...stmt.declarationList.declarations])
+            .filter(decl => ts.isIdentifier(decl.name) &&
+              decl.name.text === argument.text);
+          if (definitions.length > 0) {
+            const value = definitions.length === 1 ? definitions[0]!.initializer : undefined;
+            return value && (ts.isArrowFunction(value) || ts.isFunctionExpression(value))
+              ? value : undefined;
+          }
+          if (lexical === scope) return undefined;
+        }
+        if (ts.isFunctionLike(lexical) && lexical.parameters.some(param =>
+          bindsName(param.name, argument.text))) return undefined;
+        lexical = lexical.parent;
+      }
+      return undefined;
+    };
+    const candidates: Array<{
+      callback: ts.ArrowFunction | ts.FunctionExpression;
+      argumentSource: SourceRef;
+    }> = [];
+    for (const invokedCall of invoked) {
+      if (!invokedCall.arguments[0] || invokedCall.arguments.some(ts.isSpreadElement)) {
+        return undefined;
+      }
+      const argument = invokedCall.arguments[0]!;
+      const callback = lookupCallback(argument, invokedCall);
+      if (!callback) return undefined;
+      candidates.push({ callback, argumentSource: lineSource(file, argument, source) });
+    }
+    return candidates.sort((a, b) =>
+      (a.argumentSource.range?.lineStart ?? 0) -
+      (b.argumentSource.range?.lineStart ?? 0));
+  };
+
   const namedCallback = (call: ts.CallExpression): string | undefined => {
     const name = directCallbackName(call);
     return name && uniqueModuleBinding(name) && topLevelFunctionNames.has(name) ? name : undefined;
@@ -4014,42 +4128,51 @@ export function parseScriptFile(
         const generationCapture = directGenerationSnapshot(
           node, callback, generationGuard, file, source,
         );
-        deferredCallbacks.push({
-          scheduler,
-          source: lineSource(file, node, source),
-          callerRegion: localExecutionRegionId(node, file),
-          ...(schedulerSite === undefined ? {} : { sourceSequence: schedulerSite }),
-          ...(promiseResolver ? { externalPromiseResolver: true as const } : {}),
-          ...(callback
-            ? {
-                callbackRegion: callbackExecutionRegionId(callback, file),
-                callbackSource: lineSource(file, callback, source),
-              }
-            : namedScheduledCallback
+        const forwarded = callback || namedScheduledCallback || promiseResolver
+          ? undefined : forwardedSchedulerCallbacks(node);
+        for (const candidate of forwarded ?? [undefined]) {
+          deferredCallbacks.push({
+            scheduler,
+            source: lineSource(file, node, source),
+            callerRegion: localExecutionRegionId(node, file),
+            ...(schedulerSite === undefined ? {} : { sourceSequence: schedulerSite }),
+            ...(promiseResolver ? { externalPromiseResolver: true as const } : {}),
+            ...(candidate ? {
+              callbackRegion: callbackExecutionRegionId(candidate.callback, file),
+              callbackSource: lineSource(file, candidate.callback, source),
+              forwardedArgumentSource: candidate.argumentSource,
+            } : {}),
+            ...(callback
               ? {
-                  callbackRegion: "function:" + namedScheduledCallback,
-                  ...(topLevelCallbackSources.get(namedScheduledCallback) === undefined ? {} : {
-                    callbackSource: topLevelCallbackSources.get(namedScheduledCallback)!,
-                  }),
+                  callbackRegion: callbackExecutionRegionId(callback, file),
+                  callbackSource: lineSource(file, callback, source),
                 }
-              : {}),
-          guardEvidence: guardIdentifiers.length > 0
-            ? "explicit-generation-check"
-            : "unresolved",
-          guardIdentifiers,
-          ...(generationCapture === undefined ? {} : {
-            sourceGenerationCapture: generationCapture,
-          }),
-          ...(generationGuard === undefined ? {} : {
-            generationGuardSource: generationGuard.guardSource,
-            ...(generationGuard.operands === undefined ? {} : {
-              generationGuardOperands: generationGuard.operands,
+              : namedScheduledCallback
+                ? {
+                    callbackRegion: "function:" + namedScheduledCallback,
+                    ...(topLevelCallbackSources.get(namedScheduledCallback) === undefined ? {} : {
+                      callbackSource: topLevelCallbackSources.get(namedScheduledCallback)!,
+                    }),
+                  }
+                : {}),
+            guardEvidence: guardIdentifiers.length > 0
+              ? "explicit-generation-check"
+              : "unresolved",
+            guardIdentifiers,
+            ...(generationCapture === undefined ? {} : {
+              sourceGenerationCapture: generationCapture,
             }),
-          }),
-          ...(delayTicks === undefined
-            ? {}
-            : { delayTicks }),
+            ...(generationGuard === undefined ? {} : {
+              generationGuardSource: generationGuard.guardSource,
+              ...(generationGuard.operands === undefined ? {} : {
+                generationGuardOperands: generationGuard.operands,
+              }),
+            }),
+            ...(delayTicks === undefined
+              ? {}
+              : { delayTicks }),
         });
+        }
       }
 
       if (node.expression.name.text === "triggerEvent") {
