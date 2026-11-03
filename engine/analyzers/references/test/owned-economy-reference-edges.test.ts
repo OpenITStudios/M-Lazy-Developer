@@ -87,6 +87,56 @@ describe("owned item, loot-table and recipe source references", () => {
   });
 });
 
+describe("block-authored loot table paths (source only)", () => {
+  it("resolves same-pack block loot references and preserves missing tables as unresolved", () => {
+    const graph = new SemanticGraph();
+    const makeBlock = (id: string, path: string, loot: unknown, world = artifactId) => ({
+      ...node(id, "block", path, { "minecraft:block": {
+        description: { identifier: "test:" + id },
+        components: { "minecraft:loot": loot },
+      } }),
+      source: { artifactId: world, relativePath: path },
+    });
+    const ore = makeBlock("ore", "behavior_packs/a/blocks/ore.json", "loot_tables/blocks/ore.json");
+    const missing = makeBlock("missing", "behavior_packs/a/blocks/missing.json", "loot_tables/blocks/missing.json");
+    const found = node("loot:ore", "loot_table", "behavior_packs/a/loot_tables/blocks/ore.json", { pools: [] });
+    const otherPack = node("loot:foreign", "loot_table", "behavior_packs/b/loot_tables/blocks/missing.json", { pools: [] });
+    const otherMap = makeBlock("other-map", "behavior_packs/a/blocks/other-map.json", "loot_tables/blocks/ore.json", "another-map");
+    for (const n of [ore, missing, found, otherPack, otherMap]) graph.addNode(n);
+    populateOwnedEconomyReferences(graph, [ore, missing, found, otherPack, otherMap]);
+    const pick = (id: string) => graph.outgoingEdges(id);
+    expect(pick(ore.id)).toEqual([expect.objectContaining({
+      status: "resolved", to: found.id,
+      targetIdentifier: "loot_tables/blocks/ore.json",
+      evidence: { source: { ...ore.source, jsonPointer: "/minecraft:~1block/components/minecraft:~1loot" } },
+    })]);
+    expect(pick(missing.id)).toEqual([expect.objectContaining({
+      status: "unresolved", targetIdentifier: "loot_tables/blocks/missing.json",
+    })]);
+    // Identical pack paths from another selected map cannot satisfy the ref.
+    expect(pick(otherMap.id)).toEqual([expect.objectContaining({ status: "unresolved" })]);
+  });
+
+  it("does not fabricate paths for dynamic, traversing or non-Bedrock blocks", () => {
+    const graph = new SemanticGraph();
+    const values = [
+      "../loot_tables/outside.json", "loot_tables/../outside.json",
+      "loot_tables//empty.json", "loot_tables/./test.json", "minecraft:stone", "${dynamic}",
+      { table: "loot_tables/blocks/ore.json" },
+    ];
+    const blocks = values.map((value, index) => node("block:" + index, "block",
+      "behavior_packs/a/blocks/nope" + index + ".json", {
+        "minecraft:block": { components: { "minecraft:loot": value } },
+      }));
+    const noComponents = node("block:no-components", "block", "behavior_packs/a/blocks/other.json", {
+      "minecraft:block": { description: { identifier: "test:other" } },
+    });
+    for (const entry of [...blocks, noComponents]) graph.addNode(entry);
+    populateOwnedEconomyReferences(graph, [...blocks, noComponents]);
+    expect(graph.allEdges()).toEqual([]);
+  });
+});
+
 describe("authored loot-table source routes (not runtime reachability)", () => {
   it("distinguishes missing nested tables on entity-authored chains from orphan definitions", () => {
     const graph = new SemanticGraph();

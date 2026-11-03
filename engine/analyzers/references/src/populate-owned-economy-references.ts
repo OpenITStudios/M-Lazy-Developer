@@ -87,6 +87,25 @@ export function populateOwnedEconomyReferences(
     resolve(source, "item", identifier, jsonPointer);
   };
 
+  // An explicitly authored Bedrock block loot component is a source-only
+  // dependency on a table in the SAME behavior pack. This does not prove the
+  // block can be mined, the table was loaded, or any item actually dropped.
+  // Preserve unresolved declared references rather than silently ignoring
+  // missing tables or borrowing a matching path from a different map/pack.
+  for (const node of nodes.filter(item => item.kind === "block")) {
+    const block = record(record(node.data)?.["minecraft:block"]);
+    const components = record(block?.components);
+    const loot = components?.["minecraft:loot"];
+    if (typeof loot !== "string" ||
+        !loot.startsWith("loot_tables/") ||
+        !/^[a-zA-Z0-9_./-]+$/.test(loot) ||
+        loot.split("/").some(segment => !segment || segment === "." || segment === "..")) {
+      continue;
+    }
+    resolve(node, "loot_table", loot,
+      "/minecraft:~1block/components/minecraft:~1loot");
+  }
+
   for (const node of tables) {
     const pools = record(node.data)?.pools;
     if (!Array.isArray(pools)) continue;
