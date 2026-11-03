@@ -22,14 +22,15 @@ export function projectApprovedBugReportNext(ledger,project,{sourceRevision}={})
   throw Error("Current world publication pointer conflicts with approved ledger");
  const evidence=[],refs=new Map(),seen=new Set(),issues=[];
  for(const item of ledger.bugs){
-  const id=text(item.id,"approved issue ID"),kind=item.issueType;
+  const id=text(item.id,"approved issue ID"),kind=item.issueType??"BUG";
   if(seen.has(id)||!["BUG","DESIGN_MISMATCH"].includes(kind))throw Error("Duplicate/invalid approved issue ID: "+id);
   seen.add(id);
   if(typeof item.fixed!=="boolean"||!["blocker","major","minor"].includes(item.severity)||
-     !Array.isArray(item.reproduction)||!Array.isArray(item.relevantCode)||
-     !Array.isArray(item.mustPreserve))throw Error(id+": invalid approved issue severity/state or guidance");
+     (item.reproduction!==undefined&&!Array.isArray(item.reproduction))||
+     (item.relevantCode!==undefined&&!Array.isArray(item.relevantCode))||
+     (item.mustPreserve!==undefined&&!Array.isArray(item.mustPreserve)))throw Error(id+": invalid approved issue severity/state or guidance");
   const relatedSources=[],evidenceRefs=[];
-  for(const src of item.relevantCode){
+  for(const src of item.relevantCode??[]){
    const file=text(src.file,id+" code path"),reason=text(src.reason,id+" source reason");
    if(!refs.has(file)){
     const ref="LEDGER-SOURCE-"+String(refs.size+1).padStart(4,"0");refs.set(file,ref);
@@ -41,11 +42,12 @@ export function projectApprovedBugReportNext(ledger,project,{sourceRevision}={})
    if(!evidenceRefs.includes(ref))evidenceRefs.push(ref);
    if(!relatedSources.some(x=>x.path===file))relatedSources.push({path:file,reason});
   }
-  const steps=item.reproduction.map((s,i)=>text(s,id+" reproduction step "+(i+1)));
+  const steps=(item.reproduction??[]).map((s,i)=>text(s,id+" reproduction step "+(i+1)));
   issues.push({id,kind,approvedFixed:item.fixed,severity:item.severity.toUpperCase(),
    evidenceLevel:"REFERENCE_UNRESOLVED",proofStatus:"PROVEN",
    title:text(item.title,id+" title"),problem:text(item.problem,id+" problem"),
-   rationale:text(item.whyThisIsBug,id+" rationale"),impact:text(item.impact,id+" impact"),
+   rationale:item.whyThisIsBug===undefined?null:text(item.whyThisIsBug,id+" rationale"),
+   impact:item.impact===undefined?null:text(item.impact,id+" impact"),
    expected:text(item.expected,id+" expected"),observed:text(item.observed,id+" recorded source discrepancy"),
    evidenceRefs,testProcedure:null,validation:null,
    auditDetails:{gameplayFlow:"UNSPECIFIED",failureDomain:text(item.category,id+" category"),
@@ -54,7 +56,7 @@ export function projectApprovedBugReportNext(ledger,project,{sourceRevision}={})
     proofCeiling:"PROVEN",counterEvidence:"cleared"},
    technical:{analysis:typeof item.aiAnalysis==="string"&&item.aiAnalysis.trim()?item.aiAnalysis:null,
     relatedSources,recommendedFix:typeof item.suggestedFix==="string"&&item.suggestedFix.trim()?item.suggestedFix:null,
-    mustPreserve:item.mustPreserve.map((s,i)=>text(s,id+" preservation "+i))}
+    mustPreserve:(item.mustPreserve??[]).map((s,i)=>text(s,id+" preservation "+i))}
   });
  }
  const sourcePath="workspace/projects/"+project.projectId+"/report/bug-report.json";

@@ -941,7 +941,11 @@ interface BugReportSchema {
   };
   readonly $defs?: {
     readonly bug?: {
+      readonly required?: readonly string[];
+      readonly additionalProperties?: boolean;
       readonly properties?: {
+        readonly whyThisIsBug?: { readonly type?: string; readonly minLength?: number };
+        readonly impact?: { readonly type?: string; readonly minLength?: number };
         readonly severity?: EnumSchema;
         readonly category?: EnumSchema;
         readonly foundBy?: EnumSchema;
@@ -974,6 +978,15 @@ describe("Bug Report V2 schema/runtime parity", () => {
       .toEqual(BUG_REPORT_V2_FOUND_BY_VALUES);
     expect(bug?.issueType?.enum)
       .toEqual(BUG_REPORT_V2_ISSUE_TYPES);
+  });
+
+  it("keeps optional cause and impact aligned with the V2 parser", () => {
+    const definition = schema().$defs?.bug;
+    expect(definition?.additionalProperties).toBe(false);
+    expect(definition?.properties?.whyThisIsBug).toEqual({ type: "string", minLength: 1 });
+    expect(definition?.properties?.impact).toEqual({ type: "string", minLength: 1 });
+    expect(definition?.required).not.toContain("whyThisIsBug");
+    expect(definition?.required).not.toContain("impact");
   });
 });
 }

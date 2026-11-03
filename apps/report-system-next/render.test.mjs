@@ -379,3 +379,38 @@ test("approved V2 projector preserves source-approved findings, fixed flags and 
   claim.maps[0].levels[0].findings[0].approvedFixed=true;
   await assert.rejects(()=>renderReportNext(claim),/only the approved ledger/);
 });
+
+test("approved V2 legacy optional fields project without inferred facts or gameplay proof",async()=>{
+  const hash="8".repeat(64),revision="9".repeat(40);
+  const project={schemaVersion:1,projectId:"legacy-qa",projectName:"Legacy QA",
+    artifact:{artifactId:"drive:example",artifactFingerprint:"sha256:"+hash,version:"1.2.0"}};
+  const ledger={schema:"m-bedrock-bug-report/v2",repairBy:"developer",
+    map:{name:"Legacy QA",mapVersion:"1.2.0",
+      drive:"https://drive.google.com/file/d/example/view",
+      baseVersion:"1.21.0",testedVersion:"Source review; SHA-256 "+hash},
+    bugs:[{id:"BUG-LEGACY-001",fixed:false,severity:"minor",
+      category:"game-flow",foundBy:"tester",title:"Legacy confirmed issue",
+      problem:"The selected source contradicts the expected behavior.",
+      expected:"The session remains consistent.",observed:"A conflicting state is recorded."}]};
+  const view=projectApprovedBugReportNext(ledger,project,{sourceRevision:revision});
+  const issue=view.maps[0].levels[0].findings[0];
+  assert.equal(issue.kind,"BUG");
+  assert.equal(issue.approvedFixed,false);
+  assert.equal(issue.rationale,null);
+  assert.equal(issue.impact,null);
+  assert.deepEqual(issue.auditDetails.reproductionCues,[]);
+  assert.deepEqual(issue.technical.relatedSources,[]);
+  assert.deepEqual(issue.technical.mustPreserve,[]);
+  assert.equal(issue.technical.recommendedFix,null);
+  assert.deepEqual(issue.evidenceRefs,[]);
+  assert.equal(issue.testProcedure,null);
+  assert.equal(view.maps[0].evidence.length,0);
+  const rendered=await renderReportNext(view);
+  assert.equal(rendered.report.maps[0].levels[0].findings[0].rationale,null);
+  assert.doesNotMatch(rendered.html,/data-result="PASSED"/);
+  inspect(rendered);
+  const malformed=structuredClone(ledger);
+  malformed.bugs[0].reproduction="not-an-array";
+  assert.throws(()=>projectApprovedBugReportNext(malformed,project,{sourceRevision:revision}),
+    /invalid approved issue severity\/state or guidance/);
+});
