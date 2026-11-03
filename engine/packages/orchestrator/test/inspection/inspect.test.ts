@@ -64,6 +64,48 @@ describe("inspectDirectory", () => {
     expect(result.semanticIr.unresolvedExecutionTargets).toBeGreaterThan(0);
     expect(result.decisionBasis.semanticIrRevision).toMatch(/^[a-f0-9]{64}$/);
   });
+  it("reports missing custom block loot targets with exact selected-source evidence", async () => {
+    const root = await mkdtemp(join(tmpdir(), "m-bedrock-block-loot-inspect-"));
+    const pack = join(root, "behavior_packs/a");
+    try {
+      await mkdir(join(pack, "blocks"), { recursive: true });
+      await mkdir(join(pack, "loot_tables/blocks"), { recursive: true });
+      const block = (identifier: string, table: string) => JSON.stringify({
+        format_version: "1.21.0",
+        "minecraft:block": {
+          description: { identifier: "demo:" + identifier },
+          components: { "minecraft:loot": "loot_tables/blocks/" + table + ".json" },
+        },
+      });
+      await writeFile(join(pack, "blocks/valid.json"), block("valid", "exists"));
+      await writeFile(join(pack, "blocks/broken.json"), block("broken", "missing"));
+      await writeFile(join(pack, "loot_tables/blocks/exists.json"),
+        JSON.stringify({ pools: [] }));
+      const inspected = await inspectDirectory(root, "selected-world");
+      const unresolved = inspected.diagnostics.filter(item =>
+        item.code === "UNRESOLVED_REFERENCE" &&
+        item.message.includes("loot_tables/blocks/"));
+      expect(unresolved).toHaveLength(1);
+      expect(unresolved[0]).toMatchObject({
+        source: {
+          artifactId: "selected-world",
+          relativePath: "behavior_packs/a/blocks/broken.json",
+          jsonPointer: "/minecraft:~1block/components/minecraft:~1loot",
+        },
+        data: {
+          edgeType: "REFERENCES",
+          targetIdentifier: "loot_tables/blocks/missing.json",
+        },
+      });
+      expect(inspected.gameplayDiscoveryClosure.unresolvedReferences).toBe(1);
+      // Physical and literal reference completeness never certifies the
+      // block's mining behavior or loot-table execution in Minecraft.
+      expect(inspected.gameplayDiscoveryClosure.semanticUnderstandingGaps).toBe(3);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("keeps duplicate function targets unresolved for Discovery Closure", async () => {
     const root = await mkdtemp(join(tmpdir(), "m-bedrock-ambiguous-"));
     try {
