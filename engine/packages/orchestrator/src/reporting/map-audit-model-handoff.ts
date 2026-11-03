@@ -509,6 +509,82 @@ function projectSelectedAuthoredContent(
   };
 }
 
+/** Read-only page rows. Proof eligibility must match the canonical handoff. */
+function projectHandoffTaskRows(
+  audit: SelectedMapAuditRun,
+  tasks: SelectedMapAuditRun["modelTaskPackets"],
+  resolvable: ReadonlySet<string>,
+): SelectedMapAuditModelHandoff["tasks"] {
+  return tasks.map((task) => ({
+    task,
+    resolutionEligible:
+      task.auditRevision === audit.auditRevision &&
+      MODEL_RESOLVABLE_KINDS.has(task.kind) &&
+      task.causalLinkId !== undefined &&
+      resolvable.has(task.causalLinkId),
+  }));
+}
+
+/** An ephemeral transport snapshot of read-only handoff navigation.
+ * It never contains executable response authorization or a new audit receipt.
+ * The CLI binds serialized bytes to a separate expected digest and exact SHA.
+ */
+export interface SelectedMapAuditHandoffSnapshot {
+  readonly schemaVersion: 1;
+  readonly policy: "selected-map-audit-handoff-snapshot";
+  readonly artifactFingerprint: string;
+  readonly auditRevision: string;
+  readonly auditStatus: SelectedMapAuditRun["status"];
+  readonly shared: Omit<SelectedMapAuditModelHandoff,
+    "taskCount" | "offset" | "nextOffset" | "tasks">;
+  readonly taskRows: SelectedMapAuditModelHandoff["tasks"];
+}
+
+/** Build the bounded common context once, then reuse exactly the same task
+ * eligibility logic as normal pagination. No graph, proof or issue is revised.
+ */
+export function projectSelectedMapAuditHandoffSnapshot(
+  audit: SelectedMapAuditRun,
+): SelectedMapAuditHandoffSnapshot {
+  const first = projectSelectedMapAuditModelHandoff(audit, 0, 1);
+  const { taskCount, offset, nextOffset, tasks, ...shared } = first;
+  const graph = audit.inspection.hiddenGameplayDefects.scenarioAudit.graph;
+  const resolvable = new Set(graph.causalLinks
+    .filter(link => ["CONTRADICTED", "RUNTIME_BLOCKED", "DETECTION_GAP"]
+      .includes(link.status))
+    .map(link => link.id));
+  return {
+    schemaVersion: 1,
+    policy: "selected-map-audit-handoff-snapshot",
+    artifactFingerprint: audit.identity.artifactFingerprint,
+    auditRevision: audit.auditRevision,
+    auditStatus: audit.status,
+    shared,
+    taskRows: projectHandoffTaskRows(audit, audit.modelTaskPackets, resolvable),
+  };
+}
+
+/** Selecting snapshot rows never runs an audit or admits new evidence. */
+export function pageSelectedMapAuditHandoffSnapshot(
+  snapshot: SelectedMapAuditHandoffSnapshot,
+  offset = 0,
+  limit = 12,
+): SelectedMapAuditModelHandoff {
+  if (!Number.isSafeInteger(offset) || offset < 0 ||
+      !Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
+    throw new Error("Model handoff offset must be nonnegative and limit must be 1–50.");
+  }
+  const count = snapshot.taskRows.length;
+  const selected = snapshot.taskRows.slice(offset, offset + limit);
+  return {
+    ...snapshot.shared,
+    taskCount: count,
+    offset,
+    nextOffset: offset + selected.length < count ? offset + selected.length : null,
+    tasks: selected,
+  };
+}
+
 export function projectSelectedMapAuditModelHandoff(
   audit: SelectedMapAuditRun,
   offset = 0,
@@ -1421,14 +1497,7 @@ export function projectSelectedMapAuditModelHandoff(
     nextOffset: offset + selected.length < audit.modelTaskPackets.length
       ? offset + selected.length
       : null,
-    tasks: selected.map((task) => ({
-      task,
-      resolutionEligible:
-        task.auditRevision === audit.auditRevision &&
-        MODEL_RESOLVABLE_KINDS.has(task.kind) &&
-        task.causalLinkId !== undefined &&
-        resolvable.has(task.causalLinkId),
-    })),
+    tasks: projectHandoffTaskRows(audit, selected, resolvable),
     proofBoundary:
       "MODEL_RESPONSE_IS_UNTRUSTED_UNTIL_CANONICAL_ENGINE_ADMISSION",
   };

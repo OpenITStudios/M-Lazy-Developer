@@ -374,6 +374,27 @@ Model exchange is a projection of the existing `runSelectedMapAudit()` output, n
 
 `--handoff` emits the exact `artifactId`, `artifactFingerprint`, `auditRevision`, current-artifact game-understanding evidence and `modelTaskPackets` with `resolutionEligible` flags; `--handoff-offset N` pages this view.
 
+### Read-only handoff snapshot for multi-page investigations
+
+For large maps, requesting another 12 task rows must not require another
+full `runSelectedMapAudit()` execution. After one pinned canonical audit,
+`--handoff --handoff-save <scratch.json>` exports a read-only navigation
+snapshot outside the source tree and emits its SHA-256 separately to stderr.
+Further pages use `--handoff --handoff-read <scratch.json>
+--handoff-offset N --handoff-snapshot-sha256 <digest>
+--expected-source-sha <same HEAD> --expected-sha256 <same map SHA-256>`
+with **no map positional**. The reader verifies snapshot bytes, source/map
+identity, portable provenance and the original proof boundary before slicing.
+
+This ephemeral transport is not a second audit engine, source cache, proof
+receipt, gameplay design authority or model-response store. All task IDs,
+original UNKNOWN/obligation records, `resolutionEligible` states and BLOCKED
+status remain unchanged. A BLOCKED snapshot read exits 2. Model responses
+must always use a fresh exact-map `runSelectedMapAudit()` and canonical proof
+gates; `--responses` cannot act on a snapshot. New map/source revisions,
+or a missing/altered snapshot, require a new canonical audit.
+
+
 `--responses <answers.json>` requires schemaVersion 1, policy `selected-map-audit-model-responses`, those exact artifact/revision fields and `resolutions:[{taskId,resolution}]` where `resolution` follows the existing `GameplayDefectResolution` contract. The same CLI reruns its single canonical selected-map audit and invokes `applySelectedMapAuditModelResponses()`; only verified causal tasks and scoped source evidence can enter `resolveSelectedMapAudit()`.
 
 Non-causal tasks remain advisory. ChatGPT/GitHub does not execute the CLI or the model callback automatically. A model may submit a `CONFIRMED_DEFECT_READY` proposal only when the pre-existing canonical graph independently establishes complete source-bounded counterproof exhaustion with no blocking proof; free-text AI findings cannot create that proof. New evidence must be incorporated through the established selected-map inspection before reconsidering an unresolved claim. The optional `--brief` flag on the existing production audit CLI renders a bounded **Game Understanding / Findings / Next Investigations** view, sourced from the same `runSelectedMapAudit()` output. Without it, the CLI preserves the canonical Map Audit Output V2 JSON. The brief does not create another audit entrypoint, publish issues, change proof gates, or equate possible source-backed journeys with observed player behavior. When the selected-map audit was supplied the existing Knowledge Catalog, model tasks with actual selected-artifact mechanics may carry bounded source-backed platform references. These remain search context, not expected-gameplay authority, a runtime observation, or detector-consumption proof; no knowledge match is never itself a gameplay defect.

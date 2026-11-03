@@ -17,6 +17,8 @@ import {
   runSelectedMapAudit,
   applySelectedMapAuditModelResponses,
   projectSelectedMapAuditModelHandoff,
+  projectSelectedMapAuditHandoffSnapshot,
+  pageSelectedMapAuditHandoffSnapshot,
   type SelectedMapAuditInput,
 } from "../src/map-audit-pipeline.js";
 import {
@@ -517,6 +519,15 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       );
       expect(handoff.tasks.every(({ task }) =>
         task.auditRevision === result.auditRevision)).toBe(true);
+      // A read-only snapshot must produce exactly the same pages, status,
+      // evidence references and eligibility as the canonical audit projection.
+      const snapshot = projectSelectedMapAuditHandoffSnapshot(result);
+      expect(snapshot.auditStatus).toBe(result.status);
+      for (const offset of [0, 12, 50, result.modelTaskPackets.length]) {
+        expect(pageSelectedMapAuditHandoffSnapshot(snapshot, offset))
+          .toEqual(projectSelectedMapAuditModelHandoff(result, offset));
+      }
+      expect(snapshot.taskRows).toHaveLength(result.modelTaskPackets.length);
       const emptyAnswers = {
         schemaVersion: 1 as const,
         policy: "selected-map-audit-model-responses" as const,

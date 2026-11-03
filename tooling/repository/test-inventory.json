@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceCommit": "a8b6fa42a7beea7dc59f9dec26887fbffac85bb9",
-  "classification": "381/381 physical source test files classified by actual pinned test cases, deciding assertion sites and test-to-producer routing at exact Local source revision; 0 path-provisional feature/mechanic entries. One functional area and feature per file, optional secondary mechanic tags. Source classification is not executed tests, semantic equivalence, detection accuracy or selected-map/Minecraft proof.",
+  "classification": "382 registered physical source-test entries with exact pinned assertion/consumer classifications where reviewed. Three pre-existing source-test files remain unregistered (portable-source, defense-reader-acceptance, owned-gameplay-source-signals); the current inventory is not a complete source-test census and implies no execution PASS.",
   "lanes": {
     "safety": "Trust boundaries, authorization and preservation",
     "acceptance": "Cross-component user-facing behavior",
@@ -86,6 +86,26 @@
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "report.ui",
+      "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "apps/cli/test/handoff-snapshot.test.ts",
+      "lane": "development",
+      "owner": "apps/cli",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
+        "owner": "apps/cli",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "b4aca596a165a2ea7a4bc127a870412abe98ff68"
+      },
+      "recommendation": "keep",
+      "rationale": "Source/pagination, byte-digest, map/engine identity and proof-boundary negative controls in the existing CLI. Snapshot never authorizes responses.",
+      "functionalArea": "engineering-tooling",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "tooling.repository",
       "featureMappingBasis": "source-case-inspected"
     },
     {
@@ -6267,14 +6287,14 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "triage": {
-        "basis": "pinned-source-case-inventory",
+        "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "dd5def4a8e3d26f00b98f9e36afbc6204a5a3a9d"
+        "sourceBlobSha": "a071b474b23d31661741c94f024b8bcb789a7220"
       },
       "recommendation": "keep",
-      "rationale": "Source case inventory retained. One identical gameplayFlowBasis assertion removed after an earlier check of the unchanged result in the same test case; no distinct scenario or negative control was removed. All other cases remain provisional pending exact runtime verification.",
+      "rationale": "Existing selected-map source-to-handoff acceptance plus equality of pinned snapshot pages against canonical handoff at multiple offsets; no scope or proof boundary changed.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [
         "gameplay.source-to-report"

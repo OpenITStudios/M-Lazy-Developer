@@ -38,6 +38,9 @@ async function main(): Promise<void> {
   let handoffOffset = 0;
   let offsetSupplied = false;
   let responsesPath: string | undefined;
+  let handoffSavePath: string | undefined;
+  let handoffReadPath: string | undefined;
+  let handoffSnapshotSha256: string | undefined;
   let expectedArtifactFingerprint: string | undefined;
   let expectedSourceCommit: string | undefined;
   let legacyDeveloperPracticeFlagSeen = false;
@@ -82,6 +85,9 @@ async function main(): Promise<void> {
     if (argument === "--expected-sha256" ||
         argument === "--expected-source-sha" ||
         argument === "--responses" ||
+        argument === "--handoff-save" ||
+        argument === "--handoff-read" ||
+        argument === "--handoff-snapshot-sha256" ||
         argument === "--handoff-offset") {
       const value = rawArgs[index + 1];
       if (!value || value.startsWith("--")) {
@@ -102,6 +108,17 @@ async function main(): Promise<void> {
           throw new Error("--responses may only be supplied once");
         }
         responsesPath = value;
+      } else if (argument === "--handoff-save") {
+        if (handoffSavePath !== undefined) throw new Error("--handoff-save may only be supplied once");
+        handoffSavePath = value;
+      } else if (argument === "--handoff-read") {
+        if (handoffReadPath !== undefined) throw new Error("--handoff-read may only be supplied once");
+        handoffReadPath = value;
+      } else if (argument === "--handoff-snapshot-sha256") {
+        if (handoffSnapshotSha256 !== undefined) {
+          throw new Error("--handoff-snapshot-sha256 may only be supplied once");
+        }
+        handoffSnapshotSha256 = value;
       } else {
         if (offsetSupplied || !/^(0|[1-9][0-9]*)$/.test(value)) {
           throw new Error("--handoff-offset must be a single nonnegative integer");
@@ -129,15 +146,62 @@ async function main(): Promise<void> {
   if (offsetSupplied && !handoff) {
     throw new Error("--handoff-offset requires --handoff");
   }
+  if ((handoffSavePath !== undefined || handoffReadPath !== undefined) && !handoff) {
+    throw new Error("Handoff snapshots require --handoff");
+  }
+  if (handoffSavePath !== undefined && handoffReadPath !== undefined) {
+    throw new Error("--handoff-save and --handoff-read are mutually exclusive");
+  }
+  if (handoffSnapshotSha256 !== undefined && handoffReadPath === undefined) {
+    throw new Error("--handoff-snapshot-sha256 requires --handoff-read");
+  }
+  if (handoffSavePath !== undefined && expectedSourceCommit === undefined) {
+    throw new Error("--handoff-save requires exact --expected-source-sha");
+  }
+  if (handoffReadPath !== undefined &&
+      (expectedSourceCommit === undefined ||
+       expectedArtifactFingerprint === undefined ||
+       handoffSnapshotSha256 === undefined || responsesPath !== undefined ||
+       auditArgs.length !== 0 || timings)) {
+    throw new Error("--handoff-read requires source/map/snapshot hashes, no map or responses, and no --timings");
+  }
   // Verify all packaged source bytes before importing the engine, loaders,
   // CLI target parser or renderer. A mutated transport must fail closed.
   await verifyPortableSource(expectedSourceCommit);
+  // Offline navigation only: require independently pinned snapshot bytes,
+  // exact source and selected-artifact identity. No map audit, response
+  // application, proof admission or issue generation runs on this path.
+  if (handoffReadPath !== undefined) {
+    const { readHandoffSnapshot } = await import("./handoff-snapshot.js");
+    const { pageSelectedMapAuditHandoffSnapshot } = await import(
+      "../../../engine/packages/orchestrator/src/index.js");
+    const snapshot = await readHandoffSnapshot(handoffReadPath, {
+      sourceCommit: expectedSourceCommit!,
+      artifactFingerprint: expectedArtifactFingerprint!,
+      snapshotSha256: handoffSnapshotSha256!,
+    });
+    const output = JSON.stringify(
+      pageSelectedMapAuditHandoffSnapshot(snapshot, handoffOffset),
+      null,
+      compact ? undefined : 2,
+    ) + "\n";
+    if (gzip) {
+      await pipeline(Readable.from([output]), createGzip(), process.stdout);
+    } else {
+      process.stdout.write(output);
+    }
+    if (snapshot.auditStatus === "BLOCKED") {
+      process.stderr.write("AUDIT_INCOMPLETE: pinned handoff snapshot remains BLOCKED; no audit was rerun.\n");
+      process.exitCode = 2;
+    }
+    return;
+  }
   const { parseCliTargetOptions } = await import("./target-options.js");
   const { positionals, target, telemetryPath, arenaRegionContractsPath } =
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--responses model.json] [target options]");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-save <scratch.json>] [--responses model.json] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -224,6 +288,24 @@ async function main(): Promise<void> {
         sourceParseFailures: step.parseFailures,
       })),
       scope: "wall-clock process observations, not Minecraft runtime proof or speedup",
+    }) + "\n");
+  }
+  if (handoffSavePath !== undefined) {
+    const { projectSelectedMapAuditHandoffSnapshot } = orchestrator;
+    const { writeHandoffSnapshot } = await import("./handoff-snapshot.js");
+    const saved = await writeHandoffSnapshot(
+      handoffSavePath,
+      projectSelectedMapAuditHandoffSnapshot(resolvedAudit),
+      expectedSourceCommit!,
+    );
+    process.stderr.write("HANDOFF_SNAPSHOT " + JSON.stringify({
+      sourceCommit: expectedSourceCommit,
+      artifactFingerprint: resolvedAudit.identity.artifactFingerprint,
+      auditRevision: resolvedAudit.auditRevision,
+      path: resolve(handoffSavePath),
+      sha256: saved.sha256,
+      bytes: saved.bytes,
+      authority: "READ_ONLY_NAVIGATION_NOT_AUDIT_PROOF",
     }) + "\n");
   }
   const html = reportNext

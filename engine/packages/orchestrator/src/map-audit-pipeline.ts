@@ -296,7 +296,14 @@ export interface SelectedMapAuditRun {
 /** Stable import for existing CLI and external clients. Read-only projection owner:
  * reporting/map-audit-model-handoff.ts. Proof/admission remain in this pipeline.
  */
-export { projectSelectedMapAuditModelHandoff } from "./reporting/map-audit-model-handoff.js";
+export {
+  projectSelectedMapAuditModelHandoff,
+  projectSelectedMapAuditHandoffSnapshot,
+  pageSelectedMapAuditHandoffSnapshot,
+} from "./reporting/map-audit-model-handoff.js";
+export type {
+  SelectedMapAuditHandoffSnapshot,
+} from "./reporting/map-audit-model-handoff.js";
 export type { SelectedMapAuditModelHandoff } from "./reporting/map-audit-model-handoff.js";
 
 export interface SelectedMapAuditModelResponseBatch {
