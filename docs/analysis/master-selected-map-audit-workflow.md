@@ -394,6 +394,29 @@ must always use a fresh exact-map `runSelectedMapAudit()` and canonical proof
 gates; `--responses` cannot act on a snapshot. New map/source revisions,
 or a missing/altered snapshot, require a new canonical audit.
 
+### Grouped Audit Obligations and measured audit cost
+
+`diagnosisNavigation.pendingObligationGroups` groups *navigation only* by
+canonical audit stage, obligation source and exact `validationGroupKey`.
+The first 12 groups are ranked by stage then affected-count. Each shows the
+original obligation count, up to four canonical obligation IDs and their
+aligned global `modelTaskPackets` offsets. A `null` offset means no matching
+model task exists; it is never silently replaced by a neighboring task.
+`pendingObligationCount`, total group count and omitted-group count keep
+the hidden remainder explicit. These groupings cannot merge defect roots,
+mark any obligation resolved, alter task eligibility or override PROVE.
+To inspect a sample, use the existing `--handoff-offset` against the same
+checksum-pinned snapshot and validate the task's obligation identity.
+
+The optional existing `--timings` CLI side channel reports initial-run
+wall-clock `auditControlElapsedMs`, `modelTaskGenerationElapsedMs`,
+`reportProjectionElapsedMs` and `modelTaskCount` under
+`initialAuditAvailability`. These durations complement the existing
+archive, native World DB and source-index timings, without changing
+Map Audit Output V2, claims of Minecraft execution or continuation proof.
+Comparable performance claims require repeated runs with pinned input,
+engine source, target and equivalent canonical JSON.
+
 
 `--responses <answers.json>` requires schemaVersion 1, policy `selected-map-audit-model-responses`, those exact artifact/revision fields and `resolutions:[{taskId,resolution}]` where `resolution` follows the existing `GameplayDefectResolution` contract. The same CLI reruns its single canonical selected-map audit and invokes `applySelectedMapAuditModelResponses()`; only verified causal tasks and scoped source evidence can enter `resolveSelectedMapAudit()`.
 

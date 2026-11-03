@@ -21,6 +21,7 @@ import {
   pageSelectedMapAuditHandoffSnapshot,
   type SelectedMapAuditInput,
 } from "../src/map-audit-pipeline.js";
+import { summarizeAuditHandoffObligations } from "../src/reporting/map-audit-model-handoff.js";
 import {
   deriveAuditModelKnowledgeLookup,
   deriveAuditModelTaskPackets,
@@ -528,6 +529,27 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
           .toEqual(projectSelectedMapAuditModelHandoff(result, offset));
       }
       expect(snapshot.taskRows).toHaveLength(result.modelTaskPackets.length);
+      const timing = result.timingObservations;
+      expect(timing).toMatchObject({
+        scope: "INITIAL_AUDIT_ONLY_NOT_EXECUTED_GAMEPLAY",
+        modelTaskCount: result.modelTaskPackets.length,
+      });
+      expect([timing?.auditControlElapsedMs, timing?.modelTaskGenerationElapsedMs,
+        timing?.reportProjectionElapsedMs].every(ms =>
+          typeof ms === "number" && Number.isFinite(ms) && ms >= 0)).toBe(true);
+      expect(handoff.diagnosisNavigation.pendingObligationCount)
+        .toBe(result.auditObligations.length);
+      expect(handoff.diagnosisNavigation.pendingObligationGroupCount)
+        .toBeGreaterThanOrEqual(handoff.diagnosisNavigation.pendingObligationGroups.length);
+      for (const group of handoff.diagnosisNavigation.pendingObligationGroups) {
+        expect(group.sampleTaskOffsets).toHaveLength(group.sampleObligationIds.length);
+        group.sampleObligationIds.forEach((id, i) => {
+          const offset = group.sampleTaskOffsets[i];
+          expect(offset).not.toBeUndefined();
+          if (offset == null) return;
+          expect(result.modelTaskPackets[offset]?.unresolvedObligationIds).toContain(id);
+        });
+      }
       const emptyAnswers = {
         schemaVersion: 1 as const,
         policy: "selected-map-audit-model-responses" as const,
@@ -866,6 +888,41 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
     }
   });
 
+});
+
+describe("canonical obligation investigation groups", () => {
+  it("conserves all obligations without combining different proof stages or owners", () => {
+    const make = (id: string, stage: "DISCOVERY" | "UNDERSTAND",
+      source: "discovery-challenge" | "detection-gap", key: string) => ({
+      id, stage, source, validationGroupKey: key, title: id,
+      reason: "open", missingProof: "source", validationTest: "check",
+      subjectIds: [], componentIds: [], evidenceIds: [],
+    });
+    const obligations = [
+      make("a", "DISCOVERY", "discovery-challenge", "shared"),
+      make("b", "DISCOVERY", "discovery-challenge", "shared"),
+      make("c", "UNDERSTAND", "discovery-challenge", "shared"),
+      make("d", "DISCOVERY", "detection-gap", "shared"),
+    ];
+    const groups = summarizeAuditHandoffObligations(
+      obligations, 12, new Map([["a", 7], ["b", 18], ["c", 19], ["d", 20]]));
+    expect(groups.pendingObligationCount).toBe(4);
+    expect(groups.pendingObligationGroupCount).toBe(3);
+    expect(groups.pendingObligationGroups.reduce((sum, g) => sum + g.obligationCount, 0)).toBe(4);
+    expect(groups.pendingObligationGroups[0]).toMatchObject({
+      stage: "DISCOVERY", source: "discovery-challenge",
+      obligationCount: 2, sampleObligationIds: ["a", "b"],
+      sampleTaskOffsets: [7, 18], omittedObligationIds: 0,
+      authority: "SHARED_VALIDATION_KEY_NOT_SHARED_ROOT_CAUSE",
+    });
+    const absent = summarizeAuditHandoffObligations(obligations, 12,
+      new Map([["a", 7], ["c", 19], ["d", 20]]));
+    expect(absent.pendingObligationGroups[0]?.sampleObligationIds).toEqual(["a", "b"]);
+    expect(absent.pendingObligationGroups[0]?.sampleTaskOffsets).toEqual([7, null]);
+    const limited = summarizeAuditHandoffObligations(obligations, 1);
+    expect(limited.pendingObligationCount).toBe(4);
+    expect(limited.omittedPendingObligationGroups).toBe(2);
+  });
 });
 
 describe("model handoff Knowledge owner boundary", () => {

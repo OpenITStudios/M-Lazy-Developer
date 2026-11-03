@@ -14,6 +14,7 @@ import {
   sourceSiteStrictlyAfter,
 } from "../../../semantic-ir/src/index.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
+import type { AuditObligation } from "../map-audit-obligations.js";
 import { MODEL_RESOLVABLE_KINDS } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
 
@@ -410,6 +411,21 @@ export interface SelectedMapAuditModelHandoff {
       readonly missingProof: readonly string[];
     }[];
     readonly omittedPendingProofGroups: number;
+    /** Source-grouped investigative navigation; not a deduplicated proof ledger. */
+    readonly pendingObligationCount: number;
+    readonly pendingObligationGroupCount: number;
+    readonly pendingObligationGroups: readonly {
+      readonly stage: AuditObligation["stage"];
+      readonly source: string;
+      readonly validationGroupKey: string;
+      readonly obligationCount: number;
+      readonly sampleObligationIds: readonly string[];
+      /** Global handoff offsets for the sampled obligation IDs; not proof. */
+      readonly sampleTaskOffsets: readonly (number | null)[];
+      readonly omittedObligationIds: number;
+      readonly authority: "SHARED_VALIDATION_KEY_NOT_SHARED_ROOT_CAUSE";
+    }[];
+    readonly omittedPendingObligationGroups: number;
   };
   readonly taskCount: number;
   readonly offset: number;
@@ -506,6 +522,71 @@ function projectSelectedAuthoredContent(
       };
     }),
     omittedRoots: Math.max(0, roots.length - visibleRoots.length),
+  };
+}
+
+/**
+ * Group *navigation*, never evidence admission. A shared validation key can
+ * indicate a reusable investigative question, but cannot prove one common
+ * bug or discharge any member's individual canonical obligation. Stage and
+ * source are part of grouping identity to avoid cross-domain conflation.
+ */
+export function summarizeAuditHandoffObligations(
+  obligations: readonly AuditObligation[],
+  limit = 12,
+  taskOffsetByObligation?: ReadonlyMap<string, number>,
+): Pick<SelectedMapAuditModelHandoff["diagnosisNavigation"],
+  "pendingObligationCount" | "pendingObligationGroupCount" |
+  "pendingObligationGroups" | "omittedPendingObligationGroups"> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
+    throw new Error("Audit investigation group limit must be 1–50.");
+  }
+  const grouped = new Map<string, {
+    stage: AuditObligation["stage"];
+    source: string;
+    validationGroupKey: string;
+    ids: string[];
+  }>();
+  for (const item of obligations) {
+    const identity = JSON.stringify([
+      item.stage, item.source, item.validationGroupKey,
+    ]);
+    const existing = grouped.get(identity);
+    if (existing !== undefined) {
+      existing.ids.push(item.id);
+    } else {
+      grouped.set(identity, {
+        stage: item.stage, source: item.source,
+        validationGroupKey: item.validationGroupKey, ids: [item.id],
+      });
+    }
+  }
+  // Follow the canonical stage sequence, then show highest-leverage groups.
+  // This is investigation order, NOT a change to proof gate priority.
+  const stageIndex: Record<AuditObligation["stage"], number> = {
+    DISCOVERY: 0, UNDERSTAND: 1, FORMALIZE: 2, EVALUATE: 3, PROVE: 4,
+  };
+  const ordered = [...grouped.values()].sort((a, b) =>
+    stageIndex[a.stage] - stageIndex[b.stage] ||
+    b.ids.length - a.ids.length ||
+    a.source.localeCompare(b.source) ||
+    a.validationGroupKey.localeCompare(b.validationGroupKey));
+  return {
+    pendingObligationCount: obligations.length,
+    pendingObligationGroupCount: ordered.length,
+    pendingObligationGroups: ordered.slice(0, limit).map(group => ({
+      stage: group.stage,
+      source: group.source,
+      validationGroupKey: group.validationGroupKey,
+      obligationCount: group.ids.length,
+      sampleObligationIds: group.ids.slice(0, 4),
+      // Keep offsets aligned with sampled IDs even for unresolved task links.
+      sampleTaskOffsets: group.ids.slice(0, 4).map(id =>
+        taskOffsetByObligation?.get(id) ?? null),
+      omittedObligationIds: Math.max(0, group.ids.length - 4),
+      authority: "SHARED_VALIDATION_KEY_NOT_SHARED_ROOT_CAUSE" as const,
+    })),
+    omittedPendingObligationGroups: Math.max(0, ordered.length - limit),
   };
 }
 
@@ -1385,6 +1466,15 @@ export function projectSelectedMapAuditModelHandoff(
   }
   const handoffs = [...handoffsByEdge.values()].sort((a, b) =>
     a.handoff.edgeId.localeCompare(b.handoff.edgeId));
+  // Keep canonical packet ordering. Investigation groups only provide exact
+  // jump offsets into that existing paginated task sequence.
+  const taskOffsetByObligation = new Map<string, number>();
+  audit.modelTaskPackets.forEach((task, index) => {
+    if (task.kind !== "AUDIT_OBLIGATION") return;
+    for (const id of task.unresolvedObligationIds) {
+      if (!taskOffsetByObligation.has(id)) taskOffsetByObligation.set(id, index);
+    }
+  });
   const omittedHandoffsInFlows = handoffFlows.reduce((sum, flow) =>
     sum + (flow.omittedSourceHandoffs ?? 0), 0);
   return {
@@ -1491,6 +1581,8 @@ export function projectSelectedMapAuditModelHandoff(
         missingProof: [...group.missingProof],
       })),
       omittedPendingProofGroups: Math.max(0, audit.validationTests.length - 8),
+      ...summarizeAuditHandoffObligations(
+        audit.auditObligations, 12, taskOffsetByObligation),
     },
     taskCount: audit.modelTaskPackets.length,
     offset,

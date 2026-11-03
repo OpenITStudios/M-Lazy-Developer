@@ -240,6 +240,12 @@ export interface SelectedMapAuditRun {
       readonly issueType: AuditIssueProjection["issueType"];
       readonly status: AuditIssueProjection["status"];
     };
+    /** Distinguish canonical obligation/admission construction from task
+     * enrichment. These are wall-clock measurements, never proof receipts. */
+    readonly auditControlElapsedMs: number;
+    readonly modelTaskGenerationElapsedMs: number;
+    readonly reportProjectionElapsedMs: number;
+    readonly modelTaskCount: number;
     readonly provenCount: number;
     readonly needValidationCount: number;
     readonly firstNextDecision?: {
@@ -849,6 +855,7 @@ function assembleSelectedMapAuditRun(
               inspection.gameplayWorld.arenas.perArenaPlayerCapacity }),
       });
 
+  const auditControlStartedAt = performance.now();
   const control = deriveSelectedMapAuditControl({
     admission,
     procedure,
@@ -879,6 +886,7 @@ function assembleSelectedMapAuditRun(
       inspection.capabilityExposure,
     ...(userIntent === undefined ? {} : { userIntent }),
   });
+  const auditControlElapsedMs = Math.max(0, performance.now() - auditControlStartedAt);
   // The canonical source/proof gate has now projected all eligible findings.
   // Earlier parser candidates and historical hints cannot start the clock.
   const scopedFindingProjectionElapsedMs = elapsedSinceInitialStart();
@@ -908,6 +916,7 @@ function assembleSelectedMapAuditRun(
     (edition === "bedrock" || edition === "education")
       ? edition
       : undefined;
+  const modelTasksStartedAt = performance.now();
   const freshModelTaskPackets = deriveAuditModelTaskPackets({
     admission,
     procedure,
@@ -934,6 +943,7 @@ function assembleSelectedMapAuditRun(
     }),
     ...(knowledgeEdition === undefined ? {} : { knowledgeEdition }),
   });
+  const modelTaskGenerationElapsedMs = Math.max(0, performance.now() - modelTasksStartedAt);
   // resolveSelectedMapAudit reuses the same immutable artifact but may have
   // no catalogue argument. Carry only a bounded selection whose task goal,
   // evidence and source-grounded query are still identical.
@@ -988,6 +998,7 @@ function assembleSelectedMapAuditRun(
     }),
   );
 
+  const reportProjectionStartedAt = performance.now();
   const mapAuditReport =
     projectMapAuditOutputV2({
       auditRevision,
@@ -1026,6 +1037,7 @@ function assembleSelectedMapAuditRun(
               control.fullMapReplica,
           }),
     });
+  const reportProjectionElapsedMs = Math.max(0, performance.now() - reportProjectionStartedAt);
   const reportReadyElapsedMs = elapsedSinceInitialStart();
   const timingObservations =
     inspectionReadyElapsedMs === undefined ||
@@ -1035,6 +1047,10 @@ function assembleSelectedMapAuditRun(
       ? undefined
       : {
           scope: "INITIAL_AUDIT_ONLY_NOT_EXECUTED_GAMEPLAY" as const,
+          auditControlElapsedMs,
+          modelTaskGenerationElapsedMs,
+          reportProjectionElapsedMs,
+          modelTaskCount: modelTaskPackets.length,
           inspectionReadyElapsedMs,
           scopedFindingProjectionElapsedMs,
           ...(firstScopedFinding === undefined ? {} : {

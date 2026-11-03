@@ -6291,10 +6291,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "a071b474b23d31661741c94f024b8bcb789a7220"
+        "sourceBlobSha": "a4834a5fef8a2be22862082a5e0875960900597c"
       },
       "recommendation": "keep",
-      "rationale": "Existing selected-map source-to-handoff acceptance plus equality of pinned snapshot pages against canonical handoff at multiple offsets; no scope or proof boundary changed.",
+      "rationale": "Selected-map source-to-handoff acceptance, new initial-run cost timing and read-only grouped obligation navigation with aligned global task offsets. Canonical audit and proof admission unchanged; existing unrelated failures retained.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [
         "gameplay.source-to-report"
