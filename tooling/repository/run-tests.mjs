@@ -49,7 +49,7 @@ function discoverSourceTests() {
   return tests;
 }
 
-function loadInventory() {
+function loadInventory(focusedPaths) {
   const data = JSON.parse(readFileSync(inventoryPath, "utf8"));
   if (data.schemaVersion !== 1 || !Array.isArray(data.tests)) {
     throw new Error("Invalid test inventory");
@@ -263,7 +263,8 @@ function loadInventory() {
     // A source-case inspection label is valid for one exact source revision.
     // The Git blob hash is checked here, within the existing inventory loader.
     // Source files are LF-normalized per the repository .gitattributes.
-    if (item.featureMappingBasis === "source-case-inspected") {
+    if (item.featureMappingBasis === "source-case-inspected" &&
+        (focusedPaths === undefined || focusedPaths.has(item.path))) {
       if (typeof item.triage.sourceBlobSha !== "string") {
         throw new Error("Missing source-case review provenance: " + item.path);
       }
@@ -292,16 +293,21 @@ function loadInventory() {
   if (unusedTags.length) {
     throw new Error("Unreferenced mechanic tag(s): " + unusedTags.join(", "));
   }
-  const discovered = new Set(discoverSourceTests());
-  const missing = [...discovered].filter(path => !paths.has(path));
-  const extra = [...paths].filter(path => !discovered.has(path));
-  if (missing.length || extra.length) {
-    throw new Error(
-      "Test inventory mismatch (missing " + missing.length +
-      ", extra " + extra.length + "); examples: " +
-      [...missing, ...extra].slice(0, 5).join(", ") +
-      ". Classify exact source tests before selecting a lane.",
-    );
+  // In a focused run, the requested registered files must be source-current.
+  // Unrelated test-inventory drift is not a blocker for that narrow claim.
+  // Non-focused modes still fail closed on the full source-test census.
+  if (focusedPaths === undefined) {
+    const discovered = new Set(discoverSourceTests());
+    const missing = [...discovered].filter(path => !paths.has(path));
+    const extra = [...paths].filter(path => !discovered.has(path));
+    if (missing.length || extra.length) {
+      throw new Error(
+        "Test inventory mismatch (missing " + missing.length +
+        ", extra " + extra.length + "); examples: " +
+        [...missing, ...extra].slice(0, 5).join(", ") +
+        ". Classify exact source tests before selecting a lane.",
+      );
+    }
   }
   return data.tests;
 }
@@ -551,7 +557,10 @@ function selectAffectedTests(inventory, changedPaths, integrate, importSpecifier
 
 const args = process.argv.slice(2);
 const mode = args[0] ?? "--acceptance";
-const registeredTests = loadInventory();
+const focusedPaths = mode === "--focus" && args.length > 1
+  ? new Set(args.slice(1).map(path => path.replaceAll("\\", "/")))
+  : undefined;
+const registeredTests = loadInventory(focusedPaths);
 const registeredPaths = new Set(registeredTests.map(item => item.path));
 for (const file of [...acceptanceVitestFiles, ...acceptanceNativeFiles]) {
   if (!registeredPaths.has(file)) throw new Error("Unregistered default acceptance test: " + file);
@@ -1062,6 +1071,8 @@ if (mode === "--acceptance" && args.length <= 1) {
       process.exit(2);
     }
   }
+  console.log("FOCUSED_SCOPE_ONLY: only selected registered test blobs are verified; " +
+    "unrelated inventory drift is not certified, NOT a full-suite PASS.");
   selectedNative = requested.filter((file) => nativeFiles.includes(file));
   vitestFiles = requested.filter((file) => !nativeFiles.includes(file));
 } else {
