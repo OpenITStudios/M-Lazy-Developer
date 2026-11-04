@@ -98,10 +98,10 @@
         "owner": "apps/cli",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b4aca596a165a2ea7a4bc127a870412abe98ff68"
+        "sourceBlobSha": "1faf07c8b89532534e7395dec272d6913d4d72e7"
       },
       "recommendation": "keep",
-      "rationale": "Source/pagination, byte-digest, map/engine identity and proof-boundary negative controls in the existing CLI. Snapshot never authorizes responses.",
+      "rationale": "Source/pagination, byte-digest, map/engine identity and proof-boundary negative controls in the existing CLI. Snapshot never authorizes responses. Added bounded eight-member AI source-investigation acceptance: no loss of task offsets, original reasons or provenance, separated causal/source-specific tasks, snapshot digest/member tamper rejection and original handoff pagination equivalence. All original canonical proof gates remain authoritative; no Minecraft execution implied.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -6291,10 +6291,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "a4834a5fef8a2be22862082a5e0875960900597c"
+        "sourceBlobSha": "06f338fdc56cf145ebf1c5b07be04fee542d62ea"
       },
       "recommendation": "keep",
-      "rationale": "Selected-map source-to-handoff acceptance, new initial-run cost timing and read-only grouped obligation navigation with aligned global task offsets. Canonical audit and proof admission unchanged; existing unrelated failures retained.",
+      "rationale": "Selected-map source-to-handoff acceptance, new initial-run cost timing and read-only grouped obligation navigation with aligned global task offsets. Canonical audit and proof admission unchanged; existing unrelated failures retained. Added bounded eight-member AI source-investigation acceptance: no loss of task offsets, original reasons or provenance, separated causal/source-specific tasks, snapshot digest/member tamper rejection and original handoff pagination equivalence. All original canonical proof gates remain authoritative; no Minecraft execution implied.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [
         "gameplay.source-to-report"
@@ -6373,10 +6373,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "9235db187c16c911ab70cf37651e70b1814dd711"
+        "sourceBlobSha": "47aadaf98543ebd79ad88cf3f03d95f6a7cca20a"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\n2026-11-02 Developer ZIP evidence-to-report integration: Source-only fallback authoring: selected-artifact evidence may retrieve reference before Gameplay Intent node is classified; current Knowledge remains ungrounded and absent evidence abstains. Authored only; NOT EXECUTED.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\n2026-11-02 Developer ZIP evidence-to-report integration: Source-only fallback authoring: selected-artifact evidence may retrieve reference before Gameplay Intent node is classified; current Knowledge remains ungrounded and absent evidence abstains. Authored only; NOT EXECUTED. Added bounded eight-member AI source-investigation acceptance: no loss of task offsets, original reasons or provenance, separated causal/source-specific tasks, snapshot digest/member tamper rejection and original handoff pagination equivalence. All original canonical proof gates remain authoritative; no Minecraft execution implied.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

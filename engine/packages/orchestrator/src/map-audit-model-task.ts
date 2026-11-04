@@ -1690,6 +1690,127 @@ const DEVELOPER_KIND_DOMAINS: Readonly<Record<string, readonly string[]>> = {
   "spatial-region": ["spatial"],
 };
 
+/** Read-only AI investigation scheduling. The canonical task and Audit
+ * Obligation identities remain independent; shared source is not shared proof.
+ */
+export interface AuditModelInvestigationBatch {
+  readonly stage: SelectedMapAuditStage;
+  readonly source: string;
+  readonly validationGroupKey: string;
+  readonly sharedQuestion: string;
+  readonly sharedMissingProof: string;
+  readonly members: readonly {
+    readonly taskOffset: number;
+    readonly taskId: string;
+    readonly obligationId: string | null;
+    readonly individualReason: string;
+    readonly evidenceIds: readonly string[];
+    readonly omittedEvidenceIds: number;
+  }[];
+  readonly proofBoundary: "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE";
+}
+
+/** Assign EVERY canonical task exactly once. Only non-causal obligation
+ * packets with identical stage/source/validation key, validation method and
+ * missing-proof requirement share a source review. Individual reasons remain
+ * distinct. AI responses must still address original task IDs and proof gates.
+ */
+export function planAuditModelInvestigationBatches(input: {
+  readonly tasks: readonly AuditModelTaskPacket[];
+  readonly obligations: readonly AuditObligation[];
+}, maximumMembers = 8): readonly AuditModelInvestigationBatch[] {
+  if (!Number.isSafeInteger(maximumMembers) || maximumMembers < 1 ||
+      maximumMembers > 12) {
+    throw new Error("Investigation batch size must be an integer from 1 to 12.");
+  }
+  const counts = new Map<string, number>();
+  for (const task of input.tasks) {
+    counts.set(task.id, (counts.get(task.id) ?? 0) + 1);
+  }
+  const obligationCounts = new Map<string, number>();
+  for (const item of input.obligations) {
+    obligationCounts.set(item.id, (obligationCounts.get(item.id) ?? 0) + 1);
+  }
+  const byObligation = new Map(input.obligations.map(item =>
+    [item.id, item] as const));
+  const groups = new Map<string, {
+    stage: SelectedMapAuditStage;
+    source: string;
+    validationGroupKey: string;
+    question: string;
+    missingProof: string;
+    offsets: number[];
+  }>();
+  input.tasks.forEach((task, index) => {
+    const id = task.unresolvedObligationIds.length === 1
+      ? task.unresolvedObligationIds[0] : undefined;
+    const obligation = id === undefined ? undefined : byObligation.get(id);
+    const compatible = task.kind === "AUDIT_OBLIGATION" &&
+      counts.get(task.id) === 1 &&
+      id !== undefined && obligationCounts.get(id) === 1 &&
+      obligation !== undefined && obligation.stage === task.stage &&
+      obligation.validationGroupKey.trim().length > 0 &&
+      task.causalLinkId === undefined &&
+      task.sourceInvestigation === undefined &&
+      (task.provenClaims?.length ?? 0) === 0 &&
+      task.requiredKnowledgeIds.length === 0;
+    const groupKey = compatible && obligation !== undefined
+      ? JSON.stringify([
+          "shared-source-question", task.stage, obligation.source,
+          obligation.validationGroupKey,
+          obligation.missingProof, obligation.validationTest,
+        ])
+      : JSON.stringify(["independent-task", index]);
+    const group = groups.get(groupKey);
+    if (group) {
+      group.offsets.push(index);
+    } else {
+      groups.set(groupKey, {
+        stage: task.stage,
+        source: obligation?.source ?? "independent-task",
+        validationGroupKey: obligation?.validationGroupKey ?? task.id,
+        question: obligation?.validationTest ?? task.decisionNeeded,
+        missingProof: obligation?.missingProof ??
+          task.missingClaims?.[0] ?? "Unresolved selected-source proof",
+        offsets: [index],
+      });
+    }
+  });
+  const stageOrder = new Map(SELECTED_MAP_AUDIT_STAGE_ORDER.map((stage, index) =>
+    [stage, index] as const));
+  const ordered = [...groups.values()].sort((a, b) =>
+    (stageOrder.get(a.stage) ?? 99) - (stageOrder.get(b.stage) ?? 99) ||
+    b.offsets.length - a.offsets.length ||
+    a.offsets[0]! - b.offsets[0]!);
+  return ordered.flatMap(group => {
+    const results: AuditModelInvestigationBatch[] = [];
+    for (let start = 0; start < group.offsets.length; start += maximumMembers) {
+      const offsets = group.offsets.slice(start, start + maximumMembers);
+      results.push({
+        stage: group.stage,
+        source: group.source,
+        validationGroupKey: group.validationGroupKey,
+        sharedQuestion: group.question,
+        sharedMissingProof: group.missingProof,
+        members: offsets.map(taskOffset => {
+          const task = input.tasks[taskOffset]!;
+          return {
+            taskOffset,
+            taskId: task.id,
+            obligationId: task.unresolvedObligationIds.length === 1
+              ? task.unresolvedObligationIds[0]! : null,
+            individualReason: task.decisionNeeded,
+            evidenceIds: task.evidenceIds.slice(0, 3),
+            omittedEvidenceIds: Math.max(0, task.evidenceIds.length - 3),
+          };
+        }),
+        proofBoundary: "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE",
+      });
+    }
+    return results;
+  });
+}
+
 export function deriveAuditModelTaskPackets(input: {
   readonly admission: SelectedMapAuditAdmission;
   readonly procedure: MandatoryAuditProcedureReceipt;

@@ -19,6 +19,35 @@ const hash = (bytes: Buffer): string => createHash("sha256")
   .update(bytes).digest("hex");
 
 function fixture(): SelectedMapAuditHandoffSnapshot {
+  const taskRows: SelectedMapAuditHandoffSnapshot["taskRows"] =
+    Array.from({ length: 26 }, (_, i) => ({
+      task: {
+        schemaVersion: 1,
+        policy: "bounded-audit-model-task",
+        id: "task:" + i,
+        auditRevision: REVISION,
+        kind: "AUDIT_OBLIGATION",
+        stage: "UNDERSTAND",
+        unresolvedObligationIds: ["obligation:" + i],
+      } as SelectedMapAuditHandoffSnapshot["taskRows"][number]["task"],
+      resolutionEligible: false,
+    }));
+  const investigationRows: SelectedMapAuditHandoffSnapshot["investigationRows"] =
+    Array.from({ length: 4 }, (_, batch) => ({
+      stage: "UNDERSTAND" as const,
+      source: "discovery-challenge",
+      validationGroupKey: "shared:source",
+      sharedQuestion: "Trace authored source",
+      sharedMissingProof: "Still unresolved",
+      members: taskRows.slice(batch * 8, batch * 8 + 8).map((row, offset) => ({
+        taskOffset: batch * 8 + offset,
+        taskId: row.task.id,
+        obligationId: row.task.unresolvedObligationIds[0]!,
+        individualReason: "Source question",
+        evidenceIds: [], omittedEvidenceIds: 0,
+      })),
+      proofBoundary: "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE" as const,
+    }));
   return {
     schemaVersion: 1,
     policy: "selected-map-audit-handoff-snapshot",
@@ -37,17 +66,8 @@ function fixture(): SelectedMapAuditHandoffSnapshot {
       diagnosisNavigation: {} as SelectedMapAuditHandoffSnapshot["shared"]["diagnosisNavigation"],
       proofBoundary: "MODEL_RESPONSE_IS_UNTRUSTED_UNTIL_CANONICAL_ENGINE_ADMISSION",
     },
-    taskRows: Array.from({ length: 26 }, (_, i) => ({
-      task: {
-        schemaVersion: 1,
-        policy: "bounded-audit-model-task",
-        id: "task:" + i,
-        auditRevision: REVISION,
-        kind: "AUDIT_OBLIGATION",
-        stage: "UNDERSTAND",
-      } as SelectedMapAuditHandoffSnapshot["taskRows"][number]["task"],
-      resolutionEligible: false,
-    })),
+    taskRows,
+    investigationRows,
   };
 }
 
@@ -86,6 +106,12 @@ describe("pinned read-only handoff transport", () => {
       taskCount: 26, offset: 24, nextOffset: null,
     });
     expect(restored.taskRows.every(row => row.resolutionEligible === false)).toBe(true);
+    expect(pageSelectedMapAuditHandoffSnapshot(restored, 0, 12, 0))
+      .toMatchObject({ investigationBatchCount: 4, investigationBatchOffset: 0,
+        nextInvestigationBatchOffset: null });
+    const selectedBatch = pageSelectedMapAuditHandoffSnapshot(restored, 0, 12, 1);
+    expect(selectedBatch.investigationBatches).toHaveLength(3);
+    expect(selectedBatch.investigationBatches[0]?.members[0]?.taskOffset).toBe(8);
   });
 
   it("rejects changed bytes, stale engine/map SHA and attempts to overwrite snapshots", async () => {
@@ -118,6 +144,27 @@ describe("pinned read-only handoff transport", () => {
       sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
       snapshotSha256: hash(altered),
     })).rejects.toThrow("proof boundary");
+  });
+
+  it("rejects a digest-matched batch that omits or impersonates a canonical task", async () => {
+    const path = await snapshotFile();
+    await writeHandoffSnapshot(path, fixture(), SOURCE_SHA);
+    const record = JSON.parse((await readFile(path)).toString("utf8"));
+    record.snapshot.investigationRows[0].members[0].taskId = "forged-task";
+    let bytes = Buffer.from(JSON.stringify(record));
+    await writeFile(path, bytes);
+    await expect(readHandoffSnapshot(path, {
+      sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
+      snapshotSha256: hash(bytes),
+    })).rejects.toThrow("batch task identity");
+    record.snapshot.investigationRows[0].members[0].taskId = "task:0";
+    record.snapshot.investigationRows.pop();
+    bytes = Buffer.from(JSON.stringify(record));
+    await writeFile(path, bytes);
+    await expect(readHandoffSnapshot(path, {
+      sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
+      snapshotSha256: hash(bytes),
+    })).rejects.toThrow("omit canonical tasks");
   });
 
   it("does not allow a snapshot to become a tracked source file", async () => {

@@ -36,7 +36,9 @@ async function main(): Promise<void> {
   let gzip = false;
   let timings = false;
   let handoffOffset = 0;
+  let handoffBatchOffset = 0;
   let offsetSupplied = false;
+  let batchOffsetSupplied = false;
   let responsesPath: string | undefined;
   let handoffSavePath: string | undefined;
   let handoffReadPath: string | undefined;
@@ -88,6 +90,7 @@ async function main(): Promise<void> {
         argument === "--handoff-save" ||
         argument === "--handoff-read" ||
         argument === "--handoff-snapshot-sha256" ||
+        argument === "--handoff-batch-offset" ||
         argument === "--handoff-offset") {
       const value = rawArgs[index + 1];
       if (!value || value.startsWith("--")) {
@@ -119,6 +122,15 @@ async function main(): Promise<void> {
           throw new Error("--handoff-snapshot-sha256 may only be supplied once");
         }
         handoffSnapshotSha256 = value;
+      } else if (argument === "--handoff-batch-offset") {
+        if (batchOffsetSupplied || !/^(0|[1-9][0-9]*)$/.test(value)) {
+          throw new Error("--handoff-batch-offset must be a single nonnegative integer");
+        }
+        handoffBatchOffset = Number(value);
+        if (!Number.isSafeInteger(handoffBatchOffset)) {
+          throw new Error("--handoff-batch-offset exceeds supported integer range");
+        }
+        batchOffsetSupplied = true;
       } else {
         if (offsetSupplied || !/^(0|[1-9][0-9]*)$/.test(value)) {
           throw new Error("--handoff-offset must be a single nonnegative integer");
@@ -145,6 +157,9 @@ async function main(): Promise<void> {
   }
   if (offsetSupplied && !handoff) {
     throw new Error("--handoff-offset requires --handoff");
+  }
+  if (batchOffsetSupplied && !handoff) {
+    throw new Error("--handoff-batch-offset requires --handoff");
   }
   if ((handoffSavePath !== undefined || handoffReadPath !== undefined) && !handoff) {
     throw new Error("Handoff snapshots require --handoff");
@@ -181,7 +196,7 @@ async function main(): Promise<void> {
       snapshotSha256: handoffSnapshotSha256!,
     });
     const output = JSON.stringify(
-      pageSelectedMapAuditHandoffSnapshot(snapshot, handoffOffset),
+      pageSelectedMapAuditHandoffSnapshot(snapshot, handoffOffset, 12, handoffBatchOffset),
       null,
       compact ? undefined : 2,
     ) + "\n";
@@ -201,7 +216,7 @@ async function main(): Promise<void> {
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-save <scratch.json>] [--responses model.json] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-batch-offset N] [--handoff-save <scratch.json>] [--responses model.json] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -315,7 +330,7 @@ async function main(): Promise<void> {
       )).html : undefined;
   const output = html !== undefined ? html : handoff
     ? JSON.stringify(
-        projectSelectedMapAuditModelHandoff(resolvedAudit, handoffOffset),
+        projectSelectedMapAuditModelHandoff(resolvedAudit, handoffOffset, 12, handoffBatchOffset),
         null,
         compact ? undefined : 2,
       ) + "\n"

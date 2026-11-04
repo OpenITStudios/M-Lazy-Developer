@@ -9,9 +9,12 @@ import type { MandatoryAuditCheckpointReceipt } from "../src/inspection/mandator
 import {
   deriveAuditModelKnowledgeLookup,
   deriveAuditModelTaskPackets,
+  planAuditModelInvestigationBatches,
+  type AuditModelTaskPacket,
   reviewAuditModelSourceInterpretation,
   selectCheckpointIntentSubjects,
 } from "../src/map-audit-model-task.js";
+import type { AuditObligation } from "../src/map-audit-obligations.js";
 import {
   applySelectedMapAuditModelResponses,
   type SelectedMapAuditRun,
@@ -1488,5 +1491,80 @@ describe("EVALUATE source-scoped indicators on existing task", () => {
     expect(run({ graph: { ...graph, causalLinks: [{
       ...graph.causalLinks[0]!, evidenceIds: ["ev:foreign"],
     }] } })[0]?.scenarioIndicators).toBeUndefined();
+  });
+});
+
+const makeSharedSourceObligation = (
+  id: string, key = "owner:wave",
+  source: AuditObligation["source"] = "discovery-challenge",
+  stage: AuditObligation["stage"] = "UNDERSTAND",
+): AuditObligation => ({
+  id, source, stage, validationGroupKey: key,
+  title: "Resolve source step", reason: "different source fact: " + id,
+  missingProof: "Exact selected-source gameplay owner",
+  validationTest: "Trace authored owner and player-visible effect",
+  subjectIds: [], componentIds: [], evidenceIds: ["evidence:" + id],
+});
+const makeSharedSourceTask = (item: AuditObligation): AuditModelTaskPacket => ({
+  schemaVersion: 1, policy: "bounded-audit-model-task",
+  id: "task:audit-obligation:" + item.id, auditRevision: "revision:pinned",
+  kind: "AUDIT_OBLIGATION", stage: item.stage, goal: item.title,
+  decisionNeeded: item.reason, subjectIds: [], componentIds: [],
+  requiredKnowledgeIds: [], evidenceIds: item.evidenceIds,
+  evidenceContext: [], unresolvedEvidenceIds: [], knowledgeContext: [],
+  unresolvedObligationIds: [item.id], allowedOutputs: [],
+  forbiddenActions: [], stopCondition: "Unresolved proof remains",
+});
+
+describe("shared-source AI investigation is not shared proof", () => {
+  it("schedules every obligation exactly once with bounded groups and separate reasons", () => {
+    const obligations = [
+      ...Array.from({ length: 19 }, (_, i) => makeSharedSourceObligation("edge:" + i)),
+      makeSharedSourceObligation("different:owner", "owner:other"),
+      makeSharedSourceObligation("different:stage", "owner:wave", "discovery-challenge", "PROVE"),
+      makeSharedSourceObligation("different:source", "owner:wave", "detection-gap"),
+    ];
+    const tasks = obligations.map(makeSharedSourceTask);
+    const batches = planAuditModelInvestigationBatches({ tasks, obligations });
+    const main = batches.filter(batch =>
+      batch.stage === "UNDERSTAND" && batch.source === "discovery-challenge" &&
+      batch.validationGroupKey === "owner:wave");
+    expect(main.map(batch => batch.members.length)).toEqual([8, 8, 3]);
+    expect(main.flatMap(batch => batch.members.map(member => member.individualReason)))
+      .toEqual(obligations.slice(0, 19).map(item => item.reason));
+    const offsets = batches.flatMap(batch => batch.members.map(member => member.taskOffset))
+      .sort((a, b) => a - b);
+    expect(offsets).toEqual(tasks.map((_, index) => index));
+    expect(batches.every(batch => batch.members.length > 0 &&
+      batch.members.length <= 8 &&
+      batch.proofBoundary === "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE"))
+      .toBe(true);
+  });
+
+  it("keeps causal links, special source investigations and independent proofs isolated", () => {
+    const obligations = [
+      makeSharedSourceObligation("one"), makeSharedSourceObligation("two"),
+      { ...makeSharedSourceObligation("three"), missingProof: "Other proof" },
+      { ...makeSharedSourceObligation("four"), validationTest: "Other question" },
+    ];
+    const tasks = obligations.map(makeSharedSourceTask);
+    tasks[1] = { ...tasks[1]!, sourceInvestigation: {
+      authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+      entries: [], omittedEntries: 0,
+    } };
+    tasks[2] = { ...tasks[2]!, causalLinkId: "causal:independent" };
+    expect(planAuditModelInvestigationBatches({ tasks, obligations })
+      .every(batch => batch.members.length === 1)).toBe(true);
+  });
+
+  it("fails closed for duplicate IDs and invalid member budgets", () => {
+    const obligations = [makeSharedSourceObligation("x"), makeSharedSourceObligation("y")];
+    const tasks = obligations.map(makeSharedSourceTask);
+    tasks[1] = { ...tasks[1]!, id: tasks[0]!.id };
+    expect(planAuditModelInvestigationBatches({ tasks, obligations })).toHaveLength(2);
+    expect(() => planAuditModelInvestigationBatches({ tasks, obligations }, 0))
+      .toThrow("1 to 12");
+    expect(() => planAuditModelInvestigationBatches({ tasks, obligations }, 13))
+      .toThrow("1 to 12");
   });
 });

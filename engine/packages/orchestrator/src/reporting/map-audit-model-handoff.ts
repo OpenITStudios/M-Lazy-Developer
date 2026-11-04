@@ -15,7 +15,8 @@ import {
 } from "../../../semantic-ir/src/index.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
 import type { AuditObligation } from "../map-audit-obligations.js";
-import { MODEL_RESOLVABLE_KINDS } from "../map-audit-model-task.js";
+import { MODEL_RESOLVABLE_KINDS, planAuditModelInvestigationBatches,
+  type AuditModelInvestigationBatch } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
 
 export interface SelectedMapAuditModelHandoff {
@@ -427,6 +428,11 @@ export interface SelectedMapAuditModelHandoff {
     }[];
     readonly omittedPendingObligationGroups: number;
   };
+  /** Read-only, bounded shared-source AI investigation units, never proof. */
+  readonly investigationBatchCount: number;
+  readonly investigationBatchOffset: number;
+  readonly nextInvestigationBatchOffset: number | null;
+  readonly investigationBatches: readonly AuditModelInvestigationBatch[];
   readonly taskCount: number;
   readonly offset: number;
   readonly nextOffset: number | null;
@@ -617,8 +623,11 @@ export interface SelectedMapAuditHandoffSnapshot {
   readonly auditRevision: string;
   readonly auditStatus: SelectedMapAuditRun["status"];
   readonly shared: Omit<SelectedMapAuditModelHandoff,
-    "taskCount" | "offset" | "nextOffset" | "tasks">;
+    "taskCount" | "offset" | "nextOffset" | "tasks" |
+    "investigationBatchCount" | "investigationBatchOffset" |
+    "nextInvestigationBatchOffset" | "investigationBatches">;
   readonly taskRows: SelectedMapAuditModelHandoff["tasks"];
+  readonly investigationRows: readonly AuditModelInvestigationBatch[];
 }
 
 /** Build the bounded common context once, then reuse exactly the same task
@@ -628,7 +637,9 @@ export function projectSelectedMapAuditHandoffSnapshot(
   audit: SelectedMapAuditRun,
 ): SelectedMapAuditHandoffSnapshot {
   const first = projectSelectedMapAuditModelHandoff(audit, 0, 1);
-  const { taskCount, offset, nextOffset, tasks, ...shared } = first;
+  const { taskCount, offset, nextOffset, tasks,
+    investigationBatchCount, investigationBatchOffset,
+    nextInvestigationBatchOffset, investigationBatches, ...shared } = first;
   const graph = audit.inspection.hiddenGameplayDefects.scenarioAudit.graph;
   const resolvable = new Set(graph.causalLinks
     .filter(link => ["CONTRADICTED", "RUNTIME_BLOCKED", "DETECTION_GAP"]
@@ -642,6 +653,9 @@ export function projectSelectedMapAuditHandoffSnapshot(
     auditStatus: audit.status,
     shared,
     taskRows: projectHandoffTaskRows(audit, audit.modelTaskPackets, resolvable),
+    investigationRows: planAuditModelInvestigationBatches({
+      tasks: audit.modelTaskPackets, obligations: audit.auditObligations,
+    }),
   };
 }
 
@@ -650,15 +664,28 @@ export function pageSelectedMapAuditHandoffSnapshot(
   snapshot: SelectedMapAuditHandoffSnapshot,
   offset = 0,
   limit = 12,
+  investigationBatchOffset = 0,
 ): SelectedMapAuditModelHandoff {
   if (!Number.isSafeInteger(offset) || offset < 0 ||
       !Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
     throw new Error("Model handoff offset must be nonnegative and limit must be 1–50.");
   }
+  if (!Number.isSafeInteger(investigationBatchOffset) || investigationBatchOffset < 0) {
+    throw new Error("Investigation batch offset must be a nonnegative integer.");
+  }
   const count = snapshot.taskRows.length;
   const selected = snapshot.taskRows.slice(offset, offset + limit);
+  const batchCount = snapshot.investigationRows.length;
+  const investigationBatches = snapshot.investigationRows.slice(
+    investigationBatchOffset, investigationBatchOffset + 4);
   return {
     ...snapshot.shared,
+    investigationBatchCount: batchCount,
+    investigationBatchOffset,
+    nextInvestigationBatchOffset:
+      investigationBatchOffset + investigationBatches.length < batchCount
+        ? investigationBatchOffset + investigationBatches.length : null,
+    investigationBatches,
     taskCount: count,
     offset,
     nextOffset: offset + selected.length < count ? offset + selected.length : null,
@@ -670,11 +697,20 @@ export function projectSelectedMapAuditModelHandoff(
   audit: SelectedMapAuditRun,
   offset = 0,
   limit = 12,
+  investigationBatchOffset = 0,
 ): SelectedMapAuditModelHandoff {
   if (!Number.isSafeInteger(offset) || offset < 0 ||
       !Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
     throw new Error("Model handoff offset must be nonnegative and limit must be 1–50.");
   }
+  if (!Number.isSafeInteger(investigationBatchOffset) || investigationBatchOffset < 0) {
+    throw new Error("Investigation batch offset must be a nonnegative integer.");
+  }
+  const allInvestigationBatches = planAuditModelInvestigationBatches({
+    tasks: audit.modelTaskPackets, obligations: audit.auditObligations,
+  });
+  const selectedInvestigationBatches = allInvestigationBatches.slice(
+    investigationBatchOffset, investigationBatchOffset + 4);
   const graph = audit.inspection.hiddenGameplayDefects.scenarioAudit.graph;
   const resolvable = new Set(graph.causalLinks
     .filter((link) => ["CONTRADICTED", "RUNTIME_BLOCKED", "DETECTION_GAP"]
@@ -1584,6 +1620,12 @@ export function projectSelectedMapAuditModelHandoff(
       ...summarizeAuditHandoffObligations(
         audit.auditObligations, 12, taskOffsetByObligation),
     },
+    investigationBatchCount: allInvestigationBatches.length,
+    investigationBatchOffset,
+    nextInvestigationBatchOffset:
+      investigationBatchOffset + selectedInvestigationBatches.length < allInvestigationBatches.length
+        ? investigationBatchOffset + selectedInvestigationBatches.length : null,
+    investigationBatches: selectedInvestigationBatches,
     taskCount: audit.modelTaskPackets.length,
     offset,
     nextOffset: offset + selected.length < audit.modelTaskPackets.length

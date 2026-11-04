@@ -525,10 +525,19 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       const snapshot = projectSelectedMapAuditHandoffSnapshot(result);
       expect(snapshot.auditStatus).toBe(result.status);
       for (const offset of [0, 12, 50, result.modelTaskPackets.length]) {
-        expect(pageSelectedMapAuditHandoffSnapshot(snapshot, offset))
-          .toEqual(projectSelectedMapAuditModelHandoff(result, offset));
+        for (const batchOffset of [0, 4, snapshot.investigationRows.length]) {
+          expect(pageSelectedMapAuditHandoffSnapshot(snapshot, offset, 12, batchOffset))
+            .toEqual(projectSelectedMapAuditModelHandoff(result, offset, 12, batchOffset));
+        }
       }
       expect(snapshot.taskRows).toHaveLength(result.modelTaskPackets.length);
+      const investigationOffsets = snapshot.investigationRows.flatMap(batch =>
+        batch.members.map(member => member.taskOffset)).sort((a, b) => a - b);
+      expect(investigationOffsets).toEqual(result.modelTaskPackets.map((_, i) => i));
+      expect(snapshot.investigationRows.every(batch =>
+        batch.members.length <= 8 &&
+        batch.proofBoundary ===
+          "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE")).toBe(true);
       const timing = result.timingObservations;
       expect(timing).toMatchObject({
         scope: "INITIAL_AUDIT_ONLY_NOT_EXECUTED_GAMEPLAY",

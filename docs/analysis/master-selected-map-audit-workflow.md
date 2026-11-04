@@ -394,6 +394,48 @@ must always use a fresh exact-map `runSelectedMapAudit()` and canonical proof
 gates; `--responses` cannot act on a snapshot. New map/source revisions,
 or a missing/altered snapshot, require a new canonical audit.
 
+### Lossless AI investigation batching
+
+The existing canonical audit may correctly produce thousands of separate
+Audit Obligations from one large script. **Do not treat every obligation as
+a separate AI read of the same source.** The single canonical model task
+owner now builds a read-only investigation schedule over its unchanged
+`modelTaskPackets`. Each source-review batch has **at most eight** tasks.
+
+Batching is allowed only for non-causal `AUDIT_OBLIGATION` packets with
+one unambiguous canonical obligation and matching stage, source,
+`validationGroupKey`, missing proof, and exact validation test. A batch
+retains each task's independent reason, evidence IDs (with explicit
+omission count) and *original global task offset*. Tasks with unique
+causal claims, source-investigation context, conflicting identities or
+distinct proof requirements remain separate. The canonical ledger,
+all task IDs, individual proof status, and ordered admission remain
+unchanged. **A shared investigation is NEVER shared defect proof.**
+
+The `--handoff` output now includes `investigationBatchCount`,
+`investigationBatchOffset`, `nextInvestigationBatchOffset`, and
+four bounded `investigationBatches` at a time. Use
+`--handoff-batch-offset N` to navigate work units independently of
+`--handoff-offset N`, which still addresses exact original tasks.
+Both dimensions are replayable from the existing checksum-pinned
+`--handoff-read` snapshot without rerunning the map audit.
+
+**AI operator rule:** inspect one shared source/question per batch and
+retain an explicit result or open proof requirement **for every member**.
+Fetch the member's full canonical task at its original offset whenever
+the bounded preview omits relevant evidence; `omittedEvidenceIds` is not
+permission to skip evidence. Do not submit a batch ID in a model response,
+promote an obligation to PASS, merge root causes, or close an unknown from
+group membership. Only the original current-revision causal task and
+canonical PROVE gate can admit a resolution. The work queue is a derived
+read-only presentation, never a second authority or a new audit stage.
+
+Acceptance invariants: every original model-task offset appears exactly
+once in the complete batch index; batches have 1–8 members; no cross-stage
+or cross-source conflation; snapshot integrity checks fail closed on
+missing/duplicate/forged task membership. Verify output-v2 and original
+task IDs are unchanged before claiming any production benefit.
+
 ### Grouped Audit Obligations and measured audit cost
 
 `diagnosisNavigation.pendingObligationGroups` groups *navigation only* by

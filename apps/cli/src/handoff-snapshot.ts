@@ -108,6 +108,7 @@ export async function readHandoffSnapshot(
       snapshot.auditRevision.length === 0 ||
       !["BLOCKED", "READY_FOR_REVIEW"].includes(snapshot.auditStatus) ||
       !Array.isArray(snapshot.taskRows) ||
+      !Array.isArray(snapshot.investigationRows) ||
       snapshot.artifactFingerprint !== expectedMapHash ||
       snapshot.shared?.artifactFingerprint !== expectedMapHash ||
       snapshot.shared?.auditRevision !== snapshot.auditRevision ||
@@ -119,6 +120,34 @@ export async function readHandoffSnapshot(
         !row.task || row.task.auditRevision !== snapshot.auditRevision ||
         typeof row.resolutionEligible !== "boolean")) {
     throw new Error("Handoff snapshot identity or proof boundary is invalid");
+  }
+  // A read-only batch cannot hide a canonical task, impersonate another
+  // task ID, or become a proof response. Retain exact 1:1 offset coverage.
+  const seen = new Uint8Array(snapshot.taskRows.length);
+  for (const batch of snapshot.investigationRows) {
+    if (!batch || !Array.isArray(batch.members) ||
+        batch.members.length < 1 || batch.members.length > 8 ||
+        batch.proofBoundary !==
+          "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE") {
+      throw new Error("Handoff investigation batch boundary is invalid");
+    }
+    for (const member of batch.members) {
+      const offset = member?.taskOffset;
+      if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0 ||
+          offset >= snapshot.taskRows.length ||
+          seen[offset] !== 0 ||
+          snapshot.taskRows[offset]?.task?.id !== member.taskId ||
+          snapshot.taskRows[offset]?.task?.stage !== batch.stage ||
+          member.obligationId !==
+            (snapshot.taskRows[offset]?.task?.unresolvedObligationIds?.length === 1
+              ? snapshot.taskRows[offset]!.task.unresolvedObligationIds[0] : null)) {
+        throw new Error("Handoff investigation batch task identity is invalid");
+      }
+      seen[offset] = 1;
+    }
+  }
+  if (seen.some(value => value !== 1)) {
+    throw new Error("Handoff investigation batches omit canonical tasks");
   }
   return snapshot;
 }
