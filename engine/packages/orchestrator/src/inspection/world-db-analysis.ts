@@ -13,9 +13,12 @@ const INSPECTION_LEVELDB_BUDGET = {
   // The frozen Defense calibration map has 306,522 entries / 335 MB of
   // decoded values; the former 100k cap silently omitted most of its world.
   // Keep strict finite limits for substantially larger/untrusted worlds.
-  maxEntries: 500_000,
+  // Large worlds can exceed the old 500k / 512 MiB bounds even when the
+  // source DB itself is small and fully readable. Keep bounded streaming
+  // with room for observed complete selected-world evidence.
+  maxEntries: 1_000_000,
   maxValueBytes: 8 * 1024 * 1024,
-  maxTotalValueBytes: 512 * 1024 * 1024,
+  maxTotalValueBytes: 1024 * 1024 * 1024,
 };
 
 export interface WorldDbNativeSummary {
