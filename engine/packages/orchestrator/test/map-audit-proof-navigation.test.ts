@@ -222,7 +222,7 @@ describe("map audit proof navigation", () => {
     expect(buildAuditProofNavigation(unresolved).runtimeRequired).toBe(false);
   });
 
-  it("moves historically relevant knowledge earlier without moving runtime forward", () => {
+  it("excludes retired map hints while preserving source-proof order", () => {
     const world = {
       entities: {
         definitions: 5,
@@ -276,8 +276,8 @@ describe("map audit proof navigation", () => {
       world,
     );
 
-    expect(result.historyPressure).toBeGreaterThan(0);
-    expect(result.historicalSearchHints.length).toBeGreaterThan(0);
+    expect(result.historyPressure).toBe(0);
+    expect(result.historicalSearchHints).toEqual([]);
     expect(result.route.at(-1)?.evidencePreference).toBe(
       "runtime",
     );

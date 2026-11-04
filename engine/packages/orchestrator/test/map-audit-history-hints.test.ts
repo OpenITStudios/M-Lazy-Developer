@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   historicalSearchHintsForFinding,
+  historicalSearchPressure,
   historicalSurfaceSearchPressure,
 } from "../src/map-audit-history-hints.js";
 import type {
@@ -88,33 +89,18 @@ function worldWithSimulationGap(): GameplayWorldModel {
   } as unknown as GameplayWorldModel;
 }
 
-describe("map audit historical search hints", () => {
-  it("raises generic simulation failure hints when selected-artifact facts match", () => {
-    const world = worldWithSimulationGap();
+describe("map audit clean-slate historical isolation", () => {
+  it("does not reintroduce previous-map search hints", () => {
     const hints = historicalSearchHintsForFinding(
-      finding("progression-wave-objective"),
-      world,
+      finding("progression-wave-objective"), worldWithSimulationGap(),
     );
-
-    expect(hints.map((item) => item.id)).toContain(
-      "history:simulation-resource-realization",
-    );
-    expect(
-      historicalSurfaceSearchPressure(
-        "runtime:chunks",
-        world,
-      ),
-    ).toBeGreaterThan(0);
+    expect(hints).toEqual([]);
+    expect(historicalSearchPressure(hints)).toBe(0);
   });
 
-  it("does not inject unrelated inventory history into a pure simulation finding", () => {
-    const hints = historicalSearchHintsForFinding(
-      finding("progression-wave-objective"),
-      worldWithSimulationGap(),
-    );
-
-    expect(hints.map((item) => item.id)).not.toContain(
-      "history:recovery-authority-collision",
-    );
+  it("keeps source-evidenced current-map surface prioritization", () => {
+    expect(historicalSurfaceSearchPressure(
+      "runtime:chunks", worldWithSimulationGap(),
+    )).toBeGreaterThan(0);
   });
 });

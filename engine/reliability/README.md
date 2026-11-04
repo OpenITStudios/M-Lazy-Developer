@@ -2,6 +2,8 @@
 
 Canonical owner for durable quality evidence that supports retest, benchmark, release, and Minecraft-update decisions.
 
+**Current baseline:** Previous real-map audit records, map-derived patterns and per-map profiles have been cleared from the active Local branch. Generic engine evidence remains. Older Git commits are not current-map audit inputs.
+
 ## Structure
 
 ```text

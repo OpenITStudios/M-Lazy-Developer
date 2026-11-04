@@ -15,6 +15,8 @@ Normalize the request and present one small Pre-Audit plan; secure one user conf
 
 ## Stable start and continuation across chats
 
+**Fresh-map baseline (requested reset, 2026-11-04):** Previous map reports, historical bug findings, workspace projects, map-specific expectations, old chat summaries, and retired Git history are not valid inputs to a new selected-map audit. Start from newly supplied immutable map bytes, current engine source and general platform knowledge only. Do not rehydrate retired records to rank issues or define expected gameplay. Reproduce every proposed issue independently on the new map; generic code and synthetic negative controls remain available.
+
 A new ChatGPT conversation has **no automatic current-map audit receipt**. Re-read `AGENTS.md`, `GITHUB_RULES.md`, this skill and the single master workflow from the pinned `Local` HEAD; establish selected map bytes/SHA-256 and exact engine SHA again. A prior chat summary, a historical test PASS, the map filename, or an old portable archive is never current proof. Reuse an accessible previous canonical audit only when its artifact fingerprint, engine/source identity, applicable knowledge/revision and execution provenance match; otherwise explicitly label comparison, rerun if supported, or report source-only with exact missing evidence. Do not silently change to IMPROVE SYSTEM or create a second report.
 
 Present the same minimum operator fields described by the master workflow on **every** run, including partial ones. Headings and status meaning stay stable even when model prose differs; canonical machine evidence, not chat memory, decides results.

@@ -6313,7 +6313,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-as-targeted-development-contract",
-        "sourceBlobSha": "e258def00d0bce7be4b71e945cd38005615be287"
+        "sourceBlobSha": "9b58427bb45d054b2ea0a4c7a1a0916fc1a9ec73"
       },
       "recommendation": "keep",
       "rationale": "Direct deterministic helper contract only, with no selected-map pipeline or user-facing integration. Retain all original assertions; classify Development rather than Acceptance while preserving full/affected source selection. Execution not verified.",
@@ -6454,7 +6454,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "c3d7f9922854cfcb6af02d52ff70cb5635968841"
+        "sourceBlobSha": "3f9cb34d331d4cd5325cdf6ae54bae20b80b8679"
       },
       "recommendation": "keep",
       "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
