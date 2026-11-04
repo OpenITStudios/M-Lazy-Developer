@@ -243,6 +243,23 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
       )
       .map((item) => item.subjectId)
       .sort();
+  const authoredJourneyEvidence = (kind: "objective" | "phase" | "outcome") =>
+    intent.nodes.some((node) =>
+      node.kind === kind && node.status === "authored" &&
+      node.evidenceIds.some((id) => intent.evidence.some((item) =>
+        item.id === id && item.scope === "selected-artifact")));
+  const journeyHasGroundedCore = authoredJourneyEvidence("phase") &&
+    (authoredJourneyEvidence("objective") ||
+     authoredJourneyEvidence("outcome"));
+  // The source may mention objectives/phases only as lexical helper names.
+  // Keep this as one unresolved materiality question, never an inferred
+  // gameplay chain or a claim that progression is absent.
+  const sourceStageCandidates = intent.nodes.filter((node) =>
+    node.kind === "objective" || node.kind === "phase");
+  const hasGroundedStage = progressionContracts.some((item) =>
+    item.kind === "objective" || item.kind === "phase");
+  const progressionStageUnresolved =
+    sourceStageCandidates.length > 0 && !hasGroundedStage;
   const progressionIncomplete = progressionContracts.filter(
     (item) =>
       item.kind === "objective"
@@ -302,23 +319,21 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
   const fullJourney = graph.scenarios.find(
     (scenario) => scenario.label === "full-journey",
   );
+  const journeyComposed = (fullJourney?.composedScenarioIds.length ?? 0) > 0;
   checkpoint.push(receipt(
     "A3",
     "UNDERSTAND",
     "Player Journey Reconstruction",
-    fullJourney &&
-    fullJourney.composedScenarioIds.length > 0 &&
-    scenarioClosure.status !== "OPEN" &&
-    intent.nodes.some((node) =>
-      node.kind === "objective" ||
-      node.kind === "phase" ||
-      node.kind === "outcome"
-    )
-      ? "CLOSED"
-      : "OPEN",
-    fullJourney && fullJourney.composedScenarioIds.length > 0
-      ? "Full journey is represented as a composition of concrete gameplay scenarios."
-      : "No complete full-journey composition is available.",
+    !journeyComposed ? "OPEN" :
+      journeyHasGroundedCore && scenarioClosure.status === "CLOSED"
+        ? "CLOSED" : "PARTIAL",
+    !journeyComposed
+      ? "No complete full-journey composition is available."
+      : !journeyHasGroundedCore
+        ? "Journey composition exists, but authored phase and objective/outcome semantics are not yet established beyond source-name candidates."
+        : scenarioClosure.status !== "CLOSED"
+          ? "Journey composition and authored semantics exist, but scenario causal closure is incomplete."
+          : "Full journey composition, authored semantics and scenario closure are supported.",
     fullJourney?.composedScenarioIds ?? [],
     ["PlayerJourneyGraph"],
     {
@@ -333,11 +348,7 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
         obligation(
           "journey-core-semantics",
           true,
-          intent.nodes.some((node) => node.kind === "phase") &&
-            intent.nodes.some((node) =>
-              node.kind === "objective" ||
-              node.kind === "outcome"
-            ),
+          journeyHasGroundedCore,
           "Journey must contain grounded phase plus objective/outcome semantics.",
           intent.nodes
             .filter((node) =>
@@ -479,17 +490,17 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
     "UNDERSTAND",
     "Progression Contract",
     progressionContracts.length === 0
-      ? discoverySupportsAbsence
-        ? "NOT_APPLICABLE"
-        : "OPEN"
-      : progressionIncomplete.length === 0
-        ? "CLOSED"
-        : "PARTIAL",
-    progressionContracts.length === 0
-      ? discoverySupportsAbsence
-        ? "No objective/phase/outcome progression surface remains after complete discovery."
-        : "Progression applicability cannot close while discovery is incomplete."
-      : "Objective/phase/outcome progression edges are projected from gameplay intent.",
+      ? progressionStageUnresolved ? "PARTIAL" :
+        discoverySupportsAbsence ? "NOT_APPLICABLE" : "OPEN"
+      : progressionIncomplete.length === 0 && !progressionStageUnresolved
+        ? "CLOSED" : "PARTIAL",
+    progressionStageUnresolved
+      ? "Source names suggest objectives/phases, but no authored gameplay progression stage is grounded; helper calls are not proof of a player transition."
+      : progressionContracts.length === 0
+        ? discoverySupportsAbsence
+          ? "No authored progression surface remains after complete discovery."
+          : "Progression applicability cannot close while discovery is incomplete."
+        : "Only source-grounded objective/phase/outcome progress edges may satisfy the progression contract; unrelated helper dependencies remain source evidence.",
     progressionContracts.flatMap((item) => [
       ...item.inboundEdgeIds,
       ...item.outboundEdgeIds,
@@ -501,13 +512,18 @@ export function deriveMandatoryAuditProcedureReceipt(input: {
       obligations: [
         obligation(
           "progression-chain-connected",
-          progressionContracts.length > 0,
-          progressionIncomplete.length === 0,
-          "Objectives require inbound and outbound progression links; outcomes require inbound proof; phases require at least one transition connection.",
-          progressionContracts.flatMap((item) => [
-            ...item.inboundEdgeIds,
-            ...item.outboundEdgeIds,
-          ]),
+          progressionContracts.length > 0 || progressionStageUnresolved,
+          progressionIncomplete.length === 0 && !progressionStageUnresolved,
+          "Objectives require source-grounded progression links, outcomes require incoming gameplay effects, and source-named helper functions alone cannot certify phases or player transitions.",
+          [
+            ...progressionContracts.flatMap((item) => [
+              ...item.inboundEdgeIds,
+              ...item.outboundEdgeIds,
+            ]),
+            ...(progressionStageUnresolved
+              ? sourceStageCandidates.flatMap((item) => item.evidenceIds)
+              : []),
+          ],
         ),
       ],
     },

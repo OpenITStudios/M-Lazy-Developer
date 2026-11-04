@@ -112,6 +112,31 @@ describe("A4 dynamic-property clear source identity", () => {
   });
 });
 
+describe("A3/A6 source-grounded progression distinction", () => {
+  it("keeps lexical helper objective/phase candidates outside progression contracts", async () => {
+    const { deriveMandatoryProgressionContracts } = await import(
+      "../../src/inspection/mandatory-audit-support.js");
+    const intent = {
+      nodes: [
+        { id: "objective:format-helper", kind: "objective", status: "inferred", evidenceIds: ["source:name"] },
+        { id: "phase:stage-helper", kind: "phase", status: "hypothesis", evidenceIds: ["source:name"] },
+        { id: "objective:real", kind: "objective", status: "authored", evidenceIds: ["source:objective"] },
+        { id: "outcome:win", kind: "outcome", status: "authored", evidenceIds: ["source:outcome"] },
+      ],
+      edges: [
+        { id: "call:helper", from: "objective:real", to: "objective:format-helper", kind: "requires", status: "inferred" },
+        { id: "call:result", from: "objective:real", to: "outcome:win", kind: "requires", status: "inferred" },
+        { id: "flow:win", from: "objective:real", to: "outcome:win", kind: "transitions-to", status: "authored" },
+      ],
+    } as any;
+    const progress = deriveMandatoryProgressionContracts(intent);
+    expect(progress.map(item => item.subjectId)).toEqual(["objective:real", "outcome:win"]);
+    expect(progress.find(item => item.kind === "objective")?.outboundEdgeIds).toEqual(["flow:win"]);
+    expect(progress.find(item => item.kind === "objective")?.dependencyEdgeIds).toEqual(["call:helper", "call:result"]);
+    expect(progress.find(item => item.kind === "outcome")?.inboundEdgeIds).toEqual(["flow:win"]);
+  });
+});
+
 describe("terminal collision C6 source evaluation", () => {
   it("closes bounded source evaluation with one exact link and scenario-scoped knowledge", () => {
     expect(assess()).toEqual({

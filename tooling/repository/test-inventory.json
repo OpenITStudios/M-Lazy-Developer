@@ -5605,7 +5605,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "da980a63a977f7b22eb5a34946873f655967683a"
+        "sourceBlobSha": "897586ebc34f1befb002525d0fe572422d5ea64c"
       },
       "recommendation": "keep",
       "rationale": "Source/knowledge closure rejects foreign or detached receipts and unresolved terminal races.",

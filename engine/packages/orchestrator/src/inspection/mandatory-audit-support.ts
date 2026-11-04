@@ -396,24 +396,34 @@ export function deriveMandatoryOwnershipRegistry(
 export function deriveMandatoryProgressionContracts(
   intent: GameplayIntentModel,
 ): readonly MandatoryAuditProgressionRecord[] {
+  // Name-only source functions are navigation candidates, not completed
+  // gameplay objectives/stages. Retain them in Intent/A7 but do not turn
+  // their helper calls into mandatory progression chains.
+  const flowKinds = new Set([
+    "produces", "consumes", "resets", "persists",
+    "transitions-to", "recovers-to", "wins-by", "loses-by",
+  ]);
+  const authoredFlowNodes = new Set(intent.edges
+    .filter((edge) => edge.status === "authored" && flowKinds.has(edge.kind))
+    .flatMap((edge) => [edge.from, edge.to]));
   return intent.nodes
     .filter((node) =>
-      node.kind === "objective" ||
-      node.kind === "phase" ||
-      node.kind === "outcome"
+      (node.kind === "objective" ||
+       node.kind === "phase" ||
+       node.kind === "outcome") &&
+      node.status !== "hypothesis" &&
+      (node.status === "authored" || authoredFlowNodes.has(node.id))
     )
     .map((node) => {
-      const inbound = intent.edges.filter(
-        (edge) =>
-          edge.to === node.id &&
-          edge.status !== "hypothesis",
-      );
-      const outbound = intent.edges.filter(
-        (edge) =>
-          edge.from === node.id &&
-          edge.status !== "hypothesis",
-      );
-      const incident = [...inbound, ...outbound];
+      const allInbound = intent.edges.filter((edge) =>
+        edge.to === node.id && edge.status !== "hypothesis");
+      const allOutbound = intent.edges.filter((edge) =>
+        edge.from === node.id && edge.status !== "hypothesis");
+      const inbound = allInbound.filter((edge) => flowKinds.has(edge.kind));
+      const outbound = allOutbound.filter((edge) => flowKinds.has(edge.kind));
+      // Preserve every technical requires/ownership witness for follow-up;
+      // such a witness must not satisfy an entry or exit progression gate.
+      const incident = [...allInbound, ...allOutbound];
       const stateResourceSubjectIds = [
         ...new Set(
           incident.flatMap((edge) => {
@@ -447,7 +457,7 @@ export function deriveMandatoryProgressionContracts(
         outboundEdgeIds:
           outbound.map((edge) => edge.id).sort(),
         entryEdgeIds:
-          inbound
+          allInbound
             .filter((edge) =>
               edge.kind === "produces" ||
               edge.kind === "transitions-to" ||

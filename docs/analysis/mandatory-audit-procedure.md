@@ -647,7 +647,7 @@ Player Journey Graph.
 
 ### Closure Rule
 
-Every required gameplay stage has grounded entry, success/failure exit, and next-state accounting.
+Every required gameplay stage has grounded entry, success/failure exit, and next-state accounting. A composed journey with unproven phase/objective semantics or incomplete scenario closure remains **PARTIAL**, never CLOSED. Lexical helper names alone are not authored stage/objective evidence; a PARTIAL scenario closure cannot certify A3.
 
 ---
 
@@ -807,7 +807,7 @@ Progression Contract per material objective/mechanic.
 
 ### Closure Rule
 
-Every required progression chain reaches a grounded player-visible transition or is explicitly unresolved.
+Every required progression chain reaches a grounded player-visible transition or is explicitly unresolved. Bare source function names (including objective/phase-looking helpers) remain Intent/A7 navigation candidates, not mandatory A6 progress contracts. Technical `requires`/ownership edges are retained as dependencies but do not establish player-visible progression. If objective/phase candidates exist without a grounded material stage, A6 remains PARTIAL rather than being marked complete or not applicable.
 
 ---
 
