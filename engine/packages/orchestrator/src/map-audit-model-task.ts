@@ -1782,11 +1782,16 @@ export function planAuditModelInvestigationBatches(input: {
     (stageOrder.get(a.stage) ?? 99) - (stageOrder.get(b.stage) ?? 99) ||
     a.offsets[0]! - b.offsets[0]! ||
     b.offsets.length - a.offsets.length);
-  return ordered.flatMap(group => {
-    const results: AuditModelInvestigationBatch[] = [];
+  // In each canonical stage, offer one source-review batch per distinct
+  // question before asking for a second batch from any one source owner.
+  // This schedules existing work only: no task, evidence or proof is merged.
+  const wavesByStage = new Map<SelectedMapAuditStage,
+    AuditModelInvestigationBatch[][]>();
+  for (const group of ordered) {
+    const waves = wavesByStage.get(group.stage) ?? [];
     for (let start = 0; start < group.offsets.length; start += maximumMembers) {
       const offsets = group.offsets.slice(start, start + maximumMembers);
-      results.push({
+      (waves[start / maximumMembers] ??= []).push({
         stage: group.stage,
         source: group.source,
         validationGroupKey: group.validationGroupKey,
@@ -1807,8 +1812,10 @@ export function planAuditModelInvestigationBatches(input: {
         proofBoundary: "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE",
       });
     }
-    return results;
-  });
+    wavesByStage.set(group.stage, waves);
+  }
+  return SELECTED_MAP_AUDIT_STAGE_ORDER.flatMap(stage =>
+    (wavesByStage.get(stage) ?? []).flat());
 }
 
 export function deriveAuditModelTaskPackets(input: {

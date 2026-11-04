@@ -1543,6 +1543,30 @@ const makeSharedSourceTask = (item: AuditObligation): AuditModelTaskPacket => ({
 });
 
 describe("shared-source AI investigation is not shared proof", () => {
+  it("reviews distinct source questions before repeating one large owner", () => {
+    const obligations = [
+      ...Array.from({ length: 19 }, (_, i) =>
+        makeSharedSourceObligation("long:" + i, "owner:long")),
+      makeSharedSourceObligation("other", "owner:other"),
+      makeSharedSourceObligation("later", "owner:later",
+        "discovery-challenge", "PROVE"),
+    ];
+    const tasks = obligations.map(makeSharedSourceTask);
+    const batches = planAuditModelInvestigationBatches({ tasks, obligations });
+    expect(batches.map(batch => [
+      batch.stage, batch.validationGroupKey, batch.members.length,
+    ])).toEqual([
+      ["UNDERSTAND", "owner:long", 8],
+      ["UNDERSTAND", "owner:other", 1],
+      ["UNDERSTAND", "owner:long", 8],
+      ["UNDERSTAND", "owner:long", 3],
+      ["PROVE", "owner:later", 1],
+    ]);
+    expect(batches.flatMap(batch => batch.members.map(member =>
+      member.taskOffset)).sort((a, b) => a - b))
+      .toEqual(tasks.map((_, index) => index));
+  });
+
   it("keeps earlier source-ranked work ahead of a larger lower-ranked batch", () => {
     const obligations = [
       makeSharedSourceObligation("priority", "owner:priority"),

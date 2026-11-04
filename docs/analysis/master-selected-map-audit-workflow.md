@@ -400,7 +400,12 @@ The existing canonical audit may correctly produce thousands of separate
 Audit Obligations from one large script. **Do not treat every obligation as
 a separate AI read of the same source.** The single canonical model task
 owner now builds a read-only investigation schedule over its unchanged
-`modelTaskPackets`. Each source-review batch has **at most eight** tasks.
+`modelTaskPackets`. Each source-review batch has **at most eight** tasks. Within each
+canonical stage, the default navigation offers the first batch from every
+distinct source/question group before later batches from an already visited
+group. This avoids a long chain of repeat reads of one large source owner.
+Critical same-owner follow-ups can still be selected directly by original
+task offset. Neither default order nor group membership proves materiality.
 
 Batching is allowed only for non-causal `AUDIT_OBLIGATION` packets with
 one unambiguous canonical obligation and matching stage, source,
