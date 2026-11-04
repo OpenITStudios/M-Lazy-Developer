@@ -436,6 +436,28 @@ or cross-source conflation; snapshot integrity checks fail closed on
 missing/duplicate/forged task membership. Verify output-v2 and original
 task IDs are unchanged before claiming any production benefit.
 
+### Risk-first dispatch without obligation-count expansion
+
+A complete canonical obligation ledger is an **accountability inventory**, not
+a mandate for one AI call per obligation or per batch. After the first
+selected-artifact source pass, select the earliest unresolved checkpoint
+and then source-linked, high-impact gameplay risks and inexpensive deciding
+counterproofs within that stage. The existing `analysisPriorities` may
+reorder independent obligation packets only when their component IDs match
+the selected map's current source-owned surfaces; unlinked tasks retain
+stable order. Investigation batches follow the resulting task order,
+not the largest-batch-first heuristic. Matching risk never proves a
+defect, suppresses a task, or changes canonical checkpoint/stage precedence.
+
+Deliver verified findings and explicitly open critical risks as soon as a
+useful bounded review is available. Further low-risk/source-ambiguous
+investigations are on demand, not automatically exhausted. Preserve the
+exact original `auditObligations`, `modelTaskPackets`, remaining IDs,
+`UNKNOWN`, `NEED_VALIDATION`, and `BLOCKED` admission. A bounded
+operator report is **not** certification that every source obligation or
+full-map runtime behavior has been resolved. Measure actual time-to-useful
+finding and missed known defects before claiming speed or accuracy gains.
+
 ### Grouped Audit Obligations and measured audit cost
 
 `diagnosisNavigation.pendingObligationGroups` groups *navigation only* by

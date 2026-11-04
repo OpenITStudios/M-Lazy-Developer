@@ -1780,8 +1780,8 @@ export function planAuditModelInvestigationBatches(input: {
     [stage, index] as const));
   const ordered = [...groups.values()].sort((a, b) =>
     (stageOrder.get(a.stage) ?? 99) - (stageOrder.get(b.stage) ?? 99) ||
-    b.offsets.length - a.offsets.length ||
-    a.offsets[0]! - b.offsets[0]!);
+    a.offsets[0]! - b.offsets[0]! ||
+    b.offsets.length - a.offsets.length);
   return ordered.flatMap(group => {
     const results: AuditModelInvestigationBatch[] = [];
     for (let start = 0; start < group.offsets.length; start += maximumMembers) {
@@ -2050,7 +2050,11 @@ export function deriveAuditModelTaskPackets(input: {
     }
     return best;
   };
-  const rankedNavigationPackets = navigationPackets.map((packet, index) => ({
+  // Risk changes the order of independent source-review work, never
+  // the audit ledger, checkpoint admission, or individual proof status.
+  const rankByCurrentSurfacePriority = <T extends {
+    readonly componentIds: readonly string[];
+  }>(items: readonly T[]): T[] => items.map((packet, index) => ({
     packet, index, priority: bestPriority(packet.componentIds),
   })).sort((a, b) => {
     if (a.priority === undefined) {
@@ -2060,8 +2064,9 @@ export function deriveAuditModelTaskPackets(input: {
     return compareGameplayAnalysisPriority(a.priority, b.priority) ||
       a.index - b.index;
   }).map(item => item.packet);
+  const rankedNavigationPackets = rankByCurrentSurfacePriority(navigationPackets);
 
-  const auditObligationPackets =
+  const rankedObligationPackets = rankByCurrentSurfacePriority(
     obligationPackets(
       input.auditObligations ?? [],
       input.auditRevision,
@@ -2069,14 +2074,15 @@ export function deriveAuditModelTaskPackets(input: {
       lookupIndex,
       input.graph,
       input.sourceEffectContext,
-    );
+    ),
+  );
 
   const stage = input.admission.firstBlockingStage;
   const packets =
     stage === undefined
       ? [
           ...rankedNavigationPackets,
-          ...auditObligationPackets,
+          ...rankedObligationPackets,
         ]
       : stage === "PROVE"
         ? (() => {
@@ -2091,7 +2097,7 @@ export function deriveAuditModelTaskPackets(input: {
               ? [
                   ...prove,
                   ...rankedNavigationPackets,
-                  ...auditObligationPackets,
+                  ...rankedObligationPackets,
                 ]
               : [
                   ...checkpointPackets(
@@ -2103,7 +2109,7 @@ export function deriveAuditModelTaskPackets(input: {
                     input.scenarioPreset,
                   ),
                   ...rankedNavigationPackets,
-                  ...auditObligationPackets,
+                  ...rankedObligationPackets,
                 ];
           })()
         : [
@@ -2116,7 +2122,7 @@ export function deriveAuditModelTaskPackets(input: {
               input.scenarioPreset,
             ),
             ...rankedNavigationPackets,
-            ...auditObligationPackets,
+            ...rankedObligationPackets,
           ];
 
   // Navigation, PROVE and obligation packets may all be valid independent

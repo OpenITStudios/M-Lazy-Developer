@@ -996,6 +996,32 @@ describe("component-linked risk ordering within the existing proof stage", () =>
     expect(withEarlier.filter(task => task.kind === "PROOF_NAVIGATION")
       .map(task => task.causalLinkId))
       .toEqual(["link:high", "link:medium", "link:unlinked"]);
+
+    // Priority is only assigned to exact selected-source component IDs.
+    const obligations = [
+      { id: "low", componentIds: ["runtime:structures"] },
+      { id: "high", componentIds: ["runtime:arena"] },
+      { id: "unlinked", componentIds: [] },
+    ].map(item => ({
+      ...item, stage: "UNDERSTAND", source: "detection-gap",
+      validationGroupKey: "source:" + item.id,
+      title: "Resolve " + item.id, reason: "Missing source proof",
+      missingProof: "Deciding source witness", validationTest: "Trace source",
+      subjectIds: [], evidenceIds: [],
+    }));
+    const obligationInput = {
+      ...input, needValidationFindings: [], auditObligations: obligations,
+    };
+    const taskIds = (args: typeof input) => deriveAuditModelTaskPackets(args)
+      .map(task => task.id);
+    expect(taskIds(obligationInput)).toEqual([
+      "task:audit-obligation:high", "task:audit-obligation:low",
+      "task:audit-obligation:unlinked",
+    ]);
+    expect(taskIds({ ...obligationInput, analysisPriorities: [] })).toEqual([
+      "task:audit-obligation:low", "task:audit-obligation:high",
+      "task:audit-obligation:unlinked",
+    ]);
   });
 });
 
@@ -1517,6 +1543,20 @@ const makeSharedSourceTask = (item: AuditObligation): AuditModelTaskPacket => ({
 });
 
 describe("shared-source AI investigation is not shared proof", () => {
+  it("keeps earlier source-ranked work ahead of a larger lower-ranked batch", () => {
+    const obligations = [
+      makeSharedSourceObligation("priority", "owner:priority"),
+      ...Array.from({ length: 9 }, (_, i) =>
+        makeSharedSourceObligation("volume:" + i, "owner:volume")),
+    ];
+    const batches = planAuditModelInvestigationBatches({
+      obligations, tasks: obligations.map(makeSharedSourceTask),
+    });
+    expect(batches[0]?.validationGroupKey).toBe("owner:priority");
+    expect(batches.flatMap(batch => batch.members.map(member => member.taskOffset))
+      .sort((a, b) => a - b)).toEqual(obligations.map((_, i) => i));
+  });
+
   it("schedules every obligation exactly once with bounded groups and separate reasons", () => {
     const obligations = [
       ...Array.from({ length: 19 }, (_, i) => makeSharedSourceObligation("edge:" + i)),
