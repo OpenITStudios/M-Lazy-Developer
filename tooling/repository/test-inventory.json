@@ -1621,7 +1621,7 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/analyzers/scripts",
         "action": "revisit-on-relevant-source-change",
-        "sourceBlobSha": "c23020b516ffba48d7ea6f8a78f888bfad67bb7f"
+        "sourceBlobSha": "3f8293c984111ad50fc9a2981027503a977b4055"
       },
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
@@ -5605,7 +5605,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "e55beeaba31c86e944abf1c3498ae2379a261baa"
+        "sourceBlobSha": "da980a63a977f7b22eb5a34946873f655967683a"
       },
       "recommendation": "keep",
       "rationale": "Source/knowledge closure rejects foreign or detached receipts and unresolved terminal races.",

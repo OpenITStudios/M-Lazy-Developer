@@ -4358,8 +4358,17 @@ export function parseScriptFile(
         const propertyId = stringArgument(node);
         if (propertyId) access.propertyId = propertyId;
         if (method === "setDynamicProperty") {
-          const literal = authoredScalar(node.arguments[1]);
-          if (literal) access.writtenLiteral = literal;
+          const value = node.arguments[1];
+          // A direct `void` expression is unconditionally undefined:
+          // this is a deletion, not a persistent gameplay-value write.
+          // A variable named `undefined` or a forwarded value is NOT
+          // sufficient to prove deletion from this source site.
+          if (value && ts.isVoidExpression(value)) {
+            access.operation = "delete";
+          } else {
+            const literal = authoredScalar(value);
+            if (literal) access.writtenLiteral = literal;
+          }
         }
         // Only direct strict scalar comparison to the same get call site.
         // The condition's exact AST span must later be an actual guard on a

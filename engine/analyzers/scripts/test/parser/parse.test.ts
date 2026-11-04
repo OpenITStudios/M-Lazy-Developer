@@ -745,6 +745,25 @@ describe("script analyzer", () => {
     }
   });
 
+  it("distinguishes exact void dynamic-property deletion from a possible value write", () => {
+    const parsed = parseScriptFile("scripts/main", [
+      'import { world } from "@minecraft/server";',
+      'world.setDynamicProperty("round", 10);',
+      'world.setDynamicProperty("round", void 0);',
+      'world.setDynamicProperty(dynamicKey, void 0);',
+      'world.setDynamicProperty("other", perhapsUndefined);',
+      'world.setDynamicProperty("other", undefined);',
+      'const fake = { setDynamicProperty(_key, _value) {} };',
+      'fake.setDynamicProperty("unrelated", void 0);',
+    ].join("\n"), source);
+    expect(parsed.dynamicProperties.map(item => [
+      item.operation, item.propertyId ?? "*",
+    ])).toEqual([
+      ["set", "round"], ["delete", "round"],
+      ["delete", "*"], ["set", "other"], ["set", "other"],
+    ]);
+  });
+
   it("extracts Minecraft imports, event subscriptions and dynamic properties", () => {
     const parsed = parseScriptFile(
       "scripts/main",

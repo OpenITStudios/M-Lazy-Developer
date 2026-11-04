@@ -92,6 +92,26 @@ function assess(options: {
   });
 }
 
+describe("A4 dynamic-property clear source identity", () => {
+  it("does not treat one unknown-key deletion as proof that other keys were reset", async () => {
+    const { deriveMandatoryStateRegistry } = await import(
+      "../../src/inspection/mandatory-audit-support.js");
+    const surfaces = [
+      { id: "state:dynamic:*", ref: { kind: "dynamic-property", key: "*" } },
+      { id: "state:dynamic:exact", ref: { kind: "dynamic-property", key: "round" } },
+    ];
+    const operations = surfaces.flatMap(surface => [
+      { surfaceId: surface.id, operation: "write", executionRegionId: "function:set" },
+      { surfaceId: surface.id, operation: "delete", executionRegionId: "function:delete" },
+    ]);
+    const states = deriveMandatoryStateRegistry({
+      state: { surfaces, operations, authorityBindings: [] },
+    } as any);
+    expect(states.map(item => [item.key, item.staleRisk, item.clearRegions.length]))
+      .toEqual([["*", "possible", 1], ["round", "bounded", 1]]);
+  });
+});
+
 describe("terminal collision C6 source evaluation", () => {
   it("closes bounded source evaluation with one exact link and scenario-scoped knowledge", () => {
     expect(assess()).toEqual({

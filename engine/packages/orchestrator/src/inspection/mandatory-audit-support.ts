@@ -299,13 +299,18 @@ export function deriveMandatoryStateRegistry(
         : undefined;
     const writes = regionsFor("write");
     const clears = regionsFor("clear", "delete");
+    // A wildcard dynamic-property key may cover different runtime keys.
+    // A delete observed for one unknown key cannot prove cleanup for all
+    // other unknown writes that were merged into this surface.
+    const clearsExactSurface = clears.length > 0 &&
+      !(surface.ref.kind === "dynamic-property" && surface.ref.key === "*");
     const persistent =
       surface.ref.kind === "dynamic-property" ||
       persisted !== undefined;
     const staleRisk =
       writes.length === 0
         ? "bounded" as const
-        : clears.length > 0
+        : clearsExactSurface
           ? "bounded" as const
           : persistent &&
               (
