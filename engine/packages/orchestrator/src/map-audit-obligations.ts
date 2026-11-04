@@ -25,6 +25,7 @@ import type {
 } from "./inspection/gameplay-world-model.js";
 import type { MandatoryAuditProcedureReceipt } from "./inspection/mandatory-audit-support.js";
 import type { GameplayDiscoveryClosure } from "./inspection/gameplay-discovery-closure.js";
+import type { IgnoredCommitBeforeFeedbackCandidate } from "./inspection/persistence-source-analysis.js";
 import type {
   AuditUserIntentEnvelope,
 } from "./map-audit-user-intent.js";
@@ -1157,6 +1158,8 @@ export function deriveAuditObligations(input: {
     readonly CompoundBoundarySignal[];
   readonly accumulationGrowth:
     readonly AccumulationGrowthSignal[];
+  readonly ignoredCommitBeforeFeedback?:
+    readonly IgnoredCommitBeforeFeedbackCandidate[];
   readonly capabilityExposure?: CapabilityExposureSummary;
   readonly replicaDivergenceIds?: readonly string[];
 }): readonly AuditObligation[] {
@@ -1183,6 +1186,43 @@ export function deriveAuditObligations(input: {
       input.graph,
     ),
   ];
+
+  // Source-only, bounded A28 investigation: the caller discarded an
+  // explicitly fallible local result before later write + feedback sites.
+  // Do NOT convert this into an admitted BUG without reachability, rollback
+  // and counterexample proof. The ordinary canonical ledger/handoff owns it.
+  for (const candidate of input.ignoredCommitBeforeFeedback ?? []) {
+    const call = candidate.callSource;
+    const where = call.relativePath + ":" +
+      (call.range?.lineStart ?? "unknown") + ":" +
+      (call.range?.columnStart ?? "unknown");
+    const failureWhere = candidate.failedReturnSource.relativePath + ":" +
+      (candidate.failedReturnSource.range?.lineStart ?? "unknown");
+    const writeWhere = candidate.laterWriteSource.relativePath + ":" +
+      (candidate.laterWriteSource.range?.lineStart ?? "unknown");
+    const feedbackWhere = candidate.laterFeedbackSource.relativePath + ":" +
+      (candidate.laterFeedbackSource.range?.lineStart ?? "unknown");
+    items.push(normalize({
+      id: "unchecked-commit-before-feedback:" + encodeURIComponent(where),
+      source: "detection-gap",
+      stage: "EVALUATE",
+      title: "Verify discarded fallible commit before gameplay success",
+      reason: "Selected source " + where + " ignores " + candidate.calleeName +
+        "() even though its body has an explicit false/null return at " +
+        failureWhere + "; a later state write at " + writeWhere +
+        " and feedback-looking call at " + feedbackWhere +
+        " may publish success. This is a source-only candidate, not proof that the failure is reachable in play.",
+      missingProof: "Determine the failing commit's reachability, the intended postcondition, " +
+        "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state.",
+      validationTest: "Run one bounded success/failure case on this exact authored caller/callee " +
+        "with source-backed persistence failure; compare final state and user feedback, " +
+        "and check whether retries repair the discrepancy.",
+      validationGroupKey: "source:unchecked-commit:" + where,
+      subjectIds: [where, failureWhere, writeWhere, feedbackWhere],
+      componentIds: [],
+      evidenceIds: [],
+    }));
+  }
 
   // Group semantic debt while retaining every affected path or unknown ID.
   if (input.discovery && input.discovery.semanticUnderstandingGapPaths.length > 0) {

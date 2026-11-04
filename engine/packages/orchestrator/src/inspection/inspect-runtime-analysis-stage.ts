@@ -505,6 +505,10 @@ export function analyzeInspectionRuntimeState(
   const persistenceSource =
     analyzePersistenceSource(
       scriptsFor("persistence-recovery"),
+      // Source-first A28 failure-result triage is cheap and does not require
+      // a Knowledge domain to be selected. Other persistence assessments
+      // still honor the existing demand boundary.
+      parsedScriptModels,
     );
   const rewardSources =
     analyzeRewardSources(

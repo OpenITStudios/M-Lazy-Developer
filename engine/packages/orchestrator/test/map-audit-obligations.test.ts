@@ -73,6 +73,42 @@ const closed = {
 } as any;
 
 describe("audit obligations versus gameplay findings", () => {
+  it("keeps discarded-commit source candidates as deciding-proof obligations, not bug verdicts", () => {
+    const src = (lineStart: number) => ({
+      artifactId: "fixture:persistence", relativePath: "scripts/transactions.ts",
+      range: { lineStart, lineEnd: lineStart, columnStart: 3, columnEnd: 15 },
+    });
+    const input = {
+      graph: baseGraph("PROVEN"),
+      defectResolution: { resolutions: [], confirmedDefectReadyIds: [] },
+      gameplayWorld: { arenas: { detected: false, isolation: { observations: [] },
+        replicaProof: [] }, platformKnowledge: { claims: [] },
+        surfaceDiscovery: { surfaceIds: [] } },
+      gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
+      temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+      ignoredCommitBeforeFeedback: [{
+        scriptId: "test", callerRegion: "function:publish", calleeName: "commitResult",
+        callSource: src(6), failedReturnSource: src(2),
+        laterWriteSource: src(8), laterFeedbackSource: src(7),
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      }],
+    } as unknown as Parameters<typeof deriveAuditObligations>[0];
+    const obligations = deriveAuditObligations(input);
+    const found = obligations.filter(row =>
+      row.id.startsWith("unchecked-commit-before-feedback:"));
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({
+      source: "detection-gap", stage: "EVALUATE", evidenceIds: [],
+      componentIds: [], title: expect.stringContaining("discarded fallible commit"),
+      reason: expect.stringContaining("scripts/transactions.ts:6:3"),
+      missingProof: expect.stringContaining("rollback"),
+    });
+    expect(deriveAuditObligations({ ...input, ignoredCommitBeforeFeedback: [] })
+      .some(row => row.id.startsWith("unchecked-commit-before-feedback:")))
+      .toBe(false);
+  });
+
   it("derives map-specific unknown proof requirements from reviewed source facts", () => {
     const selected = "map:current";
     const intent = {

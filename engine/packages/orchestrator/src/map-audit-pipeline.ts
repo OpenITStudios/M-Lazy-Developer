@@ -353,6 +353,8 @@ function deriveSelectedMapAuditControl(input: {
   readonly discovery?: InspectArtifactResult["gameplayDiscoveryClosure"];
   readonly discoveryChallenges:
     InspectArtifactResult["hiddenGameplayDefects"]["discoveryChallenges"];
+  readonly ignoredCommitBeforeFeedback?:
+    NonNullable<InspectArtifactResult["persistenceSource"]>["ignoredCommitBeforeFeedback"];
   readonly sharedResourceSignals:
     InspectArtifactResult["hiddenGameplayDefects"]["sharedResourceOwnership"]["signals"];
   readonly compoundBoundaries:
@@ -432,6 +434,8 @@ function deriveSelectedMapAuditControl(input: {
         negativeSpace: input.negativeSpace,
         temporalRisks: input.temporalRisks,
         discoveryChallenges: input.discoveryChallenges,
+        ...(input.ignoredCommitBeforeFeedback === undefined ? {} :
+          { ignoredCommitBeforeFeedback: input.ignoredCommitBeforeFeedback }),
         sharedResourceSignals: input.sharedResourceSignals,
         compoundBoundaries: input.compoundBoundaries,
         accumulationGrowth: input.accumulationGrowth,
@@ -876,6 +880,8 @@ function assembleSelectedMapAuditRun(
     discovery: inspection.gameplayDiscoveryClosure,
     discoveryChallenges:
       hidden.discoveryChallenges,
+    ignoredCommitBeforeFeedback:
+      inspection.persistenceSource?.ignoredCommitBeforeFeedback,
     sharedResourceSignals:
       hidden.sharedResourceOwnership.signals,
     compoundBoundaries:

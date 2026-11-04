@@ -1,3 +1,4 @@
+import ts from "typescript";
 import type {
   ParsedScriptFile,
 } from "../../../../analyzers/scripts/src/index.js";
@@ -91,7 +92,22 @@ export interface PersistenceResultAuditRecordAssessment {
     readonly string[];
 }
 
+/** Source candidate only: an explicitly failing local commit result is
+ * discarded before a later source write and user-feedback-looking call.
+ * Names and lexical order are NOT runtime execution or gameplay proof. */
+export interface IgnoredCommitBeforeFeedbackCandidate {
+  readonly scriptId: string;
+  readonly callerRegion: string;
+  readonly calleeName: string;
+  readonly callSource: SourceRef;
+  readonly failedReturnSource: SourceRef;
+  readonly laterWriteSource: SourceRef;
+  readonly laterFeedbackSource: SourceRef;
+  readonly proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG";
+}
+
 export interface PersistenceSourceAnalysis {
+  readonly ignoredCommitBeforeFeedback: readonly IgnoredCommitBeforeFeedbackCandidate[];
   properties: readonly PersistenceSourceProperty[];
   resultAuditRecords:
     readonly PersistenceResultAuditRecordAssessment[];
@@ -293,8 +309,136 @@ function sameAuthoredResetRegion(
     path.parserExecutionRegion === resetRegion).length === 1;
 }
 
+/**
+ * Conservative, same-file AST path search; never infer a cross-file
+ * recipient, dynamic dispatch, successful persistence or player-visible UI.
+ * Avoids name-keyword rules such as "save", "win", "relay" or "finish".
+ */
+function ignoredCommitBeforeFeedback(
+  script: ParsedScriptFile,
+): readonly IgnoredCommitBeforeFeedbackCandidate[] {
+  if (!script.text || !script.source.artifactId.trim() ||
+      !script.source.relativePath.trim()) return [];
+  const file = ts.createSourceFile(
+    script.source.relativePath, script.text, ts.ScriptTarget.Latest, true,
+    /\.tsx?$/i.test(script.source.relativePath) ? ts.ScriptKind.TS : ts.ScriptKind.JS,
+  );
+  type Callable = ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression;
+  const declarations = new Map<string, Callable[]>();
+  const add = (name: string, fn: Callable) =>
+    declarations.set(name, [...(declarations.get(name) ?? []), fn]);
+  for (const statement of file.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
+      add(statement.name.text, statement);
+    } else if (ts.isVariableStatement(statement)) {
+      for (const decl of statement.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && decl.initializer &&
+            (ts.isArrowFunction(decl.initializer) ||
+             ts.isFunctionExpression(decl.initializer))) {
+          add(decl.name.text, decl.initializer);
+        }
+      }
+    }
+  }
+  const unique = new Map([...declarations.entries()]
+    .filter(([, values]) => values.length === 1)
+    .map(([name, values]) => [name, values[0]!] as const));
+  const site = (node: ts.Node): SourceRef => {
+    const start = file.getLineAndCharacterOfPosition(node.getStart(file));
+    const end = file.getLineAndCharacterOfPosition(node.getEnd());
+    return { ...script.source, range: {
+      lineStart: start.line + 1, columnStart: start.character + 1,
+      lineEnd: end.line + 1, columnEnd: end.character + 1,
+    } };
+  };
+  const walkBody = (node: ts.Node, fn: Callable, visit: (n: ts.Node) => void): void => {
+    if (node !== fn && ts.isFunctionLike(node)) return;
+    visit(node);
+    ts.forEachChild(node, child => walkBody(child, fn, visit));
+  };
+  // Require direct false/null return AND an actual .set operation in this
+  // unique authored function. A plausible failure name or type is insufficient.
+  const fallible = new Map<string, SourceRef>();
+  for (const [name, fn] of unique) {
+    if (!fn.body) continue;
+    const failed: SourceRef[] = [];
+    let hasWrite = false;
+    walkBody(fn.body, fn, node => {
+      if (ts.isReturnStatement(node) && node.expression &&
+          (node.expression.kind === ts.SyntaxKind.FalseKeyword ||
+           node.expression.kind === ts.SyntaxKind.NullKeyword)) {
+        failed.push(site(node));
+      }
+      if (ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          (node.expression.name.text === "set" ||
+           node.expression.name.text === "setDynamicProperty")) hasWrite = true;
+    });
+    if (hasWrite && failed.length > 0) fallible.set(name, failed[0]!);
+  }
+  if (fallible.size === 0) return [];
+  const feedbackMethods = new Set([
+    "enqueue", "sendMessage", "setTitle", "setActionBar", "show",
+  ]);
+  const output: IgnoredCommitBeforeFeedbackCandidate[] = [];
+  for (const [callerName, fn] of unique) {
+    if (!fn.body || !ts.isBlock(fn.body)) continue;
+    const shadowed = new Set(fn.parameters.filter(parameter =>
+      ts.isIdentifier(parameter.name)).map(parameter =>
+      (parameter.name as ts.Identifier).text));
+    // Reject caller-local shadowing of a global function. No free-variable
+    // name matching is accepted when the actual callee could be different.
+    walkBody(fn.body, fn, node => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name))
+        shadowed.add(node.name.text);
+    });
+    walkBody(fn.body, fn, node => {
+      if (!ts.isBlock(node)) return;
+      for (const [index, statement] of node.statements.entries()) {
+        if (!ts.isExpressionStatement(statement) ||
+            !ts.isCallExpression(statement.expression) ||
+            !ts.isIdentifier(statement.expression.expression)) continue;
+        const calleeName = statement.expression.expression.text;
+        const failure = fallible.get(calleeName);
+        if (!failure || shadowed.has(calleeName)) continue;
+        let write: SourceRef | undefined;
+        let feedback: SourceRef | undefined;
+        for (const later of node.statements.slice(index + 1)) {
+          if (ts.isReturnStatement(later) || ts.isThrowStatement(later)) break;
+          walkBody(later, fn, n => {
+            if (!ts.isCallExpression(n) ||
+                !ts.isPropertyAccessExpression(n.expression)) return;
+            const method = n.expression.name.text;
+            if (!write && (method === "set" || method === "setDynamicProperty")) {
+              write = site(n);
+            }
+            if (!feedback && feedbackMethods.has(method)) feedback = site(n);
+          });
+          if (write && feedback) break;
+        }
+        if (!write || !feedback) continue;
+        output.push({
+          scriptId: script.identifier,
+          callerRegion: "function:" + callerName,
+          calleeName,
+          callSource: site(statement.expression),
+          failedReturnSource: failure,
+          laterWriteSource: write,
+          laterFeedbackSource: feedback,
+          proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+        });
+      }
+    });
+  }
+  return output.sort((a, b) =>
+    a.callSource.relativePath.localeCompare(b.callSource.relativePath) ||
+    (a.callSource.range?.lineStart ?? 0) - (b.callSource.range?.lineStart ?? 0) ||
+    (a.callSource.range?.columnStart ?? 0) - (b.callSource.range?.columnStart ?? 0));
+}
+
 export function analyzePersistenceSource(
   scripts: readonly ParsedScriptFile[],
+  sourceReviewScripts: readonly ParsedScriptFile[] = scripts,
 ): PersistenceSourceAnalysis {
   const properties: PersistenceSourceProperty[] = [];
   const reconnectTransientRestoreRisks:
@@ -545,6 +689,7 @@ export function analyzePersistenceSource(
 
   return {
     properties,
+    ignoredCommitBeforeFeedback: sourceReviewScripts.flatMap(ignoredCommitBeforeFeedback),
     resultAuditRecords,
     completeResultAuditRecords:
       resultAuditRecords.filter(

@@ -7,6 +7,52 @@ import {
 } from "../../src/inspection/persistence-source-analysis.js";
 
 describe("persistence source analysis", () => {
+  it("flags only unguarded fallible commit before later write and feedback", () => {
+    const parse = (source: string) => parseScriptFile("transaction", source, {
+      artifactId: "fixture:persistence", relativePath: "scripts/transactions.ts",
+    });
+    const positive = parse([
+      "function commitResult() {",
+      "  if (!journal.set('score', 2)) return false;",
+      "  return true;",
+      "}",
+      "function publish() {",
+      "  commitResult();",
+      "  messageBus.enqueue('done');",
+      "  sessionStore.set('completed', true);",
+      "}",
+    ].join("\n"));
+    const signals = analyzePersistenceSource([positive]).ignoredCommitBeforeFeedback;
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toMatchObject({
+      calleeName: "commitResult", callerRegion: "function:publish",
+      callSource: { range: { lineStart: 6 } },
+      failedReturnSource: { range: { lineStart: 2 } },
+      laterWriteSource: { range: { lineStart: 8 } },
+      laterFeedbackSource: { range: { lineStart: 7 } },
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+    for (const rejected of [
+      // Return handling prevents a syntactically discarded failure.
+      "function publish() { if (!commitResult()) return; messageBus.enqueue('done'); sessionStore.set('completed', true); }",
+      "function publish() { const ok = commitResult(); if (!ok) return; messageBus.enqueue('done'); sessionStore.set('completed', true); }",
+      // No success-presentation + write pair; not a transaction claim.
+      "function publish() { commitResult(); messageBus.enqueue('done'); }",
+      "function publish() { commitResult(); sessionStore.set('completed', true); }",
+      // The global identifier is shadowed; cannot prove which function ran.
+      "function publish(commitResult) { commitResult(); messageBus.enqueue('done'); sessionStore.set('completed', true); }",
+    ]) {
+      const fixture = parse([
+        "function commitResult() {",
+        "  if (!journal.set('score', 2)) return false;",
+        "  return true;",
+        "}", rejected,
+      ].join("\n"));
+      expect(analyzePersistenceSource([fixture]).ignoredCommitBeforeFeedback)
+        .toEqual([]);
+    }
+  });
+
   it("summarizes growth without promoting it to a defect", () => {
     const script = parseScriptFile(
       "main",
