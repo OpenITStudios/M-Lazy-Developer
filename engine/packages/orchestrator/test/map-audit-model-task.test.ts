@@ -498,6 +498,14 @@ describe("source interpretation admission is a read-only model-task review", () 
     identity: { artifactId: "selected", artifactFingerprint: "x".repeat(64) },
     auditRevision: "revision:selected",
     modelTaskPackets: [task],
+    // Source-interpretation reviews require the selected audit's
+    // canonical Intent model even when no relation is admitted.
+    inspection: {
+      gameplayIntent: { model: {
+        schemaVersion: 1, id: "intent:selected", artifactId: "selected",
+        evidence: [], nodes: [], edges: [], invariants: [], unknowns: [],
+      } },
+    },
     mapAuditReport: report,
     status: "BLOCKED",
     admission: { status: "BLOCKED" },
