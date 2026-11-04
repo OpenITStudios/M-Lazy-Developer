@@ -238,6 +238,110 @@ describe("cross-region source handoff tracing", () => {
     expect(inferredOnly?.impactPathComponentIds).toEqual([]);
   });
 
+  it("keeps direct source helper calls in Intent but outside gameplay causal proof", () => {
+    const source = { artifactId: "selected", relativePath: "scripts/game.ts" };
+    const callId = "exec-edge:exact-helper-call";
+    const relationId = "intent-evidence:relation:requires:caller:helper";
+    const implementationId = "source:grounded-behavior";
+    const evidence = [
+      { id: callId, origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/game.ts:8:3", summary: "Exact Semantic IR call edge from parsed source location; gameplay dependency remains inferred." },
+      { id: relationId, origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/game.ts:8:3",
+        summary: "A semantically classified source region directly calls another classified gameplay region." },
+      { id: implementationId, origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/game.ts:11:3", summary: "Independent authored gameplay effect" },
+    ] as const;
+    const nodes = [
+      { id: "mechanic:caller", kind: "mechanic", label: "Caller",
+        status: "authored", evidenceIds: [implementationId] },
+      { id: "mechanic:helper", kind: "mechanic", label: "Helper",
+        status: "authored", evidenceIds: [implementationId] },
+    ] as const;
+    const helper = {
+      id: "intent-edge:requires:caller:helper", kind: "requires",
+      from: "mechanic:caller", to: "mechanic:helper",
+      status: "inferred", evidenceIds: [callId, relationId],
+    } as const;
+    const gameplay = {
+      id: "intent-edge:requires:independent", kind: "requires",
+      from: "mechanic:helper", to: "mechanic:caller",
+      status: "authored", evidenceIds: [implementationId],
+    } as const;
+    const intent: GameplayIntentModel = {
+      schemaVersion: 1, id: "intent:helper-not-causality",
+      artifactId: "selected", evidence: [...evidence],
+      nodes: [...nodes], edges: [helper, gameplay],
+      invariants: [], unknowns: [],
+    };
+    const baseIr = sample();
+    const semanticIr: SemanticIr = {
+      ...baseIr, execution: { ...baseIr.execution, edges: [
+        ...baseIr.execution.edges, { id: callId, from: "entry",
+          to: "callback", kind: "synchronous-call", targetLabel: "helper",
+          resolution: "resolved", source },
+      ] },
+    };
+    const world = {
+      arenas: { detected: false, cleanup: { resourceLedger: { resources: 0 } } },
+      chunks: { tickingAreaAcquires: 0, tickingAreaReadinessStates: 0,
+        capacityUncheckedLeases: 0 },
+      entities: { definitions: 0 },
+      combat: { hurtHandlers: 0, deathHandlers: 0, damageApplications: 0 },
+      inventory: { regions: 0, grantRegions: 0 },
+      structures: { loads: 0, runtimeLogicLoads: 0 },
+      economy: { sourceKinds: [] },
+      worldRules: { writes: 0, manualEntitySpawnPaths: 0 },
+      playerCapabilities: { gamemodeWrites: 0, abilityWrites: 0,
+        commandPermissionWrites: 0, privilegedGuardReferences: 0,
+        protectionDefinitions: 0 },
+      capabilityExposure: { exposed: 0, potentiallyExposed: 0, unresolved: 0 },
+      clientReconciliation: { predictedMutationCancellations: 0 },
+      analysisExecution: { executedCapabilityIds: [] },
+      spatial: { resolvedScriptEffects: 0, structurePlacements: 0,
+        authority: { configured: false } },
+    } as unknown as import("../../src/inspection/gameplay-world-model.js").GameplayWorldModel;
+    const compile = (model: GameplayIntentModel, ir?: SemanticIr) =>
+      compileGameplayScenarioGraph({ intent: model, world,
+        ...(ir === undefined ? {} : { semanticIr: ir }),
+        preset: { scenarios: [] } as unknown as
+          import("../../../diagnostic-reasoning/src/index.js").GameplayAuditScenarioPreset });
+    const output = compile(intent, semanticIr);
+    expect(intent.edges).toHaveLength(2); // Original technical source still exists.
+    expect(output.causalLinks.some(link => link.intentEdgeKind === "requires" &&
+      link.fromComponentId === "mechanic:caller" &&
+      link.toComponentId === "mechanic:helper")).toBe(false);
+    expect(output.causalLinks.some(link => link.intentEdgeKind === "requires" &&
+      link.fromComponentId === "mechanic:helper" &&
+      link.toComponentId === "mechanic:caller")).toBe(true);
+    // Recompiled world-only runs reuse the same exact Intent proof receipts.
+    expect(compile(intent).causalLinks.some(link =>
+      link.fromComponentId === "mechanic:caller" &&
+      link.toComponentId === "mechanic:helper")).toBe(false);
+    // Missing or downgraded call evidence must NOT suppress any causal review.
+    expect(compile({ ...intent, evidence: evidence.map(item =>
+      item.id === callId ? { ...item, scope: "external-reference" as const } : item) },
+      semanticIr).causalLinks.some(link =>
+        link.fromComponentId === "mechanic:caller" &&
+        link.toComponentId === "mechanic:helper")).toBe(true);
+    // A deliberately authored dependency cannot be silently downgraded.
+    expect(compile({ ...intent, edges: [{ ...helper,
+      status: "authored" as const }, gameplay] }, semanticIr).causalLinks.some(link =>
+        link.fromComponentId === "mechanic:caller" &&
+        link.toComponentId === "mechanic:helper")).toBe(true);
+    // Missing artifact identity also denies the optimization.
+    const { artifactId: _selectedId, ...unboundIntent } = intent;
+    expect(compile(unboundIntent, semanticIr).causalLinks.some(link =>
+      link.fromComponentId === "mechanic:caller" &&
+      link.toComponentId === "mechanic:helper")).toBe(true);
+    // Extra gameplay evidence means this is no longer a call-only dependency.
+    expect(compile({ ...intent, edges: [{ ...helper,
+      evidenceIds: [...helper.evidenceIds, implementationId] }, gameplay] },
+      semanticIr).causalLinks.some(link =>
+        link.fromComponentId === "mechanic:caller" &&
+        link.toComponentId === "mechanic:helper")).toBe(true);
+  });
+
   it("requires selected-source causal edges and approved terminal authority across every multi-step path", () => {
     const selected = "selected";
     const source = (id: string, locator: string) => ({

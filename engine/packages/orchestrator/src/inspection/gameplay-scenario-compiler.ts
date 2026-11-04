@@ -3140,6 +3140,39 @@ export function compileGameplayScenarioGraph(
   const authoredGuardWitnessesByEdge = authoredOutcomeGuardWitnessesByEdge(
     input.intent, sourceEvidenceIds, directImplementationEvidenceIds,
   );
+  // Exact source-call dependencies remain in Gameplay Intent and A7, but
+  // are not themselves player-facing scenario causality. Intent already
+  // carries selected-artifact IR receipts. Use those exact receipts across
+  // both initial IR compilation and source-preserving world-only refresh;
+  // never infer a call from its name or an arbitrary source-code ID.
+  const evidenceById = new Map(input.intent.evidence.map(item =>
+    [item.id, item] as const));
+  const isVerifiedSourceCallReceipt = (id: string): boolean => {
+    const receipt = evidenceById.get(id);
+    return id.startsWith("exec-edge:") &&
+      receipt?.scope === "selected-artifact" &&
+      receipt.origin === "source-code" &&
+      (receipt.summary ===
+        "Exact Semantic IR call edge from parsed source location; gameplay dependency remains inferred." ||
+       receipt.summary ===
+        "Exact cross-script Semantic IR call site and executable target. Gameplay purpose and actual execution remain inferred.");
+  };
+  const isTechnicalCallRelation = (id: string): boolean => {
+    const receipt = evidenceById.get(id);
+    return id.startsWith("intent-evidence:relation:requires:") &&
+      receipt?.scope === "selected-artifact" &&
+      receipt.origin === "source-code" &&
+      (receipt.summary ===
+        "A semantically classified source region directly calls another classified gameplay region." ||
+       receipt.summary ===
+        "An exact imported executable function is called from a classified region in another script. Gameplay dependency and runtime execution remain inferred.");
+  };
+  const sourceCallOnlyDependency = (edge: GameplayIntentEdge): boolean =>
+    input.intent.artifactId !== undefined &&
+    edge.kind === "requires" && edge.status === "inferred" &&
+    edge.evidenceIds.some(isVerifiedSourceCallReceipt) &&
+    edge.evidenceIds.every(id =>
+      isVerifiedSourceCallReceipt(id) || isTechnicalCallRelation(id));
   const playerCounts = presetPlayerCounts(input.preset);
   // A classified name-only declaration is not an observed gameplay flow.
   // Do not promote hypothetical source structure into a player-facing
@@ -3355,6 +3388,7 @@ export function compileGameplayScenarioGraph(
     const causalLinkIds = input.intent.edges
       .filter(
         (edge) =>
+          !sourceCallOnlyDependency(edge) &&
           componentIds.includes(edge.from) &&
           componentIds.includes(edge.to),
       )
@@ -3562,6 +3596,7 @@ export function compileGameplayScenarioGraph(
     if (scenario.label === "full-journey") continue;
     const allowed = new Set(scenario.componentIds);
     for (const edge of input.intent.edges) {
+      if (sourceCallOnlyDependency(edge)) continue;
       if (!allowed.has(edge.from) || !allowed.has(edge.to)) continue;
       if (!componentIds.has(edge.from) || !componentIds.has(edge.to)) continue;
       const impactPath = provenImpactPathFrom(
