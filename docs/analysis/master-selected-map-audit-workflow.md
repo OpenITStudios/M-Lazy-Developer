@@ -197,6 +197,73 @@ inference. No generic developer skill, test fixture, manifest version,
 or probe result can establish gameplay Expected/Actual by itself.
 Missing typed evidence means abstain, not guess.
 
+## Reproducible cross-chat audit identity and operator result
+
+This section is the **single TEST MAP re-entry/report authority**. Changing
+ChatGPT conversations does not change the selected-map contract or turn a
+source-only review, historical result, and executed current audit into
+interchangeable evidence. The same selected map must not silently acquire a
+different verdict merely because the chat changed.
+
+1. **Rebind before reuse.** Read current `Local` HEAD and this workflow/skill;
+   obtain the selected archive's actual SHA-256. Identify the exact engine
+   source SHA, audit revision, edition/knowledge context when verified,
+   execution actor and proof tier. An old filename, report title or chat
+   summary is insufficient.
+2. **Prefer one machine authority.** If a verified canonical
+   `runSelectedMapAudit()` output exists for the SAME map fingerprint,
+   exact source identity, applicable revision/knowledge context and
+   execution provenance, derive facts from its existing
+   `MapAuditOutputV2` and read-only `--brief`/`--handoff` views.
+   Do not regenerate bug counts or obligations from AI narrative.
+3. **No silent cross-version promotion.** If either SHA, knowledge revision,
+   edition or source coverage changed, clearly label the old report as
+   HISTORICAL and obtain a current executable result if truly available.
+   An exact-current-HEAD package is preferred. The manually disabled CI
+   must not be triggered to manufacture it. A historical portable base
+   alone is never evidence that current source ran; any reconstructed
+   current-source execution must pass its real provenance guards.
+4. **Preserve incomplete evidence.** If the engine is unavailable, label the
+   result **SOURCE-ONLY / ENGINE NOT EXECUTED**, retaining supported
+   individual findings, explicit unknowns and the missing current-engine
+   result. If it returns `BLOCKED`/exit 2, report the usable confirmed or
+   confirmation-ready evidence AND the unchanged `BLOCKED` status;
+   do not say PASS, bug-free or full coverage. `NOT EXECUTED` is an
+   operator proof label, not a newly invented canonical machine status.
+5. **Compare fairly.** For the SAME pinned input, engine, revision and
+   proof tier, compare canonical semantic/report facts and obligation IDs;
+   timing, transient performance telemetry and model prose may vary.
+   If comparable results conflict, show the difference and mark it
+   UNRESOLVED rather than selecting the more favorable verdict. If
+   provenance differs, report that difference before discussing improvements.
+
+Every operator answer uses these **same ordered human-facing sections**,
+whether the evidence is executed, partial or historical (no additional
+persisted schema or second report):
+
+- **Audit Identity & Proof Tier:** selected map/location, map SHA-256,
+  `Local` source SHA, actual executable/provenance tier, revision/edition
+  if known, and whether the prior report is comparable.
+- **Game Understanding:** only selected-source-supported objectives,
+  important player flows, and mechanics; unresolved design is labeled.
+- **Findings:** independently grounded BUG and DESIGN_MISMATCH findings
+  with their actual `PROVEN` or `NEED_VALIDATION` status; zero findings
+  is not proof of zero bugs.
+- **Unverified & Open Work:** material risks, critical source evidence
+  missing, exact still-open obligations/counters and out-of-scope native
+  effects, without auto-dispatching every model task.
+- **Audit Control & Next Deciding Check:** existing
+  `READY_FOR_REVIEW`/`BLOCKED` when the engine actually ran,
+  otherwise clear `NOT EXECUTED` proof wording, plus one narrow next
+  investigation with decision value.
+
+A bounded, useful source-review report may be delivered before all
+obligations are investigated, but it never upgrades the canonical
+publication gate. Keep the original report/obligation ledger and task IDs;
+if previous output cannot be retrieved, state that rather than
+reconstructing it from memory. Do not create a new continuity store,
+snapshot manager, per-chat version, schema, or parallel audit pipeline.
+
 ## Proof-gap-first resolution (existing PROVE owners)
 
 A confirmation-ready causal link that does not yet meet minimum proof

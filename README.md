@@ -43,6 +43,14 @@ TEST MAP never edits engine source. A capability gap requires an explicitly auth
 
 **For ChatGPT:** supply the `Local` repository URL and describe the intended outcome. Repository inspection alone is read-only. Normal repository development uses GitHub directly without `DEV.cmd`, a local checkout, or automatic CI.
 
+### Consistent results when starting another ChatGPT chat
+
+Use the same entry: **`OpenITStudios/M-Lazy-Developer` branch `Local` → `AGENTS.md` → `GITHUB_RULES.md` → `TEST MAP` skill → [one master audit workflow](docs/analysis/master-selected-map-audit-workflow.md#reproducible-cross-chat-audit-identity-and-operator-result)**. Give the selected Drive `.mcworld` link (or verified existing report) and request **pin map SHA-256 + exact `Local` SHA; report the actual execution tier and canonical control status**. A new chat must not reuse historical results as current without matching identities.
+
+Starting prompt: `Audit this map using OpenITStudios/M-Lazy-Developer branch Local. Read the canonical TEST MAP rules first; pin the actual map SHA and Local HEAD, reuse only comparable verified output, and report findings/unknowns using the stable operator format. Do not invent a PASS or run CI/Minecraft.`
+
+Repository policy can stabilize the workflow; it cannot guarantee identical free-form AI prose or fully verified gameplay without equivalent source and execution evidence.
+
 ## Root file ownership and navigation
 
 The root is a small entry and tooling-contract boundary, **not** another location for engine behavior, working state, or duplicated documentation. Keep files here only when their existing repository-wide consumers require the location.
