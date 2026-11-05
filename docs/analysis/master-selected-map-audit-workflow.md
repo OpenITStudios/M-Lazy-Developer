@@ -475,18 +475,29 @@ match; malformed, repeated, foreign or oversized groups fail closed.
 
 The current `reviewAuditModelSourceInterpretation()` reviews every
 hypothesis against the SAME selected source and negative/branch evidence.
-Only one uniquely supported source-rooted typed relationship can enter
-the existing Intent/Scenario reconstruction. The **model-task source review**
-now owns the first failed condition (branch counterexample, missing typed
+Every independently supported rooted typed SOURCE relationship can enter
+the existing Intent/Scenario reconstruction separately, including multiple
+source facts belonging to the SAME unclassified flow. The **model-task source
+review** owns the first failed condition (branch counterexample, missing typed
 source witness, unrooted entry or unverified effect ingress); the pipeline
-does not reconstruct a second potentially divergent source matcher. Zero
-or multiple eligible alternatives remain unadopted; the original per-task
-packet exposes all `sourceInterpretationReviews` plus a read-only
-`sourceComparisons` summary. The next deciding check names the actual
+does not reconstruct a second potentially divergent matcher. Repeated
+identical source pairs from different obligation tasks are admitted once.
+Only relationships that survive the canonical exact-artifact/unique-flow
+projection are carried forward; the whole submission fails closed if any
+proposed source pair cannot be re-projected. None of these links closes the
+unknown mechanic, invents a gameplay edge, or proves a BUG. The original
+per-task packet keeps all `sourceInterpretationReviews` plus the read-only
+`sourceComparisons` summary **only while the audit revision is unchanged**.
+After a successful source admission triggers a new revision, the canonical
+task set is rebuilt and stale review/comparison prose is discarded; the
+newly projected source relations, not the old AI wording, are the evidence
+available to the next investigation. The next deciding check names the actual
 source steps, entry/ingress edges, or competing relations, rather than
-generic advice to inspect more code. Multiple rooted relations may be
-compatible source facts and must not be mistaken for competing game
-objectives without independent design/guard/receiver evidence. This is NOT gameplay/defect proof, an extra stored finding, a
+generic advice to inspect more code. Multiple rooted relations may be independently valid source facts:
+`AMBIGUOUS_ROOTED_SOURCE_RELATIONS` refers only to the still-ambiguous
+gameplay interpretation, never an instruction to discard typed source
+witnesses. Game objectives still require independent design, guard and
+receiver evidence. This is NOT gameplay/defect proof, an extra stored finding, a
 new audit stage, or a vote. All authoritative proof and admission gates
 remain unchanged. A comparison cannot replace an actually executed
 map audit. If evidence fails to discriminate, report the next deciding

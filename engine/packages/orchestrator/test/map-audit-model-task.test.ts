@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { buildGameplayAuditScenarioPreset } from
   "../../diagnostic-reasoning/src/gameplay-audit-scenario-preset.js";
-import type { GameplayIntentModel } from "../../../packages/gameplay-intent/src/index.js";
+import {
+  admitReviewedUnknownSourceRelations,
+  type GameplayIntentModel,
+} from "../../../packages/gameplay-intent/src/index.js";
 import {
   projectReviewedSourceRelationships,
 } from "../src/inspection/gameplay-scenario-compiler.js";
@@ -271,6 +274,55 @@ describe("reviewed unknown source relations in the canonical scenario projection
     expect(projectReviewedSourceRelationships({
       ...intent, artifactId: "another-map",
     }, [rooted])).toEqual([]);
+  });
+});
+
+describe("multiple independently reviewed source relations", () => {
+  it("can preserve distinct source pairs for one unknown without inventing gameplay proof", () => {
+    const selected = "map:multiple-relations";
+    const evidenceIds = ["site:write", "site:effect", "site:return"];
+    const intent = {
+      schemaVersion: 1, id: "intent:multiple", artifactId: selected,
+      evidence: evidenceIds.map((id, index) => ({
+        id, origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/flow.js:" + (index + 1) + ":1",
+      })),
+      nodes: [], edges: [], invariants: [],
+      unknowns: [{
+        id: "unknown:flow", question: "Unclassified source flow",
+        blockedSubjectIds: [], sourceEntryRegionId: "entry:flow",
+        evidenceIds,
+      }],
+    } as GameplayIntentModel;
+    const withSources = admitReviewedUnknownSourceRelations(intent, [{
+      unknownId: "unknown:flow", fromStepId: "site:write",
+      toStepId: "site:effect",
+      sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
+      sourceRelationEvidenceIds: ["site:write", "site:effect"],
+    }, {
+      unknownId: "unknown:flow", fromStepId: "site:effect",
+      toStepId: "site:return",
+      sourceClaim: "SOURCE_EFFECT_RETURN_CANDIDATE",
+      sourceRelationEvidenceIds: ["site:effect", "site:return"],
+    }]);
+    expect(withSources.unknowns).toHaveLength(1);
+    expect(withSources.nodes).toEqual([]);
+    expect(withSources.edges).toEqual([]);
+    expect(withSources.unknowns[0]?.sourceRelations).toHaveLength(2);
+    const flow = {
+      entryRegionId: "entry:flow", sourceTraceStatus: "SOURCE_ROOT_TRACE",
+      sourceSteps: evidenceIds.map(id => ({
+        id, source: { artifactId: selected },
+      })),
+    } as any;
+    const projected = projectReviewedSourceRelationships(withSources, [flow]);
+    expect(projected).toHaveLength(2);
+    expect(projected.every(item =>
+      item.proofBoundary ===
+        "REVIEWED_TYPED_SOURCE_RELATION_NOT_GAMEPLAY_OR_RUNTIME_PROOF"))
+      .toBe(true);
+    expect(projectReviewedSourceRelationships(withSources, [flow, flow]))
+      .toEqual([]);
   });
 });
 
@@ -601,9 +653,31 @@ describe("source interpretation admission is a read-only model-task review", () 
     })).toThrow(/at most three hypotheses/);
   });
 
-  it("keeps two independently rooted but competing source pairs unadopted", () => {
+  it("does not promote two rooted source facts when current graph cannot re-project them", () => {
     const evidenceAudit = {
       ...audit,
+      // Model review is advisory; source-only candidates must pass current
+      // Gameplay Intent ownership AND an independent canonical source graph.
+      inspection: {
+        ...audit.inspection,
+        gameplayIntent: { model: {
+          ...audit.inspection.gameplayIntent.model,
+          evidence: [
+            { id: "op:a", origin: "source-code", scope: "selected-artifact",
+              locator: "scripts/unnamed.js:10:1" },
+            { id: "op:b", origin: "source-code", scope: "selected-artifact",
+              locator: "scripts/unnamed.js:11:1" },
+          ],
+          unknowns: [{
+            id: "unknown:entry", question: "What does this flow do?",
+            blockedSubjectIds: [], sourceEntryRegionId: "entry",
+            evidenceIds: ["op:a", "op:b"],
+          }],
+        } },
+        hiddenGameplayDefects: { scenarioAudit: {
+          graph: { sourceFlowCandidates: [] },
+        } },
+      },
       modelTaskPackets: [{
         ...task,
         sourceInvestigation: {
@@ -652,6 +726,8 @@ describe("source interpretation admission is a read-only model-task review", () 
       ?.nextEvidenceQuestion).toContain("independent coexisting SOURCE facts");
     expect(result.inspection).toBe(evidenceAudit.inspection);
     expect(result.mapAuditReport).toBe(evidenceAudit.mapAuditReport);
+    expect(result.admission).toBe(evidenceAudit.admission);
+    expect(result.auditRevision).toBe(evidenceAudit.auditRevision);
   });
 
   it("keeps a shared-arm proposal unresolved and rejects foreign or stale source", () => {

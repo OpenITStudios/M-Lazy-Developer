@@ -291,6 +291,10 @@ export interface AuditModelSourceComparison {
   readonly unknownId: string;
   readonly candidateCount: number;
   readonly admissibleSourceCandidateCount: number;
+  /** Ambiguity concerns the inferred GAMEPLAY meaning, not whether
+   * individually supported typed source relationships may coexist.
+   * Multiple source facts still need individual canonical projection.
+   */
   readonly disposition: "UNIQUE_ROOTED_SOURCE_RELATION"
     | "AMBIGUOUS_ROOTED_SOURCE_RELATIONS" | "NO_ROOTED_SOURCE_RELATION";
   readonly sourceEvidenceIds: readonly string[];

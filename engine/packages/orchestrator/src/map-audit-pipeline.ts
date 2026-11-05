@@ -1418,14 +1418,26 @@ export function applySelectedMapAuditModelResponses(input: {
       ]);
     }
     const comparisonsByTask = new Map<string, AuditModelSourceComparison[]>();
+    // A current-artifact source relationship has one canonical identity
+    // regardless of how many separate Audit Obligations requested it.
+    // Retain the ledger/task rows, but admit the same typed source fact once.
+    const acceptedSourceKeys = new Set<string>();
     for (const group of groups.values()) {
       if (compareSource && group.reviews.length < 2) {
         throw new Error("Source comparison requires at least two hypotheses per task and unknown.");
       }
-      // Competing rooted relations are ambiguous, not a vote. Do not
-      // adopt any until independent source evidence distinguishes them.
-      if (!compareSource || group.admitted.length === 1) {
-        acceptedSourcePairs.push(...group.admitted);
+      // Several independently rooted typed source facts may coexist in
+      // ONE unclassified flow. Do not mistake two valid source relations
+      // for mutually exclusive GAMEPLAY interpretations. Every relation
+      // still requires its own canonical Intent/Scenario projection before
+      // it is accepted; no gameplay node, objective or BUG is admitted.
+      for (const pair of group.admitted) {
+        const identity = JSON.stringify([
+          pair.unknownId, pair.sourceClaim, pair.fromStepId, pair.toStepId,
+        ]);
+        if (acceptedSourceKeys.has(identity)) continue;
+        acceptedSourceKeys.add(identity);
+        acceptedSourcePairs.push(pair);
       }
       if (compareSource) {
         const count = group.admitted.length;
@@ -1456,10 +1468,12 @@ export function applySelectedMapAuditModelResponses(input: {
                 : "For the competing unresolved hypothesis: " +
                   unresolvedReview.nextEvidenceQuestion)
             : count > 1
-              ? "Check whether " + knownPairs.join(" versus ") +
-                " are independent coexisting SOURCE facts or competing gameplay interpretations. " +
-                "Find an exact receiver/guard/ingress or counterexample witness, " +
-                "not a majority vote or assumed single player objective."
+              ? "Independently rooted typed SOURCE facts " +
+                knownPairs.join(" and ") +
+                " can coexist and enter source-only projection separately. " +
+                "Do not choose a gameplay meaning from their count: " +
+                "verify receiver, guard, player purpose and actual effect " +
+                "delivery before any mechanic or defect conclusion."
               : unresolvedReview?.nextEvidenceQuestion ??
                 group.reviews[0]!.nextEvidenceQuestion,
           proofBoundary: "SOURCE_COMPARISON_NOT_GAMEPLAY_OR_DEFECT_PROOF",
@@ -1506,6 +1520,11 @@ export function applySelectedMapAuditModelResponses(input: {
           input.knowledgeCatalog,
           input.developerPractice,
         );
+    // A newly admitted source relation changes the audit revision and
+    // regenerates canonical model tasks. Do NOT attach reviews from the old
+    // revision to those fresh tasks: source interpretation reviews are
+    // deliberately one-shot, non-authoritative navigation.
+    if (continued.auditRevision !== audit.auditRevision) return continued;
     return {
       ...continued,
       modelTaskPackets: continued.modelTaskPackets.map(task => {
