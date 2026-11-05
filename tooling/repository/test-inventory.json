@@ -5737,7 +5737,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
-        "sourceBlobSha": "3e57bace3d2243ddc616a16d609910d78ca5f2b6",
+        "sourceBlobSha": "ed8d837d3ef0dc82e2339e6acfbb045f5d9495c7",
         "consumerSymbol": "analyzePlayerSessionLifecycle"
       },
       "recommendation": "keep",

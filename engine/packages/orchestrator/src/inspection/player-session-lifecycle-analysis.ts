@@ -363,11 +363,23 @@ export function analyzePlayerSessionLifecycle(
     (site.helperDeferredWorkSites?.length ?? 0) > 0).length;
   const spawnInitialFlagReadSites = sites.filter(site =>
     site.kind === "spawn-initial-flag-read").length;
-  const orderedSites = [...sites].sort((a, b) =>
+  const sourceOrder = (a: PlayerSessionSourceSite, b: PlayerSessionSourceSite): number =>
     a.source.relativePath.localeCompare(b.source.relativePath) ||
     (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
     (a.source.range?.columnStart ?? 0) - (b.source.range?.columnStart ?? 0) ||
-    a.kind.localeCompare(b.kind));
+    a.kind.localeCompare(b.kind);
+  const orderedSites = [...sites].sort(sourceOrder);
+  // The bounded 12-site projection must not hide every playerLeave witness
+  // behind earlier playerSpawn sites (or vice versa) on a large map.
+  const spawnSites = orderedSites.filter(site =>
+    site.kind === "spawn-initial-flag-read");
+  const leaveSites = orderedSites.filter(site =>
+    site.kind !== "spawn-initial-flag-read");
+  const leaveLimit = spawnSites.length ? 11 : 12;
+  const selectedSites = [
+    ...leaveSites.slice(0, leaveLimit),
+    ...spawnSites.slice(0, 12 - Math.min(leaveSites.length, leaveLimit)),
+  ].sort(sourceOrder);
   const surfaces = [
     playerJoinSubscriptions > 0,
     playerSpawnSubscriptions > 0,
@@ -389,8 +401,8 @@ export function analyzePlayerSessionLifecycle(
     sourceOrderedLeaveCleanupPaths,
     resolvedLeaveHelperDeferredWorkPaths,
     spawnInitialFlagReadSites,
-    playerSessionSourceSites: orderedSites.slice(0, 12),
-    omittedPlayerSessionSourceSites: Math.max(0, orderedSites.length - 12),
+    playerSessionSourceSites: selectedSites,
+    omittedPlayerSessionSourceSites: Math.max(0, orderedSites.length - selectedSites.length),
     lifecycleCoverage:
       surfaces === 3
         ? "complete-surface"

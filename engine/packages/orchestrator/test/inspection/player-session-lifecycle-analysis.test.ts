@@ -39,6 +39,54 @@ describe("player session lifecycle analysis", () => {
       .toBe(1);
   });
 
+  it("retains leave and spawn source witnesses under the shared 12-site limit", () => {
+    const source = {
+      artifactId: "selected", relativePath: "scripts/many-events.js",
+    };
+    const spawn = "world.afterEvents.playerSpawn.subscribe(event => { if (event.initialSpawn) {} });";
+    const leave = "world.afterEvents.playerLeave.subscribe(({playerId: id}) => cleanup(id));";
+    const parse = (callbacks: string[]) => parseScriptFile("many-events", [
+      'import { world } from "@minecraft/server";',
+      "function cleanup(id) {}",
+      ...callbacks,
+    ].join("\n"), source);
+
+    const spawnFirst = analyzePlayerSessionLifecycle([parse([
+      ...Array.from({ length: 13 }, () => spawn),
+      leave,
+    ])]);
+    expect(spawnFirst.spawnInitialFlagReadSites).toBe(13);
+    expect(spawnFirst.leaveIdArgumentSites).toBe(1);
+    expect(spawnFirst.playerSessionSourceSites).toHaveLength(12);
+    expect(spawnFirst.playerSessionSourceSites.some(site =>
+      site.kind === "leave-id-argument")).toBe(true);
+    expect(spawnFirst.playerSessionSourceSites.some(site =>
+      site.kind === "spawn-initial-flag-read")).toBe(true);
+    expect(spawnFirst.omittedPlayerSessionSourceSites).toBe(2);
+
+    const leaveFirst = analyzePlayerSessionLifecycle([parse([
+      ...Array.from({ length: 13 }, () => leave),
+      spawn,
+    ])]);
+    expect(leaveFirst.leaveIdArgumentSites).toBe(13);
+    expect(leaveFirst.spawnInitialFlagReadSites).toBe(1);
+    expect(leaveFirst.playerSessionSourceSites).toHaveLength(12);
+    expect(leaveFirst.playerSessionSourceSites.filter(site =>
+      site.kind === "leave-id-argument")).toHaveLength(11);
+    expect(leaveFirst.playerSessionSourceSites.some(site =>
+      site.kind === "spawn-initial-flag-read")).toBe(true);
+    expect(leaveFirst.omittedPlayerSessionSourceSites).toBe(2);
+
+    const noLeave = analyzePlayerSessionLifecycle([parse([
+      ...Array.from({ length: 13 }, () => spawn),
+    ])]);
+    expect(noLeave.leaveIdArgumentSites).toBe(0);
+    expect(noLeave.playerSessionSourceSites).toHaveLength(12);
+    expect(noLeave.playerSessionSourceSites.every(site =>
+      site.kind === "spawn-initial-flag-read")).toBe(true);
+    expect(noLeave.omittedPlayerSessionSourceSites).toBe(1);
+  });
+
   it("does not treat spawn subscription as universal readiness proof", () => {
     const script = parseScriptFile(
       "main",
