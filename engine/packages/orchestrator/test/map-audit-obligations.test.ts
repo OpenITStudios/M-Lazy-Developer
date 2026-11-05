@@ -73,6 +73,64 @@ const closed = {
 } as any;
 
 describe("audit obligations versus gameplay findings", () => {
+  it("routes session cleanup source sites into one bounded deciding-proof obligation", () => {
+    const src = (lineStart: number) => ({
+      artifactId: "fixture:session", relativePath: "scripts/main.js",
+      range: { lineStart, lineEnd: lineStart, columnStart: 5, columnEnd: 15 },
+    });
+    const base = {
+      graph: baseGraph("PROVEN"),
+      defectResolution: { resolutions: [], confirmedDefectReadyIds: [] },
+      gameplayWorld: { arenas: { detected: false, isolation: { observations: [] },
+        replicaProof: [] }, platformKnowledge: { claims: [] },
+        surfaceDiscovery: { surfaceIds: [] } },
+      gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
+      temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+    } as unknown as Parameters<typeof deriveAuditObligations>[0];
+    const result = deriveAuditObligations({
+      ...base,
+      playerSessionLifecycle: {
+        playerLeaveSubscriptions: 1,
+        leaveIdArgumentSites: 2, directLeaveCacheDeleteSites: 1,
+        resolvedLeaveHelperSites: 0, omittedPlayerSessionSourceSites: 3,
+        playerSessionSourceSites: [
+          { kind: "leave-id-argument", source: src(19) },
+          { kind: "leave-direct-cache-delete", source: src(20) },
+          { kind: "spawn-initial-flag-read", source: src(31) },
+        ],
+      } as NonNullable<Parameters<typeof deriveAuditObligations>[0]["playerSessionLifecycle"]>,
+    });
+    const selected = result.filter(row =>
+      row.id === "player-session:leave-cleanup-reconnect");
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toMatchObject({
+      source: "scenario-coverage", stage: "EVALUATE", evidenceIds: [],
+      validationGroupKey: "player-session:leave-reconnect",
+    });
+    expect(selected[0]?.subjectIds).toEqual([
+      "scripts/main.js:19:5", "scripts/main.js:20:5",
+    ]);
+    expect(selected[0]?.subjectIds).not.toContain("scripts/main.js:31:5");
+    expect(selected[0]?.reason).toContain("3 additional session source site(s)");
+    expect(selected[0]?.missingProof).toContain("last member disconnect");
+    expect(selected[0]?.validationTest).toContain("never auto-admit BUG");
+    expect(deriveAuditObligations(base).some(row =>
+      row.id === "player-session:leave-cleanup-reconnect")).toBe(false);
+    expect(deriveAuditObligations({
+      ...base,
+      playerSessionLifecycle: {
+        playerLeaveSubscriptions: 1,
+        leaveIdArgumentSites: 0, directLeaveCacheDeleteSites: 0,
+        resolvedLeaveHelperSites: 0, omittedPlayerSessionSourceSites: 0,
+        playerSessionSourceSites: [
+          { kind: "spawn-initial-flag-read", source: src(31) },
+        ],
+      } as NonNullable<Parameters<typeof deriveAuditObligations>[0]["playerSessionLifecycle"]>,
+    }).some(row => row.id === "player-session:leave-cleanup-reconnect"))
+      .toBe(false);
+  });
+
   it("keeps discarded-commit source candidates as deciding-proof obligations, not bug verdicts", () => {
     const src = (lineStart: number) => ({
       artifactId: "fixture:persistence", relativePath: "scripts/transactions.ts",

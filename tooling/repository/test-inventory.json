@@ -6393,7 +6393,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-obligation-and-replica-proof-boundaries",
-        "sourceBlobSha": "b40b37a3c9803e1398eb60865fff0a3569b41172"
+        "sourceBlobSha": "b83d91f9573e9e15f16076ef2928ce8f1c2c4848"
       },
       "recommendation": "keep",
       "rationale": "Includes all prior audit obligation cases and the unclassified replica divergence regression merged from the retired single-case suite; same canonical deriveAuditObligations source owner and explicit FORMALIZE/validation evidence checks. Source reviewed, execution not verified.",

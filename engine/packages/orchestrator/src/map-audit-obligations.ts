@@ -26,6 +26,7 @@ import type {
 import type { MandatoryAuditProcedureReceipt } from "./inspection/mandatory-audit-support.js";
 import type { GameplayDiscoveryClosure } from "./inspection/gameplay-discovery-closure.js";
 import type { IgnoredCommitBeforeFeedbackCandidate } from "./inspection/persistence-source-analysis.js";
+import type { PlayerSessionLifecycleAnalysis } from "./inspection/player-session-lifecycle-analysis.js";
 import type {
   AuditUserIntentEnvelope,
 } from "./map-audit-user-intent.js";
@@ -1160,6 +1161,7 @@ export function deriveAuditObligations(input: {
     readonly AccumulationGrowthSignal[];
   readonly ignoredCommitBeforeFeedback?:
     readonly IgnoredCommitBeforeFeedbackCandidate[];
+  readonly playerSessionLifecycle?: PlayerSessionLifecycleAnalysis;
   readonly capabilityExposure?: CapabilityExposureSummary;
   readonly replicaDivergenceIds?: readonly string[];
 }): readonly AuditObligation[] {
@@ -1186,6 +1188,63 @@ export function deriveAuditObligations(input: {
       input.graph,
     ),
   ];
+
+  // One source-grounded session investigation per world, not one task per
+  // callsite. The parser and existing session owner have already resolved
+  // the imported-world event and its playerId arguments; none proves that
+  // cleanup executed, that member ownership was released, or that reconnect
+  // is allowed by the current map's design.
+  const session = input.playerSessionLifecycle;
+  const leaveSites = session?.playerSessionSourceSites.filter(site =>
+    site.kind === "leave-id-argument" ||
+    site.kind === "leave-direct-cache-delete") ?? [];
+  if (session && session.playerLeaveSubscriptions > 0 && leaveSites.length > 0) {
+    const location = (source: { relativePath: string; range?: {
+      lineStart?: number; columnStart?: number;
+    } }): string => source.relativePath +
+      (source.range?.lineStart === undefined ? "" :
+        ":" + source.range.lineStart +
+        (source.range.columnStart === undefined ? "" :
+          ":" + source.range.columnStart));
+    const locations = leaveSites.map(site => location(site.source));
+    const helperLocations = leaveSites.flatMap(site => [
+      ...(site.helperTarget ? [location(site.helperTarget)] : []),
+      ...(site.helperCacheDeleteSites ?? []).map(deletion =>
+        location(deletion.source)),
+      ...(site.helperArenaReleaseSites ?? []).map(release =>
+        location(release.membershipSource)),
+    ]);
+    const omitted = session.omittedPlayerSessionSourceSites > 0
+      ? " " + session.omittedPlayerSessionSourceSites +
+        " additional session source site(s) were omitted by the bounded inspection projection."
+      : "";
+    items.push(normalize({
+      id: "player-session:leave-cleanup-reconnect",
+      source: "scenario-coverage",
+      stage: "EVALUATE",
+      title: "Reconcile playerLeave cleanup and reconnect ownership",
+      reason: "Selected source includes " + session.playerLeaveSubscriptions +
+        " playerLeave subscription(s), " + session.leaveIdArgumentSites +
+        " ID-bearing callsite(s), " + session.directLeaveCacheDeleteSites +
+        " direct Map/Set deletion(s), and " +
+        session.resolvedLeaveHelperSites + " resolved local/ESM helper call(s)." +
+        omitted + " The callsites are source evidence only, not proof of " +
+        "successful cleanup, session isolation, or a gameplay defect.",
+      missingProof: "Trace the cited playerId callsites through their actual " +
+        "callees and arena/member state changes; determine whether the last " +
+        "member disconnect, reconnect, pending respawns and delayed work " +
+        "follow this map's independently grounded rules.",
+      validationTest: "Inspect the cited leave calls and helper state writes " +
+        "first; compare last-member disconnect/reconnect against the " +
+        "selected-world intent and a surviving concurrent arena. If " +
+        "execution evidence exists, check stale callbacks and recovery. " +
+        "Keep unresolved source/runtime effects open, never auto-admit BUG.",
+      validationGroupKey: "player-session:leave-reconnect",
+      subjectIds: [...locations, ...helperLocations],
+      componentIds: [],
+      evidenceIds: [],
+    }));
+  }
 
   // Source-only, bounded A28 investigation: a discarded fallible result
   // may precede a write/feedback, or follow a branch-local state write
