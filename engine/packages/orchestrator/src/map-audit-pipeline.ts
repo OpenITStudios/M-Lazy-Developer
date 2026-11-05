@@ -74,6 +74,7 @@ import {
   reviewAuditModelSourceInterpretation,
   MODEL_RESOLVABLE_KINDS,
   type AuditModelSourceInterpretationProposal,
+  type AuditModelSourceComparison,
   type AuditModelTaskPacket,
 } from "./map-audit-model-task.js";
 import {
@@ -329,6 +330,8 @@ export interface SelectedMapAuditModelResponseBatch {
   }[];
   /** Non-authoritative source investigation, not a defect resolution. */
   readonly sourceInterpretations?: readonly AuditModelSourceInterpretationProposal[];
+  /** Optional compare-before-compose for 2–3 hypotheses per task/unknown. */
+  readonly sourceComparisonMode?: "CONTRASTIVE_SOURCE_HYPOTHESES";
 }
 
 function deriveSelectedMapAuditControl(input: {
@@ -1336,6 +1339,14 @@ export function applySelectedMapAuditModelResponses(input: {
   if (interpretations.length > 0 && responses.resolutions.length > 0) {
     throw new Error("Cannot mix source interpretation reviews with causal resolutions.");
   }
+  const compareSource = responses.sourceComparisonMode ===
+    "CONTRASTIVE_SOURCE_HYPOTHESES";
+  if (responses.sourceComparisonMode !== undefined && !compareSource) {
+    throw new Error("Unsupported source comparison mode.");
+  }
+  if (compareSource && interpretations.length < 2) {
+    throw new Error("Source comparison requires at least two source hypotheses.");
+  }
   if (interpretations.length > 0) {
     const tasks = new Map(audit.modelTaskPackets.map(task => [task.id, task] as const));
     const reviewsByTask = new Map<string,
@@ -1347,7 +1358,15 @@ export function applySelectedMapAuditModelResponses(input: {
       readonly sourceClaim: GameplayIntentSourceRelation["sourceClaim"];
       readonly sourceRelationEvidenceIds: readonly string[];
     }[] = [];
-    const seen = new Set<string>();
+    type SourcePair = (typeof acceptedSourcePairs)[number];
+    type SourceReview = ReturnType<typeof reviewAuditModelSourceInterpretation>;
+    const groups = new Map<string, {
+      readonly taskId: string;
+      readonly unknownId: string;
+      readonly reviews: SourceReview[];
+      readonly admitted: SourcePair[];
+    }>();
+    const seenHypotheses = new Set<string>();
     for (const proposal of interpretations) {
       if (!proposal || typeof proposal !== "object") {
         throw new Error("Malformed model source interpretation.");
@@ -1357,16 +1376,29 @@ export function applySelectedMapAuditModelResponses(input: {
         throw new Error("Source interpretation has no current matching model task.");
       }
       const key = task.id + "\u0000" + proposal.unknownId;
-      if (seen.has(key)) {
+      let group = groups.get(key);
+      if (!compareSource && group !== undefined) {
         throw new Error("Duplicate source interpretation for one task and unknown.");
       }
-      seen.add(key);
+      if (compareSource && group !== undefined && group.reviews.length >= 3) {
+        throw new Error("Source comparison allows at most three hypotheses per task and unknown.");
+      }
+      const hypothesisId = [
+        key, proposal.sourceClaim, proposal.fromStepId, proposal.toStepId,
+      ].join("\u0000");
+      if (seenHypotheses.has(hypothesisId)) {
+        throw new Error("Duplicate source hypothesis cannot count as independent contrast.");
+      }
+      seenHypotheses.add(hypothesisId);
       const review = reviewAuditModelSourceInterpretation(
         task, proposal, audit.identity.artifactId);
-      // Only a positive typed relation from a source-rooted, current
-      // SourceEffectSlice may re-enter Gameplay Intent; a missing ingress,
-      // truncated interpretation or a same-branch absence-of-refutation
-      // cannot become independent semantic evidence.
+      if (group === undefined) {
+        group = { taskId: task.id, unknownId: review.unknownId,
+          reviews: [], admitted: [] };
+        groups.set(key, group);
+      }
+      // Probe every candidate against the SAME current selected-source graph.
+      // Textual plausibility and candidate votes cannot become source proof.
       const entry = task.sourceInvestigation?.entries.find(item =>
         item.unknownId === proposal.unknownId);
       const effect = entry?.effectPaths?.find(item =>
@@ -1385,7 +1417,7 @@ export function applySelectedMapAuditModelResponses(input: {
           effect?.evidenceStatus === "CANDIDATE_INGRESS" &&
           (proposal.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" ||
            proposal.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE")) {
-        acceptedSourcePairs.push({
+        group.admitted.push({
           unknownId: review.unknownId,
           fromStepId: review.fromStepId,
           toStepId: review.toStepId,
@@ -1393,9 +1425,45 @@ export function applySelectedMapAuditModelResponses(input: {
           sourceRelationEvidenceIds: review.sourceRelationEvidenceIds,
         });
       }
+      group.reviews.push(review);
       reviewsByTask.set(task.id, [
         ...(reviewsByTask.get(task.id) ?? []), review,
       ]);
+    }
+    const comparisonsByTask = new Map<string, AuditModelSourceComparison[]>();
+    for (const group of groups.values()) {
+      if (compareSource && group.reviews.length < 2) {
+        throw new Error("Source comparison requires at least two hypotheses per task and unknown.");
+      }
+      // Competing rooted relations are ambiguous, not a vote. Do not
+      // adopt any until independent source evidence distinguishes them.
+      if (!compareSource || group.admitted.length === 1) {
+        acceptedSourcePairs.push(...group.admitted);
+      }
+      if (compareSource) {
+        const count = group.admitted.length;
+        const comparison: AuditModelSourceComparison = {
+          unknownId: group.unknownId,
+          candidateCount: group.reviews.length,
+          admissibleSourceCandidateCount: count,
+          disposition: count === 1
+            ? "UNIQUE_ROOTED_SOURCE_RELATION"
+            : count > 1
+              ? "AMBIGUOUS_ROOTED_SOURCE_RELATIONS"
+              : "NO_ROOTED_SOURCE_RELATION",
+          sourceEvidenceIds: [...new Set(group.admitted.flatMap(
+            pair => pair.sourceRelationEvidenceIds))].sort(),
+          nextEvidenceQuestion: count === 1
+            ? "This is only a typed source relation. Independently verify gameplay intent, scope, guards and runtime delivery."
+            : count > 1
+              ? "Find an independent source witness that distinguishes these rooted relations; do not select by narration."
+              : "Recover a source-rooted effect/value/return witness or counterexample before proposing another relation.",
+          proofBoundary: "SOURCE_COMPARISON_NOT_GAMEPLAY_OR_DEFECT_PROOF",
+        };
+        comparisonsByTask.set(group.taskId, [
+          ...(comparisonsByTask.get(group.taskId) ?? []), comparison,
+        ]);
+      }
     }
     // A review with no admitted typed relation remains an ephemeral,
     // non-authoritative diagnostic exactly as before. A POSITIVE source
@@ -1437,11 +1505,24 @@ export function applySelectedMapAuditModelResponses(input: {
     return {
       ...continued,
       modelTaskPackets: continued.modelTaskPackets.map(task => {
-        const { sourceInterpretationReviews: _prior, ...canonicalTask } = task;
+        const {
+          sourceInterpretationReviews: _prior,
+          sourceComparisons: _priorComparison,
+          ...canonicalTask
+        } = task;
         const reviews = reviewsByTask.get(task.id);
-        return reviews === undefined ? canonicalTask : {
-          ...canonicalTask, sourceInterpretationReviews: reviews,
-        };
+        const comparisons = comparisonsByTask.get(task.id);
+        return reviews === undefined && comparisons === undefined
+          ? canonicalTask
+          : {
+              ...canonicalTask,
+              ...(reviews === undefined ? {} : {
+                sourceInterpretationReviews: reviews,
+              }),
+              ...(comparisons === undefined ? {} : {
+                sourceComparisons: comparisons,
+              }),
+            };
       }),
     };
   }

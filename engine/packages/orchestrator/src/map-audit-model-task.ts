@@ -274,6 +274,20 @@ export interface AuditModelSourceInterpretationReview
     "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF";
 }
 
+/** Temporary comparison of exact current-map source hypotheses.
+ * This never becomes new gameplay, proof, or persisted learning authority.
+ */
+export interface AuditModelSourceComparison {
+  readonly unknownId: string;
+  readonly candidateCount: number;
+  readonly admissibleSourceCandidateCount: number;
+  readonly disposition: "UNIQUE_ROOTED_SOURCE_RELATION"
+    | "AMBIGUOUS_ROOTED_SOURCE_RELATIONS" | "NO_ROOTED_SOURCE_RELATION";
+  readonly sourceEvidenceIds: readonly string[];
+  readonly nextEvidenceQuestion: string;
+  readonly proofBoundary: "SOURCE_COMPARISON_NOT_GAMEPLAY_OR_DEFECT_PROOF";
+}
+
 /** Source-scoped EVALUATE question. It never grants gameplay/proof authority. */
 export interface AuditModelTaskScenarioIndicator {
   readonly authority: "SCOPED_EVALUATE_QUESTION_NOT_DEFECT_PROOF";
@@ -313,6 +327,8 @@ export interface AuditModelTaskPacket {
   readonly sourceInvestigation?: AuditModelSourceInvestigation;
   /** One-shot, non-authoritative model review; discarded on audit rebuild. */
   readonly sourceInterpretationReviews?: readonly AuditModelSourceInterpretationReview[];
+  /** Ephemeral contrast; omitted on the next canonical audit rebuild. */
+  readonly sourceComparisons?: readonly AuditModelSourceComparison[];
   /** Routing provenance, not an audit checkpoint or proof-state change. */
   readonly subjectSelection?: {
     readonly basis: "CHECKPOINT_EVIDENCE_LINK" | "SOURCE_ROLE_CANDIDATE";

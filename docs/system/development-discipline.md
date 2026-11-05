@@ -70,6 +70,41 @@ This is the mandatory behavior contract for every `IMPROVE SYSTEM` task, includi
 
 **Development completion review:** inspect whether the intended architecture-to-consumer path is actually wired, whether any obsolete parallel implementation remains, and whether source claims exceed evidence. Do not make completed test counts the primary measure of unfinished architecture. Defer noncritical executable proof explicitly instead of inventing a PASS.
 
+## Evidence-contrast improvement (Harness2 method adapted to ChatGPT)
+
+This is a method within existing IMPROVE SYSTEM, not a new agent, skill,
+database, or replacement for Bedrock semantic analysis. Inspired by
+[google-research/harness2](https://github.com/google-research/harness2)
+(main SHA `6868817518876de8fd170c6a8354daca273b6191`).
+
+For recurring failures, follow **Propose → Probe → Compose → Reflect**:
+
+1. **Baseline:** pin `Local` SHA, the first wrong canonical owner, exact
+   input/evidence identity, source-reproducible symptom and proof ceiling.
+2. **Propose:** contrast a general workflow/tool correction with a
+   Bedrock-semantic correction where relevant. Isolate one variable when
+   feasible, avoid repeated proposals once a deterministic fix is known,
+   and never hardcode a sampled map or edit frozen expectations to pass.
+3. **Probe:** replay against the SAME source, expected contract and negative
+   control. Compare actual differences in execution, cost, failure, or
+   delivered artifact. Source review alone must be labeled STATIC REVIEW,
+   not observed runtime improvement; record missing proof.
+4. **Compose:** choose only a candidate with evidence of improvement and
+   no weaker source ownership, provenance, audit admission, permissions or
+   uncertainty handling. Conflicting/unsupported candidates remain open.
+   Do not use majority vote or AI confidence as evidence.
+5. **Reflect once:** classify each change `helped`, `hurt`,
+   `no observed effect` or `confounded` and cite the contrasting
+   observation. Adopt at most one generalizable lesson only if isolated
+   evidence supports it; otherwise record `NO EVIDENCE-SUPPORTED LESSON`.
+   Persist rules with their EXISTING owner and material decision/proof
+   in the same Git commit, not a parallel experience registry.
+
+Do not import upstream Python executors, unrestricted networks, default
+4k rollouts, automatic prompt mutation or benchmark score authority.
+ChatGPT Chat remains the operator; TEST MAP and its canonical proof gates
+retain authority. Never reactivate CI as part of this method.
+
 ## Architecture-first construction before acceptance
 
 When the user requests architecture completion or explicitly defers testing, use **BUILD** as a working emphasis inside the existing IMPROVE SYSTEM lane, not a new stage, skill, authority, or persisted status machine.

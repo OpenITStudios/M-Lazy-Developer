@@ -20,7 +20,7 @@ Use when the user explicitly wants to improve **M-Lazy-Developer itself**. Read 
 2. **INVESTIGATE:** read only owning implementation, consumers, current source and any relevant native Bedrock Skill or separately versioned Probe evidence.
 3. **DESIGN:** correct or reuse the existing owner; avoid a manager, router, registry, lane, standalone app, platform or micro-test system.
 4. **IMPLEMENT:** complete source-to-consumer behavior in bounded macro batches. Treat `skills/bedrock/source-lock.json` as native publisher identity, `experiments/developer-practice-signals.json` as the *one* curated external REFERENCE source, and `engine/packages/orchestrator/src/workflow/resource-context.ts` as the existing selected-map reference consumer.
-5. **VERIFY:** compare exact source contracts and consumer/witness/proof boundaries. Once integrated, validate only representative positive, negative and end-to-end behavior; keep frozen benchmark expectations. Do not infer executable or Minecraft PASS from source review.
+5. **VERIFY:** use the existing [evidence-contrast development method](../../../docs/system/development-discipline.md#evidence-contrast-improvement-harness2-method-adapted-to-chatgpt) for recurring failures: compare a pinned baseline, a minimally distinct proposal and a negative control before composing any retained rule. Once integrated, validate representative positive, negative and end-to-end behavior; keep frozen benchmark expectations. Do not infer executable or Minecraft PASS from source review.
 6. **COMMIT & STOP:** one coherent non-force GitHub `Local` commit with Work/State/Proof/Unresolved, verify the HEAD, report exact remaining evidence, stop.
 
 ## Source-author methodology and independent probe evidence

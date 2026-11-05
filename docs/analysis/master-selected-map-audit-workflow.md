@@ -461,6 +461,35 @@ must always use a fresh exact-map `runSelectedMapAudit()` and canonical proof
 gates; `--responses` cannot act on a snapshot. New map/source revisions,
 or a missing/altered snapshot, require a new canonical audit.
 
+### Contrastive source hypotheses (Harness2-inspired, optional)
+
+When a current selected-map `AUDIT_OBLIGATION` in UNDERSTAND contains
+`sourceInvestigation`, ChatGPT may compare two or three distinct source
+hypotheses for the SAME `taskId` and `unknownId`. Supply
+`"sourceComparisonMode": "CONTRASTIVE_SOURCE_HYPOTHESES"` in the existing
+`--responses` JSON, `resolutions: []`, and put both or all three
+candidates in `sourceInterpretations`. Every candidate must provide
+exact existing operation IDs, a typed sourceClaim, proposed meaning and
+disconfirming question. The canonical map fingerprint and revision must
+match; malformed, repeated, foreign or oversized groups fail closed.
+
+The current `reviewAuditModelSourceInterpretation()` reviews every
+hypothesis against the SAME selected source and negative/branch evidence.
+Only one uniquely supported source-rooted typed relationship can enter
+the existing Intent/Scenario reconstruction. Zero or multiple eligible
+alternatives remain unadopted; the original per-task packet exposes all
+`sourceInterpretationReviews` plus a read-only `sourceComparisons`
+summary. This is NOT gameplay/defect proof, an extra stored finding, a
+new audit stage, or a vote. All authoritative proof and admission gates
+remain unchanged. A comparison cannot replace an actually executed
+map audit. If evidence fails to discriminate, report the next deciding
+source question and retain UNKNOWN/BLOCKED.
+
+Development-level reflection follows the existing
+[Development Discipline](../system/development-discipline.md#evidence-contrast-improvement-harness2-method-adapted-to-chatgpt);
+neither mode introduces upstream Python agent runners, persistent
+experience stores or automatic prompt mutation.
+
 ### Lossless AI investigation batching
 
 The existing canonical audit may correctly produce thousands of separate

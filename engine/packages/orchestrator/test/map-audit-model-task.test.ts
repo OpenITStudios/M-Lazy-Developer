@@ -541,6 +541,110 @@ describe("source interpretation admission is a read-only model-task review", () 
     expect(audit.modelTaskPackets[0]).not.toHaveProperty("sourceInterpretationReviews");
   });
 
+  it("compares two competing source readings without inventing proof", () => {
+    const result = applySelectedMapAuditModelResponses({
+      audit,
+      responses: {
+        ...responses,
+        sourceComparisonMode: "CONTRASTIVE_SOURCE_HYPOTHESES",
+        sourceInterpretations: [
+          proposal,
+          {
+            ...proposal, fromStepId: "op:b", toStepId: "op:a",
+            proposedGameplayMeaning: "The reverse order may explain this action.",
+            disconfirmingQuestion: "Does authored branch exclusivity refute this alternative?",
+          },
+        ],
+      },
+    });
+    expect(result.modelTaskPackets[0]?.sourceInterpretationReviews).toHaveLength(2);
+    expect(result.modelTaskPackets[0]?.sourceComparisons).toMatchObject([{
+      unknownId: "unknown:entry", candidateCount: 2,
+      admissibleSourceCandidateCount: 0,
+      disposition: "NO_ROOTED_SOURCE_RELATION",
+      proofBoundary: "SOURCE_COMPARISON_NOT_GAMEPLAY_OR_DEFECT_PROOF",
+    }]);
+    expect(result.mapAuditReport).toBe(audit.mapAuditReport);
+    expect(result.admission).toBe(audit.admission);
+    expect(result.auditRevision).toBe(audit.auditRevision);
+    expect(audit.modelTaskPackets[0]).not.toHaveProperty("sourceComparisons");
+  });
+
+  it("rejects unpaired, repeated and oversized source contrasts", () => {
+    expect(() => applySelectedMapAuditModelResponses({
+      audit, responses: {
+        ...responses,
+        sourceComparisonMode: "CONTRASTIVE_SOURCE_HYPOTHESES",
+      },
+    })).toThrow(/at least two source hypotheses/);
+    expect(() => applySelectedMapAuditModelResponses({
+      audit, responses: {
+        ...responses,
+        sourceComparisonMode: "CONTRASTIVE_SOURCE_HYPOTHESES",
+        sourceInterpretations: [proposal, { ...proposal }],
+      },
+    })).toThrow(/Duplicate source hypothesis/);
+    expect(() => applySelectedMapAuditModelResponses({
+      audit, responses: {
+        ...responses,
+        sourceComparisonMode: "CONTRASTIVE_SOURCE_HYPOTHESES",
+        sourceInterpretations: [
+          proposal, { ...proposal, fromStepId: "op:b", toStepId: "op:a" },
+          { ...proposal, sourceClaim: "SOURCE_EFFECT_RETURN_CANDIDATE" },
+          { ...proposal, sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" },
+        ],
+      },
+    })).toThrow(/at most three hypotheses/);
+  });
+
+  it("keeps two independently rooted but competing source pairs unadopted", () => {
+    const evidenceAudit = {
+      ...audit,
+      modelTaskPackets: [{
+        ...task,
+        sourceInvestigation: {
+          ...task.sourceInvestigation,
+          entries: [{
+            ...task.sourceInvestigation.entries[0]!,
+            effectPaths: [{
+              effectId: "op:b", evidenceStatus: "CANDIDATE_INGRESS",
+              guardStateReadIds: ["op:a"],
+              sourceLocalStateValueHandoffs: [{
+                writeOperationId: "op:a", guardReadOperationId: "op:a",
+              }],
+              candidateOutcomeIds: [],
+            }, {
+              effectId: "op:a", evidenceStatus: "CANDIDATE_INGRESS",
+              guardStateReadIds: [], sourceLocalStateValueHandoffs: [],
+              candidateOutcomeIds: ["op:b"],
+            }],
+          }],
+        },
+      }],
+    } as unknown as SelectedMapAuditRun;
+    const result = applySelectedMapAuditModelResponses({
+      audit: evidenceAudit,
+      responses: {
+        ...responses,
+        sourceComparisonMode: "CONTRASTIVE_SOURCE_HYPOTHESES",
+        sourceInterpretations: [
+          { ...proposal, sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" },
+          { ...proposal, sourceClaim: "SOURCE_EFFECT_RETURN_CANDIDATE" },
+        ],
+      },
+    });
+    expect(result.modelTaskPackets[0]?.sourceInterpretationReviews
+      ?.map(review => review.disposition)).toEqual([
+        "SOURCE_RELATION_CANDIDATE", "SOURCE_RELATION_CANDIDATE",
+      ]);
+    expect(result.modelTaskPackets[0]?.sourceComparisons).toMatchObject([{
+      disposition: "AMBIGUOUS_ROOTED_SOURCE_RELATIONS",
+      candidateCount: 2, admissibleSourceCandidateCount: 2,
+    }]);
+    expect(result.inspection).toBe(evidenceAudit.inspection);
+    expect(result.mapAuditReport).toBe(evidenceAudit.mapAuditReport);
+  });
+
   it("keeps a shared-arm proposal unresolved and rejects foreign or stale source", () => {
     const sameArmAudit = {
       ...audit,
