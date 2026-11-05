@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 const readinessGate = fileURLToPath(new URL("./check-case-ready.mjs", import.meta.url));
 
 const scorer = fileURLToPath(new URL("./score-benchmark.mjs", import.meta.url));
+const blindCompare = fileURLToPath(new URL("./blind-compare.mjs", import.meta.url));
 const expectationValidator = fileURLToPath(
   new URL("./validate-expectation.mjs", import.meta.url),
 );
@@ -153,7 +154,7 @@ function outcomePair(caseId, artifactSha) {
   baseline.result.resultClass = "false-negative";
   return { baseline, candidate };
 }
-function runComparison(pairs) {
+function withComparisonManifest(pairs, evaluate) {
   const root = mkdtempSync(join(tmpdir(), "m-bedrock-paired-source-review-"));
   try {
     const payload = {
@@ -170,13 +171,16 @@ function runComparison(pairs) {
     };
     const path = join(root, "comparison.json");
     writeFileSync(path, JSON.stringify(payload));
-    const run = spawnSync(process.execPath, [scorer, "--compare", path],
-      { encoding: "utf8" });
-    return run;
+    return evaluate(path);
   } finally {
     rmSync(root, { recursive: true, force: true });
     for (const p of pairs) { p.baseline.cleanup(); p.candidate.cleanup(); }
   }
+}
+function runComparison(pairs) {
+  return withComparisonManifest(pairs, path =>
+    spawnSync(process.execPath, [scorer, "--compare", path],
+      { encoding: "utf8" }));
 }
 
 test("frozen positive and negative controls permit only source-claim review recommendation", () => {
@@ -247,6 +251,91 @@ test("one case and reused artifacts cannot prove independent replication", () =>
   const single = runComparison([lone]);
   assert.notEqual(single.status, 0);
   assert.match(single.stderr, /2.20 complete independent pairs/);
+});
+
+
+test("blinded source comparison exposes only anonymized canonical score views", () => {
+  const a = outcomePair("blind-case-1", "7".repeat(64));
+  const b = outcomePair("blind-case-2", "8".repeat(64));
+  withComparisonManifest([a, b], manifest => {
+    const privateKey = "private-isolated-review-key-2026-11-05";
+    const blind = spawnSync(process.execPath,
+      [blindCompare, "--blind", manifest, privateKey], { encoding: "utf8" });
+    assert.equal(blind.status, 0, blind.stderr);
+    const view = JSON.parse(blind.stdout);
+    assert.equal(view.policy, "selected-map-blinded-source-outcome-view");
+    assert.equal(view.caseCount, 2);
+    assert.match(view.sessionId, /^[a-f0-9]{64}$/);
+    assert.ok(!blind.stdout.includes('"baseline"'));
+    assert.ok(!blind.stdout.includes('"candidate"'));
+    assert.ok(!blind.stdout.includes(manifest));
+    assert.ok(!blind.stdout.includes("blind-case-1"));
+    const candidateSide = view.A.tp > view.B.tp ? "A" : "B";
+    assert.equal(Math.max(view.A.tp, view.B.tp), 2);
+    assert.equal(Math.min(view.A.tp, view.B.tp), 0);
+    const unblind = (side, session=view.sessionId) => spawnSync(process.execPath,
+      [blindCompare, "--reveal", manifest, privateKey, side, session],
+      { encoding: "utf8" });
+    const chosen = unblind(candidateSide);
+    assert.equal(chosen.status, 0, chosen.stderr);
+    const selection = JSON.parse(chosen.stdout);
+    assert.equal(selection.revealedRole, "candidate");
+    assert.equal(selection.recommendation,
+      "CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW");
+    assert.notEqual(selection.recommendation, "ADOPTED");
+    const baseline = unblind("KEEP_BASELINE");
+    assert.equal(baseline.status, 0, baseline.stderr);
+    assert.equal(JSON.parse(baseline.stdout).recommendation, "KEEP_BASELINE");
+    const stale = unblind(candidateSide, "f".repeat(64));
+    assert.notEqual(stale.status, 0);
+    assert.match(stale.stderr, /Blind session changed/);
+  });
+});
+
+test("blind selection cannot override benchmark regression or insufficient evidence", () => {
+  const a = outcomePair("blind-fp-1", "9".repeat(64));
+  const b = outcomePair("blind-fp-2", "a".repeat(64));
+  a.candidate.result.fullMapReview.decisions[1].observedClass = "supported";
+  a.candidate.result.fullMapReview.decisions[1].reason =
+    "Candidate incorrectly treated a negative source control as supported.";
+  a.candidate.result.fullMapReview.decisions[1].observedEvidenceIds =
+    ["src:negative-control"];
+  a.candidate.result.metrics.tn = 0;
+  a.candidate.result.metrics.fp = 1;
+  a.candidate.result.resultClass = "false-positive";
+  withComparisonManifest([a,b], manifest => {
+    const key = "blind-retain-baseline-on-false-positive";
+    const blind = spawnSync(process.execPath,
+      [blindCompare, "--blind", manifest, key], { encoding:"utf8" });
+    assert.equal(blind.status, 0, blind.stderr);
+    const view = JSON.parse(blind.stdout);
+    const higherTp = view.A.tp > view.B.tp ? "A" : "B";
+    const reveal = spawnSync(process.execPath,
+      [blindCompare, "--reveal", manifest, key, higherTp, view.sessionId],
+      { encoding:"utf8" });
+    assert.equal(reveal.status, 0, reveal.stderr);
+    const chosen = JSON.parse(reveal.stdout);
+    assert.equal(chosen.revealedRole, "candidate");
+    assert.equal(chosen.regressions, 1);
+    assert.equal(chosen.recommendation, "KEEP_BASELINE");
+  });
+});
+
+test("legacy blind-compare cannot accept fabricated standalone aggregate metrics", () => {
+  const root = mkdtempSync(join(tmpdir(), "m-bedrock-blind-invalid-"));
+  try {
+    const a = join(root,"a.json"), b = join(root,"b.json");
+    writeFileSync(a, JSON.stringify({ metrics: {tp:100, fp:0, fn:0} }));
+    writeFileSync(b, JSON.stringify({ metrics: {tp:0, fp:100, fn:100} }));
+    const old = spawnSync(process.execPath,
+      [blindCompare, a, b], {encoding:"utf8"});
+    assert.notEqual(old.status,0);
+    assert.match(old.stderr,/Do not pass unverified aggregate score files/);
+    const bad = spawnSync(process.execPath,
+      [blindCompare, "--blind", a, "a-valid-operator-key-has-long-length"],
+      {encoding:"utf8"});
+    assert.notEqual(bad.status,0);
+  } finally { rmSync(root,{recursive:true,force:true}); }
 });
 
 test("source-grounded full-map review scores all frozen positive/negative/unknown claims", () => {

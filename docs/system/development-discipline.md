@@ -138,11 +138,11 @@ Minecraft audit accuracy. Actual adoption still needs owner review and
 independent frozen benchmark/negative controls.
 
 The **same existing benchmark scorer** also accepts
-\`node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.mjs
---compare <comparison.json>\` for post-execution source-claim comparisons.
+`node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.mjs
+--compare <comparison.json>` for post-execution source-claim comparisons.
 The ephemeral input is
-\`{schemaVersion:1,policy:"selected-map-frozen-outcome-comparison",
-pairs:[{id,baselineResultFile,candidateResultFile},...]}\`.
+`{schemaVersion:1,policy:"selected-map-frozen-outcome-comparison",
+pairs:[{id,baselineResultFile,candidateResultFile},...]}`.
 At least two independent selected-artifact SHA-256 identities are needed.
 Each pair must use byte-identical independently frozen claims, distinct
 frozen canonical source observations, and positive + negative controls.
@@ -151,7 +151,7 @@ no metrics-only reduced-fixture result can be promoted to map accuracy.
 Regression of any negative control, false positive, positive miss, or
 correct-UNKNOWN behavior retains the baseline. A candidate improving at
 least two independent cases with no regressions is only
-\`CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW\`, never automatically selected,
+`CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW`, never automatically selected,
 applied to the Git source, or treated as Minecraft gameplay proof.
 The comparator is a **Probe → Compose review gate**, not a rollout
 executor or end-to-end Propose–Probe–Compose engine. Neither the generated
@@ -160,6 +160,40 @@ attested by their own SHA/metadata. Keep frozen acceptance oracle data
 hidden from any proposer; do not learn from blind evaluation labels.
 Current real-map audit corpus is empty, so no fresh measured real-map
 benefit is claimed.
+
+**Operator-run blind selection (existing benchmark helpers):** the old
+`references/benchmark/scripts/blind-compare.mjs` now calls the **same
+canonical `score-benchmark.mjs --compare`** internally. It no longer
+accepts two arbitrary scored JSON files, and never trusts direct TP/FP
+numbers from a candidate. After individually running a pinned baseline
+and a proposed variant through the existing canonical map-audit entrypoint
+on the same selected read-only artifact, freeze their independent outputs,
+lock the positive/negative claims with a separate reviewer, then assemble
+the existing `--compare` manifest. Do **not** run acceptance cases in a
+proposer's view or expose frozen expectation labels to a candidate.
+
+The comparison operator keeps a private high-entropy (24+ printable
+character) key and runs
+`node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/blind-compare.mjs --blind <comparison.json> <private-key>`.
+Only the anonymized A/B counts and a `sessionId` may be given to a
+reviewer; withhold the manifest, key and execution trajectory until their
+choice is recorded. A separate operator then runs
+`blind-compare.mjs --reveal <comparison.json> <same-key> <A|B|KEEP_BASELINE>
+<sessionId>`. Unblinding rescans the same per-claim oracle and refuses
+changed manifests/scores/keys; a false-positive or missing evidence still
+forces `KEEP_BASELINE`. The only favorable outcome is
+`CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW`: human source review and a
+separately approved Git commit are still required. The script does not
+invoke a map engine, mutate source, store secrets or learn rules.
+
+This is **blind to the reviewer only if the operator actually withholds**
+the private key, comparison manifest, and candidate identity. A local
+command-line key is not protected from process-history access, and a
+same-person ChatGPT operator/reviewer cannot claim independent blindness.
+The system does not attest executor provenance, measured generalization to
+unseen maps or fully automatic recursive harness updates. Until actual
+matched rollouts and outside review exist, report this as an integrated
+selection protocol with `NOT EXECUTED` evidence, not a successful PPC run.
 
 Do not import upstream Python executors, unrestricted networks, default
 4k rollouts, automatic prompt mutation or benchmark score authority.

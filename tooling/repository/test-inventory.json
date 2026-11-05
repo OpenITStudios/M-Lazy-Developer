@@ -20,7 +20,7 @@
         "owner": ".agents/skills",
         "riskHint": "low",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "13f7559a5a61b0b4b7401f2bb57ef67b9d02e3f6"
+        "sourceBlobSha": "d501c1167b204816015477913b9e929a2744527d"
       },
       "recommendation": "keep",
       "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\nPrimary taxonomy correction (same test source SHA): Source review: frozen map-audit scoring checks grounded positives/negatives, missing evidence, false negatives and forged receipts; the primary feature is reliability/benchmark assessment, not repository structure.",
