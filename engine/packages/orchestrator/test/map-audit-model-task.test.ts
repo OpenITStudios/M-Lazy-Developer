@@ -564,6 +564,10 @@ describe("source interpretation admission is a read-only model-task review", () 
       disposition: "NO_ROOTED_SOURCE_RELATION",
       proofBoundary: "SOURCE_COMPARISON_NOT_GAMEPLAY_OR_DEFECT_PROOF",
     }]);
+    expect(result.modelTaskPackets[0]?.sourceInterpretationReviews?.[0]
+      ?.sourceProjectionEligibility).toBe("AUTHORED_BRANCH_COUNTEREXAMPLE");
+    expect(result.modelTaskPackets[0]?.sourceComparisons?.[0]
+      ?.nextEvidenceQuestion).toContain("op:a");
     expect(result.mapAuditReport).toBe(audit.mapAuditReport);
     expect(result.admission).toBe(audit.admission);
     expect(result.auditRevision).toBe(audit.auditRevision);
@@ -641,6 +645,11 @@ describe("source interpretation admission is a read-only model-task review", () 
       disposition: "AMBIGUOUS_ROOTED_SOURCE_RELATIONS",
       candidateCount: 2, admissibleSourceCandidateCount: 2,
     }]);
+    expect(result.modelTaskPackets[0]?.sourceInterpretationReviews
+      ?.every(item => item.sourceProjectionEligibility ===
+        "ROOTED_TYPED_SOURCE_CANDIDATE")).toBe(true);
+    expect(result.modelTaskPackets[0]?.sourceComparisons?.[0]
+      ?.nextEvidenceQuestion).toContain("independent coexisting SOURCE facts");
     expect(result.inspection).toBe(evidenceAudit.inspection);
     expect(result.mapAuditReport).toBe(evidenceAudit.mapAuditReport);
   });
@@ -1479,14 +1488,61 @@ describe("unclassified source-effect relationship reuse", () => {
     expect(propose("SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
       "op:write", "effect:open")).toMatchObject({
       disposition: "SOURCE_RELATION_CANDIDATE",
+      sourceProjectionEligibility: "ROOTED_TYPED_SOURCE_CANDIDATE",
       sourceRelationEvidenceIds: ["effect:open", "op:write"],
     });
     expect(propose("SOURCE_EFFECT_RETURN_CANDIDATE",
       "effect:open", "return:accepted").disposition)
       .toBe("SOURCE_RELATION_CANDIDATE");
     expect(propose("SOURCE_EFFECT_RETURN_CANDIDATE",
-      "op:write", "return:accepted").disposition)
-      .toBe("SOURCE_RELATION_UNRESOLVED");
+      "op:write", "return:accepted")).toMatchObject({
+      disposition: "SOURCE_RELATION_UNRESOLVED",
+      sourceProjectionEligibility: "TYPED_SOURCE_RELATION_MISSING",
+    });
+    const relation = {
+      taskId: task.id, unknownId: "unknown:entry",
+      fromStepId: "op:write", toStepId: "effect:open",
+      sourceClaim: "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" as const,
+      proposedGameplayMeaning: "These operations might describe a player action.",
+      disconfirmingQuestion: "Could a different session or branch disprove this?",
+    };
+    const unreachable = {
+      ...task, sourceInvestigation: {
+        ...task.sourceInvestigation!,
+        entries: task.sourceInvestigation!.entries.map(entry =>
+          entry.unknownId !== "unknown:entry" ? entry : {
+            ...entry, sourceTraceStatus: "DISCONNECTED_SOURCE_REGION" as const,
+            unresolvedExecutionEdgeIds: ["edge:missing-root"],
+          }),
+      },
+    };
+    const unreachableReview = reviewAuditModelSourceInterpretation(
+      unreachable, relation, "selected");
+    expect(unreachableReview).toMatchObject({
+      disposition: "SOURCE_RELATION_CANDIDATE",
+      sourceProjectionEligibility: "SOURCE_ENTRY_NOT_ROOTED",
+    });
+    expect(unreachableReview.nextEvidenceQuestion).toContain("edge:missing-root");
+
+    const noIngress = {
+      ...task, sourceInvestigation: {
+        ...task.sourceInvestigation!,
+        entries: task.sourceInvestigation!.entries.map(entry =>
+          entry.unknownId !== "unknown:entry" ? entry : {
+            ...entry,
+            effectPaths: entry.effectPaths?.map(effect => ({
+              ...effect, evidenceStatus: "NO_KNOWN_INGRESS" as const,
+            })),
+          }),
+      },
+    };
+    const ingressReview = reviewAuditModelSourceInterpretation(
+      noIngress, relation, "selected");
+    expect(ingressReview).toMatchObject({
+      disposition: "SOURCE_RELATION_CANDIDATE",
+      sourceProjectionEligibility: "EFFECT_INGRESS_UNVERIFIED",
+    });
+    expect(ingressReview.nextEvidenceQuestion).toContain("edge:entry");
     expect(() => propose("SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE",
       "op:write", "effect:foreign")).toThrow(/foreign operation IDs/);
   });

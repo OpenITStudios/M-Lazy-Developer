@@ -476,10 +476,17 @@ match; malformed, repeated, foreign or oversized groups fail closed.
 The current `reviewAuditModelSourceInterpretation()` reviews every
 hypothesis against the SAME selected source and negative/branch evidence.
 Only one uniquely supported source-rooted typed relationship can enter
-the existing Intent/Scenario reconstruction. Zero or multiple eligible
-alternatives remain unadopted; the original per-task packet exposes all
-`sourceInterpretationReviews` plus a read-only `sourceComparisons`
-summary. This is NOT gameplay/defect proof, an extra stored finding, a
+the existing Intent/Scenario reconstruction. The **model-task source review**
+now owns the first failed condition (branch counterexample, missing typed
+source witness, unrooted entry or unverified effect ingress); the pipeline
+does not reconstruct a second potentially divergent source matcher. Zero
+or multiple eligible alternatives remain unadopted; the original per-task
+packet exposes all `sourceInterpretationReviews` plus a read-only
+`sourceComparisons` summary. The next deciding check names the actual
+source steps, entry/ingress edges, or competing relations, rather than
+generic advice to inspect more code. Multiple rooted relations may be
+compatible source facts and must not be mistaken for competing game
+objectives without independent design/guard/receiver evidence. This is NOT gameplay/defect proof, an extra stored finding, a
 new audit stage, or a vote. All authoritative proof and admission gates
 remain unchanged. A comparison cannot replace an actually executed
 map audit. If evidence fails to discriminate, report the next deciding

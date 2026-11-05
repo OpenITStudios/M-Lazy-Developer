@@ -6373,7 +6373,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b894305c0e1cee3c87d1fb7c4bd309dfa66333fc"
+        "sourceBlobSha": "9d86ce0974590b4734143fc4039029aaaedd901e"
       },
       "recommendation": "keep",
       "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\n2026-11-02 Developer ZIP evidence-to-report integration: Source-only fallback authoring: selected-artifact evidence may retrieve reference before Gameplay Intent node is classified; current Knowledge remains ungrounded and absent evidence abstains. Authored only; NOT EXECUTED. Added bounded eight-member AI source-investigation acceptance: no loss of task offsets, original reasons or provenance, separated causal/source-specific tasks, snapshot digest/member tamper rejection and original handoff pagination equivalence. All original canonical proof gates remain authoritative; no Minecraft execution implied.",

@@ -269,6 +269,16 @@ export interface AuditModelSourceInterpretationReview
   /** Exact source operation IDs are NOT observed/runtime or gameplay proof. */
   readonly sourceRelationEvidenceIds?: readonly string[];
   readonly counterexample?: AuthoredBranchExclusion;
+  /** First unmet SOURCE condition for a candidate relation. The eligibility
+   * is only to enter the existing Intent/Scenario source projection, never
+   * evidence of actual gameplay, player reachability, or a defect.
+   */
+  readonly sourceProjectionEligibility:
+    | "ROOTED_TYPED_SOURCE_CANDIDATE"
+    | "AUTHORED_BRANCH_COUNTEREXAMPLE"
+    | "TYPED_SOURCE_RELATION_MISSING"
+    | "SOURCE_ENTRY_NOT_ROOTED"
+    | "EFFECT_INGRESS_UNVERIFIED";
   readonly nextEvidenceQuestion: string;
   readonly proofBoundary:
     "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF";
@@ -1447,6 +1457,44 @@ export function reviewAuditModelSourceInterpretation(
         : false);
   const sourceRelationEvidenceIds = matchedEffect === undefined
     ? undefined : unique([proposal.fromStepId, proposal.toStepId]);
+  // ONE canonical source-adoption decision. The audit coordinator consumes
+  // this result rather than rebuilding a second effect/ingress matcher.
+  const sourceProjectionEligibility =
+    counterexample !== undefined
+      ? "AUTHORED_BRANCH_COUNTEREXAMPLE" as const
+      : matchedEffect === undefined
+        ? "TYPED_SOURCE_RELATION_MISSING" as const
+        : entry.sourceTraceStatus !== "SOURCE_ROOT_TRACE"
+          ? "SOURCE_ENTRY_NOT_ROOTED" as const
+          : matchedEffect.evidenceStatus !== "CANDIDATE_INGRESS"
+            ? "EFFECT_INGRESS_UNVERIFIED" as const
+            : "ROOTED_TYPED_SOURCE_CANDIDATE" as const;
+  const pair = proposal.fromStepId + " -> " + proposal.toStepId;
+  const missingEdges = entry.unresolvedExecutionEdgeIds.slice(0, 3);
+  const sourceProjectionNextCheck =
+    sourceProjectionEligibility === "AUTHORED_BRANCH_COUNTEREXAMPLE"
+      ? "Compare source " + pair +
+        " against the exclusive authored branches, then trace any later re-entry/repeat paths; a code branch alone does not establish gameplay."
+      : sourceProjectionEligibility === "TYPED_SOURCE_RELATION_MISSING"
+        ? "Find an exact typed effect/value or effect/return witness for " +
+          pair + " in source entry " + entry.entryRegionId +
+          "; textual meaning and a common source region are insufficient."
+        : sourceProjectionEligibility === "SOURCE_ENTRY_NOT_ROOTED"
+          ? "Resolve source entry " + entry.entryRegionId + " for " +
+            pair + " to a current-artifact source root" +
+            (missingEdges.length ? " through unresolved edges " +
+              missingEdges.join(", ") : " using its exact call/guard path") +
+            "; do not assume that a resolved import or shared filename was executed."
+          : sourceProjectionEligibility === "EFFECT_INGRESS_UNVERIFIED"
+            ? "Resolve the effect ingress for source " + pair +
+              " using the actual current-artifact entry/guard witnesses" +
+              (matchedEffect?.ingressEdgeIds.length
+                ? " (" + matchedEffect.ingressEdgeIds.slice(0, 3).join(", ") + ")"
+                : "") +
+              "; an effect with no supported ingress remains UNKNOWN."
+            : "Source pair " + pair + " has a rooted typed candidate. " +
+              "Independently establish player purpose, guards, receiver/session " +
+              "identity and delivery before any gameplay or defect claim.";
   return {
     taskId: task.id,
     unknownId: entry.unknownId,
@@ -1461,11 +1509,8 @@ export function reviewAuditModelSourceInterpretation(
         ? "SOURCE_RELATION_CANDIDATE" : "SOURCE_RELATION_UNRESOLVED",
     ...(counterexample ? { counterexample } : {}),
     ...(sourceRelationEvidenceIds === undefined ? {} : { sourceRelationEvidenceIds }),
-    nextEvidenceQuestion: counterexample
-      ? "Inspect the alternative authored branch and later re-entry/repeat paths before attributing both sites to one mechanic."
-      : sourceRelationEvidenceIds !== undefined
-        ? "Verify session/receiver identity, guard feasibility, independent intended gameplay and runtime delivery before treating this source relation as gameplay."
-        : "Trace exact guards, other entry paths, state ownership and independent intended gameplay; a shared trace is not execution proof.",
+    sourceProjectionEligibility,
+    nextEvidenceQuestion: sourceProjectionNextCheck,
     proofBoundary: "AI_INTERPRETATION_NOT_GAMEPLAY_DESIGN_DEFECT_OR_RUNTIME_PROOF",
   };
 }

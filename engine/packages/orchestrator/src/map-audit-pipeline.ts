@@ -1397,24 +1397,11 @@ export function applySelectedMapAuditModelResponses(input: {
           reviews: [], admitted: [] };
         groups.set(key, group);
       }
-      // Probe every candidate against the SAME current selected-source graph.
-      // Textual plausibility and candidate votes cannot become source proof.
-      const entry = task.sourceInvestigation?.entries.find(item =>
-        item.unknownId === proposal.unknownId);
-      const effect = entry?.effectPaths?.find(item =>
-        proposal.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE"
-          ? item.effectId === proposal.toStepId &&
-            item.sourceLocalStateValueHandoffs.some(handoff =>
-              handoff.writeOperationId === proposal.fromStepId &&
-              item.guardStateReadIds.includes(handoff.guardReadOperationId))
-          : proposal.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE"
-            ? item.effectId === proposal.fromStepId &&
-              item.candidateOutcomeIds.includes(proposal.toStepId)
-            : false);
-      if (review.disposition === "SOURCE_RELATION_CANDIDATE" &&
+      // Consume the existing model-task review's FIRST unmet source
+      // condition. Do not reimplement source/effect/ingress checks here.
+      // A typed source candidate is still NOT gameplay or defect proof.
+      if (review.sourceProjectionEligibility === "ROOTED_TYPED_SOURCE_CANDIDATE" &&
           review.sourceRelationEvidenceIds?.length === 2 &&
-          entry?.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
-          effect?.evidenceStatus === "CANDIDATE_INGRESS" &&
           (proposal.sourceClaim === "SOURCE_GUARD_VALUE_HANDOFF_CANDIDATE" ||
            proposal.sourceClaim === "SOURCE_EFFECT_RETURN_CANDIDATE")) {
         group.admitted.push({
@@ -1442,6 +1429,15 @@ export function applySelectedMapAuditModelResponses(input: {
       }
       if (compareSource) {
         const count = group.admitted.length;
+        // A contrast needs a concrete next deciding probe, not generic
+        // advice to repeat a source scan. Prioritize the first still-open
+        // typed, root or ingress witness from the SAME exact source task.
+        const unresolvedReview = group.reviews.find(item =>
+          item.sourceProjectionEligibility === "SOURCE_ENTRY_NOT_ROOTED" ||
+          item.sourceProjectionEligibility === "EFFECT_INGRESS_UNVERIFIED" ||
+          item.sourceProjectionEligibility === "TYPED_SOURCE_RELATION_MISSING");
+        const knownPairs = group.admitted.map(pair =>
+          pair.sourceClaim + " [" + pair.fromStepId + " -> " + pair.toStepId + "]");
         const comparison: AuditModelSourceComparison = {
           unknownId: group.unknownId,
           candidateCount: group.reviews.length,
@@ -1454,10 +1450,18 @@ export function applySelectedMapAuditModelResponses(input: {
           sourceEvidenceIds: [...new Set(group.admitted.flatMap(
             pair => pair.sourceRelationEvidenceIds))].sort(),
           nextEvidenceQuestion: count === 1
-            ? "This is only a typed source relation. Independently verify gameplay intent, scope, guards and runtime delivery."
+            ? "Only " + knownPairs[0] + " has a rooted typed source candidate. " +
+              (unresolvedReview === undefined
+                ? "Check independently grounded player purpose, guards, receiver/session identity and effect delivery; do not infer a gameplay BUG."
+                : "For the competing unresolved hypothesis: " +
+                  unresolvedReview.nextEvidenceQuestion)
             : count > 1
-              ? "Find an independent source witness that distinguishes these rooted relations; do not select by narration."
-              : "Recover a source-rooted effect/value/return witness or counterexample before proposing another relation.",
+              ? "Check whether " + knownPairs.join(" versus ") +
+                " are independent coexisting SOURCE facts or competing gameplay interpretations. " +
+                "Find an exact receiver/guard/ingress or counterexample witness, " +
+                "not a majority vote or assumed single player objective."
+              : unresolvedReview?.nextEvidenceQuestion ??
+                group.reviews[0]!.nextEvidenceQuestion,
           proofBoundary: "SOURCE_COMPARISON_NOT_GAMEPLAY_OR_DEFECT_PROOF",
         };
         comparisonsByTask.set(group.taskId, [
