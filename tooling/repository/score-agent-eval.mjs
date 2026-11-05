@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
 const routing = JSON.parse(
   readFileSync(".agents/evals/skill-routing.json", "utf8"),
@@ -23,12 +26,100 @@ function stats(values) {
 }
 
 
+
+/** The only verifier of file-backed agent-eval receipt bytes. This proves
+ * local byte integrity and a consistent recorded observation, NOT that a
+ * trusted executor actually ran, that a model edit caused an improvement,
+ * or that Minecraft behavior was exercised.
+ */
+function readBoundAgentReceipt(run, evidence, receiptDirectory) {
+  const invalid = (reason) => ({ ok: false, reason });
+  if (typeof receiptDirectory !== "string" ||
+      receiptDirectory.trim().length === 0) {
+    return invalid("execution receipt directory not supplied");
+  }
+  if (!evidence || typeof evidence.receiptFile !== "string" ||
+      !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}\.json$/.test(evidence.receiptFile) ||
+      evidence.receiptFile.includes("..")) {
+    return invalid("missing or unsafe direct-child execution receipt filename");
+  }
+  let fd;
+  let bytes;
+  try {
+    // The operator chooses the directory; the untrusted sidecar may only
+    // identify a regular non-symlink JSON file directly beneath it.
+    const pathname = join(receiptDirectory, evidence.receiptFile);
+    if (!lstatSync(pathname).isFile()) {
+      return invalid("execution receipt must not be a symlink or directory");
+    }
+    fd = openSync(pathname,
+      constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || stat.size <= 0 || stat.size > 65536) {
+      return invalid("receipt must be a nonempty regular file <=64 KiB");
+    }
+    bytes = readFileSync(fd);
+  } catch {
+    return invalid("execution receipt unavailable or cannot be opened safely");
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+  if (!bytes || bytes.byteLength > 65536 ||
+      createHash("sha256").update(bytes).digest("hex") !==
+        evidence.executionEvidenceSha256) {
+    return invalid("execution receipt bytes do not match pinned SHA-256");
+  }
+  let receipt;
+  try {
+    receipt = JSON.parse(bytes.toString("utf8"));
+  } catch {
+    return invalid("execution receipt is not valid JSON");
+  }
+  if (!receipt || receipt.schemaVersion !== 1 ||
+      receipt.policy !== "agent-eval-execution-receipt" ||
+      receipt.runId !== run.runId || receipt.caseId !== run.caseId ||
+      receipt.model !== run.model ||
+      receipt.inputFingerprint !== evidence.inputFingerprint ||
+      receipt.harnessFingerprint !== evidence.harnessFingerprint ||
+      receipt.executionStatus !== evidence.executionStatus ||
+      receipt.executionStatus !== "executed" ||
+      !receipt.observed || typeof receipt.observed !== "object" ||
+      Array.isArray(receipt.observed)) {
+    return invalid("receipt identity, execution or observed result does not match the selected run");
+  }
+  const observedFields = [
+    "selectedLane", "selectedSkill", "selectedTaskClass",
+    "selectedOperation", "selectedKnowledgeDomain", "assertions",
+  ];
+  if (Object.keys(receipt.observed).some(key => !observedFields.includes(key)) ||
+      observedFields.some(key => !isDeepStrictEqual(receipt.observed[key], run[key]))) {
+    return invalid("receipt observations disagree with the frozen agent-eval run");
+  }
+  if (receipt.metrics !== undefined &&
+      (!receipt.metrics || typeof receipt.metrics !== "object" ||
+       Array.isArray(receipt.metrics) ||
+       Object.keys(receipt.metrics).some(key =>
+         !["latencyMs", "inputTokens", "outputTokens"].includes(key)) ||
+       ["latencyMs", "inputTokens", "outputTokens"].some(key =>
+         receipt.metrics[key] !== undefined &&
+         (!Number.isFinite(receipt.metrics[key]) || receipt.metrics[key] < 0 ||
+          (key !== "latencyMs" && !Number.isSafeInteger(receipt.metrics[key])) ||
+          !isDeepStrictEqual(receipt.metrics[key], run[key]))))) {
+    return invalid("receipt performance counters are malformed or disagree with run");
+  }
+  return {
+    ok: true,
+    observed: { ...run, ...receipt.observed },
+    metrics: receipt.metrics,
+  };
+}
+
 /** Optional, read-only Harness²-style contrast over the EXISTING frozen
  * routing/procedure corpus. Neither the run receipts nor edited harness
  * components are independently authenticated here; do not publish learned
  * rules or infer Minecraft correctness from this scorer.
  */
-function scoreHarnessContrasts(payload, contrastInput, routingById, procedureById) {
+function scoreHarnessContrasts(payload, contrastInput, routingById, procedureById, options) {
   // Agent eval runs retain their existing immutable schema. This optional
   // sidecar owns only paired-run transport metadata, not another corpus,
   // score authority, engine execution, or persistent experience store.
@@ -129,6 +220,12 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
       const issue = [];
       const baseEvidence = evidenceByRunId.get(baseline.runId);
       const candidateEvidence = evidenceByRunId.get(candidate.runId);
+      const baseReceipt = readBoundAgentReceipt(
+        baseline, baseEvidence, options?.receiptDirectory);
+      const candidateReceipt = readBoundAgentReceipt(
+        candidate, candidateEvidence, options?.receiptDirectory);
+      if (!baseReceipt.ok) issue.push("baseline: " + baseReceipt.reason);
+      if (!candidateReceipt.ok) issue.push("candidate: " + candidateReceipt.reason);
       if (baseline.caseId !== candidate.caseId) {
         issue.push("different canonical evaluation cases");
       }
@@ -161,8 +258,8 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         usedReceiptHashes.add(baseEvidence.executionEvidenceSha256);
         usedReceiptHashes.add(candidateEvidence.executionEvidenceSha256);
       }
-      const baseQuality = quality(baseline);
-      const nextQuality = quality(candidate);
+      const baseQuality = baseReceipt.ok ? quality(baseReceipt.observed) : null;
+      const nextQuality = candidateReceipt.ok ? quality(candidateReceipt.observed) : null;
       if (!baseQuality || !nextQuality ||
           baseQuality.total !== nextQuality.total) {
         issue.push("incomplete independently specified routing/procedure expectations");
@@ -176,17 +273,19 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         if (delta > 0) improvements++;
         else if (delta < 0) regressions++;
         else unchanged++;
-        if (Number.isFinite(baseline.latencyMs) && baseline.latencyMs >= 0 &&
-            Number.isFinite(candidate.latencyMs) && candidate.latencyMs >= 0) {
+        const baseMetrics = baseReceipt.metrics;
+        const candidateMetrics = candidateReceipt.metrics;
+        if (Number.isFinite(baseMetrics?.latencyMs) &&
+            Number.isFinite(candidateMetrics?.latencyMs)) {
           latencyCompared++;
-          latencyDelta += candidate.latencyMs - baseline.latencyMs;
+          latencyDelta += candidateMetrics.latencyMs - baseMetrics.latencyMs;
         }
-        if ([baseline.inputTokens, baseline.outputTokens,
-             candidate.inputTokens, candidate.outputTokens].every(
+        if ([baseMetrics?.inputTokens, baseMetrics?.outputTokens,
+             candidateMetrics?.inputTokens, candidateMetrics?.outputTokens].every(
                x => Number.isSafeInteger(x) && x >= 0)) {
           tokenCompared++;
-          tokenDelta += candidate.inputTokens + candidate.outputTokens -
-            baseline.inputTokens - baseline.outputTokens;
+          tokenDelta += candidateMetrics.inputTokens + candidateMetrics.outputTokens -
+            baseMetrics.inputTokens - baseMetrics.outputTokens;
         }
       } else {
         deficits.push({ baselineRunId: baseline.runId,
@@ -244,7 +343,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
           ? ["Multiple changed components prevent per-component attribution."] : []),
         ...(improvements > 0 && regressions > 0
           ? ["Mixed positive/negative changes are confounded."] : []),
-        "Only provided execution receipt identifiers and frozen skill-eval expectations were compared; this scorer does not authenticate rollout artifacts or evaluate Minecraft gameplay.",
+        "Receipt files were read and SHA-256/identity/observation consistency checked for comparable pairs. This is integrity, NOT independent executor attestation, causal edit proof or Minecraft gameplay verification.",
       ],
       transferableLesson: canProposeLesson
         ? { status: "REVIEWABLE_CANDIDATE_NOT_ADOPTED",
@@ -252,13 +351,13 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
             operation: contrast.proposedLesson.operation.trim(),
             supportingCaseIds: [...caseIds].sort() }
         : { status: "NO_EVIDENCE_SUPPORTED_LESSON" },
-      proofBoundary: "DECLARED_AGENT_EVAL_RECEIPTS_NOT_VERIFIED_MINECRAFT_OR_CAUSAL_EFFECT",
+      proofBoundary: "FILE_HASH_AND_OBSERVATION_MATCH_NOT_EXECUTION_ATTESTATION_OR_MINECRAFT_PROOF",
     });
   }
   return observed;
 }
 
-export function scoreAgentEvalRuns(payload, contrastInput) {
+export function scoreAgentEvalRuns(payload, contrastInput, options) {
   if (payload?.schemaVersion !== 1 || !Array.isArray(payload.runs)) {
     throw new Error("Agent eval payload must use schemaVersion 1 and runs array.");
   }
@@ -359,16 +458,18 @@ export function scoreAgentEvalRuns(payload, contrastInput) {
     },
     agreement: agreements,
     ...(contrastInput === undefined ? {} : {
-      contrastReviews: scoreHarnessContrasts(payload, contrastInput, routingById, procedureById),
+      contrastReviews: scoreHarnessContrasts(payload, contrastInput, routingById, procedureById, options),
     }),
   };
 }
 
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replaceAll("\\","/"))) {
   const path = process.argv[2];
-  if (!path) throw new Error("Usage: node score-agent-eval.mjs <runs.json> [contrasts.json]");
+  if (!path) throw new Error("Usage: node score-agent-eval.mjs <runs.json> [contrasts.json] [receipt-directory]");
   const payload = JSON.parse(readFileSync(path, "utf8"));
   const contrasts = process.argv[3] === undefined
     ? undefined : JSON.parse(readFileSync(process.argv[3], "utf8"));
-  process.stdout.write(JSON.stringify(scoreAgentEvalRuns(payload, contrasts), null, 2) + "\n");
+  process.stdout.write(JSON.stringify(scoreAgentEvalRuns(payload, contrasts, {
+    receiptDirectory: process.argv[4],
+  }), null, 2) + "\n");
 }

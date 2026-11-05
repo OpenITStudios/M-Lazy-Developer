@@ -1,5 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { scoreAgentEvalRuns } from "./score-agent-eval.mjs";
 
 const fixed = (c) => c.repeat(64);
@@ -46,8 +50,47 @@ function makePayload(base = false, candidate = true) {
       runEvidence, contrasts: [contrast]},
   };
 }
-function reflect(pair) {
-  return scoreAgentEvalRuns(pair.runs, pair.contrast).contrastReviews[0];
+/** Real ephemeral JSON receipt files, never repository fixtures or saved map
+ * evidence. Tests verify integrity/mirroring only, not executor attestation.
+ */
+function withReceipts(pair, check) {
+  const directory = mkdtempSync(join(tmpdir(), "m-lazy-agent-eval-"));
+  try {
+    for (const evidence of pair.contrast.runEvidence) {
+      const run = pair.runs.runs.find(r => r.runId === evidence.runId);
+      if (!run) throw new Error("Missing run in test setup");
+      const observed = Object.fromEntries([
+        "selectedLane", "selectedSkill", "selectedTaskClass",
+        "selectedOperation", "selectedKnowledgeDomain", "assertions",
+      ].filter(key => Object.hasOwn(run, key)).map(key => [key, run[key]]));
+      const receipt = {
+        schemaVersion: 1, policy: "agent-eval-execution-receipt",
+        runId: run.runId, caseId: run.caseId, model: run.model,
+        inputFingerprint: evidence.inputFingerprint,
+        harnessFingerprint: evidence.harnessFingerprint,
+        executionStatus: evidence.executionStatus,
+        observed,
+        metrics: { latencyMs: run.latencyMs, inputTokens: run.inputTokens,
+          outputTokens: run.outputTokens },
+      };
+      evidence.receiptFile = run.runId + ".json";
+      const bytes = Buffer.from(JSON.stringify(receipt) + "\n", "utf8");
+      writeFileSync(join(directory, evidence.receiptFile), bytes);
+      evidence.executionEvidenceSha256 =
+        createHash("sha256").update(bytes).digest("hex");
+    }
+    return check(directory);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+function reflect(pair, mutate) {
+  return withReceipts(pair, directory => {
+    mutate?.(pair, directory);
+    return scoreAgentEvalRuns(pair.runs, pair.contrast, {
+      receiptDirectory: directory,
+    }).contrastReviews[0];
+  });
 }
 
 test("replicated independent cases yield reviewable lesson, not automatic adoption", () => {
@@ -57,7 +100,8 @@ test("replicated independent cases yield reviewable lesson, not automatic adopti
   assert.equal(r.caseCount, 2);
   assert.equal(r.transferableLesson.status, "REVIEWABLE_CANDIDATE_NOT_ADOPTED");
   assert.equal(r.proofBoundary,
-    "DECLARED_AGENT_EVAL_RECEIPTS_NOT_VERIFIED_MINECRAFT_OR_CAUSAL_EFFECT");
+    "FILE_HASH_AND_OBSERVATION_MATCH_NOT_EXECUTION_ATTESTATION_OR_MINECRAFT_PROOF");
+  assert.equal(r.comparablePairs, 2);
 });
 
 test("regression and equal quality stay distinct from efficiency claims", () => {
@@ -90,9 +134,10 @@ test("unexecuted receipts, changed task or repeated evidence never help", () => 
   x.contrast.runEvidence[0].inputFingerprint = fixed("c");
   assert.equal(reflect(x).verdict, "confounded");
   x.contrast.runEvidence[0].inputFingerprint = fixed("a");
-  x.contrast.runEvidence[2].executionEvidenceSha256 =
-    x.contrast.runEvidence[0].executionEvidenceSha256;
-  assert.equal(reflect(x).verdict, "confounded");
+  assert.equal(reflect(x, pair => {
+    pair.contrast.runEvidence[2].executionEvidenceSha256 =
+      pair.contrast.runEvidence[0].executionEvidenceSha256;
+  }).verdict, "confounded");
 });
 
 test("unscored procedure case and duplicate IDs fail closed", () => {
@@ -101,7 +146,68 @@ test("unscored procedure case and duplicate IDs fail closed", () => {
   x.runs.runs[1].caseId = "improve-system-source";
   assert.equal(reflect(x).verdict, "confounded");
   x.runs.runs[0].runId = "c1";
-  assert.throws(() => reflect(x), /unique nonempty runId/);
+  // This is an input-identity rejection, before receipt file setup.
+  assert.throws(() => scoreAgentEvalRuns(x.runs, x.contrast),
+    /unique nonempty runId/);
+});
+
+test("missing receipt directory and absent receipt bytes never earn a verdict", () => {
+  const x = makePayload();
+  const direct = scoreAgentEvalRuns(x.runs, x.contrast).contrastReviews[0];
+  assert.equal(direct.verdict, "confounded");
+  assert.ok(direct.pairs[0].reasons.some(reason =>
+    reason.includes("receipt directory")));
+  const missing = reflect(makePayload(), (_pair, directory) =>
+    rmSync(join(directory, "b1.json")));
+  assert.equal(missing.verdict, "confounded");
+  assert.ok(missing.pairs[0].reasons.some(reason =>
+    reason.includes("unavailable")));
+});
+
+test("checksum tampering and unsafe filenames fail closed", () => {
+  const altered = reflect(makePayload(), (_pair, directory) =>
+    writeFileSync(join(directory, "b1.json"), "{}\n"));
+  assert.equal(altered.verdict, "confounded");
+  assert.ok(altered.pairs[0].reasons.some(reason =>
+    reason.includes("SHA-256")));
+  const unsafe = reflect(makePayload(), pair => {
+    pair.contrast.runEvidence[0].receiptFile = "../another.json";
+  });
+  assert.equal(unsafe.verdict, "confounded");
+  assert.ok(unsafe.pairs[0].reasons.some(reason =>
+    reason.includes("unsafe direct-child")));
+});
+
+test("a matching file hash cannot override a contradictory recorded observation", () => {
+  const result = reflect(makePayload(), (pair, directory) => {
+    const path = join(directory, "c1.json");
+    const data = JSON.parse(readFileSync(path, "utf8"));
+    data.observed.selectedLane = "m-bedrock-system-improvement";
+    const bytes = Buffer.from(JSON.stringify(data) + "\n");
+    writeFileSync(path, bytes);
+    pair.contrast.runEvidence[1].executionEvidenceSha256 =
+      createHash("sha256").update(bytes).digest("hex");
+  });
+  assert.equal(result.verdict, "confounded");
+  assert.ok(result.pairs[0].reasons.some(reason =>
+    reason.includes("observations disagree")));
+});
+
+test("a receipt symlink is rejected without dereferencing it", () => {
+  const x = makePayload();
+  const review = reflect(x, (_pair, directory) => {
+    rmSync(join(directory, "b1.json"));
+    try {
+      symlinkSync(join(directory, "b2.json"), join(directory, "b1.json"));
+    } catch (error) {
+      // Windows without symlink permission must still reject the missing
+      // receipt; never claim to have tested symlink handling in that case.
+      if (error?.code !== "EPERM" && error?.code !== "EACCES") throw error;
+    }
+  });
+  assert.equal(review.verdict, "confounded");
+  assert.ok(review.pairs[0].reasons.some(reason =>
+    reason.includes("symlink") || reason.includes("unavailable")));
 });
 
 test("existing single-file eval scorer remains backward compatible", () => {

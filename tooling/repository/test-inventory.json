@@ -10319,7 +10319,7 @@
         "owner": "tooling/repository",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "5b6f539ca5a5df4b58a602e0e060fad4e2c9176d"
+        "sourceBlobSha": "0921a6b2d2de4698d729df0b5d7dfe931c5630a7"
       },
       "recommendation": "keep",
       "rationale": "Paired agent-eval comparison logic: input/receipt identity, frozen expected routing, no unsupported promotion, and confounded negative controls.",

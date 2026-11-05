@@ -101,14 +101,22 @@ For recurring failures, follow **Propose → Probe → Compose → Reflect**:
    in the same Git commit, not a parallel experience registry.
 
 The existing `score:agent-eval` scorer can accept an **optional
-second, read-only contrasts input** (`node tooling/repository/score-agent-eval.mjs
-<runs.json> <contrasts.json>`). This avoids changing the separately protected
+second, read-only contrasts input** and a third receipt directory
+(`node tooling/repository/score-agent-eval.mjs
+<runs.json> <contrasts.json> <receipt-directory>`). This avoids changing the separately protected
 canonical `.agents/schemas/agent-eval-runs.schema.json`. The paired input
 contract lives only at `tooling/repository/agent-eval-contrasts.schema.json`.
 It references baseline/candidate `runId` values in the unchanged run
 payload and supplies matching exact task `inputFingerprint`, unique
 `executionEvidenceSha256`, `executionStatus`, and candidate/baseline
-`harnessFingerprint` under `runEvidence`. Each pair must use the same
+`harnessFingerprint` under `runEvidence`. Each entry must also name
+`receiptFile`, a bounded direct-child JSON file in the explicitly selected
+directory. The existing scorer now opens these files read-only, rejects
+symlinks/unsafe names and oversized files, verifies actual SHA-256 bytes,
+and compares `agent-eval-execution-receipt` run, case, model, input,
+harness, executed status, and recorded observations against the canonical
+agent-eval run. Any absent or mismatched receipt is `confounded`, never
+`helped`, even when the sidecar declares a plausible 64-character hash. Each pair must use the same
 frozen `caseId` and model; each harness must retain its content identity
 across comparison pairs. At least two independent pairs and exactly one
 changed component are needed for an observational component verdict.
@@ -120,8 +128,11 @@ assertions, or inconsistent results is `confounded`; equal quality is
 `no observed effect`. Latency/token deltas remain informational, not
 substitutes for quality or unobserved proof. A proposed reusable lesson
 requires improvement across two distinct evaluation cases and remains
-`REVIEWABLE_CANDIDATE_NOT_ADOPTED` because the scorer does not authenticate
-rollout bytes or independently verify the edit's causal role. Do not
+`REVIEWABLE_CANDIDATE_NOT_ADOPTED` because matching receipt bytes still do
+not prove who produced them, that an executor actually ran, or that the
+edited harness caused the observed change. A hash verifies integrity
+relative to the supplied digest, not authenticity or independent execution
+attestation. Do not
 persist a lesson automatically or promote agent-routing metrics into
 Minecraft audit accuracy. Actual adoption still needs owner review and
 independent frozen benchmark/negative controls.

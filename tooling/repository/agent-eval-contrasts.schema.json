@@ -26,7 +26,8 @@
           "inputFingerprint",
           "harnessFingerprint",
           "executionStatus",
-          "executionEvidenceSha256"
+          "executionEvidenceSha256",
+          "receiptFile"
         ],
         "properties": {
           "runId": {
@@ -51,7 +52,13 @@
           },
           "executionEvidenceSha256": {
             "type": "string",
-            "pattern": "^[a-f0-9]{64}$"
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 of the actual receipt JSON bytes, not a placeholder."
+          },
+          "receiptFile": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}\\.json$",
+            "description": "Direct child filename under an explicitly supplied receipts directory; no path traversal or symlinks."
           }
         },
         "additionalProperties": false
