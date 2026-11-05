@@ -444,8 +444,28 @@ function ignoredCommitBeforeFeedback(
     // unknown. This is an ownership edge, not a transaction-success claim.
     const fieldWrites = new Map<string, ts.Node[]>();
     let dynamicWrite = false;
-    const recordField = (field: string, node: ts.Node): void =>
+    const recordField = (field: string, node: ts.Node): void => {
       fieldWrites.set(field, [...(fieldWrites.get(field) ?? []), node]);
+    };
+    // A unique this.field initialization does not keep the target method
+    // immutable: this.field.write = ..., delete this.field.write, or a
+    // receiver alias can change the invoked callable without reassigning
+    // this.field itself. Reuse the same source-identity gate, never promote
+    // a guessed target in this uncertain case.
+    const invalidateNestedMember = (target: ts.Node): void => {
+      const base = ts.isPropertyAccessExpression(target) ||
+        ts.isElementAccessExpression(target) ? target.expression : undefined;
+      if (base && ts.isPropertyAccessExpression(base) &&
+          base.expression.kind === ts.SyntaxKind.ThisKeyword)
+        recordField(base.name.text, target);
+      if (base && ts.isElementAccessExpression(base) &&
+          base.expression.kind === ts.SyntaxKind.ThisKeyword) {
+        if (base.argumentExpression &&
+            ts.isStringLiteralLike(base.argumentExpression))
+          recordField(base.argumentExpression.text, target);
+        else dynamicWrite = true;
+      }
+    };
     const assignments = (node: ts.Node): void => {
       if (ts.isBinaryExpression(node) &&
           node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
@@ -456,16 +476,47 @@ function ignoredCommitBeforeFeedback(
           recordField(left.name.text, node);
         if (ts.isElementAccessExpression(left) &&
             left.expression.kind === ts.SyntaxKind.ThisKeyword) {
-          if (ts.isStringLiteralLike(left.argumentExpression))
+          if (left.argumentExpression &&
+              ts.isStringLiteralLike(left.argumentExpression))
             recordField(left.argumentExpression.text, node);
           else dynamicWrite = true;
         }
+        invalidateNestedMember(left);
       }
       if (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) {
         const operand = node.operand;
         if (ts.isPropertyAccessExpression(operand) &&
             operand.expression.kind === ts.SyntaxKind.ThisKeyword)
           recordField(operand.name.text, node);
+        invalidateNestedMember(operand);
+      }
+      if (ts.isDeleteExpression(node)) {
+        const operand = node.expression;
+        if (ts.isPropertyAccessExpression(operand) &&
+            operand.expression.kind === ts.SyntaxKind.ThisKeyword)
+          recordField(operand.name.text, node);
+        invalidateNestedMember(operand);
+      }
+      if (node.kind === ts.SyntaxKind.ThisKeyword) {
+        // Passing/capturing 'this' can expose the receiver to an untracked
+        // mutation through an alias. Ordinary this.member reads stay local.
+        const parent = node.parent;
+        if (!((ts.isPropertyAccessExpression(parent) ||
+                ts.isElementAccessExpression(parent)) &&
+               parent.expression === node)) dynamicWrite = true;
+      }
+      if (ts.isPropertyAccessExpression(node) &&
+          node.expression.kind === ts.SyntaxKind.ThisKeyword) {
+        const parent = node.parent;
+        const escaped = ts.isVariableDeclaration(parent) &&
+            parent.initializer === node ||
+          ts.isCallExpression(parent) && parent.arguments.some(arg => arg === node) ||
+          ts.isReturnStatement(parent) && parent.expression === node ||
+          ts.isPropertyAssignment(parent) && parent.initializer === node ||
+          ts.isBinaryExpression(parent) && parent.right === node ||
+          ts.isArrayLiteralExpression(parent) &&
+            parent.elements.some(element => element === node);
+        if (escaped) recordField(node.name.text, node);
       }
       ts.forEachChild(node, assignments);
     };

@@ -707,6 +707,36 @@ describe("persistence source analysis", () => {
       // Reassignment destroys the source-unique field binding.
       ["class Round {", "  store = new Journal();",
        "  reset() { this.store = new Other(); }", ...publish, "}"],
+      // Replacing a METHOD on the same object also breaks its resolved
+      // call edge, even though the field still holds new Journal().
+      ["class Round {", "  store = new Journal();",
+       "  reset() { this.store.write = () => true; }", ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { this.store['write'] = () => true; }", ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { this['store'].write = () => true; }", ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset(key) { this[key].write = () => true; }", ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { delete this.store.write; }", ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { this.store.write++; }", ...publish, "}"],
+      // Escaped receiver or field aliases can mutate the same instance.
+      ["class Round {", "  store = new Journal();",
+       "  reset() { const alias = this.store; alias.write = () => true; }",
+       ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { const self = this; self.store = new Other(); }",
+       ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { Object.assign(this.store, { write: () => true }); }",
+       ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { Reflect.set(this.store, 'write', () => true); }",
+       ...publish, "}"],
+      ["class Round {", "  store = new Journal();",
+       "  reset() { Object.assign(this, { store: new Other() }); }",
+       ...publish, "}"],
       // Constructor assignment must be unconditional and in the direct body.
       ["class Round {", "  constructor(ready) { if (ready) this.store = new Journal(); }", ...publish, "}"],
       // A shadowed target constructor does not prove a local class instance.
@@ -747,6 +777,20 @@ describe("persistence source analysis", () => {
     });
     expect(analyzePersistenceSource([falseWithoutWriteFailure])
       .ignoredCommitBeforeFeedback).toEqual([]);
+    const unrelatedMutation = parseScriptFile("unrelated-member", [
+      ...leaf,
+      "class Round {",
+      "  store = new Journal();",
+      "  reset() { this.other = 4; this.counter++; }",
+      ...publish,
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:unrelated-member",
+      relativePath: "scripts/unrelated.js",
+    });
+    expect(analyzePersistenceSource([unrelatedMutation])
+      .ignoredCommitBeforeFeedback).toHaveLength(1);
+
     const reassignedTarget = parseScriptFile("reassigned-target", [
       ...leaf, "Journal = Other;",
       "class Round {", "  store = new Journal();", ...publish, "}",
