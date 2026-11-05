@@ -9,6 +9,7 @@ import { performance } from "node:perf_hooks";
 // Deep regression suites remain available with --full; --focus targets a repair.
 const nativeFiles = [
   ".agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.test.mjs",
+  "tooling/repository/score-agent-eval.test.mjs",
   "apps/report-system-next/render.test.mjs",
   "apps/report-system-next/client.acceptance.test.mjs",
 ];

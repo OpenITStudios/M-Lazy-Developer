@@ -10308,6 +10308,26 @@
       "mechanicMappingBasis": "source-case-inspected",
       "featureId": "tooling.repository",
       "featureMappingBasis": "source-case-inspected"
+    },
+    {
+      "path": "tooling/repository/score-agent-eval.test.mjs",
+      "lane": "development",
+      "owner": "tooling/repository",
+      "review": "case-inventory-reviewed",
+      "triage": {
+        "basis": "exact-source-contrast-scorer-consumer-and-positive-negative-assertions-reviewed",
+        "owner": "tooling/repository",
+        "riskHint": "medium",
+        "action": "review-assertion-and-consumer-equivalence",
+        "sourceBlobSha": "5b6f539ca5a5df4b58a602e0e060fad4e2c9176d"
+      },
+      "recommendation": "keep",
+      "rationale": "Paired agent-eval comparison logic: input/receipt identity, frozen expected routing, no unsupported promotion, and confounded negative controls.",
+      "functionalArea": "engineering-tooling",
+      "mechanicTags": [],
+      "mechanicMappingBasis": "source-case-inspected",
+      "featureId": "tooling.repository",
+      "featureMappingBasis": "source-case-inspected"
     }
   ],
   "reviewPolicy": "source-reviewed reflects historical file review; case-inventory-reviewed means identifiable source cases and assertion sites, NOT full assertion/consumer equivalence, an executed test, or deletion approval",

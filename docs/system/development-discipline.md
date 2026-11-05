@@ -100,6 +100,32 @@ For recurring failures, follow **Propose → Probe → Compose → Reflect**:
    Persist rules with their EXISTING owner and material decision/proof
    in the same Git commit, not a parallel experience registry.
 
+The existing `score:agent-eval` scorer can accept an **optional
+second, read-only contrasts input** (`node tooling/repository/score-agent-eval.mjs
+<runs.json> <contrasts.json>`). This avoids changing the separately protected
+canonical `.agents/schemas/agent-eval-runs.schema.json`. The paired input
+contract lives only at `tooling/repository/agent-eval-contrasts.schema.json`.
+It references baseline/candidate `runId` values in the unchanged run
+payload and supplies matching exact task `inputFingerprint`, unique
+`executionEvidenceSha256`, `executionStatus`, and candidate/baseline
+`harnessFingerprint` under `runEvidence`. Each pair must use the same
+frozen `caseId` and model; each harness must retain its content identity
+across comparison pairs. At least two independent pairs and exactly one
+changed component are needed for an observational component verdict.
+
+The scorer uses the existing frozen skill routing/procedure expectations
+to count declared correctness, never a model-authored PASS. A missing or
+reused receipt, mismatched task, multiple changed components, incomplete
+assertions, or inconsistent results is `confounded`; equal quality is
+`no observed effect`. Latency/token deltas remain informational, not
+substitutes for quality or unobserved proof. A proposed reusable lesson
+requires improvement across two distinct evaluation cases and remains
+`REVIEWABLE_CANDIDATE_NOT_ADOPTED` because the scorer does not authenticate
+rollout bytes or independently verify the edit's causal role. Do not
+persist a lesson automatically or promote agent-routing metrics into
+Minecraft audit accuracy. Actual adoption still needs owner review and
+independent frozen benchmark/negative controls.
+
 Do not import upstream Python executors, unrestricted networks, default
 4k rollouts, automatic prompt mutation or benchmark score authority.
 ChatGPT Chat remains the operator; TEST MAP and its canonical proof gates
