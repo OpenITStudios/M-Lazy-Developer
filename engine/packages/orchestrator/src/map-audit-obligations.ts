@@ -25,7 +25,7 @@ import type {
 } from "./inspection/gameplay-world-model.js";
 import type { MandatoryAuditProcedureReceipt } from "./inspection/mandatory-audit-support.js";
 import type { GameplayDiscoveryClosure } from "./inspection/gameplay-discovery-closure.js";
-import type { IgnoredCommitBeforeFeedbackCandidate } from "./inspection/persistence-source-analysis.js";
+import type { IgnoredCommitBeforeFeedbackCandidate, SequentialCounterBeforePayloadCandidate } from "./inspection/persistence-source-analysis.js";
 import type { PlayerSessionLifecycleAnalysis } from "./inspection/player-session-lifecycle-analysis.js";
 import type {
   AuditUserIntentEnvelope,
@@ -1161,6 +1161,7 @@ export function deriveAuditObligations(input: {
     readonly AccumulationGrowthSignal[];
   readonly ignoredCommitBeforeFeedback?:
     readonly IgnoredCommitBeforeFeedbackCandidate[];
+  readonly sequentialCounterBeforePayload?: readonly SequentialCounterBeforePayloadCandidate[];
   readonly playerSessionLifecycle?: PlayerSessionLifecycleAnalysis;
   readonly capabilityExposure?: CapabilityExposureSummary;
   readonly replicaDivergenceIds?: readonly string[];
@@ -1241,6 +1242,42 @@ export function deriveAuditObligations(input: {
         "Keep unresolved source/runtime effects open, never auto-admit BUG.",
       validationGroupKey: "player-session:leave-reconnect",
       subjectIds: [...locations, ...helperLocations],
+      componentIds: [],
+      evidenceIds: [],
+    }));
+  }
+
+  // One bounded deciding-proof task per world; partial writes are not BUGs.
+  const orderedCommits = input.sequentialCounterBeforePayload ?? [];
+  if (orderedCommits.length > 0) {
+    const location = (source: SequentialCounterBeforePayloadCandidate["firstWriteSource"]): string =>
+      source.relativePath +
+      (source.range?.lineStart === undefined ? "" : ":" + source.range.lineStart +
+        (source.range.columnStart === undefined ? "" : ":" + source.range.columnStart));
+    const bounded = orderedCommits.slice(0, 4);
+    items.push(normalize({
+      id: "persistence:counter-before-payload-write",
+      source: "detection-gap",
+      stage: "EVALUATE",
+      title: "Verify counter write before result/history payload commit",
+      reason: orderedCommits.length + " source path(s) update a counter-like key " +
+        "before a potentially distinct payload key in the same lexical block. " +
+        "A storage setter is visible in source, but backend atomicity, failure " +
+        "reachability, rollback and gameplay impact remain unproven." +
+        (orderedCommits.length > bounded.length ? " " +
+          (orderedCommits.length - bounded.length) +
+          " additional source path(s) omitted from navigation." : ""),
+      missingProof: "Identify actual keys, record dependency, storage fault " +
+        "semantics, rollback/retry and player-visible outcome.",
+      validationTest: "Inject failure of the second storage write after the " +
+        "counter update; retry and compare sequence, result/history, " +
+        "reset/recovery and feedback against a clean run. Do not promote BUG " +
+        "without intended behavior and independent counterproof.",
+      validationGroupKey: "persistence:counter-payload-atomicity",
+      subjectIds: bounded.flatMap(item => [
+        location(item.firstWriteSource), location(item.payloadWriteSource),
+        location(item.storageSetSource),
+      ]),
       componentIds: [],
       evidenceIds: [],
     }));

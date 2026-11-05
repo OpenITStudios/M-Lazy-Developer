@@ -73,6 +73,47 @@ const closed = {
 } as any;
 
 describe("audit obligations versus gameplay findings", () => {
+  it("keeps partial result persistence as one source-backed proof obligation, not a BUG", () => {
+    const source = (lineStart: number) => ({
+      artifactId: "fixture:history", relativePath: "scripts/history.js",
+      range: { lineStart, lineEnd: lineStart, columnStart: 4, columnEnd: 18 },
+    });
+    const input = {
+      graph: baseGraph("PROVEN"),
+      defectResolution: { resolutions: [], confirmedDefectReadyIds: [] },
+      gameplayWorld: { arenas: { detected: false, isolation: { observations: [] },
+        replicaProof: [] }, platformKnowledge: { claims: [] },
+        surfaceDiscovery: { surfaceIds: [] } },
+      gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
+      temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
+      compoundBoundaries: [], accumulationGrowth: [],
+      sequentialCounterBeforePayload: [{
+        scriptId: "test", callerRegion: "function:DB.record",
+        counterKey: "history_sequence",
+        firstWriteSource: source(5), payloadWriteSource: source(7),
+        storageSetSource: source(2),
+        proof: "SOURCE_ORDERED_COUNTER_PAYLOAD_NOT_ATOMICITY_PROOF",
+      }],
+    } as unknown as Parameters<typeof deriveAuditObligations>[0];
+    const obligations = deriveAuditObligations(input);
+    const selected = obligations.filter(row =>
+      row.id === "persistence:counter-before-payload-write");
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toMatchObject({
+      source: "detection-gap", stage: "EVALUATE",
+      evidenceIds: [], validationGroupKey: "persistence:counter-payload-atomicity",
+    });
+    expect(selected[0]?.subjectIds).toEqual([
+      "scripts/history.js:2:4", "scripts/history.js:5:4",
+      "scripts/history.js:7:4",
+    ]);
+    expect(selected[0]?.missingProof).toContain("rollback/retry");
+    expect(selected[0]?.validationTest).toContain("Do not promote BUG");
+    expect(deriveAuditObligations({
+      ...input, sequentialCounterBeforePayload: [],
+    }).some(row => row.id === "persistence:counter-before-payload-write")).toBe(false);
+  });
+
   it("routes session cleanup source sites into one bounded deciding-proof obligation", () => {
     const src = (lineStart: number) => ({
       artifactId: "fixture:session", relativePath: "scripts/main.js",

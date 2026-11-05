@@ -7,6 +7,62 @@ import {
 } from "../../src/inspection/persistence-source-analysis.js";
 
 describe("persistence source analysis", () => {
+  it("retains an ordered counter write before a distinct durable payload call", () => {
+    const dynamicKey = String.fromCharCode(96) + "history_$" + "{doc.id}" +
+      String.fromCharCode(96);
+    const source = [
+      "const DB = class {",
+      "  write(key, value) { this.storage.set(key, value); }",
+      "  record(doc) {",
+      "    const n = 5;",
+      "    this.write('history_sequence', n + 1);",
+      "    const row = { ...doc, order: n + 1 };",
+      "    this.write(" + dynamicKey + ", row);",
+      "  }",
+      "};",
+    ].join("\n");
+    const parsed = parseScriptFile("history", source, {
+      artifactId: "fixture:history", relativePath: "scripts/history.js",
+    });
+    // Source review is not gated by persistence Knowledge scheduling.
+    const result = analyzePersistenceSource([], [parsed]);
+    const candidates = result.sequentialCounterBeforePayload ?? [];
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({
+      scriptId: "history",
+      counterKey: "history_sequence",
+      firstWriteSource: { range: { lineStart: 5 } },
+      payloadWriteSource: { range: { lineStart: 7 } },
+      storageSetSource: { range: { lineStart: 2 } },
+      proof: "SOURCE_ORDERED_COUNTER_PAYLOAD_NOT_ATOMICITY_PROOF",
+    });
+  });
+
+  it("does not infer partial multi-key commits from unrelated or unlinked writes", () => {
+    const parse = (lines: readonly string[]) => parseScriptFile(
+      "controls", ["const DB = class {", ...lines, "};"].join("\n"),
+      { artifactId: "fixture:control", relativePath: "scripts/controls.js" },
+    );
+    const cases = [
+      ["write(k,v) { this.storage.set(k,v); }",
+       "record(row) { this.write('history',row); this.write('sequence',n+1); }"],
+      ["write(k,v) { this.storage.set(k,v); }",
+       "record(row) { this.write('sequence',1); this.write('history',row); }"],
+      ["write(k,v) { this.ui.set(k,v); }",
+       "record(row) { this.write('sequence',n+1); this.write('history',row); }"],
+      ["write(k,v) { this.storage.set(k,v); }",
+       "record(row) { this.write('sequence',n+1); this.write('sequence',row); }"],
+      ["write(k,v) { this.storage.set(k,v); }",
+       "record(row) { this.write('sequence',n+1); if (ready) this.write('history',row); }"],
+      ["write(k,v) { this.storage.set(k,v); }",
+       "record(row) { this.write('sequence',n+1); this.write('another_counter',m+1); }"],
+    ];
+    for (const lines of cases) {
+      expect(analyzePersistenceSource([], [parse(lines)])
+        .sequentialCounterBeforePayload).toEqual([]);
+    }
+  });
+
   it("flags only unguarded fallible commit before later write and feedback", () => {
     const parse = (source: string) => parseScriptFile("transaction", source, {
       artifactId: "fixture:persistence", relativePath: "scripts/transactions.ts",

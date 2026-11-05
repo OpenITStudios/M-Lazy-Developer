@@ -117,8 +117,22 @@ export interface IgnoredCommitBeforeFeedbackCandidate {
   readonly proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG";
 }
 
+/** Same-block ordered counter and payload writes through one storage-like
+ * source callee. This does not prove backend atomicity or a gameplay defect.
+ */
+export interface SequentialCounterBeforePayloadCandidate {
+  readonly scriptId: string;
+  readonly callerRegion: string;
+  readonly counterKey: string;
+  readonly firstWriteSource: SourceRef;
+  readonly payloadWriteSource: SourceRef;
+  readonly storageSetSource: SourceRef;
+  readonly proof: "SOURCE_ORDERED_COUNTER_PAYLOAD_NOT_ATOMICITY_PROOF";
+}
+
 export interface PersistenceSourceAnalysis {
   readonly ignoredCommitBeforeFeedback: readonly IgnoredCommitBeforeFeedbackCandidate[];
+  readonly sequentialCounterBeforePayload?: readonly SequentialCounterBeforePayloadCandidate[];
   properties: readonly PersistenceSourceProperty[];
   resultAuditRecords:
     readonly PersistenceResultAuditRecordAssessment[];
@@ -900,6 +914,86 @@ function ignoredCommitBeforeFeedback(
     (a.callSource.range?.columnStart ?? 0) - (b.callSource.range?.columnStart ?? 0));
 }
 
+/** Reuse exact parser call, declaration, block and storage setter evidence.
+ * One source-only candidate per writer method, not a new detector or BUG.
+ */
+function sequentialCounterBeforePayload(
+  script: ParsedScriptFile,
+): readonly SequentialCounterBeforePayloadCandidate[] {
+  const stores = new Map<string, SourceRef>();
+  for (const site of script.unresolvedReceiverCalls ?? []) {
+    if (site.method !== "set" ||
+        !/^this\.(?:storage|store|database|db|journal)$/.test(site.receiverExpression) ||
+        site.source.artifactId !== script.source.artifactId ||
+        site.source.relativePath !== script.source.relativePath) continue;
+    if (!stores.has(site.executionRegion))
+      stores.set(site.executionRegion, site.source);
+  }
+  const literal = (s: string | undefined): string | undefined =>
+    /^(['"])([A-Za-z0-9_.:-]{1,96})\1$/.exec(s?.trim() ?? "")?.[2];
+  const inc = (s: string | undefined): boolean =>
+    /^[A-Za-z_$][\w$]*\s*\+\s*1$/.test(s?.trim() ?? "");
+  const separateKeyCandidate = (s: string | undefined, first: string): boolean => {
+    if (!s) return false;
+    const constant = literal(s);
+    if (constant !== undefined) return constant !== first;
+    const value = s.trim();
+    return value.charCodeAt(0) === 96 &&
+      value.charCodeAt(value.length - 1) === 96 &&
+      value.includes("$" + "{");
+  };
+  type Call = ParsedScriptFile["localFunctionCalls"][number];
+  const groups = new Map<string, Call[]>();
+  for (const call of script.localFunctionCalls) {
+    if (!stores.has(call.targetRegion) ||
+        call.argumentExpressions?.length !== 2 ||
+        !call.targetSource || !exactSourceToken(call.targetSource) ||
+        !call.sourceSequence?.directCall ||
+        call.source.artifactId !== script.source.artifactId ||
+        call.source.relativePath !== script.source.relativePath ||
+        call.targetSource.artifactId !== script.source.artifactId ||
+        call.targetSource.relativePath !== script.source.relativePath) continue;
+    const groupId = JSON.stringify([
+      call.callerRegion, call.targetRegion, exactSourceToken(call.targetSource),
+    ]);
+    const group = groups.get(groupId) ?? [];
+    group.push(call);
+    groups.set(groupId, group);
+  }
+  const found: SequentialCounterBeforePayloadCandidate[] = [];
+  for (const calls of groups.values()) {
+    const sorted = [...calls].sort((a, b) =>
+      a.sourceSequence!.statementIndex - b.sourceSequence!.statementIndex);
+    let selected = false;
+    for (const first of sorted) {
+      if (selected) break;
+      const counterKey = literal(first.argumentExpressions?.[0]);
+      if (!counterKey || !inc(first.argumentExpressions?.[1])) continue;
+      for (const second of sorted) {
+        if (second.sourceSequence!.statementIndex <= first.sourceSequence!.statementIndex ||
+            !sameSequentialBlock(first.sourceSequence!.block, second.sourceSequence!.block) ||
+            !separateKeyCandidate(second.argumentExpressions?.[0], counterKey) ||
+            inc(second.argumentExpressions?.[1])) continue;
+        found.push({
+          scriptId: script.identifier,
+          callerRegion: first.callerRegion,
+          counterKey,
+          firstWriteSource: first.source,
+          payloadWriteSource: second.source,
+          storageSetSource: stores.get(first.targetRegion)!,
+          proof: "SOURCE_ORDERED_COUNTER_PAYLOAD_NOT_ATOMICITY_PROOF",
+        });
+        selected = true;
+        break;
+      }
+    }
+  }
+  return found.sort((a, b) =>
+    a.firstWriteSource.relativePath.localeCompare(b.firstWriteSource.relativePath) ||
+    (a.firstWriteSource.range?.lineStart ?? 0) - (b.firstWriteSource.range?.lineStart ?? 0) ||
+    (a.firstWriteSource.range?.columnStart ?? 0) - (b.firstWriteSource.range?.columnStart ?? 0));
+}
+
 export function analyzePersistenceSource(
   scripts: readonly ParsedScriptFile[],
   sourceReviewScripts: readonly ParsedScriptFile[] = scripts,
@@ -1154,6 +1248,7 @@ export function analyzePersistenceSource(
   return {
     properties,
     ignoredCommitBeforeFeedback: sourceReviewScripts.flatMap(ignoredCommitBeforeFeedback),
+    sequentialCounterBeforePayload: sourceReviewScripts.flatMap(sequentialCounterBeforePayload),
     resultAuditRecords,
     completeResultAuditRecords:
       resultAuditRecords.filter(
