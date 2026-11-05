@@ -142,7 +142,15 @@ The **same existing benchmark scorer** also accepts
 --compare <comparison.json>` for post-execution source-claim comparisons.
 The ephemeral input is
 `{schemaVersion:1,policy:"selected-map-frozen-outcome-comparison",
+baselineSourceCommit:"<40-hex-baseline-SHA>",
+candidateSourceCommit:"<40-hex-candidate-SHA>",
 pairs:[{id,baselineResultFile,candidateResultFile},...]}`.
+The distinct source commits are pinned **once for the whole experiment**:
+EVERY baseline/candidate CLI receipt must match its respective manifest
+commit across all artifacts. Mixed candidate versions, mixed baselines and
+role swaps fail closed rather than pooling unrelated evidence. Commit equality
+proves only source identity, not the substantive one-component harness diff,
+operator independence or causal effect; those still require separate review.
 At least two independent selected-artifact SHA-256 identities are needed.
 Each pair must use byte-identical independently frozen claims, distinct
 frozen canonical source observations, and positive + negative controls.
@@ -182,7 +190,8 @@ bytes, raw output SHA-256 and receipt identity, and uses the receipt's
 verified source commit instead of `git rev-parse HEAD` (portable snapshots
 have no `.git`). The existing `score-benchmark.mjs --compare` now
 requires a bound receipt in BOTH frozen observations, different source
-commits for baseline versus candidate, and SHA-256 agreement with each
+commits for baseline versus candidate, exact manifest-pinned source commits
+consistent across every compared case, and SHA-256 agreement with each
 reconstructed canonical JSON report. Legacy single-report scoring/freezing
 remain supported but unreceipted reports are not eligible for paired
 candidate review. Do not infer end-to-end executor authenticity or

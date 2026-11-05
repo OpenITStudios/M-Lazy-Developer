@@ -188,6 +188,8 @@ function withComparisonManifest(pairs, evaluate, mutateBeforeSave) {
     const payload = {
       schemaVersion: 1,
       policy: "selected-map-frozen-outcome-comparison",
+      baselineSourceCommit: "1".repeat(40),
+      candidateSourceCommit: "2".repeat(40),
       pairs: pairs.map((p) => {
         p.baseline.save(); p.candidate.save();
         return {
@@ -218,6 +220,8 @@ test("frozen positive and negative controls permit only source-claim review reco
   assert.equal(done.status, 0, done.stderr);
   const result = JSON.parse(done.stdout);
   assert.equal(result.pairCount, 2);
+  assert.equal(result.baselineSourceCommit, "1".repeat(40));
+  assert.equal(result.candidateSourceCommit, "2".repeat(40));
   assert.equal(result.improved, 2);
   assert.equal(result.regressed, 0);
   assert.equal(result.recommendation,
@@ -282,6 +286,52 @@ test("one case and reused artifacts cannot prove independent replication", () =>
 });
 
 
+test("comparison rejects mixed source commits and role swapping across artifacts", () => {
+  const source = (f, commit) => {
+    f.frozen.execution.gitCommit = commit;
+    f.frozen.execution.canonicalAuditReceipt.sourceCommit = commit;
+  };
+  for (const [label, mutate] of [
+    ["changed-baseline", p => source(p.baseline, "3".repeat(40))],
+    ["changed-candidate", p => source(p.candidate, "4".repeat(40))],
+    ["swapped-roles", p => {
+      source(p.baseline, "2".repeat(40));
+      source(p.candidate, "1".repeat(40));
+    }],
+  ]) {
+    const a = outcomePair("stable-case-a", "a".repeat(64));
+    const b = outcomePair("stable-case-b", "b".repeat(64));
+    const done = runComparison([a, b], pairs => mutate(pairs[1]));
+    assert.notEqual(done.status, 0, label);
+    assert.match(done.stderr, /Cross-case source-variant mismatch/, label);
+  }
+});
+
+test("comparison requires explicit distinct SHA pins in its manifest", () => {
+  for (const [label, corrupt, error] of [
+    ["missing-baseline", p => { delete p.baselineSourceCommit; },
+      /distinct, manifest-pinned/],
+    ["same-sources", p => { p.candidateSourceCommit = p.baselineSourceCommit; },
+      /distinct, manifest-pinned/],
+    ["invalid-source", p => { p.candidateSourceCommit = "not-a-git-sha"; },
+      /distinct, manifest-pinned/],
+    ["wrong-declared-candidate", p => { p.candidateSourceCommit = "3".repeat(40); },
+      /Cross-case source-variant mismatch/],
+  ]) {
+    const a = outcomePair("pinned-case-a", "c".repeat(64));
+    const b = outcomePair("pinned-case-b", "d".repeat(64));
+    withComparisonManifest([a, b], manifest => {
+      const payload = JSON.parse(readFileSync(manifest, "utf8"));
+      corrupt(payload);
+      writeFileSync(manifest, JSON.stringify(payload));
+      const done = spawnSync(process.execPath, [scorer, "--compare", manifest],
+        { encoding: "utf8" });
+      assert.notEqual(done.status, 0, label);
+      assert.match(done.stderr, error, label);
+    });
+  }
+});
+
 test("blinded source comparison exposes only anonymized canonical score views", () => {
   const a = outcomePair("blind-case-1", "7".repeat(64));
   const b = outcomePair("blind-case-2", "8".repeat(64));
@@ -298,6 +348,8 @@ test("blinded source comparison exposes only anonymized canonical score views", 
     assert.ok(!blind.stdout.includes('"candidate"'));
     assert.ok(!blind.stdout.includes(manifest));
     assert.ok(!blind.stdout.includes("blind-case-1"));
+    assert.ok(!blind.stdout.includes("1".repeat(40)));
+    assert.ok(!blind.stdout.includes("2".repeat(40)));
     const candidateSide = view.A.tp > view.B.tp ? "A" : "B";
     assert.equal(Math.max(view.A.tp, view.B.tp), 2);
     assert.equal(Math.min(view.A.tp, view.B.tp), 0);

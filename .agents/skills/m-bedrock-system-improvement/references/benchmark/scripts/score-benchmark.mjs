@@ -345,6 +345,17 @@ function compareFrozenSourceOutcomes(input) {
       input.pairs.length < 2 || input.pairs.length > 20) {
     throw new Error("Frozen outcome comparison requires 2–20 complete independent pairs.");
   }
+  // Commit identities are a comparison-wide contract, not a per-case hint.
+  // Different candidate versions cannot jointly establish repeatable benefit.
+  const isCommit = value => typeof value === "string" &&
+    /^[a-f0-9]{40}$/.test(value);
+  if (!isCommit(input.baselineSourceCommit) ||
+      !isCommit(input.candidateSourceCommit) ||
+      input.baselineSourceCommit === input.candidateSourceCommit) {
+    throw new Error(
+      "Source outcome comparison requires distinct, manifest-pinned baseline and candidate Git commits.",
+    );
+  }
   const digest = value => createHash("sha256").update(value).digest("hex");
   const read = file => {
     if (typeof file !== "string" || !file.trim()) {
@@ -402,6 +413,16 @@ function compareFrozenSourceOutcomes(input) {
         "A freezer Git HEAD alone is not audit execution provenance.",
       );
     }
+    const baselineSourceCommit =
+      frozenBase.execution.canonicalAuditReceipt.sourceCommit;
+    const candidateSourceCommit =
+      frozenCandidate.execution.canonicalAuditReceipt.sourceCommit;
+    if (baselineSourceCommit !== input.baselineSourceCommit ||
+        candidateSourceCommit !== input.candidateSourceCommit) {
+      throw new Error(
+        "Cross-case source-variant mismatch: every pair must use the exact manifest-pinned baseline and candidate commits.",
+      );
+    }
     const baseObservedHash = digest(JSON.stringify(frozenBase.observed));
     const candidateObservedHash = digest(JSON.stringify(frozenCandidate.observed));
     if (baseObservedHash === candidateObservedHash ||
@@ -448,8 +469,8 @@ function compareFrozenSourceOutcomes(input) {
       id: pair.id,
       artifactSha256: b.receipt.artifactSha256,
       frozenExpectationSha256: expectedHash,
-      baselineSourceCommit: frozenBase.execution.canonicalAuditReceipt.sourceCommit,
-      candidateSourceCommit: frozenCandidate.execution.canonicalAuditReceipt.sourceCommit,
+      baselineSourceCommit,
+      candidateSourceCommit,
       sourceObservationChanged: true,
       positiveClaims: positive,
       negativeClaims: negative,
@@ -470,6 +491,8 @@ function compareFrozenSourceOutcomes(input) {
     schemaVersion: 1,
     policy: "selected-map-frozen-outcome-comparison-result",
     recommendation,
+    baselineSourceCommit: input.baselineSourceCommit,
+    candidateSourceCommit: input.candidateSourceCommit,
     pairCount: evaluated.length,
     improved, regressed, unchanged, insufficient,
     comparisons: evaluated,
