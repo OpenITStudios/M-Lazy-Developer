@@ -3035,10 +3035,19 @@ export function parseScriptFile(
     if (!eventParam && !alias) return [];
     const param = eventParam ?? alias!;
     const body = callback.body;
-    // Refuse rebinding in any branch or closure; the alias would no
-    // longer prove that a later call received the event field.
+    // Refuse rebinding in any branch or closure. For non-destructured
+    // events, writing the tracked property changes which player/session
+    // value a later read refers to, even if the event variable is stable.
     const writesBinding = (node: ts.Node): boolean =>
       ts.isIdentifier(node) ? node.text === param :
+      eventParam !== undefined && ts.isPropertyAccessExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === param && node.name.text === field ? true :
+      eventParam !== undefined && ts.isElementAccessExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === param &&
+        (!ts.isStringLiteralLike(node.argumentExpression) ||
+         node.argumentExpression.text === field) ? true :
       (ts.isParenthesizedExpression(node) ||
        ts.isObjectLiteralExpression(node) ||
        ts.isArrayLiteralExpression(node) ||
@@ -3060,6 +3069,8 @@ export function parseScriptFile(
            (node.operator === ts.SyntaxKind.PlusPlusToken ||
             node.operator === ts.SyntaxKind.MinusMinusToken) &&
            writesBinding(node.operand)) ||
+          (ts.isDeleteExpression(node) &&
+           writesBinding(node.expression)) ||
           ((ts.isForOfStatement(node) || ts.isForInStatement(node)) &&
            !ts.isVariableDeclarationList(node.initializer) &&
            writesBinding(node.initializer))) {

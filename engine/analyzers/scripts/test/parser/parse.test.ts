@@ -79,6 +79,55 @@ describe("script analyzer", () => {
       .toBe(true);
   });
 
+  it("rejects rewritten playerLeave IDs and playerSpawn flags without losing valid identity", () => {
+    const mutations = [
+      "event.playerId = other;",
+      "event['playerId'] = other;",
+      "event[key] = other;",
+      "delete event.playerId;",
+      "event.playerId++;",
+      "({ playerId: event.playerId } = other);",
+    ];
+    for (const mutation of mutations) {
+      const parsed = parseScriptFile("session-mutation", [
+        'import { world } from "@minecraft/server";',
+        "const cache = new Map();",
+        "world.afterEvents.playerLeave.subscribe(event => {",
+        "  " + mutation,
+        "  cache.delete(event.playerId);",
+        "});",
+      ].join("\n"), source);
+      expect(parsed.events.find(event => event.event === "playerLeave")
+        ?.playerSessionSites ?? []).toHaveLength(0);
+    }
+    const spawn = parseScriptFile("spawn-mutation", [
+      'import { world } from "@minecraft/server";',
+      "world.afterEvents.playerSpawn.subscribe(event => {",
+      "  event.initialSpawn = false;",
+      "  if (event.initialSpawn) announce();",
+      "});",
+    ].join("\n"), source);
+    expect(spawn.events.find(event => event.event === "playerSpawn")
+      ?.playerSessionSites ?? []).toHaveLength(0);
+
+    // Unrelated event fields and direct unmodified ID aliases remain valid.
+    const safe = parseScriptFile("session-stable", [
+      'import { world } from "@minecraft/server";',
+      "const cache = new Map();",
+      "world.afterEvents.playerLeave.subscribe(event => {",
+      "  event.unrelated = 1;",
+      "  event['unrelated'] = 2;",
+      "  cache.delete(event.playerId);",
+      "});",
+      "world.afterEvents.playerLeave.subscribe(({ playerId: id }) => {",
+      "  cache.delete(id);",
+      "});",
+    ].join("\n"), source);
+    const events = safe.events.filter(event => event.event === "playerLeave");
+    expect(events.map(event => event.playerSessionSites?.[0]?.kind))
+      .toEqual(["leave-direct-cache-delete", "leave-direct-cache-delete"]);
+  });
+
   it("retains exact authored translate-key object references, never random strings or computed keys", () => {
     const script = [
       'player.sendMessage({ translate: "welcome.guide" });',
