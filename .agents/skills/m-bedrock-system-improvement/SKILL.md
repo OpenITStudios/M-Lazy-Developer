@@ -30,7 +30,7 @@ Developer source `minecraft-bedrock-agent-skills` owns each `bedrock-*/SKILL.md`
 ## Internal operations, not extra lanes
 
 - **Detection improvement:** source/typed Semantic IR gap → existing analyzer/knowledge/proof owner → generalized source-grounded change → scope-appropriate validation. `references/detection-development/` retains detailed detector contracts and `scripts/validate-delta.mjs` under that subtree.
-- **BENCHMARK:** freeze expected case and observed capability separately; score with `references/benchmark/scripts/score-benchmark.mjs` and related scripts. This operation is read-only with respect to implementation and frozen expectations; reduced fixtures never equal complete selected-map proof.
+- **BENCHMARK:** freeze expected case and observed capability separately; score with `references/benchmark/scripts/score-benchmark.mjs` and related scripts. The same scorer accepts `--compare` for two or more independently frozen baseline/candidate source-claim outcomes; this selects only a review candidate and never launches a map test or adopts a harness. Follow the canonical Evidence-contrast section in Development Discipline for negative controls and proof ceilings. This operation is read-only with respect to implementation and frozen expectations; reduced fixtures never equal complete selected-map proof.
 - **Architecture/reference updates:** preserve single owners and current map checking via ChatGPT Chat; direct source interpretation is not `runSelectedMapAudit()`.
 
 Read `../../../docs/system/implementation-map.md` for precise semantic ownership and `../../../docs/product/flow.md` for the two-skill/four-stage operating model.

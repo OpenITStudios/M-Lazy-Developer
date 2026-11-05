@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -302,9 +303,152 @@ function adjudicateFullMapClaims(result) {
   };
 }
 
+
+/** Compare independently frozen source-scope outcomes using the SAME
+ * existing per-claim adjudicator; never rescore from model-written counts.
+ * Outputs are review decisions, not an automatic harness adoption or
+ * an actual Minecraft observation.
+ */
+function compareFrozenSourceOutcomes(input) {
+  if (!input || input.schemaVersion !== 1 ||
+      input.policy !== "selected-map-frozen-outcome-comparison" ||
+      !Array.isArray(input.pairs) ||
+      input.pairs.length < 2 || input.pairs.length > 20) {
+    throw new Error("Frozen outcome comparison requires 2–20 complete independent pairs.");
+  }
+  const digest = value => createHash("sha256").update(value).digest("hex");
+  const read = file => {
+    if (typeof file !== "string" || !file.trim()) {
+      throw new Error("Comparison requires an exact source result file path.");
+    }
+    return JSON.parse(readFileSync(resolve(file), "utf8"));
+  };
+  const evaluated = [];
+  const uniqueCaseIds = new Set();
+  const uniqueArtifacts = new Set();
+  const usedObservationDigests = new Set();
+  let improved = 0, regressed = 0, unchanged = 0, insufficient = 0;
+  for (const pair of input.pairs) {
+    if (!pair || typeof pair.id !== "string" || !pair.id.trim() ||
+        uniqueCaseIds.has(pair.id) ||
+        pair.baselineResultFile === pair.candidateResultFile) {
+      throw new Error("Comparison requires unique cases and separate result files.");
+    }
+    uniqueCaseIds.add(pair.id);
+    const baseline = read(pair.baselineResultFile);
+    const candidate = read(pair.candidateResultFile);
+    if (baseline.evaluationScope !== "full-map-claim-review" ||
+        candidate.evaluationScope !== "full-map-claim-review") {
+      throw new Error("Cannot compare aggregate/reduced-fixture metrics as full-map detection accuracy.");
+    }
+    // The existing source-step oracle validates every claim and submitted
+    // aggregate BEFORE the comparison may inspect any outcome deltas.
+    const b = adjudicateFullMapClaims(baseline);
+    const c = adjudicateFullMapClaims(candidate);
+    const bExpectation = readFileSync(resolve(baseline.fullMapReview.frozenExpectationFile));
+    const cExpectation = readFileSync(resolve(candidate.fullMapReview.frozenExpectationFile));
+    const bExpect = JSON.parse(bExpectation.toString("utf8"));
+    const cExpect = JSON.parse(cExpectation.toString("utf8"));
+    const expectedHash = digest(bExpectation);
+    if (expectedHash !== digest(cExpectation) ||
+        b.receipt.expectationId !== c.receipt.expectationId ||
+        pair.id !== b.receipt.expectationId ||
+        pair.id !== c.receipt.expectationId ||
+        b.receipt.artifactSha256 !== c.receipt.artifactSha256) {
+      throw new Error("Compared outcomes must have byte-identical frozen expectations and exact selected artifact.");
+    }
+    if (uniqueArtifacts.has(b.receipt.artifactSha256)) {
+      throw new Error("Independent comparison cases cannot reuse an artifact SHA-256.");
+    }
+    uniqueArtifacts.add(b.receipt.artifactSha256);
+    const frozenBase = read(baseline.fullMapReview.frozenObservationFile);
+    const frozenCandidate = read(candidate.fullMapReview.frozenObservationFile);
+    const baseObservedHash = digest(JSON.stringify(frozenBase.observed));
+    const candidateObservedHash = digest(JSON.stringify(frozenCandidate.observed));
+    if (baseObservedHash === candidateObservedHash ||
+        usedObservationDigests.has(baseObservedHash) ||
+        usedObservationDigests.has(candidateObservedHash)) {
+      throw new Error("Baseline and candidate require distinct frozen source observations, not regraded identical outputs.");
+    }
+    usedObservationDigests.add(baseObservedHash);
+    usedObservationDigests.add(candidateObservedHash);
+    const expectedClaims = bExpect.expected.claims;
+    if (!Array.isArray(expectedClaims) ||
+        expectedClaims.length !== cExpect.expected?.claims?.length) {
+      throw new Error("Frozen claim denominator changed.");
+    }
+    const positive = expectedClaims.filter(x => x.expectedClass === "supported").length;
+    const negative = expectedClaims.filter(x => x.expectedClass === "rejected").length;
+    const valid = b.receipt.scoredClaims === c.receipt.scoredClaims &&
+      b.receipt.scoredClaims === expectedClaims.length &&
+      b.receipt.unscorableClaimIds.length === 0 &&
+      c.receipt.unscorableClaimIds.length === 0 &&
+      positive > 0 && negative > 0 &&
+      b.receipt.insufficient === 0 && c.receipt.insufficient === 0;
+    const regression = c.counts.fp > b.counts.fp ||
+      c.counts.fn > b.counts.fn ||
+      c.counts.tp < b.counts.tp ||
+      c.counts.tn < b.counts.tn ||
+      c.receipt.correctUnknown < b.receipt.correctUnknown;
+    const improvement = c.counts.tp > b.counts.tp ||
+      c.counts.fn < b.counts.fn ||
+      c.counts.tn > b.counts.tn ||
+      c.counts.fp < b.counts.fp;
+    const decision = !valid
+      ? "INSUFFICIENT_EVIDENCE"
+      : regression
+        ? "REGRESSION"
+        : improvement
+          ? "IMPROVED_SOURCE_CLAIM_REVIEW"
+          : "NO_DEMONSTRATED_IMPROVEMENT";
+    if (!valid) insufficient++;
+    else if (regression) regressed++;
+    else if (improvement) improved++;
+    else unchanged++;
+    evaluated.push({
+      id: pair.id,
+      artifactSha256: b.receipt.artifactSha256,
+      frozenExpectationSha256: expectedHash,
+      sourceObservationChanged: true,
+      positiveClaims: positive,
+      negativeClaims: negative,
+      baseline: { counts: b.counts, correctUnknown: b.receipt.correctUnknown },
+      candidate: { counts: c.counts, correctUnknown: c.receipt.correctUnknown },
+      decision,
+      proofBoundary: "INDEPENDENTLY_FROZEN_CLAIMS_REVIEWER_DECLARED_NOT_EXECUTOR_ATTESTED",
+    });
+  }
+  // A candidate may proceed to human/independent harness review only with
+  // multiple separate improvements and no adverse source-claim outcomes.
+  // No code/harness is selected or mutated by this benchmark scorer.
+  const recommendation =
+    insufficient || regressed ? "KEEP_BASELINE"
+    : improved >= 2 ? "CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW"
+    : "KEEP_BASELINE";
+  return {
+    schemaVersion: 1,
+    policy: "selected-map-frozen-outcome-comparison-result",
+    recommendation,
+    pairCount: evaluated.length,
+    improved, regressed, unchanged, insufficient,
+    comparisons: evaluated,
+    proofBoundary:
+      "SOURCE_CLAIM_OUTCOME_COMPARISON_NOT_EXECUTOR_CAUSALITY_OR_MINECRAFT_GAMEPLAY",
+    caveat:
+      "Frozen source observations and reviewer interpretations are checked, but evaluator independence, execution provenance and actual Minecraft behavior are not independently attested. No automatic harness adoption.",
+  };
+}
+
 const path = process.argv[2];
-if (!path) {
-  throw new Error("Usage: node score-benchmark.mjs <result.json>");
+if (path === "--compare") {
+  if (!process.argv[3] || process.argv[4] !== undefined) {
+    throw new Error("Usage: node score-benchmark.mjs --compare <comparison.json>");
+  }
+  const comparison = JSON.parse(readFileSync(resolve(process.argv[3]), "utf8"));
+  process.stdout.write(JSON.stringify(compareFrozenSourceOutcomes(comparison), null, 2) + "\n");
+} else {
+if (!path || process.argv[3] !== undefined) {
+  throw new Error("Usage: node score-benchmark.mjs <result.json> | --compare <comparison.json>");
 }
 
 const data = JSON.parse(readFileSync(path, "utf8"));
@@ -398,3 +542,5 @@ const output = {
 };
 
 process.stdout.write(JSON.stringify(output, null, 2) + "\n");
+
+}

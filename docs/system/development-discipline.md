@@ -137,6 +137,30 @@ persist a lesson automatically or promote agent-routing metrics into
 Minecraft audit accuracy. Actual adoption still needs owner review and
 independent frozen benchmark/negative controls.
 
+The **same existing benchmark scorer** also accepts
+\`node .agents/skills/m-bedrock-system-improvement/references/benchmark/scripts/score-benchmark.mjs
+--compare <comparison.json>\` for post-execution source-claim comparisons.
+The ephemeral input is
+\`{schemaVersion:1,policy:"selected-map-frozen-outcome-comparison",
+pairs:[{id,baselineResultFile,candidateResultFile},...]}\`.
+At least two independent selected-artifact SHA-256 identities are needed.
+Each pair must use byte-identical independently frozen claims, distinct
+frozen canonical source observations, and positive + negative controls.
+The existing per-claim full-map scorer validates both outcomes first;
+no metrics-only reduced-fixture result can be promoted to map accuracy.
+Regression of any negative control, false positive, positive miss, or
+correct-UNKNOWN behavior retains the baseline. A candidate improving at
+least two independent cases with no regressions is only
+\`CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW\`, never automatically selected,
+applied to the Git source, or treated as Minecraft gameplay proof.
+The comparator is a **Probe → Compose review gate**, not a rollout
+executor or end-to-end Propose–Probe–Compose engine. Neither the generated
+source observations nor reviewer-declared decisions are independently
+attested by their own SHA/metadata. Keep frozen acceptance oracle data
+hidden from any proposer; do not learn from blind evaluation labels.
+Current real-map audit corpus is empty, so no fresh measured real-map
+benefit is claimed.
+
 Do not import upstream Python executors, unrestricted networks, default
 4k rollouts, automatic prompt mutation or benchmark score authority.
 ChatGPT Chat remains the operator; TEST MAP and its canonical proof gates

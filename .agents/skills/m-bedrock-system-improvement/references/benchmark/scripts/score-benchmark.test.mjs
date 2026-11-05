@@ -124,6 +124,131 @@ function fixture() {
     cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
+
+/** Baseline and candidate are distinct frozen source observations of the
+ * SAME independently frozen claim set. This tests evaluation/selection only,
+ * not live Minecraft, actual agent rollout or evaluator independence.
+ */
+function outcomePair(caseId, artifactSha) {
+  const baseline = fixture();
+  const candidate = fixture();
+  for (const f of [baseline, candidate]) {
+    f.expectation.id = caseId;
+    f.expectation.artifact.sha256 = artifactSha;
+    f.frozen.artifact.sha256 = artifactSha;
+    f.frozen.observed.artifactFingerprint = artifactSha;
+    f.result.expectationId = caseId;
+  }
+  baseline.frozen.observed.gameplayStructure.sourceFlowCandidates[0]
+    .sourceSteps = baseline.frozen.observed.gameplayStructure
+      .sourceFlowCandidates[0].sourceSteps.filter(
+        site => site.id !== "src:verified-state");
+  baseline.result.fullMapReview.decisions[0].observedClass = "unknown";
+  baseline.result.fullMapReview.decisions[0].observedEvidenceIds = [];
+  baseline.result.fullMapReview.decisions[0].reason =
+    "The baseline did not expose the expected selected-source operation.";
+  baseline.result.metrics.tp = 0;
+  baseline.result.metrics.fn = 1;
+  baseline.result.metrics.unknown = 2;
+  baseline.result.resultClass = "false-negative";
+  return { baseline, candidate };
+}
+function runComparison(pairs) {
+  const root = mkdtempSync(join(tmpdir(), "m-bedrock-paired-source-review-"));
+  try {
+    const payload = {
+      schemaVersion: 1,
+      policy: "selected-map-frozen-outcome-comparison",
+      pairs: pairs.map((p) => {
+        p.baseline.save(); p.candidate.save();
+        return {
+          id: p.baseline.expectation.id,
+          baselineResultFile: p.baseline.paths.result,
+          candidateResultFile: p.candidate.paths.result,
+        };
+      }),
+    };
+    const path = join(root, "comparison.json");
+    writeFileSync(path, JSON.stringify(payload));
+    const run = spawnSync(process.execPath, [scorer, "--compare", path],
+      { encoding: "utf8" });
+    return run;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    for (const p of pairs) { p.baseline.cleanup(); p.candidate.cleanup(); }
+  }
+}
+
+test("frozen positive and negative controls permit only source-claim review recommendation", () => {
+  const a = outcomePair("source-case-a", "b".repeat(64));
+  const b = outcomePair("source-case-b", "c".repeat(64));
+  const done = runComparison([a, b]);
+  assert.equal(done.status, 0, done.stderr);
+  const result = JSON.parse(done.stdout);
+  assert.equal(result.pairCount, 2);
+  assert.equal(result.improved, 2);
+  assert.equal(result.regressed, 0);
+  assert.equal(result.recommendation,
+    "CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW");
+  assert.equal(result.comparisons[0].positiveClaims, 1);
+  assert.equal(result.comparisons[0].negativeClaims, 1);
+  assert.equal(result.comparisons[0].baseline.counts.fn, 1);
+  assert.equal(result.comparisons[0].candidate.counts.tp, 1);
+  assert.equal(result.proofBoundary,
+    "SOURCE_CLAIM_OUTCOME_COMPARISON_NOT_EXECUTOR_CAUSALITY_OR_MINECRAFT_GAMEPLAY");
+});
+
+test("even one new false-positive forces baseline retention", () => {
+  const a = outcomePair("source-case-c", "d".repeat(64));
+  const b = outcomePair("source-case-d", "e".repeat(64));
+  a.candidate.result.fullMapReview.decisions[1].observedClass = "supported";
+  a.candidate.result.fullMapReview.decisions[1].reason =
+    "Candidate incorrectly promoted a false scoped relationship.";
+  a.candidate.result.fullMapReview.decisions[1].observedEvidenceIds =
+    ["src:negative-control"];
+  a.candidate.result.metrics.tn = 0;
+  a.candidate.result.metrics.fp = 1;
+  a.candidate.result.resultClass = "false-positive";
+  const done = runComparison([a, b]);
+  assert.equal(done.status, 0, done.stderr);
+  const result = JSON.parse(done.stdout);
+  assert.equal(result.recommendation, "KEEP_BASELINE");
+  assert.equal(result.regressed, 1);
+  assert.equal(result.comparisons[0].decision, "REGRESSION");
+});
+
+test("same observation cannot be regraded to claim harness improvement", () => {
+  const a = outcomePair("source-case-e", "f".repeat(64));
+  const b = outcomePair("source-case-f", "1".repeat(64));
+  a.baseline.frozen.observed =
+    JSON.parse(JSON.stringify(a.candidate.frozen.observed));
+  const done = runComparison([a, b]);
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /distinct frozen source observations/);
+});
+
+test("changed frozen expectation cannot masquerade as paired improvement", () => {
+  const a = outcomePair("source-case-g", "2".repeat(64));
+  const b = outcomePair("source-case-h", "3".repeat(64));
+  a.candidate.expectation.expected.claims[0].subject =
+    "Altered independent claim while preserving its source refs";
+  const done = runComparison([a, b]);
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /byte-identical frozen expectations/);
+});
+
+test("one case and reused artifacts cannot prove independent replication", () => {
+  const a = outcomePair("source-case-i", "4".repeat(64));
+  const b = outcomePair("source-case-j", "4".repeat(64));
+  const done = runComparison([a, b]);
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /cannot reuse an artifact SHA-256/);
+  const lone = outcomePair("source-case-k", "5".repeat(64));
+  const single = runComparison([lone]);
+  assert.notEqual(single.status, 0);
+  assert.match(single.stderr, /2.20 complete independent pairs/);
+});
+
 test("source-grounded full-map review scores all frozen positive/negative/unknown claims", () => {
   const f = fixture();
   try {
