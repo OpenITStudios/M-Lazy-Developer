@@ -59,7 +59,7 @@ This is the mandatory behavior contract for every `IMPROVE SYSTEM` task, includi
 1. **Normalize intent.** Translate informal or disordered user prompts into a bounded goal, observable acceptance, known constraints, non-goals and current mode. Clearly distinguish explicit user requirements from agent interpretation. Ask only when materially different implementations cannot safely be resolved from current context.
 2. **Pin and understand context.** Read current `Local` source and nearest owner-specific rules before proposing a fix. Trace the affected consumer and existing design; historical notes are not implementation authority.
 3. **Ground claims.** Separate observed source facts, inference, hypothesis and genuinely unresolved evidence. Exhaust relevant accessible evidence before declaring UNKNOWN; never invent API behavior, tests, or Minecraft runtime results. Stronger claims require stronger proof. Explicitly distinguish **ChatGPT artifact examination**, **GitHub source implementation**, **script execution inside ChatGPT**, **actual repository TypeScript execution**, and **live Minecraft observation**. None implies the next; do not describe a source contract as an executed `runSelectedMapAudit()` receipt.
-4. **Choose minimum complete solution.** Evaluate no change → remove obsolete code → correct existing owner → reuse → minimal extension → new component only when justified by existing architectural gates. Do not manufacture managers, registries, compatibility layers or parallel execution paths.
+4. **Choose minimum complete solution.** After tracing the affected owner and consumers, apply the existing [Minimum complete change](#minimum-complete-change) decision gate once per proven root cause. No new manager, registry, compatibility layer or parallel execution path without a demonstrated need.
 5. **Zero waste and modularity.** Every added file, interface, branch, artifact and test must have a real purpose and consumer. Prevent dead code, stale references and duplicated semantic ownership. Keep modules aligned to one responsibility; do not split files just to appear modular.
 6. **Naming and hierarchy.** Reuse canonical vocabulary and established paths. Name components for responsibility and behavior, not vague labels (`Smart`, `Universal`, `V2`) or cosmetic novelty. Preserve public IDs where renaming would break consumers unless a migration is authorized.
 7. **Execute autonomously within scope.** Finish coherent, bounded units without asking permission for every internal step. Never silently switch mode, modify target artifacts or extend into adjacent features. Group related corrections by root cause, not one speculative patch per symptom.
@@ -319,22 +319,25 @@ When evidence is insufficient, state the **exact undecided claim**, what current
 
 Before recommending implementation, establish the actual user outcome, source evidence, responsible owner, affected consumers, simpler alternatives, risks, acceptance criteria and STOP boundary. Distinguish observed findings from hypotheses. If a decision-changing assumption remains unverified, investigate before presenting the solution as ready. Experiments may gather evidence but are not production recommendations.
 
-Scale verification to a complete integrated outcome, consequence and uncertainty—not edit count. Under an explicit BUILD-first instruction, do not run tests or generate fixtures for partial subsystems merely because a source change was committed. Prefer existing acceptance cases when the production path is ready. Add enduring cases only for distinct, demonstrated failure families; a new standalone test runner or verifier needs a recurring consumer. Keep narrow early review for security, data integrity, permissions and irreversible mutation. Full Verify is push-triggered on `Local` by user authorization; it provides integration evidence but is not a prerequisite for independent source-level work.
+Scale verification to a complete integrated outcome, consequence and uncertainty—not edit count. Under an explicit BUILD-first instruction, do not run tests or generate fixtures for partial subsystems merely because a source change was committed. Prefer existing acceptance cases when the production path is ready. Add enduring cases only for distinct, demonstrated failure families; a new standalone test runner or verifier needs a recurring consumer. Keep narrow early review for security, data integrity, permissions and irreversible mutation. Automatic Verify and Repository Policy CI are suspended on `Local`; do not dispatch GitHub Actions without separate explicit authorization. Any unexecuted check remains NOT EXECUTED, not integration evidence.
 
 ## Minimum complete change
 
-Default order:
+**Before writing**, identify the observable result, first wrong canonical owner and affected callers, contracts, exports, configuration, tests/fixtures and trust boundaries. Apply this ladder once per proven root cause; stop at the first rung that **fully** solves the task:
 
 ```text
-No change required?
-→ delete unnecessary path?
-→ reuse current owner/path?
-→ use native/existing dependency?
-→ smallest complete addition
-→ new abstraction/system only after repeated responsibility is proven
+No change: current behavior already satisfies the goal? → report and STOP
+→ delete obsolete behavior after checking callers/compatibility?
+→ correct the first wrong canonical owner in place?
+→ reuse an established repository capability or pattern?
+→ use standard library, native platform or an installed dependency?
+→ make the smallest readable, complete addition?
+→ new abstraction only if the existing New abstraction gate is proven.
 ```
 
-Quality is not measured by code volume, abstraction count, tool count, or architectural novelty.
+Do not minimize a diff by leaving broken consumers or removing requested behavior, validation, data-loss handling, security, accessibility or meaningful checks. During unfinished BUILD, keep existing tests and batch focused acceptance at the integration boundary; check concrete critical risks earlier. For recurring failures, use the existing Harness2 comparison only when a distinct candidate and decision-changing baseline/negative-control evidence are needed; do not invoke it for routine edits or invent gains from source-only review. No new agent, runner, registry, receipt or benchmark layer is authorized by this ladder.
+
+This adapts [Ponytail's smallest-complete-change principle](https://github.com/DietrichGebert/ponytail/blob/96608e078b2d5ea607c5c3b8b5a54d1c1fba6846/skills/ponytail/SKILL.md) as an **existing IMPROVE SYSTEM decision**, not a plugin or dependency. Success is cost to a correct, accepted result—not minimum line count.
 
 ## Evidence gate
 
@@ -402,7 +405,7 @@ For future IMPROVE SYSTEM decisions:
 - **No checker proliferation.** Add/extend a detector or validation rule only for a demonstrated, material, generalizable failure that the current owner cannot resolve more simply. Do not create a new test, benchmark, receipt or coverage layer just to validate another layer. Existing proof protection stays in place; its expansion requires a specific decision it will change.
 - **Stop at useful output.** A bounded source-backed map-design explanation plus correctly classified findings and exact material unknowns is more valuable than exhaustive unrelated validations. Retain final-report admission and safety rules, but do not present inability to certify every runtime behavior as inability to understand any gameplay.
 
-For the next acceptance boundary, compare the existing selected-source Defense v1.1.5 and Fall of the Pillager L1 v1.1.0 reviews (different script styles and gameplay), then one independently inspected contrasting map when accessible. Use their actual evidence and negative controls; do not manufacture an executed TypeScript audit or promote historical QA. Fix only the first demonstrable generalized gap and reassess the human-usable outcome.
+For a future real-map acceptance boundary, use a newly supplied immutable selected artifact, independently grounded expectations and negative controls, and exact-source execution evidence when genuinely available. The earlier selected-map corpus was reset: historical map reviews may orient source investigation but cannot serve as current gameplay truth, frozen current-map expectations or executable proof. Fix only the first demonstrated generalizable gap and reassess the human-usable outcome.
 
 ## User-value gate
 

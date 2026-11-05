@@ -12,13 +12,13 @@ Improve product architecture, analyzers, Semantic IR, Knowledge, evidence/proof,
 
 ## Entry criteria and permission boundary
 
-Use when the user explicitly wants to improve **M-Lazy-Developer itself**. Read `AGENTS.md`, `GITHUB_RULES.md`, `docs/system/development-discipline.md` and the first affected owner on the pinned `Local` SHA. No original/working target mutation, new dependencies or external network source without existing approval. A map seed may expose a generalized gap but cannot be hardcoded as the fix. Benchmark has frozen expectations and must not edit implementation or expectation in the same measurement operation.
+Use when the user explicitly wants to improve **M-Lazy-Developer itself**. On a fresh chat or when `Local` HEAD changes, read `AGENTS.md` and `GITHUB_RULES.md` completely; on unchanged HEAD in the same chat, reuse those rules. Load only `docs/system/development-discipline.md#development-operating-standard`, `#minimum-complete-change`, and the affected owner/consumers; load other sections (e.g. BUILD or Harness2) only if decision-changing. No original/working target mutation, new dependencies or external network source without existing approval. A map seed may expose a generalized gap but cannot be hardcoded as the fix. Benchmark has frozen expectations and must not edit implementation or expectation in the same measurement operation.
 
 ## One development sequence
 
 1. **DEFINE:** goal, observable acceptance, first incorrect canonical owner, non-goals and source/proof ceiling.
 2. **INVESTIGATE:** read only owning implementation, consumers, current source and any relevant native Bedrock Skill or separately versioned Probe evidence.
-3. **DESIGN:** correct or reuse the existing owner; avoid a manager, router, registry, lane, standalone app, platform or micro-test system.
+3. **DESIGN:** apply the existing minimum-complete-change gate to the whole affected owner-to-consumer path; allow no change or deletion where sufficient, not a new manager, router, registry, lane, app or micro-test system.
 4. **IMPLEMENT:** complete source-to-consumer behavior in bounded macro batches. Treat `skills/bedrock/source-lock.json` as native publisher identity, `experiments/developer-practice-signals.json` as the *one* curated external REFERENCE source, and `engine/packages/orchestrator/src/workflow/resource-context.ts` as the existing selected-map reference consumer.
 5. **VERIFY:** use the existing [evidence-contrast development method](../../../docs/system/development-discipline.md#evidence-contrast-improvement-harness2-method-adapted-to-chatgpt) for recurring failures: compare a pinned baseline, a minimally distinct proposal and a negative control before composing any retained rule. Once integrated, validate representative positive, negative and end-to-end behavior; keep frozen benchmark expectations. Do not infer executable or Minecraft PASS from source review.
 6. **COMMIT & STOP:** one coherent non-force GitHub `Local` commit with Work/State/Proof/Unresolved, verify the HEAD, report exact remaining evidence, stop.

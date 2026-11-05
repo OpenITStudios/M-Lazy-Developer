@@ -84,7 +84,7 @@ a generated engine receipt. Skill routing is owned by
 
 ## Mandatory development style
 
-For every `IMPROVE SYSTEM` task, apply `docs/system/development-discipline.md#development-operating-standard` before material changes and its completion review before STOP. The IMPROVE SYSTEM skill routes all source development through that owner. When the user prioritizes unfinished architecture over testing, follow that document's **Architecture-first construction before acceptance** rule: deliver a coherent production path in macro batches, review source continuity, and defer routine tests/fixtures until integration readiness. This does not authorize a new manager, state store, local execution, CI, or unsupported PASS claim.
+For every `IMPROVE SYSTEM` task, apply `docs/system/development-discipline.md#development-operating-standard` and its existing [minimum-complete-change gate](docs/system/development-discipline.md#minimum-complete-change) before material edits; use the completion review before STOP. This is one decision inside the existing skill, not another lane or reviewer. When the user prioritizes unfinished architecture over testing, follow that document's **Architecture-first construction before acceptance** rule: deliver a coherent production path in macro batches, review source continuity, and defer routine tests/fixtures until integration readiness. This does not authorize a new manager, state store, local execution, CI, or unsupported PASS claim.
 
 ## Development contract
 
@@ -155,7 +155,7 @@ Context   → engine/packages/orchestrator/src/workflow/context-compiler.ts
 
 ## ChatGPT-GitHub Work Continuity
 
-**Project instruction bootstrap.** ChatGPT Project Instructions are a short pointer to this repository on branch `Local`: before repository work, read `AGENTS.md` and `GITHUB_RULES.md` **completely** from the current `Local` HEAD, then follow every applicable linked rule, domain router, skill, permission profile, and canonical owner for the selected task. Do not duplicate repository rules inside Project Instructions. Do not impose chat-title conventions or chat-retention requirements; conversation titles and deleted chats are not repository work-state authority.
+**Project instruction bootstrap.** ChatGPT Project Instructions are a short pointer to this repository on branch `Local`. On a fresh chat or changed `Local` HEAD, read `AGENTS.md` and `GITHUB_RULES.md` **completely** at the pinned HEAD, then follow the applicable skill, permission profile, domain router and canonical owner. On later turns in the **same chat and unchanged HEAD**, reuse already-read root rules and fetch only decision-changing owner/consumer sections; do not reload large documents or history for reassurance. This saves context, not proof: a new chat or different SHA requires fresh reads. Do not duplicate repository rules inside Project Instructions or impose chat-title/chat-retention requirements; conversations are not repository work-state authority.
 
 For a fresh repository chat or explicit cross-chat continuation, apply the **Short-prompt repository startup** and topic-based recovery rules below: fetch a fresh GitHub `Local` HEAD and relevant current owner/source, then distinguish verified decisions, `PAUSED`/`BLOCKED` work, and unresolved proof. Prior chats, sidebar titles, ChatGPT memory, and Project instructions are orientation clues, not substitutes for GitHub evidence.
 
