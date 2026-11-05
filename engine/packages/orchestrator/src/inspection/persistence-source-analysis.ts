@@ -101,6 +101,10 @@ export interface IgnoredCommitBeforeFeedbackCandidate {
   readonly calleeName: string;
   readonly callSource: SourceRef;
   readonly failedReturnSource: SourceRef;
+  /** Exact same-file return-forwarding sites, ordered outer to inner. */
+  readonly forwardingReturnSources?: readonly SourceRef[];
+  /** Names of the bounded resolved call chain, outer to fallible leaf. */
+  readonly failurePropagationPath?: readonly string[];
   /** Existing same-block case: state write after the unchecked call. */
   readonly laterWriteSource?: SourceRef;
   /** Guarded branch case: state write before the unchecked call, with
@@ -360,11 +364,20 @@ function ignoredCommitBeforeFeedback(
     visit(node);
     ts.forEachChild(node, child => walkBody(child, fn, visit));
   };
-  // Require direct false/null return AND an actual .set operation in this
-  // unique authored function. A plausible failure name or type is insufficient.
-  const fallible = new Map<string, SourceRef>();
+  // A leaf has an explicit false/null return and a source-visible write.
+  // Bounded forwarding traces those SAME-FILE facts; neither level proves a
+  // durable persistence failure or successful runtime recovery.
+  interface FailureTrace {
+    readonly failedReturnSource: SourceRef;
+    readonly forwardingReturnSources: readonly SourceRef[];
+    readonly names: readonly string[];
+  }
+  const fallible = new Map<string, FailureTrace>();
   for (const [name, fn] of unique) {
-    if (!fn.body) continue;
+    // An async call yields a Promise rather than a directly checked
+    // false/null result. Do not promote it as a synchronous failure.
+    if (!fn.body ||
+        fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
     const failed: SourceRef[] = [];
     let hasWrite = false;
     walkBody(fn.body, fn, node => {
@@ -378,7 +391,47 @@ function ignoredCommitBeforeFeedback(
           (node.expression.name.text === "set" ||
            node.expression.name.text === "setDynamicProperty")) hasWrite = true;
     });
-    if (hasWrite && failed.length > 0) fallible.set(name, failed[0]!);
+    if (hasWrite && failed.length > 0) {
+      fallible.set(name, {
+        failedReturnSource: failed[0]!,
+        forwardingReturnSources: [],
+        names: [name],
+      });
+    }
+  }
+  // No guessing through aliases, async, member dispatch, conditional/logical
+  // expressions, nested functions or unbounded chains. Snapshotting each
+  // iteration prevents declaration order from silently increasing depth.
+  for (let hop = 0; hop < 2; hop++) {
+    const earlier = new Map(fallible);
+    for (const [name, fn] of unique) {
+      if (fallible.has(name) || !fn.body || !ts.isBlock(fn.body) ||
+          fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
+      const last = fn.body.statements.at(-1);
+      if (!last || !ts.isReturnStatement(last) ||
+          !last.expression || !ts.isCallExpression(last.expression) ||
+          !ts.isIdentifier(last.expression.expression)) continue;
+      const calleeName = last.expression.expression.text;
+      const underlying = earlier.get(calleeName);
+      if (!underlying || underlying.names.includes(name)) continue;
+      let shadowed = fn.parameters.some(param =>
+        ts.isIdentifier(param.name) && param.name.text === calleeName);
+      if (fn.body.statements.some(statement =>
+          ts.isFunctionDeclaration(statement) &&
+          statement.name?.text === calleeName)) shadowed = true;
+      walkBody(fn.body, fn, node => {
+        if (ts.isVariableDeclaration(node) &&
+            ts.isIdentifier(node.name) && node.name.text === calleeName) shadowed = true;
+        if (ts.isFunctionDeclaration(node) &&
+            node.name?.text === calleeName) shadowed = true;
+      });
+      if (shadowed) continue;
+      fallible.set(name, {
+        failedReturnSource: underlying.failedReturnSource,
+        forwardingReturnSources: [site(last), ...underlying.forwardingReturnSources],
+        names: [name, ...underlying.names],
+      });
+    }
   }
   if (fallible.size === 0) return [];
   const feedbackMethods = new Set([
@@ -390,14 +443,26 @@ function ignoredCommitBeforeFeedback(
     const shadowed = new Set(fn.parameters.filter(parameter =>
       ts.isIdentifier(parameter.name)).map(parameter =>
       (parameter.name as ts.Identifier).text));
+    for (const statement of fn.body.statements) {
+      if (ts.isFunctionDeclaration(statement) && statement.name)
+        shadowed.add(statement.name.text);
+    }
     // Reject caller-local shadowing of a global function. No free-variable
     // name matching is accepted when the actual callee could be different.
     walkBody(fn.body, fn, node => {
       if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name))
         shadowed.add(node.name.text);
+      if (ts.isFunctionDeclaration(node) && node.name)
+        shadowed.add(node.name.text);
     });
     walkBody(fn.body, fn, node => {
       if (!ts.isBlock(node)) return;
+      // Catch/finally may compensate or transform the source outcome.
+      // A try-owned block does not prove a simple straight-line commit.
+      for (let parent: ts.Node | undefined = node.parent;
+           parent && parent !== fn; parent = parent.parent) {
+        if (ts.isTryStatement(parent) || ts.isCatchClause(parent)) return;
+      }
       for (const [index, statement] of node.statements.entries()) {
         if (!ts.isExpressionStatement(statement) ||
             !ts.isCallExpression(statement.expression) ||
@@ -407,17 +472,19 @@ function ignoredCommitBeforeFeedback(
         if (!failure || shadowed.has(calleeName)) continue;
         let write: SourceRef | undefined;
         let feedback: SourceRef | undefined;
+        // Source-visible adjacent siblings only. A branch, try/catch,
+        // unmodeled call or possible compensation is a deciding-proof gap:
+        // do not gather unrelated nested write/feedback as a success path.
         for (const later of node.statements.slice(index + 1)) {
-          if (ts.isReturnStatement(later) || ts.isThrowStatement(later)) break;
-          walkBody(later, fn, n => {
-            if (!ts.isCallExpression(n) ||
-                !ts.isPropertyAccessExpression(n.expression)) return;
-            const method = n.expression.name.text;
-            if (!write && (method === "set" || method === "setDynamicProperty")) {
-              write = site(n);
-            }
-            if (!feedback && feedbackMethods.has(method)) feedback = site(n);
-          });
+          if (!ts.isExpressionStatement(later) ||
+              !ts.isCallExpression(later.expression) ||
+              !ts.isPropertyAccessExpression(later.expression.expression)) break;
+          const method = later.expression.expression.name.text;
+          if (method === "set" || method === "setDynamicProperty") {
+            if (!write) write = site(later.expression);
+          } else if (feedbackMethods.has(method)) {
+            if (!feedback) feedback = site(later.expression);
+          } else break;
           if (write && feedback) break;
         }
         if (!write || !feedback) continue;
@@ -426,7 +493,11 @@ function ignoredCommitBeforeFeedback(
           callerRegion: "function:" + callerName,
           calleeName,
           callSource: site(statement.expression),
-          failedReturnSource: failure,
+          failedReturnSource: failure.failedReturnSource,
+          ...(failure.forwardingReturnSources.length === 0 ? {} : {
+            forwardingReturnSources: failure.forwardingReturnSources,
+            failurePropagationPath: failure.names,
+          }),
           laterWriteSource: write,
           laterFeedbackSource: feedback,
           proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
@@ -471,11 +542,13 @@ function ignoredCommitBeforeFeedback(
             ts.isDoStatement(later) || ts.isSwitchStatement(later)) break;
         if (!ts.isExpressionStatement(later) ||
             !ts.isCallExpression(later.expression) ||
-            !ts.isPropertyAccessExpression(later.expression.expression)) continue;
+            !ts.isPropertyAccessExpression(later.expression.expression)) break;
         if (feedbackMethods.has(later.expression.expression.name.text)) {
           feedback = site(later.expression);
-          break;
         }
+        // Unmodeled intervening effects may retry, compensate or redirect
+        // the outcome. Do not borrow later feedback from another source path.
+        break;
       }
       if (!feedback) continue;
       output.push({
@@ -483,7 +556,11 @@ function ignoredCommitBeforeFeedback(
         callerRegion: "function:" + callerName,
         calleeName,
         callSource: site(last.expression),
-        failedReturnSource: failure,
+        failedReturnSource: failure.failedReturnSource,
+        ...(failure.forwardingReturnSources.length === 0 ? {} : {
+          forwardingReturnSources: failure.forwardingReturnSources,
+          failurePropagationPath: failure.names,
+        }),
         precedingWriteSource: precedingWrite,
         laterFeedbackSource: feedback,
         proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",

@@ -134,6 +134,142 @@ describe("persistence source analysis", () => {
     }
   });
 
+  it("traces two unique same-file direct-return forwarders to an explicit failed write", () => {
+    const parse = (text: string) => parseScriptFile("flow", text, {
+      artifactId: "fixture:forwarded", relativePath: "scripts/flow.ts",
+    });
+    const observed = parse([
+      "function leafCommit() {",
+      "  if (!db.set('score', 4)) return false;",
+      "  return true;",
+      "}",
+      "function oneHop() { return leafCommit(); }",
+      "function twoHop() { return oneHop(); }",
+      "function after() {",
+      "  twoHop();",
+      "  player.sendMessage('complete');",
+      "  state.set('completed', true);",
+      "}",
+      "function branch() {",
+      "  if (ready) {",
+      "    state.set('completed', true);",
+      "    twoHop();",
+      "  }",
+      "  player.sendMessage('complete');",
+      "}",
+    ].join("\n"));
+    const found = analyzePersistenceSource([observed]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(2);
+    for (const signal of found) {
+      expect(signal).toMatchObject({
+        calleeName: "twoHop",
+        failedReturnSource: { range: { lineStart: 2 } },
+        failurePropagationPath: ["twoHop", "oneHop", "leafCommit"],
+        forwardingReturnSources: [
+          { range: { lineStart: 6 } },
+          { range: { lineStart: 5 } },
+        ],
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      });
+    }
+    expect(found.find(x => x.callerRegion === "function:after"))
+      .toMatchObject({ laterWriteSource: { range: { lineStart: 10 } } });
+    expect(found.find(x => x.callerRegion === "function:branch"))
+      .toMatchObject({ precedingWriteSource: { range: { lineStart: 14 } } });
+  });
+
+  it("abstains on shadowed, async, indirect, out-of-depth and handled failure paths", () => {
+    const leaf = [
+      "function leafCommit() {",
+      "  if (!db.set('score', 4)) return false;",
+      "  return true;",
+      "}",
+      "function oneHop() { return leafCommit(); }",
+    ];
+    const caller = "function publish() { nextHop(); player.sendMessage('complete'); state.set('completed', true); }";
+    for (const forwarding of [
+      "function nextHop(oneHop) { return oneHop(); }",
+      "function nextHop() { const oneHop = () => true; return oneHop(); }",
+      "function nextHop() { return oneHop() || true; }",
+      "function nextHop() { try { return oneHop(); } catch { return true; } }",
+      "async function nextHop() { return oneHop(); }",
+      "function nextHop() { return opaque.set('score', 4); }",
+    ]) {
+      const doc = parseScriptFile("negative", [...leaf, forwarding, caller].join("\n"), {
+        artifactId: "fixture:recovery-negative", relativePath: "scripts/recovery.ts",
+      });
+      expect(analyzePersistenceSource([doc]).ignoredCommitBeforeFeedback).toEqual([]);
+    }
+    const beyond = parseScriptFile("depth", [
+      ...leaf,
+      "function middle() { return oneHop(); }",
+      "function nextHop() { return middle(); }",
+      caller,
+    ].join("\n"), {
+      artifactId: "fixture:depth", relativePath: "scripts/depth.ts",
+    });
+    expect(analyzePersistenceSource([beyond]).ignoredCommitBeforeFeedback).toEqual([]);
+    const asyncLeaf = parseScriptFile("async-leaf", [
+      "async function leafCommit() { if (!db.set('score', 4)) return false; return true; }",
+      "function publish() { leafCommit(); player.sendMessage('complete'); state.set('complete', true); }",
+    ].join("\n"), {
+      artifactId: "fixture:async-leaf", relativePath: "scripts/async-leaf.ts",
+    });
+    expect(analyzePersistenceSource([asyncLeaf]).ignoredCommitBeforeFeedback)
+      .toEqual([]);
+    const handled = parseScriptFile("handled", [
+      ...leaf,
+      "function nextHop() { return oneHop(); }",
+      "function publish() {",
+      "  if (!nextHop()) return;",
+      "  player.sendMessage('complete');",
+      "  state.set('completed', true);",
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:handled", relativePath: "scripts/handled.ts",
+    });
+    expect(analyzePersistenceSource([handled]).ignoredCommitBeforeFeedback).toEqual([]);
+  });
+
+  it("does not borrow success feedback across unknown recovery or control flow", () => {
+    const parse = (body: readonly string[]) => parseScriptFile("recovery", [
+      "function commit() { if (!db.set('score', 4)) return false; return true; }",
+      "function publish() {", ...body, "}",
+    ].join("\n"), {
+      artifactId: "fixture:recovery", relativePath: "scripts/recovery.ts",
+    });
+    for (const rejected of [
+      ["  commit();", "  retryOrRollback();",
+       "  player.sendMessage('complete');", "  state.set('complete', true);"],
+      ["  commit();",
+       "  if (ready) { player.sendMessage('complete'); state.set('complete', true); }"],
+      ["  commit();", "  try { state.set('complete', true); } catch {}",
+       "  player.sendMessage('complete');"],
+      ["  function commit() { return true; }", "  commit();",
+       "  player.sendMessage('complete');", "  state.set('complete', true);"],
+      ["  if (ready) { state.set('complete', true); commit(); }",
+       "  reconcileState();", "  player.sendMessage('complete');"],
+      ["  if (ready) { state.set('complete', true); commit(); }",
+       "  const recovered = reconcileState();", "  player.sendMessage('complete');"],
+    ]) {
+      expect(analyzePersistenceSource([parse(rejected)])
+        .ignoredCommitBeforeFeedback).toEqual([]);
+    }
+    expect(analyzePersistenceSource([parse([
+      "  commit();", "  player.sendMessage('complete');",
+      "  state.set('complete', true);",
+    ])]).ignoredCommitBeforeFeedback).toHaveLength(1);
+    expect(analyzePersistenceSource([parse([
+      "  try { commit(); player.sendMessage('complete');",
+      "    state.set('complete', true); }",
+      "  catch { state.set('recovered', true); }",
+    ])]).ignoredCommitBeforeFeedback).toEqual([]);
+    expect(analyzePersistenceSource([parse([
+      "  if (ready) { state.set('complete', true); commit(); }",
+      "  player.sendMessage('complete');",
+    ])]).ignoredCommitBeforeFeedback).toHaveLength(1);
+  });
+
   it("summarizes growth without promoting it to a defect", () => {
     const script = parseScriptFile(
       "main",

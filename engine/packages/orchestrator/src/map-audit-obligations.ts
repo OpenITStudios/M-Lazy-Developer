@@ -1210,14 +1210,20 @@ export function deriveAuditObligations(input: {
         " and following feedback-looking call at "
       : "a later state write at " + writeWhere +
         " and feedback-looking call at ";
+    const forwarding = candidate.forwardingReturnSources?.map(source =>
+      source.relativePath + ":" + (source.range?.lineStart ?? "unknown")) ?? [];
+    const failureClaim = candidate.failurePropagationPath?.length
+      ? "() via a bounded unique same-file return chain (" +
+        candidate.failurePropagationPath.join(" -> ") +
+        ") that reaches an explicit false/null return at "
+      : "() even though its body has an explicit false/null return at ";
     items.push(normalize({
       id: "unchecked-commit-before-feedback:" + encodeURIComponent(where),
       source: "detection-gap",
       stage: "EVALUATE",
       title: "Verify discarded fallible commit before gameplay success",
       reason: "Selected source " + where + " ignores " + candidate.calleeName +
-        "() even though its body has an explicit false/null return at " +
-        failureWhere + "; " + writeSequence + feedbackWhere +
+        failureClaim + failureWhere + "; " + writeSequence + feedbackWhere +
         " may publish success. This is a source-only candidate, not proof that the failure is reachable in play.",
       missingProof: "Determine the failing commit's reachability, the intended postcondition, " +
         "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state.",
@@ -1225,7 +1231,7 @@ export function deriveAuditObligations(input: {
         "with source-backed persistence failure; compare final state and user feedback, " +
         "and check whether retries repair the discrepancy.",
       validationGroupKey: "source:unchecked-commit:" + where,
-      subjectIds: [where, failureWhere, writeWhere, feedbackWhere],
+      subjectIds: [where, ...forwarding, failureWhere, writeWhere, feedbackWhere],
       componentIds: [],
       evidenceIds: [],
     }));

@@ -126,6 +126,29 @@ describe("audit obligations versus gameplay findings", () => {
     });
     expect(prior?.subjectIds).toContain("scripts/transactions.ts:8");
     expect(prior?.subjectIds).toContain("scripts/transactions.ts:11");
+    const forwarded = deriveAuditObligations({
+      ...input,
+      ignoredCommitBeforeFeedback: [{
+        scriptId: "test", callerRegion: "function:publish",
+        calleeName: "twoHop",
+        callSource: src(12),
+        failedReturnSource: src(2),
+        forwardingReturnSources: [src(6), src(5)],
+        failurePropagationPath: ["twoHop", "oneHop", "leafCommit"],
+        laterWriteSource: src(14),
+        laterFeedbackSource: src(13),
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      }],
+    });
+    const forwardedProof = forwarded.find(row =>
+      row.id.startsWith("unchecked-commit-before-feedback:"));
+    expect(forwardedProof).toMatchObject({
+      source: "detection-gap", stage: "EVALUATE",
+      reason: expect.stringContaining(
+        "unique same-file return chain (twoHop -> oneHop -> leafCommit)"),
+    });
+    expect(forwardedProof?.subjectIds).toContain("scripts/transactions.ts:6");
+    expect(forwardedProof?.subjectIds).toContain("scripts/transactions.ts:5");
 
   });
 
