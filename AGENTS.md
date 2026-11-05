@@ -2,6 +2,8 @@
 
 Root agent policy owns repository-wide routing and invariants only. Detailed domain procedures belong to the selected skill or canonical documentation owner.
 
+**Portable engineering/UI method (v0.1):** [Universal Engineering Harness](https://github.com/OpenITStudios/M-LazyDesigner/blob/e889e9ae26700790d28db9c0df6f1f4f91712055/docs/04-system/universal-engineering-harness.md) considers **Ponytail, Harness², DeepSeek Harness, REA and UI UX Pro Max** for matching system/UI tasks. Load the relevant method only; do not install/run third-party harnesses by default. The existing **two project skills**, ChatGPT map-testing workflow, map mutation permissions, actual proof and `Local` branch remain authoritative. No new work lane or GUI is implied.
+
 ## Priority
 
 Current user intent has priority over workflow convenience. Repository safety, source authority, proof boundaries, and actual execution capability remain binding.
