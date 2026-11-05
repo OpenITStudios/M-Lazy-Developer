@@ -329,6 +329,42 @@ function authorityPathsByRegion(
   return output;
 }
 
+/** Reuse existing exact local calls, not a generic finish-name rule.
+ * A finish() shared by a recognized terminal owner and another distinct
+ * caller is a terminal investigation candidate, never an executed outcome.
+ */
+function sourceLinkedFinishTargets(script: ParsedScriptFile): readonly string[] {
+  const targets = new Map<string, { declaration: string; callers: Set<string>; ambiguous: boolean }>();
+  for (const call of script.localFunctionCalls) {
+    if (!/^function:[^.@]+\.finish@[1-9]\d*:[1-9]\d*$/.test(call.targetRegion) ||
+        call.targetSource?.artifactId !== script.source.artifactId ||
+        call.targetSource.relativePath !== script.source.relativePath ||
+        call.source.artifactId !== script.source.artifactId ||
+        call.source.relativePath !== script.source.relativePath ||
+        call.targetSource.range?.lineStart === undefined ||
+        call.targetSource.range.columnStart === undefined) continue;
+    const declaration = [
+      call.targetSource.relativePath, call.targetSource.range.lineStart,
+      call.targetSource.range.columnStart,
+      call.targetSource.range.lineEnd ?? "", call.targetSource.range.columnEnd ?? "",
+    ].join(":");
+    const known = targets.get(call.targetRegion);
+    if (known) {
+      known.ambiguous ||= known.declaration !== declaration;
+      known.callers.add(call.callerRegion);
+    } else {
+      targets.set(call.targetRegion, {
+        declaration, callers: new Set([call.callerRegion]), ambiguous: false,
+      });
+    }
+  }
+  return [...targets].filter(([, item]) =>
+    !item.ambiguous && item.callers.size >= 2 &&
+    [...item.callers].some(isArenaTerminalRegionCandidate) &&
+    [...item.callers].some(region => !isArenaTerminalRegionCandidate(region))
+  ).map(([region]) => region).sort();
+}
+
 function terminalRegions(
   script: ParsedScriptFile,
 ): Map<string, Set<CandidateBasis>> {
@@ -420,6 +456,9 @@ function terminalRegions(
     }
   }
 
+  for (const region of sourceLinkedFinishTargets(script)) {
+    add(region, "terminal-name");
+  }
   return output;
 }
 
@@ -803,6 +842,9 @@ function assessProject(
           "terminal-name",
         );
       }
+    }
+    for (const region of sourceLinkedFinishTargets(script)) {
+      addCandidate(script, region, "terminal-name");
     }
   }
 

@@ -41,6 +41,51 @@ describe("arena lifecycle convergence", () => {
     expect(end?.status).toBe("unresolved");
   });
 
+  it("recognizes source-owned finish shared by a disconnect and tick", () => {
+    const script = parseScriptFile("round", [
+      'import { world, system } from "@minecraft/server";',
+      "class Match {",
+      "  setup() {",
+      "    world.afterEvents.playerLeave.subscribe(({ playerId: id }) => this.disconnect(id));",
+      "    system.runInterval(() => this.tick(), 20);",
+      "  }",
+      "  disconnect(id) { this.finish('blue'); }",
+      "  tick() { if (timeUp) this.finish('draw'); }",
+      "  finish(result) { this.record(result); }",
+      "  record(result) { return result; }",
+      "}",
+    ].join("\n"), { artifactId: "fixture", relativePath: "scripts/round.js" });
+    const result = analyzeArenaLifecycleConvergence([script]);
+    const finish = result.assessments.filter(item =>
+      /^function:Match\.finish@\d+:\d+$/.test(item.terminalRegion));
+    expect(finish).toHaveLength(1);
+    expect(finish[0]?.status).toBe("unresolved");
+    const path = result.terminalEntryPaths?.find(item =>
+      item.terminalRegion === finish[0]?.terminalRegion);
+    expect(path?.ingresses.some(item =>
+      item.id === "world.afterEvents.playerLeave" && item.kind === "event")).toBe(true);
+    expect(result.provenTerminalRaces).toBe(0);
+  });
+
+  it("does not promote a generic finish helper without a source-linked terminal and second owner", () => {
+    const cases = [
+      ["class UI { tick() { this.finish(); } paint() { this.finish(); } finish() {} }",
+        "function:UI.finish@"],
+      ["class Game { disconnect() { this.finish(); } finish() {} }",
+        "function:Game.finish@"],
+      ["function finish() {} function disconnect() { finish(); } function tick() { finish(); }",
+        "function:finish"],
+    ];
+    for (const [text, region] of cases) {
+      const script = parseScriptFile("controls", text, {
+        artifactId: "fixture", relativePath: "scripts/controls.js",
+      });
+      const assessed = analyzeArenaLifecycleConvergence([script]);
+      expect(assessed.assessments.some(item =>
+        item.terminalRegion.startsWith(region))).toBe(false);
+    }
+  });
+
   it("retains a single developer script-event entry without inventing a terminal race", () => {
     const sourceText = [
       'import { system } from "@minecraft/server";',
