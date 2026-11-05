@@ -107,6 +107,26 @@ describe("audit obligations versus gameplay findings", () => {
     expect(deriveAuditObligations({ ...input, ignoredCommitBeforeFeedback: [] })
       .some(row => row.id.startsWith("unchecked-commit-before-feedback:")))
       .toBe(false);
+    const preceding = deriveAuditObligations({
+      ...input,
+      ignoredCommitBeforeFeedback: [{
+        scriptId: "test", callerRegion: "function:finishAscent",
+        calleeName: "completeGameplayObjective",
+        callSource: src(9), failedReturnSource: src(2),
+        precedingWriteSource: src(8), laterFeedbackSource: src(11),
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      }],
+    });
+    const prior = preceding.find(row =>
+      row.id.startsWith("unchecked-commit-before-feedback:"));
+    expect(prior).toMatchObject({
+      source: "detection-gap", stage: "EVALUATE",
+      reason: expect.stringContaining("preceding branch-local state write"),
+      missingProof: expect.stringContaining("rollback"),
+    });
+    expect(prior?.subjectIds).toContain("scripts/transactions.ts:8");
+    expect(prior?.subjectIds).toContain("scripts/transactions.ts:11");
+
   });
 
   it("derives map-specific unknown proof requirements from reviewed source facts", () => {

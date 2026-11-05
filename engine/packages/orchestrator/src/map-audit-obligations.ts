@@ -1187,8 +1187,9 @@ export function deriveAuditObligations(input: {
     ),
   ];
 
-  // Source-only, bounded A28 investigation: the caller discarded an
-  // explicitly fallible local result before later write + feedback sites.
+  // Source-only, bounded A28 investigation: a discarded fallible result
+  // may precede a write/feedback, or follow a branch-local state write
+  // before unconditional feedback in the same authored caller.
   // Do NOT convert this into an admitted BUG without reachability, rollback
   // and counterexample proof. The ordinary canonical ledger/handoff owns it.
   for (const candidate of input.ignoredCommitBeforeFeedback ?? []) {
@@ -1198,10 +1199,17 @@ export function deriveAuditObligations(input: {
       (call.range?.columnStart ?? "unknown");
     const failureWhere = candidate.failedReturnSource.relativePath + ":" +
       (candidate.failedReturnSource.range?.lineStart ?? "unknown");
-    const writeWhere = candidate.laterWriteSource.relativePath + ":" +
-      (candidate.laterWriteSource.range?.lineStart ?? "unknown");
+    const writeSite = candidate.laterWriteSource ?? candidate.precedingWriteSource;
+    if (!writeSite) continue;
+    const writeWhere = writeSite.relativePath + ":" +
+      (writeSite.range?.lineStart ?? "unknown");
     const feedbackWhere = candidate.laterFeedbackSource.relativePath + ":" +
       (candidate.laterFeedbackSource.range?.lineStart ?? "unknown");
+    const writeSequence = candidate.precedingWriteSource && !candidate.laterWriteSource
+      ? "a preceding branch-local state write at " + writeWhere +
+        " and following feedback-looking call at "
+      : "a later state write at " + writeWhere +
+        " and feedback-looking call at ";
     items.push(normalize({
       id: "unchecked-commit-before-feedback:" + encodeURIComponent(where),
       source: "detection-gap",
@@ -1209,8 +1217,7 @@ export function deriveAuditObligations(input: {
       title: "Verify discarded fallible commit before gameplay success",
       reason: "Selected source " + where + " ignores " + candidate.calleeName +
         "() even though its body has an explicit false/null return at " +
-        failureWhere + "; a later state write at " + writeWhere +
-        " and feedback-looking call at " + feedbackWhere +
+        failureWhere + "; " + writeSequence + feedbackWhere +
         " may publish success. This is a source-only candidate, not proof that the failure is reachable in play.",
       missingProof: "Determine the failing commit's reachability, the intended postcondition, " +
         "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state.",

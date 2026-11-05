@@ -92,16 +92,20 @@ export interface PersistenceResultAuditRecordAssessment {
     readonly string[];
 }
 
-/** Source candidate only: an explicitly failing local commit result is
- * discarded before a later source write and user-feedback-looking call.
- * Names and lexical order are NOT runtime execution or gameplay proof. */
+/** Source candidate only: an explicitly fallible local commit result is
+ * discarded with a nearby state write (before or after the call) and a later
+ * feedback-looking call. Lexical relations are NOT gameplay or BUG proof. */
 export interface IgnoredCommitBeforeFeedbackCandidate {
   readonly scriptId: string;
   readonly callerRegion: string;
   readonly calleeName: string;
   readonly callSource: SourceRef;
   readonly failedReturnSource: SourceRef;
-  readonly laterWriteSource: SourceRef;
+  /** Existing same-block case: state write after the unchecked call. */
+  readonly laterWriteSource?: SourceRef;
+  /** Guarded branch case: state write before the unchecked call, with
+   * subsequent feedback in the enclosing block. Never gameplay proof. */
+  readonly precedingWriteSource?: SourceRef;
   readonly laterFeedbackSource: SourceRef;
   readonly proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG";
 }
@@ -429,6 +433,62 @@ function ignoredCommitBeforeFeedback(
         });
       }
     });
+    // A distinct path shape can discard a fallible commit AFTER mutating
+    // state, then publish feedback outside the enclosing if block.
+    // Keep this conservative: the call must be a bare final statement in a
+    // direct, single-arm block, preceded by a direct state write. Feedback
+    // must be a straight-line sibling (not a possibly unrelated branch).
+    // Example: if (ready) { state.set(...); commit(); } ui.setActionBar(...).
+    for (const [index, statement] of fn.body.statements.entries()) {
+      if (!ts.isIfStatement(statement) || statement.elseStatement ||
+          !ts.isBlock(statement.thenStatement)) continue;
+      const branch = statement.thenStatement.statements;
+      const last = branch.at(-1);
+      if (!last || !ts.isExpressionStatement(last) ||
+          !ts.isCallExpression(last.expression) ||
+          !ts.isIdentifier(last.expression.expression)) continue;
+      const calleeName = last.expression.expression.text;
+      const failure = fallible.get(calleeName);
+      if (!failure || shadowed.has(calleeName)) continue;
+      let precedingWrite: SourceRef | undefined;
+      for (const prior of branch.slice(0, -1)) {
+        if (!ts.isExpressionStatement(prior) ||
+            !ts.isCallExpression(prior.expression) ||
+            !ts.isPropertyAccessExpression(prior.expression.expression)) continue;
+        if (prior.expression.expression.name.text === "set" ||
+            prior.expression.expression.name.text === "setDynamicProperty") {
+          precedingWrite = site(prior.expression);
+        }
+      }
+      if (!precedingWrite) continue;
+      let feedback: SourceRef | undefined;
+      for (const later of fn.body.statements.slice(index + 1)) {
+        // An intervening branch/exit makes reachability uncertain; abstain.
+        if (ts.isReturnStatement(later) || ts.isThrowStatement(later) ||
+            ts.isIfStatement(later) || ts.isTryStatement(later) ||
+            ts.isForStatement(later) || ts.isForOfStatement(later) ||
+            ts.isForInStatement(later) || ts.isWhileStatement(later) ||
+            ts.isDoStatement(later) || ts.isSwitchStatement(later)) break;
+        if (!ts.isExpressionStatement(later) ||
+            !ts.isCallExpression(later.expression) ||
+            !ts.isPropertyAccessExpression(later.expression.expression)) continue;
+        if (feedbackMethods.has(later.expression.expression.name.text)) {
+          feedback = site(later.expression);
+          break;
+        }
+      }
+      if (!feedback) continue;
+      output.push({
+        scriptId: script.identifier,
+        callerRegion: "function:" + callerName,
+        calleeName,
+        callSource: site(last.expression),
+        failedReturnSource: failure,
+        precedingWriteSource: precedingWrite,
+        laterFeedbackSource: feedback,
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      });
+    }
   }
   return output.sort((a, b) =>
     a.callSource.relativePath.localeCompare(b.callSource.relativePath) ||

@@ -53,6 +53,87 @@ describe("persistence source analysis", () => {
     }
   });
 
+  it("identifies branch-local state commit before ignored failure and sibling success feedback", () => {
+    const source = (body: readonly string[], signature = "finishAscent(player, ready)") =>
+      parseScriptFile("transaction", [
+        "function completeGameplayObjective() {",
+        "  if (!sessions.set('score', 250)) return false;",
+        "  return true;",
+        "}",
+        "function " + signature + " {",
+        ...body,
+        "}",
+      ].join("\n"), {
+        artifactId: "fixture:aftershock-pattern",
+        relativePath: "scripts/ascent.js",
+      });
+    const candidate = source([
+      "  if (ready) {",
+      "    const stopped = stopTimer();",
+      "    runtimeDb.set('state', 'ascent_complete_waiting');",
+      "    completeGameplayObjective();",
+      "  }",
+      "  player.onScreenDisplay.setActionBar('Ascent Complete');",
+      "  playCompleteCue(player);",
+    ]);
+    const findings = analyzePersistenceSource([candidate]).ignoredCommitBeforeFeedback;
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      callerRegion: "function:finishAscent",
+      calleeName: "completeGameplayObjective",
+      callSource: { range: { lineStart: 9 } },
+      failedReturnSource: { range: { lineStart: 2 } },
+      precedingWriteSource: { range: { lineStart: 8 } },
+      laterFeedbackSource: { range: { lineStart: 11 } },
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+    expect(findings[0].laterWriteSource).toBeUndefined();
+    // Control cases: guarded result, missing state write, unproven feedback
+    // reachability, and ambiguous local identity must not be promoted.
+    const rejected: { body: string[]; signature?: string }[] = [
+      { body: [
+        "  if (ready) {",
+        "    runtimeDb.set('state', 'complete');",
+        "    if (!completeGameplayObjective()) return;",
+        "  }",
+        "  player.onScreenDisplay.setActionBar('Ascent Complete');",
+      ] },
+      { body: [
+        "  if (ready) {",
+        "    completeGameplayObjective();",
+        "  }",
+        "  player.onScreenDisplay.setActionBar('Ascent Complete');",
+      ] },
+      { body: [
+        "  if (ready) {",
+        "    runtimeDb.set('state', 'complete');",
+        "    completeGameplayObjective();",
+        "  }",
+        "  if (needsReconciliation()) return;",
+        "  player.onScreenDisplay.setActionBar('Ascent Complete');",
+      ] },
+      { body: [
+        "  if (ready) {",
+        "    runtimeDb.set('state', 'complete');",
+        "    completeGameplayObjective();",
+        "  }",
+        "  if (ready) player.onScreenDisplay.setActionBar('Ascent Complete');",
+      ] },
+      { body: [
+        "  if (ready) {",
+        "    runtimeDb.set('state', 'complete');",
+        "    completeGameplayObjective();",
+        "  }",
+        "  player.onScreenDisplay.setActionBar('Ascent Complete');",
+      ], signature: "finishAscent(player, ready, completeGameplayObjective)" },
+    ];
+    for (const { body, signature } of rejected) {
+      const map = source(body, signature);
+      expect(analyzePersistenceSource([map]).ignoredCommitBeforeFeedback)
+        .toEqual([]);
+    }
+  });
+
   it("summarizes growth without promoting it to a defect", () => {
     const script = parseScriptFile(
       "main",
