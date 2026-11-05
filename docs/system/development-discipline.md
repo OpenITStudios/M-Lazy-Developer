@@ -153,7 +153,12 @@ proves only source identity, not the substantive one-component harness diff,
 operator independence or causal effect; those still require separate review.
 At least two independent selected-artifact SHA-256 identities are needed.
 Each pair must use byte-identical independently frozen claims, distinct
-frozen canonical source observations, and positive + negative controls.
+frozen canonical source observations, and positive + negative controls. A canonical CLI receipt's
+`auditRevision` MUST exactly match the revision in its observed JSON;
+freezing and the scorer both reject mismatched revisions. For claimed
+source improvements, changing only `auditRevision` (metadata) cannot
+establish a distinct material audit observation, even if a reviewer
+relabels claims. Exact report-byte digests remain independently checked.
 The existing per-claim full-map scorer validates both outcomes first;
 no metrics-only reduced-fixture result can be promoted to map accuracy.
 Regression of any negative control, false positive, positive miss, or

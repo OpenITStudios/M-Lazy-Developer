@@ -54,6 +54,7 @@ function fixture() {
     observed: {
       schemaVersion: 2, artifactId: "selected:map",
       artifactFingerprint: SHA,
+      auditRevision: "a".repeat(64),
       auditTarget: {
         edition: "bedrock", minecraftVersion: "1.26.0",
         source: "selected-audit-runtime-target-not-live-observation",
@@ -263,6 +264,27 @@ test("same observation cannot be regraded to claim harness improvement", () => {
   assert.match(done.stderr, /distinct frozen source observations/);
 });
 
+test("revision-only audit changes cannot count as independent source improvement", () => {
+  const a = outcomePair("revision-only-a", "e".repeat(64));
+  const b = outcomePair("revision-only-b", "f".repeat(64));
+  const done = runComparison([a, b], pairs => {
+    for (const p of pairs) {
+      // Keep source evidence and all gameplay decisions byte-identical,
+      // vary ONLY the canonical audit revision between the two reports.
+      p.baseline.frozen.observed =
+        JSON.parse(JSON.stringify(p.candidate.frozen.observed));
+      p.baseline.frozen.observed.auditRevision = "d".repeat(64);
+      const receipt = p.baseline.frozen.execution.canonicalAuditReceipt;
+      receipt.auditRevision = "d".repeat(64);
+      receipt.outputSha256 = createHash("sha256")
+        .update(JSON.stringify(p.baseline.frozen.observed, null, 2) + "\n")
+        .digest("hex");
+    }
+  });
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /distinct material audit observations/);
+});
+
 test("changed frozen expectation cannot masquerade as paired improvement", () => {
   const a = outcomePair("source-case-g", "2".repeat(64));
   const b = outcomePair("source-case-h", "3".repeat(64));
@@ -438,6 +460,17 @@ test("matched source outcomes reject missing or same-source canonical CLI receip
   assert.match(same.stderr, /distinct, internally bound/);
 });
 
+test("paired scorer rejects mismatched report and receipt audit revisions", () => {
+  const a = outcomePair("revision-receipt-a", "6".repeat(64));
+  const b = outcomePair("revision-receipt-b", "7".repeat(64));
+  const done = runComparison([a, b], pairs => {
+    pairs[1].candidate.frozen.execution.canonicalAuditReceipt.auditRevision =
+      "f".repeat(64);
+  });
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /canonical audit invocation receipts/);
+});
+
 test("freeze accepts output-bound CLI receipt without requiring a Git checkout", () => {
   const root = mkdtempSync(join(tmpdir(), "m-bedrock-receipt-freeze-"));
   try {
@@ -451,6 +484,7 @@ test("freeze accepts output-bound CLI receipt without requiring a Git checkout",
     const audit = {
       schemaVersion: 2, artifactId: "selected:synthetic-map",
       artifactFingerprint: artifactSha,
+      auditRevision: "c".repeat(64),
       evidenceScope: { mode: "selected-map-version-only",
         archiveSourcesUsed: false },
       gameplayFlowBasis: "AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY",
@@ -506,6 +540,12 @@ test("freeze accepts output-bound CLI receipt without requiring a Git checkout",
     assert.notEqual(overwriteAudit.status, 0);
     assert.match(overwriteAudit.stderr, /Frozen output cannot overwrite/);
     assert.deepEqual(readFileSync(report), auditBytes);
+    receipt.auditRevision = "d".repeat(64);
+    writeFileSync(receiptPath, JSON.stringify(receipt));
+    const wrongRevision = run();
+    assert.notEqual(wrongRevision.status, 0);
+    assert.match(wrongRevision.stderr, /Canonical CLI receipt fails/);
+    receipt.auditRevision = audit.auditRevision;
     receipt.outputSha256 = "0".repeat(64);
     writeFileSync(receiptPath, JSON.stringify(receipt));
     const invalid = run();

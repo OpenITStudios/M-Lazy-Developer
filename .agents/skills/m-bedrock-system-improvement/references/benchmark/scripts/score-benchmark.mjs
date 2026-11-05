@@ -322,6 +322,9 @@ function isBoundCanonicalAuditReceipt(frozen, scored) {
     execution.gitCommit === receipt.sourceCommit &&
     sha64(receipt.receiptSha256) &&
     sha64(receipt.auditRevision) &&
+    // The canonical CLI reports the same decision revision in BOTH JSON and
+    // receipt. A well-shaped but unrelated revision is not execution proof.
+    receipt.auditRevision === report?.auditRevision &&
     sha64(receipt.outputSha256) &&
     // Canonical CLI output is JSON.stringify(MapAuditOutputV2,null,2)+"\\n".
     // Recompute from the frozen JSON; metadata alone is not a content hash.
@@ -423,12 +426,19 @@ function compareFrozenSourceOutcomes(input) {
         "Cross-case source-variant mismatch: every pair must use the exact manifest-pinned baseline and candidate commits.",
       );
     }
-    const baseObservedHash = digest(JSON.stringify(frozenBase.observed));
-    const candidateObservedHash = digest(JSON.stringify(frozenCandidate.observed));
+    // A changed auditRevision is metadata, not improved source detection.
+    // Compare material canonical audit output independently of that identifier.
+    // Keep raw report hashes validated against their respective CLI receipts.
+    const materialAuditDigest = report => {
+      const { auditRevision: _revision, ...material } = report;
+      return digest(JSON.stringify(material));
+    };
+    const baseObservedHash = materialAuditDigest(frozenBase.observed);
+    const candidateObservedHash = materialAuditDigest(frozenCandidate.observed);
     if (baseObservedHash === candidateObservedHash ||
         usedObservationDigests.has(baseObservedHash) ||
         usedObservationDigests.has(candidateObservedHash)) {
-      throw new Error("Baseline and candidate require distinct frozen source observations, not regraded identical outputs.");
+      throw new Error("Baseline and candidate require distinct material audit observations; revision-only differences or regraded identical output are not proof of a source improvement.");
     }
     usedObservationDigests.add(baseObservedHash);
     usedObservationDigests.add(candidateObservedHash);

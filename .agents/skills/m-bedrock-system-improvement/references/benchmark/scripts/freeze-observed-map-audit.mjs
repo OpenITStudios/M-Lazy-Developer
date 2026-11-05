@@ -74,6 +74,7 @@ if (receipt !== undefined) {
       receipt.canonicalOutput !== "map-audit-output-v2-json" ||
       !/^[a-f0-9]{40}$/.test(receipt.sourceCommit ?? "") ||
       !/^[a-f0-9]{64}$/.test(receipt.auditRevision ?? "") ||
+      receipt.auditRevision !== audit.auditRevision ||
       receipt.selectedArtifactSha256 !== sha256 ||
       receipt.artifactId !== audit.artifactId ||
       receipt.auditStatus !== audit.control.status ||
