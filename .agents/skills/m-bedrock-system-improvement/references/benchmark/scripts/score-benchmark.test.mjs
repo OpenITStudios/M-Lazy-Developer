@@ -469,6 +469,8 @@ test("freeze accepts output-bound CLI receipt without requiring a Git checkout",
       artifactId: audit.artifactId,
       auditRevision: "c".repeat(64),
       outputSha256: createHash("sha256").update(auditBytes).digest("hex"),
+      canonicalReportFile: "audit.json",
+      captureMode: "EXCLUSIVE_SAME_INVOCATION_SCRATCH_JSON",
       auditStatus: "BLOCKED", exitCode: 2,
       proofBoundary:
         "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION",
@@ -485,6 +487,25 @@ test("freeze accepts output-bound CLI receipt without requiring a Git checkout",
       receipt.outputSha256);
     assert.match(frozen.execution.canonicalAuditReceipt.receiptSha256,
       /^[a-f0-9]{64}$/);
+    assert.equal(frozen.execution.canonicalAuditReceipt.canonicalReportFile,
+      receipt.canonicalReportFile);
+    const originalFreeze = readFileSync(frozenPath);
+    const repeated = run();
+    assert.notEqual(repeated.status, 0);
+    assert.match(repeated.stderr, /EEXIST/);
+    assert.deepEqual(readFileSync(frozenPath), originalFreeze);
+    const alternateReport = join(root, "reassembled-audit.json");
+    writeFileSync(alternateReport, auditBytes);
+    const swapped = spawnSync(process.execPath,
+      [freezer, artifact, alternateReport, join(root, "alternate-frozen.json"), receiptPath],
+      { encoding: "utf8" });
+    assert.notEqual(swapped.status, 0);
+    assert.match(swapped.stderr, /Captured canonical report must match/);
+    const overwriteAudit = spawnSync(process.execPath,
+      [freezer, artifact, report, report, receiptPath], { encoding: "utf8" });
+    assert.notEqual(overwriteAudit.status, 0);
+    assert.match(overwriteAudit.stderr, /Frozen output cannot overwrite/);
+    assert.deepEqual(readFileSync(report), auditBytes);
     receipt.outputSha256 = "0".repeat(64);
     writeFileSync(receiptPath, JSON.stringify(receipt));
     const invalid = run();

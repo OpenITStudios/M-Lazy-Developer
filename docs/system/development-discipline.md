@@ -183,10 +183,22 @@ exit code and canonical output byte SHA-256. The existing portable-source
 manifest is checked before loading or invoking the engine; a freshly
 invented JSON shape alone cannot produce this CLI-side record.
 
+The optional `--execution-output <new-canonical-json>` used with
+`--execution-receipt <new-receipt-json>` captures both outputs in the SAME
+CLI invocation as distinct, exclusively-created files in the same canonical
+scratch directory outside the verified portable source tree. The CLI still
+emits unchanged canonical JSON on stdout and preserves BLOCKED exit 2.
+The receipt records the sibling canonical JSON filename and output hash;
+a write failure leaves no admissible matched receipt/report pair. Do not
+interpret a partially written scratch output or an operator's redirected
+stdout as a successful verified probe.
+
 Next call the EXISTING `freeze-observed-map-audit.mjs` with
 `<artifact.mcworld> <canonical-stdout.json> <frozen-output.json>
 <cli-execution-receipt.json>`. The freezer checks actual selected archive
-bytes, raw output SHA-256 and receipt identity, and uses the receipt's
+bytes, raw output SHA-256 and receipt identity, including the captured
+sibling report when present. It creates only a NEW scratch file outside the verified source tree (no
+overwrites of a map, canonical report, receipt or earlier freeze) and uses the receipt's
 verified source commit instead of `git rev-parse HEAD` (portable snapshots
 have no `.git`). The existing `score-benchmark.mjs --compare` now
 requires a bound receipt in BOTH frozen observations, different source

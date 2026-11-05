@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, realpath, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { createGzip } from "node:zlib";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -42,6 +42,7 @@ async function main(): Promise<void> {
   let batchOffsetSupplied = false;
   let responsesPath: string | undefined;
   let executionReceiptPath: string | undefined;
+  let executionOutputPath: string | undefined;
   let handoffSavePath: string | undefined;
   let handoffReadPath: string | undefined;
   let handoffSnapshotSha256: string | undefined;
@@ -90,6 +91,7 @@ async function main(): Promise<void> {
         argument === "--expected-source-sha" ||
         argument === "--responses" ||
         argument === "--execution-receipt" ||
+        argument === "--execution-output" ||
         argument === "--handoff-save" ||
         argument === "--handoff-read" ||
         argument === "--handoff-snapshot-sha256" ||
@@ -119,6 +121,11 @@ async function main(): Promise<void> {
           throw new Error("--execution-receipt may only be supplied once");
         }
         executionReceiptPath = value;
+      } else if (argument === "--execution-output") {
+        if (executionOutputPath !== undefined) {
+          throw new Error("--execution-output may only be supplied once");
+        }
+        executionOutputPath = value;
       } else if (argument === "--handoff-save") {
         if (handoffSavePath !== undefined) throw new Error("--handoff-save may only be supplied once");
         handoffSavePath = value;
@@ -204,6 +211,9 @@ async function main(): Promise<void> {
       "no responses, snapshots, alternate views or compression.",
     );
   }
+  if (executionOutputPath !== undefined && executionReceiptPath === undefined) {
+    throw new Error("--execution-output requires --execution-receipt for the same fresh audit.");
+  }
   // Verify all packaged source bytes before importing the engine, loaders,
   // CLI target parser or renderer. A mutated transport must fail closed.
   await verifyPortableSource(expectedSourceCommit);
@@ -243,7 +253,7 @@ async function main(): Promise<void> {
     throw new Error("Execution receipt requires exactly one selected map input.");
   }
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-batch-offset N] [--handoff-save <scratch.json>] [--responses model.json] [--execution-receipt <new-scratch.json>] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-batch-offset N] [--handoff-save <scratch.json>] [--responses model.json] [--execution-receipt <new-scratch.json> --execution-output <new-canonical-json>] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -254,6 +264,34 @@ async function main(): Promise<void> {
     throw new Error(
       "Production audit cannot accept external contract source roots.",
     );
+  }
+
+  // One auditable invocation can capture its exact JSON and receipt as two
+  // new sibling scratch files. Canonicalizing the existing directory prevents
+  // a symlinked "outside" path from writing back inside the verified source.
+  const probeFiles = executionReceiptPath === undefined ? undefined : {
+    receipt: resolve(executionReceiptPath),
+    ...(executionOutputPath === undefined ? {} : { output: resolve(executionOutputPath) }),
+  };
+  if (probeFiles !== undefined) {
+    const sourceRoot = await realpath(process.cwd());
+    const scratchRoot = await realpath(dirname(probeFiles.receipt));
+    const withinSource = relative(sourceRoot, scratchRoot);
+    if (withinSource === "" ||
+        (withinSource !== ".." &&
+         !withinSource.startsWith(".." + sep) &&
+         !isAbsolute(withinSource))) {
+      throw new Error("Execution probe scratch files must be outside the verified source tree.");
+    }
+    if (probeFiles.receipt === resolve(input)) {
+      throw new Error("Execution receipt cannot overwrite the selected map.");
+    }
+    if (probeFiles.output !== undefined &&
+        (probeFiles.output === probeFiles.receipt ||
+         probeFiles.output === resolve(input) ||
+         await realpath(dirname(probeFiles.output)) !== scratchRoot)) {
+      throw new Error("Execution output and receipt require distinct new files in the same outside-source scratch directory.");
+    }
   }
 
   const [orchestrator, knowledgeLoader] = await Promise.all([
@@ -367,20 +405,7 @@ async function main(): Promise<void> {
           intent: resolvedAudit.inspection.gameplayIntent.model,
         })
       : JSON.stringify(resolvedAudit.mapAuditReport, null, compact ? undefined : 2) + "\n";
-  if (executionReceiptPath !== undefined) {
-    const receiptFile = resolve(executionReceiptPath);
-    if (receiptFile === resolve(input)) {
-      throw new Error("Execution receipt cannot overwrite the selected map.");
-    }
-    // Scratch proof transport cannot add untracked files to the verified
-    // source package after its exact-path manifest has been checked.
-    const withinCheckout = relative(process.cwd(), receiptFile);
-    if (withinCheckout === "" ||
-        (withinCheckout !== ".." &&
-         !withinCheckout.startsWith(".." + sep) &&
-         !isAbsolute(withinCheckout))) {
-      throw new Error("Execution receipt must be in scratch outside the verified source directory.");
-    }
+  if (probeFiles !== undefined) {
     const status = resolvedAudit.mapAuditReport.control.status;
     const receipt = {
       schemaVersion: 1,
@@ -392,14 +417,22 @@ async function main(): Promise<void> {
       artifactId: resolvedAudit.identity.artifactId,
       auditRevision: resolvedAudit.auditRevision,
       outputSha256: createHash("sha256").update(output, "utf8").digest("hex"),
+      ...(probeFiles.output === undefined ? {} : {
+        canonicalReportFile: basename(probeFiles.output),
+        captureMode: "EXCLUSIVE_SAME_INVOCATION_SCRATCH_JSON",
+      }),
       auditStatus: status,
       exitCode: status === "BLOCKED" ? 2 : 0,
       proofBoundary:
         "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION",
     };
-    // Exclusive creation: no existing source, map, expectation or result
-    // can be overwritten by an audit-sidecar request.
-    await writeFile(receiptFile, JSON.stringify(receipt, null, 2) + "\n", {
+    // Publish exact canonical bytes before the receipt; an interrupted
+    // capture leaves an unreceipted file, never an admissible probe outcome.
+    // Both writes are exclusive: no existing file can be overwritten.
+    if (probeFiles.output !== undefined) {
+      await writeFile(probeFiles.output, output, { encoding: "utf8", flag: "wx" });
+    }
+    await writeFile(probeFiles.receipt, JSON.stringify(receipt, null, 2) + "\n", {
       encoding: "utf8", flag: "wx",
     });
   }

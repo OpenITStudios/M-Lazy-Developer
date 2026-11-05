@@ -86,6 +86,14 @@ commit, selected artifact fingerprint, revision, report-byte hash,
 `BLOCKED`/other status and corresponding exit code; it is written
 exclusively to a new scratch file, not a user target or Git source.
 The canonical report on stdout is unchanged and a `BLOCKED` run exits 2.
+An optional `--execution-output <new-report.json>` paired with
+`--execution-receipt <new-receipt.json>` also writes exact JSON bytes
+directly from the same invocation to a distinct new sibling scratch file,
+not inside the source package (including symlinked paths). Both files
+are exclusively created and the receipt binds the report filename and
+SHA-256; missing/incomplete capture cannot be promoted to a valid pair.
+Freezing additionally refuses to overwrite any existing artifact or
+prior frozen output. No automatic executor or source mutation is added.
 
 `freeze-observed-map-audit.mjs <artifact> <report> <frozen>
 <receipt>` validates actual artifact and report bytes against the CLI

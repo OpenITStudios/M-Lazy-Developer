@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { execFileSync } from "node:child_process";
 
 const [artifactPath, auditOutputPath, frozenOutputPath, executionReceiptPath,
@@ -55,6 +55,19 @@ const receipt = receiptBytes === undefined
   ? undefined : JSON.parse(receiptBytes.toString("utf8"));
 if (receipt !== undefined) {
   const reportDigest = createHash("sha256").update(auditBytes).digest("hex");
+  // Captured reports must be the sibling JSON published by the exact CLI
+  // invocation, not reassembled or substituted after execution.
+  if (receipt.canonicalReportFile !== undefined &&
+      (receipt.captureMode !== "EXCLUSIVE_SAME_INVOCATION_SCRATCH_JSON" ||
+       typeof receipt.canonicalReportFile !== "string" ||
+       receipt.canonicalReportFile !== basename(auditPath) ||
+       realpathSync(dirname(auditPath)) !==
+         realpathSync(dirname(resolve(executionReceiptPath))))) {
+    throw new Error("Captured canonical report must match the CLI receipt's sibling scratch output.");
+  }
+  if (receipt.captureMode !== undefined && receipt.canonicalReportFile === undefined) {
+    throw new Error("CLI capture mode requires the captured canonical report file identity.");
+  }
   if (receipt.schemaVersion !== 1 ||
       receipt.policy !== "selected-map-canonical-audit-execution-receipt" ||
       receipt.canonicalEntrypoint !== "apps/cli/src/audit.ts:runSelectedMapAudit" ||
@@ -102,6 +115,10 @@ const frozen = {
         auditStatus: receipt.auditStatus,
         exitCode: receipt.exitCode,
         receiptSha256: createHash("sha256").update(receiptBytes).digest("hex"),
+        ...(receipt.canonicalReportFile === undefined ? {} : {
+          captureMode: receipt.captureMode,
+          canonicalReportFile: receipt.canonicalReportFile,
+        }),
         proofBoundary:
           "BOUND_CLI_RECEIPT_BYTES_NOT_INDEPENDENT_AUDIT_EXECUTOR_ATTESTATION",
       },
@@ -113,10 +130,25 @@ const frozen = {
   observed: audit,
 };
 
+// Frozen proof is not allowed to mutate the verified portable source tree,
+// even when a lexical outside path uses a symlink back into the package.
+const frozenParent = realpathSync(dirname(outputPath));
+const insideSource = relative(realpathSync(process.cwd()), frozenParent);
+if (insideSource === "" ||
+    (insideSource !== ".." && !insideSource.startsWith(".." + sep) &&
+     !isAbsolute(insideSource))) {
+  throw new Error("Frozen output must be new scratch outside the verified source tree.");
+}
+// A frozen observation is evidence, never a mutation of the original map,
+// canonical report, receipt or an earlier frozen review. Require a new file.
+if ([artifact, auditPath, ...(executionReceiptPath === undefined ? [] :
+    [resolve(executionReceiptPath)])].includes(outputPath)) {
+  throw new Error("Frozen output cannot overwrite its map, report or CLI receipt.");
+}
 writeFileSync(
   outputPath,
   JSON.stringify(frozen, null, 2) + "\n",
-  "utf8",
+  { encoding: "utf8", flag: "wx" },
 );
 process.stdout.write(
   JSON.stringify({
