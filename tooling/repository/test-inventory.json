@@ -5690,7 +5690,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
-        "sourceBlobSha": "508e045134bc25b66887eb517814a917c62da704",
+        "sourceBlobSha": "ae0aac32874e4250fbbcd34d3caaba284e8a01db",
         "consumerSymbol": "analyzePersistenceSource"
       },
       "recommendation": "keep",
@@ -6393,7 +6393,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-obligation-and-replica-proof-boundaries",
-        "sourceBlobSha": "c523aace5c8d4bfbb8b2c5e3e96457127e744e58"
+        "sourceBlobSha": "b40b37a3c9803e1398eb60865fff0a3569b41172"
       },
       "recommendation": "keep",
       "rationale": "Includes all prior audit obligation cases and the unclassified replica divergence regression merged from the retired single-case suite; same canonical deriveAuditObligations source owner and explicit FORMALIZE/validation evidence checks. Source reviewed, execution not verified.",

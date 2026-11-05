@@ -149,6 +149,26 @@ describe("audit obligations versus gameplay findings", () => {
     });
     expect(forwardedProof?.subjectIds).toContain("scripts/transactions.ts:6");
     expect(forwardedProof?.subjectIds).toContain("scripts/transactions.ts:5");
+    const grounded = deriveAuditObligations({
+      ...input,
+      ignoredCommitBeforeFeedback: [{
+        scriptId: "test", callerRegion: "class:Round.finish",
+        calleeName: "this.store.write",
+        callSource: src(10), failedReturnSource: src(3),
+        receiverBindingSources: [src(8)],
+        laterWriteSource: src(12), laterFeedbackSource: src(11),
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      }],
+    });
+    const field = grounded.find(row =>
+      row.id.startsWith("unchecked-commit-before-feedback:"));
+    expect(field).toMatchObject({
+      source: "detection-gap", stage: "EVALUATE",
+      reason: expect.stringContaining("source ownership only"),
+      missingProof: expect.stringContaining("rollback"),
+    });
+    expect(field?.subjectIds).toContain("scripts/transactions.ts:8:3");
+    expect(field?.evidenceIds).toEqual([]);
 
   });
 

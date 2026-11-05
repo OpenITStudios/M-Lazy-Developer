@@ -1212,6 +1212,14 @@ export function deriveAuditObligations(input: {
         " and feedback-looking call at ";
     const forwarding = candidate.forwardingReturnSources?.map(source =>
       source.relativePath + ":" + (source.range?.lineStart ?? "unknown")) ?? [];
+    const fieldBindings = candidate.receiverBindingSources?.map(source =>
+      source.relativePath + ":" + (source.range?.lineStart ?? "unknown") +
+      ":" + (source.range?.columnStart ?? "unknown")) ?? [];
+    const fieldProof = fieldBindings.length > 0
+      ? " Unique same-file new LocalClass() receiver initialization at " +
+        fieldBindings.join(", ") +
+        " identifies source ownership only, not immutable runtime objects."
+      : "";
     const failureClaim = candidate.failurePropagationPath?.length
       ? "() via a bounded unique same-file return chain (" +
         candidate.failurePropagationPath.join(" -> ") +
@@ -1224,14 +1232,15 @@ export function deriveAuditObligations(input: {
       title: "Verify discarded fallible commit before gameplay success",
       reason: "Selected source " + where + " ignores " + candidate.calleeName +
         failureClaim + failureWhere + "; " + writeSequence + feedbackWhere +
-        " may publish success. This is a source-only candidate, not proof that the failure is reachable in play.",
+        " may publish success." + fieldProof +
+        " This is a source-only candidate, not proof that the failure is reachable in play.",
       missingProof: "Determine the failing commit's reachability, the intended postcondition, " +
         "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state.",
       validationTest: "Run one bounded success/failure case on this exact authored caller/callee " +
         "with source-backed persistence failure; compare final state and user feedback, " +
         "and check whether retries repair the discrepancy.",
       validationGroupKey: "source:unchecked-commit:" + where,
-      subjectIds: [where, ...forwarding, failureWhere, writeWhere, feedbackWhere],
+      subjectIds: [where, ...forwarding, ...fieldBindings, failureWhere, writeWhere, feedbackWhere],
       componentIds: [],
       evidenceIds: [],
     }));

@@ -620,6 +620,143 @@ describe("persistence source analysis", () => {
     });
   });
 
+  it("grounds an ignored write through one constructor-initialized class receiver", () => {
+    const source = [
+      "class Journal {",
+      "  write(value) {",
+      "    if (!this.raw.set('score', value)) return false;",
+      "    return true;",
+      "  }",
+      "}",
+      "class Round {",
+      "  constructor() { this.store = new Journal(); }",
+      "  finish() {",
+      "    this.store.write(4);",
+      "    player.sendMessage('done');",
+      "    state.set('finished', true);",
+      "  }",
+      "}",
+    ].join("\n");
+    const doc = parseScriptFile("owned-store", source, {
+      artifactId: "fixture:owned-store", relativePath: "scripts/round.js",
+    });
+    const found = analyzePersistenceSource([doc]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({
+      callerRegion: "class:Round.finish",
+      calleeName: "this.store.write",
+      callSource: { range: { lineStart: 10 } },
+      failedReturnSource: { range: { lineStart: 3 } },
+      receiverBindingSources: [{ range: { lineStart: 8 } }],
+      laterFeedbackSource: { range: { lineStart: 11 } },
+      laterWriteSource: { range: { lineStart: 12 } },
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+  });
+
+  it("carries grounded receiver source through bounded same-file return forwarding", () => {
+    const source = [
+      "class Journal {",
+      "  write(value) {",
+      "    if (this.raw.set('score', value) === false) return false;",
+      "    return true;",
+      "  }",
+      "}",
+      "class Round {",
+      "  store = new Journal();",
+      "  commit() { return this.store.write(5); }",
+      "  finish() {",
+      "    this.commit();",
+      "    player.sendMessage('done');",
+      "    state.set('finished', true);",
+      "  }",
+      "}",
+    ].join("\n");
+    const doc = parseScriptFile("owned-forward", source, {
+      artifactId: "fixture:owned-forward", relativePath: "scripts/round.js",
+    });
+    const found = analyzePersistenceSource([doc]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({
+      callerRegion: "class:Round.finish",
+      calleeName: "this.commit",
+      failedReturnSource: { range: { lineStart: 3 } },
+      forwardingReturnSources: [{ range: { lineStart: 9 } }],
+      failurePropagationPath: ["class:Round.commit", "class:Journal.write"],
+      receiverBindingSources: [{ range: { lineStart: 8 } }],
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+  });
+
+  it("rejects ungrounded field receivers, unrelated failures and opaque writes", () => {
+    const leaf = [
+      "class Journal {",
+      "  write(value) { if (!this.raw.set('score', value)) return false; return true; }",
+      "}",
+    ];
+    const publish = [
+      "  finish() {",
+      "    this.store.write(4);",
+      "    player.sendMessage('done');",
+      "    state.set('finished', true);",
+      "  }",
+    ];
+    const badOwners: readonly string[][] = [
+      // A field name does not establish identity without direct new.
+      ["class Round {", "  constructor() { this.store = getJournal(); }", ...publish, "}"],
+      // Reassignment destroys the source-unique field binding.
+      ["class Round {", "  store = new Journal();",
+       "  reset() { this.store = new Other(); }", ...publish, "}"],
+      // Constructor assignment must be unconditional and in the direct body.
+      ["class Round {", "  constructor(ready) { if (ready) this.store = new Journal(); }", ...publish, "}"],
+      // A shadowed target constructor does not prove a local class instance.
+      ["class Round {", "  constructor(Journal) { this.store = new Journal(); }", ...publish, "}"],
+      // A dynamically computed write can replace the instance field.
+      ["class Round {", "  store = new Journal();",
+       "  reset(key) { this[key] = new Other(); }", ...publish, "}"],
+      // Non-own field or optional call is not an unconditional owned call.
+      ["class Round {", "  store = new Journal();",
+       "  finish() { this.store?.write(4); player.sendMessage('done'); state.set('finished',true); }", "}"],
+      ["class Round {", "  store = new Journal();",
+       "  finish() { this.store.write?.(4); player.sendMessage('done'); state.set('finished',true); }", "}"],
+      ["class Round {", "  finish() { const store = new Journal();",
+       "    store.write(4); player.sendMessage('done'); state.set('finished',true); }", "}"],
+    ];
+    for (const [index, owner] of badOwners.entries()) {
+      const doc = parseScriptFile("unknown-field-" + index,
+        [...leaf, ...owner].join("\n"), {
+          artifactId: "fixture:unknown-fields",
+          relativePath: "scripts/round.js",
+        });
+      expect(analyzePersistenceSource([doc]).ignoredCommitBeforeFeedback).toEqual([]);
+    }
+    const falseWithoutWriteFailure = parseScriptFile("unrelated-return", [
+      "class Journal {",
+      "  write(value) {",
+      "    if (!value) return false;",
+      "    this.raw.set('score', value);",
+      "    return true;",
+      "  }",
+      "}",
+      "class Round {",
+      "  store = new Journal();",
+      ...publish,
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:unrelated-return", relativePath: "scripts/round.js",
+    });
+    expect(analyzePersistenceSource([falseWithoutWriteFailure])
+      .ignoredCommitBeforeFeedback).toEqual([]);
+    const reassignedTarget = parseScriptFile("reassigned-target", [
+      ...leaf, "Journal = Other;",
+      "class Round {", "  store = new Journal();", ...publish, "}",
+    ].join("\n"), {
+      artifactId: "fixture:reassigned-target", relativePath: "scripts/round.js",
+    });
+    expect(analyzePersistenceSource([reassignedTarget])
+      .ignoredCommitBeforeFeedback).toEqual([]);
+  });
+
   it("summarizes growth without promoting it to a defect", () => {
     const script = parseScriptFile(
       "main",

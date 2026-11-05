@@ -101,6 +101,9 @@ export interface IgnoredCommitBeforeFeedbackCandidate {
   readonly calleeName: string;
   readonly callSource: SourceRef;
   readonly failedReturnSource: SourceRef;
+  /** Source sites establishing a direct this.field = new LocalClass()
+   * or field = new LocalClass() receiver, not runtime object identity. */
+  readonly receiverBindingSources?: readonly SourceRef[];
   /** Exact same-file return-forwarding sites, ordered outer to inner. */
   readonly forwardingReturnSources?: readonly SourceRef[];
   /** Names of the bounded resolved call chain, outer to fallible leaf. */
@@ -341,6 +344,22 @@ function ignoredCommitBeforeFeedback(
   const parentScope = new Map<string, string>();
   const thisOwner = new Map<string, string>();
   const staticThis = new Set<string>();
+  // Instance member identity is admitted only for one direct source-visible
+  // initialization and no other write in this class. It does not attest
+  // runtime construction, side effects or external mutation.
+  const classOwnerCount = new Map<string, number>();
+  const receiverFields = new Map<string, Map<string, {
+    readonly target: string; readonly source: ts.Node;
+  }>>();
+  const reassignedClassSymbols = new Set<string>();
+  const findClassReassignments = (node: ts.Node): void => {
+    if (ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+        ts.isIdentifier(node.left)) reassignedClassSymbols.add(node.left.text);
+    ts.forEachChild(node, findClassReassignments);
+  };
+  findClassReassignments(file);
   const add = (
     key: string, fn: Callable, parent?: string, className?: string,
     depth = 0, isStatic = false,
@@ -374,6 +393,7 @@ function ignoredCommitBeforeFeedback(
   const addClass = (
     owner: string, definition: ts.ClassDeclaration | ts.ClassExpression,
   ): void => {
+    classOwnerCount.set(owner, (classOwnerCount.get(owner) ?? 0) + 1);
     if (definition.heritageClauses?.length) return;
     // Direct class declarations and variable class expressions share a
     // lexical source owner. Static and instance namespaces are separate;
@@ -418,6 +438,82 @@ function ignoredCommitBeforeFeedback(
         scan(member.body, reboundStatic);
       if (ts.isMethodDeclaration(member) && member.body)
         scan(member.body, isStatic(member) ? reboundStatic : reboundInstance);
+    }
+    // Source-grounded instance field identity for this.field.method().
+    // Anything conditional, rebound, dynamically addressed or shadowed is
+    // unknown. This is an ownership edge, not a transaction-success claim.
+    const fieldWrites = new Map<string, ts.Node[]>();
+    let dynamicWrite = false;
+    const recordField = (field: string, node: ts.Node): void =>
+      fieldWrites.set(field, [...(fieldWrites.get(field) ?? []), node]);
+    const assignments = (node: ts.Node): void => {
+      if (ts.isBinaryExpression(node) &&
+          node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+          node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) {
+        const left = node.left;
+        if (ts.isPropertyAccessExpression(left) &&
+            left.expression.kind === ts.SyntaxKind.ThisKeyword)
+          recordField(left.name.text, node);
+        if (ts.isElementAccessExpression(left) &&
+            left.expression.kind === ts.SyntaxKind.ThisKeyword) {
+          if (ts.isStringLiteralLike(left.argumentExpression))
+            recordField(left.argumentExpression.text, node);
+          else dynamicWrite = true;
+        }
+      }
+      if (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) {
+        const operand = node.operand;
+        if (ts.isPropertyAccessExpression(operand) &&
+            operand.expression.kind === ts.SyntaxKind.ThisKeyword)
+          recordField(operand.name.text, node);
+      }
+      ts.forEachChild(node, assignments);
+    };
+    for (const member of definition.members) {
+      if (ts.isPropertyDeclaration(member) && !isStatic(member)) {
+        const name = memberName(member.name);
+        if (name) recordField(name, member);
+      }
+      if (ts.isConstructorDeclaration(member) && member.body)
+        assignments(member.body);
+      if (ts.isMethodDeclaration(member) && member.body && !isStatic(member))
+        assignments(member.body);
+    }
+    if (!dynamicWrite) {
+      const fields = new Map<string, { target: string; source: ts.Node }>();
+      for (const [field, writes] of fieldWrites) {
+        if (writes.length !== 1) continue;
+        const write = writes[0]!;
+        const value = ts.isPropertyDeclaration(write) ? write.initializer :
+          ts.isBinaryExpression(write) &&
+            write.operatorToken.kind === ts.SyntaxKind.EqualsToken ?
+            write.right : undefined;
+        if (!value || !ts.isNewExpression(value) ||
+            !ts.isIdentifier(value.expression)) continue;
+        if (ts.isBinaryExpression(write)) {
+          const statement = write.parent;
+          const constructorBody = statement.parent;
+          const constructor = constructorBody.parent;
+          const targetName = value.expression.text;
+          if (!ts.isExpressionStatement(statement) ||
+              !ts.isBlock(constructorBody) ||
+              !ts.isConstructorDeclaration(constructor) ||
+              constructor.body !== constructorBody ||
+              !constructorBody.statements.includes(statement) ||
+              constructor.parameters.some(param =>
+                ts.isIdentifier(param.name) && param.name.text === targetName) ||
+              constructorBody.statements.some(other =>
+                ts.isVariableStatement(other) &&
+                other.declarationList.declarations.some(decl =>
+                  ts.isIdentifier(decl.name) && decl.name.text === targetName) ||
+                ts.isFunctionDeclaration(other) &&
+                other.name?.text === targetName ||
+                ts.isClassDeclaration(other) &&
+                other.name?.text === targetName)) continue;
+        }
+        fields.set(field, { target: value.expression.text, source: write });
+      }
+      if (fields.size) receiverFields.set(owner, fields);
     }
     for (const member of definition.members) {
       if (!ts.isMethodDeclaration(member) || !member.body ||
@@ -469,8 +565,9 @@ function ignoredCommitBeforeFeedback(
     if (fn.body) visit(fn.body);
     bindings.set(key, names);
   }
-  const resolveCall = (callerKey: string, expr: ts.LeftHandSideExpression):
-    string | undefined => {
+  const resolveCall = (callerKey: string, expr: ts.LeftHandSideExpression): {
+    readonly key: string; readonly bindingSource?: ts.Node;
+  } | undefined => {
     if (ts.isIdentifier(expr)) {
       let scope: string | undefined = callerKey;
       while (scope) {
@@ -480,22 +577,41 @@ function ignoredCommitBeforeFeedback(
         if (unique.get(scope)?.parameters.some(param =>
             ts.isIdentifier(param.name) && param.name.text === expr.text)) return undefined;
         if (bindings.get(scope)?.has(expr.text) || declarations.has(localKey))
-          return unique.has(localKey) ? localKey : undefined;
+          return unique.has(localKey) ? { key: localKey } : undefined;
         scope = parentScope.get(scope);
       }
-      return unique.has(expr.text) ? expr.text : undefined;
+      return unique.has(expr.text) ? { key: expr.text } : undefined;
     }
     if (ts.isPropertyAccessExpression(expr)) {
+      // Optional member access cannot establish an unconditional call edge.
+      if (expr.questionDotToken ||
+          (ts.isPropertyAccessExpression(expr.expression) &&
+           expr.expression.questionDotToken)) return undefined;
       const owner = thisOwner.get(callerKey);
       if (!owner) return undefined;
       const staticOwner = staticThis.has(callerKey);
+      if (ts.isPropertyAccessExpression(expr.expression) &&
+          expr.expression.expression.kind === ts.SyntaxKind.ThisKeyword &&
+          !staticOwner && classOwnerCount.get(owner) === 1) {
+        const binding = receiverFields.get(owner)?.get(expr.expression.name.text);
+        if (!binding || classOwnerCount.get(binding.target) !== 1 ||
+            reassignedClassSymbols.has(binding.target) ||
+            !unique.has("class:" + binding.target + "." + expr.name.text))
+          return undefined;
+        // No dynamic/intermediate alias resolution; this.field is grounded
+        // by a single same-file new LocalClass() initialization only.
+        return {
+          key: "class:" + binding.target + "." + expr.name.text,
+          bindingSource: binding.source,
+        };
+      }
       if (expr.expression.kind !== ts.SyntaxKind.ThisKeyword &&
           !(staticOwner && ts.isIdentifier(expr.expression) &&
             expr.expression.text === owner &&
             !bindings.get(callerKey)?.has(owner))) return undefined;
       const key = (staticOwner ? "static:" : "class:") +
         owner + "." + expr.name.text;
-      return unique.has(key) ? key : undefined;
+      return unique.has(key) ? { key } : undefined;
     }
     return undefined;
   };
@@ -516,12 +632,15 @@ function ignoredCommitBeforeFeedback(
     visit(node);
     ts.forEachChild(node, child => walkBody(child, fn, visit));
   };
-  // A leaf has an explicit false/null return and a source-visible write.
-  // Bounded forwarding traces those SAME-FILE facts; neither level proves a
-  // durable persistence failure or successful runtime recovery.
+  // A leaf requires a directly guarded failure after a source-visible
+  // storage write in the guard. An unrelated return false plus unrelated
+  // .set() is not evidence of a failed transaction. Only this narrow
+  // failure shape is admitted; other error semantics remain UNKNOWN.
+  // Bounded forwarding traces SAME-FILE facts, not durable runtime proof.
   interface FailureTrace {
     readonly failedReturnSource: SourceRef;
     readonly forwardingReturnSources: readonly SourceRef[];
+    readonly receiverBindingSources: readonly SourceRef[];
     readonly names: readonly string[];
   }
   const fallible = new Map<string, FailureTrace>();
@@ -531,22 +650,33 @@ function ignoredCommitBeforeFeedback(
     if (!fn.body ||
         fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
     const failed: SourceRef[] = [];
-    let hasWrite = false;
+    const isWrite = (node: ts.Node): node is ts.CallExpression =>
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      (node.expression.name.text === "set" ||
+       node.expression.name.text === "setDynamicProperty");
     walkBody(fn.body, fn, node => {
-      if (ts.isReturnStatement(node) && node.expression &&
-          (node.expression.kind === ts.SyntaxKind.FalseKeyword ||
-           node.expression.kind === ts.SyntaxKind.NullKeyword)) {
-        failed.push(site(node));
-      }
-      if (ts.isCallExpression(node) &&
-          ts.isPropertyAccessExpression(node.expression) &&
-          (node.expression.name.text === "set" ||
-           node.expression.name.text === "setDynamicProperty")) hasWrite = true;
+      if (!ts.isIfStatement(node)) return;
+      const then = ts.isBlock(node.thenStatement)
+        ? node.thenStatement.statements[0]
+        : node.thenStatement;
+      if (!then || !ts.isReturnStatement(then) || !then.expression ||
+          (then.expression.kind !== ts.SyntaxKind.FalseKeyword &&
+           then.expression.kind !== ts.SyntaxKind.NullKeyword)) return;
+      const condition = node.expression;
+      if (ts.isPrefixUnaryExpression(condition) &&
+          condition.operator === ts.SyntaxKind.ExclamationToken &&
+          isWrite(condition.operand)) failed.push(site(then));
+      if (ts.isBinaryExpression(condition) &&
+          condition.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+          condition.right.kind === ts.SyntaxKind.FalseKeyword &&
+          isWrite(condition.left)) failed.push(site(then));
     });
-    if (hasWrite && failed.length > 0) {
+    if (failed.length > 0) {
       fallible.set(name, {
         failedReturnSource: failed[0]!,
         forwardingReturnSources: [],
+        receiverBindingSources: [],
         names: [name],
       });
     }
@@ -561,13 +691,18 @@ function ignoredCommitBeforeFeedback(
           fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
       const last = fn.body.statements.at(-1);
       if (!last || !ts.isReturnStatement(last) ||
-          !last.expression || !ts.isCallExpression(last.expression)) continue;
-      const calleeKey = resolveCall(name, last.expression.expression);
-      const underlying = calleeKey === undefined ? undefined : earlier.get(calleeKey);
+          !last.expression || !ts.isCallExpression(last.expression) ||
+          last.expression.questionDotToken) continue;
+      const resolved = resolveCall(name, last.expression.expression);
+      const underlying = resolved === undefined ? undefined : earlier.get(resolved.key);
       if (!underlying || underlying.names.includes(name)) continue;
       fallible.set(name, {
         failedReturnSource: underlying.failedReturnSource,
         forwardingReturnSources: [site(last), ...underlying.forwardingReturnSources],
+        receiverBindingSources: [
+          ...(resolved?.bindingSource ? [site(resolved.bindingSource)] : []),
+          ...underlying.receiverBindingSources,
+        ],
         names: [name, ...underlying.names],
       });
     }
@@ -592,9 +727,10 @@ function ignoredCommitBeforeFeedback(
       }
       for (const [index, statement] of node.statements.entries()) {
         if (!ts.isExpressionStatement(statement) ||
-            !ts.isCallExpression(statement.expression)) continue;
-        const calleeKey = resolveCall(callerName, statement.expression.expression);
-        const failure = calleeKey === undefined ? undefined : fallible.get(calleeKey);
+            !ts.isCallExpression(statement.expression) ||
+            statement.expression.questionDotToken) continue;
+        const resolved = resolveCall(callerName, statement.expression.expression);
+        const failure = resolved === undefined ? undefined : fallible.get(resolved.key);
         if (!failure) continue;
         const calleeName = statement.expression.expression.getText(file);
         let write: SourceRef | undefined;
@@ -625,6 +761,12 @@ function ignoredCommitBeforeFeedback(
             forwardingReturnSources: failure.forwardingReturnSources,
             failurePropagationPath: failure.names,
           }),
+          ...((resolved?.bindingSource || failure.receiverBindingSources.length) ? {
+            receiverBindingSources: [
+              ...(resolved?.bindingSource ? [site(resolved.bindingSource)] : []),
+              ...failure.receiverBindingSources,
+            ],
+          } : {}),
           laterWriteSource: write,
           laterFeedbackSource: feedback,
           proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
@@ -643,9 +785,10 @@ function ignoredCommitBeforeFeedback(
       const branch = statement.thenStatement.statements;
       const last = branch.at(-1);
       if (!last || !ts.isExpressionStatement(last) ||
-          !ts.isCallExpression(last.expression)) continue;
-      const calleeKey = resolveCall(callerName, last.expression.expression);
-      const failure = calleeKey === undefined ? undefined : fallible.get(calleeKey);
+          !ts.isCallExpression(last.expression) ||
+          last.expression.questionDotToken) continue;
+      const resolved = resolveCall(callerName, last.expression.expression);
+      const failure = resolved === undefined ? undefined : fallible.get(resolved.key);
       if (!failure) continue;
       const calleeName = last.expression.expression.getText(file);
       let precedingWrite: SourceRef | undefined;
@@ -688,6 +831,12 @@ function ignoredCommitBeforeFeedback(
           forwardingReturnSources: failure.forwardingReturnSources,
           failurePropagationPath: failure.names,
         }),
+        ...((resolved?.bindingSource || failure.receiverBindingSources.length) ? {
+          receiverBindingSources: [
+            ...(resolved?.bindingSource ? [site(resolved.bindingSource)] : []),
+            ...failure.receiverBindingSources,
+          ],
+        } : {}),
         precedingWriteSource: precedingWrite,
         laterFeedbackSource: feedback,
         proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
