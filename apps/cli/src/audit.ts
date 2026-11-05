@@ -1,6 +1,7 @@
-import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-import { resolve } from "node:path";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import { createGzip } from "node:zlib";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -40,6 +41,7 @@ async function main(): Promise<void> {
   let offsetSupplied = false;
   let batchOffsetSupplied = false;
   let responsesPath: string | undefined;
+  let executionReceiptPath: string | undefined;
   let handoffSavePath: string | undefined;
   let handoffReadPath: string | undefined;
   let handoffSnapshotSha256: string | undefined;
@@ -87,6 +89,7 @@ async function main(): Promise<void> {
     if (argument === "--expected-sha256" ||
         argument === "--expected-source-sha" ||
         argument === "--responses" ||
+        argument === "--execution-receipt" ||
         argument === "--handoff-save" ||
         argument === "--handoff-read" ||
         argument === "--handoff-snapshot-sha256" ||
@@ -111,6 +114,11 @@ async function main(): Promise<void> {
           throw new Error("--responses may only be supplied once");
         }
         responsesPath = value;
+      } else if (argument === "--execution-receipt") {
+        if (executionReceiptPath !== undefined) {
+          throw new Error("--execution-receipt may only be supplied once");
+        }
+        executionReceiptPath = value;
       } else if (argument === "--handoff-save") {
         if (handoffSavePath !== undefined) throw new Error("--handoff-save may only be supplied once");
         handoffSavePath = value;
@@ -180,6 +188,22 @@ async function main(): Promise<void> {
        auditArgs.length !== 0 || timings)) {
     throw new Error("--handoff-read requires source/map/snapshot hashes, no map or responses, and no --timings");
   }
+  // An execution receipt binds a canonical JSON report emitted by THIS
+  // invocation to the already required exact source/map fingerprints.
+  // It is never available on a snapshot, response, projection, or transport
+  // path; those cannot claim that the production audit just executed.
+  if (executionReceiptPath !== undefined &&
+      (expectedSourceCommit === undefined ||
+       expectedArtifactFingerprint === undefined ||
+       handoff || brief || reportNext || gzip || compact ||
+       responsesPath !== undefined || handoffReadPath !== undefined ||
+       handoffSavePath !== undefined)) {
+    throw new Error(
+      "--execution-receipt requires exact --expected-source-sha and " +
+      "--expected-sha256 with a fresh canonical JSON audit; " +
+      "no responses, snapshots, alternate views or compression.",
+    );
+  }
   // Verify all packaged source bytes before importing the engine, loaders,
   // CLI target parser or renderer. A mutated transport must fail closed.
   await verifyPortableSource(expectedSourceCommit);
@@ -215,8 +239,11 @@ async function main(): Promise<void> {
   const { positionals, target, telemetryPath, arenaRegionContractsPath } =
     parseCliTargetOptions(auditArgs);
   const [input] = positionals;
+  if (executionReceiptPath !== undefined && positionals.length !== 1) {
+    throw new Error("Execution receipt requires exactly one selected map input.");
+  }
   if (!input) {
-    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-batch-offset N] [--handoff-save <scratch.json>] [--responses model.json] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
+    throw new Error("Usage: npm run audit -- <selected.mcworld> [--expected-source-sha <Local HEAD>] [--brief|--handoff|--report-next] [--compact] [--gzip] [--timings] [--handoff-offset N] [--handoff-batch-offset N] [--handoff-save <scratch.json>] [--responses model.json] [--execution-receipt <new-scratch.json>] [target options]; offline: --handoff --handoff-read <scratch.json> --handoff-snapshot-sha256 <digest> --expected-sha256 <map> --expected-source-sha <HEAD>");
   }
   if (telemetryPath !== undefined || arenaRegionContractsPath !== undefined) {
     throw new Error(
@@ -340,6 +367,42 @@ async function main(): Promise<void> {
           intent: resolvedAudit.inspection.gameplayIntent.model,
         })
       : JSON.stringify(resolvedAudit.mapAuditReport, null, compact ? undefined : 2) + "\n";
+  if (executionReceiptPath !== undefined) {
+    const receiptFile = resolve(executionReceiptPath);
+    if (receiptFile === resolve(input)) {
+      throw new Error("Execution receipt cannot overwrite the selected map.");
+    }
+    // Scratch proof transport cannot add untracked files to the verified
+    // source package after its exact-path manifest has been checked.
+    const withinCheckout = relative(process.cwd(), receiptFile);
+    if (withinCheckout === "" ||
+        (withinCheckout !== ".." &&
+         !withinCheckout.startsWith(".." + sep) &&
+         !isAbsolute(withinCheckout))) {
+      throw new Error("Execution receipt must be in scratch outside the verified source directory.");
+    }
+    const status = resolvedAudit.mapAuditReport.control.status;
+    const receipt = {
+      schemaVersion: 1,
+      policy: "selected-map-canonical-audit-execution-receipt",
+      canonicalEntrypoint: "apps/cli/src/audit.ts:runSelectedMapAudit",
+      canonicalOutput: "map-audit-output-v2-json",
+      sourceCommit: expectedSourceCommit!,
+      selectedArtifactSha256: resolvedAudit.identity.artifactFingerprint,
+      artifactId: resolvedAudit.identity.artifactId,
+      auditRevision: resolvedAudit.auditRevision,
+      outputSha256: createHash("sha256").update(output, "utf8").digest("hex"),
+      auditStatus: status,
+      exitCode: status === "BLOCKED" ? 2 : 0,
+      proofBoundary:
+        "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION",
+    };
+    // Exclusive creation: no existing source, map, expectation or result
+    // can be overwritten by an audit-sidecar request.
+    await writeFile(receiptFile, JSON.stringify(receipt, null, 2) + "\n", {
+      encoding: "utf8", flag: "wx",
+    });
+  }
   // Transport only: decompression yields the exact same canonical JSON
   // document and audit proof state. Stream with backpressure instead of
   // retaining another compressed copy of an often enormous report.

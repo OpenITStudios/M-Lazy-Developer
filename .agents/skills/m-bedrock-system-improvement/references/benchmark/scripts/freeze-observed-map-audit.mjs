@@ -3,17 +3,19 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 
-const [artifactPath, auditOutputPath, frozenOutputPath] = process.argv.slice(2);
-if (!artifactPath || !auditOutputPath || !frozenOutputPath) {
+const [artifactPath, auditOutputPath, frozenOutputPath, executionReceiptPath,
+  unexpected] = process.argv.slice(2);
+if (!artifactPath || !auditOutputPath || !frozenOutputPath || unexpected) {
   throw new Error(
-    "Usage: node freeze-observed-map-audit.mjs <artifact.mcworld> <audit-output.json> <frozen-output.json>",
+    "Usage: node freeze-observed-map-audit.mjs <artifact.mcworld> <audit-output.json> <frozen-output.json> [cli-execution-receipt.json]",
   );
 }
 
 const artifact = resolve(artifactPath);
 const auditPath = resolve(auditOutputPath);
 const outputPath = resolve(frozenOutputPath);
-const audit = JSON.parse(readFileSync(auditPath, "utf8"));
+const auditBytes = readFileSync(auditPath);
+const audit = JSON.parse(auditBytes.toString("utf8"));
 if (
   audit.schemaVersion !== 2 ||
   typeof audit.artifactId !== "string" ||
@@ -44,11 +46,37 @@ if (!/^[a-f0-9]{64}$/.test(audit.artifactFingerprint ?? "") ||
     "audit for this exact artifact; do not transplant another version's report.",
   );
 }
-const gitCommit = execFileSync(
-  "git",
-  ["rev-parse", "HEAD"],
-  { encoding: "utf8" },
-).trim();
+// The .git directory does not exist in a verified portable source package.
+// When available, use the canonical CLI's bound execution sidecar instead
+// of treating the HEAD of a separate freezing process as audit provenance.
+const receiptBytes = executionReceiptPath === undefined
+  ? undefined : readFileSync(resolve(executionReceiptPath));
+const receipt = receiptBytes === undefined
+  ? undefined : JSON.parse(receiptBytes.toString("utf8"));
+if (receipt !== undefined) {
+  const reportDigest = createHash("sha256").update(auditBytes).digest("hex");
+  if (receipt.schemaVersion !== 1 ||
+      receipt.policy !== "selected-map-canonical-audit-execution-receipt" ||
+      receipt.canonicalEntrypoint !== "apps/cli/src/audit.ts:runSelectedMapAudit" ||
+      receipt.canonicalOutput !== "map-audit-output-v2-json" ||
+      !/^[a-f0-9]{40}$/.test(receipt.sourceCommit ?? "") ||
+      !/^[a-f0-9]{64}$/.test(receipt.auditRevision ?? "") ||
+      receipt.selectedArtifactSha256 !== sha256 ||
+      receipt.artifactId !== audit.artifactId ||
+      receipt.auditStatus !== audit.control.status ||
+      receipt.outputSha256 !== reportDigest ||
+      receipt.exitCode !== (audit.control.status === "BLOCKED" ? 2 : 0) ||
+      receipt.proofBoundary !==
+        "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION") {
+    throw new Error(
+      "Canonical CLI receipt fails current artifact, output byte, " +
+      "source revision or exit-status binding.",
+    );
+  }
+}
+const gitCommit = receipt === undefined
+  ? execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
+  : receipt.sourceCommit;
 
 const frozen = {
   schemaVersion: 1,
@@ -63,9 +91,24 @@ const frozen = {
     frozenAt: new Date().toISOString(),
     command: "npm run audit -- <artifact>",
     artifactBinding: "EXACT_SELECTED_ARTIFACT_SHA256_MATCH",
-    proofLimit: "Report matches the selected archive bytes. This alone does " +
-      "not attest that the audit ran on this Git commit, establish blind " +
-      "expectation independence, or prove Minecraft runtime behavior.",
+    ...(receipt === undefined ? {} : {
+      canonicalAuditReceipt: {
+        policy: receipt.policy,
+        sourceCommit: receipt.sourceCommit,
+        selectedArtifactSha256: receipt.selectedArtifactSha256,
+        artifactId: receipt.artifactId,
+        auditRevision: receipt.auditRevision,
+        outputSha256: receipt.outputSha256,
+        auditStatus: receipt.auditStatus,
+        exitCode: receipt.exitCode,
+        receiptSha256: createHash("sha256").update(receiptBytes).digest("hex"),
+        proofBoundary:
+          "BOUND_CLI_RECEIPT_BYTES_NOT_INDEPENDENT_AUDIT_EXECUTOR_ATTESTATION",
+      },
+    }),
+    proofLimit: receipt === undefined
+      ? "Report matches archive bytes, but the freezer's Git HEAD is not audit execution provenance."
+      : "The verified CLI receipt matches this map and output byte-for-byte. This does not independently attest execution origin, blind reviewer independence or Minecraft gameplay.",
   },
   observed: audit,
 };

@@ -72,6 +72,35 @@ A requested native DB scan still requires the addon, and an unavailable/incompat
 
 **Remaining environment gap:** GitHub connector file reads are authenticated evidence, but they are not a mounted exact-commit repository tree. A source/lockfile-compatible Node version cannot provide missing source files, `node_modules`, `vitest`, `tsx` or `@zip.js/zip.js`; no full repository test may be reported as executed until those exact inputs are genuinely present. The lockfile now pins `@types/node@22.15.30`, `undici-types@6.21.0` and TypeScript 5.8.3 using published package integrity metadata. This is a source/lockfile alignment, **not** evidence of successful `npm ci`, `tsc` or Vitest execution.
 
+### Canonical audit receipt transport for paired Harness² probes
+
+When a genuine exact-HEAD portable package and one immutable selected map
+are available, production `apps/cli/src/audit.ts` accepts optional
+`--execution-receipt <scratch-file-outside-source>` together with
+`--expected-source-sha <40-hex-Local-commit>` and
+`--expected-sha256 <64-hex-map-digest>`. It is a strict **fresh full-JSON
+audit only** mode. The verified portable manifest, unchanged
+`runSelectedMapAudit()` call, and the final Map Audit Output V2 JSON
+remain the sole producers. The auxiliary JSON records the exact source
+commit, selected artifact fingerprint, revision, report-byte hash,
+`BLOCKED`/other status and corresponding exit code; it is written
+exclusively to a new scratch file, not a user target or Git source.
+The canonical report on stdout is unchanged and a `BLOCKED` run exits 2.
+
+`freeze-observed-map-audit.mjs <artifact> <report> <frozen>
+<receipt>` validates actual artifact and report bytes against the CLI
+receipt and preserves the receipt digest in the existing frozen execution
+record. With this argument, it does **not** require a `.git` directory.
+The original 3-argument freeze remains valid for historical source
+inspection but is not eligible for a new paired benchmark comparison.
+`score-benchmark.mjs --compare` requires matching receipt identity
+for both source observations, distinct source-commit identities, and
+positive/negative independently frozen claims. Neither the receipt nor
+freeze metadata authenticates a separate executor, proves a causal
+harness improvement, or substitutes for independently reviewed map
+behavior. No launcher, new agent lane, hidden CI, or target-map writes
+are introduced.
+
 ### ChatGPT Chat: exact-source isolated module execution
 
 When this conversation has a connected GitHub source reader but no mounted repository checkout, do not equate failure to clone with inability to run **any** repository code. Select one small, relevant source owner and its minimum dependency closure. Fetch the file at the exact `Local` commit through authenticated GitHub, reconstruct its UTF-8 contents in the ChatGPT execution container, and compare `git hash-object <file>` with the fetched Git blob SHA **before** executing it. An unmatched blob must not be used as exact-ref repository proof. Never copy target-map proprietary source into GitHub.

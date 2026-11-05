@@ -161,6 +161,34 @@ hidden from any proposer; do not learn from blind evaluation labels.
 Current real-map audit corpus is empty, so no fresh measured real-map
 benefit is claimed.
 
+**Actual canonical CLI receipt chain for matched experiments:** invoke the
+EXISTING `apps/cli/src/audit.ts` with one read-only selected map,
+`--expected-sha256 <artifact-sha256>`, `--expected-source-sha
+<exact-local-commit>` and `--execution-receipt <outside-source-scratch.json>`.
+Use the default full canonical JSON output, retaining stdout and exit 2
+(`BLOCKED` is a valid incomplete report). This optional mode refuses
+model responses, prior handoff snapshots, brief/HTML/compact/gzip views
+and any output path inside the verified source package. It first executes
+the canonical audit, then exclusively creates an immutable scratch
+receipt binding source commit, selected map SHA-256, audit revision, status,
+exit code and canonical output byte SHA-256. The existing portable-source
+manifest is checked before loading or invoking the engine; a freshly
+invented JSON shape alone cannot produce this CLI-side record.
+
+Next call the EXISTING `freeze-observed-map-audit.mjs` with
+`<artifact.mcworld> <canonical-stdout.json> <frozen-output.json>
+<cli-execution-receipt.json>`. The freezer checks actual selected archive
+bytes, raw output SHA-256 and receipt identity, and uses the receipt's
+verified source commit instead of `git rev-parse HEAD` (portable snapshots
+have no `.git`). The existing `score-benchmark.mjs --compare` now
+requires a bound receipt in BOTH frozen observations, different source
+commits for baseline versus candidate, and SHA-256 agreement with each
+reconstructed canonical JSON report. Legacy single-report scoring/freezing
+remain supported but unreceipted reports are not eligible for paired
+candidate review. Do not infer end-to-end executor authenticity or
+independence from a hash: the byte source package, CLI invocation and
+reviewer are still only proven to the strongest level actually observed.
+
 **Operator-run blind selection (existing benchmark helpers):** the old
 `references/benchmark/scripts/blind-compare.mjs` now calls the **same
 canonical `score-benchmark.mjs --compare`** internally. It no longer

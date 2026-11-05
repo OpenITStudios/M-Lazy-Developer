@@ -304,6 +304,35 @@ function adjudicateFullMapClaims(result) {
 }
 
 
+/** Require a canonical audit invocation receipt carried forward by the
+ * freeze operation. This verifies receipt identity/metadata coherence only.
+ * It cannot independently prove the CLI ran, that a Git SHA is trusted,
+ * or that a code change caused the output to differ.
+ */
+function isBoundCanonicalAuditReceipt(frozen, scored) {
+  const execution = frozen?.execution;
+  const receipt = execution?.canonicalAuditReceipt;
+  const sha40 = v => typeof v === "string" && /^[a-f0-9]{40}$/.test(v);
+  const sha64 = v => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+  const report = frozen?.observed;
+  return receipt?.policy === "selected-map-canonical-audit-execution-receipt" &&
+    receipt.proofBoundary ===
+      "BOUND_CLI_RECEIPT_BYTES_NOT_INDEPENDENT_AUDIT_EXECUTOR_ATTESTATION" &&
+    sha40(receipt.sourceCommit) &&
+    execution.gitCommit === receipt.sourceCommit &&
+    sha64(receipt.receiptSha256) &&
+    sha64(receipt.auditRevision) &&
+    sha64(receipt.outputSha256) &&
+    // Canonical CLI output is JSON.stringify(MapAuditOutputV2,null,2)+"\\n".
+    // Recompute from the frozen JSON; metadata alone is not a content hash.
+    receipt.outputSha256 === createHash("sha256")
+      .update(JSON.stringify(report, null, 2) + "\n").digest("hex") &&
+    receipt.selectedArtifactSha256 === scored.receipt.artifactSha256 &&
+    receipt.artifactId === report.artifactId &&
+    receipt.auditStatus === report.control.status &&
+    receipt.exitCode === (report.control.status === "BLOCKED" ? 2 : 0);
+}
+
 /** Compare independently frozen source-scope outcomes using the SAME
  * existing per-claim adjudicator; never rescore from model-written counts.
  * Outputs are review decisions, not an automatic harness adoption or
@@ -363,6 +392,16 @@ function compareFrozenSourceOutcomes(input) {
     uniqueArtifacts.add(b.receipt.artifactSha256);
     const frozenBase = read(baseline.fullMapReview.frozenObservationFile);
     const frozenCandidate = read(candidate.fullMapReview.frozenObservationFile);
+    if (!isBoundCanonicalAuditReceipt(frozenBase, b) ||
+        !isBoundCanonicalAuditReceipt(frozenCandidate, c) ||
+        frozenBase.execution.canonicalAuditReceipt.sourceCommit ===
+          frozenCandidate.execution.canonicalAuditReceipt.sourceCommit) {
+      throw new Error(
+        "Paired source outcomes require distinct, internally bound " +
+        "canonical audit invocation receipts for baseline and candidate. " +
+        "A freezer Git HEAD alone is not audit execution provenance.",
+      );
+    }
     const baseObservedHash = digest(JSON.stringify(frozenBase.observed));
     const candidateObservedHash = digest(JSON.stringify(frozenCandidate.observed));
     if (baseObservedHash === candidateObservedHash ||
@@ -409,6 +448,8 @@ function compareFrozenSourceOutcomes(input) {
       id: pair.id,
       artifactSha256: b.receipt.artifactSha256,
       frozenExpectationSha256: expectedHash,
+      baselineSourceCommit: frozenBase.execution.canonicalAuditReceipt.sourceCommit,
+      candidateSourceCommit: frozenCandidate.execution.canonicalAuditReceipt.sourceCommit,
       sourceObservationChanged: true,
       positiveClaims: positive,
       negativeClaims: negative,
@@ -435,7 +476,7 @@ function compareFrozenSourceOutcomes(input) {
     proofBoundary:
       "SOURCE_CLAIM_OUTCOME_COMPARISON_NOT_EXECUTOR_CAUSALITY_OR_MINECRAFT_GAMEPLAY",
     caveat:
-      "Frozen source observations and reviewer interpretations are checked, but evaluator independence, execution provenance and actual Minecraft behavior are not independently attested. No automatic harness adoption.",
+      "Canonical CLI execution-receipt metadata, frozen source outputs and reviewer interpretations are checked, but the receipt alone does not independently authenticate the executor, approval of changed source, evaluator independence or Minecraft gameplay. No automatic harness adoption.",
   };
 }
 

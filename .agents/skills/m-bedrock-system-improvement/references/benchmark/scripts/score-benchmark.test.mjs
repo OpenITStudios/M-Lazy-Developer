@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,7 @@ const readinessGate = fileURLToPath(new URL("./check-case-ready.mjs", import.met
 
 const scorer = fileURLToPath(new URL("./score-benchmark.mjs", import.meta.url));
 const blindCompare = fileURLToPath(new URL("./blind-compare.mjs", import.meta.url));
+const freezer = fileURLToPath(new URL("./freeze-observed-map-audit.mjs", import.meta.url));
 const expectationValidator = fileURLToPath(
   new URL("./validate-expectation.mjs", import.meta.url),
 );
@@ -154,9 +156,35 @@ function outcomePair(caseId, artifactSha) {
   baseline.result.resultClass = "false-negative";
   return { baseline, candidate };
 }
-function withComparisonManifest(pairs, evaluate) {
+function withComparisonManifest(pairs, evaluate, mutateBeforeSave) {
   const root = mkdtempSync(join(tmpdir(), "m-bedrock-paired-source-review-"));
   try {
+    // Test-only synthetic receipts do not attest a real audit execution.
+    // The real freeze path verifies CLI receipt bytes and their output SHA.
+    for (const p of pairs) {
+      for (const [f, sourceCommit] of [
+        [p.baseline, "1".repeat(40)],
+        [p.candidate, "2".repeat(40)],
+      ]) {
+        f.frozen.execution.gitCommit = sourceCommit;
+        const rawAudit = JSON.stringify(f.frozen.observed, null, 2) + "\n";
+        f.frozen.execution.canonicalAuditReceipt = {
+          policy: "selected-map-canonical-audit-execution-receipt",
+          sourceCommit,
+          selectedArtifactSha256: f.frozen.artifact.sha256,
+          artifactId: f.frozen.observed.artifactId,
+          auditRevision: "a".repeat(64),
+          outputSha256: createHash("sha256").update(rawAudit).digest("hex"),
+          auditStatus: f.frozen.observed.control.status,
+          exitCode: f.frozen.observed.control.status === "BLOCKED" ? 2 : 0,
+          receiptSha256: createHash("sha256")
+            .update("TEST-ONLY:" + sourceCommit).digest("hex"),
+          proofBoundary:
+            "BOUND_CLI_RECEIPT_BYTES_NOT_INDEPENDENT_AUDIT_EXECUTOR_ATTESTATION",
+        };
+      }
+    }
+    mutateBeforeSave?.(pairs);
     const payload = {
       schemaVersion: 1,
       policy: "selected-map-frozen-outcome-comparison",
@@ -177,10 +205,10 @@ function withComparisonManifest(pairs, evaluate) {
     for (const p of pairs) { p.baseline.cleanup(); p.candidate.cleanup(); }
   }
 }
-function runComparison(pairs) {
+function runComparison(pairs, mutateBeforeSave) {
   return withComparisonManifest(pairs, path =>
     spawnSync(process.execPath, [scorer, "--compare", path],
-      { encoding: "utf8" }));
+      { encoding: "utf8" }), mutateBeforeSave);
 }
 
 test("frozen positive and negative controls permit only source-claim review recommendation", () => {
@@ -336,6 +364,83 @@ test("legacy blind-compare cannot accept fabricated standalone aggregate metrics
       {encoding:"utf8"});
     assert.notEqual(bad.status,0);
   } finally { rmSync(root,{recursive:true,force:true}); }
+});
+
+
+test("matched source outcomes reject missing or same-source canonical CLI receipts", () => {
+  const a = outcomePair("receipt-a", "6".repeat(64));
+  const b = outcomePair("receipt-b", "7".repeat(64));
+  const missing = runComparison([a, b], () => {
+    delete a.baseline.frozen.execution.canonicalAuditReceipt;
+  });
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /canonical audit invocation receipts/);
+  const c = outcomePair("receipt-c", "8".repeat(64));
+  const d = outcomePair("receipt-d", "9".repeat(64));
+  const same = runComparison([c, d], () => {
+    c.candidate.frozen.execution.gitCommit = "1".repeat(40);
+    c.candidate.frozen.execution.canonicalAuditReceipt.sourceCommit =
+      "1".repeat(40);
+  });
+  assert.notEqual(same.status, 0);
+  assert.match(same.stderr, /distinct, internally bound/);
+});
+
+test("freeze accepts output-bound CLI receipt without requiring a Git checkout", () => {
+  const root = mkdtempSync(join(tmpdir(), "m-bedrock-receipt-freeze-"));
+  try {
+    const artifact = join(root, "source.mcworld");
+    const report = join(root, "audit.json");
+    const receiptPath = join(root, "execution-receipt.json");
+    const frozenPath = join(root, "frozen.json");
+    const bytes = Buffer.from("test-only-synthetic-artifact");
+    writeFileSync(artifact, bytes);
+    const artifactSha = createHash("sha256").update(bytes).digest("hex");
+    const audit = {
+      schemaVersion: 2, artifactId: "selected:synthetic-map",
+      artifactFingerprint: artifactSha,
+      evidenceScope: { mode: "selected-map-version-only",
+        archiveSourcesUsed: false },
+      gameplayFlowBasis: "AUDIT_CHECKLIST_NOT_OBSERVED_GAMEPLAY",
+      control: { status: "BLOCKED" },
+      bugs: [], designMismatches: [],
+    };
+    const auditBytes = Buffer.from(JSON.stringify(audit) + "\n");
+    writeFileSync(report, auditBytes);
+    const receipt = {
+      schemaVersion: 1,
+      policy: "selected-map-canonical-audit-execution-receipt",
+      canonicalEntrypoint: "apps/cli/src/audit.ts:runSelectedMapAudit",
+      canonicalOutput: "map-audit-output-v2-json",
+      sourceCommit: "b".repeat(40),
+      selectedArtifactSha256: artifactSha,
+      artifactId: audit.artifactId,
+      auditRevision: "c".repeat(64),
+      outputSha256: createHash("sha256").update(auditBytes).digest("hex"),
+      auditStatus: "BLOCKED", exitCode: 2,
+      proofBoundary:
+        "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION",
+    };
+    writeFileSync(receiptPath, JSON.stringify(receipt) + "\n");
+    const run = () => spawnSync(process.execPath,
+      [freezer, artifact, report, frozenPath, receiptPath],
+      { encoding: "utf8" });
+    const result = run();
+    assert.equal(result.status, 0, result.stderr);
+    const frozen = JSON.parse(readFileSync(frozenPath, "utf8"));
+    assert.equal(frozen.execution.gitCommit, receipt.sourceCommit);
+    assert.equal(frozen.execution.canonicalAuditReceipt.outputSha256,
+      receipt.outputSha256);
+    assert.match(frozen.execution.canonicalAuditReceipt.receiptSha256,
+      /^[a-f0-9]{64}$/);
+    receipt.outputSha256 = "0".repeat(64);
+    writeFileSync(receiptPath, JSON.stringify(receipt));
+    const invalid = run();
+    assert.notEqual(invalid.status, 0);
+    assert.match(invalid.stderr, /Canonical CLI receipt fails/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("source-grounded full-map review scores all frozen positive/negative/unknown claims", () => {
