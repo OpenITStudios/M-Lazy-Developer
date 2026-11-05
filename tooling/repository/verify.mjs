@@ -169,6 +169,29 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// Agent Rules is a self-contained root contract, not a dependency on another
+// OpenIT product's repository or an installed third-party agent runtime.
+const agentRules = readFileSync("AGENTS.md", "utf8");
+const agentMethodSources = [
+  "multica-ai/andrej-karpathy-skills",
+  "dietrichgebert/ponytail",
+  "cursor/plugins",
+  "google-research/harness2",
+  "deepseek-ai/deepseek-harness",
+  "morluto/rea",
+  "nextlevelbuilder/ui-ux-pro-max-skill",
+];
+if (
+  !agentRules.includes("## Agent Rules — independent seven-method contract") ||
+  !agentRules.includes("The user selects the branch manually") ||
+  !agentRules.includes("No implicit plugin install") ||
+  agentMethodSources.some((repo) => !agentRules.includes(`github.com/${repo}/tree/`)) ||
+  agentRules.includes("github.com/OpenITStudios/M-LazyDesigner/blob/")
+) {
+  console.error("Agent Rules root must remain independent, seven-source, manually branched, and permission-safe.");
+  process.exit(1);
+}
+
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
 const toolchain = JSON.parse(readFileSync("toolchain.json", "utf8"));
