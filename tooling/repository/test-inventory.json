@@ -5690,7 +5690,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
-        "sourceBlobSha": "cf6d979c54b3e1a337879ba940942d966693da06",
+        "sourceBlobSha": "508e045134bc25b66887eb517814a917c62da704",
         "consumerSymbol": "analyzePersistenceSource"
       },
       "recommendation": "keep",

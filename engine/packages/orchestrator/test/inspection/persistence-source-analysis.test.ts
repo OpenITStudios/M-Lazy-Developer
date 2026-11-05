@@ -270,6 +270,356 @@ describe("persistence source analysis", () => {
     ])]).ignoredCommitBeforeFeedback).toHaveLength(1);
   });
 
+  it("resolves same-file class methods and named nested closures by owner", () => {
+    const parsed = parseScriptFile("owner", [
+      "class FirstRound {",
+      "  commit() { if (!storage.set('score', 4)) return false; return true; }",
+      "  finish() {",
+      "    this.commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "}",
+      "class SecondRound {",
+      "  commit() { return true; }",
+      "  finish() {",
+      "    this.commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "}",
+      "function outer() {",
+      "  function commit() { if (!storage.set('score', 5)) return false; return true; }",
+      "  const finish = () => {",
+      "    commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  };",
+      "  finish();",
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:scope-ownership",
+      relativePath: "scripts/owners.js",
+    });
+    const found = analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(2);
+    expect(found).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        callerRegion: "class:FirstRound.finish",
+        calleeName: "this.commit",
+        callSource: { range: { lineStart: 4 } },
+        failedReturnSource: { range: { lineStart: 2 } },
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      }),
+      expect.objectContaining({
+        callerRegion: "function:outer/finish",
+        calleeName: "commit",
+        callSource: { range: { lineStart: 20 } },
+        failedReturnSource: { range: { lineStart: 18 } },
+      }),
+    ]));
+    expect(found.some(row => row.callerRegion.includes("SecondRound"))).toBe(false);
+  });
+
+  it("keeps bounded return-forwarding within a single lexical or class owner", () => {
+    const parsed = parseScriptFile("scoped-forward", [
+      "class Owned {",
+      "  commit() { if (!storage.set('score', 4)) return false; return true; }",
+      "  forward() { return this.commit(); }",
+      "  publish() {",
+      "    this.forward();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "}",
+      "function outer() {",
+      "  function commit() { if (!storage.set('score', 5)) return false; return true; }",
+      "  function forward() { return commit(); }",
+      "  function finish() {",
+      "    forward();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:scoped-forward", relativePath: "scripts/forward.js",
+    });
+    const found = analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(2);
+    expect(found.find(row => row.callerRegion === "class:Owned.publish"))
+      .toMatchObject({
+        failurePropagationPath: ["class:Owned.forward", "class:Owned.commit"],
+        forwardingReturnSources: [{ range: { lineStart: 3 } }],
+        failedReturnSource: { range: { lineStart: 2 } },
+      });
+    expect(found.find(row => row.callerRegion === "function:outer/finish"))
+      .toMatchObject({
+        failurePropagationPath: ["outer::forward", "outer::commit"],
+        forwardingReturnSources: [{ range: { lineStart: 12 } }],
+        failedReturnSource: { range: { lineStart: 11 } },
+      });
+  });
+
+  it("abstains on ambiguous class receivers, unrelated owners and local shadows", () => {
+    const cases = [
+      [
+        "class Other {",
+        "  commit() { if (!db.set('score', 4)) return false; return true; }",
+        "}",
+        "class Different {",
+        "  finish() { this.commit(); ui.sendMessage('done'); state.set('done', true); }",
+        "}",
+      ],
+      [
+        "class Base {",
+        "  commit() { if (!db.set('score', 4)) return false; return true; }",
+        "}",
+        "class Derived extends Base {",
+        "  finish() { this.commit(); ui.sendMessage('done'); state.set('done', true); }",
+        "}",
+      ],
+      [
+        "class Owned {",
+        "  commit() { if (!db.set('score', 4)) return false; return true; }",
+        "  finish(obj) { obj.commit(); ui.sendMessage('done'); state.set('done', true); }",
+        "}",
+      ],
+      [
+        "class Owned {",
+        "  static commit() { if (!db.set('score', 4)) return false; return true; }",
+        "  finish() { this.commit(); ui.sendMessage('done'); state.set('done', true); }",
+        "}",
+      ],
+      [
+        "class Owned {",
+        "  commit() { if (!db.set('score', 4)) return false; return true; }",
+        "  finish() { this['commit'](); ui.sendMessage('done'); state.set('done', true); }",
+        "}",
+      ],
+      [
+        "class Owned {",
+        "  commit() { if (!db.set('score', 4)) return false; return true; }",
+        "  finish() {",
+        "    function inner() {",
+        "      this.commit(); ui.sendMessage('done'); state.set('done', true);",
+        "    }",
+        "    inner();",
+        "  }",
+        "}",
+      ],
+      [
+        "function commit() { if (!db.set('score', 4)) return false; return true; }",
+        "function outer() {",
+        "  const commit = null;",
+        "  const inner = () => {",
+        "    commit(); ui.sendMessage('done'); state.set('done', true);",
+        "  };",
+        "}",
+      ],
+      [
+        "class Owned {",
+        "  commit() { if (!db.set('score', 4)) return false; return true; }",
+        "  finish() {",
+        "    jobs.forEach(() => this.commit());",
+        "    ui.sendMessage('done');",
+        "    state.set('done', true);",
+        "  }",
+        "}",
+      ],
+    ];
+    for (const [index, lines] of cases.entries()) {
+      const parsed = parseScriptFile("negative-" + index, lines.join("\n"), {
+        artifactId: "fixture:scoped-negative", relativePath: "scripts/negatives.js",
+      });
+      expect(analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback)
+        .toEqual([]);
+    }
+  });
+
+  it("preserves source columns for one-line class-method bundles", () => {
+    const source = "class C{commit(){if(!db.set('x',1))return false;return true;}finish(){this.commit();ui.sendMessage('done');state.set('done',true);}}";
+    const parsed = parseScriptFile("minified", source, {
+      artifactId: "fixture:minified", relativePath: "scripts/bundle.min.js",
+    });
+    const findings = analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback;
+    expect(findings).toHaveLength(1);
+    expect(findings[0].callSource.range).toMatchObject({ lineStart: 1 });
+    expect(findings[0].callSource.range!.columnStart).toBeGreaterThan(1);
+    expect(findings[0].failedReturnSource.range).toMatchObject({ lineStart: 1 });
+  });
+
+  it("owns static methods inside bundled class expressions separately from instance methods", () => {
+    const parsed = parseScriptFile("static-class-bundle", [
+      "var Service = class {",
+      "  static commit() { if (!db.set('score', 4)) return false; return true; }",
+      "  static finish() {",
+      "    this.commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "  static finishNamed() {",
+      "    Service.commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "  finishInstance() {",
+      "    this.commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "};",
+      "var Unrelated = class {",
+      "  static commit() { return true; }",
+      "  static finish() {",
+      "    this.commit();",
+      "    player.sendMessage('complete');",
+      "    state.set('done', true);",
+      "  }",
+      "};",
+    ].join("\n"), {
+      artifactId: "fixture:bundled-classes",
+      relativePath: "scripts/bundle.js",
+    });
+    const findings = analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback;
+    expect(findings).toHaveLength(2);
+    expect(findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        callerRegion: "static:Service.finish",
+        calleeName: "this.commit",
+        callSource: { range: { lineStart: 4 } },
+        failedReturnSource: { range: { lineStart: 2 } },
+      }),
+      expect.objectContaining({
+        callerRegion: "static:Service.finishNamed",
+        calleeName: "Service.commit",
+        callSource: { range: { lineStart: 9 } },
+        failedReturnSource: { range: { lineStart: 2 } },
+      }),
+    ]));
+    expect(findings.some(x => x.callerRegion.includes("Instance") ||
+      x.callerRegion.includes("Unrelated"))).toBe(false);
+  });
+
+  it("rejects static method replacement, qualified alias and receiver ambiguity", () => {
+    const cases = [
+      [
+        "var A = class {",
+        "  static commit() { if (!db.set('x',1)) return false; return true; }",
+        "  static commit = () => true;",
+        "  static finish() { this.commit(); ui.sendMessage('done'); state.set('done',true); }",
+        "};",
+      ],
+      [
+        "var A = class {",
+        "  static commit() { if (!db.set('x',1)) return false; return true; }",
+        "  static finish() {",
+        "    this.commit = () => true;",
+        "    this.commit(); ui.sendMessage('done'); state.set('done',true);",
+        "  }",
+        "};",
+      ],
+      [
+        "var A = class {",
+        "  static commit() { if (!db.set('x',1)) return false; return true; }",
+        "  static finish() {",
+        "    const Alias = A;",
+        "    Alias.commit(); ui.sendMessage('done'); state.set('done',true);",
+        "  }",
+        "};",
+      ],
+      [
+        "var A = class {",
+        "  static commit() { if (!db.set('x',1)) return false; return true; }",
+        "  static finish(A) {",
+        "    A.commit(); ui.sendMessage('done'); state.set('done',true);",
+        "  }",
+        "};",
+      ],
+    ];
+    for (const [index, lines] of cases.entries()) {
+      const parsed = parseScriptFile("static-negative-" + index, lines.join("\n"), {
+        artifactId: "fixture:static-ambiguity",
+        relativePath: "scripts/static-bundle.js",
+      });
+      expect(analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback).toEqual([]);
+    }
+  });
+
+  it("preserves class static this inside a nested arrow, not an ordinary function", () => {
+    const parsed = parseScriptFile("static-this", [
+      "var Service = class {",
+      "  static commit() { if (!db.set('score', 4)) return false; return true; }",
+      "  static publish() {",
+      "    const direct = () => {",
+      "      this.commit();",
+      "      ui.sendMessage('complete');",
+      "      state.set('done', true);",
+      "    };",
+      "    direct();",
+      "  }",
+      "  static dynamic() {",
+      "    function inner() {",
+      "      this.commit(); ui.sendMessage('complete'); state.set('done', true);",
+      "    }",
+      "    inner();",
+      "  }",
+      "};",
+    ].join("\n"), {
+      artifactId: "fixture:static-this",
+      relativePath: "scripts/class-bundle.js",
+    });
+    const found = analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({
+      callerRegion: "static:Service.publish/direct",
+      calleeName: "this.commit",
+      callSource: { range: { lineStart: 5 } },
+      failedReturnSource: { range: { lineStart: 2 } },
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+  });
+
+  it("rejects class methods that are syntactically replaced by instance or static ownership", () => {
+    const variants = [
+      "class Owned { commit(){if(!db.set('x',1))return false;return true;} constructor(){this.commit=()=>true;} finish(){this.commit();ui.sendMessage('done');state.set('done',true)} }",
+      "var Owned=class { static commit(){if(!db.set('x',1))return false;return true;} static {this.commit=()=>true;} static finish(){this.commit();ui.sendMessage('done');state.set('done',true)} };",
+      "class Owned { commit(){if(!db.set('x',1))return false;return true;} constructor(){this['commit']=()=>true;} finish(){this.commit();ui.sendMessage('done');state.set('done',true)} }",
+      "class Owned { commit(){if(!db.set('x',1))return false;return true;} get commit(){return ()=>true;} finish(){this.commit();ui.sendMessage('done');state.set('done',true)} }",
+      "class Owned { commit(){if(!db.set('x',1))return false;return true;} ['commit']=()=>true; finish(){this.commit();ui.sendMessage('done');state.set('done',true)} }",
+    ];
+    for (const [index, text] of variants.entries()) {
+      const parsed = parseScriptFile("rebound-" + index, text, {
+        artifactId: "fixture:class-rebind", relativePath: "scripts/rebound.js",
+      });
+      expect(analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback)
+        .toEqual([]);
+    }
+  });
+
+  it("does not merge equal local names owned by separate nested closures", () => {
+    const parsed = parseScriptFile("closures", [
+      "function safeOuter() {",
+      "  function commit() { return true; }",
+      "  function publish() { commit(); ui.sendMessage('done'); state.set('done', true); }",
+      "}",
+      "function unsafeOuter() {",
+      "  function commit() { if (!db.set('score',4)) return false; return true; }",
+      "  function publish() { commit(); ui.sendMessage('done'); state.set('done', true); }",
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:independent-closures",
+      relativePath: "scripts/nested.js",
+    });
+    const found = analyzePersistenceSource([parsed]).ignoredCommitBeforeFeedback;
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({
+      callerRegion: "function:unsafeOuter/publish",
+      calleeName: "commit",
+      failedReturnSource: { range: { lineStart: 6 } },
+      callSource: { range: { lineStart: 7 } },
+    });
+  });
+
   it("summarizes growth without promoting it to a defect", () => {
     const script = parseScriptFile(
       "main",

@@ -331,26 +331,178 @@ function ignoredCommitBeforeFeedback(
     script.source.relativePath, script.text, ts.ScriptTarget.Latest, true,
     /\.tsx?$/i.test(script.source.relativePath) ? ts.ScriptKind.TS : ts.ScriptKind.JS,
   );
-  type Callable = ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression;
+  // A callable is resolved by its lexical owner, not its bare method name.
+  // Identical method/local names in other classes or closures are unrelated.
+  // Unnamed callbacks, arbitrary obj.method(), and dynamic/computed receivers
+  // remain unknown rather than supplying guessed call-graph edges.
+  type Callable = ts.FunctionDeclaration | ts.ArrowFunction |
+    ts.FunctionExpression | ts.MethodDeclaration;
   const declarations = new Map<string, Callable[]>();
-  const add = (name: string, fn: Callable) =>
-    declarations.set(name, [...(declarations.get(name) ?? []), fn]);
+  const parentScope = new Map<string, string>();
+  const thisOwner = new Map<string, string>();
+  const staticThis = new Set<string>();
+  const add = (
+    key: string, fn: Callable, parent?: string, className?: string,
+    depth = 0, isStatic = false,
+  ): void => {
+    declarations.set(key, [...(declarations.get(key) ?? []), fn]);
+    if (parent) parentScope.set(key, parent);
+    if (className) thisOwner.set(key, className);
+    if (isStatic) staticThis.add(key);
+    // Only direct, named lexical declarations in a bounded enclosing body.
+    // A deeper scope remains an UNKNOWN instead of leaking into a global map.
+    if (depth >= 4 || !fn.body || !ts.isBlock(fn.body)) return;
+    for (const statement of fn.body.statements) {
+      if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
+        add(key + "::" + statement.name.text, statement, key, undefined, depth + 1);
+      } else if (ts.isVariableStatement(statement)) {
+        for (const decl of statement.declarationList.declarations) {
+          if (ts.isIdentifier(decl.name) && decl.initializer &&
+              (ts.isArrowFunction(decl.initializer) ||
+               ts.isFunctionExpression(decl.initializer))) {
+            // Arrow functions preserve lexical this; normal functions do not.
+            const inheritedThis = ts.isArrowFunction(decl.initializer)
+              ? className : undefined;
+            add(key + "::" + decl.name.text, decl.initializer,
+              key, inheritedThis, depth + 1,
+              !!inheritedThis && staticThis.has(key));
+          }
+        }
+      }
+    }
+  };
+  const addClass = (
+    owner: string, definition: ts.ClassDeclaration | ts.ClassExpression,
+  ): void => {
+    if (definition.heritageClauses?.length) return;
+    // Direct class declarations and variable class expressions share a
+    // lexical source owner. Static and instance namespaces are separate;
+    // a class-field/this.member rebinding invalidates only its own side.
+    const reboundInstance = new Set<string>();
+    const reboundStatic = new Set<string>();
+    const isStatic = (member: ts.ClassElement): boolean =>
+      ts.canHaveModifiers(member) &&
+      !!ts.getModifiers(member)?.some(mod => mod.kind === ts.SyntaxKind.StaticKeyword);
+    const memberName = (name: ts.PropertyName): string | undefined => {
+      if (ts.isIdentifier(name) || ts.isStringLiteralLike(name))
+        return name.text;
+      if (ts.isComputedPropertyName(name) && ts.isStringLiteralLike(name.expression))
+        return name.expression.text;
+      return undefined;
+    };
+    const scan = (node: ts.Node, unstable: Set<string>): void => {
+      if (ts.isBinaryExpression(node) &&
+          node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+        const left = node.left;
+        if (ts.isPropertyAccessExpression(left) &&
+            left.expression.kind === ts.SyntaxKind.ThisKeyword)
+          unstable.add(left.name.text);
+        if (ts.isElementAccessExpression(left) &&
+            left.expression.kind === ts.SyntaxKind.ThisKeyword &&
+            ts.isStringLiteralLike(left.argumentExpression))
+          unstable.add(left.argumentExpression.text);
+      }
+      ts.forEachChild(node, child => scan(child, unstable));
+    };
+    for (const member of definition.members) {
+      if (ts.isPropertyDeclaration(member) ||
+          ts.isGetAccessorDeclaration(member) ||
+          ts.isSetAccessorDeclaration(member)) {
+        const name = memberName(member.name);
+        if (name !== undefined)
+          (isStatic(member) ? reboundStatic : reboundInstance).add(name);
+      }
+      if (ts.isConstructorDeclaration(member) && member.body)
+        scan(member.body, reboundInstance);
+      if (ts.isClassStaticBlockDeclaration(member))
+        scan(member.body, reboundStatic);
+      if (ts.isMethodDeclaration(member) && member.body)
+        scan(member.body, isStatic(member) ? reboundStatic : reboundInstance);
+    }
+    for (const member of definition.members) {
+      if (!ts.isMethodDeclaration(member) || !member.body ||
+          !ts.isIdentifier(member.name)) continue;
+      const staticMember = isStatic(member);
+      if ((staticMember ? reboundStatic : reboundInstance).has(member.name.text))
+        continue;
+      add((staticMember ? "static:" : "class:") +
+        owner + "." + member.name.text, member, undefined, owner, 0,
+        staticMember);
+    }
+  };
   for (const statement of file.statements) {
     if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
       add(statement.name.text, statement);
     } else if (ts.isVariableStatement(statement)) {
       for (const decl of statement.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name) && decl.initializer &&
-            (ts.isArrowFunction(decl.initializer) ||
-             ts.isFunctionExpression(decl.initializer))) {
+        if (!ts.isIdentifier(decl.name) || !decl.initializer) continue;
+        if (ts.isArrowFunction(decl.initializer) ||
+            ts.isFunctionExpression(decl.initializer)) {
           add(decl.name.text, decl.initializer);
+        } else if (ts.isClassExpression(decl.initializer)) {
+          // A direct variable initializer provides a stable source identifier
+          // for method ownership; it is NOT proof of runtime class identity.
+          addClass(decl.name.text, decl.initializer);
         }
       }
+    } else if (ts.isClassDeclaration(statement) && statement.name) {
+      addClass(statement.name.text, statement);
     }
   }
   const unique = new Map([...declarations.entries()]
     .filter(([, values]) => values.length === 1)
-    .map(([name, values]) => [name, values[0]!] as const));
+    .map(([key, values]) => [key, values[0]!] as const));
+  const bindings = new Map<string, Set<string>>();
+  for (const [key, fn] of unique) {
+    const names = new Set(fn.parameters
+      .filter(param => ts.isIdentifier(param.name))
+      .map(param => (param.name as ts.Identifier).text));
+    const visit = (node: ts.Node): void => {
+      if (node !== fn && ts.isFunctionLike(node)) {
+        if (ts.isFunctionDeclaration(node) && node.name) names.add(node.name.text);
+        return;
+      }
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name))
+        names.add(node.name.text);
+      ts.forEachChild(node, visit);
+    };
+    if (fn.body) visit(fn.body);
+    bindings.set(key, names);
+  }
+  const resolveCall = (callerKey: string, expr: ts.LeftHandSideExpression):
+    string | undefined => {
+    if (ts.isIdentifier(expr)) {
+      let scope: string | undefined = callerKey;
+      while (scope) {
+        const localKey: string = scope + "::" + expr.text;
+        // A parameter, local variable or local declaration shadows any
+        // outer/global callable. Only uniquely indexed local functions pass.
+        if (unique.get(scope)?.parameters.some(param =>
+            ts.isIdentifier(param.name) && param.name.text === expr.text)) return undefined;
+        if (bindings.get(scope)?.has(expr.text) || declarations.has(localKey))
+          return unique.has(localKey) ? localKey : undefined;
+        scope = parentScope.get(scope);
+      }
+      return unique.has(expr.text) ? expr.text : undefined;
+    }
+    if (ts.isPropertyAccessExpression(expr)) {
+      const owner = thisOwner.get(callerKey);
+      if (!owner) return undefined;
+      const staticOwner = staticThis.has(callerKey);
+      if (expr.expression.kind !== ts.SyntaxKind.ThisKeyword &&
+          !(staticOwner && ts.isIdentifier(expr.expression) &&
+            expr.expression.text === owner &&
+            !bindings.get(callerKey)?.has(owner))) return undefined;
+      const key = (staticOwner ? "static:" : "class:") +
+        owner + "." + expr.name.text;
+      return unique.has(key) ? key : undefined;
+    }
+    return undefined;
+  };
+  const ownerRegion = (key: string): string =>
+    key.startsWith("class:") || key.startsWith("static:")
+      ? key.replaceAll("::", "/")
+      : "function:" + key.replaceAll("::", "/");
   const site = (node: ts.Node): SourceRef => {
     const start = file.getLineAndCharacterOfPosition(node.getStart(file));
     const end = file.getLineAndCharacterOfPosition(node.getEnd());
@@ -409,23 +561,10 @@ function ignoredCommitBeforeFeedback(
           fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
       const last = fn.body.statements.at(-1);
       if (!last || !ts.isReturnStatement(last) ||
-          !last.expression || !ts.isCallExpression(last.expression) ||
-          !ts.isIdentifier(last.expression.expression)) continue;
-      const calleeName = last.expression.expression.text;
-      const underlying = earlier.get(calleeName);
+          !last.expression || !ts.isCallExpression(last.expression)) continue;
+      const calleeKey = resolveCall(name, last.expression.expression);
+      const underlying = calleeKey === undefined ? undefined : earlier.get(calleeKey);
       if (!underlying || underlying.names.includes(name)) continue;
-      let shadowed = fn.parameters.some(param =>
-        ts.isIdentifier(param.name) && param.name.text === calleeName);
-      if (fn.body.statements.some(statement =>
-          ts.isFunctionDeclaration(statement) &&
-          statement.name?.text === calleeName)) shadowed = true;
-      walkBody(fn.body, fn, node => {
-        if (ts.isVariableDeclaration(node) &&
-            ts.isIdentifier(node.name) && node.name.text === calleeName) shadowed = true;
-        if (ts.isFunctionDeclaration(node) &&
-            node.name?.text === calleeName) shadowed = true;
-      });
-      if (shadowed) continue;
       fallible.set(name, {
         failedReturnSource: underlying.failedReturnSource,
         forwardingReturnSources: [site(last), ...underlying.forwardingReturnSources],
@@ -440,21 +579,9 @@ function ignoredCommitBeforeFeedback(
   const output: IgnoredCommitBeforeFeedbackCandidate[] = [];
   for (const [callerName, fn] of unique) {
     if (!fn.body || !ts.isBlock(fn.body)) continue;
-    const shadowed = new Set(fn.parameters.filter(parameter =>
-      ts.isIdentifier(parameter.name)).map(parameter =>
-      (parameter.name as ts.Identifier).text));
-    for (const statement of fn.body.statements) {
-      if (ts.isFunctionDeclaration(statement) && statement.name)
-        shadowed.add(statement.name.text);
-    }
-    // Reject caller-local shadowing of a global function. No free-variable
-    // name matching is accepted when the actual callee could be different.
-    walkBody(fn.body, fn, node => {
-      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name))
-        shadowed.add(node.name.text);
-      if (ts.isFunctionDeclaration(node) && node.name)
-        shadowed.add(node.name.text);
-    });
+    // Call-site binding resolution is shared with return forwarding.
+    // A class method, nested closure or global function cannot borrow a
+    // same-named callable belonging to another lexical owner.
     walkBody(fn.body, fn, node => {
       if (!ts.isBlock(node)) return;
       // Catch/finally may compensate or transform the source outcome.
@@ -465,11 +592,11 @@ function ignoredCommitBeforeFeedback(
       }
       for (const [index, statement] of node.statements.entries()) {
         if (!ts.isExpressionStatement(statement) ||
-            !ts.isCallExpression(statement.expression) ||
-            !ts.isIdentifier(statement.expression.expression)) continue;
-        const calleeName = statement.expression.expression.text;
-        const failure = fallible.get(calleeName);
-        if (!failure || shadowed.has(calleeName)) continue;
+            !ts.isCallExpression(statement.expression)) continue;
+        const calleeKey = resolveCall(callerName, statement.expression.expression);
+        const failure = calleeKey === undefined ? undefined : fallible.get(calleeKey);
+        if (!failure) continue;
+        const calleeName = statement.expression.expression.getText(file);
         let write: SourceRef | undefined;
         let feedback: SourceRef | undefined;
         // Source-visible adjacent siblings only. A branch, try/catch,
@@ -490,7 +617,7 @@ function ignoredCommitBeforeFeedback(
         if (!write || !feedback) continue;
         output.push({
           scriptId: script.identifier,
-          callerRegion: "function:" + callerName,
+          callerRegion: ownerRegion(callerName),
           calleeName,
           callSource: site(statement.expression),
           failedReturnSource: failure.failedReturnSource,
@@ -516,11 +643,11 @@ function ignoredCommitBeforeFeedback(
       const branch = statement.thenStatement.statements;
       const last = branch.at(-1);
       if (!last || !ts.isExpressionStatement(last) ||
-          !ts.isCallExpression(last.expression) ||
-          !ts.isIdentifier(last.expression.expression)) continue;
-      const calleeName = last.expression.expression.text;
-      const failure = fallible.get(calleeName);
-      if (!failure || shadowed.has(calleeName)) continue;
+          !ts.isCallExpression(last.expression)) continue;
+      const calleeKey = resolveCall(callerName, last.expression.expression);
+      const failure = calleeKey === undefined ? undefined : fallible.get(calleeKey);
+      if (!failure) continue;
+      const calleeName = last.expression.expression.getText(file);
       let precedingWrite: SourceRef | undefined;
       for (const prior of branch.slice(0, -1)) {
         if (!ts.isExpressionStatement(prior) ||
@@ -553,7 +680,7 @@ function ignoredCommitBeforeFeedback(
       if (!feedback) continue;
       output.push({
         scriptId: script.identifier,
-        callerRegion: "function:" + callerName,
+        callerRegion: ownerRegion(callerName),
         calleeName,
         callSource: site(last.expression),
         failedReturnSource: failure.failedReturnSource,
