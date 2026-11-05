@@ -3431,7 +3431,7 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "riskHint": "low",
         "action": "validate-merged-suite-on-affected-change",
-        "sourceBlobSha": "07325d0b0cb0c858037de99cdaa905253d525d7f"
+        "sourceBlobSha": "a4d1223e94b82da98fab2c2e4870861cebecfc07"
       },
       "functionalArea": "arena-match",
       "mechanicTags": [

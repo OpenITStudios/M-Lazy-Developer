@@ -1488,10 +1488,18 @@ function terminalRaceAssessments(
           ),
       );
 
+    // A source-linked finish() was newly admitted as a candidate, but the
+    // terminal latch extractor does not recognize that method name. Its
+    // missing latch receipt is therefore NOT evidence that the actual method
+    // lacks a guard; keep the race unresolved instead of claiming a bug.
+    const unmodeledFinish =
+      regionFunctionName(assessment.terminalRegion)?.toLowerCase() ===
+      "finish";
     const status =
       latch !== undefined
         ? "protected" as const
-        : unguardedDeferred.length > 0 &&
+        : !unmodeledFinish &&
+            unguardedDeferred.length > 0 &&
             hasOtherIngress
           ? "contradicted" as const
           : "unresolved" as const;
@@ -1531,7 +1539,9 @@ function terminalRaceAssessments(
           : status ===
               "contradicted"
             ? "An unguarded deferred terminal callback remains able to reach the same terminal owner as another distinct ingress, and the terminal owner has no source-proven one-shot latch."
-            : "Multiple distinct terminal ingresses reach the same terminal owner, but source evidence does not yet prove coexistence or a blocking/idempotent exclusion.",
+            : unmodeledFinish
+              ? "Source-linked finish() has distinct terminal ingresses, but this method is outside the current latch extractor's recognized terminal names. An absent latch receipt cannot prove the absence of an authored guard or a double-ending bug."
+              : "Multiple distinct terminal ingresses reach the same terminal owner, but source evidence does not yet prove coexistence or a blocking/idempotent exclusion.",
     });
   }
 

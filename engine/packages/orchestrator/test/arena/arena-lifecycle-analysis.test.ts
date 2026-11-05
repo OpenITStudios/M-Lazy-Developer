@@ -67,6 +67,46 @@ describe("arena lifecycle convergence", () => {
     expect(result.provenTerminalRaces).toBe(0);
   });
 
+  it("does not declare a shared finish() double-ending when its latch is not modeled", () => {
+    const script = parseScriptFile("finish-guard", [
+      'import { world, system } from "@minecraft/server";',
+      "class Match {",
+      "  setup() {",
+      "    world.afterEvents.playerLeave.subscribe(() => this.disconnect());",
+      "    system.runTimeout(() => this.tick(), 20);",
+      "  }",
+      "  disconnect() { this.finish('red'); }",
+      "  tick() { this.finish('draw'); }",
+      "  finish(winner) {",
+      "    if (this.feedback.kind('arena') === 'ending') return;",
+      "    this.feedback.begin('ending', winner);",
+      "  }",
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture", relativePath: "scripts/finish-guard.js",
+    });
+    const assessed = analyzeArenaLifecycleConvergence([script]);
+    const race = assessed.terminalRaces.find(item =>
+      /^function:Match\.finish@\d+:\d+$/.test(item.terminalRegion));
+    expect(race).toMatchObject({
+      status: "unresolved",
+      precedenceStatus: "unresolved",
+      ingresses: expect.arrayContaining([
+        expect.objectContaining({
+          kind: "event", id: "world.afterEvents.playerLeave",
+        }),
+        expect.objectContaining({
+          kind: "deferred", guardStatus: "unguarded",
+        }),
+      ]),
+    });
+    expect(race?.reason).toContain("cannot prove the absence");
+    expect(assessed.provenTerminalRaces).toBe(0);
+    expect(assessed.unresolvedTerminalRaces).toBe(1);
+    // Existing unguarded endGame regression below still requires
+    // contradicted; only source-linked finish() is conservatively scoped.
+  });
+
   it("does not promote a generic finish helper without a source-linked terminal and second owner", () => {
     const cases = [
       ["class UI { tick() { this.finish(); } paint() { this.finish(); } finish() {} }",
