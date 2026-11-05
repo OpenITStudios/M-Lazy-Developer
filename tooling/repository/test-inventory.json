@@ -1621,7 +1621,7 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/analyzers/scripts",
         "action": "revisit-on-relevant-source-change",
-        "sourceBlobSha": "3f8293c984111ad50fc9a2981027503a977b4055"
+        "sourceBlobSha": "dce566bf3a5690d12993582cbb398a46d6269a8a"
       },
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],

@@ -3013,13 +3013,63 @@ export function parseScriptFile(
         !(ts.isArrowFunction(callback) ||
           ts.isFunctionExpression(callback) ||
           ts.isFunctionDeclaration(callback)) ||
-        callback.parameters.length !== 1 ||
-        !ts.isIdentifier(callback.parameters[0]!.name) ||
-        !callback.body) return [];
-    const paramDecl = callback.parameters[0]!.name;
-    if (!ts.isIdentifier(paramDecl)) return [];
-    const param = paramDecl.text;
+        callback.parameters.length !== 1 || !callback.body) return [];
+    const formal = callback.parameters[0]!;
+    if (formal.dotDotDotToken || formal.initializer) return [];
+    const paramDecl = formal.name;
+    const field = eventName === "playerLeave" ? "playerId" : "initialSpawn";
+    const eventParam = ts.isIdentifier(paramDecl) ? paramDecl.text : undefined;
+    // Bundled Bedrock scripts often destructure and rename event fields.
+    // Only one direct, default-free binding can identify the source.
+    const fields = ts.isObjectBindingPattern(paramDecl)
+      ? paramDecl.elements.filter(element =>
+          !element.dotDotDotToken && !element.initializer &&
+          ts.isIdentifier(element.name) &&
+          (element.propertyName === undefined
+            ? element.name.text === field
+            : ts.isIdentifier(element.propertyName) &&
+              element.propertyName.text === field))
+      : [];
+    const alias = fields.length === 1 && ts.isIdentifier(fields[0]!.name)
+      ? fields[0]!.name.text : undefined;
+    if (!eventParam && !alias) return [];
+    const param = eventParam ?? alias!;
     const body = callback.body;
+    // Refuse rebinding in any branch or closure; the alias would no
+    // longer prove that a later call received the event field.
+    const writesBinding = (node: ts.Node): boolean =>
+      ts.isIdentifier(node) ? node.text === param :
+      (ts.isParenthesizedExpression(node) ||
+       ts.isObjectLiteralExpression(node) ||
+       ts.isArrayLiteralExpression(node) ||
+       ts.isPropertyAssignment(node) ||
+       ts.isShorthandPropertyAssignment(node) ||
+       ts.isSpreadElement(node) ||
+       ts.isSpreadAssignment(node))
+        ? ts.forEachChild(node, writesBinding) === true : false;
+    let rebound = false;
+    const checkRebind = (node: ts.Node): void => {
+      if (rebound) return;
+      if ((ts.isVariableDeclaration(node) && bindsName(node.name, param)) ||
+          (ts.isBinaryExpression(node) &&
+           node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+           node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+           writesBinding(node.left)) ||
+          ((ts.isPrefixUnaryExpression(node) ||
+            ts.isPostfixUnaryExpression(node)) &&
+           (node.operator === ts.SyntaxKind.PlusPlusToken ||
+            node.operator === ts.SyntaxKind.MinusMinusToken) &&
+           writesBinding(node.operand)) ||
+          ((ts.isForOfStatement(node) || ts.isForInStatement(node)) &&
+           !ts.isVariableDeclarationList(node.initializer) &&
+           writesBinding(node.initializer))) {
+        rebound = true;
+        return;
+      }
+      ts.forEachChild(node, checkRebind);
+    };
+    checkRebind(body);
+    if (rebound) return [];
     const sites: NonNullable<ScriptEventSubscription["playerSessionSites"]>[number][] = [];
     const shadowedParam = (id: ts.Identifier): boolean => {
       let current: ts.Node | undefined = id.parent;
@@ -3035,17 +3085,25 @@ export function parseScriptFile(
       return current !== callback;
     };
     const eventMember = (expr: ts.Expression, member: string): boolean =>
-      ts.isPropertyAccessExpression(expr) &&
-      ts.isIdentifier(expr.expression) &&
-      expr.expression.text === param &&
-      expr.name.text === member &&
-      !shadowedParam(expr.expression);
+      eventParam !== undefined
+        ? ts.isPropertyAccessExpression(expr) &&
+          ts.isIdentifier(expr.expression) &&
+          expr.expression.text === param &&
+          expr.name.text === member &&
+          !shadowedParam(expr.expression)
+        : member === field && ts.isIdentifier(expr) &&
+          expr.text === param &&
+          !(ts.isPropertyAccessExpression(expr.parent) &&
+            expr.parent.name === expr) &&
+          !(ts.isPropertyAssignment(expr.parent) &&
+            expr.parent.name === expr) &&
+          !shadowedParam(expr);
     const scan = (node: ts.Node): void => {
       // A nested closure might run later and cannot prove this handler's
       // immediate source behavior.
       if (ts.isFunctionLike(node)) return;
       if (eventName === "playerSpawn" &&
-          ts.isPropertyAccessExpression(node) &&
+          (ts.isPropertyAccessExpression(node) || ts.isIdentifier(node)) &&
           eventMember(node, "initialSpawn") &&
           !(ts.isBinaryExpression(node.parent) &&
             node.parent.left === node &&

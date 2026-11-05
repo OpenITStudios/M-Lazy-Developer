@@ -22,6 +22,63 @@ describe("script analyzer", () => {
     expect(structuredClone(parsed)).toEqual(parsed);
   });
 
+  it("recovers player-session sites from direct destructured event fields", () => {
+    const parsed = parseScriptFile("scripts/session", [
+      'import { world as w } from "@minecraft/server";',
+      "const cache = new Map();",
+      "function closeSession(id) { cache.delete(id); }",
+      "w.afterEvents.playerLeave.subscribe(({ playerId: id }) => {",
+      "  cache.delete(id);",
+      "  closeSession(id);",
+      "});",
+      "w.afterEvents.playerSpawn.subscribe(({ initialSpawn: fresh }) => {",
+      "  if (fresh) announce();",
+      "});",
+      "w.afterEvents.playerLeave.subscribe(event => closeSession(event.playerId));",
+    ].join("\n"), source);
+    const leave = parsed.events.filter(item => item.event === "playerLeave");
+    expect(leave[0]?.playerSessionSites?.map(item => item.kind))
+      .toEqual(["leave-direct-cache-delete", "leave-id-argument"]);
+    expect(leave[0]?.playerSessionSites?.map(item => item.source.range?.lineStart))
+      .toEqual([5, 6]);
+    expect(leave[0]?.playerSessionSites?.[1]).toMatchObject({
+      argumentIndex: 0, argumentCount: 1,
+    });
+    expect(leave[1]?.playerSessionSites?.[0]?.kind).toBe("leave-id-argument");
+    const spawn = parsed.events.find(item => item.event === "playerSpawn");
+    expect(spawn?.playerSessionSites?.[0]).toMatchObject({
+      kind: "spawn-initial-flag-read", source: { range: { lineStart: 9 } },
+    });
+  });
+
+  it("refuses changed, defaulted, shadowed and deferred playerId aliases", () => {
+    const unsafe = [
+      "({ playerId: id = fallback }) => { cache.delete(id); }",
+      "({ playerId: id }) => { id = other; cache.delete(id); }",
+      "({ playerId: id }) => { ({ playerId: id } = other); cache.delete(id); }",
+      "({ playerId: id }) => { ++id; cache.delete(id); }",
+      "({ playerId: id }) => { { const id = other; cache.delete(id); } }",
+      "({ playerId: id }) => { try {} catch (id) { cache.delete(id); } }",
+      "({ playerId: id }) => { schedule(() => cache.delete(id)); }",
+      "({ other: id }) => { cache.delete(id); }",
+      "({ [name]: id }) => { cache.delete(id); }",
+    ];
+    const parsed = parseScriptFile("scripts/session-unsafe", [
+      'import { world } from "@minecraft/server";',
+      "const cache = new Map();",
+      ...unsafe.map(handler =>
+        "world.afterEvents.playerLeave.subscribe(" + handler + ");"),
+      "world.afterEvents.playerLeave.subscribe(event => {",
+      "  event = other;",
+      "  cache.delete(event.playerId);",
+      "});",
+    ].join("\n"), source);
+    const leave = parsed.events.filter(item => item.event === "playerLeave");
+    expect(leave).toHaveLength(unsafe.length + 1);
+    expect(leave.every(item => (item.playerSessionSites ?? []).length === 0))
+      .toBe(true);
+  });
+
   it("retains exact authored translate-key object references, never random strings or computed keys", () => {
     const script = [
       'player.sendMessage({ translate: "welcome.guide" });',
