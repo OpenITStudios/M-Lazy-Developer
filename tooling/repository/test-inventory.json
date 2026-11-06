@@ -5730,11 +5730,11 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
-        "sourceBlobSha": "0bc0dfaabcf33533f387c330202a06927ad2cb0f",
+        "sourceBlobSha": "5f6825dbc8e6ba135d7a6c60ea118e64c6118fde",
         "consumerSymbol": "analyzePersistenceSource"
       },
       "recommendation": "keep",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Direct two-argument storage-set source sequence is now covered by existing parser-to-persistence regression, including same-block and same-receiver negative controls; source-only, not executable test PASS.",
       "functionalArea": "player-state-persistence",
       "mechanicTags": [
         "player.leave",

@@ -3507,6 +3507,13 @@ export function parseScriptFile(
           node.expression.expression.kind !== ts.SyntaxKind.ThisKeyword) {
         const callerRegion = localExecutionRegionId(node, file);
         if (callerRegion.startsWith("function:")) {
+          // Keep just the two-argument direct statement shape for source
+          // comparisons. No semantic meaning or receiver ownership is
+          // inferred by the parser, and nested/conditional calls remain
+          // outside this bounded direct-write sequence.
+          const orderedCall = node.expression.name.text === "set" &&
+              node.arguments.length === 2
+            ? sourceSequentialSite(node, file, source) : undefined;
           unresolvedReceiverCalls.push({
             executionRegion: callerRegion,
             receiverExpression: node.expression.expression.getText(file).slice(0,160),
@@ -3514,6 +3521,10 @@ export function parseScriptFile(
             source: lineSource(file, node, source),
             lexicalGuards: lexicalBranchGuards(node, file, source),
             precedenceGuards: precedingEarlyExitGuards(node, file, source),
+            ...(orderedCall?.directCall !== true ? {} : {
+              argumentExpressions: node.arguments.map(arg => arg.getText(file)),
+              sourceSequence: orderedCall,
+            }),
           });
         }
       }

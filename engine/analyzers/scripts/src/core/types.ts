@@ -282,6 +282,10 @@ export interface ScriptUnresolvedReceiverCall {
   readonly source: SourceRef;
   readonly lexicalGuards?: readonly ScriptLexicalGuard[];
   readonly precedenceGuards?: readonly ScriptLexicalGuard[];
+  /** Only direct two-argument expression statements: lexical syntax, not
+   * receiver identity, a successful write, or a persistence transaction. */
+  readonly argumentExpressions?: readonly string[];
+  readonly sourceSequence?: SourceSequentialSite;
 }
 
 export interface ScriptPropertyWrite {

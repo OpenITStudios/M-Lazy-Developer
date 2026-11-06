@@ -38,6 +38,70 @@ describe("persistence source analysis", () => {
     });
   });
 
+  it("retains direct ordered storage writes without a wrapper or a new detector", () => {
+    const parse = (lines: readonly string[]) => parseScriptFile(
+      "direct-history",
+      ["const DB = class {", ...lines, "};"].join("\n"),
+      { artifactId: "fixture:direct", relativePath: "scripts/direct.js" },
+    );
+    const key = String.fromCharCode(96) + "history_$" + "{doc.id}" +
+      String.fromCharCode(96);
+    const positive = parse([
+      "record(doc) {",
+      "  const n = 4;",
+      "  this.storage.set('history_sequence', n + 1);",
+      "  const row = { ...doc, order: n + 1 };",
+      "  this.storage.set(" + key + ", row);",
+      "}",
+    ]);
+    const directCalls = positive.unresolvedReceiverCalls?.filter(site =>
+      site.method === "set" && site.receiverExpression === "this.storage") ?? [];
+    expect(directCalls).toHaveLength(2);
+    expect(directCalls.every(site =>
+      site.sourceSequence?.directCall &&
+      site.argumentExpressions?.length === 2)).toBe(true);
+    const selected = analyzePersistenceSource([], [positive])
+      .sequentialCounterBeforePayload ?? [];
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toMatchObject({
+      scriptId: "direct-history", counterKey: "history_sequence",
+      firstWriteSource: { range: { lineStart: 4 } },
+      payloadWriteSource: { range: { lineStart: 6 } },
+      storageSetSource: { range: { lineStart: 4 } },
+      proof: "SOURCE_ORDERED_COUNTER_PAYLOAD_NOT_ATOMICITY_PROOF",
+    });
+
+    const negative: readonly (readonly string[])[] = [
+      // One storage backend cannot borrow a second, unrelated receiver.
+      ["record(doc) { const n = 4;",
+       "  this.storage.set('history_sequence', n + 1);",
+       "  this.telemetry.set('history_record', doc); }"],
+      // Branch bodies are not the same exact direct lexical block.
+      ["record(doc) { const n = 4;",
+       "  this.storage.set('history_sequence', n + 1);",
+       "  if (doc.ready) { this.storage.set('history_record', doc); } }"],
+      // Counter-like increments are not a separate payload.
+      ["record(doc) { const n = 4;",
+       "  this.storage.set('history_sequence', n + 1);",
+       "  this.storage.set('another_counter', n + 1); }"],
+      // Order and key identity are both significant.
+      ["record(doc) { const n = 4;",
+       "  this.storage.set('history_record', doc);",
+       "  this.storage.set('history_sequence', n + 1); }"],
+      ["record(doc) { const n = 4;",
+       "  this.storage.set('history_sequence', n + 1);",
+       "  this.storage.set('history_sequence', doc); }"],
+      // A similarly named method in a different method owner does not
+      // manufacture one sequential transaction.
+      ["first(doc) { const n = 4; this.storage.set('history_sequence', n + 1); }",
+       "second(doc) { this.storage.set('history_record', doc); }"],
+    ];
+    for (const lines of negative) {
+      expect(analyzePersistenceSource([], [parse(lines)])
+        .sequentialCounterBeforePayload).toEqual([]);
+    }
+  });
+
   it("does not infer partial multi-key commits from unrelated or unlinked writes", () => {
     const parse = (lines: readonly string[]) => parseScriptFile(
       "controls", ["const DB = class {", ...lines, "};"].join("\n"),

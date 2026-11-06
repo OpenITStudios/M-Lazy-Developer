@@ -915,15 +915,17 @@ function ignoredCommitBeforeFeedback(
 }
 
 /** Reuse exact parser call, declaration, block and storage setter evidence.
- * One source-only candidate per writer method, not a new detector or BUG.
+ * Direct storage.set(key, value) and same-class write-wrapper calls share
+ * one bounded lexical pairing rule; neither proves atomicity or gameplay.
  */
 function sequentialCounterBeforePayload(
   script: ParsedScriptFile,
 ): readonly SequentialCounterBeforePayloadCandidate[] {
+  const storageReceiver = (value: string): boolean =>
+    /^this\.(?:storage|store|database|db|journal)$/.test(value);
   const stores = new Map<string, SourceRef>();
   for (const site of script.unresolvedReceiverCalls ?? []) {
-    if (site.method !== "set" ||
-        !/^this\.(?:storage|store|database|db|journal)$/.test(site.receiverExpression) ||
+    if (site.method !== "set" || !storageReceiver(site.receiverExpression) ||
         site.source.artifactId !== script.source.artifactId ||
         site.source.relativePath !== script.source.relativePath) continue;
     if (!stores.has(site.executionRegion))
@@ -942,45 +944,88 @@ function sequentialCounterBeforePayload(
       value.charCodeAt(value.length - 1) === 96 &&
       value.includes("$" + "{");
   };
-  type Call = ParsedScriptFile["localFunctionCalls"][number];
-  const groups = new Map<string, Call[]>();
+  type Write = {
+    readonly callerRegion: string;
+    readonly argumentExpressions: readonly string[];
+    readonly source: SourceRef;
+    readonly sourceSequence: NonNullable<
+      ParsedScriptFile["localFunctionCalls"][number]["sourceSequence"]
+    >;
+    readonly storageSetSource: SourceRef;
+  };
+  const groups = new Map<string, Write[]>();
+  const add = (kind: string, target: string, write: Write): void => {
+    // Include exact containing block in the key. Comparing every write
+    // against writes in unrelated branches would waste quadratic work.
+    const block = exactSourceToken(write.sourceSequence.block);
+    if (block === undefined) return;
+    const key = JSON.stringify([kind, write.callerRegion, target, block]);
+    const group = groups.get(key) ?? [];
+    group.push(write);
+    groups.set(key, group);
+  };
+
+  // Existing same-class writer wrapper: this.write(counter, n+1)
+  // followed by this.write(payload, record).
   for (const call of script.localFunctionCalls) {
-    if (!stores.has(call.targetRegion) ||
-        call.argumentExpressions?.length !== 2 ||
-        !call.targetSource || !exactSourceToken(call.targetSource) ||
-        !call.sourceSequence?.directCall ||
+    const store = stores.get(call.targetRegion);
+    const targetSource = call.targetSource &&
+      exactSourceToken(call.targetSource);
+    if (!store || call.argumentExpressions?.length !== 2 ||
+        targetSource === undefined || !call.sourceSequence?.directCall ||
         call.source.artifactId !== script.source.artifactId ||
         call.source.relativePath !== script.source.relativePath ||
-        call.targetSource.artifactId !== script.source.artifactId ||
-        call.targetSource.relativePath !== script.source.relativePath) continue;
-    const groupId = JSON.stringify([
-      call.callerRegion, call.targetRegion, exactSourceToken(call.targetSource),
-    ]);
-    const group = groups.get(groupId) ?? [];
-    group.push(call);
-    groups.set(groupId, group);
+        call.targetSource?.artifactId !== script.source.artifactId ||
+        call.targetSource?.relativePath !== script.source.relativePath) continue;
+    add("wrapper", JSON.stringify([call.targetRegion, targetSource]), {
+      callerRegion: call.callerRegion,
+      argumentExpressions: call.argumentExpressions,
+      source: call.source,
+      sourceSequence: call.sourceSequence,
+      storageSetSource: store,
+    });
   }
+
+  // Direct same-receiver storage calls need no extra AST traversal. The
+  // generic parser already provides exact arguments and direct-block order.
+  // Receiver rebinding, backend transaction semantics and exception recovery
+  // remain unproven; this is an investigation candidate, never BUG proof.
+  for (const site of script.unresolvedReceiverCalls ?? []) {
+    if (site.method !== "set" || !storageReceiver(site.receiverExpression) ||
+        site.argumentExpressions?.length !== 2 ||
+        !site.sourceSequence?.directCall ||
+        site.source.artifactId !== script.source.artifactId ||
+        site.source.relativePath !== script.source.relativePath) continue;
+    add("direct", site.receiverExpression, {
+      callerRegion: site.executionRegion,
+      argumentExpressions: site.argumentExpressions,
+      source: site.source,
+      sourceSequence: site.sourceSequence,
+      storageSetSource: site.source,
+    });
+  }
+
   const found: SequentialCounterBeforePayloadCandidate[] = [];
   for (const calls of groups.values()) {
     const sorted = [...calls].sort((a, b) =>
-      a.sourceSequence!.statementIndex - b.sourceSequence!.statementIndex);
+      a.sourceSequence.statementIndex - b.sourceSequence.statementIndex);
     let selected = false;
     for (const first of sorted) {
       if (selected) break;
-      const counterKey = literal(first.argumentExpressions?.[0]);
-      if (!counterKey || !inc(first.argumentExpressions?.[1])) continue;
+      const counterKey = literal(first.argumentExpressions[0]);
+      if (!counterKey || !inc(first.argumentExpressions[1])) continue;
       for (const second of sorted) {
-        if (second.sourceSequence!.statementIndex <= first.sourceSequence!.statementIndex ||
-            !sameSequentialBlock(first.sourceSequence!.block, second.sourceSequence!.block) ||
-            !separateKeyCandidate(second.argumentExpressions?.[0], counterKey) ||
-            inc(second.argumentExpressions?.[1])) continue;
+        if (second.sourceSequence.statementIndex <= first.sourceSequence.statementIndex ||
+            !sameSequentialBlock(first.sourceSequence.block, second.sourceSequence.block) ||
+            !separateKeyCandidate(second.argumentExpressions[0], counterKey) ||
+            inc(second.argumentExpressions[1])) continue;
         found.push({
           scriptId: script.identifier,
           callerRegion: first.callerRegion,
           counterKey,
           firstWriteSource: first.source,
           payloadWriteSource: second.source,
-          storageSetSource: stores.get(first.targetRegion)!,
+          storageSetSource: first.storageSetSource,
           proof: "SOURCE_ORDERED_COUNTER_PAYLOAD_NOT_ATOMICITY_PROOF",
         });
         selected = true;
