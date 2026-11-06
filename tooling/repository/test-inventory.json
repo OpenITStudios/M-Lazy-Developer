@@ -6473,7 +6473,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "bdd864a5e3dab9adec116ed8c221649b9108c6c4",
+        "sourceBlobSha": "d06263cf3502649838d1d4ec59b1b01b9f7ed306",
         "consumerSymbol": "projectMapAuditOutputV2"
       },
       "recommendation": "keep",

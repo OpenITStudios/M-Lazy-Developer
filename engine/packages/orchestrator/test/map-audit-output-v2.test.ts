@@ -406,6 +406,77 @@ describe("Map Audit Output V2 projection", () => {
     expect(multiModeReport.gameDesign.loseConditionGrounding).toBe("unresolved");
     expect(multiModeReport.bugs.map(item => item.status))
       .toEqual(["PROVEN", "NEED_VALIDATION"]);
+    // Ambiguous identities must not promote authored map intent or QA scope.
+    const duplicateEvidence = projectMapAuditOutputV2({
+      ...projectionInput,
+      inspection: {
+        ...inspection,
+        gameplayIntent: { model: {
+          ...inspection.gameplayIntent.model,
+          evidence: [
+            { id: "e:objective", origin: "historical-diff",
+              scope: "external-reference", locator: "prior-map.json",
+              summary: "Different map with reused source ID." },
+            ...inspection.gameplayIntent.model.evidence,
+          ],
+        } },
+      },
+    });
+    expect(duplicateEvidence.gameDesign.objectiveGrounding).toBe("unresolved");
+    expect(duplicateEvidence.gameDesign.objective)
+      .toBe("Unresolved from selected artifact.");
+    expect(duplicateEvidence.qaCoverage?.sourceActivities).toEqual([]);
+
+    const duplicateNode = projectMapAuditOutputV2({
+      ...projectionInput,
+      inspection: {
+        ...inspection,
+        gameplayIntent: { model: {
+          ...inspection.gameplayIntent.model,
+          nodes: [
+            ...inspection.gameplayIntent.model.nodes,
+            { ...inspection.gameplayIntent.model.nodes[0],
+              label: "Conflicting objective with reused node ID" },
+          ],
+        } },
+      },
+    });
+    expect(duplicateNode.gameDesign.objectiveGrounding).toBe("unresolved");
+    expect(duplicateNode.gameDesign.objective)
+      .toBe("Unresolved from selected artifact.");
+    expect(duplicateNode.qaCoverage?.sourceActivities).toEqual([]);
+
+    const winEdge = {
+      id: "edge:winning", kind: "wins-by", status: "authored",
+      from: "objective:1", to: "outcome:1",
+      evidenceIds: ["e:objective"],
+    };
+    const ownedWin = {
+      ...inspection,
+      gameplayIntent: { model: {
+        ...inspection.gameplayIntent.model,
+        nodes: [...inspection.gameplayIntent.model.nodes, {
+          id: "outcome:1", kind: "outcome", status: "authored",
+          label: "Victory condition", evidenceIds: ["e:objective"],
+        }],
+        edges: [winEdge],
+      } },
+    };
+    expect(projectMapAuditOutputV2({
+      ...projectionInput, inspection: ownedWin,
+    }).gameDesign.winCondition).toContain("Victory condition");
+    const ambiguousWin = projectMapAuditOutputV2({
+      ...projectionInput,
+      inspection: { ...ownedWin, gameplayIntent: { model: {
+        ...ownedWin.gameplayIntent.model,
+        nodes: [...ownedWin.gameplayIntent.model.nodes, {
+          id: "outcome:1", kind: "outcome", status: "authored",
+          label: "Conflicting victory", evidenceIds: ["e:objective"],
+        }],
+      } } },
+    });
+    expect(ambiguousWin.gameDesign.winCondition)
+      .toBe("Unresolved from selected artifact.");
   });
 
   it("renders source-labelled stage/task ownership without assuming progression", () => {

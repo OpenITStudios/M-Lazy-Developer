@@ -411,16 +411,42 @@ function nodeText(
   return value || undefined;
 }
 
+/** Duplicated evidence IDs have no unique current-artifact owner. */
+function uniquelyOwnedSelectedEvidence(model: GameplayIntentModel) {
+  const byId = new Map<string, GameplayIntentModel["evidence"][number]>();
+  const ambiguous = new Set<string>();
+  for (const evidence of model.evidence ?? []) {
+    if (byId.has(evidence.id)) ambiguous.add(evidence.id);
+    else byId.set(evidence.id, evidence);
+  }
+  for (const id of ambiguous) byId.delete(id);
+  for (const [id, evidence] of byId) {
+    if (evidence.scope !== "selected-artifact") byId.delete(id);
+  }
+  return byId;
+}
+
 function selectedSourceIds(model: GameplayIntentModel): Set<string> {
-  return new Set((model.evidence ?? []).filter(item =>
-    item.scope === "selected-artifact").map(item => item.id));
+  return new Set(uniquelyOwnedSelectedEvidence(model).keys());
+}
+
+/** Duplicate node IDs cannot author a unique gameplay relationship. */
+function uniquelyOwnedNodes(model: GameplayIntentModel) {
+  const byId = new Map<string, GameplayIntentNode>();
+  const ambiguous = new Set<string>();
+  for (const node of model.nodes ?? []) {
+    if (byId.has(node.id)) ambiguous.add(node.id);
+    else byId.set(node.id, node);
+  }
+  for (const id of ambiguous) byId.delete(id);
+  return byId;
 }
 
 function independentlyAuthoredDesign(
   model: GameplayIntentModel,
   ids: readonly string[],
 ): boolean {
-  const byId = new Map((model.evidence ?? []).map(item => [item.id, item]));
+  const byId = uniquelyOwnedSelectedEvidence(model);
   return hasIndependentApprovedDesignEvidence(ids.map(id => byId.get(id)));
 }
 
@@ -448,7 +474,9 @@ function summarizeSourceObjectives(model: GameplayIntentModel): {
   readonly grounding: "authored" | "inferred" | "unresolved";
 } {
   const selected = selectedSourceIds(model);
+  const uniqueNodes = uniquelyOwnedNodes(model);
   const candidates = (model.nodes ?? []).filter(node =>
+    uniqueNodes.get(node.id) === node &&
     node.kind === "objective" && node.status !== "hypothesis" &&
     node.evidenceIds.some(id => selected.has(id)))
     .sort((left, right) => left.id.localeCompare(right.id));
@@ -497,7 +525,7 @@ function outcomeFor(
   readonly text: string;
   readonly grounding: "authored" | "inferred" | "unresolved";
 } | undefined {
-  const nodes = new Map((model.nodes ?? []).map(node => [node.id, node]));
+  const nodes = uniquelyOwnedNodes(model);
   const source = selectedSourceIds(model);
   const current = (ids: readonly string[]) =>
     ids.some(id => source.has(id));
@@ -608,20 +636,12 @@ function projectSelectedMapQaCoverage(
   relatedFindings: readonly AuditIssueProjection[],
 ): MapAuditQaCoverage {
   const intent = inspection.gameplayIntent.model;
-  const selectedIds = new Set(intent.evidence
-    .filter(item => item.scope === "selected-artifact")
-    .map(item => item.id));
-  const byNode = new Map(intent.nodes.map(node => [node.id, node]));
-  // Keep the established fail-closed duplicate identity rule without
-  // rescanning every authored node for each QA relation or source subject.
-  const nodeOwnerCounts = new Map<string, number>();
-  for (const node of intent.nodes) {
-    nodeOwnerCounts.set(node.id, (nodeOwnerCounts.get(node.id) ?? 0) + 1);
-  }
+  const selectedIds = selectedSourceIds(intent);
+  const byNode = uniquelyOwnedNodes(intent);
   const preset = inspection.hiddenGameplayDefects.auditScenarioPreset;
   const graph = inspection.hiddenGameplayDefects.scenarioAudit.graph;
   const activityCandidates = intent.nodes.flatMap(node => {
-    if (node.status === "hypothesis" ||
+    if (byNode.get(node.id) !== node || node.status === "hypothesis" ||
         (node.kind !== "game" && node.kind !== "mechanic" &&
          node.kind !== "objective")) return [];
     const evidenceIds = [...new Set(node.evidenceIds
@@ -636,8 +656,7 @@ function projectSelectedMapQaCoverage(
   // candidates. Only exact authored edges with selected-source evidence
   // connect them; labels, shared file names and inferred graph proximity
   // never assign a second mode or game type.
-  const uniqueNode = (id: string) =>
-    nodeOwnerCounts.get(id) === 1 ? byNode.get(id) : undefined;
+  const uniqueNode = (id: string) => byNode.get(id);
   const directGameScopes = activityCandidates
     .filter(item => item.kind === "game")
     .map(game => {
@@ -972,9 +991,7 @@ export function projectMapAuditOutputV2(input: {
   }
   const model =
     input.inspection.gameplayIntent.model;
-  const nodes = new Map(
-    model.nodes.map((node) => [node.id, node]),
-  );
+  const nodes = uniquelyOwnedNodes(model);
   const sourceIds = selectedSourceIds(model);
   const isCurrent = (ids: readonly string[]): boolean =>
     ids.some(id => sourceIds.has(id));
