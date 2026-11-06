@@ -170,6 +170,44 @@ describe("audit obligations versus gameplay findings", () => {
       } as NonNullable<Parameters<typeof deriveAuditObligations>[0]["playerSessionLifecycle"]>,
     }).some(row => row.id === "player-session:leave-cleanup-reconnect"))
       .toBe(false);
+    // A leave subscription with player-owned persistence still needs one
+    // source-scoped investigation when the parser cannot link an ID cleanup.
+    const unlinked = deriveAuditObligations({
+      ...base,
+      playerSessionLifecycle: {
+        playerLeaveSubscriptions: 1,
+        persistentPlayerStateAccesses: 2,
+        leaveIdArgumentSites: 0, directLeaveCacheDeleteSites: 0,
+        resolvedLeaveHelperSites: 0, omittedPlayerSessionSourceSites: 0,
+        playerLeaveSubscriptionSources: [src(8)],
+        omittedPlayerLeaveSubscriptionSources: 0,
+        playerSessionSourceSites: [
+          { kind: "spawn-initial-flag-read", source: src(31) },
+        ],
+      } as NonNullable<Parameters<typeof deriveAuditObligations>[0]["playerSessionLifecycle"]>,
+    }).filter(row => row.id === "player-session:leave-cleanup-reconnect");
+    expect(unlinked).toHaveLength(1);
+    expect(unlinked[0]?.subjectIds).toEqual(["scripts/main.js:8:5"]);
+    expect(unlinked[0]).toMatchObject({
+      source: "scenario-coverage", stage: "EVALUATE", evidenceIds: [],
+    });
+    expect(unlinked[0]?.reason).toContain("No recognized playerId-bearing");
+    expect(unlinked[0]?.validationTest).toContain("not a BUG");
+    // The same risk applies to an authored arena even when direct Player
+    // dynamic properties are absent; no unsupported BUG is admitted.
+    const arenaOnly = deriveAuditObligations({
+      ...base,
+      gameplayWorld: {
+        ...base.gameplayWorld, arenas: { ...base.gameplayWorld.arenas, detected: true },
+      },
+      playerSessionLifecycle: {
+        playerLeaveSubscriptions: 1, persistentPlayerStateAccesses: 0,
+        leaveIdArgumentSites: 0, directLeaveCacheDeleteSites: 0,
+        resolvedLeaveHelperSites: 0, omittedPlayerSessionSourceSites: 0,
+        playerLeaveSubscriptionSources: [src(8)], playerSessionSourceSites: [],
+      } as NonNullable<Parameters<typeof deriveAuditObligations>[0]["playerSessionLifecycle"]>,
+    }).filter(row => row.id === "player-session:leave-cleanup-reconnect");
+    expect(arenaOnly).toHaveLength(1);
   });
 
   it("keeps discarded-commit source candidates as deciding-proof obligations, not bug verdicts", () => {

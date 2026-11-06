@@ -14,7 +14,8 @@ describe("player session lifecycle analysis", () => {
       ].join("\n"),
       { artifactId: "fixture", relativePath: "scripts/main.ts" },
     );
-    expect(analyzePlayerSessionLifecycle([script])).toMatchObject({
+    const result = analyzePlayerSessionLifecycle([script]);
+    expect(result).toMatchObject({
       playerJoinSubscriptions: 1,
       playerSpawnSubscriptions: 1,
       playerLeaveSubscriptions: 1,
@@ -22,6 +23,10 @@ describe("player session lifecycle analysis", () => {
       initialVsRespawnStatus: "runtime-flag-required",
       leaveCleanupStatus: "cleanup-proof-required",
     });
+    expect(result.playerLeaveSubscriptionSources).toMatchObject([
+      { relativePath: "scripts/main.ts", range: { lineStart: 4 } },
+    ]);
+    expect(result.omittedPlayerLeaveSubscriptionSources).toBe(0);
   });
 
   it("counts only typed Player persistence sites, not player-named helpers", () => {
@@ -76,6 +81,8 @@ describe("player session lifecycle analysis", () => {
     expect(leaveFirst.playerSessionSourceSites.some(site =>
       site.kind === "spawn-initial-flag-read")).toBe(true);
     expect(leaveFirst.omittedPlayerSessionSourceSites).toBe(2);
+    expect(leaveFirst.playerLeaveSubscriptionSources).toHaveLength(4);
+    expect(leaveFirst.omittedPlayerLeaveSubscriptionSources).toBe(9);
 
     const noLeave = analyzePlayerSessionLifecycle([parse([
       ...Array.from({ length: 13 }, () => spawn),

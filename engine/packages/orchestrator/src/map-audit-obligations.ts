@@ -1199,7 +1199,17 @@ export function deriveAuditObligations(input: {
   const leaveSites = session?.playerSessionSourceSites.filter(site =>
     site.kind === "leave-id-argument" ||
     site.kind === "leave-direct-cache-delete") ?? [];
-  if (session && session.playerLeaveSubscriptions > 0 && leaveSites.length > 0) {
+  // A recognized leave-ID call is not required to preserve investigation.
+  // A leave subscription plus player-owned state or an authored arena is a
+  // material coverage gap when no ID-bearing cleanup site was recognized.
+  // Do not turn an unrelated analytics-only leave callback into a task.
+  const unlinkedLeaveCleanup = session !== undefined &&
+    session.playerLeaveSubscriptions > 0 &&
+    leaveSites.length === 0 &&
+    (session.persistentPlayerStateAccesses > 0 ||
+      input.gameplayWorld.arenas.detected);
+  if (session && session.playerLeaveSubscriptions > 0 &&
+      (leaveSites.length > 0 || unlinkedLeaveCleanup)) {
     const location = (source: { relativePath: string; range?: {
       lineStart?: number; columnStart?: number;
     } }): string => source.relativePath +
@@ -1208,6 +1218,9 @@ export function deriveAuditObligations(input: {
         (source.range.columnStart === undefined ? "" :
           ":" + source.range.columnStart));
     const locations = leaveSites.map(site => location(site.source));
+    const subscriptionLocations = unlinkedLeaveCleanup
+      ? (session.playerLeaveSubscriptionSources ?? []).map(location)
+      : [];
     const helperLocations = leaveSites.flatMap(site => [
       ...(site.helperTarget ? [location(site.helperTarget)] : []),
       ...(site.helperCacheDeleteSites ?? []).map(deletion =>
@@ -1229,19 +1242,39 @@ export function deriveAuditObligations(input: {
         " ID-bearing callsite(s), " + session.directLeaveCacheDeleteSites +
         " direct Map/Set deletion(s), and " +
         session.resolvedLeaveHelperSites + " resolved local/ESM helper call(s)." +
-        omitted + " The callsites are source evidence only, not proof of " +
+        omitted +
+        (unlinkedLeaveCleanup
+          ? " No recognized playerId-bearing leave cleanup site was linked; " +
+            "player-owned persistence or an authored arena makes this a " +
+            "source-coverage question, not proof that cleanup is missing."
+          : "") +
+        (unlinkedLeaveCleanup && (session.omittedPlayerLeaveSubscriptionSources ?? 0) > 0
+          ? " " + session.omittedPlayerLeaveSubscriptionSources +
+            " additional leave registration source(s) omitted from navigation."
+          : "") +
+        " The callsites are source evidence only, not proof of " +
         "successful cleanup, session isolation, or a gameplay defect.",
-      missingProof: "Trace the cited playerId callsites through their actual " +
-        "callees and arena/member state changes; determine whether the last " +
-        "member disconnect, reconnect, pending respawns and delayed work " +
-        "follow this map's independently grounded rules.",
-      validationTest: "Inspect the cited leave calls and helper state writes " +
-        "first; compare last-member disconnect/reconnect against the " +
-        "selected-world intent and a surviving concurrent arena. If " +
-        "execution evidence exists, check stale callbacks and recovery. " +
-        "Keep unresolved source/runtime effects open, never auto-admit BUG.",
+      missingProof: unlinkedLeaveCleanup
+        ? "Trace the cited playerLeave subscription to its callback and " +
+          "callee-owned state changes; resolve cleanup via other syntax, " +
+          "arena membership and session persistence before inferring " +
+          "anything about last-member disconnect or reconnect."
+        : "Trace the cited playerId callsites through their actual " +
+          "callees and arena/member state changes; determine whether the last " +
+          "member disconnect, reconnect, pending respawns and delayed work " +
+          "follow this map's independently grounded rules.",
+      validationTest: unlinkedLeaveCleanup
+        ? "Inspect the exact leave registration, callback, state readers " +
+          "and cleanup writers from selected source. Establish whether " +
+          "session/arena cleanup is applicable and already handled through " +
+          "unmodeled calls. A missing parser witness is not a BUG."
+        : "Inspect the cited leave calls and helper state writes " +
+          "first; compare last-member disconnect/reconnect against the " +
+          "selected-world intent and a surviving concurrent arena. If " +
+          "execution evidence exists, check stale callbacks and recovery. " +
+          "Keep unresolved source/runtime effects open, never auto-admit BUG.",
       validationGroupKey: "player-session:leave-reconnect",
-      subjectIds: [...locations, ...helperLocations],
+      subjectIds: [...subscriptionLocations, ...locations, ...helperLocations],
       componentIds: [],
       evidenceIds: [],
     }));

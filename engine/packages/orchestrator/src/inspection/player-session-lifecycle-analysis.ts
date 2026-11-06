@@ -120,6 +120,12 @@ export interface PlayerSessionLifecycleAnalysis {
   spawnInitialFlagReadSites: number;
   playerSessionSourceSites: readonly PlayerSessionSourceSite[];
   omittedPlayerSessionSourceSites: number;
+  /** Exact world.afterEvents.playerLeave registration witnesses even when
+   * no playerId-bearing cleanup statement was recognized by the parser.
+   * These prove subscription syntax, NOT callback delivery or missing cleanup.
+   */
+  playerLeaveSubscriptionSources?: readonly SourceRef[];
+  omittedPlayerLeaveSubscriptionSources?: number;
   lifecycleCoverage: "complete-surface" | "partial-surface" | "absent";
   initialVsRespawnStatus: "runtime-flag-required" | "not-applicable";
   leaveCleanupStatus: "cleanup-proof-required" | "not-applicable";
@@ -137,9 +143,10 @@ export function analyzePlayerSessionLifecycle(
   const playerSpawnSubscriptions = events.filter(
     (event) => event.root === "world" && event.phase === "afterEvents" && event.event === "playerSpawn",
   ).length;
-  const playerLeaveSubscriptions = events.filter(
+  const playerLeaveEvents = events.filter(
     (event) => event.root === "world" && event.phase === "afterEvents" && event.event === "playerLeave",
-  ).length;
+  );
+  const playerLeaveSubscriptions = playerLeaveEvents.length;
   // Reuse the parser's typed receiver identity, not a variable name such
   // as "playerCache" or "myPlayer". A write/read is source-authored only;
   // it never proves durable state, session ownership or reconnection.
@@ -363,6 +370,12 @@ export function analyzePlayerSessionLifecycle(
     (site.helperDeferredWorkSites?.length ?? 0) > 0).length;
   const spawnInitialFlagReadSites = sites.filter(site =>
     site.kind === "spawn-initial-flag-read").length;
+  const subscriptionSources = playerLeaveEvents
+    .map(event => event.registrationSource ?? event.source)
+    .sort((a, b) =>
+      a.relativePath.localeCompare(b.relativePath) ||
+      (a.range?.lineStart ?? 0) - (b.range?.lineStart ?? 0) ||
+      (a.range?.columnStart ?? 0) - (b.range?.columnStart ?? 0));
   const sourceOrder = (a: PlayerSessionSourceSite, b: PlayerSessionSourceSite): number =>
     a.source.relativePath.localeCompare(b.source.relativePath) ||
     (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0) ||
@@ -403,6 +416,8 @@ export function analyzePlayerSessionLifecycle(
     spawnInitialFlagReadSites,
     playerSessionSourceSites: selectedSites,
     omittedPlayerSessionSourceSites: Math.max(0, orderedSites.length - selectedSites.length),
+    playerLeaveSubscriptionSources: subscriptionSources.slice(0, 4),
+    omittedPlayerLeaveSubscriptionSources: Math.max(0, subscriptionSources.length - 4),
     lifecycleCoverage:
       surfaces === 3
         ? "complete-surface"
