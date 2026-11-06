@@ -20,10 +20,10 @@
         "owner": ".agents/skills",
         "riskHint": "low",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "b8927fa0e8641cf4f40c1c9c1c714ec0163a7573"
+        "sourceBlobSha": "96f32187b397cb9ee9c11bf9523a11050b09f81a"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\nPrimary taxonomy correction (same test source SHA): Source review: frozen map-audit scoring checks grounded positives/negatives, missing evidence, false negatives and forged receipts; the primary feature is reliability/benchmark assessment, not repository structure.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.\nPrimary taxonomy correction (same test source SHA): Source review: frozen map-audit scoring checks grounded positives/negatives, missing evidence, false negatives and forged receipts; the primary feature is reliability/benchmark assessment, not repository structure.\nAdded source-level counterexample for QA-navigation-only paired comparison deltas; no native node:test or full-map Harness2 execution was run.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

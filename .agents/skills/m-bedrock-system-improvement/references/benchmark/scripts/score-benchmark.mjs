@@ -426,12 +426,47 @@ function compareFrozenSourceOutcomes(input) {
         "Cross-case source-variant mismatch: every pair must use the exact manifest-pinned baseline and candidate commits.",
       );
     }
-    // A changed auditRevision is metadata, not improved source detection.
-    // Compare material canonical audit output independently of that identifier.
-    // Keep raw report hashes validated against their respective CLI receipts.
+    // Reviewer scores alone do not establish a detector gain: changes only
+    // to QA navigation, display copy, metadata, validation instructions, or
+    // derived honesty gates must not make identical source proof "material".
+    // Preserve raw canonical report hashes in the CLI receipt validation above.
     const materialAuditDigest = report => {
-      const { auditRevision: _revision, ...material } = report;
-      return digest(JSON.stringify(material));
+      const findingProof = findings => (findings ?? []).map(item => ({
+        id: item.id,
+        status: item.status,
+        issueType: item.issueType,
+        evidenceIds: item.evidenceIds,
+        proofCeiling: item.proofCeiling,
+        counterEvidence: item.counterEvidence,
+      })).sort((a, b) => a.id.localeCompare(b.id));
+      return digest(JSON.stringify({
+        artifactId: report.artifactId,
+        artifactFingerprint: report.artifactFingerprint,
+        auditTarget: report.auditTarget,
+        gameDesign: report.gameDesign,
+        gameplayStructure: report.gameplayStructure,
+        stateTransitions: report.stateTransitions,
+        multiArena: report.multiArena,
+        coverage: report.coverage,
+        gameplayClosure: report.gameplayClosure,
+        bugs: findingProof(report.bugs),
+        designMismatches: findingProof(report.designMismatches),
+        auditObligations: (report.auditObligations ?? []).map(item => ({
+          id: item.id,
+          source: item.source,
+          stage: item.stage,
+          subjectIds: item.subjectIds,
+          componentIds: item.componentIds,
+          evidenceIds: item.evidenceIds,
+          sourceProofRequirements: item.sourceProofRequirements,
+        })),
+        unresolved: report.unresolved,
+        control: report.control === undefined ? undefined : {
+          status: report.control.status,
+          currentStage: report.control.currentStage,
+          blockingCheckpointIds: report.control.blockingCheckpointIds,
+        },
+      }));
     };
     const baseObservedHash = materialAuditDigest(frozenBase.observed);
     const candidateObservedHash = materialAuditDigest(frozenCandidate.observed);

@@ -285,6 +285,31 @@ test("revision-only audit changes cannot count as independent source improvement
   assert.match(done.stderr, /distinct material audit observations/);
 });
 
+test("QA-navigation-only deltas cannot qualify reviewer regrading as a Harness2 gain", () => {
+  const a = outcomePair("navigation-only-a", "7".repeat(64));
+  const b = outcomePair("navigation-only-b", "8".repeat(64));
+  const done = runComparison([a, b], pairs => {
+    for (const p of pairs) {
+      // Both source proof surfaces and every finding are identical. Only
+      // non-authoritative presentation metadata is changed, while a reviewer
+      // still tries to regrade the same source as a newly detected positive.
+      p.baseline.frozen.observed =
+        JSON.parse(JSON.stringify(p.candidate.frozen.observed));
+      p.baseline.frozen.observed.qaCoverage = {
+        authority: "READ_ONLY_QA_NAVIGATION_NOT_PROOF",
+        profile: "UNRESOLVED_SOURCE_CANDIDATES",
+        displayOnly: "baseline navigation text",
+      };
+      p.baseline.frozen.execution.canonicalAuditReceipt.outputSha256 =
+        createHash("sha256")
+          .update(JSON.stringify(p.baseline.frozen.observed, null, 2) + "\n")
+          .digest("hex");
+    }
+  });
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /distinct material audit observations/);
+});
+
 test("changed frozen expectation cannot masquerade as paired improvement", () => {
   const a = outcomePair("source-case-g", "2".repeat(64));
   const b = outcomePair("source-case-h", "3".repeat(64));
