@@ -60,6 +60,29 @@ function authoredUiMessageRoutes(model: GameplayIntentModel): readonly {
     a.method.localeCompare(b.method));
 }
 
+/** A duplicate evidence ID cannot supply an exact source locator in any
+ * read-only operator view, even if one record belongs to the selected map.
+ * This mirrors the canonical report's fail-closed ownership requirement.
+ */
+function uniquelyOwnedIntentEvidence(model: GameplayIntentModel) {
+  const byId = new Map<string, GameplayIntentModel["evidence"][number]>();
+  const duplicates = new Set<string>();
+  for (const evidence of model.evidence) {
+    if (byId.has(evidence.id)) duplicates.add(evidence.id);
+    else byId.set(evidence.id, evidence);
+  }
+  for (const id of duplicates) byId.delete(id);
+  return byId;
+}
+
+function pendingCounterproofSearch(
+  finding: MapAuditOutputV2["bugs"][number],
+): boolean {
+  return finding.status === "NEED_VALIDATION" &&
+    finding.reasoning?.unresolvedPredicates.some(id =>
+      id.endsWith(":counterproof-clearance:none")) === true;
+}
+
 /**
  * The operator's FINAL summary has two finding categories: Bug and Design
  * Mismatch. PROVEN / NEED_VALIDATION are visible per-finding proof labels;
@@ -113,9 +136,8 @@ function formatSourceBoundGameplayFlowReview(
   }));
   const compact = (value: string): string =>
     value.replace(/\s+/g, " ").trim().slice(0, 120);
-  const selectedEvidence = new Map(intent.evidence
-    .filter(item => item.scope === "selected-artifact")
-    .map(item => [item.id, item] as const));
+  const selectedEvidence = new Map([...uniquelyOwnedIntentEvidence(intent)]
+    .filter(([, evidence]) => evidence.scope === "selected-artifact"));
   const locatorFor = (ids: readonly string[]): readonly string[] =>
     [...new Set(ids.flatMap(id => {
       const locator = selectedEvidence.get(id)?.locator;
@@ -459,8 +481,7 @@ export function formatSelectedMapAuditFinalReport(input: {
   const concise = (value: string | undefined): string =>
     (value ?? "").replace(/\s+/g, " ").trim().slice(0, 500) ||
     "Belum dirinci dalam bukti audit";
-  const evidenceById = new Map(intent.evidence
-    .map(item => [item.id, item] as const));
+  const evidenceById = uniquelyOwnedIntentEvidence(intent);
   const sourceLocatorsFor = (ids: readonly string[]): readonly string[] =>
     [...new Set(ids.flatMap(id => {
       const evidence = evidenceById.get(id);
@@ -705,6 +726,10 @@ export function formatSelectedMapAuditFinalReport(input: {
       ...(pendingProof ? [
         "  - Mengapa belum terbukti: " + concise(item.validationReason),
         "  - Bukti yang diperlukan: " + concise(item.missingProof),
+        ...(pendingCounterproofSearch(item)
+          ? ["  - Counterproof masih OPEN (source-only): pencarian bukti " +
+              "pengaman/penyangkal belum tuntas; ini bukan bukti Bug atau Safe."]
+          : []),
       ] : []),
       "  - " + (sourceFirst
         ? "Cara membuktikan (pemeriksaan source, bukan playtest):"
@@ -1008,9 +1033,7 @@ export function formatSelectedMapAuditBrief(input: {
   const contentCollections = input.contentCollections ?? [];
   const concise = (value: string): string =>
     value.replace(/\s+/g, " ").trim().slice(0, 300) || "unresolved";
-  const evidenceById = new Map(
-    intent.evidence.map((item) => [item.id, item]),
-  );
+  const evidenceById = uniquelyOwnedIntentEvidence(intent);
   const features = report.gameplayStructure?.features ?? [];
   // A source-localized stage is navigational content, not a player state,
   // proof of a wave, or a causal link. Keep namespace/pack ownership intact.
@@ -1494,6 +1517,9 @@ export function formatSelectedMapAuditBrief(input: {
           concise(finding.reproduceSteps[0]!)]),
       ...(finding.missingProof === undefined ? [] :
         ["  Missing proof: " + concise(finding.missingProof)]),
+      ...(pendingCounterproofSearch(finding) ? [
+        "  Counterproof source: OPEN (search incomplete; neither BUG nor SAFE proof).",
+      ] : []),
     );
   }
   if (findings.length > 12) {

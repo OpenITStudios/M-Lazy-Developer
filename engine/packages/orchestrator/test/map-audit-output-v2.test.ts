@@ -1986,6 +1986,82 @@ describe("two-category final report with visible pending findings", () => {
     expect(output).not.toContain("## Safe");
   });
 
+
+  it("does not assign ambiguous evidence locations in final and brief views", () => {
+    const collision: any = {
+      ...intent,
+      evidence: [
+        ...intent.evidence,
+        { id: "current", scope: "external-reference",
+          origin: "historical-diff", locator: "older/duplicate.js:40" },
+      ],
+    };
+    const final = formatSelectedMapAuditFinalReport({ report: base, intent: collision });
+    expect(final).not.toContain("behavior_packs/demo/scripts/active.js:10");
+    expect(final).not.toContain("older/duplicate.js:40");
+    expect(final).toContain("Lokasi/ID bukti: current");
+    const selectedCollision: any = {
+      ...intent,
+      evidence: [
+        ...intent.evidence,
+        { id: "current", scope: "selected-artifact",
+          origin: "source-code", locator: "behavior_packs/demo/scripts/duplicate.js:90" },
+      ],
+    };
+    const finalSelected = formatSelectedMapAuditFinalReport({
+      report: base, intent: selectedCollision,
+    });
+    expect(finalSelected).not.toContain("behavior_packs/demo/scripts/active.js:10");
+    expect(finalSelected).not.toContain("behavior_packs/demo/scripts/duplicate.js:90");
+    const currentReport = { ...base, bugs: [{
+      ...pendingBug,
+      reasoning: {
+        reportClassification: "UNKNOWN", proofConfidence: "low",
+        evidenceDomainSources: ["static"], evidenceChain: ["causal-link:current"],
+        unresolvedPredicates: ["causal-link:bug:pending:counterproof-clearance:none"],
+      },
+    }], designMismatches: [] };
+    const finalOpen = formatSelectedMapAuditFinalReport({
+      report: currentReport, intent,
+    });
+    expect(finalOpen).toContain("Counterproof masih OPEN (source-only)");
+    expect(finalOpen).toContain("NEED_VALIDATION (dugaan, belum terbukti)");
+    expect(finalOpen).not.toContain("PROVEN BUG");
+
+    const brief: any = formatSelectedMapAuditBrief({
+      report: {
+        ...currentReport,
+        gameDesign: {
+          objective: "UNKNOWN", objectiveGrounding: "unresolved",
+          winCondition: "UNKNOWN", winConditionGrounding: "unresolved",
+          loseCondition: "UNKNOWN", loseConditionGrounding: "unresolved",
+        },
+        multiArena: { isolationRules: [] },
+        stateTransitions: [],
+        gameplayClosure: { status: "PARTIAL", surfaceInventory: [] },
+      },
+      intent: collision,
+      modelTaskPackets: [],
+    });
+    const findingPreview = brief.slice(
+      brief.indexOf("## Findings"),
+      brief.indexOf("## Next Decision"),
+    );
+    expect(findingPreview).toContain("Counterproof source: OPEN");
+    expect(findingPreview).toContain("[NEED_VALIDATION] BUG");
+    expect(findingPreview).not.toContain("behavior_packs/demo/scripts/active.js:10");
+    expect(findingPreview).not.toContain("older/duplicate.js:40");
+  });
+
+  it("does not invent counterproof obligations when a finding has none", () => {
+    const final = formatSelectedMapAuditFinalReport({
+      report: { ...base, bugs: [pendingBug], designMismatches: [] },
+      intent,
+    });
+    expect(final).not.toContain("Counterproof masih OPEN (source-only)");
+    expect(final).toContain("One deciding observation");
+  });
+
   it("hides Safe in a completely closed audit without hiding proved defects", () => {
     const report = formatSelectedMapAuditFinalReport({
       report: {
