@@ -612,6 +612,12 @@ function projectSelectedMapQaCoverage(
     .filter(item => item.scope === "selected-artifact")
     .map(item => item.id));
   const byNode = new Map(intent.nodes.map(node => [node.id, node]));
+  // Keep the established fail-closed duplicate identity rule without
+  // rescanning every authored node for each QA relation or source subject.
+  const nodeOwnerCounts = new Map<string, number>();
+  for (const node of intent.nodes) {
+    nodeOwnerCounts.set(node.id, (nodeOwnerCounts.get(node.id) ?? 0) + 1);
+  }
   const preset = inspection.hiddenGameplayDefects.auditScenarioPreset;
   const graph = inspection.hiddenGameplayDefects.scenarioAudit.graph;
   const activityCandidates = intent.nodes.flatMap(node => {
@@ -630,10 +636,8 @@ function projectSelectedMapQaCoverage(
   // candidates. Only exact authored edges with selected-source evidence
   // connect them; labels, shared file names and inferred graph proximity
   // never assign a second mode or game type.
-  const uniqueNode = (id: string) => {
-    const owned = intent.nodes.filter(node => node.id === id);
-    return owned.length === 1 ? owned[0] : undefined;
-  };
+  const uniqueNode = (id: string) =>
+    nodeOwnerCounts.get(id) === 1 ? byNode.get(id) : undefined;
   const directGameScopes = activityCandidates
     .filter(item => item.kind === "game")
     .map(game => {
@@ -856,7 +860,7 @@ function projectSelectedMapQaCoverage(
     const linkIds = scoped === undefined ? [] : graph.causalLinks.filter(link =>
       link.scenarioId === scoped.id &&
       scoped.causalLinkIds.includes(link.id) &&
-      graph.causalLinks.filter(other => other.id === link.id).length === 1 &&
+      causalIdCounts.get(link.id) === 1 &&
       link.evidenceIds.some(id => selectedIds.has(id))
     ).map(link => link.id).sort();
     for (const question of scenario.questions) {
