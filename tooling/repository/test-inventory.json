@@ -158,10 +158,10 @@
         "owner": "apps/report-system-next",
         "riskHint": "low",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "591df6eb4622ddf623d22125eb2e5dc5942ad130"
+        "sourceBlobSha": "8bd1c4c5cdd2ed52f3668ec289fc8ec9584621f1"
       },
       "recommendation": "keep",
-      "rationale": "Native Node acceptance suite read as source; requires more detailed assertion-level mapping before final review.",
+      "rationale": "Native Node acceptance suite read as source; requires more detailed assertion-level mapping before final review. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -178,10 +178,10 @@
         "owner": "apps/report-system-next",
         "riskHint": "low",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "e3f9add3c8a2a1cb3a9c1e313f35401b93acfe2d"
+        "sourceBlobSha": "fbdc591ab6b1be18d1945e30f6ac13f421fe3a36"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -589,10 +589,10 @@
         "owner": "engine/analyzers/diagnostics",
         "riskHint": "medium",
         "action": "validate-merged-module-isolation-and-affected-selection",
-        "sourceBlobSha": "4cc137f2e0c41cf269c6e4842bea720c0787220f"
+        "sourceBlobSha": "074b899c08ce06934d0128338f03d0214ca4948d"
       },
       "recommendation": "keep",
-      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 9 it/test and 27 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED.",
+      "rationale": "Same-owner/feature/lane consolidation 2 -> 1: 9 it/test and 27 expect registrations remain in original source bodies. TypeScript/Vitest/Minecraft NOT EXECUTED. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "runtime-telemetry",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -1037,10 +1037,10 @@
         "owner": "engine/analyzers/references",
         "riskHint": "medium",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "9fa33624ea56c829b8e8462dc971b19d3bb4aa1a"
+        "sourceBlobSha": "bdb6008482b23c282167632db301ff8104efa899"
       },
       "recommendation": "keep",
-      "rationale": "Source-reviewed assertions cover same-pack loot/recipe resolution, conditional entity event activation, exact script spawn provenance, and negative dynamic/cross-pack cases without promoting authored references into runtime proof.",
+      "rationale": "Source-reviewed assertions cover same-pack loot/recipe resolution, conditional entity event activation, exact script spawn provenance, and negative dynamic/cross-pack cases without promoting authored references into runtime proof. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "inventory-economy",
       "mechanicTags": [
         "economy.currency-rewards"
@@ -2258,10 +2258,10 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "riskHint": "low",
         "action": "validate-merged-suite-on-affected-change",
-        "sourceBlobSha": "1f9e329104c05ae269d7ac4e54f713020cd0098c"
+        "sourceBlobSha": "63416bf4aa67afc920a163694d4da753b0a01cbc"
       },
       "recommendation": "keep",
-      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -2314,13 +2314,13 @@
       "owner": "engine/packages/bug-report",
       "review": "case-inventory-reviewed",
       "recommendation": "keep",
-      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "triage": {
         "owner": "engine/packages/bug-report",
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "riskHint": "low",
         "action": "validate-merged-suite-on-affected-change",
-        "sourceBlobSha": "467dca4b8f411543a5d94d4b93929f7f11fbeeb7"
+        "sourceBlobSha": "a75b21601b005f37b9962c582645ff9e0dfb4b0e"
       },
       "functionalArea": "reporting",
       "mechanicTags": [],
@@ -2628,11 +2628,11 @@
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "33e47fead4f97ea0275c23b7b50f298efc2a4046",
+        "sourceBlobSha": "e631e5029cb86fc55f2b7d9b17235ba393e022a7",
         "consumerSymbol": "evaluateGameplayBugCandidateEvidence"
       },
       "recommendation": "keep",
-      "rationale": "Consolidated 5 same-owner, same-feature Development source files into one suite; all original tests and 23 it()/test() plus 42 expect() call sites retained statically. Exact execution, test-file isolation and affected-selection cost unverified. Direct source review confirms production invocation of evaluateGameplayBugCandidateEvidence and distinct case scenarios; no semantic duplicate-deletion authorization.",
+      "rationale": "Consolidated 5 same-owner, same-feature Development source files into one suite; all original tests and 23 it()/test() plus 42 expect() call sites retained statically. Exact execution, test-file isolation and affected-selection cost unverified. Direct source review confirms production invocation of evaluateGameplayBugCandidateEvidence and distinct case scenarios; no semantic duplicate-deletion authorization. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -2907,10 +2907,10 @@
         "owner": "engine/packages/gameplay-intent",
         "riskHint": "medium",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "6378454f8fbf7a2c8bc5d799077707fb9c1e5b72"
+        "sourceBlobSha": "e5eebd1c642e125196c648e05761654fde3efe50"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 8 -> 1, retaining 58 it/test call sites and 165 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 8 -> 1, retaining 58 it/test call sites and 165 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -3634,13 +3634,13 @@
       "owner": "engine/packages/orchestrator",
       "review": "case-inventory-reviewed",
       "recommendation": "keep",
-      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "triage": {
         "owner": "engine/packages/orchestrator",
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "riskHint": "low",
         "action": "validate-merged-suite-on-affected-change",
-        "sourceBlobSha": "a7214724d429b657522fb142f1aa9792a1431b8c"
+        "sourceBlobSha": "0682e8ef263de9447bf5bb69e041ca24b5479892"
       },
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
@@ -3654,12 +3654,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Coordinator verifies confirmed defect admission and bounded probe selection; complementary to runtime handoff scenario.",
+      "rationale": "Coordinator verifies confirmed defect admission and bounded probe selection; complementary to runtime handoff scenario. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-indirect-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "action": "revisit-on-relevant-source-change",
-        "sourceBlobSha": "0d469351c24545428f95aa302c96cc36fa7c8f00"
+        "sourceBlobSha": "a2f53663057b96e208b476c6b42bf3849b081888"
       },
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
@@ -3771,10 +3771,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "af7746e0b974c1584e235772721dad2b7d486149"
+        "sourceBlobSha": "182e151dd208f7eb524c90d9d02aadb6930956ab"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 3 -> 1, retaining 22 it/test call sites and 128 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 3 -> 1, retaining 22 it/test call sites and 128 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -4648,10 +4648,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "high",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "49cb423b8d98d6a45d1a4a5d3aaa704cff3a4f5b"
+        "sourceBlobSha": "f0fda9587981505ffe2dacb9ee9744e4d3c653ab"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 22 it/test call sites and 73 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\n2026-11-02 source-guard integration: Authored same-artifact imported ScriptEvent ID branch/registration source ownership and conflicting-IR regression; execution deferred. NOT EXECUTED.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 22 it/test call sites and 73 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.\n2026-11-02 source-guard integration: Authored same-artifact imported ScriptEvent ID branch/registration source ownership and conflicting-IR regression; execution deferred. NOT EXECUTED. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -5033,12 +5033,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "Same-directory development family 3 -> 1, retaining 24 it/test call sites and 241 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection.",
+      "rationale": "Same-directory development family 3 -> 1, retaining 24 it/test call sites and 241 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "action": "confirm-selected-module-typecheck-and-isolation-when-execution-is-available",
-        "sourceBlobSha": "678b6ed3df3ffb5e4eefff5a35b8b4951555b589"
+        "sourceBlobSha": "7dfedc8d8776a49c8486ff10603ff7b9c0d9271f"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
@@ -5154,11 +5154,11 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "7467f4f7d6bb28800ce43822e9635fc031033519",
+        "sourceBlobSha": "05760a7c98fafea34e9f780b2990b84ab402b118",
         "consumerSymbol": "assessGameplayDefectResolutionGate"
       },
       "recommendation": "keep",
-      "rationale": "Same-directory development family 2 -> 1, retaining 38 it/test call sites and 125 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Direct source review confirms production invocation of assessGameplayDefectResolutionGate and distinct case scenarios; no semantic duplicate-deletion authorization.",
+      "rationale": "Same-directory development family 2 -> 1, retaining 38 it/test call sites and 125 expect call sites from exact original source bodies. Static retention only, Vitest/TypeScript/Minecraft NOT EXECUTED; may widen affected-file selection. Direct source review confirms production invocation of assessGameplayDefectResolutionGate and distinct case scenarios; no semantic duplicate-deletion authorization. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result. The renamed A2/A7 coverage case now keeps the source-accounted discovery checkpoint distinct from semantic-understanding proof debt.",
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -5189,12 +5189,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "23 cases protect unowned raw evidence, unresolved edges and source/scenario proof ownership; critical against false closure. Direct source review confirms production invocation of challengeGameplayDiscovery and distinct case scenarios; no semantic duplicate-deletion authorization.",
+      "rationale": "23 cases protect unowned raw evidence, unresolved edges and source/scenario proof ownership; critical against false closure. Direct source review confirms production invocation of challengeGameplayDiscovery and distinct case scenarios; no semantic duplicate-deletion authorization. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "triage": {
         "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "owner": "engine/packages/orchestrator",
         "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "5df91bd81a9d0e2546638875555e70e9fc866d4a",
+        "sourceBlobSha": "c515aeea07ad2a5b4542b081d19d259341b77563",
         "consumerSymbol": "challengeGameplayDiscovery"
       },
       "functionalArea": "gameplay-interpretation",
@@ -5228,12 +5228,12 @@
       "owner": "engine/packages/orchestrator",
       "review": "source-reviewed",
       "recommendation": "keep",
-      "rationale": "36 assertion scenarios spanning exact authored provenance, cross-file calls, negative identity ownership, and uncertainty; foundational semantics, not a microtest.",
+      "rationale": "36 assertion scenarios spanning exact authored provenance, cross-file calls, negative identity ownership, and uncertainty; foundational semantics, not a microtest. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "triage": {
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "owner": "engine/packages/orchestrator",
         "action": "revisit-on-relevant-source-change",
-        "sourceBlobSha": "8cef4eb4ce6d17c4228e741c4a859741d05db243"
+        "sourceBlobSha": "d6855d0ec23af23a76f9cf4554c4deb28e580061"
       },
       "functionalArea": "gameplay-interpretation",
       "mechanicTags": [],
@@ -5455,11 +5455,11 @@
         "basis": "pinned-source-case-and-direct-production-consumer-reviewed",
         "riskHint": "medium",
         "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "a4525d204d10f4b037fe0869adf5432459b8634a",
+        "sourceBlobSha": "d80852bc7c5b6fe40dbe06fd12461600c167fef7",
         "consumerSymbol": "inspectDirectory"
       },
       "recommendation": "keep",
-      "rationale": "Canonical inspectDirectory source suite: preserves original source discovery/semantics plus two manifest-script/world-DB scenarios and one scoped Knowledge diagnostic scenario transferred exactly from former top-level integration suites. Three moved cases are source-body-identical, not executed, and do not constitute selected .mcworld end-to-end acceptance. Direct source review confirms production invocation of inspectDirectory and distinct case scenarios; no semantic duplicate-deletion authorization.",
+      "rationale": "Canonical inspectDirectory source suite: preserves original source discovery/semantics plus two manifest-script/world-DB scenarios and one scoped Knowledge diagnostic scenario transferred exactly from former top-level integration suites. Three moved cases are source-body-identical, not executed, and do not constitute selected .mcworld end-to-end acceptance. Direct source review confirms production invocation of inspectDirectory and distinct case scenarios; no semantic duplicate-deletion authorization. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -6008,10 +6008,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "5c442b442ddc59b16544762f7833b7486adac9d7"
+        "sourceBlobSha": "3aaa3ad2679e9b2fcc4936070db3373a735f7102"
       },
       "recommendation": "keep",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review.",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "gameplay-scripting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -6453,10 +6453,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "056d12a1c0b15ca9ca4f7214fcd7484e2fc5b32f"
+        "sourceBlobSha": "8ee63f9562586d7f33007db75b097e3472cff5e5"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -6473,11 +6473,11 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-case; check fixture/positive-negative equivalence before any physical retirement",
-        "sourceBlobSha": "afaa32ec530ce2f3534adffc7d2382c91743124b",
+        "sourceBlobSha": "bdd864a5e3dab9adec116ed8c221649b9108c6c4",
         "consumerSymbol": "projectMapAuditOutputV2"
       },
       "recommendation": "keep",
-      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review confirms production invocation of projectMapAuditOutputV2 and distinct case scenarios; no semantic duplicate-deletion authorization.",
+      "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review. Direct source review confirms production invocation of projectMapAuditOutputV2 and distinct case scenarios; no semantic duplicate-deletion authorization. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -7751,10 +7751,10 @@
         "basis": "exact-Git-test-case-assertion-and-import-consumer-route-reviewed",
         "riskHint": "high",
         "action": "validate-merged-suite-on-affected-change",
-        "sourceBlobSha": "049b20c66e61c7510e31058abde46788c50a9f00"
+        "sourceBlobSha": "ffa11664a7405962bbd15c13c0e08b5377de8b04"
       },
       "recommendation": "keep",
-      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified.",
+      "rationale": "Same-owner, same-feature source test suites grouped without deleting original case or assertion bodies. Exact TypeScript/Vitest isolation and true case redundancy remain unverified. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -7792,11 +7792,11 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "Revisit behavior/consumer equivalence when consolidating; current change only routes the same imported exports to their canonical modules.",
-        "sourceBlobSha": "25a059a73e88156db1a8db1fcbddc8fe148a636b",
+        "sourceBlobSha": "d46e769c6a0b111cc98bb1cdeb69d21ed38ea7ca",
         "consumerSymbol": "planReportCandidateReuse"
       },
       "recommendation": "keep",
-      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED.",
+      "rationale": "Existing test assertions and lexical bodies unchanged by import-only canonical routing. Exact Git source re-pinned; executable TypeScript/Vitest NOT EXECUTED. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "reporting",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
@@ -8063,10 +8063,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "re-review original merged assertions and new per-project publication persistence cases before any consolidation",
-        "sourceBlobSha": "ac8a9361271316d540e4b3da10c9ebb311936207"
+        "sourceBlobSha": "82754be7053f8c49fd6e642cd225bb17e1ba9616"
       },
       "recommendation": "keep",
-      "rationale": "Original 7 merged test/assertion sites retained; three source-authored single-level, stale/Drive, and multi-level fail-closed persistence cases added. Exact TS/Vitest and Minecraft NOT EXECUTED.",
+      "rationale": "Original 7 merged test/assertion sites retained; three source-authored single-level, stale/Drive, and multi-level fail-closed persistence cases added. Exact TS/Vitest and Minecraft NOT EXECUTED. Exact current Git blob re-reviewed against the previously pinned source: additions/changes remain within the existing owner, feature and lane. This is a source-case routing review, NOT an executed TypeScript/Node/Minecraft test result.",
       "functionalArea": "engineering-tooling",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",
