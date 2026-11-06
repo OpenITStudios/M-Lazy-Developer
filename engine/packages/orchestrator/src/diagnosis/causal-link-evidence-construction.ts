@@ -7,8 +7,10 @@ import type {
 import type {
   CausalLinkHypothesisConstruction,
 } from "./causal-link-hypothesis-construction.js";
-import type {
-  GameplayDefectResolution,
+import {
+  blockingCounterProofFor,
+  counterProofSearchIsGraphGrounded,
+  type GameplayDefectResolution,
 } from "../inspection/gameplay-defect-resolution.js";
 import {
   uniqueGameplayCausalLinkScope,
@@ -134,22 +136,41 @@ export function constructCausalLinkEvidence(input: {
     }
   }
 
-  const counterProofIds = [
-    ...(input.resolution.counterProofEvidenceIds ?? []),
-    ...(input.resolution.counterProofSearch?.conclusion === "BLOCKING_PROOF_FOUND"
-      ? input.resolution.counterProofSearch.evidenceIds
-      : []),
-  ].filter((value, index, all) => all.indexOf(value) === index);
-
+  // The current graph, not a caller-supplied counterproof ID or a bare
+  // claimed search conclusion, owns blocking witnesses. Absence of a
+  // witness without an exact exhaustive search remains UNKNOWN.
+  const counterProofIds = blockingCounterProofFor(input.graph, link);
+  const cleared = link.status === "CONTRADICTED" &&
+    counterProofIds.length === 0 &&
+    input.resolution.counterProofSearch?.conclusion === "NO_BLOCKING_PROOF" &&
+    counterProofSearchIsGraphGrounded(
+      input.graph, link, scenario, input.resolution.counterProofSearch,
+    );
   output.push({
     predicate: "causal-link:" + link.id + ":counterproof:none",
-    state: counterProofIds.length > 0 ? "present" : "absent",
+    state: counterProofIds.length > 0 ? "present" :
+      cleared ? "absent" : "unknown",
     evidenceId: evidenceId(
       "counterproof",
       counterProofIds.length > 0 ? counterProofIds : [link.id],
     ),
     domain: "static",
     sourceEvidenceIds: counterProofIds,
+  });
+  output.push({
+    predicate: "causal-link:" + link.id + ":counterproof-clearance:none",
+    state: counterProofIds.length > 0 ? "absent" :
+      cleared ? "present" : "unknown",
+    evidenceId: cleared
+      ? evidenceId("counterproof-clearance",
+          input.resolution.counterProofSearch?.evidenceIds ?? [])
+      : counterProofIds.length > 0
+        ? evidenceId("counterproof-blocked", counterProofIds)
+        : "counterproof-search-unresolved:" + link.id,
+    domain: "static",
+    sourceEvidenceIds: cleared
+      ? input.resolution.counterProofSearch?.evidenceIds ?? []
+      : counterProofIds,
   });
 
   const runtimePredicate =

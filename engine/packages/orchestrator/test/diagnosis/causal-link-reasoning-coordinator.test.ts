@@ -1,5 +1,18 @@
+import { automaticCounterProofSearch } from "../../src/inspection/gameplay-defect-resolution.js";
 import{describe,expect,it}from"vitest";import{reasonAboutCausalLinkFinding}from"../../src/diagnosis/causal-link-reasoning-coordinator.js";
-describe("causal link reasoning coordinator",()=>{it("composes canonical reasoning and admits evidence-linked output",()=>{const graph:any={scenarios:[{id:"s1",purpose:"Complete objective",causalLinkIds:["l1"],componentIds:[]}],causalLinks:[{id:"l1",scenarioId:"s1",purpose:"Dependency resolves",reason:"Dependency contradicted",status:"CONTRADICTED",evidenceIds:["e1"],subjectIds:[],componentIds:[],impactPathComponentIds:[],impactPathEvidenceIds:[],knowledgeRequirementIds:[]}],components:[],knowledgeRequirements:[],knowledgeReceipts:[]};const resolution:any={causalLinkId:"l1",scenarioId:"s1",evidenceIds:["e1"],disposition:"CONFIRMED_DEFECT_READY"};const finding:any={causalLinkId:"l1",status:"PROVEN",issueType:"BUG",evidenceIds:["e1"]};const result=reasonAboutCausalLinkFinding({graph,resolution,finding,diagnosticDisposition:"confirmed-defect"});expect(result.status).toBe("ADMITTED");expect(result).toMatchObject({causalLinkId:"l1",reportClassification:"PROVEN BUG",proofConfidence:"proven"});expect(result.reasoning?.reportClassification).toBe("PROVEN BUG");});
+describe("causal link reasoning coordinator",()=>{it("composes canonical reasoning and admits evidence-linked output",()=>{const graph:any={scenarios:[{id:"s1",purpose:"Complete objective",causalLinkIds:["l1"],componentIds:[]}],causalLinks:[{id:"l1",scenarioId:"s1",purpose:"Dependency resolves",reason:"Dependency contradicted",status:"CONTRADICTED",evidenceIds:["e1"],subjectIds:[],componentIds:[],impactPathComponentIds:[],impactPathEvidenceIds:[],knowledgeRequirementIds:[]}],components:[],knowledgeRequirements:[],knowledgeReceipts:[]};const dimensions=["owner","guard","generation","scope","cleanup","exclusion","geometry","capability","world-rule","activation","representation"];
+  const link=graph.causalLinks[0];
+  link.componentIds=["runtime:state"];
+  link.subjectIds=["objective:a"];
+  link.fromComponentId="runtime:state";
+  link.toComponentId="runtime:state";
+  link.dimensionEvidence=Object.fromEntries(dimensions.map((id)=>[id,["e:"+id]]));
+  link.evidenceIds=["e1",...dimensions.map((id)=>"e:"+id)];
+  graph.scenarios[0].componentIds=["runtime:state"];
+  graph.scenarios[0].playerCounts=[1];
+  graph.scenarios[0].gameplayStage="PROGRESSION";
+  graph.scenarios[0].label="objective";
+  const resolution:any={causalLinkId:"l1",scenarioId:"s1",evidenceIds:["e1"],disposition:"CONFIRMED_DEFECT_READY",counterProofSearch:automaticCounterProofSearch(graph,link,graph.scenarios[0])};const finding:any={causalLinkId:"l1",status:"PROVEN",issueType:"BUG",evidenceIds:["e1"]};const result=reasonAboutCausalLinkFinding({graph,resolution,finding,diagnosticDisposition:"confirmed-defect"});expect(result.status).toBe("ADMITTED");expect(result).toMatchObject({causalLinkId:"l1",reportClassification:"PROVEN BUG",proofConfidence:"proven"});expect(result.reasoning?.reportClassification).toBe("PROVEN BUG");});
  it("derives minimal probe candidates from canonical definitions and bindings",()=>{const graph:any={scenarios:[{id:"s1",purpose:"Complete",causalLinkIds:["l1"],componentIds:[]}],causalLinks:[{id:"l1",scenarioId:"s1",purpose:"Dependency",reason:"Blocked",status:"CONTRADICTED",evidenceIds:["e1"],subjectIds:[],componentIds:[],impactPathComponentIds:[],impactPathEvidenceIds:[],knowledgeRequirementIds:[]}],components:[],knowledgeRequirements:[],knowledgeReceipts:[]};const result=reasonAboutCausalLinkFinding({graph,resolution:{causalLinkId:"l1",disposition:"RUNTIME_PROOF_REQUIRED",evidenceIds:["e1"]} as any,finding:{causalLinkId:"l1",status:"NEED_VALIDATION",issueType:"BUG",evidenceIds:["e1"]} as any,diagnosticDisposition:"runtime-proof-required",probeDefinitions:[{id:"p1",label:"Runtime predicate",requiredContext:"LIVE_MINECRAFT",costUnits:1,mutationRisk:"read-only",outcomes:[{id:"yes",observation:"yes",supportsCandidateIds:["causal-link-defect:l1"]},{id:"no",observation:"no",rejectsCandidateIds:["causal-link-defect:l1"]}]}],runtimeProbeBindings:[{probeId:"p1",predicate:"causal-link:l1:runtime:none",query:{kind:"entity-resolvable",entityId:"e"},outcomeByState:{present:"yes",absent:"no"}}]});expect(result.nextPredicate).toBe("causal-link:l1:runtime:none");expect(result.recommendedReadOnlyProbeId).toBe("p1");});
 });
 
@@ -11,9 +24,9 @@ describe("causal observation provenance", () => {
    impactPathComponentIds:[],impactPathEvidenceIds:[],knowledgeRequirementIds:[],
   }],components:[],knowledgeRequirements:[],knowledgeReceipts:[]};
   const result=reasonAboutCausalLinkFinding({graph,
-   resolution:{causalLinkId:"l1",scenarioId:"s1",evidenceIds:["e:source"],disposition:"CONFIRMED_DEFECT_READY"} as any,
-   finding:{causalLinkId:"l1",status:"PROVEN",issueType:"BUG",evidenceIds:["e:source"]} as any,
-   diagnosticDisposition:"confirmed-defect"});
+   resolution:{causalLinkId:"l1",scenarioId:"s1",evidenceIds:["e:source"],disposition:"COUNTERPROOF_SEARCH_REQUIRED"} as any,
+   finding:{causalLinkId:"l1",status:"NEED_VALIDATION",issueType:"BUG",evidenceIds:["e:source"]} as any,
+   diagnosticDisposition:"insufficient-evidence"});
   expect(result.status).toBe("ADMITTED");
   expect(result.reasoning?.evidenceChain).toContain("causal-link:e:source");
   // Canonical source evidence remains on the finding; no synthetic observation
@@ -92,12 +105,43 @@ describe("causal reasoning exact owner and Knowledge proof boundaries", () => {
         evidenceIds: ["e:knowledge"], knowledgeIds: ["knowledge:state"],
       }],
     });
-    expect(satisfied.status).toBe("REJECTED");
-    expect(satisfied.nextPredicate).toBeUndefined();
+    expect(satisfied.status).toBe("ADMITTED");
+    expect(satisfied.nextPredicate)
+      .toBe("causal-link:link:a:counterproof-clearance:none");
     expect(satisfied.evidenceIds).toContain("knowledge-receipt:e:knowledge");
-    // NEED_VALIDATION cannot attach a full proven-confidence explanation;
-    // canonical issue admission remains the only PROVEN authority.
-    expect(satisfied.proofConfidence).toBe("proven");
+    // Satisfied Knowledge does not imply a completed counterproof search.
+    expect(satisfied.proofConfidence).not.toBe("proven");
+  });
+
+  it("does not accept caller counterproof IDs or an ungrounded clearance claim", () => {
+    const withKnowledge = {
+      ...graph,
+      // Canonical source searches require typed dimension maps even when
+      // no dimension witness has been established.
+      causalLinks: graph.causalLinks.map((link: any) => ({
+        ...link, dimensionEvidence: {},
+      })),
+      knowledgeReceipts: [{
+        requirementId: "req:a", scenarioId: "scenario:a",
+        domain: "state-flow", status: "SATISFIED",
+        evidenceIds: ["e:knowledge"], knowledgeIds: ["knowledge:state"],
+      }],
+    };
+    const ungrounded = reason(withKnowledge, {
+      ...resolution,
+      counterProofEvidenceIds: ["e:foreign-exclusion"],
+      counterProofSearch: {
+        schemaVersion: 1, policy: "bounded-counterproof-search",
+        searchedDimensions: ["scope"], dimensionReceipts: [],
+        scopeIds: [], evidenceIds: ["e:foreign-exclusion"],
+        exhaustiveWithinScope: true, conclusion: "NO_BLOCKING_PROOF",
+      },
+    });
+    expect(ungrounded.status).toBe("ADMITTED");
+    expect(ungrounded.nextPredicate)
+      .toBe("causal-link:link:a:counterproof-clearance:none");
+    expect(ungrounded.proofConfidence).not.toBe("proven");
+    expect(ungrounded.reasoning?.reportClassification).toBe("UNKNOWN");
   });
 
   it("never chooses the first duplicate causal or scenario owner", () => {

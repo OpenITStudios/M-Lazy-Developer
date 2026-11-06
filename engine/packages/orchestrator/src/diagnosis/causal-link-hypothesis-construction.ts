@@ -23,7 +23,8 @@ export interface CausalLinkHypothesisConstruction {
 
 function predicate(
   causalLinkId: string,
-  role: "contradiction" | "runtime" | "counterproof" | "knowledge" | "impact-path",
+  role: "contradiction" | "runtime" | "counterproof" |
+    "counterproof-clearance" | "knowledge" | "impact-path",
   ownerId?: string,
 ): string {
   return [
@@ -86,13 +87,18 @@ export function constructCausalLinkHypothesis(input: {
       ? predicate(link.id, "impact-path")
       : undefined;
   const counterproof = predicate(link.id, "counterproof");
+  const counterproofClearance = predicate(link.id, "counterproof-clearance");
 
+  // A missing counterproof receipt is not proof of NO_BLOCKING_PROOF.
+  // Require the canonical bounded search to be complete before assigning
+  // full confidence to a causal hypothesis. PROVE still alone admits BUGs.
   const requiredPredicates = [
     contradiction,
     ...(impactPath ? [impactPath] : []),
     ...(runtime ? [runtime] : []),
     ...knowledgeRequirementPredicates,
     ...knowledgePredicates,
+    counterproofClearance,
   ];
   const falsifierPredicates = [counterproof];
 
