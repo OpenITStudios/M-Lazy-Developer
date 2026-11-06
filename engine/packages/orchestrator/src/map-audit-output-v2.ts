@@ -484,6 +484,22 @@ function summarizeSourceObjectives(model: GameplayIntentModel): {
     text: "Unresolved from selected artifact.",
     grounding: "unresolved",
   };
+  // A parsed finite objective-state declaration with matching literal
+  // state sites is more informative than unrelated helper-function names.
+  // This is still an INFERRED source blueprint, never an approved player
+  // goal, execution path or map-wide win contract.
+  const stateSequences = candidates.filter(node =>
+    node.id.startsWith("objective:source-state-sequence:"));
+  if (stateSequences.length === 1) return {
+    text: nodeText(stateSequences[0]!) ?? "Unresolved from selected artifact.",
+    grounding: "inferred",
+  };
+  if (stateSequences.length > 1) return {
+    text: summarizeSourceAlternatives("source-declared objective-state sequences",
+      "session/player/mode scope", stateSequences.map(node =>
+        nodeText(node) ?? node.id)),
+    grounding: "unresolved",
+  };
   // Multiple real modes can have different objectives. Do not collapse
   // their selected-source statements to an unhelpful count, and do not imply
   // that any candidate is the one map-wide/player-wide objective.

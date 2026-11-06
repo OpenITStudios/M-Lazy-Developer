@@ -31,6 +31,7 @@ import type {
   ScriptModuleMemberAccess,
   ScriptEnumValueComparison,
   ScriptStateMutation,
+  ScriptSourceStateSequence,
   ScriptTransitionDeclaration,
   ScriptArenaAuthorityPath,
   ScriptTypeProperty,
@@ -2223,6 +2224,91 @@ function scanRestrictedMutations(
     seen.add(key);
     return true;
   });
+}
+
+/** Correlate literal module-level objective-state declarations with exact
+ * lexical object-property value sites. This intentionally does NOT treat a
+ * property inside an object spread as an executed/persisted state write.
+ * A source array is declared order, never inferred runtime play order.
+ */
+function sourceStateSequencesFromFile(
+  file: ts.SourceFile,
+  source: SourceRef,
+): readonly ScriptSourceStateSequence[] {
+  const stateProperty = /^(?:active|current)(?:Objective|Quest|Phase|Stage|Level|Step)$/i;
+  const sequenceName = /(?:objectives?|quests?|phases?|stages?|levels?|steps?)(?:[0-9]+)?$/i;
+  const writeSites = new Map<string, {
+    value: string; source: SourceRef;
+  }[]>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isPropertyAssignment(node) &&
+        (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) &&
+        stateProperty.test(node.name.text) &&
+        ts.isStringLiteralLike(node.initializer)) {
+      const key = node.name.text;
+      const list = writeSites.get(key) ?? [];
+      list.push({
+        value: node.initializer.text,
+        source: lineSource(file, node, source),
+      });
+      writeSites.set(key, list);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  const candidates: ScriptSourceStateSequence[] = [];
+  for (const statement of file.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name) ||
+          !sequenceName.test(declaration.name.text) ||
+          declaration.initializer === undefined) continue;
+      let initializer = declaration.initializer;
+      while (ts.isAsExpression(initializer) ||
+             ts.isSatisfiesExpression(initializer) ||
+             ts.isParenthesizedExpression(initializer)) {
+        initializer = initializer.expression;
+      }
+      if (!ts.isArrayLiteralExpression(initializer) ||
+          initializer.elements.length < 3 ||
+          initializer.elements.length > 32 ||
+          !initializer.elements.every(ts.isStringLiteralLike)) continue;
+      const values = initializer.elements.map(value =>
+        (value as ts.StringLiteral).text);
+      if (new Set(values).size !== values.length) continue;
+      for (const [field, writes] of writeSites) {
+        const literalValues = new Set(writes.map(site => site.value));
+        const matched = values.filter(value => literalValues.has(value));
+        // Every observed literal for this one property must belong to the
+        // source declaration; avoid borrowing similarly named mode lists.
+        if (matched.length < 2 || matched.length * 2 < values.length ||
+            [...literalValues].some(value => !values.includes(value))) continue;
+        candidates.push({
+          declarationName: declaration.name.text,
+          statePropertyName: field,
+          values,
+          source: lineSource(file, declaration, source),
+          literalWriteSites: writes.filter(site => values.includes(site.value))
+            .slice(0, 128),
+        });
+      }
+    }
+  }
+  // A same-source subset is not another independent map objective.
+  // Retain incomparable declarations as separately scoped candidates.
+  return candidates.filter(item => !candidates.some(other => {
+    if (other === item || other.statePropertyName !== item.statePropertyName ||
+        other.values.length <= item.values.length) return false;
+    let position = 0;
+    return item.values.every(value => {
+      const next = other.values.indexOf(value, position);
+      if (next < 0) return false;
+      position = next + 1;
+      return true;
+    });
+  })).sort((a, b) =>
+    a.declarationName.localeCompare(b.declarationName) ||
+    (a.source.range?.lineStart ?? 0) - (b.source.range?.lineStart ?? 0));
 }
 
 export function parseScriptFile(
@@ -4701,6 +4787,7 @@ export function parseScriptFile(
     importedSymbols,
     enumValueComparisons,
     stateMutations,
+    sourceStateSequences: sourceStateSequencesFromFile(file, source),
     typeProperties,
     transitionDeclarations,
     returnOutcomes,

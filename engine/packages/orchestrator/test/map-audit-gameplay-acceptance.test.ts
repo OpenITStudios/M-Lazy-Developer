@@ -38,7 +38,7 @@ import {
  * without a second extractor, a private map, or genre-specific expectations.
  */
 type Case = "dialogue" | "animation" | "ambiguous-target" |
-  "authored-content" | "ui-source-flow";
+  "authored-content" | "ui-source-flow" | "objective-sequence";
 
 async function syntheticMcworld(kind: Case): Promise<{
   archive: string;
@@ -59,7 +59,7 @@ async function syntheticMcworld(kind: Case): Promise<{
     },
     modules: [
       { type: "data", uuid: moduleUuid, version: [1, 0, 0] },
-      ...((kind === "authored-content" || kind === "ui-source-flow") ? [{
+      ...((kind === "authored-content" || kind === "ui-source-flow" || kind === "objective-sequence") ? [{
         type: "script",
         language: "javascript",
         entry: "scripts/main.js",
@@ -127,6 +127,28 @@ async function syntheticMcworld(kind: Case): Promise<{
           'const opaque = { translate: "daigon.ui.winner.red" };',
           'world.sendMessage({ ...opaque });',
         ] : []),
+      ].join("\n"));
+    }
+    if (kind === "objective-sequence") {
+      await mkdir(join(first, "scripts"), { recursive: true });
+      await writeFile(join(first, "scripts", "main.js"), [
+        'import { world } from "@minecraft/server";',
+        'const OBJECTIVES = ["docks", "quarry", "relay", "ending"];',
+        'const ACTIVE_GAMEPLAY_PHASES = ["docks", "quarry", "relay"];',
+        'const DEVELOPMENT_LEVEL_TARGETS = ["all", "skip", "quarry", "relay"];',
+        'function formatObjectiveLine(x) { return "Objective " + x; }',
+        'function parseDevelopmentSkipTarget(x) { return x; }',
+        'function startSession(player) {',
+        '  return { sessionId: player.id, arenaId: "arena_1", activeObjective: "docks", status: "loading" };',
+        '}',
+        'function advanceQuarry(session) {',
+        '  return { ...session, activeObjective: "quarry", status: "active" };',
+        '}',
+        'function advanceRelay(session) {',
+        '  return { ...session, activeObjective: "relay", status: "active" };',
+        '}',
+        'function finish(session) { return { ...session, status: "completed" }; }',
+        'world.afterEvents.playerSpawn.subscribe(event => { startSession(event.player); });',
       ].join("\n"));
     }
     const packs = [{
@@ -1620,4 +1642,45 @@ describe("source-linked Game Design path bridges (bounded source-only)", () => {
       path.boundary === "SOURCE_JOIN_UNPROVEN")).toBe(true);
   });
 
+});
+
+describe("source-declared objective sequence is a gameplay blueprint, not helper names", () => {
+  it("connects a finite sequence to literal source state sites without inventing play order", async () => {
+    const fixture = await syntheticMcworld("objective-sequence");
+    try {
+      const run = await runSelectedMapAudit({ artifactPath: fixture.archive });
+      const intent = run.inspection.gameplayIntent.model;
+      const sequences = intent.nodes.filter(node =>
+        node.id.startsWith("objective:source-state-sequence:"));
+      expect(sequences).toHaveLength(1);
+      expect(sequences[0]?.label).toBe(
+        "Source-declared objective states: docks → quarry → relay → ending");
+      expect(sequences[0]?.status).toBe("inferred");
+      expect(run.mapAuditReport.gameDesign.objective).toContain(
+        "docks → quarry → relay → ending");
+      expect(run.mapAuditReport.gameDesign.objectiveGrounding).toBe("inferred");
+      expect(run.mapAuditReport.gameDesign.winConditionGrounding)
+        .toBe("unresolved");
+      expect(run.mapAuditReport.gameDesign.loseConditionGrounding)
+        .toBe("unresolved");
+      const declaredEnding = intent.nodes.find(node =>
+        node.kind === "state" && node.label === "activeObjective = ending");
+      expect(declaredEnding?.status).toBe("inferred");
+      const brief = formatSelectedMapAuditBrief({ report: run.mapAuditReport,
+        intent, modelTaskPackets: run.modelTaskPackets });
+      expect(brief).toContain("Source-declared objective states:");
+      const edges = intent.edges.filter(edge =>
+        edge.from === sequences[0]!.id);
+      expect(edges).toHaveLength(4);
+      expect(edges.every(edge => edge.kind === "participates-in" &&
+        edge.status === "inferred")).toBe(true);
+      const sources = edges.flatMap(edge => edge.evidenceIds)
+        .map(id => intent.evidence.find(item => item.id === id)?.locator);
+      expect(sources.some(site => site?.endsWith("#L11"))).toBe(true);
+      expect(run.mapAuditReport.bugs.filter(item => item.status === "PROVEN"))
+        .toEqual([]);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
 });

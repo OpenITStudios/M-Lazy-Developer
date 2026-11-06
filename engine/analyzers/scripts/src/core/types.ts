@@ -525,6 +525,20 @@ export interface ScriptTypeProperty {
   source: SourceRef;
 }
 
+/** Author-declared finite objective/phase state values correlated with literal
+ * object-property entries. Source sites only: no session/arena alias proof,
+ * write execution, accepted transition, or guaranteed player sequence. */
+export interface ScriptSourceStateSequence {
+  readonly declarationName: string;
+  readonly statePropertyName: string;
+  readonly values: readonly string[];
+  readonly source: SourceRef;
+  readonly literalWriteSites: readonly {
+    readonly value: string;
+    readonly source: SourceRef;
+  }[];
+}
+
 export interface ScriptTransitionDeclaration {
   tableName: string;
   stateType?: string;
@@ -840,6 +854,7 @@ export interface ParsedScriptFile {
   importedSymbols: ScriptImportedSymbol[];
   enumValueComparisons: ScriptEnumValueComparison[];
   stateMutations?: ScriptStateMutation[];
+  sourceStateSequences?: readonly ScriptSourceStateSequence[];
   typeProperties?: ScriptTypeProperty[];
   transitionDeclarations?: ScriptTransitionDeclaration[];
   returnOutcomes?: ScriptReturnOutcome[];

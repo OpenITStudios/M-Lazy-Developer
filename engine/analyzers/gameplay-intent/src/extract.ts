@@ -1150,6 +1150,71 @@ export function extractGameplayIntentSignals(
       });
     }
 
+    // The declaration has authored finite state values. Correlating its
+    // literal property sites yields source navigation, NEVER a runtime
+    // transition or independently approved player objective.
+    for (const sequence of script.sourceStateSequences ?? []) {
+      if (sequence.source.artifactId !== script.source.artifactId ||
+          sequence.source.relativePath !== path) continue;
+      const declarationLine = sequence.source.range?.lineStart;
+      const owner = [script.source.artifactId, path,
+        sequence.declarationName, declarationLine ?? 0].join(":");
+      const key = "objective:source-state-sequence:" +
+        encodeURIComponent(owner);
+      const locator = path + (declarationLine === undefined
+        ? "" : "#L" + declarationLine);
+      pushSignal(signals, {
+        id: "signal:" + key,
+        subjectKey: key, nodeKind: "objective",
+        label: "Source-declared objective states: " +
+          sequence.values.join(" → "),
+        status: "inferred", evidenceOrigin: "source-code",
+        locator,
+        summary: "Authored finite source array " +
+          sequence.declarationName + " lists " +
+          sequence.values.length + " ordered values. The same source " +
+          "contains " + sequence.literalWriteSites.length +
+          " literal object-property sites for " +
+          sequence.statePropertyName + ". Array order is NOT proven " +
+          "player progression; session/arena ownership, guard feasibility, " +
+          "persistence and terminal success remain unverified.",
+      });
+      for (const value of sequence.values) {
+        const sites = sequence.literalWriteSites.filter(site =>
+          site.value === value);
+        const first = sites[0];
+        const state = "state:source-objective-value:" +
+          encodeURIComponent(owner + ":" + value);
+        const siteLocator = first?.source.range?.lineStart === undefined
+          ? locator : path + "#L" + first.source.range.lineStart;
+        pushSignal(signals, {
+          id: "signal:" + state,
+          subjectKey: state, nodeKind: "state",
+          label: sequence.statePropertyName + " = " + value,
+          status: sites.length > 0 ? "authored" : "inferred",
+          evidenceOrigin: "source-code", locator: siteLocator,
+          summary: sites.length > 0
+            ? "Declared source value with " + sites.length +
+              " matching literal object-property site(s). Source syntax " +
+              "does not prove execution, storage commit or arena identity."
+            : "Declared source value with NO observed matching literal " +
+              "property site. Not an executed objective transition.",
+        });
+        pushRelation({
+          id: "relation:source-objective-member:" +
+            encodeURIComponent(owner + ":" + value),
+          fromSubjectKey: key, toSubjectKey: state,
+          edgeKind: "participates-in", status: "inferred",
+          evidenceOrigin: "source-code", locator: siteLocator,
+          summary: "Source-defined objective-state membership; value " +
+            value + (sites.length > 0 ?
+              " has a matching literal property site." :
+              " is declared but has no literal property site.") +
+            " No source execution ordering or game transition is implied.",
+        });
+      }
+    }
+
     for (const comparison of script.enumValueComparisons) {
       const raw =
         comparison.enumName + " " + comparison.member;
