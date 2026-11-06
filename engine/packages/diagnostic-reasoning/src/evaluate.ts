@@ -5,15 +5,16 @@ import type {
   HypothesisAssessment,
 } from "./types.js";
 
-function latestEvidence(
+/** Evidence observations have no version or timestamp. Never infer that
+ * the last input row supersedes an earlier row for the same predicate. */
+function groupEvidenceByPredicate(
   evidence: readonly DiagnosticEvidenceObservation[],
-): ReadonlyMap<string, DiagnosticEvidenceObservation> {
-  const map = new Map<
-    string,
-    DiagnosticEvidenceObservation
-  >();
+): ReadonlyMap<string, readonly DiagnosticEvidenceObservation[]> {
+  const map = new Map<string, DiagnosticEvidenceObservation[]>();
   for (const item of evidence) {
-    map.set(item.predicate, item);
+    const group = map.get(item.predicate) ?? [];
+    group.push(item);
+    map.set(item.predicate, group);
   }
   return map;
 }
@@ -32,67 +33,66 @@ function assessOne(
   hypothesis: DiagnosticHypothesis,
   byPredicate: ReadonlyMap<
     string,
-    DiagnosticEvidenceObservation
+    readonly DiagnosticEvidenceObservation[]
   >,
 ): HypothesisAssessment {
   const supportingEvidenceIds: string[] = [];
   const eliminatingEvidenceIds: string[] = [];
   const missingRequiredPredicates: string[] = [];
   const reasons: string[] = [];
-
-  for (
-    const predicate of
-      hypothesis.falsifierPredicates ?? []
-  ) {
-    const item = byPredicate.get(predicate);
-    if (item?.state === "present") {
-      eliminatingEvidenceIds.push(
-        evidenceId(item),
-      );
-      reasons.push(
-        "Falsifier observed: " +
-          predicate +
-          ".",
-      );
+  const conflicts = new Set<string>();
+  const observed = (predicate: string) => {
+    const group = byPredicate.get(predicate) ?? [];
+    const states = new Set(group.map((item) => item.state));
+    if (states.size > 1) {
+      if (!conflicts.has(predicate)) {
+        reasons.push(
+          "Conflicting observations for " + predicate +
+          "; source scope and evidence identity remain unresolved.",
+        );
+        conflicts.add(predicate);
+      }
+      return { state: "unknown" as const, ids: [], conflicting: true };
     }
-  }
+    return {
+      state: group[0]?.state ?? "unknown" as const,
+      ids: [...new Set(group.map(evidenceId))].sort(),
+      conflicting: false,
+    };
+  };
 
-  for (
-    const predicate of
-      hypothesis.requiredPredicates ?? []
-  ) {
-    const item = byPredicate.get(predicate);
-    if (!item || item.state === "unknown") {
+  for (const predicate of hypothesis.falsifierPredicates ?? []) {
+    const observation = observed(predicate);
+    if (observation.conflicting) {
+      // An ambiguous falsifier cannot be dismissed merely because the
+      // hypothesis's positive predicates happen to be complete.
       missingRequiredPredicates.push(predicate);
-      continue;
-    }
-    if (item.state === "absent") {
-      eliminatingEvidenceIds.push(
-        evidenceId(item),
-      );
-      reasons.push(
-        "Required predicate is absent: " +
-          predicate +
-          ".",
-      );
-    } else {
-      supportingEvidenceIds.push(
-        evidenceId(item),
-      );
+    } else if (observation.state === "present") {
+      eliminatingEvidenceIds.push(...observation.ids);
+      reasons.push("Falsifier observed: " + predicate + ".");
     }
   }
 
-  for (
-    const predicate of
-      hypothesis.supportingPredicates ?? []
-  ) {
-    const item = byPredicate.get(predicate);
-    if (item?.state === "present") {
-      supportingEvidenceIds.push(
-        evidenceId(item),
-      );
+  for (const predicate of hypothesis.requiredPredicates ?? []) {
+    const observation = observed(predicate);
+    if (observation.state === "unknown") {
+      missingRequiredPredicates.push(predicate);
+    } else if (observation.state === "absent") {
+      eliminatingEvidenceIds.push(...observation.ids);
+      reasons.push("Required predicate is absent: " + predicate + ".");
+    } else {
+      supportingEvidenceIds.push(...observation.ids);
     }
   }
+
+  for (const predicate of hypothesis.supportingPredicates ?? []) {
+    const observation = observed(predicate);
+    if (observation.state === "present") {
+      supportingEvidenceIds.push(...observation.ids);
+    }
+  }
+
+  const missing = [...new Set(missingRequiredPredicates)];
 
   if (eliminatingEvidenceIds.length > 0) {
     return {
@@ -100,13 +100,13 @@ function assessOne(
       disposition: "eliminated",
       supportingEvidenceIds,
       eliminatingEvidenceIds,
-      missingRequiredPredicates,
+      missingRequiredPredicates: missing,
       reasons,
     };
   }
 
   const requiredComplete =
-    missingRequiredPredicates.length === 0;
+    missing.length === 0;
   const hasRequired =
     (hypothesis.requiredPredicates?.length ??
       0) > 0;
@@ -122,7 +122,7 @@ function assessOne(
         : "open",
     supportingEvidenceIds,
     eliminatingEvidenceIds,
-    missingRequiredPredicates,
+    missingRequiredPredicates: missing,
     reasons: [
       ...reasons,
       ...(requiredComplete &&
@@ -141,7 +141,7 @@ export function assessDiagnosticHypotheses(
   set: DiagnosticHypothesisSet,
   evidence: readonly DiagnosticEvidenceObservation[],
 ): HypothesisAssessment[] {
-  const byPredicate = latestEvidence(evidence);
+  const byPredicate = groupEvidenceByPredicate(evidence);
   return set.hypotheses.map((hypothesis) =>
     assessOne(hypothesis, byPredicate)
   );

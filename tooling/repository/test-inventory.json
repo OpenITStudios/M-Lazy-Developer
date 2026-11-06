@@ -2566,7 +2566,7 @@
         "owner": "engine/packages/diagnostic-reasoning",
         "riskHint": "medium",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "a049b99163b7f8e9b46786217a91edfb58b78e5c"
+        "sourceBlobSha": "953eb5ef9992a645188157aed5be1af16b84d19a"
       },
       "recommendation": "keep",
       "rationale": "Separates proven corroboration from incomplete inference and prioritizes bounded hypotheses.",

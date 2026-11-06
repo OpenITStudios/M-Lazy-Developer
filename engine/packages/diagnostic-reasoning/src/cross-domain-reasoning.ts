@@ -61,13 +61,18 @@ export function assessCrossDomainHypotheses(
   evidence: readonly CrossDomainEvidenceObservation[],
 ): CrossDomainHypothesisAssessment[] {
   const base = assessDiagnosticHypotheses(set, evidence);
-  const byEvidenceId = new Map(
-    evidence.map((item) => [
-      item.evidenceId ??
-        "predicate:" + item.predicate + ":" + item.state,
-      item,
-    ] as const),
-  );
+  const byEvidenceId = new Map<string, CrossDomainEvidenceObservation>();
+  const ambiguousEvidenceIds = new Set<string>();
+  for (const item of evidence) {
+    const id = item.evidenceId ??
+      "predicate:" + item.predicate + ":" + item.state;
+    const previous = byEvidenceId.get(id);
+    if (previous !== undefined &&
+        (previous.domain !== item.domain ||
+         previous.predicate !== item.predicate ||
+         previous.state !== item.state)) ambiguousEvidenceIds.add(id);
+    else if (previous === undefined) byEvidenceId.set(id, item);
+  }
 
   return base.map((assessment) => {
     const relevantIds = [
@@ -76,7 +81,8 @@ export function assessCrossDomainHypotheses(
     ];
     const domains = [...new Set(
       relevantIds
-        .map((id) => byEvidenceId.get(id)?.domain)
+        .map((id) => ambiguousEvidenceIds.has(id)
+          ? undefined : byEvidenceId.get(id)?.domain)
         .filter((value): value is DiagnosticEvidenceDomain => value !== undefined),
     )].sort();
 
