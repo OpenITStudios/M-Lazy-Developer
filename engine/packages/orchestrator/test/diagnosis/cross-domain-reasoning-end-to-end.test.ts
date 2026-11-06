@@ -12,7 +12,11 @@ import {
 describe("cross-domain source reasoning and runtime handoff", () => {
   it("preserves read-only probe cost, runtime uncertainty and artifact-bound handoff", () => {
     const graph: any = {
-      scenarios: [{ id: "s", purpose: "Finish objective" }],
+      scenarios: [{
+        id: "s", purpose: "Finish objective",
+        causalLinkIds: ["l"], componentIds: [],
+      }],
+      components: [],
       causalLinks: [{
         id: "l",
         scenarioId: "s",
@@ -22,6 +26,9 @@ describe("cross-domain source reasoning and runtime handoff", () => {
         evidenceIds: ["e:static"],
         subjectIds: [],
         componentIds: [],
+        impactPathComponentIds: [],
+        impactPathEvidenceIds: [],
+        knowledgeRequirementIds: [],
       }],
       knowledgeRequirements: [],
       knowledgeReceipts: [],

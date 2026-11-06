@@ -10,9 +10,14 @@ import type {
 import type {
   GameplayDefectResolution,
 } from "../inspection/gameplay-defect-resolution.js";
-import type {
-  GameplayScenarioGraph,
+import {
+  uniqueGameplayCausalLinkScope,
+  type GameplayScenarioGraph,
 } from "../inspection/gameplay-scenario-model.js";
+import {
+  uniqueScenarioKnowledgeRequirement,
+  satisfiedScenarioKnowledgeReceipt,
+} from "../inspection/gameplay-scenario-knowledge.js";
 import type { RuntimeScope } from "../../../project-model/src/index.js";
 import { assessRuntimeGenerationIntegrity } from "./runtime-generation-integrity.js";
 
@@ -33,10 +38,13 @@ export function constructCausalLinkEvidence(input: {
   expectedArtifactId?: string;
   expectedRuntimeScope?: RuntimeScope;
 }): CausalLinkEvidenceObservation[] {
-  const link = input.graph.causalLinks.find(
-    (item) => item.id === input.construction.causalLinkId,
+  const scope = uniqueGameplayCausalLinkScope(
+    input.graph, input.construction.causalLinkId,
   );
-  if (!link) return [];
+  if (scope === undefined ||
+      (input.resolution.scenarioId !== undefined &&
+       input.resolution.scenarioId !== scope.scenario.id)) return [];
+  const { link, scenario } = scope;
 
   const output: CausalLinkEvidenceObservation[] = [];
   const contradictionPredicate =
@@ -75,48 +83,53 @@ export function constructCausalLinkEvidence(input: {
     });
   }
 
-  for (const requirementId of link.knowledgeRequirementIds) {
-    const receipt = input.graph.knowledgeReceipts.find(
+  for (const requirementId of [...new Set(link.knowledgeRequirementIds)]) {
+    const owner = uniqueScenarioKnowledgeRequirement(
+      input.graph, requirementId, scenario.id,
+    );
+    // An explicit negative result has meaning only with one exact owner.
+    // Foreign, duplicated, or evidence-less satisfied receipts are UNKNOWN.
+    const candidates = input.graph.knowledgeReceipts.filter(
       (item) => item.requirementId === requirementId,
     );
-    const predicate =
-      "causal-link:" + link.id + ":knowledge:" +
+    const ownedReceipt = owner !== undefined && candidates.length === 1 &&
+        candidates[0]?.scenarioId === scenario.id &&
+        candidates[0]?.domain === owner.domain
+      ? candidates[0] : undefined;
+    const satisfied = owner === undefined ? undefined :
+      satisfiedScenarioKnowledgeReceipt(input.graph, owner);
+    const predicate = "causal-link:" + link.id + ":knowledge:" +
       requirementId;
     output.push({
       predicate,
-      state:
-        receipt?.status === "SATISFIED"
-          ? "present"
-          : receipt === undefined
-            ? "unknown"
-            : "absent",
+      state: satisfied !== undefined ? "present" :
+        ownedReceipt !== undefined && ownedReceipt.status !== "SATISFIED"
+          ? "absent" : "unknown",
       evidenceId: evidenceId(
         "knowledge-receipt",
-        receipt?.evidenceIds.length
-          ? receipt.evidenceIds
+        ownedReceipt?.evidenceIds.length
+          ? ownedReceipt.evidenceIds
           : [requirementId],
       ),
       domain: "knowledge",
-      sourceEvidenceIds: receipt?.evidenceIds ?? [],
+      sourceEvidenceIds: ownedReceipt?.evidenceIds ?? [],
     });
 
-    for (const knowledgeId of receipt?.knowledgeIds ?? []) {
+    // Only a uniquely SATISFIED canonical receipt can contribute extra
+    // Knowledge predicates, never a foreign or missing-source record.
+    for (const knowledgeId of satisfied?.knowledgeIds ?? []) {
       output.push({
-        predicate:
-          "causal-link:" + link.id + ":knowledge:" +
+        predicate: "causal-link:" + link.id + ":knowledge:" +
           knowledgeId,
-        state:
-          receipt?.status === "SATISFIED"
-            ? "present"
-            : "absent",
+        state: "present",
         evidenceId: evidenceId(
           "knowledge-record",
-          receipt?.evidenceIds.length
-            ? receipt.evidenceIds
+          satisfied?.evidenceIds.length
+            ? satisfied.evidenceIds
             : [knowledgeId],
         ),
         domain: "knowledge",
-        sourceEvidenceIds: receipt?.evidenceIds ?? [],
+        sourceEvidenceIds: satisfied?.evidenceIds ?? [],
       });
     }
   }

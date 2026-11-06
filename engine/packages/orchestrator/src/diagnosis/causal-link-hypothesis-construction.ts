@@ -4,9 +4,14 @@ import type {
 import type {
   GameplayDefectResolution,
 } from "../inspection/gameplay-defect-resolution.js";
-import type {
-  GameplayScenarioGraph,
+import {
+  uniqueGameplayCausalLinkScope,
+  type GameplayScenarioGraph,
 } from "../inspection/gameplay-scenario-model.js";
+import {
+  uniqueScenarioKnowledgeRequirement,
+  satisfiedScenarioKnowledgeReceipt,
+} from "../inspection/gameplay-scenario-knowledge.js";
 
 export interface CausalLinkHypothesisConstruction {
   causalLinkId: string;
@@ -33,43 +38,36 @@ export function constructCausalLinkHypothesis(input: {
   graph: GameplayScenarioGraph;
   resolution: GameplayDefectResolution;
 }): CausalLinkHypothesisConstruction | undefined {
-  const link = input.graph.causalLinks.find(
-    (item) => item.id === input.resolution.causalLinkId,
+  // Reuse the same unique causal/scenario/component identity boundary as
+  // canonical PROVE. First-match graph lookup can borrow another owner.
+  const scope = uniqueGameplayCausalLinkScope(
+    input.graph, input.resolution.causalLinkId,
   );
-  if (!link) return undefined;
-  const scenario = input.graph.scenarios.find(
-    (item) => item.id === link.scenarioId,
-  );
-  if (!scenario) return undefined;
+  if (scope === undefined ||
+      (input.resolution.scenarioId !== undefined &&
+       input.resolution.scenarioId !== scope.scenario.id)) return undefined;
+  const { link, scenario } = scope;
 
-  const knowledgeRequirements =
-    link.knowledgeRequirementIds
-      .map((id) =>
-        input.graph.knowledgeRequirements.find(
-          (item) => item.id === id,
-        )
-      )
-      .filter((item): item is NonNullable<typeof item> =>
-        item !== undefined
-      );
-  const knowledgeReceipts =
-    link.knowledgeRequirementIds
-      .map((id) =>
-        input.graph.knowledgeReceipts.find(
-          (item) => item.requirementId === id,
-        )
-      )
-      .filter((item): item is NonNullable<typeof item> =>
-        item !== undefined
-      );
+  // Keep every authored Knowledge obligation even if no unique matching
+  // source requirement or fulfilled receipt exists. Missing proof must
+  // remain a required predicate, never silently vanish from reasoning.
+  const requiredKnowledgeIds = [...new Set(link.knowledgeRequirementIds)];
+  const knowledgeReceipts = requiredKnowledgeIds.flatMap((id) => {
+    const owner = uniqueScenarioKnowledgeRequirement(
+      input.graph, id, scenario.id,
+    );
+    const receipt = owner === undefined ? undefined :
+      satisfiedScenarioKnowledgeReceipt(input.graph, owner);
+    return receipt === undefined ? [] : [receipt];
+  });
 
   const contradiction = predicate(link.id, "contradiction");
   const runtime = input.resolution.disposition === "RUNTIME_PROOF_REQUIRED"
     ? predicate(link.id, "runtime")
     : undefined;
   const knowledgeRequirementPredicates =
-    knowledgeRequirements.map((knowledge) =>
-      predicate(link.id, "knowledge", knowledge.id)
+    requiredKnowledgeIds.map((id) =>
+      predicate(link.id, "knowledge", id)
     );
   const knowledgePredicates =
     knowledgeReceipts
