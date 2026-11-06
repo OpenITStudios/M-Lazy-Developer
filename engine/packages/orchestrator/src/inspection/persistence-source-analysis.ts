@@ -715,13 +715,30 @@ function ignoredCommitBeforeFeedback(
     if (!fn.body ||
         fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
     const failed: SourceRef[] = [];
+    // A direct terminal finally return/throw overrides a return made by
+    // the guarded storage-write branch. Such a branch does NOT establish
+    // that false/null reaches callers; keep its propagation UNKNOWN.
+    // Only the direct unconditional terminal is modeled. Nested and
+    // conditional finalizers remain source-uncertain, never success proof.
+    const overriddenByFinally = (node: ts.Node): boolean => {
+      for (let ancestor: ts.Node | undefined = node.parent;
+           ancestor && ancestor !== fn; ancestor = ancestor.parent) {
+        if (!ts.isBlock(ancestor) ||
+            !ts.isTryStatement(ancestor.parent) ||
+            ancestor.parent.tryBlock !== ancestor) continue;
+        const last = ancestor.parent.finallyBlock?.statements.at(-1);
+        if (last && (ts.isReturnStatement(last) ||
+                     ts.isThrowStatement(last))) return true;
+      }
+      return false;
+    };
     const isWrite = (node: ts.Node): node is ts.CallExpression =>
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       (node.expression.name.text === "set" ||
        node.expression.name.text === "setDynamicProperty");
     walkBody(fn.body, fn, node => {
-      if (!ts.isIfStatement(node)) return;
+      if (!ts.isIfStatement(node) || overriddenByFinally(node)) return;
       const then = ts.isBlock(node.thenStatement)
         ? node.thenStatement.statements[0]
         : node.thenStatement;

@@ -5730,11 +5730,11 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
-        "sourceBlobSha": "5f6825dbc8e6ba135d7a6c60ea118e64c6118fde",
+        "sourceBlobSha": "f1200ce1c93b81ace54c7405d92346ee5e02499c",
         "consumerSymbol": "analyzePersistenceSource"
       },
       "recommendation": "keep",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Direct two-argument storage-set source sequence is now covered by existing parser-to-persistence regression, including same-block and same-receiver negative controls; source-only, not executable test PASS.",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Direct two-argument storage-set source sequence is now covered by existing parser-to-persistence regression, including same-block and same-receiver negative controls; source-only, not executable test PASS. Source-only negative cases now prevent a direct unconditional finally return/throw from being treated as a propagated write failure; non-overriding and conditional finalizers retain the original candidate. Regression authored, native Vitest not executed.",
       "functionalArea": "player-state-persistence",
       "mechanicTags": [
         "player.leave",

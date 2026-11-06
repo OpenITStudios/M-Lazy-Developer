@@ -351,6 +351,49 @@ describe("persistence source analysis", () => {
     expect(analyzePersistenceSource([handled]).ignoredCommitBeforeFeedback).toEqual([]);
   });
 
+  it("does not forward an overwritten failed storage result through unconditional finally", () => {
+    const parse = (finalizer: string) => parseScriptFile("finally-return", [
+      "function commit() {",
+      "  try { if (!db.set('score', 4)) return false; }",
+      "  finally { " + finalizer + " }",
+      "  return true;",
+      "}",
+      "function publish() {",
+      "  commit();",
+      "  player.sendMessage('complete');",
+      "  state.set('completed', true);",
+      "}",
+    ].join("\n"), {
+      artifactId: "fixture:finally-return",
+      relativePath: "scripts/finally.js",
+    });
+
+    // Both direct exits replace the guarded return in the try-block.
+    // Even if a failed storage call is authored, its false-result path is
+    // not the outcome observed by the immediate caller.
+    for (const finalizer of [
+      "return true;",
+      "throw new Error('abort');",
+      "state.set('recovered', true); return true;",
+    ]) {
+      expect(analyzePersistenceSource([parse(finalizer)])
+        .ignoredCommitBeforeFeedback).toEqual([]);
+    }
+    // A non-overriding finally does not erase the original guarded return.
+    const original = analyzePersistenceSource([parse("")])
+      .ignoredCommitBeforeFeedback;
+    expect(original).toHaveLength(1);
+    expect(original[0]).toMatchObject({
+      calleeName: "commit",
+      failedReturnSource: { range: { lineStart: 2 } },
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+    // Do not treat a conditional finalizer as an unconditional override.
+    // It can still expose the failed return on the other branch.
+    expect(analyzePersistenceSource([parse("if (recover) return true;")])
+      .ignoredCommitBeforeFeedback).toHaveLength(1);
+  });
+
   it("does not borrow success feedback across unknown recovery or control flow", () => {
     const parse = (body: readonly string[]) => parseScriptFile("recovery", [
       "function commit() { if (!db.set('score', 4)) return false; return true; }",
