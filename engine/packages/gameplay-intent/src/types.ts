@@ -106,6 +106,39 @@ export interface GameplayIntentEvidence {
       readonly worldAttachment: "listed" | "not-listed" | "unknown";
     };
   };
+  /** Literal source declaration order, NEVER effective gameplay order. */
+  sourceObjectiveStateSequence?: {
+    readonly declarationName: string;
+    readonly statePropertyName: string;
+    readonly values: readonly string[];
+    readonly proof: "DECLARED_SOURCE_SEQUENCE_NOT_PLAY_SEQUENCE";
+  };
+  /** One exact AST source property site for a declared objective-state
+   * value. Enclosing function, branch and a set-call are source CONTEXT,
+   * never successful persistence, gameplay sequence or owner identity.
+   * Stored on existing Intent evidence, not a new gameplay authority. */
+  sourceObjectiveStateWrite?: {
+    readonly declarationName: string;
+    readonly statePropertyName: string;
+    readonly value: string;
+    readonly sequenceIndex: number;
+    readonly executionRegion: string;
+    readonly executionRegionId?: string;
+    readonly guards: readonly {
+      readonly kind: "lexical" | "precedence";
+      readonly expression: string;
+      readonly branch: "true" | "false";
+      readonly locator: string;
+    }[];
+    readonly sourceUsage:
+      | { readonly kind: "set-call-argument";
+          readonly callLocator: string;
+          readonly receiverExpression: string;
+          readonly keyExpression: string }
+      | { readonly kind: "return-object" }
+      | { readonly kind: "object-literal" };
+    readonly proof: "EXACT_OBJECT_LITERAL_SOURCE_CONTEXT_NOT_EXECUTION";
+  };
   /** Literal source `translate` property referring to a selected .lang
    * key. This independent code site does not certify UI delivery or which
    * resource/behavior pack translation wins when keys collide.

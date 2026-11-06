@@ -473,6 +473,131 @@ function formatSelectedMapProbeCoverage(
   return out;
 }
 
+/** One read-only view of the already-owned objective declaration,
+ * exact literal source writers and optional source-root IR context.
+ * It never creates a new goal, transition, source admission or BUG. */
+function formatObjectiveStateSourceContexts(
+  report: MapAuditOutputV2,
+  intent: GameplayIntentModel,
+): readonly string[] {
+  const evidenceById = uniquelyOwnedIntentEvidence(intent);
+  const counts = new Map<string, number>();
+  for (const node of intent.nodes) counts.set(node.id,
+    (counts.get(node.id) ?? 0) + 1);
+  const nodes = new Map(intent.nodes.filter(node =>
+    counts.get(node.id) === 1).map(node => [node.id, node] as const));
+  const authoredSequences = [...nodes.values()].filter(node =>
+    node.id.startsWith("objective:source-state-sequence:"))
+    .flatMap(node => {
+      const witnesses = node.evidenceIds
+        .map(id => evidenceById.get(id))
+        .filter(item => item?.scope === "selected-artifact" &&
+          item.sourceObjectiveStateSequence?.proof ===
+            "DECLARED_SOURCE_SEQUENCE_NOT_PLAY_SEQUENCE");
+      return witnesses.length === 1 ? [{
+        node, sequence: witnesses[0]!.sourceObjectiveStateSequence!,
+        locator: witnesses[0]!.locator,
+      }] : [];
+    }).sort((a,b) => a.node.id.localeCompare(b.node.id));
+  if (authoredSequences.length === 0) return [];
+
+  const clean = (value: string): string =>
+    value.replace(/\s+/g, " ").trim().slice(0, 160);
+  const entryKindsByRegion = new Map<string, Set<string>>();
+  for (const flow of report.gameplayStructure?.sourceFlowCandidates ?? []) {
+    if (flow.sourceTraceStatus !== "SOURCE_ROOT_TRACE") continue;
+    for (const id of flow.regionIds) {
+      const kinds = entryKindsByRegion.get(id) ?? new Set<string>();
+      kinds.add(flow.entryKind);
+      entryKindsByRegion.set(id, kinds);
+    }
+  }
+  const out: string[] = [
+    "",
+    "### Source-declared objective-state context (NOT PLAY SEQUENCE)",
+    "The source declares possible objective values and selected AST literal " +
+      "sites. Enclosing functions, branch guards, set-call syntax and " +
+      "IR root traces are investigative CONTEXT, not successful writes, " +
+      "session/arena ownership, event delivery or terminal proof.",
+  ];
+  if (authoredSequences.length > 1) {
+    out.push("**Ambiguous mode/session scope:** " +
+      authoredSequences.length + " distinct source declarations; none " +
+      "is automatically the map-wide player journey.");
+  }
+  for (const { node, sequence, locator } of authoredSequences.slice(0, 3)) {
+    out.push("- " + clean(sequence.declarationName) + " / " +
+      clean(sequence.statePropertyName) + " (" +
+      sequence.values.length + " declared values; " +
+      clean(locator) + ")");
+    for (const [index, value] of sequence.values.entries()) {
+      const owners = intent.edges.filter(edge =>
+        edge.from === node.id && edge.kind === "participates-in" &&
+        edge.status !== "hypothesis" &&
+        nodes.get(edge.to)?.label ===
+          sequence.statePropertyName + " = " + value);
+      if (owners.length !== 1) {
+        out.push("  " + (index + 1) + ". " + clean(value) +
+          " — source-state owner ambiguous; NOT VERIFIED.");
+        continue;
+      }
+      const state = nodes.get(owners[0]!.to)!;
+      const writers = state.evidenceIds.flatMap(id => {
+        const item = evidenceById.get(id);
+        const site = item?.sourceObjectiveStateWrite;
+        return item?.scope === "selected-artifact" &&
+          site?.proof ===
+            "EXACT_OBJECT_LITERAL_SOURCE_CONTEXT_NOT_EXECUTION" &&
+          site.sequenceIndex === index &&
+          site.value === value &&
+          site.statePropertyName === sequence.statePropertyName &&
+          site.declarationName === sequence.declarationName
+          ? [{ site, locator: item.locator }] : [];
+      }).sort((a,b) => a.locator.localeCompare(b.locator));
+      out.push("  " + (index + 1) + ". " + clean(value) +
+        " — exact literal sites: " + writers.length +
+        (writers.length === 0
+          ? "; declared value only (no verified source writer)." : "."));
+      for (const { site, locator: writerLocator } of writers.slice(0, 2)) {
+        const usage = site.sourceUsage;
+        const writer = site.executionRegion +
+          (usage.kind === "set-call-argument"
+            ? " [set-call argument: " +
+                clean(usage.receiverExpression) + ".set(" +
+                clean(usage.keyExpression) + ", …) @ " +
+                clean(usage.callLocator) + "]"
+            : usage.kind === "return-object"
+              ? " [returned object; persistence NOT proven]"
+              : " [object literal; consumer unresolved]");
+        const guards = site.guards.slice(0, 2).map(guard =>
+          guard.kind + ":" + guard.branch + " " +
+          clean(guard.expression));
+        const roots = site.executionRegionId === undefined
+          ? []
+          : [...(entryKindsByRegion.get(site.executionRegionId) ?? [])]
+              .sort();
+        out.push("    - " + clean(writerLocator) + " — " +
+          clean(writer) + "; branch conditions: " +
+          (guards.length > 0 ? guards.join(" AND ") : "not evidenced") +
+          "; IR entry-context: " +
+          (roots.length > 0 ? roots.join(", ") : "unresolved") +
+          " (NOT event delivery/write reachability).");
+      }
+      if (writers.length > 2) out.push("    - +" +
+        (writers.length - 2) + " additional site(s) retained in " +
+        "Gameplay Intent evidence.");
+    }
+  }
+  if (authoredSequences.length > 3) out.push("+" +
+    (authoredSequences.length - 3) +
+    " further source-declared sequence(s) remain in canonical Intent.");
+  out.push("**Still NEED_VALIDATION:** which event actually triggers each " +
+    "state change; whether branch guards pass; whether set-call targets " +
+    "persist the value under the correct session/player/arena key; and " +
+    "whether the declared final state produces a real terminal outcome.", "");
+  return out;
+}
+
 export function formatSelectedMapAuditFinalReport(input: {
   readonly report: MapAuditOutputV2;
   readonly intent: GameplayIntentModel;
@@ -527,6 +652,7 @@ export function formatSelectedMapAuditFinalReport(input: {
     "**Versi:** " + concise(report.mapVersion), "",
   ];
   out.push(...formatSourceBoundGameplayFlowReview(report, intent));
+  out.push(...formatObjectiveStateSourceContexts(report, intent));
   // Derived QA IDs remain pending until requirement-specific PROVE evidence.
   const qa = report.qaCoverage;
   if (qa) {
@@ -1163,6 +1289,7 @@ export function formatSelectedMapAuditBrief(input: {
     "",
   ];
   out.push(...formatSourceBoundGameplayFlowReview(report, intent));
+  out.push(...formatObjectiveStateSourceContexts(report, intent));
   const playerSession = input.playerSessionLifecycle;
   if (playerSession && (
       playerSession.playerJoinSubscriptions +

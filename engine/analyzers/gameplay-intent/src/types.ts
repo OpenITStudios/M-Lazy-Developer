@@ -24,6 +24,24 @@ export interface GameplayIntentSignal {
    * This is an identity/alias question, not a claim about runtime scope.
    */
   sourceStateCollisionBaseKey?: string;
+  /** Finite source-declared values, not a verified player journey. */
+  sourceObjectiveStateSequence?: {
+    readonly declarationName: string;
+    readonly statePropertyName: string;
+    readonly values: readonly string[];
+  };
+  /** AST-local objective-state literal sites, not executed or committed writes.
+   * The same selected-source parser owns these facts; Intent reuses them. */
+  sourceObjectiveStateWriteOrigins?: readonly {
+    readonly scriptSource: ParsedScriptFile["source"];
+    readonly declarationName: string;
+    readonly statePropertyName: string;
+    readonly value: string;
+    readonly sequenceIndex: number;
+    readonly site: NonNullable<
+      ParsedScriptFile["sourceStateSequences"]
+    >[number]["literalWriteSites"][number];
+  }[];
   /** Exact parsed named function region, not evidence of its actual invocation. */
   executionRegionOrigins?: readonly {
     scriptSource: ParsedScriptFile["source"];

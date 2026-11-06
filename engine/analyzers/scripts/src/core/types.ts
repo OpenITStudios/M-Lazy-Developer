@@ -536,6 +536,19 @@ export interface ScriptSourceStateSequence {
   readonly literalWriteSites: readonly {
     readonly value: string;
     readonly source: SourceRef;
+    /** Parsed enclosing function/callback only, not an invoked entrypoint. */
+    readonly executionRegion: string;
+    /** Exact lexical branch ancestry; neither guard feasibility nor runtime. */
+    readonly lexicalGuards: readonly ScriptLexicalGuard[];
+    readonly precedenceGuards: readonly ScriptLexicalGuard[];
+    /** Syntax at the containing object, not proof of committed state. */
+    readonly sourceUsage:
+      | { readonly kind: "set-call-argument";
+          readonly callSource: SourceRef;
+          readonly receiverExpression: string;
+          readonly keyExpression: string }
+      | { readonly kind: "return-object" }
+      | { readonly kind: "object-literal" };
   }[];
 }
 

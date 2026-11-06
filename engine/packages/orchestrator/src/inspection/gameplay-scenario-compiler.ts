@@ -2499,6 +2499,29 @@ function reconstructClassifiedMechanics(
       intentEdgesBySubject.set(subjectId, list);
     }
   }
+  // A finite objective sequence has inferred membership edges to exact
+  // object-literal sites. Reuse their uniquely sourced IR region identity
+  // only for flow CONTEXT, not a directly executed state mutation or
+  // verified source-root-to-write dependency.
+  const objectiveWriterEvidence = new Map<string,
+    GameplayIntentModel["evidence"][number]>();
+  const observedEvidenceIds = new Set<string>();
+  const duplicateSourceIds = new Set<string>();
+  for (const item of intent.evidence) {
+    if (observedEvidenceIds.has(item.id)) duplicateSourceIds.add(item.id);
+    observedEvidenceIds.add(item.id);
+    if (item.scope === "selected-artifact" &&
+        item.sourceObjectiveStateWrite !== undefined &&
+        !objectiveWriterEvidence.has(item.id))
+      objectiveWriterEvidence.set(item.id, item);
+  }
+  for (const id of duplicateSourceIds) objectiveWriterEvidence.delete(id);
+  const nodeCounts = new Map<string, number>();
+  for (const node of intent.nodes) nodeCounts.set(node.id,
+    (nodeCounts.get(node.id) ?? 0) + 1);
+  const intentNodeById = new Map(intent.nodes
+    .filter(node => nodeCounts.get(node.id) === 1)
+    .map(node => [node.id, node] as const));
   const guardedIndicesByWriteId = new Map<string, number[]>();
   guardedTransitions.forEach((candidate, index) => {
     const list = guardedIndicesByWriteId.get(candidate.writeOperationId) ?? [];
@@ -2541,6 +2564,31 @@ function reconstructClassifiedMechanics(
         })).sort((a,b) => a.id.localeCompare(b.id));
       const matchedFlowIndices = new Set<number>();
       const declaredIds = new Set(node.evidenceIds);
+      if (node.id.startsWith("objective:source-state-sequence:")) {
+        const linkedWriteRegions = new Set<string>();
+        for (const edge of intentEdgesBySubject.get(node.id) ?? []) {
+          if (edge.from !== node.id ||
+              edge.kind !== "participates-in" ||
+              edge.status === "hypothesis" ||
+              !edge.to.startsWith("state:source-objective-value:")) continue;
+          const state = intentNodeById.get(edge.to);
+          if (!state) continue;
+          for (const id of edge.evidenceIds) {
+            if (!state.evidenceIds.includes(id)) continue;
+            const regionId = objectiveWriterEvidence.get(id)
+              ?.sourceObjectiveStateWrite?.executionRegionId;
+            if (regionId) linkedWriteRegions.add(regionId);
+          }
+        }
+        for (const regionId of linkedWriteRegions) {
+          for (const index of flowIndicesByRegionId.get(regionId) ?? []) {
+            // Context only. The feature still needs exact source STEP IDs
+            // to establish effect ownership; sourceActivationCandidates
+            // remain TRACE_CONTEXT_ONLY without a directly owned entry.
+            matchedFlowIndices.add(index);
+          }
+        }
+      }
       for (const id of evidenceIds) {
         for (const index of flowIndicesByEvidenceId.get(id) ?? []) {
           matchedFlowIndices.add(index);

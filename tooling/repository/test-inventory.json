@@ -6331,7 +6331,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "35d3e0adaba5420adb324b333fa81946c26e7c9a"
+        "sourceBlobSha": "f1b9729a9e8e1757dac4e149582b6b815a2a9fff"
       },
       "recommendation": "keep",
       "rationale": "Selected-map source-to-handoff acceptance, new initial-run cost timing and read-only grouped obligation navigation with aligned global task offsets. Canonical audit and proof admission unchanged; existing unrelated failures retained. Added bounded eight-member AI source-investigation acceptance: no loss of task offsets, original reasons or provenance, separated causal/source-specific tasks, snapshot digest/member tamper rejection and original handoff pagination equivalence. All original canonical proof gates remain authoritative; no Minecraft execution implied.",

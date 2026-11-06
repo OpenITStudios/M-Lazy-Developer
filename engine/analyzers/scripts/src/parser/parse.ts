@@ -2237,9 +2237,46 @@ function sourceStateSequencesFromFile(
 ): readonly ScriptSourceStateSequence[] {
   const stateProperty = /^(?:active|current)(?:Objective|Quest|Phase|Stage|Level|Step)$/i;
   const sequenceName = /(?:objectives?|quests?|phases?|stages?|levels?|steps?)(?:[0-9]+)?$/i;
-  const writeSites = new Map<string, {
-    value: string; source: SourceRef;
-  }[]>();
+  type Writer = ScriptSourceStateSequence["literalWriteSites"][number];
+  const writeSites = new Map<string, Writer[]>();
+  const sourceUsage = (node: ts.PropertyAssignment): Writer["sourceUsage"] => {
+    if (!ts.isObjectLiteralExpression(node.parent)) {
+      return { kind: "object-literal" };
+    }
+    let object: ts.Expression = node.parent;
+    // Parenthesized/cast expressions do not change the syntactic owner.
+    while (true) {
+      const parent = object.parent;
+      if (ts.isParenthesizedExpression(parent) ||
+          ts.isAsExpression(parent) ||
+          ts.isSatisfiesExpression(parent)) {
+        object = parent;
+      } else {
+        break;
+      }
+    }
+    const parent = object.parent;
+    if (ts.isReturnStatement(parent) && parent.expression === object) {
+      return { kind: "return-object" };
+    }
+    // A Map-like set(key, object) is evidence of a call argument, NOT an
+    // established session store, database commit or active arena owner.
+    if (ts.isCallExpression(parent) &&
+        parent.arguments.length === 2 &&
+        parent.arguments[1] === object &&
+        ts.isPropertyAccessExpression(parent.expression) &&
+        parent.expression.name.text === "set" &&
+        !parent.arguments.some(ts.isSpreadElement)) {
+      return {
+        kind: "set-call-argument",
+        callSource: lineSource(file, parent, source),
+        receiverExpression:
+          parent.expression.expression.getText(file).slice(0, 180),
+        keyExpression: parent.arguments[0]!.getText(file).slice(0, 180),
+      };
+    }
+    return { kind: "object-literal" };
+  };
   const visit = (node: ts.Node): void => {
     if (ts.isPropertyAssignment(node) &&
         (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) &&
@@ -2250,6 +2287,11 @@ function sourceStateSequencesFromFile(
       list.push({
         value: node.initializer.text,
         source: lineSource(file, node, source),
+        executionRegion: localExecutionRegionId(node, file),
+        lexicalGuards: lexicalBranchGuards(node, file, source).slice(0, 12),
+        precedenceGuards: precedingEarlyExitGuards(node, file, source)
+          .slice(0, 12),
+        sourceUsage: sourceUsage(node),
       });
       writeSites.set(key, list);
     }

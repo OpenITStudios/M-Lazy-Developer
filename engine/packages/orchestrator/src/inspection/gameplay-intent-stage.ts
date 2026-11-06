@@ -539,6 +539,93 @@ export function buildGameplayIntentModel(
     return [...linked].sort();
   };
 
+  // A parsed objective state literal is a precise SOURCE site, but the
+  // semantic IR may not model an object property as a state write. Keep the
+  // original AST site and a separately verified execution-region CONTEXT,
+  // never substitute a function trace for an executed persistence attempt.
+  const sourceObjectiveWriteEvidenceIds = (
+    signal: GameplayIntentSignal,
+  ): string[] => {
+    const output = new Set<string>();
+    for (const origin of signal.sourceObjectiveStateWriteOrigins ?? []) {
+      const site = origin.site;
+      const source = site.source;
+      const range = source.range;
+      if (origin.scriptSource.artifactId !== source.artifactId ||
+          origin.scriptSource.relativePath !== source.relativePath ||
+          (input.artifactId !== undefined &&
+           source.artifactId !== input.artifactId) ||
+          !selectedArtifactSourcePaths.has(source.relativePath) ||
+          range?.lineStart === undefined ||
+          range.columnStart === undefined ||
+          range.lineEnd === undefined ||
+          range.columnEnd === undefined) continue;
+      const key = [
+        source.artifactId, source.relativePath,
+        range.lineStart, range.columnStart,
+        range.lineEnd, range.columnEnd,
+        origin.declarationName, origin.statePropertyName, origin.value,
+      ].join(":");
+      const id = "source-objective-state-write:" +
+        encodeURIComponent(key);
+      const regionId = scriptRegionId(origin.scriptSource,
+        site.executionRegion);
+      const ownedRegions = input.semanticIr?.execution.regions.filter(
+        region => region.id === regionId &&
+          region.source?.artifactId === source.artifactId &&
+          region.source.relativePath === source.relativePath,
+      ) ?? [];
+      const usage = site.sourceUsage.kind === "set-call-argument"
+        ? {
+            kind: "set-call-argument" as const,
+            callLocator: sourceLocator(site.sourceUsage.callSource),
+            receiverExpression: site.sourceUsage.receiverExpression,
+            keyExpression: site.sourceUsage.keyExpression,
+          }
+        : site.sourceUsage.kind === "return-object"
+          ? { kind: "return-object" as const }
+          : { kind: "object-literal" as const };
+      evidence.set(id, {
+        id,
+        scope: "selected-artifact",
+        origin: "source-code",
+        locator: sourceLocator(source),
+        summary:
+          "Exact authored object-property literal " +
+          origin.statePropertyName + " = " + origin.value +
+          " in " + site.executionRegion +
+          ". A set-call argument or returned object is not proof of " +
+          "state commit, session/arena ownership or gameplay success.",
+        sourceObjectiveStateWrite: {
+          declarationName: origin.declarationName,
+          statePropertyName: origin.statePropertyName,
+          value: origin.value,
+          sequenceIndex: origin.sequenceIndex,
+          executionRegion: site.executionRegion,
+          ...(ownedRegions.length === 1 ? { executionRegionId: regionId } : {}),
+          guards: [
+            ...site.lexicalGuards.map(guard => ({
+              kind: "lexical" as const,
+              expression: guard.conditionText.slice(0, 300),
+              branch: guard.branch,
+              locator: sourceLocator(guard.source),
+            })),
+            ...site.precedenceGuards.map(guard => ({
+              kind: "precedence" as const,
+              expression: guard.conditionText.slice(0, 300),
+              branch: guard.branch,
+              locator: sourceLocator(guard.source),
+            })),
+          ],
+          sourceUsage: usage,
+          proof: "EXACT_OBJECT_LITERAL_SOURCE_CONTEXT_NOT_EXECUTION",
+        },
+      });
+      output.add(id);
+    }
+    return [...output].sort();
+  };
+
   // Aggregate one source-alias question per lexical value rather than
   // creating a new unknown for every write site in the same state surface.
   const stateAliasQuestions = new Map<string, {
@@ -557,13 +644,23 @@ export function buildGameplayIntentModel(
       origin: signal.evidenceOrigin,
       locator: signal.locator,
       summary: signal.summary,
+      ...(signalScope === "selected-artifact" &&
+          signal.sourceObjectiveStateSequence !== undefined ? {
+            sourceObjectiveStateSequence: {
+              ...signal.sourceObjectiveStateSequence,
+              proof: "DECLARED_SOURCE_SEQUENCE_NOT_PLAY_SEQUENCE" as const,
+            },
+          } : {}),
       ...(signalScope === undefined
         ? {}
         : { scope: signalScope }),
     });
 
     const exactTechnicalEvidenceIds = signalIrEvidenceIds(signal);
-    const signalEvidenceIds = [id, ...exactTechnicalEvidenceIds];
+    const sourceWriteIds = signalScope === "selected-artifact"
+      ? sourceObjectiveWriteEvidenceIds(signal) : [];
+    const signalEvidenceIds = [id, ...exactTechnicalEvidenceIds,
+      ...sourceWriteIds];
     if (signalScope === "selected-artifact" &&
         signal.sourceStateCollisionBaseKey !== undefined) {
       const key = signal.sourceStateCollisionBaseKey;
@@ -807,6 +904,21 @@ export function buildGameplayIntentModel(
           locator: sourceLocator(matched.source), scope: "selected-artifact",
           summary: "Exact authored return for inferred producer relationship; gameplay meaning and execution remain unproven.",
         });
+      }
+    }
+    // Existing objective membership is the source-only navigation edge.
+    // Carry exact typed AST writer-site IDs into its evidence chain so
+    // Scenario Graph and read-only reports can inspect owners and guards.
+    // This is NOT a transitions-to edge or a committed session mutation.
+    if (relation.edgeKind === "participates-in" &&
+        relation.fromSubjectKey.startsWith(
+          "objective:source-state-sequence:") &&
+        relation.toSubjectKey.startsWith(
+          "state:source-objective-value:")) {
+      for (const siteId of nodes.get(relation.toSubjectKey)?.evidenceIds ?? []) {
+        if (evidence.get(siteId)?.sourceObjectiveStateWrite !== undefined) {
+          exactIrEvidenceIds.add(siteId);
+        }
       }
     }
     const relationEvidenceIds = [id, ...exactIrEvidenceIds].sort();

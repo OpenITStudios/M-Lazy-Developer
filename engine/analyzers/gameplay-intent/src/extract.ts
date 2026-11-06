@@ -484,6 +484,10 @@ function pushSignal(
     ...(existing.returnOutcomeOrigins ?? []),
     ...(signal.returnOutcomeOrigins ?? []),
   ];
+  const objectiveWriters = [
+    ...(existing.sourceObjectiveStateWriteOrigins ?? []),
+    ...(signal.sourceObjectiveStateWriteOrigins ?? []),
+  ];
   const mutations = [
     ...(existing.stateMutationOrigins ?? []),
     ...(signal.stateMutationOrigins ?? []),
@@ -502,6 +506,9 @@ function pushSignal(
     ...(mutations.length > 0 ? { stateMutationOrigins: mutations } : {}),
     ...(actions.length > 0 ? { resourceActionOrigins: actions } : {}),
     ...(regions.length > 0 ? { executionRegionOrigins: regions } : {}),
+    ...(objectiveWriters.length > 0
+      ? { sourceObjectiveStateWriteOrigins: objectiveWriters }
+      : {}),
   });
 }
 
@@ -1168,6 +1175,11 @@ export function extractGameplayIntentSignals(
         subjectKey: key, nodeKind: "objective",
         label: "Source-declared objective states: " +
           sequence.values.join(" → "),
+        sourceObjectiveStateSequence: {
+          declarationName: sequence.declarationName,
+          statePropertyName: sequence.statePropertyName,
+          values: sequence.values,
+        },
         status: "inferred", evidenceOrigin: "source-code",
         locator,
         summary: "Authored finite source array " +
@@ -1191,6 +1203,14 @@ export function extractGameplayIntentSignals(
           id: "signal:" + state,
           subjectKey: state, nodeKind: "state",
           label: sequence.statePropertyName + " = " + value,
+          sourceObjectiveStateWriteOrigins: sites.map(site => ({
+            scriptSource: script.source,
+            declarationName: sequence.declarationName,
+            statePropertyName: sequence.statePropertyName,
+            value,
+            sequenceIndex: sequence.values.indexOf(value),
+            site,
+          })),
           status: sites.length > 0 ? "authored" : "inferred",
           evidenceOrigin: "source-code", locator: siteLocator,
           summary: sites.length > 0

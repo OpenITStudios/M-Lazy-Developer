@@ -147,6 +147,14 @@ async function syntheticMcworld(kind: Case): Promise<{
         'function advanceRelay(session) {',
         '  return { ...session, activeObjective: "relay", status: "active" };',
         '}',
+        'function commitQuarry(session) {',
+        '  if (session.status !== "active") return false;',
+        '  return sessions().set(session.sessionId, { ...session, activeObjective: "quarry", status: "active" });',
+        '}',
+        'function commitRelay(session) {',
+        '  if (session.arenaId !== "arena_1") return false;',
+        '  return sessions().set(session.sessionId, { ...session, activeObjective: "relay", status: "active" });',
+        '}',
         'function finish(session) { return { ...session, status: "completed" }; }',
         'world.afterEvents.playerSpawn.subscribe(event => { startSession(event.player); });',
       ].join("\n"));
@@ -1666,9 +1674,47 @@ describe("source-declared objective sequence is a gameplay blueprint, not helper
       const declaredEnding = intent.nodes.find(node =>
         node.kind === "state" && node.label === "activeObjective = ending");
       expect(declaredEnding?.status).toBe("inferred");
+      const writers = intent.evidence.filter(item =>
+        item.sourceObjectiveStateWrite !== undefined);
+      const committedQuarry = writers.find(item =>
+        item.sourceObjectiveStateWrite?.executionRegion ===
+          "function:commitQuarry");
+      expect(committedQuarry?.sourceObjectiveStateWrite?.sourceUsage)
+        .toMatchObject({
+          kind: "set-call-argument",
+          receiverExpression: "sessions()",
+          keyExpression: "session.sessionId",
+        });
+      expect(committedQuarry?.sourceObjectiveStateWrite?.guards.some(guard =>
+        guard.kind === "precedence" &&
+        guard.expression.includes("session.status") &&
+        guard.branch === "false")).toBe(true);
+      const committedRelay = writers.find(item =>
+        item.sourceObjectiveStateWrite?.executionRegion ===
+          "function:commitRelay");
+      expect(committedRelay?.sourceObjectiveStateWrite?.guards.some(guard =>
+        guard.expression.includes("session.arenaId"))).toBe(true);
+      expect(writers.some(item =>
+        item.sourceObjectiveStateWrite?.value === "ending")).toBe(false);
+      const reconstructed = run.mapAuditReport.gameplayStructure
+        ?.mechanicReconstructions.find(item =>
+          item.featureId === sequences[0]!.id);
+      expect(reconstructed?.relations.some(edge =>
+        edge.kind === "participates-in" &&
+        edge.evidenceIds.some(id =>
+          id.startsWith("source-objective-state-write:")))).toBe(true);
       const brief = formatSelectedMapAuditBrief({ report: run.mapAuditReport,
         intent, modelTaskPackets: run.modelTaskPackets });
       expect(brief).toContain("Source-declared objective states:");
+      expect(brief).toContain("Source-declared objective-state context");
+      expect(brief).toContain("set-call argument");
+      expect(brief).toContain("session.sessionId");
+      expect(brief).toContain("terminal outcome");
+      const finalReport = formatSelectedMapAuditFinalReport({
+        report: run.mapAuditReport, intent,
+      });
+      expect(finalReport).toContain("Source-declared objective-state context");
+      expect(finalReport).toContain("Still NEED_VALIDATION");
       const edges = intent.edges.filter(edge =>
         edge.from === sequences[0]!.id);
       expect(edges).toHaveLength(4);
