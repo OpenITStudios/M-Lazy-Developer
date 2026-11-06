@@ -13,6 +13,8 @@
 - `golden.json`: the locked SHA-256 baseline of the synthetic example output HTML and JCS JSON. Any later renderer/style/script change that modifies the output bytes must be reviewed against the versioned design instead of silently replacing this baseline.
 - `client.acceptance.test.mjs`: isolated browser-DOM interaction harness using only built-in Node modules. Exercises Passed/Failed, screenshot/caption, Save as HTML embedded tester snapshot, saved-file reopen with independent storage, Reset recovery, malformed JSON import, quota-error fallback, and unverified-issue admission. **This is not a real Chromium/browser run.**
 
+**Historical Defense reader probe:** `defense-reader-acceptance.manual.mjs` requires private ignored Defense v1.1.3 workspace and approval-note files. It is intentionally outside the portable `*.test.*` inventory, is never run by the normal test suite, and provides no PASS if those sources are absent.
+
 ## API contract
 
 ```js

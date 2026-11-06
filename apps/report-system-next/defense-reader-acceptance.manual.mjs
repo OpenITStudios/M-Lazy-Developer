@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { projectApprovedBugReportNext } from "./from-approved-bug-report.mjs";
 import { renderReportNext } from "./render.mjs";
 
-// Read-only acceptance for the real approved ledger. This test does not run Minecraft.
+// Historical, manual-only acceptance probe: requires private ignored workspace/projects/defense-challenge\n// and planning/report-system-next/defense-v1.1.3-reader-acceptance.md.\n// Not part of the portable repository test census; do not treat a missing source as a PASS.\n// This probe never runs Minecraft.
 const base=new URL("../../workspace/projects/defense-challenge/",import.meta.url);
 const [ledger,project,readiness]=await Promise.all([
   readFile(new URL("report/bug-report.json",base),"utf8").then(JSON.parse),
