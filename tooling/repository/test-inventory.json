@@ -5730,11 +5730,11 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-distinct-source-backed-assertions; reassess-on-source-revision",
-        "sourceBlobSha": "f1200ce1c93b81ace54c7405d92346ee5e02499c",
+        "sourceBlobSha": "94752c7da89ec2bd9e1feb0a4bfafc320f057e58",
         "consumerSymbol": "analyzePersistenceSource"
       },
       "recommendation": "keep",
-      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Direct two-argument storage-set source sequence is now covered by existing parser-to-persistence regression, including same-block and same-receiver negative controls; source-only, not executable test PASS. Source-only negative cases now prevent a direct unconditional finally return/throw from being treated as a propagated write failure; non-overriding and conditional finalizers retain the original candidate. Regression authored, native Vitest not executed.",
+      "rationale": "Inspected named scenarios protect exact source ownership, runtime/static proof distinctions, uncertainty or gameplay lifecycle; provisional until full assertion review. Direct two-argument storage-set source sequence is now covered by existing parser-to-persistence regression, including same-block and same-receiver negative controls; source-only, not executable test PASS. Source-only negative cases now prevent a direct unconditional finally return/throw from being treated as a propagated write failure; non-overriding and conditional finalizers retain the original candidate. Regression authored, native Vitest not executed. Source-only caught setter exception false/null handling uses a single throw candidate and no known rollback/retry; original guarded boolean path remains. Regression authored, native Vitest NOT_EXECUTED. Added source negative controls for argument evaluation, opaque receiver and missing setter argument to prevent false attribution of caught exceptions.",
       "functionalArea": "player-state-persistence",
       "mechanicTags": [
         "player.leave",
@@ -6433,10 +6433,10 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "medium",
         "action": "retain-obligation-and-replica-proof-boundaries",
-        "sourceBlobSha": "2d2a287341a8b775c924e765604029132bb73776"
+        "sourceBlobSha": "29ce07f028713ba6d545dad78e2c5771e66f0243"
       },
       "recommendation": "keep",
-      "rationale": "Includes all prior audit obligation cases and the unclassified replica divergence regression merged from the retired single-case suite; same canonical deriveAuditObligations source owner and explicit FORMALIZE/validation evidence checks. Source reviewed, execution not verified.",
+      "rationale": "Includes all prior audit obligation cases and the unclassified replica divergence regression merged from the retired single-case suite; same canonical deriveAuditObligations source owner and explicit FORMALIZE/validation evidence checks. Source reviewed, execution not verified. Source-only caught setter exception false/null handling uses a single throw candidate and no known rollback/retry; original guarded boolean path remains. Regression authored, native Vitest NOT_EXECUTED.",
       "functionalArea": "audit-diagnosis",
       "mechanicTags": [],
       "mechanicMappingBasis": "source-case-inspected",

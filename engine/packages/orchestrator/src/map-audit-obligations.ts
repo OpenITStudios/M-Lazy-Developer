@@ -1349,11 +1349,23 @@ export function deriveAuditObligations(input: {
         fieldBindings.join(", ") +
         " identifies source ownership only, not immutable runtime objects."
       : "";
-    const failureClaim = candidate.failurePropagationPath?.length
-      ? "() via a bounded unique same-file return chain (" +
-        candidate.failurePropagationPath.join(" -> ") +
-        ") that reaches an explicit false/null return at "
-      : "() even though its body has an explicit false/null return at ";
+    const caught = candidate.caughtStorageExceptionWriteSource;
+    const caughtWhere = caught === undefined ? undefined :
+      caught.relativePath + ":" + (caught.range?.lineStart ?? "unknown");
+    const failureClaim = caughtWhere !== undefined
+      ? "() has an authored catch returning false/null after a direct " +
+        "setter at " + caughtWhere +
+        " (whether that setter throws remains unproven), with catch return at "
+      : candidate.failurePropagationPath?.length
+        ? "() via a bounded unique same-file return chain (" +
+          candidate.failurePropagationPath.join(" -> ") +
+          ") that reaches an explicit false/null return at "
+        : "() even though its body has an explicit false/null return at ";
+    const caughtForwarding = caughtWhere !== undefined &&
+        candidate.failurePropagationPath?.length
+      ? " Source return-forwarding chain: " +
+        candidate.failurePropagationPath.join(" -> ") + "."
+      : "";
     items.push(normalize({
       id: "unchecked-commit-before-feedback:" + encodeURIComponent(where),
       source: "detection-gap",
@@ -1361,15 +1373,27 @@ export function deriveAuditObligations(input: {
       title: "Verify discarded fallible commit before gameplay success",
       reason: "Selected source " + where + " ignores " + candidate.calleeName +
         failureClaim + failureWhere + "; " + writeSequence + feedbackWhere +
-        " may publish success." + fieldProof +
+        " may publish success." + caughtForwarding + fieldProof +
         " This is a source-only candidate, not proof that the failure is reachable in play.",
-      missingProof: "Determine the failing commit's reachability, the intended postcondition, " +
-        "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state.",
-      validationTest: "Run one bounded success/failure case on this exact authored caller/callee " +
-        "with source-backed persistence failure; compare final state and user feedback, " +
-        "and check whether retries repair the discrepancy.",
+      missingProof: caughtWhere === undefined
+        ? "Determine the failing commit's reachability, the intended postcondition, " +
+          "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state."
+        : "Determine whether the cited setter can throw in the selected " +
+          "runtime/API profile, whether the catch returns false/null without " +
+          "retry/rollback, and whether discarding the result violates the " +
+          "authored player-visible postcondition.",
+      validationTest: caughtWhere === undefined
+        ? "Run one bounded success/failure case on this exact authored caller/callee " +
+          "with source-backed persistence failure; compare final state and user feedback, " +
+          "and check whether retries repair the discrepancy."
+        : "Inspect the exact setter, single catch-return, caller and runtime " +
+          "contract first; only if an exception is feasible, compare one " +
+          "failed write against the success path, later state, feedback and " +
+          "retry/rollback. Do not promote BUG from catch syntax.",
       validationGroupKey: "source:unchecked-commit:" + where,
-      subjectIds: [where, ...forwarding, ...fieldBindings, failureWhere, writeWhere, feedbackWhere],
+      subjectIds: [where, ...forwarding, ...fieldBindings,
+        ...(caughtWhere === undefined ? [] : [caughtWhere]),
+        failureWhere, writeWhere, feedbackWhere],
       componentIds: [],
       evidenceIds: [],
     }));

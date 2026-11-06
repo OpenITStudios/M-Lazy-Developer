@@ -351,6 +351,86 @@ describe("persistence source analysis", () => {
     expect(analyzePersistenceSource([handled]).ignoredCommitBeforeFeedback).toEqual([]);
   });
 
+  it("retains a directly caught storage exception as a source-only ignored failure result", () => {
+    const parse = (body: readonly string[], caller = "commit();") =>
+      parseScriptFile("caught-storage", [
+        "function commit() {",
+        ...body,
+        "  return true;",
+        "}",
+        "function relay() { return commit(); }",
+        "function publish() {",
+        "  " + caller,
+        "  player.sendMessage('complete');",
+        "  state.set('completed', true);",
+        "}",
+      ].join("\n"), {
+        artifactId: "fixture:caught-storage",
+        relativePath: "scripts/caught.js",
+      });
+    const body = [
+      "  try { db.set('score', 4); }",
+      "  catch (error) { return false; }",
+    ];
+    const direct = analyzePersistenceSource([parse(body)])
+      .ignoredCommitBeforeFeedback;
+    expect(direct).toHaveLength(1);
+    expect(direct[0]).toMatchObject({
+      calleeName: "commit",
+      failedReturnSource: { range: { lineStart: 3 } },
+      caughtStorageExceptionWriteSource: { range: { lineStart: 2 } },
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+    const forwarded = analyzePersistenceSource([parse(body, "relay();")])
+      .ignoredCommitBeforeFeedback;
+    expect(forwarded).toHaveLength(1);
+    expect(forwarded[0]).toMatchObject({
+      calleeName: "relay",
+      caughtStorageExceptionWriteSource: { range: { lineStart: 2 } },
+      failurePropagationPath: ["relay", "commit"],
+    });
+    expect(analyzePersistenceSource([parse([
+      "  try { db.set('score', 4); }",
+      "  catch { return null; }",
+    ])]).ignoredCommitBeforeFeedback).toHaveLength(1);
+
+    // Never attribute another exception or compensating effect to a
+    // setter solely because a catch contains a false return.
+    const negative: readonly (readonly string[])[] = [
+      ["  try { db.set('score', 4); audit(); }",
+       "  catch { return false; }"],
+      ["  try { db.set('score', 4); }",
+       "  catch { restorePreviousState(); return false; }"],
+      ["  try { db.set('score', 4); }",
+       "  catch { return true; }"],
+      ["  try { db.set('score', 4); }",
+       "  catch (error) { throw error; }"],
+      ["  try { store.save('score', 4); }",
+       "  catch { return false; }"],
+      ["  try { db.set('score', 4); }",
+       "  catch { return false; }",
+       "  finally { rollback(); }"],
+      ["  try { db.set('score', 4); }",
+       "  catch { return false; }",
+       "  finally { return true; }"],
+      ["  try { db?.set('score', 4); }",
+       "  catch { return false; }"],
+      ["  try { db.set('score', computeValue()); }",
+       "  catch { return false; }"],
+      ["  try { acquireDb().set('score', 4); }",
+       "  catch { return false; }"],
+      ["  try { db.set('score'); }",
+       "  catch { return false; }"],
+    ];
+    for (const shape of negative) {
+      expect(analyzePersistenceSource([parse(shape)])
+        .ignoredCommitBeforeFeedback).toEqual([]);
+    }
+    // An explicitly tested result must not become an ignored-result lead.
+    expect(analyzePersistenceSource([parse(body, "if (!commit()) return;")])
+      .ignoredCommitBeforeFeedback).toEqual([]);
+  });
+
   it("does not forward an overwritten failed storage result through unconditional finally", () => {
     const parse = (finalizer: string) => parseScriptFile("finally-return", [
       "function commit() {",

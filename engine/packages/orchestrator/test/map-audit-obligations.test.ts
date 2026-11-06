@@ -307,6 +307,29 @@ describe("audit obligations versus gameplay findings", () => {
     expect(field?.subjectIds).toContain("scripts/transactions.ts:8:3");
     expect(field?.evidenceIds).toEqual([]);
 
+    const caught = deriveAuditObligations({
+      ...input,
+      ignoredCommitBeforeFeedback: [{
+        scriptId: "test", callerRegion: "function:publish",
+        calleeName: "commitResult", callSource: src(16),
+        caughtStorageExceptionWriteSource: src(2),
+        failedReturnSource: src(3),
+        laterFeedbackSource: src(17), laterWriteSource: src(18),
+        proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+      }],
+    });
+    const caughtProof = caught.find(row =>
+      row.id.startsWith("unchecked-commit-before-feedback:"));
+    expect(caughtProof).toMatchObject({
+      source: "detection-gap", stage: "EVALUATE",
+      evidenceIds: [],
+      reason: expect.stringContaining("authored catch returning false/null"),
+      missingProof: expect.stringContaining("setter can throw"),
+      validationTest: expect.stringContaining("Do not promote BUG"),
+    });
+    expect(caughtProof?.subjectIds).toContain("scripts/transactions.ts:2");
+    expect(caughtProof?.subjectIds).toContain("scripts/transactions.ts:3");
+
   });
 
   it("derives map-specific unknown proof requirements from reviewed source facts", () => {

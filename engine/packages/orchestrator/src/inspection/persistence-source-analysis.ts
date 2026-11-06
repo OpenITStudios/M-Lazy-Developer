@@ -101,6 +101,10 @@ export interface IgnoredCommitBeforeFeedbackCandidate {
   readonly calleeName: string;
   readonly callSource: SourceRef;
   readonly failedReturnSource: SourceRef;
+  /** A direct authored setter in a try whose single catch returns
+   * false/null. This is NOT proof the storage API throws or that the
+   * candidate actually occurred in Minecraft. */
+  readonly caughtStorageExceptionWriteSource?: SourceRef;
   /** Source sites establishing a direct this.field = new LocalClass()
    * or field = new LocalClass() receiver, not runtime object identity. */
   readonly receiverBindingSources?: readonly SourceRef[];
@@ -697,13 +701,14 @@ function ignoredCommitBeforeFeedback(
     visit(node);
     ts.forEachChild(node, child => walkBody(child, fn, visit));
   };
-  // A leaf requires a directly guarded failure after a source-visible
-  // storage write in the guard. An unrelated return false plus unrelated
-  // .set() is not evidence of a failed transaction. Only this narrow
-  // failure shape is admitted; other error semantics remain UNKNOWN.
+  // A source-only fallible leaf requires either a guarded setter result
+  // returning false/null, or one direct setter in try with a single literal
+  // false/null catch-return. Throw reachability, backend recovery and
+  // transaction success remain UNKNOWN. Other error shapes are not inferred.
   // Bounded forwarding traces SAME-FILE facts, not durable runtime proof.
   interface FailureTrace {
     readonly failedReturnSource: SourceRef;
+    readonly caughtStorageExceptionWriteSource?: SourceRef;
     readonly forwardingReturnSources: readonly SourceRef[];
     readonly receiverBindingSources: readonly SourceRef[];
     readonly names: readonly string[];
@@ -714,7 +719,10 @@ function ignoredCommitBeforeFeedback(
     // false/null result. Do not promote it as a synchronous failure.
     if (!fn.body ||
         fn.modifiers?.some(mod => mod.kind === ts.SyntaxKind.AsyncKeyword)) continue;
-    const failed: SourceRef[] = [];
+    const failed: {
+      readonly failedReturnSource: SourceRef;
+      readonly caughtStorageExceptionWriteSource?: SourceRef;
+    }[] = [];
     // A direct terminal finally return/throw overrides a return made by
     // the guarded storage-write branch. Such a branch does NOT establish
     // that false/null reaches callers; keep its propagation UNKNOWN.
@@ -737,7 +745,53 @@ function ignoredCommitBeforeFeedback(
       ts.isPropertyAccessExpression(node.expression) &&
       (node.expression.name.text === "set" ||
        node.expression.name.text === "setDynamicProperty");
+    // A computed call argument or opaque receiver can throw *before* the
+    // setter is invoked. A catch-return then cannot be attributed to the
+    // storage write without more source facts; abstain from that shortcut.
+    const directValue = (arg: ts.Expression): boolean =>
+      ts.isIdentifier(arg) || ts.isStringLiteralLike(arg) ||
+      ts.isNumericLiteral(arg) ||
+      arg.kind === ts.SyntaxKind.TrueKeyword ||
+      arg.kind === ts.SyntaxKind.FalseKeyword ||
+      arg.kind === ts.SyntaxKind.NullKeyword;
+    const directReceiver = (expr: ts.Expression): boolean =>
+      ts.isIdentifier(expr) || expr.kind === ts.SyntaxKind.ThisKeyword ||
+      (ts.isPropertyAccessExpression(expr) &&
+       expr.expression.kind === ts.SyntaxKind.ThisKeyword &&
+       !expr.questionDotToken);
     walkBody(fn.body, fn, node => {
+      if (ts.isTryStatement(node)) {
+        // Only one direct setter and one direct literal catch-return are
+        // eligible. Other throwing work, retry, rollback or a nonempty
+        // finally leaves source failure propagation UNKNOWN.
+        const attempts = node.tryBlock.statements;
+        const handler = node.catchClause?.block.statements;
+        const attempt = attempts.length === 1 &&
+            ts.isExpressionStatement(attempts[0]!) &&
+            ts.isCallExpression(attempts[0]!.expression)
+          ? attempts[0]!.expression : undefined;
+        const caught = handler?.length === 1 &&
+            ts.isReturnStatement(handler[0]!)
+          ? handler[0] : undefined;
+        if (attempt && isWrite(attempt) &&
+            !attempt.questionDotToken &&
+            ts.isPropertyAccessExpression(attempt.expression) &&
+            !attempt.expression.questionDotToken &&
+            directReceiver(attempt.expression.expression) &&
+            attempt.arguments.length === 2 &&
+            attempt.arguments.every(directValue) &&
+            caught?.expression &&
+            (caught.expression.kind === ts.SyntaxKind.FalseKeyword ||
+             caught.expression.kind === ts.SyntaxKind.NullKeyword) &&
+            (node.finallyBlock?.statements.length ?? 0) === 0 &&
+            !overriddenByFinally(attempts[0]!)) {
+          failed.push({
+            failedReturnSource: site(caught),
+            caughtStorageExceptionWriteSource: site(attempt),
+          });
+        }
+        return;
+      }
       if (!ts.isIfStatement(node) || overriddenByFinally(node)) return;
       const then = ts.isBlock(node.thenStatement)
         ? node.thenStatement.statements[0]
@@ -748,15 +802,19 @@ function ignoredCommitBeforeFeedback(
       const condition = node.expression;
       if (ts.isPrefixUnaryExpression(condition) &&
           condition.operator === ts.SyntaxKind.ExclamationToken &&
-          isWrite(condition.operand)) failed.push(site(then));
+          isWrite(condition.operand)) failed.push({ failedReturnSource: site(then) });
       if (ts.isBinaryExpression(condition) &&
           condition.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
           condition.right.kind === ts.SyntaxKind.FalseKeyword &&
-          isWrite(condition.left)) failed.push(site(then));
+          isWrite(condition.left)) failed.push({ failedReturnSource: site(then) });
     });
     if (failed.length > 0) {
       fallible.set(name, {
-        failedReturnSource: failed[0]!,
+        failedReturnSource: failed[0]!.failedReturnSource,
+        ...(failed[0]!.caughtStorageExceptionWriteSource === undefined ? {} : {
+          caughtStorageExceptionWriteSource:
+            failed[0]!.caughtStorageExceptionWriteSource,
+        }),
         forwardingReturnSources: [],
         receiverBindingSources: [],
         names: [name],
@@ -780,6 +838,10 @@ function ignoredCommitBeforeFeedback(
       if (!underlying || underlying.names.includes(name)) continue;
       fallible.set(name, {
         failedReturnSource: underlying.failedReturnSource,
+        ...(underlying.caughtStorageExceptionWriteSource === undefined ? {} : {
+          caughtStorageExceptionWriteSource:
+            underlying.caughtStorageExceptionWriteSource,
+        }),
         forwardingReturnSources: [site(last), ...underlying.forwardingReturnSources],
         receiverBindingSources: [
           ...(resolved?.bindingSource ? [site(resolved.bindingSource)] : []),
@@ -839,6 +901,10 @@ function ignoredCommitBeforeFeedback(
           calleeName,
           callSource: site(statement.expression),
           failedReturnSource: failure.failedReturnSource,
+          ...(failure.caughtStorageExceptionWriteSource === undefined ? {} : {
+            caughtStorageExceptionWriteSource:
+              failure.caughtStorageExceptionWriteSource,
+          }),
           ...(failure.forwardingReturnSources.length === 0 ? {} : {
             forwardingReturnSources: failure.forwardingReturnSources,
             failurePropagationPath: failure.names,
@@ -909,6 +975,10 @@ function ignoredCommitBeforeFeedback(
         calleeName,
         callSource: site(last.expression),
         failedReturnSource: failure.failedReturnSource,
+        ...(failure.caughtStorageExceptionWriteSource === undefined ? {} : {
+          caughtStorageExceptionWriteSource:
+            failure.caughtStorageExceptionWriteSource,
+        }),
         ...(failure.forwardingReturnSources.length === 0 ? {} : {
           forwardingReturnSources: failure.forwardingReturnSources,
           failurePropagationPath: failure.names,
