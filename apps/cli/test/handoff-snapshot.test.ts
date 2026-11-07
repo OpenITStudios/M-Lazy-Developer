@@ -63,7 +63,18 @@ function fixture(): SelectedMapAuditHandoffSnapshot {
       currentStage: "DISCOVERY",
       allowedNextAction: "RESOLVE_BLOCKING_STAGE",
       gameUnderstanding: {} as SelectedMapAuditHandoffSnapshot["shared"]["gameUnderstanding"],
-      diagnosisNavigation: {} as SelectedMapAuditHandoffSnapshot["shared"]["diagnosisNavigation"],
+      diagnosisNavigation: {
+        issueFirstFocus: {
+          policy: "issue-first-source-navigation",
+          auditRevision: REVISION,
+          mandatoryFirstBlockingStage: "DISCOVERY",
+          canonicalTaskCount: 26,
+          eligibleSourceGroups: 0,
+          suggestions: [],
+          omittedSourceGroups: 0,
+          proofBoundary: "READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION",
+        },
+      } as SelectedMapAuditHandoffSnapshot["shared"]["diagnosisNavigation"],
       proofBoundary: "MODEL_RESPONSE_IS_UNTRUSTED_UNTIL_CANONICAL_ENGINE_ADMISSION",
     },
     taskRows,
@@ -165,6 +176,40 @@ describe("pinned read-only handoff transport", () => {
       sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
       snapshotSha256: hash(bytes),
     })).rejects.toThrow("omit canonical tasks");
+  });
+
+
+  it("rejects checksum-matched focus recommendations that impersonate a task", async () => {
+    const path = await snapshotFile();
+    const original = fixture();
+    const fake = {
+      ...original,
+      shared: {
+        ...original.shared,
+        diagnosisNavigation: {
+          ...original.shared.diagnosisNavigation,
+          issueFirstFocus: {
+            ...original.shared.diagnosisNavigation.issueFirstFocus,
+            eligibleSourceGroups: 1,
+            suggestions: [{
+              taskId: "forged-task", taskOffset: 2,
+              category: "SOURCE_BOUND_OBLIGATION",
+              obligationId: "obligation:2",
+              sourceLocators: ["scripts/round.ts:15:2"],
+              nextCheck: "Trace source",
+              missingProof: ["Exact caller"],
+              proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF" as const,
+            }],
+          },
+        },
+      },
+    };
+    await writeHandoffSnapshot(path, fake as SelectedMapAuditHandoffSnapshot, SOURCE_SHA);
+    const bytes = await readFile(path);
+    await expect(readHandoffSnapshot(path, {
+      sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
+      snapshotSha256: hash(bytes),
+    })).rejects.toThrow(/focus task identity/);
   });
 
   it("does not allow a snapshot to become a tracked source file", async () => {

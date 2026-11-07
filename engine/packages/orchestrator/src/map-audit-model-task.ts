@@ -1891,6 +1891,154 @@ export function planAuditModelInvestigationBatches(input: {
     (wavesByStage.get(stage) ?? []).flat());
 }
 
+/** Read-only, current-revision shortlist into EXISTING model tasks.
+ * Ranking never updates the canonical stage, obligations, proof, or findings.
+ */
+export interface AuditIssueFirstFocus {
+  readonly policy: "issue-first-source-navigation";
+  readonly auditRevision: string;
+  readonly mandatoryFirstBlockingStage: SelectedMapAuditStage | null;
+  readonly canonicalTaskCount: number;
+  readonly eligibleSourceGroups: number;
+  readonly suggestions: readonly {
+    readonly taskId: string;
+    readonly taskOffset: number;
+    readonly category: string;
+    readonly causalLinkId?: string;
+    readonly obligationId?: string;
+    readonly sourceLocators: readonly string[];
+    readonly nextCheck: string;
+    readonly missingProof: readonly string[];
+    readonly proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF";
+  }[];
+  readonly omittedSourceGroups: number;
+  readonly proofBoundary: "READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION";
+}
+
+/** Pick the earliest falsifiable *source-backed* decisions, not the first
+ * generated questions. Only a precise current-source locator or canonical
+ * A28 failure-path witness can enter this preview. Source method is advisory.
+ */
+export function planAuditIssueFirstFocus(input: {
+  readonly tasks: readonly AuditModelTaskPacket[];
+  readonly obligations: readonly AuditObligation[];
+  readonly auditRevision: string;
+  readonly analysisPriorities?: readonly GameplayAnalysisPriority[];
+  readonly firstBlockingStage?: SelectedMapAuditStage;
+}, maximum = 5): AuditIssueFirstFocus {
+  if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 12) {
+    throw new Error("Issue-first shortlist limit must be from 1 to 12.");
+  }
+  const byObligation = new Map(input.obligations.map(o => [o.id, o] as const));
+  const countIds = new Map();
+  for (const obligation of input.obligations) {
+    countIds.set(obligation.id, (countIds.get(obligation.id) ?? 0) + 1);
+  }
+  const bySurface = new Map((input.analysisPriorities ?? [])
+    .map(p => [p.surfaceId, p] as const));
+  const precise = (locator: string) =>
+    /(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator);
+  const candidates = input.tasks.flatMap((task, taskOffset) => {
+    if (task.auditRevision !== input.auditRevision) return [];
+    const obligationId = task.kind === "AUDIT_OBLIGATION" &&
+      task.unresolvedObligationIds.length === 1
+        ? task.unresolvedObligationIds[0] : undefined;
+    const obligation = obligationId === undefined ||
+      countIds.get(obligationId) !== 1
+        ? undefined : byObligation.get(obligationId);
+    const isFailure = task.kind === "AUDIT_OBLIGATION" &&
+      obligation !== undefined && isSourceBackedFailurePathObligation(obligation);
+    const locators = [...new Set([
+      ...task.evidenceContext.flatMap(e =>
+        e.kind === "selected-artifact-evidence" &&
+        typeof e.locator === "string" && precise(e.locator)
+          ? [e.locator] : []),
+      ...(isFailure && obligation !== undefined
+        ? obligation.subjectIds.filter(precise) : []),
+    ])].sort();
+    if (locators.length === 0) return [];
+
+    let tier = 99;
+    let category = "SOURCE_BOUND_OBLIGATION";
+    if (task.causalLinkId && task.scenarioId &&
+        task.kind === "COUNTERPROOF_SEARCH") {
+      tier = 0; category = "CAUSAL_COUNTERPROOF";
+    } else if (task.causalLinkId && task.scenarioId &&
+        task.kind === "GAMEPLAY_TRANSLATION") {
+      tier = 1; category = "CAUSAL_TRANSLATION";
+    } else if (task.causalLinkId && task.scenarioId &&
+        task.kind === "PROOF_NAVIGATION" &&
+        task.navigationRoute?.some(s => s.evidencePreference !== "runtime")) {
+      tier = 2; category = "CAUSAL_PROOF_NAVIGATION";
+    } else if (isFailure) {
+      tier = 3; category = "FALLIBLE_COMMIT_PATH";
+    } else if (task.kind === "AUDIT_OBLIGATION" &&
+        task.sourceInvestigation?.entries.some(e =>
+          e.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
+          (e.effectPaths?.length ?? 0) > 0)) {
+      tier = 4; category = "ROOTED_SOURCE_EFFECT";
+    } else if (task.kind === "CHECKPOINT_REASONING") {
+      tier = 5; category = "SOURCE_BOUND_CHECKPOINT";
+    } else if (task.kind === "AUDIT_OBLIGATION" &&
+        obligation !== undefined) {
+      tier = 6;
+    } else return [];
+
+    const sourceCheck = task.navigationRoute?.find(s =>
+      s.evidencePreference !== "runtime");
+    const prior = task.componentIds.flatMap(id => {
+      const found = bySurface.get(id);
+      return found === undefined ? [] : [found];
+    }).sort(compareGameplayAnalysisPriority)[0];
+    const group = task.causalLinkId
+      ? "link:" + task.causalLinkId
+      : obligation && task.sourceInvestigation === undefined
+        ? JSON.stringify([obligation.stage, obligation.source,
+            obligation.validationGroupKey, obligation.missingProof,
+            obligation.validationTest])
+        : "task:" + task.id;
+    return [{
+      group, tier, prior, taskOffset,
+      item: {
+        taskId: task.id, taskOffset, category,
+        ...(task.causalLinkId ? { causalLinkId: task.causalLinkId } : {}),
+        ...(obligationId ? { obligationId } : {}),
+        sourceLocators: locators.slice(0, 4),
+        nextCheck: sourceCheck
+          ? sourceCheck.question + " " + sourceCheck.purpose
+          : obligation?.validationTest ?? task.decisionNeeded,
+        missingProof: task.missingClaims?.length
+          ? [...task.missingClaims]
+          : obligation ? [obligation.missingProof] : [],
+        proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF" as const,
+      },
+    }];
+  });
+  candidates.sort((a, b) => a.tier - b.tier ||
+    (a.prior === undefined
+      ? (b.prior === undefined ? 0 : 1)
+      : b.prior === undefined ? -1 :
+        compareGameplayAnalysisPriority(a.prior, b.prior)) ||
+    a.taskOffset - b.taskOffset);
+  const included = new Set();
+  const selected = [];
+  for (const candidate of candidates) {
+    if (included.has(candidate.group)) continue;
+    included.add(candidate.group);
+    if (selected.length < maximum) selected.push(candidate.item);
+  }
+  return {
+    policy: "issue-first-source-navigation",
+    auditRevision: input.auditRevision,
+    mandatoryFirstBlockingStage: input.firstBlockingStage ?? null,
+    canonicalTaskCount: input.tasks.length,
+    eligibleSourceGroups: included.size,
+    suggestions: selected,
+    omittedSourceGroups: Math.max(0, included.size - selected.length),
+    proofBoundary: "READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION",
+  };
+}
+
 export function deriveAuditModelTaskPackets(input: {
   readonly admission: SelectedMapAuditAdmission;
   readonly procedure: MandatoryAuditProcedureReceipt;

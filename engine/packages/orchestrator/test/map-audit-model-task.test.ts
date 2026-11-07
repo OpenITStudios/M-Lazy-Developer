@@ -13,6 +13,7 @@ import {
   deriveAuditModelKnowledgeLookup,
   deriveAuditModelTaskPackets,
   planAuditModelInvestigationBatches,
+  planAuditIssueFirstFocus,
   type AuditModelTaskPacket,
   reviewAuditModelSourceInterpretation,
   selectCheckpointIntentSubjects,
@@ -1874,5 +1875,104 @@ describe("shared-source AI investigation is not shared proof", () => {
       .toThrow("1 to 12");
     expect(() => planAuditModelInvestigationBatches({ tasks, obligations }, 13))
       .toThrow("1 to 12");
+  });
+});
+
+describe("issue-first current-source navigation", () => {
+  const source = (locator: string, kind = "selected-artifact-evidence") =>
+    ({ id: "evidence:" + locator, kind, locator });
+  const task = (id: string, overrides: Record<string, unknown> = {}) => ({
+    schemaVersion: 1, policy: "bounded-audit-model-task", id,
+    auditRevision: "revision:map", stage: "DISCOVERY", kind: "AUDIT_OBLIGATION",
+    goal: "Review", decisionNeeded: "Inspect this source",
+    subjectIds: [], componentIds: [], requiredKnowledgeIds: [],
+    evidenceIds: [], evidenceContext: [], unresolvedEvidenceIds: [],
+    knowledgeContext: [], unresolvedObligationIds: [],
+    allowedOutputs: [], forbiddenActions: [], stopCondition: "One check",
+    ...overrides,
+  } as any);
+  it("surfaces a current source counterproof behind 240 generic checkpoint tasks without dropping them", () => {
+    const bulk = Array.from({ length: 240 }, (_, n) => task("general:" + n));
+    const important = task("source:root", {
+      stage: "PROVE", kind: "COUNTERPROOF_SEARCH",
+      causalLinkId: "link:root", scenarioId: "scenario:round",
+      evidenceContext: [source("scripts/end.ts:41:3")],
+    });
+    const tasks = [...bulk, important];
+    const result = planAuditIssueFirstFocus({
+      tasks, obligations: [], auditRevision: "revision:map",
+      firstBlockingStage: "DISCOVERY",
+    });
+    expect(result.canonicalTaskCount).toBe(241);
+    expect(result.mandatoryFirstBlockingStage).toBe("DISCOVERY");
+    expect(result.suggestions.map(item => item.taskId)).toEqual(["source:root"]);
+    expect(result.suggestions[0]).toMatchObject({
+      taskOffset: 240, causalLinkId: "link:root",
+      category: "CAUSAL_COUNTERPROOF",
+      sourceLocators: ["scripts/end.ts:41:3"],
+      proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF",
+    });
+    expect(tasks[0]?.id).toBe("general:0");
+  });
+  it("deduplicates only the preview by exact causal scope and rejects foreign sources", () => {
+    const generic = Array.from({ length: 72 }, (_, n) => task("general:" + n));
+    const navigation = task("navigation:root", {
+      stage: "PROVE", kind: "PROOF_NAVIGATION",
+      causalLinkId: "link:root", scenarioId: "scenario:round",
+      evidenceContext: [source("scripts/round.ts:19:2")],
+      navigationRoute: [{ evidencePreference: "selected-artifact",
+        question: "Which guard decides completion?", purpose: "Trace caller" }],
+    });
+    const counter = task("counter:root", {
+      stage: "PROVE", kind: "COUNTERPROOF_SEARCH",
+      causalLinkId: "link:root", scenarioId: "scenario:round",
+      evidenceContext: [source("scripts/round.ts:21:2")],
+    });
+    const foreign = task("external:root", {
+      stage: "PROVE", kind: "COUNTERPROOF_SEARCH",
+      causalLinkId: "link:foreign", scenarioId: "scenario:foreign",
+      evidenceContext: [source("old/scripts/round.ts:13:4", "analysis-receipt")],
+    });
+    const fallible = {
+      id: "unchecked-commit-before-feedback:script-end",
+      stage: "EVALUATE", source: "detection-gap",
+      title: "Failed commit", reason: "Unresolved",
+      missingProof: "Prove reachability", validationTest: "Trace fallible source",
+      validationGroupKey: "source:unchecked-commit:scripts/end.ts:33:2",
+      subjectIds: ["scripts/end.ts:33:2"], componentIds: [], evidenceIds: [],
+    } as any;
+    const failureTask = task("failure:source", {stage: "EVALUATE",
+      unresolvedObligationIds: [fallible.id]});
+    const tasks = [...generic, foreign, navigation, counter, failureTask];
+    const result = planAuditIssueFirstFocus({
+      tasks, obligations: [fallible], auditRevision: "revision:map",
+    });
+    expect(result.suggestions.map(item => item.taskId))
+      .toEqual(["counter:root", "failure:source"]);
+    expect(result.eligibleSourceGroups).toBe(2);
+    expect(result.canonicalTaskCount).toBe(tasks.length);
+    expect(result.suggestions[1]?.sourceLocators).toEqual(["scripts/end.ts:33:2"]);
+  });
+  it("never promotes unknown, stale or unlocated evidence", () => {
+    const tasks = [
+      task("stale", {auditRevision: "old", stage: "PROVE",
+        kind: "COUNTERPROOF_SEARCH", causalLinkId: "x", scenarioId: "one",
+        evidenceContext: [source("scripts/current.ts:15:2")]}),
+      task("unsited", {stage: "PROVE",
+        kind: "COUNTERPROOF_SEARCH", causalLinkId: "y", scenarioId: "two",
+        evidenceContext: [source("scripts/current.ts")]}),
+      task("external", {stage: "PROVE",
+        kind: "COUNTERPROOF_SEARCH", causalLinkId: "z", scenarioId: "three",
+        evidenceContext: [source("old/scripts.ts:10:4", "analysis-receipt")]}),
+    ];
+    const result = planAuditIssueFirstFocus({
+      tasks, obligations: [], auditRevision: "revision:map",
+    });
+    expect(result.suggestions).toEqual([]);
+    expect(result.canonicalTaskCount).toBe(3);
+    expect(result.proofBoundary).toBe("READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION");
+    expect(() => planAuditIssueFirstFocus({
+      tasks, obligations: [], auditRevision: "revision:map",
+    }, 0)).toThrow(/limit/);
   });
 });

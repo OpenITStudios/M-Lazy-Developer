@@ -501,6 +501,19 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
       expect(brief).toContain("buttons/0/name");
       expect(brief).toContain("buttons/0/commands/0");
       const handoff = projectSelectedMapAuditModelHandoff(result);
+      const focus = handoff.diagnosisNavigation.issueFirstFocus;
+      expect(focus).toMatchObject({
+        policy: "issue-first-source-navigation",
+        auditRevision: result.auditRevision,
+        canonicalTaskCount: result.modelTaskPackets.length,
+        proofBoundary: "READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION",
+      });
+      expect(focus.suggestions.length).toBeLessThanOrEqual(5);
+      for (const item of focus.suggestions) {
+        expect(result.modelTaskPackets[item.taskOffset]?.id).toBe(item.taskId);
+        expect(item.proof).toBe("SOURCE_REVIEW_HINT_NOT_BUG_PROOF");
+        expect(item.sourceLocators.length).toBeGreaterThan(0);
+      }
       const buttonBinding = handoff.gameUnderstanding.playerFacingCommandBindings
         .find(item => item.sourceRelationId === relation!.id);
       expect(buttonBinding).toMatchObject({

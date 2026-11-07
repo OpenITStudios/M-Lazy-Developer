@@ -19,6 +19,7 @@ import {
   type AuditObligation,
 } from "../map-audit-obligations.js";
 import { MODEL_RESOLVABLE_KINDS, planAuditModelInvestigationBatches,
+  planAuditIssueFirstFocus,
   type AuditModelInvestigationBatch } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
 
@@ -399,6 +400,8 @@ export interface SelectedMapAuditModelHandoff {
    */
   readonly diagnosisNavigation: {
     readonly authority: "READ_ONLY_CANONICAL_GROUPS_NOT_REPORT_PROOF";
+    /** Bounded, read-only cross-stage source shortlist, not another ledger. */
+    readonly issueFirstFocus: import("../map-audit-model-task.js").AuditIssueFirstFocus;
     readonly admittedBugRootGroups: readonly {
       readonly candidateGroupKey: string;
       readonly technicalOwnerId: string;
@@ -1657,6 +1660,13 @@ export function projectSelectedMapAuditModelHandoff(
     },
     diagnosisNavigation: {
       authority: "READ_ONLY_CANONICAL_GROUPS_NOT_REPORT_PROOF",
+      issueFirstFocus: planAuditIssueFirstFocus({
+        tasks: audit.modelTaskPackets,
+        obligations: audit.auditObligations,
+        auditRevision: audit.auditRevision,
+        firstBlockingStage: audit.admission.firstBlockingStage,
+        analysisPriorities: audit.inspection.analysisPriorities,
+      }),
       admittedBugRootGroups: audit.candidateGroups.slice(0, 8).map(group => ({
         candidateGroupKey: group.candidateGroupKey,
         technicalOwnerId: group.technicalOwnerId,

@@ -149,5 +149,43 @@ export async function readHandoffSnapshot(
   if (seen.some(value => value !== 1)) {
     throw new Error("Handoff investigation batches omit canonical tasks");
   }
+  // Source-first focus is navigation, never proof. A checksummed snapshot
+  // must not impersonate another canonical task, map source or audit revision.
+  const focus = snapshot.shared.diagnosisNavigation?.issueFirstFocus;
+  if (!focus || focus.policy !== "issue-first-source-navigation" ||
+      focus.auditRevision !== snapshot.auditRevision ||
+      focus.canonicalTaskCount !== snapshot.taskRows.length ||
+      focus.proofBoundary !== "READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION" ||
+      !Array.isArray(focus.suggestions) || focus.suggestions.length > 5 ||
+      !Number.isSafeInteger(focus.eligibleSourceGroups) ||
+      focus.eligibleSourceGroups < focus.suggestions.length ||
+      focus.omittedSourceGroups !==
+        focus.eligibleSourceGroups - focus.suggestions.length) {
+    throw new Error("Handoff source focus boundary or counts are invalid");
+  }
+  const focusOffsets = new Set<number>();
+  for (const suggestion of focus.suggestions) {
+    const offset = suggestion?.taskOffset;
+    const task = typeof offset === "number" &&
+      Number.isSafeInteger(offset) && offset >= 0
+      ? snapshot.taskRows[offset]?.task : undefined;
+    const expectedObligation = task?.kind === "AUDIT_OBLIGATION" &&
+      task.unresolvedObligationIds.length === 1
+      ? task.unresolvedObligationIds[0] : undefined;
+    if (!task || suggestion.taskId !== task.id ||
+        suggestion.causalLinkId !== task.causalLinkId ||
+        suggestion.obligationId !== expectedObligation ||
+        focusOffsets.has(offset) ||
+        suggestion.proof !== "SOURCE_REVIEW_HINT_NOT_BUG_PROOF" ||
+        !Array.isArray(suggestion.sourceLocators) ||
+        suggestion.sourceLocators.length < 1 ||
+        suggestion.sourceLocators.length > 4 ||
+        suggestion.sourceLocators.some(locator =>
+          typeof locator !== "string" ||
+          !/(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator))) {
+      throw new Error("Handoff source focus task identity or provenance is invalid");
+    }
+    focusOffsets.add(offset);
+  }
   return snapshot;
 }
