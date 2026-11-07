@@ -942,6 +942,46 @@ graph's evidence ceiling**, even if no unresolved literal relative
 imports were found. An impact result does not claim a test passed,
 permission to mutate, or a complete list of runtime side effects.
 
+### Explicit unknown dependencies and Knowledge source witnesses
+
+The existing repository AST importer now accepts an opt-in unresolved-source
+collector. It preserves the ordinary `importSpecifiers()` API output for older
+consumers, while the derived source graph reports:
+
+- `edges`: uniquely resolved relative imports with exact source sites,
+  separated from runtime/call-graph conclusions;
+- `unresolved`: computed `import(expression)`, literal or computed `require()`
+  calls whose CommonJS binding has not been verified, unresolved relative
+  paths and ambiguous/unregistered module owners; and
+- `excluded`: non-relative imports (external package or alias), explicitly
+  outside the registered internal SOURCE graph rather than silently counted
+  as absent dependencies.
+
+These lists are static source evidence. `UNVERIFIED_REQUIRE_BINDING` does not
+assert CommonJS `require()` is executed or that it is Node's built-in loader.
+Computed expressions never acquire a guessed target. Standard-library
+`node:` imports are not internal module dependencies.
+
+Knowledge consumption is separately reviewed by the **existing**
+`tooling/repository/audit-knowledge-consumption.mjs`, not injected into
+Resource Graph `USES` or `VALIDATES` relations. The binding declaration
+registry remains REFERENCE evidence. The audit now uses an AST lexical
+inventory to detect exact knowledge-ID *string literals* with `path:line:column`
+witnesses and generic Knowledge API *identifier* candidates; code comments
+cannot masquerade as literal references. Each binding is classified
+`EXACT_AST_LITERAL_REFERENCE_NOT_CONSUMPTION_PROOF`,
+`GENERIC_KNOWLEDGE_API_CANDIDATE`, or `DECLARATION_ONLY`.
+`--knowledge-id <fact-or-relation-id>` reports an exact selected binding;
+`--binding-details` retains all records for source review. No classification
+proves a detector loaded a particular fact, applied applicability criteria,
+changed the report, or passed tests. Those require exact consumer flow and
+actual source/test evidence beyond a literal-ID mention.
+
+Do not collapse Knowledge facts with same-name source modules, promote
+declared proof paths to executed PASS, or infer a dependency from textual
+co-occurrence. Unresolved reference gaps are preserved for a bounded
+investigation rather than being scored as successfully mapped graph edges.
+
 Existing `engine/packages/task-graph/` alone decides affected executable
 capabilities and dependency order; this new module-import view **does not**
 schedule tests or replace its authority. Task Graph capability paths are

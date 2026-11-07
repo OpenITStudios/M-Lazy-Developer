@@ -24,8 +24,19 @@ export interface SourceDependencyProjection {
     from: string;
     path: string;
     line: number;
+    column?: number;
     target: string;
+    syntax?: string;
     reason: string;
+  }[];
+  excluded: {
+    from: string;
+    path: string;
+    line: number;
+    column?: number;
+    target: string;
+    syntax?: string;
+    reason: "NON_RELATIVE_SPECIFIER_OUT_OF_SCOPE";
   }[];
 }
 

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { buildResourceCatalog } from "./resource-catalog.mjs";
+import { sourceSyntaxInventory } from "./source-import-specifiers.mjs";
 
 const roots = [
   "engine/knowledge",
@@ -35,19 +36,34 @@ const bindings = existsSync(bindingPath)
   : [];
 const bound = new Set(bindings.map((item) => item.knowledgeId));
 
-// Static binding inspection describes declared references, not runtime use.
-// Literal ID mentions can corroborate traceability; their absence never proves
-// that a generic evaluator does not consume the record.
-const sourceTextCache = new Map();
-function sourceText(path) {
-  if (!sourceTextCache.has(path)) {
-    sourceTextCache.set(
+// AST-only source witnesses. Declarations and literal ID references do
+// NOT prove that a knowledge record is loaded, evaluated or causal.
+// Cache each file inventory once across all declared bindings.
+const sourceInventoryCache = new Map();
+function sourceInventory(path) {
+  if (!sourceInventoryCache.has(path)) {
+    sourceInventoryCache.set(
       path,
-      existsSync(path) ? readFileSync(path, "utf8") : null,
+      existsSync(path)
+        ? sourceSyntaxInventory(path, readFileSync(path, "utf8"))
+        : null,
     );
   }
-  return sourceTextCache.get(path);
+  return sourceInventoryCache.get(path);
 }
+function exactLiteralSites(path, id) {
+  const sites = sourceInventory(path)?.literalSitesByValue.get(id) ?? [];
+  return sites.map((site) => ({ path, line: site.line, column: site.column }));
+}
+const genericKnowledgeIdentifiers = [
+  "KnowledgeCatalog",
+  "knowledgeCatalog",
+  "assessKnowledgeRelations",
+  "assessEntityKnowledge",
+  "effectiveKnowledge",
+  "knowledgeFactApplies",
+];
+
 function moduleSourceOwner(path) {
   const match = path.match(/^engine\/(packages|analyzers|adapters)\/([^/]+)\//);
   if (!match) return undefined;
@@ -61,21 +77,36 @@ function moduleSourceOwner(path) {
 const literalKnowledgeSignals = bindings.map((binding) => {
   const analyzerPaths = binding.analyzerPaths ?? [];
   const proofPaths = binding.proofPaths ?? [];
-  const literalAnalyzerPaths = analyzerPaths.filter((path) =>
-    sourceText(path)?.includes(binding.knowledgeId)
+  const literalAnalyzerSites = analyzerPaths.flatMap((path) =>
+    exactLiteralSites(path, binding.knowledgeId)
   );
-  const literalProofPaths = proofPaths.filter((path) =>
-    sourceText(path)?.includes(binding.knowledgeId)
+  const literalProofSites = proofPaths.flatMap((path) =>
+    exactLiteralSites(path, binding.knowledgeId)
   );
+  const literalAnalyzerPaths = [...new Set(
+    literalAnalyzerSites.map((site) => site.path),
+  )];
+  const literalProofPaths = [...new Set(
+    literalProofSites.map((site) => site.path),
+  )];
   const genericCatalogPathCandidates = analyzerPaths.filter((path) =>
-    /\b(?:KnowledgeCatalog|knowledgeCatalog|assessKnowledgeRelations|assessEntityKnowledge|effectiveKnowledge|knowledgeFactApplies)\b/.test(
-      sourceText(path) ?? "",
+    genericKnowledgeIdentifiers.some((name) =>
+      sourceInventory(path)?.identifiers.has(name)
     )
   );
   return {
     id: binding.knowledgeId,
+    evidenceClass: literalAnalyzerSites.length > 0
+      ? "EXACT_AST_LITERAL_REFERENCE_NOT_CONSUMPTION_PROOF"
+      : genericCatalogPathCandidates.length > 0
+        ? "GENERIC_KNOWLEDGE_API_CANDIDATE"
+        : "DECLARATION_ONLY",
+    declaredAnalyzerPaths: analyzerPaths,
+    declaredProofPaths: proofPaths,
     literalAnalyzerPaths,
     literalProofPaths,
+    literalAnalyzerSites,
+    literalProofSites,
     genericCatalogPathCandidates,
   };
 });
@@ -104,8 +135,17 @@ const bindingInspection = {
   sourceOwnerConcentration: [...sourceOwnerCounts.entries()]
     .map(([owner, bindingCount]) => ({ owner, bindingCount }))
     .sort((a, b) => b.bindingCount - a.bindingCount || a.owner.localeCompare(b.owner)),
+  evidenceSemantics:
+    "AST literal-id and identifier sites demonstrate static code references only; absence of a site does not disprove generic consumption.",
+  evidenceClasses: Object.fromEntries(
+    [...new Set(literalKnowledgeSignals.map((item) => item.evidenceClass))]
+      .sort()
+      .map((value) => [value, literalKnowledgeSignals.filter(
+        (item) => item.evidenceClass === value,
+      ).length]),
+  ),
   interpretation:
-    "Static literal references and catalog API mentions are navigation signals, not proof a specific knowledge ID changed analysis output. Unbound actionable knowledge may remain searchable reference material.",
+    "Exact AST literal references and catalog API identifiers are navigation signals, not proof a specific Knowledge ID was loaded, applied, or changed analysis output. Test literals are proof-path source references, not executed test evidence. Unbound actionable knowledge may remain searchable reference material.",
 };
 const debt = existsSync(debtPath)
   ? JSON.parse(readFileSync(debtPath, "utf8")).classifications ?? []
@@ -203,6 +243,23 @@ const dedicatedBindingCoverage =
     ? 1
     : boundActionableKnowledge / actionable.length;
 
+const requestedKnowledgeIdIndex = process.argv.indexOf("--knowledge-id");
+const requestedKnowledgeId = requestedKnowledgeIdIndex < 0 ? undefined
+  : process.argv[requestedKnowledgeIdIndex + 1];
+if (requestedKnowledgeIdIndex >= 0 &&
+    (!requestedKnowledgeId || requestedKnowledgeId.startsWith("--"))) {
+  throw new Error("--knowledge-id requires an exact knowledge fact/relation ID.");
+}
+const selectedBindingInspection = requestedKnowledgeId === undefined ? undefined
+  : literalKnowledgeSignals.find((item) => item.id === requestedKnowledgeId) ?? {
+      id: requestedKnowledgeId,
+      evidenceClass: "NO_DECLARED_BINDING",
+      registeredKnowledgeResource: catalog.resources.some((resource) =>
+        resource.id === "knowledge." + requestedKnowledgeId
+      ),
+      proofBoundary: "REFERENCE_ONLY_NOT_CONSUMPTION_PROOF",
+    };
+
 const result = {
   schemaVersion: 1,
   actionableKnowledge: actionable.length,
@@ -215,6 +272,9 @@ const result = {
   dedicatedBindingCoverage,
   bindingCoverageMeaning: "Declared binding/debt accounting only; NOT actual knowledge consumption or detector recall.",
   bindingInspection,
+  ...(selectedBindingInspection === undefined ? {} : {
+    selectedBindingInspection,
+  }),
   ...(process.argv.includes("--binding-details") ? {
     bindingInspectionDetails: literalKnowledgeSignals,
   } : {}),

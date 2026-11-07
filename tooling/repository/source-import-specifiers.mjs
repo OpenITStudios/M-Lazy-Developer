@@ -54,7 +54,13 @@ export function resolveRelativeSourceImport(fromFile, specifier, sourceRoot = pr
 
 // Derive actual imports from AST, never from text in comments, template strings
 // or generated source examples (which previously produced phantom edges).
-export function importSpecifiers(filePath, content, includeLocalResources = false, includeSourceSites = false) {
+// Optional fifth argument collects unresolved source call sites. Existing
+// callers retain their exact array output; unknown syntax never becomes an
+// invented import edge.
+export function importSpecifiers(
+  filePath, content, includeLocalResources = false,
+  includeSourceSites = false, unresolvedSites = undefined,
+) {
   const kind = filePath.endsWith(".tsx") ? ts.ScriptKind.TSX :
     /\.[cm]?js$/.test(filePath) ? ts.ScriptKind.JS : ts.ScriptKind.TS;
   const file = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, kind);
@@ -68,6 +74,15 @@ export function importSpecifiers(filePath, content, includeLocalResources = fals
       result.syntax = syntax;
     }
     found.push(result);
+  };
+  const unresolved = (node, syntax, reason, target) => {
+    if (!unresolvedSites) return;
+    const site = file.getLineAndCharacterOfPosition(node.getStart(file));
+    unresolvedSites.push({
+      syntax, reason,
+      target: typeof target === "string" ? target : node.getText(file).slice(0, 180),
+      line: site.line + 1, column: site.character + 1,
+    });
   };
   const visit = (node) => {
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
@@ -95,9 +110,27 @@ export function importSpecifiers(filePath, content, includeLocalResources = fals
         node.moduleReference.expression && ts.isStringLiteralLike(node.moduleReference.expression)) {
       add(node.moduleReference.expression.text, !node.isTypeOnly, node.moduleReference.expression, "IMPORT_EQUALS");
     }
-    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-        node.arguments.length === 1 && ts.isStringLiteralLike(node.arguments[0])) {
-      add(node.arguments[0].text, true, node.arguments[0], "DYNAMIC_LITERAL");
+    if (ts.isCallExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+      if (node.arguments.length === 1 && ts.isStringLiteralLike(node.arguments[0])) {
+        add(node.arguments[0].text, true, node.arguments[0], "DYNAMIC_LITERAL");
+      } else {
+        unresolved(node, "DYNAMIC_EXPRESSION", "NON_LITERAL_DYNAMIC_IMPORT",
+          node.arguments[0]?.getText(file));
+      }
+    }
+    if (ts.isCallExpression(node) &&
+        (ts.isIdentifier(node.expression) && node.expression.text === "require" ||
+         ts.isPropertyAccessExpression(node.expression) &&
+         node.expression.name.text === "require")) {
+      // A local function/variable can shadow require. Without a verified
+      // binding this is a candidate, not a CommonJS dependency edge.
+      const literal = node.arguments.length === 1 &&
+        ts.isStringLiteralLike(node.arguments[0]);
+      unresolved(node,
+        ts.isIdentifier(node.expression) ? "REQUIRE_CALL" : "REQUIRE_MEMBER_CALL",
+        literal ? "UNVERIFIED_REQUIRE_BINDING" : "NON_LITERAL_REQUIRE",
+        node.arguments[0]?.getText(file));
     }
     // Opt-in static resource edge; default imports remain unchanged for
     // repository dependency graph consumers.
@@ -119,3 +152,26 @@ export function importSpecifiers(filePath, content, includeLocalResources = fals
   return found;
 }
 
+
+/** Exact AST-only literal/identifier inventory for source evidence. A literal
+ * ID appearing in code is a reference witness, NOT proof the Knowledge record
+ * was loaded, applied, or changed analysis output. Comments are excluded. */
+export function sourceSyntaxInventory(filePath, content) {
+  const kind = filePath.endsWith(".tsx") ? ts.ScriptKind.TSX :
+    /\.[cm]?js$/.test(filePath) ? ts.ScriptKind.JS : ts.ScriptKind.TS;
+  const file = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, kind);
+  const literals = new Map();
+  const identifiers = new Set();
+  const visit = (node) => {
+    if (ts.isStringLiteralLike(node)) {
+      const position = file.getLineAndCharacterOfPosition(node.getStart(file));
+      const list = literals.get(node.text) ?? [];
+      list.push({ line: position.line + 1, column: position.character + 1 });
+      literals.set(node.text, list);
+    }
+    if (ts.isIdentifier(node)) identifiers.add(node.text);
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return { literalSitesByValue: literals, identifiers };
+}

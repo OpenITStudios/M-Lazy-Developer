@@ -265,19 +265,41 @@ export function buildSourceDependencyGraph(options = {}) {
     lstatSync(resolve(root, resource.path)).isDirectory());
   const pairs = new Map();
   const unresolved = [];
+  const excluded = [];
   let scannedSourceFiles = 0;
 
   for (const owner of modules) {
     for (const fullPath of ownedSourceFiles(resolve(root, owner.path))) {
       scannedSourceFiles += 1;
       const path = repositoryPath(fullPath, root);
-      const imports = importSpecifiers(fullPath, readFileSync(fullPath, "utf8"), false, true);
+      const unknownCalls = [];
+      const imports = importSpecifiers(
+        fullPath, readFileSync(fullPath, "utf8"), false, true, unknownCalls,
+      );
+      for (const call of unknownCalls) {
+        unresolved.push({
+          from: owner.id, path, line: call.line, column: call.column,
+          target: call.target, syntax: call.syntax, reason: call.reason,
+        });
+      }
       for (const site of imports) {
-        if (!site.specifier.startsWith(".")) continue;
+        if (!site.specifier.startsWith(".")) {
+          // Explicitly out of scope, not silently omitted or invented as
+          // an internal SOURCE module dependency (may be a package or alias).
+          if (!site.specifier.startsWith("node:")) {
+            excluded.push({
+              from: owner.id, path, line: site.line, column: site.column,
+              target: site.specifier, syntax: site.syntax,
+              reason: "NON_RELATIVE_SPECIFIER_OUT_OF_SCOPE",
+            });
+          }
+          continue;
+        }
         const resolution = resolveRelativeSourceImport(fullPath, site.specifier, root);
         if (resolution.status !== "RESOLVED") {
           unresolved.push({
-            from: owner.id, path, line: site.line, target: site.specifier,
+            from: owner.id, path, line: site.line, column: site.column,
+            target: site.specifier, syntax: site.syntax,
             reason: resolution.status,
           });
           continue;
@@ -286,7 +308,8 @@ export function buildSourceDependencyGraph(options = {}) {
         const target = resolveSourceOwner(modules, targetPath);
         if (!target) {
           unresolved.push({
-            from: owner.id, path, line: site.line, target: site.specifier,
+            from: owner.id, path, line: site.line, column: site.column,
+            target: site.specifier, syntax: site.syntax,
             reason: "UNREGISTERED_TARGET_OWNER",
           });
           continue;
@@ -320,9 +343,12 @@ export function buildSourceDependencyGraph(options = {}) {
     };
   }).sort((a, b) =>
     a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
-  unresolved.sort((a, b) =>
+  const sourceSiteOrder = (a, b) =>
     a.from.localeCompare(b.from) || a.path.localeCompare(b.path) ||
-    a.line - b.line || a.target.localeCompare(b.target));
+    a.line - b.line || (a.column ?? 0) - (b.column ?? 0) ||
+    a.target.localeCompare(b.target);
+  unresolved.sort(sourceSiteOrder);
+  excluded.sort(sourceSiteOrder);
   return {
     mode: "SOURCE_MODULE_DEPENDENCY_PROJECTION",
     proofBoundary: "STATIC_LITERAL_IMPORTS_ONLY_NOT_CALLSITE_OR_EXECUTION_PROOF",
@@ -330,5 +356,6 @@ export function buildSourceDependencyGraph(options = {}) {
     scannedModules: modules.length,
     edges,
     unresolved,
+    excluded,
   };
 }

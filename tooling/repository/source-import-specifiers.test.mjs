@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
+import { importSpecifiers, resolveRelativeSourceImport, sourceSyntaxInventory } from "./source-import-specifiers.mjs";
 import { authoredLinks, buildSourceDependencyGraph, resolveSourceOwner } from "./graph.mjs";
 
 describe("canonical repository import discovery", () => {
@@ -243,6 +243,48 @@ describe("source-backed architecture impact extraction", () => {
     ]);
   });
 
+  it("records computed imports and unverified require calls without fabricating dependency edges", () => {
+    const input = [
+      '// const fake = import(commentOnly);',
+      'const computed = import(moduleName);',
+      'const literal = import("./known.js");',
+      'const cjs = require("./maybe.js");',
+      'const shadowable = require(dynamicName);',
+      'const member = module.require("./member.js");',
+      'const text = \'require("./not-a-call.js")\';',
+    ].join("\n");
+    const oldOutput = importSpecifiers("entry.ts", input);
+    expect(oldOutput).toEqual([
+      { specifier: "./known.js", runtime: true },
+    ]);
+    const unresolved = [];
+    const known = importSpecifiers("entry.ts", input, false, true, unresolved);
+    expect(known).toEqual([
+      { specifier: "./known.js", runtime: true, line: 3, column: 24, syntax: "DYNAMIC_LITERAL" },
+    ]);
+    expect(unresolved.map((site) => [site.line, site.reason, site.target])).toEqual([
+      [2, "NON_LITERAL_DYNAMIC_IMPORT", "moduleName"],
+      [4, "UNVERIFIED_REQUIRE_BINDING", '"./maybe.js"'],
+      [5, "NON_LITERAL_REQUIRE", "dynamicName"],
+      [6, "UNVERIFIED_REQUIRE_BINDING", '"./member.js"'],
+    ]);
+  });
+
+  it("exposes only exact AST string-literal knowledge ID witnesses, not comments", () => {
+    const id = "inventory.itemstack-can-carry-custom-state";
+    const input = [
+      '// inventory.itemstack-can-carry-custom-state',
+      'const prose = "another.record";',
+      'const real = "inventory.itemstack-can-carry-custom-state";',
+      'const uses = knowledgeCatalog.get(real);',
+    ].join("\n");
+    const observed = sourceSyntaxInventory("consumer.ts", input);
+    expect(observed.literalSitesByValue.get(id)?.map((site) => site.line)).toEqual([3]);
+    expect(observed.literalSitesByValue.has("inventory.not-here")).toBe(false);
+    expect(observed.identifiers.has("knowledgeCatalog")).toBe(true);
+    expect(observed.identifiers.has("get")).toBe(true);
+  });
+
   it("resolves source-owner import edges without guessing ambiguous or missing modules", () => {
     const root = mkdtempSync(join(tmpdir(), "lazy-source-graph-"));
     const resources = [
@@ -266,6 +308,10 @@ describe("source-backed architecture impact extraction", () => {
       "engine/packages/beta/src/clash.js": "export const js = true;",
       "engine/packages/alpha/src/ambiguous.ts":
         'import "../../beta/src/clash.js";',
+      "engine/packages/alpha/src/unknown.ts":
+        'const dynamic = import(variable);\n' +
+        'const cjs = require("../../beta/src/runtime.js");\n' +
+        'import { api } from "some-external-package";',
     };
     try {
       for (const [path, content] of Object.entries(sources)) {
@@ -303,7 +349,7 @@ describe("source-backed architecture impact extraction", () => {
       ).status).toBe("AMBIGUOUS");
 
       const result = buildSourceDependencyGraph({root, catalog: {resources}});
-      expect(result.scannedSourceFiles).toBe(7);
+      expect(result.scannedSourceFiles).toBe(8);
       expect(result.edges.map(edge => [edge.from, edge.to])).toEqual([
         ["source.package.alpha", "source.package.beta"],
         ["source.package.gamma", "source.package.alpha"],
@@ -313,11 +359,14 @@ describe("source-backed architecture impact extraction", () => {
         [1, false, "STATIC_IMPORT"],
         [2, true, "DYNAMIC_LITERAL"],
       ]);
-      expect(result.unresolved).toEqual([{
-        from: "source.package.alpha",
-        path: "engine/packages/alpha/src/ambiguous.ts",
-        line: 1, target: "../../beta/src/clash.js", reason: "AMBIGUOUS",
-      }]);
+      expect(result.unresolved.map((site) => [site.path, site.line, site.reason])).toEqual([
+        ["engine/packages/alpha/src/ambiguous.ts", 1, "AMBIGUOUS"],
+        ["engine/packages/alpha/src/unknown.ts", 1, "NON_LITERAL_DYNAMIC_IMPORT"],
+        ["engine/packages/alpha/src/unknown.ts", 2, "UNVERIFIED_REQUIRE_BINDING"],
+      ]);
+      expect(result.excluded.map((site) => [site.path, site.line, site.reason])).toEqual([
+        ["engine/packages/alpha/src/unknown.ts", 3, "NON_RELATIVE_SPECIFIER_OUT_OF_SCOPE"],
+      ]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

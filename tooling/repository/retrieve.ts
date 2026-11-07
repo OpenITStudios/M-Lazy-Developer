@@ -258,7 +258,13 @@ function obsidianResourceLink(resource: ResourcePathExplanation["nodes"][number]
     : mark + resource.id + mark + " (" + resource.path + ")";
 }
 
-function markdownTrace(trace: ResourcePathExplanation, codeProjection?: { unresolved: readonly unknown[] }): string {
+function markdownTrace(
+  trace: ResourcePathExplanation,
+  codeProjection?: {
+    unresolved: readonly unknown[];
+    excluded: readonly unknown[];
+  },
+): string {
   const mark = String.fromCharCode(96);
   const out = [
     "# Repository Architecture Trace",
@@ -273,7 +279,9 @@ function markdownTrace(trace: ResourcePathExplanation, codeProjection?: { unreso
       ? "Document links establish navigation, not code execution, gameplay or authority."
       : "These are source-declared literal imports, not proof that a module, function or gameplay action executed.",
     ...(codeProjection ? ["Unresolved source references (global): " +
-      codeProjection.unresolved.length + " — inspect JSON for full details."] : []),
+      codeProjection.unresolved.length + " — inspect JSON for full details.",
+      "Non-relative source imports excluded from this internal graph: " +
+      codeProjection.excluded.length + "."] : []),
     "",
   ];
   if (trace.status === "FOUND") {
@@ -346,6 +354,8 @@ function markdownImpact(
   analysis: SourceImpactExplanation,
   source: { scannedSourceFiles: number; scannedModules: number;
     unresolved: readonly { from: string; path: string; line: number;
+      target: string; reason: string }[];
+    excluded: readonly { from: string; path: string; line: number;
       target: string; reason: string }[] },
 ): string {
   const mark = String.fromCharCode(96);
@@ -358,7 +368,8 @@ function markdownImpact(
     "Depth limit: " + analysis.scope.maxHops +
       " (truncated: " + analysis.scope.depthTruncated + ")",
     "Analyzed source files/modules: " + source.scannedSourceFiles + "/" + source.scannedModules,
-    "Unresolved literal relative imports (global): " + source.unresolved.length,
+    "Unresolved or unverified import/require sites (global): " + source.unresolved.length,
+    "Non-relative source specifiers outside the internal module graph: " + source.excluded.length,
     "",
     "Boundary: " + mark + analysis.proofBoundary + mark +
       ". Module-level import reachability is conservative; it does not prove " +
@@ -388,7 +399,7 @@ function markdownImpact(
     analysis.changedOwnerId, ...analysis.impacted.map((item) => item.resource.id),
   ]);
   const local = source.unresolved.filter((item) => affected.has(item.from));
-  if (!local.length) out.push("No unresolved relative import in the discovered affected modules.");
+  if (!local.length) out.push("No unresolved/unverified import call in the discovered affected modules.");
   for (const item of local.slice(0, 30)) {
     out.push("- " + mark + item.path + ":" + item.line + mark + " → " +
       mark + item.target + mark + " (" + item.reason + ")");
@@ -431,7 +442,11 @@ function main(): void {
           scannedModules: source.scannedModules,
           knownDependencyEdges: source.edges.length,
           unresolvedCount: source.unresolved.length,
+          unresolvedByReason: countBy(source.unresolved, (item) => item.reason),
           unresolvedRelevant: source.unresolved.filter((item) =>
+            affectedOwners.has(item.from)),
+          excludedNonRelativeCount: source.excluded.length,
+          excludedNonRelativeRelevant: source.excluded.filter((item) =>
             affectedOwners.has(item.from)),
           proofBoundary: source.proofBoundary,
         },
@@ -475,6 +490,10 @@ function main(): void {
             scannedSourceFiles: code.scannedSourceFiles,
             scannedModules: code.scannedModules,
             unresolvedCount: code.unresolved.length,
+            unresolvedByReason: countBy(code.unresolved, (item) => item.reason),
+            unresolvedRelevant: code.unresolved.filter((item) =>
+              [options.trace!.from, options.trace!.to].includes(item.from)),
+            excludedNonRelativeCount: code.excluded.length,
             proofBoundary: code.proofBoundary,
           },
         }),
