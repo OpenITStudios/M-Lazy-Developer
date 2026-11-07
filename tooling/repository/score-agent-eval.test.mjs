@@ -228,6 +228,29 @@ test("omitted procedure assertions count as failures instead of disappearing", (
   assert.equal(partial.procedure.passRate, 0.2);
 });
 
+test("procedure claims cannot pass under the wrong active work lane", () => {
+  const assertions = {
+    "single existing source owner": true,
+    "no target write during system improvement": true,
+    "Skills/Probe source and report versions separated": true,
+    "no unsupported gameplay proof": true,
+    "GitHub Local commit verified": true,
+  };
+  const wrongLane = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
+    runId: "wrong", caseId: "improve-system-source",
+    selectedLane: "m-bedrock-map-testing", assertions,
+  }]});
+  assert.equal(wrongLane.procedure.assertions, 5);
+  assert.equal(wrongLane.procedure.passed, 0);
+  assert.equal(wrongLane.procedure.passRate, 0);
+  const rightLane = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
+    runId: "right", caseId: "improve-system-source",
+    selectedLane: "m-bedrock-system-improvement", assertions,
+  }]});
+  assert.equal(rightLane.procedure.assertions, 5);
+  assert.equal(rightLane.procedure.passed, 5);
+});
+
 test("a forbidden selected skill cannot earn routing accuracy credit", () => {
   const result = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
     caseId: "audit-id-01", runId: "forbidden",

@@ -419,7 +419,11 @@ export function scoreAgentEvalRuns(payload, contrastInput, options) {
         // Count required checks even when the agent omits the assertion
         // payload; missing evidence must not make passRate look better.
         procedureAssertions += 1;
-        if (observedAssertions[assertion] === true) procedurePassed += 1;
+        // Procedure checks belong to one active lane. A correct-looking
+        // assertion from the wrong lane is not successful procedure routing.
+        if ((procedureCase.lane === undefined ||
+             run.selectedLane === procedureCase.lane) &&
+            observedAssertions[assertion] === true) procedurePassed += 1;
       }
     }
   }
