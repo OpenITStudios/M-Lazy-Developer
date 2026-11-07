@@ -494,6 +494,21 @@ try {
     }
     edgeKeys.add(key);
 
+    const declaredOwner = byId.get(edge.from);
+    const witness = edge.evidence;
+    if (edge.basis !== "EXTRACTED" || !witness ||
+        witness.path !== declaredOwner?.path ||
+        !Number.isInteger(witness.line) || witness.line < 1 ||
+        typeof witness.target !== "string" || !witness.target) {
+      failures.push("Graph edge lacks exact authored Markdown witness: " + key);
+    } else {
+      const sourceLine = readFileSync(witness.path, "utf8")
+        .split(/\r?\n/)[witness.line - 1];
+      if (!sourceLine || !sourceLine.includes("(" + witness.target + ")")) {
+        failures.push("Graph edge authored witness does not match source: " + key);
+      }
+    }
+
     if (!byId.has(edge.from)) {
       failures.push("Graph edge source is not registered: " + edge.from);
     }

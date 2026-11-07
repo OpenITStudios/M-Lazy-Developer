@@ -49,7 +49,122 @@ export interface GraphEdge {
   from: string;
   type: GraphRelationType;
   to: string;
+  /** Explicit Markdown link witness. Never gameplay or code-execution proof. */
+  basis?: "EXTRACTED";
+  evidence?: {
+    path: string;
+    line: number;
+    target: string;
+  };
 }
+
+export interface ResourcePathStep {
+  from: string;
+  to: string;
+  type: GraphRelationType;
+  direction: "FORWARD" | "REVERSE";
+  basis: "EXTRACTED" | "UNVERIFIED";
+  evidence?: GraphEdge["evidence"];
+}
+
+export interface ResourcePathExplanation {
+  status: "FOUND" | "NO_PATH" | "UNKNOWN_RESOURCE";
+  fromId: string;
+  toId: string;
+  nodes: readonly CatalogResource[];
+  steps: readonly ResourcePathStep[];
+  proofBoundary: "REPOSITORY_NAVIGATION_ONLY_NOT_RUNTIME_OR_AUTHORITY_PROOF";
+  scope: {
+    maxHops: number;
+    allowReverse: boolean;
+    includeHistorical: boolean;
+  };
+}
+
+/** Explain ONE shortest registered, directed navigation path, not a gameplay
+ * or JavaScript call graph. Reverse navigation is always explicit/opt-in. */
+export function explainResourcePath(
+  resources: readonly CatalogResource[],
+  edges: readonly GraphEdge[],
+  fromId: string,
+  toId: string,
+  options: { maxHops?: number; allowReverse?: boolean; includeHistorical?: boolean } = {},
+): ResourcePathExplanation {
+  const maxHops = options.maxHops ?? 4;
+  if (!Number.isInteger(maxHops) || maxHops < 1 || maxHops > 6) {
+    throw new Error("Architecture trace maxHops must be between 1 and 6.");
+  }
+  const allowed = new Map(resources
+    .filter((resource) => resource.lifecycle === "ACTIVE")
+    .filter((resource) => options.includeHistorical || resource.authority !== "HISTORICAL")
+    .map((resource) => [resource.id, resource] as const));
+  const result = (
+    status: ResourcePathExplanation["status"],
+    ids: readonly string[] = [],
+    steps: readonly ResourcePathStep[] = [],
+  ): ResourcePathExplanation => ({
+    status, fromId, toId,
+    nodes: ids.map((id) => allowed.get(id)!),
+    steps,
+    proofBoundary: "REPOSITORY_NAVIGATION_ONLY_NOT_RUNTIME_OR_AUTHORITY_PROOF",
+    scope: {
+      maxHops,
+      allowReverse: options.allowReverse === true,
+      includeHistorical: options.includeHistorical === true,
+    },
+  });
+
+  if (!allowed.has(fromId) || !allowed.has(toId)) return result("UNKNOWN_RESOURCE");
+  if (fromId === toId) return result("FOUND", [fromId]);
+
+  const adjacency = new Map<string, ResourcePathStep[]>();
+  const add = (from: string, step: ResourcePathStep) => {
+    const list = adjacency.get(from) ?? [];
+    list.push(step);
+    adjacency.set(from, list);
+  };
+  for (const edge of edges) {
+    if (!allowed.has(edge.from) || !allowed.has(edge.to)) continue;
+    const basis = edge.basis === "EXTRACTED" && edge.evidence
+      ? "EXTRACTED" as const : "UNVERIFIED" as const;
+    add(edge.from, {
+      from: edge.from, to: edge.to, type: edge.type,
+      direction: "FORWARD", basis,
+      ...(basis === "EXTRACTED" ? { evidence: edge.evidence } : {}),
+    });
+    if (options.allowReverse) {
+      add(edge.to, {
+        from: edge.to, to: edge.from, type: edge.type,
+        direction: "REVERSE", basis,
+        ...(basis === "EXTRACTED" ? { evidence: edge.evidence } : {}),
+      });
+    }
+  }
+  for (const list of adjacency.values()) {
+    list.sort((a, b) =>
+      a.to.localeCompare(b.to) ||
+      a.type.localeCompare(b.type) ||
+      a.direction.localeCompare(b.direction));
+  }
+
+  const seen = new Set([fromId]);
+  const queue: { id: string; ids: string[]; steps: ResourcePathStep[] }[] =
+    [{ id: fromId, ids: [fromId], steps: [] }];
+  for (let index = 0; index < queue.length; index += 1) {
+    const current = queue[index]!;
+    if (current.steps.length >= maxHops) continue;
+    for (const step of adjacency.get(current.id) ?? []) {
+      if (seen.has(step.to)) continue;
+      const ids = [...current.ids, step.to];
+      const steps = [...current.steps, step];
+      if (step.to === toId) return result("FOUND", ids, steps);
+      seen.add(step.to);
+      queue.push({ id: step.to, ids, steps });
+    }
+  }
+  return result("NO_PATH");
+}
+
 
 export interface RetrievalQuery {
   text: string;

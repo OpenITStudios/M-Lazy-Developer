@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import {
   retrieveDocumentSections,
   retrieveResources,
+  explainResourcePath,
+  type ResourcePathExplanation,
 } from "../../engine/packages/analysis-planner/src/index.js";
 import { buildDocumentSectionIndex } from "./document-sections.mjs";
 import { buildGraph } from "./graph.mjs";
@@ -25,6 +27,10 @@ interface RetrievalCliOptions {
   allowAllDomains: boolean;
   limit: number;
   sectionLimit: number;
+  trace?: { from: string; to: string };
+  format: "json" | "mermaid" | "markdown";
+  allowReverse: boolean;
+  maxHops: number;
 }
 
 function positiveInteger(value: string | undefined, fallback: number): number {
@@ -45,9 +51,43 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
   let summary = false;
   let limit = 12;
   let sectionLimit = 8;
+  let trace: { from: string; to: string } | undefined;
+  let format: "json" | "mermaid" | "markdown" = "json";
+  let allowReverse = false;
+  let maxHops = 4;
 
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index]!;
+
+    if (value === "--trace") {
+      const from = argv[index + 1];
+      const to = argv[index + 2];
+      if (!from || !to || from.startsWith("--") || to.startsWith("--")) {
+        throw new Error("--trace requires two registered resource IDs.");
+      }
+      trace = { from, to };
+      index += 2;
+      continue;
+    }
+    if (value === "--format") {
+      const chosen = argv[index + 1];
+      if (chosen !== "json" && chosen !== "mermaid" && chosen !== "markdown") {
+        throw new Error("--format must be json, mermaid, or markdown.");
+      }
+      format = chosen;
+      index += 1;
+      continue;
+    }
+    if (value === "--both-directions") {
+      allowReverse = true;
+      continue;
+    }
+    if (value === "--max-hops") {
+      maxHops = positiveInteger(argv[index + 1], 4);
+      if (maxHops > 6) throw new Error("--max-hops must be at most 6.");
+      index += 1;
+      continue;
+    }
 
     if (value === "--summary") {
       summary = true;
@@ -101,7 +141,14 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
   }
 
   const query = queryParts.join(" ").trim();
-  if (!query && id === undefined && !summary) {
+  if (trace !== undefined && (id !== undefined || summary || query ||
+      domains.length > 0 || allowAllDomains)) {
+    throw new Error("--trace takes only two IDs, not a query or scope.");
+  }
+  if (trace === undefined && (format !== "json" || allowReverse || maxHops !== 4)) {
+    throw new Error("--format/--both-directions/--max-hops require --trace.");
+  }
+  if (!query && id === undefined && !summary && trace === undefined) {
     throw new Error(
       "Usage: npm run retrieve:repository -- <query> --domain <domain> OR npm run retrieve:repository -- --id <resource-id>",
     );
@@ -110,6 +157,7 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
   if (
     id === undefined &&
     !summary &&
+    trace === undefined &&
     domains.length === 0 &&
     !allowAllDomains
   ) {
@@ -127,6 +175,10 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
     allowAllDomains,
     limit,
     sectionLimit,
+    ...(trace === undefined ? {} : { trace }),
+    format,
+    allowReverse,
+    maxHops,
   };
 }
 
@@ -148,10 +200,96 @@ function countBy<T>(
   );
 }
 
+function mermaidTrace(trace: ResourcePathExplanation): string {
+  const lines = ["flowchart LR"];
+  if (trace.status !== "FOUND") {
+    lines.push('  missing["No verified navigation path"]');
+    return lines.join("\n");
+  }
+  for (const [index, resource] of trace.nodes.entries()) {
+    // Stable Catalog IDs, never user-authored Mermaid snippets.
+    lines.push('  n' + index + '["' + resource.id + '"]');
+  }
+  for (const [index, step] of trace.steps.entries()) {
+    const from = step.direction === "FORWARD" ? index : index + 1;
+    const to = step.direction === "FORWARD" ? index + 1 : index;
+    lines.push("  n" + from + " -->|" + step.type + "| n" + to);
+  }
+  return lines.join("\n");
+}
+
+function obsidianResourceLink(resource: ResourcePathExplanation["nodes"][number]): string {
+  const mark = String.fromCharCode(96);
+  // The repository root is the proposed vault root; no vault is written.
+  return resource.path.endsWith(".md")
+    ? "[[" + resource.path + "|" + resource.id + "]]"
+    : mark + resource.id + mark + " (" + resource.path + ")";
+}
+
+function markdownTrace(trace: ResourcePathExplanation): string {
+  const mark = String.fromCharCode(96);
+  const out = [
+    "# Repository Architecture Trace",
+    "",
+    "Status: **" + trace.status + "**",
+    "",
+    "Proof boundary: " + mark + trace.proofBoundary + mark + ".",
+    "Search scope: max " + trace.scope.maxHops + " hops; reverse " +
+      trace.scope.allowReverse + "; history " + trace.scope.includeHistorical + ".",
+    "",
+    "Repository navigation only: a link is not source execution, gameplay behavior, " +
+      "causal ownership, test PASS, or repair authority.",
+    "",
+  ];
+  if (trace.status === "FOUND") {
+    out.push("## Routed resources", "");
+    for (const resource of trace.nodes) {
+      out.push("- " + obsidianResourceLink(resource) + " — " +
+        resource.authority + " / " + resource.class);
+    }
+    out.push("", "## Authored link witnesses", "");
+    for (const step of trace.steps) {
+      out.push("- " + mark + step.from + mark + " " +
+        (step.direction === "FORWARD" ? "→" : "← (reverse traversal)") +
+        " " + mark + step.to + mark + " (" + step.type + ", " + step.basis + ")" +
+        (step.evidence ? " — " + mark + step.evidence.path + ":" + step.evidence.line + mark
+          : " — NO_SOURCE_WITNESS"));
+    }
+  } else {
+    out.push("No path was established within the selected depth, direction and authority scope.", "");
+  }
+  const fence = mark.repeat(3);
+  out.push("## Mermaid / Pele-compatible diagram", "", fence + "mermaid", mermaidTrace(trace), fence, "");
+  return out.join("\n");
+}
+
 function main(): void {
   const options = parseArgs(process.argv.slice(2));
   const catalog = buildResourceCatalog();
   const graph = buildGraph();
+
+  if (options.trace !== undefined) {
+    const trace = explainResourcePath(
+      catalog.resources, graph.edges, options.trace.from, options.trace.to,
+      {
+        maxHops: options.maxHops,
+        allowReverse: options.allowReverse,
+        includeHistorical: options.includeHistorical,
+      },
+    );
+    if (options.format === "json") {
+      process.stdout.write(JSON.stringify({
+        schemaVersion: 1,
+        mode: "REPOSITORY_ARCHITECTURE_TRACE",
+        trace,
+      }, null, 2) + "\n");
+    } else if (options.format === "mermaid") {
+      process.stdout.write(mermaidTrace(trace) + "\n");
+    } else {
+      process.stdout.write(markdownTrace(trace));
+    }
+    return;
+  }
 
   if (options.summary) {
     const sectionIndex = buildDocumentSectionIndex();

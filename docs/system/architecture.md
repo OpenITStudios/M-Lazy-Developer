@@ -830,6 +830,49 @@ DOCUMENT parent
 
 This enables bounded loading of large owners without fragmenting them into many files.
 
+### Explainable repository relationships (Graphify / Obsidian / Pele patterns)
+
+Architectural explanations follow a bounded, source-backed navigation path:
+
+~~~text
+Task → canonical resource ID → authored link witness → typed Resource Graph
+→ direction-aware shortest path → authority-annotated explanation
+→ optional Mermaid/Markdown projection, never another authority
+~~~
+
+Canonical owners are unchanged. `tooling/repository/resource-catalog.mjs`
+registers stable IDs, including root `AGENTS.md` and `GITHUB_RULES.md`.
+`tooling/repository/graph.mjs` derives `ROUTES_TO` and related navigation
+edges only from authored, non-fenced Markdown links and preserves the exact
+`path:line` and literal target. The source does not infer dependencies
+from names, co-occurrences or declared detector-to-knowledge bindings.
+
+`engine/packages/analysis-planner/src/retrieval.ts` owns
+`explainResourcePath()` to return one bounded, directed route with
+per-resource authority and provenance. It returns `UNKNOWN_RESOURCE` or
+`NO_PATH` rather than inventing a missing link. It excludes historical
+nodes by default and requires explicit reverse traversal. `EXTRACTED`
+means *a registered Markdown link was found*, not that code executes,
+a Minecraft behavior occurs or the linked document is the semantic owner.
+
+The existing `tooling/repository/retrieve.ts` has a source-only
+`--trace <from-id> <to-id> [--max-hops 1..6] [--both-directions]`
+route with `--format json|mermaid|markdown` and optional `--history`.
+JSON retains path witnesses. Mermaid is a deterministic visual projection
+that can be rendered by Pele (https://github.com/obsidianmd/pele)
+in a separately authorized presentation environment. Markdown contains
+repo-root Obsidian-compatible `[[path|id]]` links and a Mermaid code fence;
+it performs no vault write. Obsidian graph navigation comes from actual
+note links, not the Mermaid drawing alone.
+
+This architecture explanation applies to *repository documentation and
+registered Resource IDs only*. The Minecraft semantic graph, task graph,
+and existing AST-driven source dependency checker retain their separate
+semantic owners. A module dependency cannot be claimed from a Markdown
+reference or inferred because a declaration-only knowledge binding
+points at the same package. Neither rendering nor path discovery changes
+permission, proof, or repair admission.
+
 ### Generated projections
 
 Generated indexes and graphs are DERIVED.

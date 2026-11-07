@@ -26,6 +26,11 @@ TEST MAP
 → LOAD → UNDERSTAND → TEST → REPORT
 ```
 
+The two active source-owned Skill policies are linked for precise
+Resource Graph navigation: [IMPROVE SYSTEM](../../.agents/skills/m-bedrock-system-improvement/SKILL.md)
+and [TEST MAP](../../.agents/skills/m-bedrock-map-testing/SKILL.md).
+These links register existing rules; they do not install or select another Skill.
+
 ## Internal proof mapping, not new stages
 
 - **LOAD** groups existing TARGET / DISCOVERY identities and source inventory.

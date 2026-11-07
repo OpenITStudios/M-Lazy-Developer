@@ -170,6 +170,16 @@ Retrieval → engine/packages/analysis-planner/src/retrieval.ts
 Context   → engine/packages/orchestrator/src/workflow/context-compiler.ts
 ```
 
+**Architecture explanation:** Use stable Resource IDs and the existing
+`tooling/repository/retrieve.ts --trace <from-id> <to-id>` contract to explain
+how registered repository resources connect. Read original link witnesses
+and resource authorities. `--format markdown` exports vault-root
+Obsidian links and Mermaid/Pele-compatible diagram source; it never
+runs Pele or installs a tool. Resource navigation is not proof of code
+execution, module consumption, Minecraft behavior, a test PASS or
+repair permission. Missing relationships remain NO_PATH/UNKNOWN rather
+than guessed source dependencies. Keep the two skills and existing owners.
+
 ## ChatGPT-GitHub Work Continuity
 
 **Project instruction bootstrap.** ChatGPT Project Instructions are a short pointer to this repository on branch `Local`. On a fresh chat or changed `Local` HEAD, read `AGENTS.md` and `GITHUB_RULES.md` **completely** at the pinned HEAD, then follow the applicable skill, permission profile, domain router and canonical owner. On later turns in the **same chat and unchanged HEAD**, reuse already-read root rules and fetch only decision-changing owner/consumer sections; do not reload large documents or history for reassurance. This saves context, not proof: a new chat or different SHA requires fresh reads. Do not duplicate repository rules inside Project Instructions or impose chat-title/chat-retention requirements; conversations are not repository work-state authority.

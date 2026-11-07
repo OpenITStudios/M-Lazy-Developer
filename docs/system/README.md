@@ -16,6 +16,8 @@ It does not own planning, current project state, or chronological proof history.
 ## Canonical entrypoints
 
 - [Architecture](./architecture.md) — dependency direction, orchestration boundary, and subsystem composition.
+- [Agent Rules](../../AGENTS.md) — canonical repository-wide agent routing, context and evidence boundaries.
+- [GitHub Rules](../../GITHUB_RULES.md) — canonical remote-source mutation, commit and verification boundaries.
 - [Authority Model](./authority-model.md) — semantic authority and proof boundaries.
 - [Behavioral World Model](./behavioral-world-model.md) — executable state/transition/temporal model boundary.
 - [Bug Report Ownership](./bug-report-ownership.md) — current audit truth vs approved Bug Report V2 ownership.

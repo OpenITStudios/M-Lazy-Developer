@@ -2,7 +2,7 @@
 // Original cases and assertions remain; executable equivalence not yet proven.
 import { describe, expect, it } from "vitest";
 import { BUILTIN_ANALYSIS_CAPABILITIES, createAnalysisCapabilityRegistry, planMinimumSufficientAnalysis, assertEngineeringTaskPreconditions, routeEngineeringTask } from "../src/index.js";
-import { retrieveResources, scoreTextDocuments, prepareTextDocumentScorer, type CatalogResource, type GraphEdge } from "../src/retrieval.js";
+import { retrieveResources, explainResourcePath, scoreTextDocuments, prepareTextDocumentScorer, type CatalogResource, type GraphEdge } from "../src/retrieval.js";
 import { retrieveDocumentSections, type DocumentSection } from "../src/section-retrieval.js";
 
 // Original suite: engine/packages/analysis-planner/test/domain-capabilities.test.ts (blob bebc6da2eacd0d50b96d93b5944dd1ddcef8c29d)
@@ -644,3 +644,53 @@ describe("engineering task routing", () => {
   });
 });
 }
+
+
+describe("explainResourcePath architecture navigation", () => {
+  const resources: CatalogResource[] = [
+    { id: "document.docs.router", class: "DOCUMENT", domain: "docs", role: "ROUTER", authority: "CANONICAL", path: "docs/README.md", lifecycle: "ACTIVE" },
+    { id: "document.system.router", class: "DOCUMENT", domain: "system", role: "ROUTER", authority: "CANONICAL", path: "docs/system/README.md", lifecycle: "ACTIVE" },
+    { id: "source.rules.agent-policy", class: "SOURCE", domain: "rules", authority: "CANONICAL", path: "AGENTS.md", lifecycle: "ACTIVE" },
+    { id: "reliability.history.sample", class: "RELIABILITY", domain: "history", authority: "HISTORICAL", path: "engine/reliability/history/sample.json", lifecycle: "ACTIVE" },
+    { id: "source.rules.retired", class: "SOURCE", domain: "rules", authority: "CANONICAL", path: "retired.md", lifecycle: "RETIRED" },
+  ];
+  const edges: GraphEdge[] = [
+    { from: "document.docs.router", to: "document.system.router", type: "ROUTES_TO", basis: "EXTRACTED", evidence: { path: "docs/README.md", line: 8, target: "./system/README.md" } },
+    { from: "document.system.router", to: "source.rules.agent-policy", type: "ROUTES_TO", basis: "EXTRACTED", evidence: { path: "docs/system/README.md", line: 5, target: "../../AGENTS.md" } },
+    { from: "document.system.router", to: "reliability.history.sample", type: "RELATES_TO" },
+    { from: "document.system.router", to: "source.rules.retired", type: "RELATES_TO" },
+  ];
+
+  it("finds a deterministic forward path while retaining link witnesses and authority", () => {
+    const trace = explainResourcePath(resources, edges, "document.docs.router", "source.rules.agent-policy");
+    expect(trace.status).toBe("FOUND");
+    expect(trace.nodes.map((node) => node.id)).toEqual([
+      "document.docs.router", "document.system.router", "source.rules.agent-policy",
+    ]);
+    expect(trace.steps.map((step) => step.type)).toEqual(["ROUTES_TO", "ROUTES_TO"]);
+    expect(trace.steps.every((step) => step.basis === "EXTRACTED")).toBe(true);
+    expect(trace.steps[1]?.evidence).toEqual({
+      path: "docs/system/README.md", line: 5, target: "../../AGENTS.md",
+    });
+    expect(trace.proofBoundary).toBe("REPOSITORY_NAVIGATION_ONLY_NOT_RUNTIME_OR_AUTHORITY_PROOF");
+    expect(trace.scope).toEqual({ maxHops: 4, allowReverse: false, includeHistorical: false });
+  });
+
+  it("does not invent the reverse route unless backward navigation is selected", () => {
+    const forward = explainResourcePath(resources, edges, "source.rules.agent-policy", "document.docs.router");
+    expect(forward.status).toBe("NO_PATH");
+    const backward = explainResourcePath(resources, edges, "source.rules.agent-policy", "document.docs.router", { allowReverse: true });
+    expect(backward.status).toBe("FOUND");
+    expect(backward.steps.map((step) => step.direction)).toEqual(["REVERSE", "REVERSE"]);
+  });
+
+  it("excludes historical, retired and unknown owners unless authorized for history", () => {
+    expect(explainResourcePath(resources, edges, "document.docs.router", "reliability.history.sample").status).toBe("UNKNOWN_RESOURCE");
+    const opted = explainResourcePath(resources, edges, "document.docs.router", "reliability.history.sample", { includeHistorical: true });
+    expect(opted.status).toBe("FOUND");
+    expect(opted.steps[1]?.basis).toBe("UNVERIFIED");
+    expect(explainResourcePath(resources, edges, "document.system.router", "source.rules.retired").status).toBe("UNKNOWN_RESOURCE");
+    expect(explainResourcePath(resources, edges, "document.docs.router", "unknown.node").status).toBe("UNKNOWN_RESOURCE");
+    expect(explainResourcePath(resources, edges, "document.docs.router", "source.rules.agent-policy", { maxHops: 1 }).status).toBe("NO_PATH");
+  });
+});

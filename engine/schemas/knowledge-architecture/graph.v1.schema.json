@@ -48,6 +48,32 @@
         "to": {
           "type": "string",
           "minLength": 1
+        },
+        "basis": {
+          "const": "EXTRACTED"
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "line",
+            "target"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "line": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     }

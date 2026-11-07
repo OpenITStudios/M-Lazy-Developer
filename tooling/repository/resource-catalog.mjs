@@ -89,6 +89,38 @@ function catalogExamples(resources, seen) {
 function catalogStandaloneSources(resources, seen) {
   for (const resource of [
     {
+      id: "source.rules.agent-policy",
+      class: "SOURCE",
+      domain: "rules",
+      authority: "CANONICAL",
+      path: "AGENTS.md",
+      lifecycle: "ACTIVE",
+    },
+    {
+      id: "source.rules.github-policy",
+      class: "SOURCE",
+      domain: "rules",
+      authority: "CANONICAL",
+      path: "GITHUB_RULES.md",
+      lifecycle: "ACTIVE",
+    },
+    {
+      id: "source.rules.improve-system-skill",
+      class: "SOURCE",
+      domain: "rules",
+      authority: "CANONICAL",
+      path: ".agents/skills/m-bedrock-system-improvement/SKILL.md",
+      lifecycle: "ACTIVE",
+    },
+    {
+      id: "source.rules.test-map-skill",
+      class: "SOURCE",
+      domain: "rules",
+      authority: "CANONICAL",
+      path: ".agents/skills/m-bedrock-map-testing/SKILL.md",
+      lifecycle: "ACTIVE",
+    },
+    {
       id: "source.rules.capabilities",
       class: "SOURCE",
       domain: "rules",
