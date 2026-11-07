@@ -1,12 +1,74 @@
 import ts from "typescript";
+import { existsSync, realpathSync, statSync } from "node:fs";
+import { dirname, extname, isAbsolute, normalize, relative, resolve, sep } from "node:path";
+
+const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"];
+
+/** One repository-native literal import resolver. Symbolic links outside the
+ * source root, ambiguous TS/JS source candidates and calculated imports are
+ * never silently promoted into known dependency edges. */
+export function resolveRelativeSourceImport(fromFile, specifier, sourceRoot = process.cwd()) {
+  if (typeof specifier !== "string" || !specifier.startsWith(".")) {
+    return { status: "NOT_RELATIVE", candidates: [] };
+  }
+  const root = realpathSync(resolve(sourceRoot));
+  const base = normalize(resolve(dirname(resolve(fromFile)), specifier));
+  const rel = relative(root, base);
+  if (rel === ".." || rel.startsWith(".." + sep) || isAbsolute(rel)) {
+    return { status: "OUTSIDE_ROOT", candidates: [] };
+  }
+
+  const extension = extname(base);
+  const candidates = [];
+  if (SOURCE_EXTENSIONS.includes(extension)) {
+    candidates.push(base);
+    const aliasExtensions = extension === ".js" ? [".ts", ".tsx", ".mts", ".cts"]
+      : extension === ".mjs" ? [".mts"]
+      : extension === ".cjs" ? [".cts"] : [];
+    const stem = base.slice(0, -extension.length);
+    candidates.push(...aliasExtensions.map((suffix) => stem + suffix));
+  } else if (!extension) {
+    candidates.push(base);
+    for (const suffix of SOURCE_EXTENSIONS) candidates.push(base + suffix);
+    for (const suffix of SOURCE_EXTENSIONS) candidates.push(resolve(base, "index" + suffix));
+  } else {
+    return { status: "UNRESOLVED", candidates: [] };
+  }
+
+  const matches = [];
+  for (const candidate of candidates) {
+    if (!existsSync(candidate) || !statSync(candidate).isFile()) continue;
+    const actual = realpathSync(candidate);
+    const relativeActual = relative(root, actual);
+    if (relativeActual === ".." || relativeActual.startsWith(".." + sep) ||
+        isAbsolute(relativeActual)) {
+      return { status: "OUTSIDE_ROOT", candidates: [] };
+    }
+    if (!matches.includes(actual)) matches.push(actual);
+  }
+  if (matches.length > 1) return { status: "AMBIGUOUS", candidates: matches };
+  if (matches.length === 0) return { status: "UNRESOLVED", candidates: [] };
+  return { status: "RESOLVED", path: matches[0], candidates: matches };
+}
+
 
 // Derive actual imports from AST, never from text in comments, template strings
 // or generated source examples (which previously produced phantom edges).
-export function importSpecifiers(filePath, content, includeLocalResources = false) {
+export function importSpecifiers(filePath, content, includeLocalResources = false, includeSourceSites = false) {
   const kind = filePath.endsWith(".tsx") ? ts.ScriptKind.TSX :
     /\.[cm]?js$/.test(filePath) ? ts.ScriptKind.JS : ts.ScriptKind.TS;
   const file = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, kind);
   const found = [];
+  const add = (specifier, runtime, node, syntax) => {
+    const result = { specifier, runtime };
+    if (includeSourceSites) {
+      const site = file.getLineAndCharacterOfPosition(node.getStart(file));
+      result.line = site.line + 1;
+      result.column = site.character + 1;
+      result.syntax = syntax;
+    }
+    found.push(result);
+  };
   const visit = (node) => {
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
         node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) {
@@ -20,22 +82,22 @@ export function importSpecifiers(filePath, content, includeLocalResources = fals
            (node.exportClause && ts.isNamedExports(node.exportClause) &&
             node.exportClause.elements.length > 0 &&
             node.exportClause.elements.every(item => item.isTypeOnly)));
-      found.push({ specifier: node.moduleSpecifier.text, runtime: !typeOnly });
+      add(node.moduleSpecifier.text, !typeOnly, node.moduleSpecifier, ts.isImportDeclaration(node) ? "STATIC_IMPORT" : "RE_EXPORT");
     }
     // Type-position import("./types.js") references a source module but
     // never creates a runtime dependency edge.
     if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument) &&
         ts.isStringLiteralLike(node.argument.literal)) {
-      found.push({specifier: node.argument.literal.text, runtime: false});
+      add(node.argument.literal.text, false, node.argument.literal, "IMPORT_TYPE");
     }
     if (ts.isImportEqualsDeclaration(node) &&
         ts.isExternalModuleReference(node.moduleReference) &&
         node.moduleReference.expression && ts.isStringLiteralLike(node.moduleReference.expression)) {
-      found.push({specifier: node.moduleReference.expression.text, runtime: !node.isTypeOnly});
+      add(node.moduleReference.expression.text, !node.isTypeOnly, node.moduleReference.expression, "IMPORT_EQUALS");
     }
     if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword &&
         node.arguments.length === 1 && ts.isStringLiteralLike(node.arguments[0])) {
-      found.push({specifier: node.arguments[0].text, runtime: true});
+      add(node.arguments[0].text, true, node.arguments[0], "DYNAMIC_LITERAL");
     }
     // Opt-in static resource edge; default imports remain unchanged for
     // repository dependency graph consumers.
@@ -48,7 +110,7 @@ export function importSpecifiers(filePath, content, includeLocalResources = fals
           ts.isMetaProperty(base.expression) &&
           base.expression.keywordToken === ts.SyntaxKind.ImportKeyword &&
           base.expression.name.text === "meta") {
-        found.push({ specifier: node.arguments[0].text, runtime: true });
+        add(node.arguments[0].text, true, node.arguments[0], "LOCAL_RESOURCE");
       }
     }
     ts.forEachChild(node, visit);

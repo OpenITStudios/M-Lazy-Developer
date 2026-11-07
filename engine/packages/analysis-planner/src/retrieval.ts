@@ -45,12 +45,24 @@ export interface CatalogResource {
   lifecycle: ResourceLifecycle;
 }
 
+export interface SourceDependencySite {
+  path: string;
+  line: number;
+  column: number;
+  target: string;
+  targetPath: string;
+  runtime: boolean;
+  syntax: string;
+}
+
 export interface GraphEdge {
   from: string;
   type: GraphRelationType;
   to: string;
-  /** Explicit Markdown link witness. Never gameplay or code-execution proof. */
+  /** Authored Markdown link or literal AST import. Neither proves execution. */
   basis?: "EXTRACTED";
+  /** Source-only module dependency projection retains all direct import sites. */
+  sourceSites?: readonly SourceDependencySite[];
   evidence?: {
     path: string;
     line: number;
@@ -65,6 +77,7 @@ export interface ResourcePathStep {
   direction: "FORWARD" | "REVERSE";
   basis: "EXTRACTED" | "UNVERIFIED";
   evidence?: GraphEdge["evidence"];
+  sourceSites?: readonly SourceDependencySite[];
 }
 
 export interface ResourcePathExplanation {
@@ -131,12 +144,14 @@ export function explainResourcePath(
       from: edge.from, to: edge.to, type: edge.type,
       direction: "FORWARD", basis,
       ...(basis === "EXTRACTED" ? { evidence: edge.evidence } : {}),
+      ...(edge.sourceSites?.length ? { sourceSites: edge.sourceSites } : {}),
     });
     if (options.allowReverse) {
       add(edge.to, {
         from: edge.to, to: edge.from, type: edge.type,
         direction: "REVERSE", basis,
         ...(basis === "EXTRACTED" ? { evidence: edge.evidence } : {}),
+        ...(edge.sourceSites?.length ? { sourceSites: edge.sourceSites } : {}),
       });
     }
   }
@@ -165,6 +180,100 @@ export function explainResourcePath(
   return result("NO_PATH");
 }
 
+
+
+export interface SourceImpactItem {
+  resource: CatalogResource;
+  distance: number;
+  /** Module import edges in order: impacted owner → ... → changed owner. */
+  pathToChanged: readonly GraphEdge[];
+}
+
+export interface SourceImpactExplanation {
+  status: "FOUND" | "UNKNOWN_OWNER";
+  changedOwnerId: string;
+  changedOwner?: CatalogResource;
+  impacted: readonly SourceImpactItem[];
+  scope: {
+    maxHops: number;
+    depthTruncated: boolean;
+  };
+  proofBoundary: "POSSIBLE_MODULE_LEVEL_STATIC_IMPACT_NOT_FILE_OR_RUNTIME_PROOF";
+}
+
+/** Conservative reverse dependency closure over REAL AST import sites.
+ * This explains potential module blast radius, NOT executed call chains,
+ * behavioral effects, approved task execution, or verified regression scope. */
+export function explainSourceImpact(
+  resources: readonly CatalogResource[],
+  edges: readonly GraphEdge[],
+  changedOwnerId: string,
+  options: { maxHops?: number } = {},
+): SourceImpactExplanation {
+  const maxHops = options.maxHops ?? 3;
+  if (!Number.isInteger(maxHops) || maxHops < 1 || maxHops > 6) {
+    throw new Error("Source impact maxHops must be between 1 and 6.");
+  }
+  const allowed = new Map(resources
+    .filter((resource) => resource.class === "SOURCE" &&
+      resource.lifecycle === "ACTIVE" && resource.authority === "CANONICAL")
+    .map((resource) => [resource.id, resource] as const));
+  const changedOwner = allowed.get(changedOwnerId);
+  const result = (
+    status: SourceImpactExplanation["status"],
+    impacted: readonly SourceImpactItem[],
+    depthTruncated: boolean,
+  ): SourceImpactExplanation => ({
+    status, changedOwnerId,
+    ...(changedOwner ? { changedOwner } : {}),
+    impacted,
+    scope: { maxHops, depthTruncated },
+    proofBoundary: "POSSIBLE_MODULE_LEVEL_STATIC_IMPACT_NOT_FILE_OR_RUNTIME_PROOF",
+  });
+  if (!changedOwner) return result("UNKNOWN_OWNER", [], false);
+
+  const incoming = new Map<string, GraphEdge[]>();
+  for (const edge of edges) {
+    if (edge.type !== "DEPENDS_ON" || edge.basis !== "EXTRACTED" ||
+        !edge.evidence || !edge.sourceSites?.length ||
+        !allowed.has(edge.from) || !allowed.has(edge.to)) continue;
+    const matches = incoming.get(edge.to) ?? [];
+    matches.push(edge);
+    incoming.set(edge.to, matches);
+  }
+  for (const list of incoming.values()) {
+    list.sort((left, right) =>
+      left.from.localeCompare(right.from) ||
+      left.evidence!.path.localeCompare(right.evidence!.path) ||
+      left.evidence!.line - right.evidence!.line);
+  }
+
+  const visited = new Set([changedOwnerId]);
+  const queue: { id: string; depth: number; path: GraphEdge[] }[] = [
+    { id: changedOwnerId, depth: 0, path: [] },
+  ];
+  const impacted: SourceImpactItem[] = [];
+  let depthTruncated = false;
+  for (let index = 0; index < queue.length; index += 1) {
+    const current = queue[index]!;
+    if (current.depth >= maxHops) {
+      if ((incoming.get(current.id) ?? []).some((edge) =>
+        !visited.has(edge.from))) depthTruncated = true;
+      continue;
+    }
+    for (const edge of incoming.get(current.id) ?? []) {
+      if (visited.has(edge.from)) continue;
+      visited.add(edge.from);
+      const path = [edge, ...current.path];
+      const distance = current.depth + 1;
+      impacted.push({
+        resource: allowed.get(edge.from)!, distance, pathToChanged: path,
+      });
+      queue.push({ id: edge.from, depth: distance, path });
+    }
+  }
+  return result("FOUND", impacted, depthTruncated);
+}
 
 export interface RetrievalQuery {
   text: string;

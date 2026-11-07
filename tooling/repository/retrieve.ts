@@ -3,10 +3,12 @@ import {
   retrieveDocumentSections,
   retrieveResources,
   explainResourcePath,
+  explainSourceImpact,
   type ResourcePathExplanation,
+  type SourceImpactExplanation,
 } from "../../engine/packages/analysis-planner/src/index.js";
 import { buildDocumentSectionIndex } from "./document-sections.mjs";
-import { buildGraph } from "./graph.mjs";
+import { buildGraph, buildSourceDependencyGraph, resolveSourceOwner } from "./graph.mjs";
 import {
   readKnowledgeResourceContext,
   scoreResourcesLexically,
@@ -28,6 +30,8 @@ interface RetrievalCliOptions {
   limit: number;
   sectionLimit: number;
   trace?: { from: string; to: string };
+  impact?: string;
+  sourceDependencies: boolean;
   format: "json" | "mermaid" | "markdown";
   allowReverse: boolean;
   maxHops: number;
@@ -52,6 +56,8 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
   let limit = 12;
   let sectionLimit = 8;
   let trace: { from: string; to: string } | undefined;
+  let impact: string | undefined;
+  let sourceDependencies = false;
   let format: "json" | "mermaid" | "markdown" = "json";
   let allowReverse = false;
   let maxHops = 4;
@@ -59,6 +65,19 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index]!;
 
+    if (value === "--impact") {
+      const pathOrId = argv[index + 1];
+      if (!pathOrId || pathOrId.startsWith("--")) {
+        throw new Error("--impact requires one source module ID or repository-relative source path.");
+      }
+      impact = pathOrId;
+      index += 1;
+      continue;
+    }
+    if (value === "--source-deps") {
+      sourceDependencies = true;
+      continue;
+    }
     if (value === "--trace") {
       const from = argv[index + 1];
       const to = argv[index + 2];
@@ -141,16 +160,26 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
   }
 
   const query = queryParts.join(" ").trim();
-  if (trace !== undefined && (id !== undefined || summary || query ||
-      domains.length > 0 || allowAllDomains)) {
-    throw new Error("--trace takes only two IDs, not a query or scope.");
+  if (trace !== undefined && (impact !== undefined || id !== undefined ||
+      summary || query || domains.length > 0 || allowAllDomains)) {
+    throw new Error("--trace takes only two IDs, not --impact, a query or scope.");
   }
-  if (trace === undefined && (format !== "json" || allowReverse || maxHops !== 4)) {
-    throw new Error("--format/--both-directions/--max-hops require --trace.");
+  if (impact !== undefined && (id !== undefined || summary || query ||
+      domains.length > 0 || allowAllDomains || includeHistorical ||
+      trace !== undefined || allowReverse || sourceDependencies)) {
+    throw new Error("--impact is exclusive and cannot use historical or reverse navigation.");
   }
-  if (!query && id === undefined && !summary && trace === undefined) {
+  if (sourceDependencies && trace === undefined) {
+    throw new Error("--source-deps requires --trace.");
+  }
+  if (trace === undefined && impact === undefined &&
+      (format !== "json" || allowReverse || maxHops !== 4)) {
+    throw new Error("--format/--both-directions/--max-hops require --trace or --impact.");
+  }
+  if (!query && id === undefined && !summary &&
+      trace === undefined && impact === undefined) {
     throw new Error(
-      "Usage: npm run retrieve:repository -- <query> --domain <domain> OR npm run retrieve:repository -- --id <resource-id>",
+      "Usage: npm run retrieve:repository -- <query> --domain <domain> | --id <resource-id> | --trace <from-id> <to-id> [--source-deps] | --impact <source-id-or-code-path> [--format json|markdown|mermaid]",
     );
   }
 
@@ -158,6 +187,7 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
     id === undefined &&
     !summary &&
     trace === undefined &&
+    impact === undefined &&
     domains.length === 0 &&
     !allowAllDomains
   ) {
@@ -176,6 +206,8 @@ function parseArgs(argv: readonly string[]): RetrievalCliOptions {
     limit,
     sectionLimit,
     ...(trace === undefined ? {} : { trace }),
+    ...(impact === undefined ? {} : { impact }),
+    sourceDependencies,
     format,
     allowReverse,
     maxHops,
@@ -226,7 +258,7 @@ function obsidianResourceLink(resource: ResourcePathExplanation["nodes"][number]
     : mark + resource.id + mark + " (" + resource.path + ")";
 }
 
-function markdownTrace(trace: ResourcePathExplanation): string {
+function markdownTrace(trace: ResourcePathExplanation, codeProjection?: { unresolved: readonly unknown[] }): string {
   const mark = String.fromCharCode(96);
   const out = [
     "# Repository Architecture Trace",
@@ -237,8 +269,11 @@ function markdownTrace(trace: ResourcePathExplanation): string {
     "Search scope: max " + trace.scope.maxHops + " hops; reverse " +
       trace.scope.allowReverse + "; history " + trace.scope.includeHistorical + ".",
     "",
-    "Repository navigation only: a link is not source execution, gameplay behavior, " +
-      "causal ownership, test PASS, or repair authority.",
+    codeProjection === undefined
+      ? "Document links establish navigation, not code execution, gameplay or authority."
+      : "These are source-declared literal imports, not proof that a module, function or gameplay action executed.",
+    ...(codeProjection ? ["Unresolved source references (global): " +
+      codeProjection.unresolved.length + " — inspect JSON for full details."] : []),
     "",
   ];
   if (trace.status === "FOUND") {
@@ -247,13 +282,24 @@ function markdownTrace(trace: ResourcePathExplanation): string {
       out.push("- " + obsidianResourceLink(resource) + " — " +
         resource.authority + " / " + resource.class);
     }
-    out.push("", "## Authored link witnesses", "");
+    out.push("", codeProjection ? "## AST import witnesses" : "## Authored link witnesses", "");
     for (const step of trace.steps) {
       out.push("- " + mark + step.from + mark + " " +
         (step.direction === "FORWARD" ? "→" : "← (reverse traversal)") +
         " " + mark + step.to + mark + " (" + step.type + ", " + step.basis + ")" +
         (step.evidence ? " — " + mark + step.evidence.path + ":" + step.evidence.line + mark
           : " — NO_SOURCE_WITNESS"));
+      if (step.sourceSites?.length) {
+        for (const site of step.sourceSites.slice(0, 12)) {
+          out.push("  - " + mark + site.path + ":" + site.line + mark +
+            " imports " + mark + site.target + mark +
+            (site.runtime ? " [runtime-capable]" : " [type-only]"));
+        }
+        if (step.sourceSites.length > 12) {
+          out.push("  - " + (step.sourceSites.length - 12) +
+            " more import sites available in JSON.");
+        }
+      }
     }
   } else {
     out.push("No path was established within the selected depth, direction and authority scope.", "");
@@ -263,14 +309,154 @@ function markdownTrace(trace: ResourcePathExplanation): string {
   return out.join("\n");
 }
 
+
+function mermaidImpact(analysis: SourceImpactExplanation): string {
+  const lines = ["flowchart LR"];
+  if (analysis.status !== "FOUND") {
+    lines.push('  unknown["Unknown registered source module"]');
+    return lines.join("\n");
+  }
+  const ids = new Set([analysis.changedOwnerId]);
+  for (const affected of analysis.impacted) {
+    ids.add(affected.resource.id);
+    for (const edge of affected.pathToChanged) {
+      ids.add(edge.from);
+      ids.add(edge.to);
+    }
+  }
+  const ordered = [...ids].sort();
+  const nodeIds = new Map(ordered.map((id, index) => [id, "m" + index]));
+  for (const id of ordered) {
+    lines.push("  " + nodeIds.get(id) + '["' + id + '"]');
+  }
+  const seen = new Set<string>();
+  for (const affected of analysis.impacted) {
+    for (const edge of affected.pathToChanged) {
+      const key = edge.from + "|" + edge.to;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      lines.push("  " + nodeIds.get(edge.from) +
+        " -->|imports| " + nodeIds.get(edge.to));
+    }
+  }
+  return lines.join("\n");
+}
+
+function markdownImpact(
+  analysis: SourceImpactExplanation,
+  source: { scannedSourceFiles: number; scannedModules: number;
+    unresolved: readonly { from: string; path: string; line: number;
+      target: string; reason: string }[] },
+): string {
+  const mark = String.fromCharCode(96);
+  const out = [
+    "# Source Dependency Impact",
+    "",
+    "Change owner: " + mark + analysis.changedOwnerId + mark,
+    "Status: **" + analysis.status + "**",
+    "Potentially affected modules: **" + analysis.impacted.length + "**",
+    "Depth limit: " + analysis.scope.maxHops +
+      " (truncated: " + analysis.scope.depthTruncated + ")",
+    "Analyzed source files/modules: " + source.scannedSourceFiles + "/" + source.scannedModules,
+    "Unresolved literal relative imports (global): " + source.unresolved.length,
+    "",
+    "Boundary: " + mark + analysis.proofBoundary + mark +
+      ". Module-level import reachability is conservative; it does not prove " +
+      "a changed function is used or any gameplay/runtime behavior occurred.",
+    "",
+  ];
+  out.push("## Potentially affected source modules", "");
+  for (const item of analysis.impacted) {
+    out.push("- " + mark + item.resource.id + mark + " (" + item.distance + " hop(s))");
+    for (const edge of item.pathToChanged) {
+      out.push("  - " + mark + edge.from + mark + " → " + mark + edge.to +
+        mark + " (" + (edge.sourceSites?.length ?? 0) + " literal import site(s))");
+      for (const site of (edge.sourceSites ?? []).slice(0, 5)) {
+        out.push("    - " + mark + site.path + ":" + site.line + mark +
+          " imports " + mark + site.target + mark + " (" +
+          (site.runtime ? "runtime-capable" : "type-only") + ")");
+      }
+      const omitted = (edge.sourceSites?.length ?? 0) - 5;
+      if (omitted > 0) out.push("    - " + omitted + " additional sites in JSON projection");
+    }
+  }
+  if (!analysis.impacted.length) {
+    out.push("No in-scope AST-backed module importers found; this is not a no-impact guarantee.");
+  }
+  out.push("", "## Unresolved source references", "");
+  const affected = new Set([
+    analysis.changedOwnerId, ...analysis.impacted.map((item) => item.resource.id),
+  ]);
+  const local = source.unresolved.filter((item) => affected.has(item.from));
+  if (!local.length) out.push("No unresolved relative import in the discovered affected modules.");
+  for (const item of local.slice(0, 30)) {
+    out.push("- " + mark + item.path + ":" + item.line + mark + " → " +
+      mark + item.target + mark + " (" + item.reason + ")");
+  }
+  if (local.length > 30) out.push("- " + (local.length - 30) + " more unresolved references; inspect JSON.");
+  const fence = mark.repeat(3);
+  out.push("", "## Mermaid / Pele-compatible dependency view", "",
+    fence + "mermaid", mermaidImpact(analysis), fence, "");
+  return out.join("\n");
+}
+
 function main(): void {
   const options = parseArgs(process.argv.slice(2));
   const catalog = buildResourceCatalog();
-  const graph = buildGraph();
 
+  if (options.impact !== undefined) {
+    const owner = resolveSourceOwner(catalog.resources, options.impact);
+    if (!owner) throw new Error("No registered SOURCE module owns --impact: " + options.impact);
+    const normalizedInput = options.impact.replaceAll("\\", "/").replace(/^(\.\/)+/, "");
+    if (normalizedInput !== owner.id && normalizedInput !== owner.path &&
+        !/\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/.test(normalizedInput)) {
+      throw new Error("--impact accepts a source module ID, module directory, or source code file; not unrelated documents/data.");
+    }
+    const source = buildSourceDependencyGraph({ catalog });
+    const analysis = explainSourceImpact(
+      catalog.resources, source.edges, owner.id, { maxHops: options.maxHops },
+    );
+    if (options.format === "json") {
+      const affectedOwners = new Set([
+        owner.id, ...analysis.impacted.map((item) => item.resource.id),
+      ]);
+      process.stdout.write(JSON.stringify({
+        schemaVersion: 1,
+        mode: "SOURCE_MODULE_IMPACT",
+        requestedPathOrId: options.impact,
+        analysis,
+        sourceProjection: {
+          scannedSourceFiles: source.scannedSourceFiles,
+          scannedModules: source.scannedModules,
+          knownDependencyEdges: source.edges.length,
+          unresolvedCount: source.unresolved.length,
+          unresolvedRelevant: source.unresolved.filter((item) =>
+            affectedOwners.has(item.from)),
+          proofBoundary: source.proofBoundary,
+        },
+      }, null, 2) + "\n");
+    } else if (options.format === "mermaid") {
+      process.stdout.write(mermaidImpact(analysis) + "\n");
+    } else {
+      process.stdout.write(markdownImpact(analysis, source));
+    }
+    return;
+  }
+
+  const graph = buildGraph();
   if (options.trace !== undefined) {
+    if (options.sourceDependencies) {
+      for (const id of [options.trace.from, options.trace.to]) {
+        const owner = resolveSourceOwner(catalog.resources, id);
+        if (!owner || owner.id !== id) {
+          throw new Error("--source-deps trace requires registered SOURCE module IDs: " + id);
+        }
+      }
+    }
+    const code = options.sourceDependencies
+      ? buildSourceDependencyGraph({ catalog }) : undefined;
     const trace = explainResourcePath(
-      catalog.resources, graph.edges, options.trace.from, options.trace.to,
+      catalog.resources, code?.edges ?? graph.edges, options.trace.from, options.trace.to,
       {
         maxHops: options.maxHops,
         allowReverse: options.allowReverse,
@@ -280,13 +466,22 @@ function main(): void {
     if (options.format === "json") {
       process.stdout.write(JSON.stringify({
         schemaVersion: 1,
-        mode: "REPOSITORY_ARCHITECTURE_TRACE",
+        mode: options.sourceDependencies
+          ? "SOURCE_DEPENDENCY_TRACE" : "REPOSITORY_ARCHITECTURE_TRACE",
         trace,
+        ...(code === undefined ? {} : {
+          sourceProjection: {
+            scannedSourceFiles: code.scannedSourceFiles,
+            scannedModules: code.scannedModules,
+            unresolvedCount: code.unresolved.length,
+            proofBoundary: code.proofBoundary,
+          },
+        }),
       }, null, 2) + "\n");
     } else if (options.format === "mermaid") {
       process.stdout.write(mermaidTrace(trace) + "\n");
     } else {
-      process.stdout.write(markdownTrace(trace));
+      process.stdout.write(markdownTrace(trace, code));
     }
     return;
   }

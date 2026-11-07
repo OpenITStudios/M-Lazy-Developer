@@ -873,6 +873,68 @@ reference or inferred because a declaration-only knowledge binding
 points at the same package. Neither rendering nor path discovery changes
 permission, proof, or repair admission.
 
+
+### Source dependency intelligence and conservative change impact
+
+The same registered SOURCE IDs now support a separate, **opt-in** source
+dependency projection, without adding AST import edges to the default
+documentation/Knowledge Graph or authorizing new Task Graph execution.
+
+~~~text
+changed source file or registered SOURCE owner
+→ Resource Catalog owner (existing stable SOURCE ID)
+→ AST literal import inventory + single exact-source resolver
+→ resolved module DEPENDS_ON edges, with every source path:line
+→ reverse importer traversal (max 1–6 hops)
+→ affected MODULE candidates + unresolved/ambiguous source references
+→ JSON, Markdown, or Mermaid/Pele-compatible projection
+~~~
+
+Ownership:
+
+- `tooling/repository/source-import-specifiers.mjs` is the **existing**
+  TypeScript AST importer. It now optionally emits exact import sites and
+  supplies the source resolver used by both the original
+  `verify-dependency-graph.mjs` and the new source projection. Normal
+  `importSpecifiers()` callers keep their previous output shape.
+- `tooling/repository/graph.mjs` owns
+  `buildSourceDependencyGraph()` as a derived/read-only view over exact
+  registered SOURCE module owners, not a second persisted graph. Its
+  `DEPENDS_ON` edges carry the complete direct source import sites:
+  literal specifier, resolved file, source location, and whether the
+  import is type-only or runtime-capable. Literal dynamic import is not
+  evidence the enclosing function executed.
+- `engine/packages/analysis-planner/src/retrieval.ts` owns
+  `explainSourceImpact()`, a bounded *reverse module-import closure*
+  with the shortest observed path and depth-truncation status. A change
+  anywhere in the selected module makes its importing modules
+  *potentially* affected; this is deliberately conservative and **not**
+  a precise statement that the changed symbol is used.
+- The original `tooling/repository/retrieve.ts` query owner supports
+  `--impact <source-id-or-repo-relative-path> [--max-hops 1..6]` and
+  `--trace <source-id> <source-id> --source-deps`, retaining
+  `--format json|markdown|mermaid` for all these modes. Markdown remains
+  an exported projection rather than an Obsidian vault mutation; Mermaid
+  may be rendered by Pele in an available, separately permitted
+  presentation environment but the source viewer does not run Pele.
+
+All source edges require an exact statically resolved, uniquely owned
+**relative import**. Unknown targets, ambiguous JS/TS candidates,
+unregistered code owners, and out-of-repository resolution are returned
+as unresolved source sites, never guessed edges. Bare package imports,
+path aliases, computed `import(expression)`, runtime module loading,
+reflection, and gameplay state effects are **outside the static module
+graph's evidence ceiling**, even if no unresolved literal relative
+imports were found. An impact result does not claim a test passed,
+permission to mutate, or a complete list of runtime side effects.
+
+Existing `engine/packages/task-graph/` alone decides affected executable
+capabilities and dependency order; this new module-import view **does not**
+schedule tests or replace its authority. Module-level import edges
+cannot become Knowledge `USES`/`VALIDATES` evidence, player-gameplay
+causality, or selected-world proof. The default resource/Knowledge
+Retrieval candidates are unchanged.
+
 ### Generated projections
 
 Generated indexes and graphs are DERIVED.

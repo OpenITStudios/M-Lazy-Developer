@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, extname, normalize, relative, resolve, sep } from "node:path";
-import { importSpecifiers } from "./source-import-specifiers.mjs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { extname, relative, resolve, sep } from "node:path";
+import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
 
 const ROOT = process.cwd();
 const SOURCE_ROOTS = ["apps", "engine/packages", "engine/analyzers", "engine/adapters"];
@@ -39,35 +39,6 @@ function moduleId(file) {
   return rel[0] + "/" + rel[1];
 }
 
-function candidateTargets(base) {
-  const ext = extname(base);
-  if (SOURCE_EXTENSIONS.includes(ext)) return [base];
-
-  const values = [base];
-  for (const candidateExt of SOURCE_EXTENSIONS) values.push(base + candidateExt);
-  for (const candidateExt of SOURCE_EXTENSIONS) values.push(resolve(base, "index" + candidateExt));
-  return values;
-}
-
-function resolveRelativeImport(fromFile, specifier) {
-  if (!specifier.startsWith(".")) return undefined;
-  const raw = normalize(resolve(dirname(fromFile), specifier));
-
-  for (const candidate of candidateTargets(raw)) {
-    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-  }
-
-  if (/\.js$/.test(raw)) {
-    const withoutJs = raw.slice(0, -3);
-    for (const ext of [".ts", ".tsx", ".mts", ".cts"]) {
-      const candidate = withoutJs + ext;
-      if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-    }
-  }
-
-  return undefined;
-}
-
 const moduleGraph = new Map();
 const edgeFiles = new Map();
 const unresolvedRelative = [];
@@ -101,16 +72,17 @@ for (const rootName of SOURCE_ROOTS) {
         continue;
       }
 
-      const target = resolveRelativeImport(file, specifier);
-      if (!target) {
+      const resolution = resolveRelativeSourceImport(file, specifier, ROOT);
+      if (resolution.status !== "RESOLVED") {
         unresolvedRelative.push({
           file: relative(ROOT, file).replaceAll("\\", "/"),
           import: specifier,
+          status: resolution.status,
         });
         continue;
       }
 
-      const toModule = moduleId(target);
+      const toModule = moduleId(resolution.path);
       // Type-only references contribute to schema validation but not the
       // runtime module dependency DAG/cycle count.
       if (!runtime || !toModule || toModule === fromModule) continue;
@@ -210,7 +182,7 @@ if (unresolvedRelative.length > 0) {
   console.error("");
   console.error("Unresolved relative imports:");
   for (const item of unresolvedRelative.slice(0, 20)) {
-    console.error(`- ${item.file} -> ${item.import}`);
+    console.error(`- ${item.file} -> ${item.import} [${item.status}]`);
   }
   if (unresolvedRelative.length > 20) {
     console.error(`- ... and ${unresolvedRelative.length - 20} more`);

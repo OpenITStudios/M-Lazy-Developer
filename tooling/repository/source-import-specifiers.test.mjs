@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { importSpecifiers } from "./source-import-specifiers.mjs";
+import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
+import { buildSourceDependencyGraph, resolveSourceOwner } from "./graph.mjs";
 
 describe("canonical repository import discovery", () => {
   it("does not turn comments or string examples into dependency edges", () => {
@@ -217,5 +218,98 @@ describe("canonical repository import discovery", () => {
       { specifier: "./schema.js", runtime: false },
       { specifier: "./runtime.js", runtime: true },
     ]);
+  });
+});
+
+
+describe("source-backed architecture impact extraction", () => {
+  it("preserves exact AST import sites without changing existing import inventory", () => {
+    const code = [
+      '// import fake from "../wrong.js";',
+      'import type { Contract } from "./types.js";',
+      'export { fn } from "./runtime.js";',
+      'const deferred = import("./late.js");',
+      'const unknown = import(variable);',
+    ].join("\n");
+    expect(importSpecifiers("entry.ts", code)).toEqual([
+      { specifier: "./types.js", runtime: false },
+      { specifier: "./runtime.js", runtime: true },
+      { specifier: "./late.js", runtime: true },
+    ]);
+    expect(importSpecifiers("entry.ts", code, false, true)).toEqual([
+      { specifier: "./types.js", runtime: false, line: 2, column: 31, syntax: "STATIC_IMPORT" },
+      { specifier: "./runtime.js", runtime: true, line: 3, column: 20, syntax: "RE_EXPORT" },
+      { specifier: "./late.js", runtime: true, line: 4, column: 25, syntax: "DYNAMIC_LITERAL" },
+    ]);
+  });
+
+  it("resolves source-owner import edges without guessing ambiguous or missing modules", () => {
+    const root = mkdtempSync(join(tmpdir(), "lazy-source-graph-"));
+    const resources = [
+      { id: "source.package.alpha", class: "SOURCE", domain: "package",
+        authority: "CANONICAL", path: "engine/packages/alpha", lifecycle: "ACTIVE" },
+      { id: "source.package.beta", class: "SOURCE", domain: "package",
+        authority: "CANONICAL", path: "engine/packages/beta", lifecycle: "ACTIVE" },
+      { id: "source.package.gamma", class: "SOURCE", domain: "package",
+        authority: "CANONICAL", path: "engine/packages/gamma", lifecycle: "ACTIVE" },
+    ];
+    const sources = {
+      "engine/packages/alpha/src/index.ts":
+        'import type { Contract } from "../../beta/src/contract.js";\n' +
+        'const lazy = import("../../beta/src/runtime.js");\n' +
+        'const notACall = \'import "../../gamma/src/entry.js"\';',
+      "engine/packages/beta/src/contract.ts": "export interface Contract { ok: true }",
+      "engine/packages/beta/src/runtime.ts": "export const execute = () => true;",
+      "engine/packages/gamma/src/entry.ts":
+        'export { execute } from "../../alpha/src/index.js";',
+      "engine/packages/beta/src/clash.ts": "export const ts = true;",
+      "engine/packages/beta/src/clash.js": "export const js = true;",
+      "engine/packages/alpha/src/ambiguous.ts":
+        'import "../../beta/src/clash.js";',
+    };
+    try {
+      for (const [path, content] of Object.entries(sources)) {
+        const dest = join(root, path);
+        mkdirSync(dirname(dest), { recursive: true });
+        writeFileSync(dest, content);
+      }
+      expect(resolveSourceOwner(resources, "engine/packages/beta/src/contract.ts")?.id)
+        .toBe("source.package.beta");
+      expect(resolveSourceOwner(resources, "../outside.ts")).toBeUndefined();
+
+      const resolved = resolveRelativeSourceImport(
+        join(root, "engine/packages/alpha/src/index.ts"),
+        "../../beta/src/contract.js", root,
+      );
+      expect(resolved.status).toBe("RESOLVED");
+      expect(resolved.path).toBe(join(root, "engine/packages/beta/src/contract.ts"));
+      expect(resolveRelativeSourceImport(
+        join(root, "engine/packages/alpha/src/index.ts"),
+        "../../../../../../outside.ts", root,
+      ).status).toBe("OUTSIDE_ROOT");
+      expect(resolveRelativeSourceImport(
+        join(root, "engine/packages/alpha/src/ambiguous.ts"),
+        "../../beta/src/clash.js", root,
+      ).status).toBe("AMBIGUOUS");
+
+      const result = buildSourceDependencyGraph({root, catalog: {resources}});
+      expect(result.scannedSourceFiles).toBe(7);
+      expect(result.edges.map(edge => [edge.from, edge.to])).toEqual([
+        ["source.package.alpha", "source.package.beta"],
+        ["source.package.gamma", "source.package.alpha"],
+      ]);
+      const edge = result.edges[0];
+      expect(edge.sourceSites.map(site => [site.line, site.runtime, site.syntax])).toEqual([
+        [1, false, "STATIC_IMPORT"],
+        [2, true, "DYNAMIC_LITERAL"],
+      ]);
+      expect(result.unresolved).toEqual([{
+        from: "source.package.alpha",
+        path: "engine/packages/alpha/src/ambiguous.ts",
+        line: 1, target: "../../beta/src/clash.js", reason: "AMBIGUOUS",
+      }]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

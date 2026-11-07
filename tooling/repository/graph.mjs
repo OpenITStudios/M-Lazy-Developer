@@ -1,6 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
-import { posix } from "node:path";
+import { existsSync, readFileSync, readdirSync, lstatSync } from "node:fs";
+import { extname, relative, resolve, sep, posix } from "node:path";
 import { buildResourceCatalog, resourceIdForDocumentPath } from "./resource-catalog.mjs";
+import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
 
 const MARKDOWN_LINK = /\[[^\]]*\]\(([^)]+)\)/g;
 
@@ -99,4 +100,135 @@ export function buildGraph() {
 
 export function documentGraphRootId() {
   return resourceIdForDocumentPath("docs/README.md");
+}
+
+
+// Repository source dependency intelligence is a DERIVED, opt-in projection.
+// Keep it OUT of the documentation/knowledge Retrieval Graph; otherwise a
+// module-level import can spuriously turn unrelated Knowledge into "USES".
+const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"]);
+const SKIP_SOURCE_DIRS = new Set([
+  "node_modules", "test", "tests", "__tests__", "fixtures", "dist",
+  "coverage", ".git", ".svelte-kit", "generated",
+]);
+function* ownedSourceFiles(directory) {
+  for (const entry of readdirSync(directory, { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))) {
+    const path = resolve(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (!SKIP_SOURCE_DIRS.has(entry.name)) yield* ownedSourceFiles(path);
+    } else if (entry.isFile() && CODE_EXTENSIONS.has(extname(entry.name))) {
+      yield path;
+    }
+  }
+}
+
+function repositoryPath(fullPath, root) {
+  return relative(root, fullPath).split(sep).join("/");
+}
+
+/** Resolve a registered module owner by its source ID OR a relative
+ * repository path. Reject absolute/out-of-repo path selections. */
+export function resolveSourceOwner(resources, input) {
+  if (typeof input !== "string" || !input || input.includes("\0")) return undefined;
+  const normalized = input.replaceAll("\\", "/").replace(/^(\.\/)+/, "");
+  if (normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized) ||
+      normalized.includes("://") || normalized.split("/").includes("..")) {
+    return undefined;
+  }
+  const modules = resources.filter((resource) =>
+    resource.class === "SOURCE" && resource.lifecycle === "ACTIVE" &&
+    !resource.locator && !resource.path.endsWith(".md"));
+  const byId = modules.find((resource) => resource.id === normalized);
+  if (byId) return byId;
+  return modules
+    .filter((resource) =>
+      normalized === resource.path ||
+      normalized.startsWith(resource.path + "/"))
+    .sort((a, b) => b.path.length - a.path.length ||
+      a.id.localeCompare(b.id))[0];
+}
+
+/** AST source import sites → registered SOURCE module links.
+ * One DEPENDS_ON edge per exact module pair, with all known source sites.
+ * Includes type-only imports because edits can affect TypeScript contracts.
+ * Literal dynamic import is a source-declared dependency, not executed code.
+ * Ambiguous/unresolved/nonregistered paths remain explicit open obligations.
+ */
+export function buildSourceDependencyGraph(options = {}) {
+  const root = resolve(options.root ?? process.cwd());
+  const catalog = options.catalog ?? buildResourceCatalog();
+  const modules = catalog.resources.filter((resource) =>
+    resource.class === "SOURCE" && resource.lifecycle === "ACTIVE" &&
+    !resource.locator && !resource.path.endsWith(".md") &&
+    existsSync(resolve(root, resource.path)) &&
+    lstatSync(resolve(root, resource.path)).isDirectory());
+  const pairs = new Map();
+  const unresolved = [];
+  let scannedSourceFiles = 0;
+
+  for (const owner of modules) {
+    for (const fullPath of ownedSourceFiles(resolve(root, owner.path))) {
+      scannedSourceFiles += 1;
+      const path = repositoryPath(fullPath, root);
+      const imports = importSpecifiers(fullPath, readFileSync(fullPath, "utf8"), false, true);
+      for (const site of imports) {
+        if (!site.specifier.startsWith(".")) continue;
+        const resolution = resolveRelativeSourceImport(fullPath, site.specifier, root);
+        if (resolution.status !== "RESOLVED") {
+          unresolved.push({
+            from: owner.id, path, line: site.line, target: site.specifier,
+            reason: resolution.status,
+          });
+          continue;
+        }
+        const targetPath = repositoryPath(resolution.path, root);
+        const target = resolveSourceOwner(modules, targetPath);
+        if (!target) {
+          unresolved.push({
+            from: owner.id, path, line: site.line, target: site.specifier,
+            reason: "UNREGISTERED_TARGET_OWNER",
+          });
+          continue;
+        }
+        if (target.id === owner.id) continue; // Internal implementation, not module-level impact.
+        const key = owner.id + "|" + target.id;
+        const edge = pairs.get(key) ?? {
+          from: owner.id, type: "DEPENDS_ON", to: target.id,
+          basis: "EXTRACTED", sourceSites: [],
+        };
+        edge.sourceSites.push({
+          path, line: site.line, column: site.column,
+          target: site.specifier, targetPath,
+          runtime: site.runtime, syntax: site.syntax,
+        });
+        pairs.set(key, edge);
+      }
+    }
+  }
+
+  const edges = [...pairs.values()].map((edge) => {
+    edge.sourceSites.sort((a, b) =>
+      a.path.localeCompare(b.path) || a.line - b.line ||
+      a.column - b.column || a.target.localeCompare(b.target));
+    const first = edge.sourceSites[0];
+    return {
+      ...edge,
+      // Existing GraphEdge explanation can display one witness; detailed
+      // impact output retains EVERY sourceSites entry separately.
+      evidence: { path: first.path, line: first.line, target: first.target },
+    };
+  }).sort((a, b) =>
+    a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+  unresolved.sort((a, b) =>
+    a.from.localeCompare(b.from) || a.path.localeCompare(b.path) ||
+    a.line - b.line || a.target.localeCompare(b.target));
+  return {
+    mode: "SOURCE_MODULE_DEPENDENCY_PROJECTION",
+    proofBoundary: "STATIC_LITERAL_IMPORTS_ONLY_NOT_CALLSITE_OR_EXECUTION_PROOF",
+    scannedSourceFiles,
+    scannedModules: modules.length,
+    edges,
+    unresolved,
+  };
 }

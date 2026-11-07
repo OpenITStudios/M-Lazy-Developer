@@ -2,7 +2,7 @@
 // Original cases and assertions remain; executable equivalence not yet proven.
 import { describe, expect, it } from "vitest";
 import { BUILTIN_ANALYSIS_CAPABILITIES, createAnalysisCapabilityRegistry, planMinimumSufficientAnalysis, assertEngineeringTaskPreconditions, routeEngineeringTask } from "../src/index.js";
-import { retrieveResources, explainResourcePath, scoreTextDocuments, prepareTextDocumentScorer, type CatalogResource, type GraphEdge } from "../src/retrieval.js";
+import { retrieveResources, explainResourcePath, explainSourceImpact, scoreTextDocuments, prepareTextDocumentScorer, type CatalogResource, type GraphEdge } from "../src/retrieval.js";
 import { retrieveDocumentSections, type DocumentSection } from "../src/section-retrieval.js";
 
 // Original suite: engine/packages/analysis-planner/test/domain-capabilities.test.ts (blob bebc6da2eacd0d50b96d93b5944dd1ddcef8c29d)
@@ -692,5 +692,70 @@ describe("explainResourcePath architecture navigation", () => {
     expect(explainResourcePath(resources, edges, "document.system.router", "source.rules.retired").status).toBe("UNKNOWN_RESOURCE");
     expect(explainResourcePath(resources, edges, "document.docs.router", "unknown.node").status).toBe("UNKNOWN_RESOURCE");
     expect(explainResourcePath(resources, edges, "document.docs.router", "source.rules.agent-policy", { maxHops: 1 }).status).toBe("NO_PATH");
+  });
+});
+
+
+describe("explainSourceImpact: conservative module dependency analysis", () => {
+  const modules: CatalogResource[] = [
+    { id: "source.package.alpha", class: "SOURCE", domain: "package", authority: "CANONICAL",
+      path: "engine/packages/alpha", lifecycle: "ACTIVE" },
+    { id: "source.package.beta", class: "SOURCE", domain: "package", authority: "CANONICAL",
+      path: "engine/packages/beta", lifecycle: "ACTIVE" },
+    { id: "source.package.gamma", class: "SOURCE", domain: "package", authority: "CANONICAL",
+      path: "engine/packages/gamma", lifecycle: "ACTIVE" },
+    { id: "source.package.legacy", class: "SOURCE", domain: "package", authority: "CANONICAL",
+      path: "engine/packages/legacy", lifecycle: "RETIRED" },
+  ];
+  const edges: GraphEdge[] = [
+    {
+      from: "source.package.alpha", to: "source.package.beta", type: "DEPENDS_ON",
+      basis: "EXTRACTED", evidence: { path: "engine/packages/alpha/src/index.ts", line: 1, target: "../../beta/src/index.js" },
+      sourceSites: [{
+        path: "engine/packages/alpha/src/index.ts", line: 1, column: 19,
+        target: "../../beta/src/index.js", targetPath: "engine/packages/beta/src/index.ts",
+        runtime: false, syntax: "STATIC_IMPORT",
+      }],
+    },
+    {
+      from: "source.package.gamma", to: "source.package.alpha", type: "DEPENDS_ON",
+      basis: "EXTRACTED", evidence: { path: "engine/packages/gamma/src/index.ts", line: 2, target: "../../alpha/src/index.js" },
+      sourceSites: [{
+        path: "engine/packages/gamma/src/index.ts", line: 2, column: 20,
+        target: "../../alpha/src/index.js", targetPath: "engine/packages/alpha/src/index.ts",
+        runtime: true, syntax: "RE_EXPORT",
+      }],
+    },
+    { from: "source.package.legacy", to: "source.package.beta", type: "DEPENDS_ON",
+      basis: "EXTRACTED", evidence: { path: "retired.ts", line: 1, target: "beta" },
+      sourceSites: [{ path: "retired.ts", line: 1, column: 1, target: "beta",
+        targetPath: "beta.ts", runtime: true, syntax: "STATIC_IMPORT" }] },
+    // A declared navigation edge without AST import sites cannot extend impact.
+    { from: "source.package.gamma", to: "source.package.beta", type: "RELATES_TO" },
+  ];
+
+  it("explains the exact one- and two-hop importer chain with source evidence", () => {
+    const impact = explainSourceImpact(modules, edges, "source.package.beta");
+    expect(impact.status).toBe("FOUND");
+    expect(impact.impacted.map(item => [item.resource.id, item.distance])).toEqual([
+      ["source.package.alpha", 1],
+      ["source.package.gamma", 2],
+    ]);
+    expect(impact.impacted[1]?.pathToChanged.map(edge => edge.from)).toEqual([
+      "source.package.gamma", "source.package.alpha",
+    ]);
+    expect(impact.impacted[0]?.pathToChanged[0]?.sourceSites?.[0]?.runtime).toBe(false);
+    expect(impact.scope.depthTruncated).toBe(false);
+    expect(impact.proofBoundary).toBe("POSSIBLE_MODULE_LEVEL_STATIC_IMPACT_NOT_FILE_OR_RUNTIME_PROOF");
+  });
+
+  it("reports unknown owner, scope truncation and refuses navigation-only edges", () => {
+    expect(explainSourceImpact(modules, edges, "unknown.module").status).toBe("UNKNOWN_OWNER");
+    expect(explainSourceImpact(modules, edges, "source.package.legacy").status).toBe("UNKNOWN_OWNER");
+    const narrow = explainSourceImpact(modules, edges, "source.package.beta", { maxHops: 1 });
+    expect(narrow.impacted.map(item => item.resource.id)).toEqual(["source.package.alpha"]);
+    expect(narrow.scope.depthTruncated).toBe(true);
+    expect(explainSourceImpact(modules, [{ from: "source.package.alpha",
+      to: "source.package.beta", type: "DEPENDS_ON" }], "source.package.beta").impacted).toEqual([]);
   });
 });

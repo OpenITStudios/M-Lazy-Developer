@@ -170,6 +170,18 @@ Retrieval → engine/packages/analysis-planner/src/retrieval.ts
 Context   → engine/packages/orchestrator/src/workflow/context-compiler.ts
 ```
 
+**Source-change impact:** When asked which repository code modules
+might be affected, use the existing source-only
+`tooling/repository/retrieve.ts --impact <source-id-or-repo-path>`
+contract; for an explicit import chain use
+`--trace <from-source-id> <to-source-id> --source-deps`.
+Read AST source sites and unresolved references, and preserve a
+conservative **module-level potential impact** label. No computed
+dynamic import, third-party package resolution, function call trace,
+Minecraft execution, or automatic Task Graph execution is implied.
+Markdown and Mermaid remain derived views; no Obsidian/Pele runtime
+is installed by this method.
+
 **Architecture explanation:** Use stable Resource IDs and the existing
 `tooling/repository/retrieve.ts --trace <from-id> <to-id>` contract to explain
 how registered repository resources connect. Read original link witnesses
