@@ -100,6 +100,26 @@ export interface AuditObligation {
   readonly omittedSourceProofRequirements?: number;
 }
 
+/** A source-first A28 navigation lead, not a reportable finding or severity.
+ * The current selected-map obligation ledger is the only authority. Do not
+ * admit generic detection gaps, unsited observations or historical reports.
+ */
+export function isSourceBackedFailurePathObligation(
+  item: AuditObligation,
+): boolean {
+  const uncheckedCommit =
+    item.id.startsWith("unchecked-commit-before-feedback:") &&
+    item.validationGroupKey.startsWith("source:unchecked-commit:");
+  const orderedWrites =
+    item.id === "persistence:counter-before-payload-write" &&
+    item.validationGroupKey === "persistence:counter-payload-atomicity";
+  return item.source === "detection-gap" &&
+    item.stage === "EVALUATE" &&
+    (uncheckedCommit || orderedWrites) &&
+    item.subjectIds.some(locator =>
+      /:[1-9]\\d*(?::[1-9]\\d*)?$/.test(locator));
+}
+
 // The projection creates tens of thousands of mostly empty evidence/subject
 // lists on large maps. Reuse only the immutable empty result; nonempty lists
 // remain freshly normalized so callers cannot share mutable source arrays.

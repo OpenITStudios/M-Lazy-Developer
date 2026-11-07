@@ -14,7 +14,10 @@ import {
   sourceSiteStrictlyAfter,
 } from "../../../semantic-ir/src/index.js";
 import type { AuditModelTaskPacket } from "../map-audit-model-task.js";
-import type { AuditObligation } from "../map-audit-obligations.js";
+import {
+  isSourceBackedFailurePathObligation,
+  type AuditObligation,
+} from "../map-audit-obligations.js";
 import { MODEL_RESOLVABLE_KINDS, planAuditModelInvestigationBatches,
   type AuditModelInvestigationBatch } from "../map-audit-model-task.js";
 import type { SelectedMapAuditRun } from "../map-audit-pipeline.js";
@@ -412,6 +415,20 @@ export interface SelectedMapAuditModelHandoff {
       readonly missingProof: readonly string[];
     }[];
     readonly omittedPendingProofGroups: number;
+    /** Fast entry to exact current-source failure paths already in A28.
+     * These are investigation leads, never a BUG, proof, or new ledger.
+     */
+    readonly sourceFailurePathLeadCount: number;
+    readonly sourceFailurePathLeads: readonly {
+      readonly obligationId: string;
+      readonly taskOffset: number | null;
+      readonly sourceLocators: readonly string[];
+      readonly omittedSourceLocators: number;
+      readonly missingProof: string;
+      readonly nextCheck: string;
+      readonly proof: "SOURCE_ONLY_FAILURE_PATH_LEAD_NOT_BUG_PROOF";
+    }[];
+    readonly omittedSourceFailurePathLeads: number;
     /** Source-grouped investigative navigation; not a deduplicated proof ledger. */
     readonly pendingObligationCount: number;
     readonly pendingObligationGroupCount: number;
@@ -537,6 +554,45 @@ function projectSelectedAuthoredContent(
  * bug or discharge any member's individual canonical obligation. Stage and
  * source are part of grouping identity to avoid cross-domain conflation.
  */
+/** Read-only index over the existing A28 source-failure obligations.
+ * This surface is intentionally visible before large stage-first group
+ * previews, while every individual obligation and task remains in the
+ * canonical full ledger and handoff pagination.
+ */
+export function summarizeAuditSourceFailurePaths(
+  obligations: readonly AuditObligation[],
+  taskOffsetByObligation?: ReadonlyMap<string, number>,
+  limit = 8,
+): Pick<SelectedMapAuditModelHandoff["diagnosisNavigation"],
+  "sourceFailurePathLeadCount" | "sourceFailurePathLeads" |
+  "omittedSourceFailurePathLeads"> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
+    throw new Error("Source failure path lead limit must be 1–50.");
+  }
+  const leads = obligations.filter(isSourceBackedFailurePathObligation)
+    .sort((a, b) =>
+      Number(b.id.startsWith("unchecked-commit-before-feedback:")) -
+      Number(a.id.startsWith("unchecked-commit-before-feedback:")) ||
+      a.id.localeCompare(b.id));
+  return {
+    sourceFailurePathLeadCount: leads.length,
+    sourceFailurePathLeads: leads.slice(0, limit).map(item => {
+      const locators = [...new Set(item.subjectIds.filter(locator =>
+        /:[1-9]\\d*(?::[1-9]\\d*)?$/.test(locator)))];
+      return {
+        obligationId: item.id,
+        taskOffset: taskOffsetByObligation?.get(item.id) ?? null,
+        sourceLocators: locators.slice(0, 8),
+        omittedSourceLocators: Math.max(0, locators.length - 8),
+        missingProof: item.missingProof,
+        nextCheck: item.validationTest,
+        proof: "SOURCE_ONLY_FAILURE_PATH_LEAD_NOT_BUG_PROOF" as const,
+      };
+    }),
+    omittedSourceFailurePathLeads: Math.max(0, leads.length - limit),
+  };
+}
+
 export function summarizeAuditHandoffObligations(
   obligations: readonly AuditObligation[],
   limit = 12,
@@ -1617,6 +1673,8 @@ export function projectSelectedMapAuditModelHandoff(
         missingProof: [...group.missingProof],
       })),
       omittedPendingProofGroups: Math.max(0, audit.validationTests.length - 8),
+      ...summarizeAuditSourceFailurePaths(
+        audit.auditObligations, taskOffsetByObligation),
       ...summarizeAuditHandoffObligations(
         audit.auditObligations, 12, taskOffsetByObligation),
     },

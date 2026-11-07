@@ -21,10 +21,14 @@ import {
   pageSelectedMapAuditHandoffSnapshot,
   type SelectedMapAuditInput,
 } from "../src/map-audit-pipeline.js";
-import { summarizeAuditHandoffObligations } from "../src/reporting/map-audit-model-handoff.js";
+import {
+  summarizeAuditHandoffObligations,
+  summarizeAuditSourceFailurePaths,
+} from "../src/reporting/map-audit-model-handoff.js";
 import {
   deriveAuditModelKnowledgeLookup,
   deriveAuditModelTaskPackets,
+  planAuditModelInvestigationBatches,
   retrieveAuditTaskKnowledge,
 } from "../src/map-audit-model-task.js";
 import {
@@ -930,6 +934,70 @@ describe("Game Reconstruction selected-map production acceptance (synthetic)", (
 });
 
 describe("canonical obligation investigation groups", () => {
+  it("surfaces source-backed failed-commit risks without losing stage gates or creating findings", () => {
+    const make = (id: string, stage: "DISCOVERY" | "EVALUATE",
+      source: "discovery-challenge" | "detection-gap",
+      key: string, subjectIds: string[] = []) => ({
+      id, stage, source, validationGroupKey: key, title: id,
+      reason: "Unresolved selected-source path",
+      missingProof: "Validate reachability, rollback and player outcome",
+      validationTest: "Inspect this source caller and its failing branch",
+      subjectIds, componentIds: [], evidenceIds: [],
+    });
+    const early = Array.from({ length: 36 }, (_, index) =>
+      make("discovery:" + index, "DISCOVERY",
+        "discovery-challenge", "early:" + index));
+    const generic = make("other:detection", "EVALUATE",
+      "detection-gap", "generic", ["scripts/other.ts:4:1"]);
+    const counter = make("persistence:counter-before-payload-write", "EVALUATE",
+      "detection-gap", "persistence:counter-payload-atomicity",
+      ["scripts/persist.ts:14:2", "scripts/persist.ts:18:2"]);
+    const ignored = make("unchecked-commit-before-feedback:scripts%2Fend.ts%3A22%3A3",
+      "EVALUATE", "detection-gap",
+      "source:unchecked-commit:scripts/end.ts:22:3",
+      ["scripts/end.ts:22:3", "scripts/end.ts:25:3"]);
+    const invalid = [
+      { ...ignored, id: "unchecked-commit-before-feedback:foreign",
+        source: "discovery-challenge" as const },
+      { ...ignored, id: "unchecked-commit-before-feedback:unsited",
+        subjectIds: ["scripts/unknown.ts"] },
+    ];
+    const obligations = [...early, generic, counter, ignored, ...invalid];
+    const taskOffsets = new Map([
+      [ignored.id, 40], [counter.id, 39], [generic.id, 38],
+    ]);
+    const summary = summarizeAuditSourceFailurePaths(obligations,
+      taskOffsets);
+    expect(summary.sourceFailurePathLeadCount).toBe(2);
+    expect(summary.omittedSourceFailurePathLeads).toBe(0);
+    expect(summary.sourceFailurePathLeads.map(item =>
+      [item.obligationId, item.taskOffset])).toEqual([
+        [ignored.id, 40], [counter.id, 39],
+      ]);
+    expect(summary.sourceFailurePathLeads[0]).toMatchObject({
+      sourceLocators: ["scripts/end.ts:22:3", "scripts/end.ts:25:3"],
+      proof: "SOURCE_ONLY_FAILURE_PATH_LEAD_NOT_BUG_PROOF",
+    });
+    // The existing stage-first preview stays unchanged and no ledger
+    // entry, proof status, or required independent task is discarded.
+    expect(summarizeAuditHandoffObligations(obligations, 12)
+      .pendingObligationCount).toBe(obligations.length);
+    const tasks = [early[0]!, generic, counter, ignored].map(item => ({
+      id: "task:" + item.id, kind: "AUDIT_OBLIGATION",
+      stage: item.stage, unresolvedObligationIds: [item.id],
+      requiredKnowledgeIds: [], evidenceIds: [], decisionNeeded: item.reason,
+    })) as any;
+    const batches = planAuditModelInvestigationBatches({
+      tasks, obligations,
+    });
+    expect(batches.map(batch => batch.members[0]?.obligationId)).toEqual([
+      early[0]!.id, counter.id, ignored.id, generic.id,
+    ]);
+    expect(batches.every(batch =>
+      batch.proofBoundary ===
+        "SHARED_SOURCE_REVIEW_NOT_SHARED_PROOF_OR_MODEL_RESPONSE")).toBe(true);
+  });
+
   it("conserves all obligations without combining different proof stages or owners", () => {
     const make = (id: string, stage: "DISCOVERY" | "UNDERSTAND",
       source: "discovery-challenge" | "detection-gap", key: string) => ({

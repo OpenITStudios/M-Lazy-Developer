@@ -68,8 +68,9 @@ import {
   type SelectedMapAuditAdmission,
   type SelectedMapAuditStage,
 } from "./map-audit-admission.js";
-import type {
-  AuditObligation,
+import {
+  isSourceBackedFailurePathObligation,
+  type AuditObligation,
 } from "./map-audit-obligations.js";
 import {
   auditUserIntentAuthorityNote,
@@ -1804,6 +1805,7 @@ export function planAuditModelInvestigationBatches(input: {
     validationGroupKey: string;
     question: string;
     missingProof: string;
+    failurePathLead: boolean;
     offsets: number[];
   }>();
   input.tasks.forEach((task, index) => {
@@ -1837,6 +1839,8 @@ export function planAuditModelInvestigationBatches(input: {
         question: obligation?.validationTest ?? task.decisionNeeded,
         missingProof: obligation?.missingProof ??
           task.missingClaims?.[0] ?? "Unresolved selected-source proof",
+        failurePathLead: compatible && obligation !== undefined &&
+          isSourceBackedFailurePathObligation(obligation),
         offsets: [index],
       });
     }
@@ -1845,6 +1849,10 @@ export function planAuditModelInvestigationBatches(input: {
     [stage, index] as const));
   const ordered = [...groups.values()].sort((a, b) =>
     (stageOrder.get(a.stage) ?? 99) - (stageOrder.get(b.stage) ?? 99) ||
+    // Within EVALUATE only, make a current-source fallible commit/ordered
+    // write lead reachable before bulk generic questions. Earlier audit
+    // stages and all original task/obligation IDs remain unchanged.
+    Number(b.failurePathLead) - Number(a.failurePathLead) ||
     a.offsets[0]! - b.offsets[0]! ||
     b.offsets.length - a.offsets.length);
   // In each canonical stage, offer one source-review batch per distinct
