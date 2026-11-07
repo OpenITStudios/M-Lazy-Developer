@@ -138,6 +138,24 @@ describe("task graph", () => {
     ]);
   });
 
+  it("matches GitHub root-relative engine paths without changing source identities", () => {
+    const graph = createTaskGraph(capabilities);
+    const repositoryPath = "engine/analyzers/discovery/src/files.ts";
+    const legacyPath = "analyzers/discovery/src/files.ts";
+    const gitInput = resolveAffectedTasks(graph, [repositoryPath]);
+    const originalInput = resolveAffectedTasks(graph, [legacyPath]);
+
+    expect(gitInput.directCapabilityIds).toEqual(originalInput.directCapabilityIds);
+    expect(gitInput.affectedCapabilityIds).toEqual(originalInput.affectedCapabilityIds);
+    expect(gitInput.unmatchedPaths).toEqual([]);
+    expect(gitInput.changedPaths).toEqual([repositoryPath]);
+    expect(originalInput.changedPaths).toEqual([legacyPath]);
+
+    const unknown = resolveAffectedTasks(graph, ["engine/rules/unregistered.ts"]);
+    expect(unknown.directCapabilityIds).toEqual([]);
+    expect(unknown.unmatchedPaths).toEqual(["engine/rules/unregistered.ts"]);
+  });
+
   it("supports bounded trailing wildcard ownership for colocated domain files", () => {
     const graph = createTaskGraph([
       {

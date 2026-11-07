@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { buildResourceCatalog } from "./resource-catalog.mjs";
-import { buildGraph, documentGraphRootId } from "./graph.mjs";
+import { authoredLinks, buildGraph, documentGraphRootId } from "./graph.mjs";
 import { buildDocumentSectionIndex } from "./document-sections.mjs";
 import {
   readKnowledgeResourceContext,
@@ -487,6 +487,7 @@ try {
   }
 
   const edgeKeys = new Set();
+  const linkWitnessCache = new Map();
   for (const edge of graph.edges) {
     const key = edge.from + "|" + edge.type + "|" + edge.to;
     if (edgeKeys.has(key)) {
@@ -502,9 +503,16 @@ try {
         typeof witness.target !== "string" || !witness.target) {
       failures.push("Graph edge lacks exact authored Markdown witness: " + key);
     } else {
-      const sourceLine = readFileSync(witness.path, "utf8")
-        .split(/\r?\n/)[witness.line - 1];
-      if (!sourceLine || !sourceLine.includes("(" + witness.target + ")")) {
+      if (!linkWitnessCache.has(witness.path)) {
+        linkWitnessCache.set(
+          witness.path,
+          [...authoredLinks(readFileSync(witness.path, "utf8"))],
+        );
+      }
+      const exact = linkWitnessCache.get(witness.path).some((link) =>
+        link.line === witness.line && link.target === witness.target
+      );
+      if (!exact) {
         failures.push("Graph edge authored witness does not match source: " + key);
       }
     }

@@ -844,7 +844,15 @@ Canonical owners are unchanged. `tooling/repository/resource-catalog.mjs`
 registers stable IDs, including root `AGENTS.md` and `GITHUB_RULES.md`.
 `tooling/repository/graph.mjs` derives `ROUTES_TO` and related navigation
 edges only from authored, non-fenced Markdown links and preserves the exact
-`path:line` and literal target. The source does not infer dependencies
+`path:line` and literal target. Inline Markdown navigation and
+Obsidian-style `[[repo-root/path.md|label]]` references are recognized
+only when their target resolves to a uniquely registered resource.
+Code spans, fenced and indented examples, HTML comments, image embeds
+and escaped links cannot introduce navigational graph edges; fuzzy
+Obsidian note-name matching cannot assign a canonical owner. The
+canonical Knowledge verifier checks these witnesses using the same
+authored-link extractor rather than merely matching raw source text.
+The source does not infer dependencies
 from names, co-occurrences or declared detector-to-knowledge bindings.
 
 `engine/packages/analysis-planner/src/retrieval.ts` owns
@@ -936,7 +944,13 @@ permission to mutate, or a complete list of runtime side effects.
 
 Existing `engine/packages/task-graph/` alone decides affected executable
 capabilities and dependency order; this new module-import view **does not**
-schedule tests or replace its authority. Module-level import edges
+schedule tests or replace its authority. Task Graph capability paths are
+declared relative to `engine/` while GitHub diffs use repository-root paths.
+`resolveAffectedTasks()` now normalizes the known `engine/packages/`,
+`engine/analyzers/` and `engine/adapters/` prefixes **only for lookup**,
+returning unchanged source-relative path identities in changed and unmatched
+results. Unknown paths remain conservative fallback requirements; a source
+dependency is still not a task capability owner. Module-level import edges
 cannot become Knowledge `USES`/`VALIDATES` evidence, player-gameplay
 causality, or selected-world proof. The default resource/Knowledge
 Retrieval candidates are unchanged.

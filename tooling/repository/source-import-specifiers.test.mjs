@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
-import { buildSourceDependencyGraph, resolveSourceOwner } from "./graph.mjs";
+import { authoredLinks, buildSourceDependencyGraph, resolveSourceOwner } from "./graph.mjs";
 
 describe("canonical repository import discovery", () => {
   it("does not turn comments or string examples into dependency edges", () => {
@@ -321,5 +321,54 @@ describe("source-backed architecture impact extraction", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+
+describe("repository Resource Graph authored-link integrity", () => {
+  it("extracts real prose links while excluding code, comments, images and escapes", () => {
+    const input = [
+      "# Navigation",
+      "[Valid](./active.md)",
+      "`[Fake](./inline.md)`",
+      "Here ``two [Fake](./double.md)`` and [Other](../some.md)",
+      "<!-- [Hidden](./html.md) --> [After](./after.md)",
+      "![Picture](./image.png)",
+      "\\[Literal](./escaped.md)",
+      "    [Indented](./indented.md)",
+      "~~~markdown",
+      "[Fenced](./fenced.md)",
+      "~~~",
+      "[[docs/system/architecture.md|Architecture]]",
+      "![[docs/system/image.md]]",
+      "[Cross](../../AGENTS.md)",
+      "[[Some ambiguous note]]",
+    ].join("\n");
+    expect([...authoredLinks(input)]).toEqual([
+      { target: "./active.md", line: 2, syntax: "MARKDOWN_INLINE" },
+      { target: "../some.md", line: 4, syntax: "MARKDOWN_INLINE" },
+      { target: "./after.md", line: 5, syntax: "MARKDOWN_INLINE" },
+      { target: "docs/system/architecture.md", line: 12, syntax: "OBSIDIAN_WIKILINK" },
+      { target: "../../AGENTS.md", line: 14, syntax: "MARKDOWN_INLINE" },
+      { target: "Some ambiguous note", line: 15, syntax: "OBSIDIAN_WIKILINK" },
+    ]);
+  });
+
+  it("keeps multiline spans/comment and fenced code from becoming graph edges", () => {
+    const source = [
+      "~~~text",
+      "[Inside](./bad.md)",
+      "~~~",
+      "``open [Hidden](./not.md)",
+      "close`` and [Actual](./yes.md)",
+      "<!--",
+      "[In comment](./other.md)",
+      "-->",
+      "[Final](./end.md)",
+    ].join("\n");
+    expect([...authoredLinks(source)]).toEqual([
+      { target: "./yes.md", line: 5, syntax: "MARKDOWN_INLINE" },
+      { target: "./end.md", line: 9, syntax: "MARKDOWN_INLINE" },
+    ]);
   });
 });

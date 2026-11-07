@@ -3,15 +3,30 @@ import { extname, isAbsolute, relative, resolve, sep, posix } from "node:path";
 import { buildResourceCatalog, resourceIdForDocumentPath } from "./resource-catalog.mjs";
 import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
 
-const MARKDOWN_LINK = /\[[^\]]*\]\(([^)]+)\)/g;
+const TICK = String.fromCharCode(96);
+const MARKDOWN_LINK = /\[[^\]\n]*\]\(([^)\n]+)\)/g;
+const WIKI_LINK = /(!?)\[\[([^\]\n]+)\]\]/g;
+const FENCE_MARKER = new RegExp("^ {0,3}(" + TICK + "{3,}|~{3,})(.*)$");
 
 function cleanTarget(value) {
   return value.trim().replace(/^<|>$/g, "").split("#", 1)[0].split("?", 1)[0];
 }
 
-function resolveResourceLink(fromPath, rawTarget) {
+function resolveResourceLink(fromPath, rawTarget, syntax) {
   const target = cleanTarget(rawTarget);
   if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) return undefined;
+  if (syntax === "OBSIDIAN_WIKILINK") {
+    // Only explicit repository-root file identities. Obsidian's fuzzy
+    // filename/alias lookup must not elect an ambiguous canonical owner.
+    if (!/^(docs|engine|tooling|apps|\.agents)\//.test(target) &&
+        !["AGENTS.md", "GITHUB_RULES.md", "CONTEXT.md", "README.md"].includes(target)) {
+      return undefined;
+    }
+    const direct = posix.normalize(target.replace(/^\//, ""));
+    if (direct === ".." || direct.startsWith("../")) return undefined;
+    return direct;
+  }
+
   const resolved = target.startsWith("/")
     ? target.slice(1)
     : posix.normalize(posix.join(posix.dirname(fromPath), target));
@@ -19,27 +34,94 @@ function resolveResourceLink(fromPath, rawTarget) {
   return resolved;
 }
 
-// Authored Markdown links only. Example links inside fenced code are not
-// declarations of repository architecture.
-function* authoredLinks(markdown) {
-  const lines = markdown.split(/\r?\n/);
-  let fence;
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const marker = line.match(/^\s{0,3}(`{3,}|~{3,})(.*)$/);
-    if (marker) {
-      if (!fence) {
-        fence = { char: marker[1][0], length: marker[1].length };
-      } else if (marker[1][0] === fence.char &&
-                 marker[1].length >= fence.length &&
-                 marker[2].trim() === "") {
-        fence = undefined;
+function escapedAt(text, index) {
+  let slashes = 0;
+  for (let i = index - 1; i >= 0 && text[i] === "\\"; i -= 1) slashes += 1;
+  return slashes % 2 === 1;
+}
+
+// Mask code spans and HTML comments without shifting line offsets. Keep
+// state so a multi-line code span/comment cannot leak fictitious edges.
+function maskNonProse(line, state) {
+  const out = [...line];
+  let index = 0;
+  const mask = (start, end) => {
+    for (let i = start; i < end; i += 1) out[i] = " ";
+  };
+  while (index < line.length) {
+    if (state.comment) {
+      const end = line.indexOf("-->", index);
+      if (end < 0) {
+        mask(index, line.length);
+        break;
+      }
+      mask(index, end + 3);
+      state.comment = false;
+      index = end + 3;
+      continue;
+    }
+    if (state.inlineTicks > 0) {
+      if (line[index] === TICK) {
+        let end = index;
+        while (line[end] === TICK) end += 1;
+        mask(index, end);
+        if (end - index === state.inlineTicks) state.inlineTicks = 0;
+        index = end;
+      } else {
+        out[index] = " ";
+        index += 1;
       }
       continue;
     }
-    if (fence) continue;
-    for (const match of line.matchAll(MARKDOWN_LINK)) {
-      yield { target: match[1], line: index + 1 };
+    if (line.startsWith("<!--", index)) {
+      state.comment = true;
+      continue;
+    }
+    if (line[index] === TICK && !escapedAt(line, index)) {
+      let end = index;
+      while (line[end] === TICK) end += 1;
+      state.inlineTicks = end - index;
+      mask(index, end);
+      index = end;
+      continue;
+    }
+    index += 1;
+  }
+  return out.join("");
+}
+
+/** Exact authored navigation references only. Not code dependencies, usage
+ * proof, Obsidian alias resolution, or executable source trace. */
+export function* authoredLinks(markdown) {
+  const lines = markdown.split(/\r?\n/);
+  const state = { fence: undefined, comment: false, inlineTicks: 0 };
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const marker = line.match(FENCE_MARKER);
+    if (state.fence) {
+      if (marker && marker[1][0] === state.fence.char &&
+          marker[1].length >= state.fence.length &&
+          marker[2].trim() === "") state.fence = undefined;
+      continue;
+    }
+    if (!state.comment && state.inlineTicks === 0 && marker) {
+      state.fence = { char: marker[1][0], length: marker[1].length };
+      continue;
+    }
+    // Indented blocks are code, not navigable authored relationships.
+    if (!state.comment && state.inlineTicks === 0 && /^( {4}|\t)/.test(line)) continue;
+    const prose = maskNonProse(line, state);
+    for (const match of prose.matchAll(MARKDOWN_LINK)) {
+      const at = match.index ?? 0;
+      if (escapedAt(prose, at) || (at > 0 && prose[at - 1] === "!")) continue;
+      yield { target: match[1], line: index + 1, syntax: "MARKDOWN_INLINE" };
+    }
+    for (const match of prose.matchAll(WIKI_LINK)) {
+      const at = match.index ?? 0;
+      if (match[1] === "!" || escapedAt(prose, at)) continue;
+      const target = match[2].split("|", 1)[0].trim();
+      if (!target) continue;
+      yield { target, line: index + 1, syntax: "OBSIDIAN_WIKILINK" };
     }
   }
 }
@@ -73,7 +155,7 @@ export function buildGraph() {
         !existsSync(resource.path)) continue;
 
     for (const link of authoredLinks(readFileSync(resource.path, "utf8"))) {
-      const targetPath = resolveResourceLink(resource.path, link.target);
+      const targetPath = resolveResourceLink(resource.path, link.target, link.syntax);
       if (!targetPath) continue;
       const target = byPath.get(targetPath);
       if (!target) continue;

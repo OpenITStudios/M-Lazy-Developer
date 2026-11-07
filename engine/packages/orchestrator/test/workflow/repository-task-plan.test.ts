@@ -41,6 +41,21 @@ describe("repository task planning", () => {
     );
   });
 
+  it("preserves GitHub changed-path provenance while selecting its engine-local owner", () => {
+    const sourcePath = "engine/analyzers/scripts/src/inventory-lifecycle-evidence.ts";
+    const plan = planRepositoryTasks({
+      changedPaths: [sourcePath],
+      context: "REMOTE_GITHUB",
+      targetCapabilityIds: ["context.compile"],
+    });
+
+    expect(plan.status).toBe("planned");
+    expect(plan.affected.changedPaths).toEqual([sourcePath]);
+    expect(plan.affected.unmatchedPaths).toEqual([]);
+    expect(plan.execution.selectedCapabilityIds).toContain("source.scripts.inventory");
+    expect(plan.execution.selectedCapabilityIds).toContain("context.compile");
+  });
+
   it("requires conservative fallback when a changed path has no owner", () => {
     const plan = planRepositoryTasks({
       changedPaths: [

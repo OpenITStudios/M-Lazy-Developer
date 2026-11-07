@@ -7,6 +7,16 @@ function normalizePath(path: string): string {
   return path.replaceAll("\\", "/").replace(/^\.\//, "");
 }
 
+// Builtin Task Capabilities describe engine-local owners ("packages/",
+// "analyzers/", "adapters/"); GitHub diffs use repository-root paths.
+// Normalize solely for matching; returned changed/unmatched paths keep the
+// actual source-relative spelling so source identities are never rewritten.
+function taskGraphMatchPath(path: string): string {
+  return /^engine\/(?:packages|analyzers|adapters)\//.test(path)
+    ? path.slice("engine/".length)
+    : path;
+}
+
 function matchesPrefix(
   path: string,
   prefix: string,
@@ -39,11 +49,12 @@ export function resolveAffectedTasks(
   const unmatchedPaths: string[] = [];
 
   for (const path of normalizedPaths) {
+    const matchPath = taskGraphMatchPath(path);
     let matched = false;
     for (const capability of graph.capabilities.values()) {
       if (
         capability.pathPrefixes.some((prefix) =>
-          matchesPrefix(path, prefix)
+          matchesPrefix(matchPath, prefix)
         )
       ) {
         direct.add(capability.id);

@@ -6,6 +6,11 @@ export function buildGraph(): {
   edges: GraphEdge[];
 };
 export function documentGraphRootId(): string;
+export function authoredLinks(markdown: string): IterableIterator<{
+  target: string;
+  line: number;
+  syntax: "MARKDOWN_INLINE" | "OBSIDIAN_WIKILINK";
+}>;
 
 
 /** Derived AST source-module view; never part of default Knowledge Retrieval. */

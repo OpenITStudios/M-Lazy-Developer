@@ -15,6 +15,21 @@ changed paths / explicit targets
 → deterministic execution order
 ```
 
+## Repository-path reconciliation
+
+Builtin task capability prefixes such as `packages/...` and
+`analyzers/...` are **engine-local**. GitHub and Resource Graph inputs
+normally use repository-root paths such as `engine/packages/...`.
+`resolveAffectedTasks()` accepts either spelling by mapping the
+three known `engine/packages/`, `engine/analyzers/`, and
+`engine/adapters/` prefixes for matching only. Returned changed paths
+and unmatched paths retain their original repository spelling, so
+provenance is never silently rewritten. Paths without an exact registered
+capability remain unmatched and require conservative fallback.
+
+This is a path-admission correction in the existing Task Graph, not a
+join with the derived source import graph or proof of executed behavior.
+
 ## Rules
 
 - capability ownership stays with the existing package/analyzer/adapter;
