@@ -405,12 +405,13 @@ function main(): void {
   const catalog = buildResourceCatalog();
 
   if (options.impact !== undefined) {
-    const owner = resolveSourceOwner(catalog.resources, options.impact);
-    if (!owner) throw new Error("No registered SOURCE module owns --impact: " + options.impact);
-    const normalizedInput = options.impact.replaceAll("\\", "/").replace(/^(\.\/)+/, "");
-    if (normalizedInput !== owner.id && normalizedInput !== owner.path &&
-        !/\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/.test(normalizedInput)) {
-      throw new Error("--impact accepts a source module ID, module directory, or source code file; not unrelated documents/data.");
+    const owner = resolveSourceOwner(
+      catalog.resources,
+      options.impact,
+      { requireExistingSourceFile: true },
+    );
+    if (!owner) {
+      throw new Error("--impact requires a registered SOURCE module ID, registered module directory, or existing code file inside the repository: " + options.impact);
     }
     const source = buildSourceDependencyGraph({ catalog });
     const analysis = explainSourceImpact(

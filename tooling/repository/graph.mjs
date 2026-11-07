@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, readdirSync, lstatSync } from "node:fs";
-import { extname, relative, resolve, sep, posix } from "node:path";
+import { existsSync, readFileSync, readdirSync, lstatSync, realpathSync } from "node:fs";
+import { extname, isAbsolute, relative, resolve, sep, posix } from "node:path";
 import { buildResourceCatalog, resourceIdForDocumentPath } from "./resource-catalog.mjs";
 import { importSpecifiers, resolveRelativeSourceImport } from "./source-import-specifiers.mjs";
 
@@ -129,7 +129,7 @@ function repositoryPath(fullPath, root) {
 
 /** Resolve a registered module owner by its source ID OR a relative
  * repository path. Reject absolute/out-of-repo path selections. */
-export function resolveSourceOwner(resources, input) {
+export function resolveSourceOwner(resources, input, options = {}) {
   if (typeof input !== "string" || !input || input.includes("\0")) return undefined;
   const normalized = input.replaceAll("\\", "/").replace(/^(\.\/)+/, "");
   if (normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized) ||
@@ -141,6 +141,24 @@ export function resolveSourceOwner(resources, input) {
     !resource.locator && !resource.path.endsWith(".md"));
   const byId = modules.find((resource) => resource.id === normalized);
   if (byId) return byId;
+
+  // In public --impact input, a file path MUST exist. Mere prefix matching
+  // would otherwise report impact for a fictitious or outside-root file.
+  // Registered module directory and stable SOURCE ID selection remain valid.
+  const moduleDirectory = modules.some((resource) => normalized === resource.path);
+  if (options.requireExistingSourceFile && !moduleDirectory) {
+    if (!CODE_EXTENSIONS.has(extname(normalized))) return undefined;
+    const root = resolve(options.root ?? process.cwd());
+    const selected = resolve(root, normalized);
+    if (!existsSync(root) || !existsSync(selected) ||
+        !lstatSync(selected).isFile()) return undefined;
+    const realRoot = realpathSync(root);
+    const realSelected = realpathSync(selected);
+    const rel = relative(realRoot, realSelected);
+    if (rel === ".." || rel.startsWith(".." + sep) || isAbsolute(rel)) {
+      return undefined;
+    }
+  }
   return modules
     .filter((resource) =>
       normalized === resource.path ||

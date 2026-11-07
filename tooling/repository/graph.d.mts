@@ -32,4 +32,5 @@ export function buildSourceDependencyGraph(options?: {
 export function resolveSourceOwner(
   resources: readonly CatalogResource[],
   input: string,
+  options?: { requireExistingSourceFile?: boolean; root?: string },
 ): CatalogResource | undefined;

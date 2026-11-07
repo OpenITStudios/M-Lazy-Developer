@@ -918,6 +918,12 @@ Ownership:
   may be rendered by Pele in an available, separately permitted
   presentation environment but the source viewer does not run Pele.
 
+When the user explicitly chooses a source code file with `--impact`,
+the file must exist under the repository root and be a supported code
+extension; an invented path merely sharing a registered module prefix is
+not an admissible change source. Stable SOURCE IDs and registered module
+directories remain eligible for conservative module-level inspection.
+
 All source edges require an exact statically resolved, uniquely owned
 **relative import**. Unknown targets, ambiguous JS/TS candidates,
 unregistered code owners, and out-of-repository resolution are returned

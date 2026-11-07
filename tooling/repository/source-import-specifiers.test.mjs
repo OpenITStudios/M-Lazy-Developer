@@ -275,6 +275,16 @@ describe("source-backed architecture impact extraction", () => {
       }
       expect(resolveSourceOwner(resources, "engine/packages/beta/src/contract.ts")?.id)
         .toBe("source.package.beta");
+      expect(resolveSourceOwner(resources, "engine/packages/beta/src/contract.ts",
+        { root, requireExistingSourceFile: true })?.id).toBe("source.package.beta");
+      expect(resolveSourceOwner(resources, "source.package.beta",
+        { root, requireExistingSourceFile: true })?.id).toBe("source.package.beta");
+      expect(resolveSourceOwner(resources, "engine/packages/beta",
+        { root, requireExistingSourceFile: true })?.id).toBe("source.package.beta");
+      expect(resolveSourceOwner(resources, "engine/packages/beta/src/not-real.ts",
+        { root, requireExistingSourceFile: true })).toBeUndefined();
+      expect(resolveSourceOwner(resources, "engine/packages/beta/src/file.txt",
+        { root, requireExistingSourceFile: true })).toBeUndefined();
       expect(resolveSourceOwner(resources, "../outside.ts")).toBeUndefined();
 
       const resolved = resolveRelativeSourceImport(
