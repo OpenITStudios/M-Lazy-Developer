@@ -117,7 +117,7 @@ export function isSourceBackedFailurePathObligation(
     item.stage === "EVALUATE" &&
     (uncheckedCommit || orderedWrites) &&
     item.subjectIds.some(locator =>
-      /:[1-9]\\d*(?::[1-9]\\d*)?$/.test(locator));
+      /:[1-9]\d*(?::[1-9]\d*)?$/.test(locator));
 }
 
 // The projection creates tens of thousands of mostly empty evidence/subject

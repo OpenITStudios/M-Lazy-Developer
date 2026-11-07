@@ -548,12 +548,6 @@ function projectSelectedAuthoredContent(
   };
 }
 
-/**
- * Group *navigation*, never evidence admission. A shared validation key can
- * indicate a reusable investigative question, but cannot prove one common
- * bug or discharge any member's individual canonical obligation. Stage and
- * source are part of grouping identity to avoid cross-domain conflation.
- */
 /** Read-only index over the existing A28 source-failure obligations.
  * This surface is intentionally visible before large stage-first group
  * previews, while every individual obligation and task remains in the
@@ -578,7 +572,7 @@ export function summarizeAuditSourceFailurePaths(
     sourceFailurePathLeadCount: leads.length,
     sourceFailurePathLeads: leads.slice(0, limit).map(item => {
       const locators = [...new Set(item.subjectIds.filter(locator =>
-        /:[1-9]\\d*(?::[1-9]\\d*)?$/.test(locator)))];
+        /:[1-9]\d*(?::[1-9]\d*)?$/.test(locator)))];
       return {
         obligationId: item.id,
         taskOffset: taskOffsetByObligation?.get(item.id) ?? null,
@@ -593,6 +587,12 @@ export function summarizeAuditSourceFailurePaths(
   };
 }
 
+/**
+ * Group *navigation*, never evidence admission. A shared validation key can
+ * indicate a reusable investigative question, but cannot prove one common
+ * bug or discharge any member's individual canonical obligation. Stage and
+ * source are part of grouping identity to avoid cross-domain conflation.
+ */
 export function summarizeAuditHandoffObligations(
   obligations: readonly AuditObligation[],
   limit = 12,
