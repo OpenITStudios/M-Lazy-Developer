@@ -57,6 +57,25 @@ const routing=readFileSync("docs/system/skill-routing.md","utf8");
 for(const value of ["IMPROVE SYSTEM","TEST MAP","LOAD","UNDERSTAND","TEST","REPORT","capability-gap","Skills Probe"])if(!routing.includes(value))failures.push("Missing canonical two-skill intent: "+value);
 const dos=readFileSync("docs/system/development-discipline.md","utf8");
 for(const p of ["## Development Operating Standard","**Development preflight:**","**Development completion review:**"])if(!dos.includes(p))failures.push("Missing development discipline: "+p);
+
+// Guard the adopted external-method path without installing an extra Skill,
+// mutating the frozen eval corpus or asserting model-run effectiveness.
+const policy = readFileSync("AGENTS.md","utf8");
+const improveSkillSource = readFileSync(
+  ".agents/skills/m-bedrock-system-improvement/SKILL.md","utf8");
+const improveEvaluation = readFileSync(
+  ".agents/skills/m-bedrock-system-improvement/EVAL.md","utf8");
+const methodSection = "## Matt Pocock engineering method (adapted)";
+const methodAnchor = "matt-pocock-engineering-method-adapted";
+if(!policy.includes("Matt Pocock Skills") ||
+   !policy.includes("docs/system/development-discipline.md#"+methodAnchor) ||
+   !dos.includes(methodSection) ||
+   !improveSkillSource.includes("#"+methodAnchor) ||
+   !improveSkillSource.includes("**Standards**") ||
+   !improveSkillSource.includes("**Spec**") ||
+   !improveEvaluation.includes("## Matt Pocock method source-review scenarios")) {
+  failures.push("Adopted engineering method is not wired through root policy, canonical discipline, IMPROVE SYSTEM, and source-review scenarios.");
+}
 const product=readFileSync("docs/product/flow.md","utf8");
 for(const word of ["LOAD","UNDERSTAND","TEST","REPORT","TARGET","DISCOVERY","FORMALIZE","EVALUATE","PROVE"])if(!product.includes(word))failures.push("Missing outer flow/internal proof mapping "+word);
 

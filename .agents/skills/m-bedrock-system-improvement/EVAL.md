@@ -20,6 +20,18 @@ Evaluate the skill's decisions with representative tasks; these are scenarios, n
 - **False claim:** never equate written tests, successful commit, or inferred semantics with executed proof.
 - **Scope creep:** an unrelated issue is reported separately rather than silently implemented; STOP once scoped acceptance is reached.
 
+## Matt Pocock method source-review scenarios
+
+These scenarios exercise the existing IMPROVE SYSTEM contract as **manual review expectations**, not model-run scores or additions to the protected `.agents/evals/` corpus. A missing actual run remains NOT EXECUTED.
+
+- **Ambiguous terms:** conflicting meanings for a gameplay term are reconciled against `docs/system/canonical-naming.md` and current semantic source; do not add a second glossary merely to record a synonym.
+- **Deep module:** a proposed wrapper over existing graph/analysis code must pass the deletion test and identify concrete callers, responsibilities, evidence boundaries and test seams; otherwise reuse the canonical owner.
+- **Failure diagnosis:** an analyzer false-positive request identifies a red-capable source witness or executed reproduction and rival explanations. If execution is unavailable, retain the exact missing proof without claiming red-green success.
+- **Two-axis change review:** evaluate Standards and Spec independently for a pinned diff. A compliant source change missing requested downstream behavior must fail the Spec axis; an apparently correct feature violating permission/proof rules must fail Standards.
+- **Agent documentation:** a revised root Agent Rule is a short trigger pointing to one canonical procedure; reject duplicated instructions, new active Skills and a default third agent.
+- **Selected-map guard:** invoking a Matt Pocock reference while testing a selected `.mcworld` never changes the TEST MAP lane, permits source mutation or turns a static observation into Minecraft runtime proof.
+- **Effectiveness:** a baseline/candidate comparison without independent, matching case/receipt evidence cannot establish improved agent behavior. The frozen scored corpus and permission profile remain unchanged.
+
 ## Complete repair and naming scenarios
 
 - Several related symptoms share one owner: consolidate the root-cause correction and remove superseded branches after consumer checks instead of stacking independent patches.

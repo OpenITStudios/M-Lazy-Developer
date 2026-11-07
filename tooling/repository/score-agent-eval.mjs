@@ -392,12 +392,14 @@ export function scoreAgentEvalRuns(payload, contrastInput, options) {
       const knowledgeMatch =
         routeCase.expectedKnowledgeDomain === undefined ||
         routeCase.expectedKnowledgeDomain === run.selectedKnowledgeDomain;
-      if (laneMatch && skillMatch && taskClassMatch && operationMatch && knowledgeMatch) routingCorrect += 1;
-
       const selected = [run.selectedLane, run.selectedSkill].filter(Boolean);
-      if ((routeCase.forbidden ?? []).some((item) => selected.includes(item))) {
-        forbiddenViolations += 1;
-      }
+      const forbiddenSelected = (routeCase.forbidden ?? [])
+        .some((item) => selected.includes(item));
+      if (forbiddenSelected) forbiddenViolations += 1;
+      // A disallowed active skill cannot earn routing credit even if its
+      // separately reported lane happens to match the expected lane.
+      if (laneMatch && skillMatch && taskClassMatch && operationMatch &&
+          knowledgeMatch && !forbiddenSelected) routingCorrect += 1;
 
       const bucket = caseBuckets.get(run.caseId) ?? [];
       bucket.push(
@@ -409,10 +411,15 @@ export function scoreAgentEvalRuns(payload, contrastInput, options) {
     }
 
     const procedureCase = procedureById.get(run.caseId);
-    if (procedureCase && run.assertions && typeof run.assertions === "object") {
+    if (procedureCase) {
+      const observedAssertions = run.assertions &&
+        typeof run.assertions === "object" &&
+        !Array.isArray(run.assertions) ? run.assertions : {};
       for (const assertion of procedureCase.assertions ?? []) {
+        // Count required checks even when the agent omits the assertion
+        // payload; missing evidence must not make passRate look better.
         procedureAssertions += 1;
-        if (run.assertions[assertion] === true) procedurePassed += 1;
+        if (observedAssertions[assertion] === true) procedurePassed += 1;
       }
     }
   }

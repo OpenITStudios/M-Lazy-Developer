@@ -210,6 +210,36 @@ test("a receipt symlink is rejected without dereferencing it", () => {
     reason.includes("symlink") || reason.includes("unavailable")));
 });
 
+test("omitted procedure assertions count as failures instead of disappearing", () => {
+  const caseId = "improve-system-source";
+  const missing = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
+    caseId, runId: "missing", selectedLane: "m-bedrock-system-improvement",
+  }]});
+  assert.equal(missing.procedure.assertions, 5);
+  assert.equal(missing.procedure.passed, 0);
+  assert.equal(missing.procedure.passRate, 0);
+
+  const partial = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
+    caseId, runId: "partial", selectedLane: "m-bedrock-system-improvement",
+    assertions: {"single existing source owner": true},
+  }]});
+  assert.equal(partial.procedure.assertions, 5);
+  assert.equal(partial.procedure.passed, 1);
+  assert.equal(partial.procedure.passRate, 0.2);
+});
+
+test("a forbidden selected skill cannot earn routing accuracy credit", () => {
+  const result = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
+    caseId: "audit-id-01", runId: "forbidden",
+    selectedLane: "m-bedrock-map-testing",
+    selectedSkill: "m-bedrock-system-improvement",
+  }]});
+  assert.equal(result.routing.eligible, 1);
+  assert.equal(result.routing.forbiddenViolations, 1);
+  assert.equal(result.routing.correct, 0);
+  assert.equal(result.routing.accuracy, 0);
+});
+
 test("existing single-file eval scorer remains backward compatible", () => {
   const result = scoreAgentEvalRuns({schemaVersion: 1, runs: [{
     caseId: "audit-id-01", runId: "legacy",
