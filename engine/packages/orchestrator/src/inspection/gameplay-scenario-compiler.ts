@@ -3545,23 +3545,28 @@ export function compileGameplayScenarioGraph(
         },
       ),
   );
-  const requirementsByScenario = new Map<
-    string,
-    readonly string[]
-  >();
-  for (const scenario of scenariosWithComposition) {
-    requirementsByScenario.set(
-      scenario.id,
-      knowledgeRequirements
-        .filter((item) => item.scenarioId === scenario.id)
-        .map((item) => item.id),
-    );
+
+  // Index existing Knowledge rows once per compilation, preserving source
+  // order and all duplicated IDs. This index is navigation only; it does
+  // not establish any Knowledge receipt or gameplay result.
+  const requirementsByScenario = new Map<string, string[]>();
+  const requirementRowsByScenario =
+    new Map<string, typeof knowledgeRequirements>();
+  for (const item of knowledgeRequirements) {
+    const ids = requirementsByScenario.get(item.scenarioId);
+    if (ids) ids.push(item.id);
+    else requirementsByScenario.set(item.scenarioId, [item.id]);
+    const rows = requirementRowsByScenario.get(item.scenarioId);
+    if (rows) rows.push(item);
+    else requirementRowsByScenario.set(item.scenarioId, [item]);
   }
   const scenariosWithKnowledge = scenariosWithComposition.map(
     (scenario) => ({
       ...scenario,
-      requiredKnowledgeIds:
-        requirementsByScenario.get(scenario.id) ?? [],
+      // Separate list per scenario, even for duplicate scenario IDs.
+      requiredKnowledgeIds: [
+        ...(requirementsByScenario.get(scenario.id) ?? []),
+      ],
     }),
   );
 
@@ -3698,6 +3703,21 @@ export function compileGameplayScenarioGraph(
       knowledgeRequirements,
       input.world,
     );
+  // Retain original Array.find first-occurrence semantics for duplicates.
+  const firstReceiptByRequirementId = new Map<string,
+    (typeof knowledgeReceipts)[number]>();
+  for (const receipt of knowledgeReceipts) {
+    if (!firstReceiptByRequirementId.has(receipt.requirementId)) {
+      firstReceiptByRequirementId.set(receipt.requirementId, receipt);
+    }
+  }
+  const firstIntentNodeById = new Map<string,
+    (typeof input.intent.nodes)[number]>();
+  for (const node of input.intent.nodes) {
+    if (!firstIntentNodeById.has(node.id)) {
+      firstIntentNodeById.set(node.id, node);
+    }
+  }
 
   const scenarioById = new Map(
     scenariosWithKnowledge.map((scenario) => [
@@ -3714,43 +3734,35 @@ export function compileGameplayScenarioGraph(
           (id) => componentIds.has(id),
         );
       if (!anchorId || !componentIds.has(anchorId)) continue;
+
       const knowledgeDomain =
         runtimeDomainKnowledge[component.id];
+      // Only Knowledge from the exact scenario may inform this runtime
+      // component; same-domain requirements of siblings stay separate.
+      const scenarioRequirements =
+        requirementRowsByScenario.get(scenarioId) ?? [];
       const requirement =
         knowledgeDomain === undefined
           ? undefined
-          : knowledgeRequirements.find(
-              (item) =>
-                item.scenarioId === scenarioId &&
-                item.domain === knowledgeDomain,
+          : scenarioRequirements.find(
+              (item) => item.domain === knowledgeDomain,
             );
       const relevantRequirements =
-        knowledgeRequirements.filter(
-          (item) =>
-            item.scenarioId === scenarioId &&
-            (
-              item.id === requirement?.id ||
-              item.componentIds.includes(component.id) ||
-              item.componentIds.includes(anchorId)
-            ),
+        scenarioRequirements.filter((item) =>
+          item.id === requirement?.id ||
+          item.componentIds.includes(component.id) ||
+          item.componentIds.includes(anchorId),
         );
       const receipt =
         requirement === undefined
           ? undefined
-          : knowledgeReceipts.find(
-              (item) =>
-                item.requirementId === requirement.id,
-            );
+          : firstReceiptByRequirementId.get(requirement.id);
       const anchorEvidenceIds = new Set(
         [
           ...(requirement?.subjectIds ?? []),
           ...(requirement?.componentIds ?? []),
-        ].flatMap((id) => {
-          const node = input.intent.nodes.find(
-            (item) => item.id === id,
-          );
-          return node?.evidenceIds ?? [];
-        }),
+        ].flatMap((id) =>
+          firstIntentNodeById.get(id)?.evidenceIds ?? []),
       );
       const sourceLocators = input.intent.evidence
         .filter(
@@ -3814,16 +3826,22 @@ export function compileGameplayScenarioGraph(
     }
   }
 
+
+  // Source links are already complete here. Group once instead of
+  // re-filtering every link for every scenario. Do not join neighboring
+  // gameplay components or invent causal source authority.
+  const causalLinkIdsByScenario = new Map<string, string[]>();
+  for (const link of causalLinks) {
+    const ids = causalLinkIdsByScenario.get(link.scenarioId);
+    if (ids) ids.push(link.id);
+    else causalLinkIdsByScenario.set(link.scenarioId, [link.id]);
+  }
   const scenariosWithCausalLinks =
     scenariosWithKnowledge.map((scenario) => ({
       ...scenario,
-      causalLinkIds: causalLinks
-        .filter(
-          (link) =>
-            link.scenarioId === scenario.id,
-        )
-        .map((link) => link.id)
-        .sort(),
+      causalLinkIds: [
+        ...(causalLinkIdsByScenario.get(scenario.id) ?? []),
+      ].sort(),
     }));
 
   return {

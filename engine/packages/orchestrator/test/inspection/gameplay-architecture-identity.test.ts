@@ -1716,6 +1716,20 @@ describe("gameplay world model", () => {
       world: deriveGameplayWorldModel(scenarioSource),
       preset,
     });
+    // Model compilation must retain all per-scenario source identities
+    // and original ordering, even though none proves runtime gameplay.
+    for (const scenario of scopeGraph.scenarios) {
+      expect(scenario.requiredKnowledgeIds).toEqual(
+        scopeGraph.knowledgeRequirements
+          .filter(item => item.scenarioId === scenario.id)
+          .map(item => item.id),
+      );
+      expect(scenario.causalLinkIds).toEqual(
+        scopeGraph.causalLinks
+          .filter(item => item.scenarioId === scenario.id)
+          .map(item => item.id).sort(),
+      );
+    }
     const capabilityLink = scopeGraph.causalLinks.find((link) =>
       link.scenarioId === "preset:capability-scope" &&
       link.fromComponentId === "runtime:player-capability");
