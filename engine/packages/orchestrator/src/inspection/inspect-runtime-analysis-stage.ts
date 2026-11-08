@@ -635,7 +635,9 @@ export function analyzeInspectionRuntimeState(
     // an independently source-proven admission cap remains actionable.
     const limiters = arenaCapacity.report.limitingResourceIds;
     const ambiguousCommandBudget =
-      arenaCapacity.evidence.tickingAreaMutationSourceSites > 0 &&
+      // Complete source geometry and one native DB snapshot do not prove
+      // disjoint active area allocations at arena start, even if no remove
+      // command was seen in the currently analyzed source set.
       limiters.includes("command-tickingarea-slots") &&
       !limiters.includes("runtime-arena-admission-cap");
     if (!ambiguousCommandBudget) {

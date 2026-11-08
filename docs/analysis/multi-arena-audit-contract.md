@@ -85,8 +85,12 @@ lease ordering. If any such mutation can change occupancy after the
 selected-world database snapshot, leave the effective capacity `UNKNOWN`
 in Gameplay World even if the source-only resource formula returns a
 number. The existing diagnostic consumer must also abstain from a
-**command-only critical shortfall** when occupancy is temporally ambiguous,
-while preserving an independently proven hard admission-cap shortfall.
+**command-only critical shortfall** whenever the source/DB accounting does
+not prove that live allocations are distinct from persisted areas—even
+when no explicit remove was found. Keep the numeric source/DB snapshot
+as a conditional internal resource calculation, not a proven safe
+simultaneous capacity or a published blocker. Independently proven hard
+admission-cap shortfalls remain actionable.
 Retain the source location and conditional arithmetic instead of silently
 promoting an admission cap to proven simultaneous gameplay.
 

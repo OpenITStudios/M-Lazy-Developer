@@ -646,9 +646,10 @@ function formatOperationalOutcomeSnapshot(report: MapAuditOutputV2): string[] {
         ". Jumlah arena terlihat bukan bukti semua dapat dimainkan.",
       "**Kapasitas serentak:** batas deklarasi source " +
         count(arena.declaredConcurrentArenaLimit) +
-        "; batas aman dari analisis bukti " +
+        "; batas efektif yang dapat dipastikan dari audit " +
         count(arena.safeConcurrentArenaLimit) +
-        ". Ini bukan pengamatan beberapa sesi benar-benar berjalan.",
+        ". Angka source dan anggaran ticking area tidak membuktikan " +
+        "beberapa sesi benar-benar berjalan.",
     );
     if (arena.queueBehavior?.trim()) {
       out.push("**Antrean (model/source, bukan uji game):** " +

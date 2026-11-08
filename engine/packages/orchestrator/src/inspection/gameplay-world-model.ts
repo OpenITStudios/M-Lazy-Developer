@@ -1182,8 +1182,12 @@ export function deriveGameplayWorldModel(
 
   const arenaCapacityConstraintsUnresolved =
     source.arena.capacity !== undefined && (
-      (source.arena.capacity.evidence.commandTickingAreaAdds > 0 &&
-        !source.arena.capacity.evidence.commandTickingAreaResourceResolved) ||
+      // Source-family geometry + persisted world count cannot establish
+      // which persisted slots already belong to these authored commands,
+      // nor whether/when they are allocated for concurrent gameplay.
+      // Retain the numeric snapshot in extraction as a conditional estimate,
+      // not a safe delivered-arena limit or completed gameplay coverage.
+      source.arena.capacity.evidence.commandTickingAreaAdds > 0 ||
       (source.arena.capacity.evidence.scriptTickingAreaManagerReferenced &&
         !source.arena.capacity.evidence.scriptTickingAreaCapacityResolved) ||
       (source.arena.capacity.evidence.tickingAreaMutationSourceSites ?? 0) > 0
