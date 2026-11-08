@@ -433,11 +433,27 @@ export async function executePlannedDiagnosisStep(
     }
   }
 
-  const result = await executor.execute({
-    capabilityId: capability.id,
-    context: input.context,
-    payload: input.payload,
-  });
+  let result: DiagnosisExecutorResult;
+  try {
+    result = await executor.execute({
+      capabilityId: capability.id,
+      context: input.context,
+      payload: input.payload,
+    });
+  } catch (error) {
+    return {
+      status: "blocked",
+      capabilityId: capability.id,
+      executorId: capability.executorId,
+      reasons: [
+        "Diagnosis executor threw before usable evidence could be established.",
+        error instanceof Error
+          ? error.message
+          : String(error),
+        ...cacheNotes,
+      ],
+    };
+  }
 
   if (result.status === "blocked") {
     return {

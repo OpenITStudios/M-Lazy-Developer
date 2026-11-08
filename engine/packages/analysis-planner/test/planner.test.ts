@@ -337,6 +337,48 @@ describe(
       },
     );
 
+
+    it(
+      "uses a viable goal producer when a higher-ranked prerequisite route is unavailable",
+      () => {
+        const plan = planMinimumSufficientAnalysis({
+          goal: "semantic-consistency",
+          relevantTags: ["session", "state"],
+          context: "LOCAL_ARTIFACT",
+          capabilities: capabilities.filter((capability) =>
+            capability.id === "semantic-lifecycle" ||
+            capability.id === "expensive-semantic"
+          ),
+        });
+
+        expect(plan.disposition).toBe("execute");
+        expect(plan.steps[0]?.capabilityId)
+          .toBe("expensive-semantic");
+        expect(plan.skippedCapabilityIds)
+          .toContain("semantic-lifecycle");
+        expect(plan.reasons.join(" "))
+          .toMatch(/Skipped 1 unavailable/);
+      },
+    );
+
+    it(
+      "retains a capability gap when every goal route is unreachable",
+      () => {
+        const plan = planMinimumSufficientAnalysis({
+          goal: "semantic-consistency",
+          relevantTags: ["session", "state"],
+          context: "LOCAL_ARTIFACT",
+          capabilities: capabilities.filter((capability) =>
+            capability.id === "semantic-lifecycle"
+          ),
+        });
+
+        expect(plan.disposition).toBe("capability-gap");
+        expect(plan.steps).toEqual([]);
+        expect(plan.reasons.join(" "))
+          .toMatch(/missing prerequisite source-graph/);
+      },
+    );
     it(
       "runs unmet prerequisites before the requested capability",
       () => {

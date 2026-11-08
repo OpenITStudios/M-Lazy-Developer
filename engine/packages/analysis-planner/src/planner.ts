@@ -435,12 +435,30 @@ export function planMinimumSufficientAnalysis(
     };
   }
 
-  const resolved = prerequisiteChoice(
-    candidates[0]!,
-    input,
-  );
+  let selected: AnalysisCapability | undefined;
+  let selectedProducer: AnalysisCapability | undefined;
+  const unavailableRoutes: string[] = [];
 
-  if (!resolved.capability) {
+  // A relevant producer can still have an impossible prerequisite chain.
+  // Try the next ranked goal producer rather than declaring a global gap.
+  for (const candidate of candidates) {
+    const resolved = prerequisiteChoice(
+      candidate,
+      input,
+    );
+    if (resolved.capability !== undefined) {
+      selected = resolved.capability;
+      selectedProducer = candidate;
+      break;
+    }
+    unavailableRoutes.push(
+      candidate.id + ": " +
+        (resolved.error ??
+          "No executable prerequisite route was resolved."),
+    );
+  }
+
+  if (selected === undefined || selectedProducer === undefined) {
     return {
       goal: input.goal,
       requiredEvidenceLevel,
@@ -454,13 +472,12 @@ export function planMinimumSufficientAnalysis(
       skippedCapabilityIds:
         input.capabilities.map((item) => item.id).sort(),
       reasons: [
-        resolved.error ??
-          "No executable analysis capability could be resolved.",
+        "No goal-relevant capability has an executable prerequisite route.",
+        ...unavailableRoutes,
       ],
     };
   }
 
-  const selected = resolved.capability;
   const step: PlannedAnalysisStep = {
     capabilityId: selected.id,
     evidenceLevel: selected.evidenceLevel,
@@ -470,7 +487,7 @@ export function planMinimumSufficientAnalysis(
       ...(selected.deterministic
         ? ["Deterministic capability preferred."]
         : []),
-      ...(selected.id === candidates[0]!.id
+      ...(selected.id === selectedProducer.id
         ? []
         : [
             "Selected because it is an unmet prerequisite of the next analysis capability.",
@@ -494,6 +511,13 @@ export function planMinimumSufficientAnalysis(
       .sort(),
     reasons: [
       "Only one next-best analysis action is scheduled.",
+      ...(unavailableRoutes.length === 0
+        ? []
+        : [
+            "Skipped " +
+              unavailableRoutes.length +
+              " unavailable higher-ranked goal route(s) without executing them.",
+          ]),
       "Re-plan after this step so new usable evidence can stop escalation before more expensive analysis runs.",
       "Evidence must satisfy both level and trait requirements; a high-level but wrong-kind or invalid evidence record cannot stop analysis.",
       "The repair authority remains outside the analysis planner; satisfying analysis requirements does not authorize mutation.",

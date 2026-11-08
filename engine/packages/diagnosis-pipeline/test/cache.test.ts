@@ -355,6 +355,35 @@ describe("diagnosis planned-step execution", () => {
       .toMatch(/declared evidence trait/);
   });
 
+
+  it("returns bounded blocked evidence when a diagnosis executor throws", async () => {
+    const execute = vi.fn(async () => {
+      throw new Error("selected source read failed");
+    });
+
+    const result = await executePlannedDiagnosisStep({
+      plan: plan(),
+      context: "LOCAL_ARTIFACT",
+      payload: { artifactId: "a" },
+      registry: {
+        schemaVersion: 1,
+        executors: [{
+          executorId: "diagnosis.source-index",
+          executorRevision: "diagnosis.source-index:test:1",
+          execute,
+        }],
+      },
+    });
+
+    expect(result.status).toBe("blocked");
+    expect(result.status === "blocked"
+      ? result.capabilityId
+      : undefined).toBe("diagnosis.source-index");
+    expect(result.reasons.join(" "))
+      .toMatch(/selected source read failed/);
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
   it("does not execute a missing or unrelated executor", async () => {
     const result =
       await executePlannedDiagnosisStep({
