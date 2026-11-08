@@ -695,7 +695,15 @@ export interface SelectedMapAuditHandoffSnapshot {
 export function projectSelectedMapAuditHandoffSnapshot(
   audit: SelectedMapAuditRun,
 ): SelectedMapAuditHandoffSnapshot {
-  const first = projectSelectedMapAuditModelHandoff(audit, 0, 1);
+  // Snapshot and first-page projection share one canonical read-only
+  // investigation plan. Replanning identical task/obligation inputs does
+  // not add any source evidence or audit proof.
+  const investigationRows = planAuditModelInvestigationBatches({
+    tasks: audit.modelTaskPackets, obligations: audit.auditObligations,
+  });
+  const first = projectSelectedMapAuditModelHandoffInternal(
+    audit, 0, 1, 0, investigationRows,
+  );
   const { taskCount, offset, nextOffset, tasks,
     investigationBatchCount, investigationBatchOffset,
     nextInvestigationBatchOffset, investigationBatches, ...shared } = first;
@@ -712,9 +720,7 @@ export function projectSelectedMapAuditHandoffSnapshot(
     auditStatus: audit.status,
     shared,
     taskRows: projectHandoffTaskRows(audit, audit.modelTaskPackets, resolvable),
-    investigationRows: planAuditModelInvestigationBatches({
-      tasks: audit.modelTaskPackets, obligations: audit.auditObligations,
-    }),
+    investigationRows,
   };
 }
 
@@ -752,11 +758,16 @@ export function pageSelectedMapAuditHandoffSnapshot(
   };
 }
 
-export function projectSelectedMapAuditModelHandoff(
+/** One private projection implementation for direct pages and the snapshot.
+ * A prepared plan is available only to the local snapshot caller, never
+ * as public proof or a caller-provided trusted ledger.
+ */
+function projectSelectedMapAuditModelHandoffInternal(
   audit: SelectedMapAuditRun,
-  offset = 0,
-  limit = 12,
-  investigationBatchOffset = 0,
+  offset: number,
+  limit: number,
+  investigationBatchOffset: number,
+  preparedInvestigationBatches?: readonly AuditModelInvestigationBatch[],
 ): SelectedMapAuditModelHandoff {
   if (!Number.isSafeInteger(offset) || offset < 0 ||
       !Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
@@ -765,9 +776,10 @@ export function projectSelectedMapAuditModelHandoff(
   if (!Number.isSafeInteger(investigationBatchOffset) || investigationBatchOffset < 0) {
     throw new Error("Investigation batch offset must be a nonnegative integer.");
   }
-  const allInvestigationBatches = planAuditModelInvestigationBatches({
-    tasks: audit.modelTaskPackets, obligations: audit.auditObligations,
-  });
+  const allInvestigationBatches = preparedInvestigationBatches ??
+    planAuditModelInvestigationBatches({
+      tasks: audit.modelTaskPackets, obligations: audit.auditObligations,
+    });
   const selectedInvestigationBatches = allInvestigationBatches.slice(
     investigationBatchOffset, investigationBatchOffset + 4);
   const graph = audit.inspection.hiddenGameplayDefects.scenarioAudit.graph;
@@ -1705,3 +1717,16 @@ export function projectSelectedMapAuditModelHandoff(
   };
 }
 
+/** Stable read-only direct handoff. Retains the original public interface;
+ * external callers cannot supply or replace canonical investigation groups.
+ */
+export function projectSelectedMapAuditModelHandoff(
+  audit: SelectedMapAuditRun,
+  offset = 0,
+  limit = 12,
+  investigationBatchOffset = 0,
+): SelectedMapAuditModelHandoff {
+  return projectSelectedMapAuditModelHandoffInternal(
+    audit, offset, limit, investigationBatchOffset,
+  );
+}
