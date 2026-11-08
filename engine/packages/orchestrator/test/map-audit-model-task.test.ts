@@ -789,6 +789,7 @@ describe("PROVE model evidence handoff", () => {
       evidence: [{
         id: guardId, origin: "source-code", scope: "selected-artifact",
         locator: "scripts/admission.js:12:3",
+        summary: "Authored guard source witness",
       }],
       nodes: [], edges: [], invariants: [], unknowns: [],
     };
