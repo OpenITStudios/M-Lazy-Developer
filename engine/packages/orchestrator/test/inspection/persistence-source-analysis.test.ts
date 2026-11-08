@@ -225,6 +225,27 @@ describe("persistence source analysis", () => {
       .toEqual([]);
     expect(run(source, target.replace("data.setScore(player, value);",
       "data.getScore(player);"))).toEqual([]);
+
+    for (const sourceOnlyFalseLead of [
+      target.replace("data.setScore(player, value); return true;",
+        "data.setScore(player, value);"),
+      target.replace("data.setScore(player, value); return true;",
+        "data.setScore(player, value); audit.record(); return true;"),
+      target.replace("catch (error) {}", "catch (error) { store.rollback(); }"),
+      target.replace("catch (error) {}", "catch (error) {} finally { store.rollback(); }"),
+      target.replace("data.setScore(player, value); return true;",
+        "if (ready) { data.setScore(player, value); return true; } else { store.rollback(); }"),
+      target.replace("catch (error) {}",
+        "catch (error) { console.warn(reportError(error)); }"),
+    ]) {
+      expect(run(source, sourceOnlyFalseLead)).toEqual([]);
+    }
+    const guarded = target.replace(
+      "try { data.setScore(player, value); return true; }",
+      "try { const objective = world.scoreboard.getObjective('demo'); " +
+        "if (objective) { objective.setScore(player, value); return true; } }",
+    ).replace("catch (error) {}", "catch (error) { console.warn(error.message); }");
+    expect(run(source, guarded)).toHaveLength(1);
   });
 
 

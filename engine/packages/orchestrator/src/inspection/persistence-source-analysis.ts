@@ -1134,8 +1134,9 @@ function sequentialCounterBeforePayload(
  * fallible write result is discarded immediately before feedback. Unlike
  * same-file lexical resolution, this requires an exact unique named ESM
  * import, same-artifact file, exported class, one constructor binding and
- * a terminal false/null fallback after an authored try/write. No dynamic
- * modules, aliases, virtual paths, reexports or guessed runtime outcomes.
+ * a terminal false/null fallback after a directly paired write/success
+ * path without modeled compensation. Other paths remain UNKNOWN. No
+ * dynamic modules, aliases, virtual paths, reexports or runtime claims.
  */
 function crossFileIgnoredWriteBeforeFeedback(
   scripts: readonly ParsedScriptFile[],
@@ -1167,6 +1168,57 @@ function crossFileIgnoredWriteBeforeFeedback(
     "enqueue", "sendMessage", "setTitle", "setActionBar", "show",
   ]);
   const writeMethods = new Set(["set", "setScore", "setDynamicProperty"]);
+  // An arbitrary write somewhere in try is not a source-coupled success.
+  // Require an authored setter followed immediately by return true.
+  const isWriteThenTrue = (statements: readonly ts.Statement[]): boolean => {
+    if (statements.length < 2) return false;
+    const write = statements[statements.length - 2]!;
+    const success = statements[statements.length - 1]!;
+    return ts.isExpressionStatement(write) &&
+      ts.isCallExpression(write.expression) &&
+      !write.expression.questionDotToken &&
+      ts.isPropertyAccessExpression(write.expression.expression) &&
+      !write.expression.expression.questionDotToken &&
+      writeMethods.has(write.expression.expression.name.text) &&
+      ts.isReturnStatement(success) &&
+      success.expression?.kind === ts.SyntaxKind.TrueKeyword;
+  };
+  const hasSourceCoupledSuccess = (block: ts.Block): boolean =>
+    isWriteThenTrue(block.statements) ||
+    block.statements.some(statement => {
+      if (!ts.isIfStatement(statement) || statement.elseStatement ||
+          !(ts.isIdentifier(statement.expression) ||
+            (ts.isPropertyAccessExpression(statement.expression) &&
+              !statement.expression.questionDotToken))) return false;
+      const branch = ts.isBlock(statement.thenStatement)
+        ? statement.thenStatement.statements : [statement.thenStatement];
+      return isWriteThenTrue(branch);
+    });
+  const hasNestedCall = (node: ts.Node): boolean => {
+    let found = false;
+    const visit = (current: ts.Node): void => {
+      if (ts.isCallExpression(current) || ts.isNewExpression(current)) {
+        found = true; return;
+      }
+      ts.forEachChild(current, visit);
+    };
+    visit(node);
+    return found;
+  };
+  const nonCompensatingCatch = (block: ts.Block): boolean =>
+    block.statements.every(statement => {
+      if (!ts.isExpressionStatement(statement) ||
+          !ts.isCallExpression(statement.expression) ||
+          statement.expression.questionDotToken ||
+          !ts.isPropertyAccessExpression(statement.expression.expression) ||
+          statement.expression.expression.questionDotToken) return false;
+      const method = statement.expression.expression;
+      return ts.isIdentifier(method.expression) &&
+        method.expression.text === "console" &&
+        (method.name.text === "warn" ||
+          method.name.text === "log" || method.name.text === "error") &&
+        statement.expression.arguments.every(arg => !hasNestedCall(arg));
+    });
   const result: IgnoredCommitBeforeFeedbackCandidate[] = [];
 
   for (const entries of bySourcePath.values()) {
@@ -1335,20 +1387,13 @@ function crossFileIgnoredWriteBeforeFeedback(
               if (!last || !ts.isReturnStatement(last) || !last.expression ||
                   (last.expression.kind !== ts.SyntaxKind.FalseKeyword &&
                    last.expression.kind !== ts.SyntaxKind.NullKeyword)) continue;
-              let authoredWrite = false;
-              const findWrite = (current: ts.Node): void => {
-                if (current !== implementation.body && ts.isFunctionLike(current))
-                  return;
-                if (ts.isCallExpression(current) &&
-                    ts.isPropertyAccessExpression(current.expression) &&
-                    writeMethods.has(current.expression.name.text))
-                  authoredWrite = true;
-                ts.forEachChild(current, findWrite);
-              };
-              for (const inner of implementation.body!.statements) {
-                if (ts.isTryStatement(inner)) findWrite(inner.tryBlock);
-              }
-              if (!authoredWrite ||
+              // The penultimate direct try must prove a paired write/true
+              // return and no modeled compensation; otherwise stay UNKNOWN.
+              const attempt = implementation.body!.statements.at(-2);
+              if (!attempt || !ts.isTryStatement(attempt) ||
+                  attempt.finallyBlock || !attempt.catchClause ||
+                  !nonCompensatingCatch(attempt.catchClause.block) ||
+                  !hasSourceCoupledSuccess(attempt.tryBlock) ||
                   !ts.isExpressionStatement(next) ||
                   !ts.isCallExpression(next.expression) ||
                   !ts.isPropertyAccessExpression(next.expression.expression) ||

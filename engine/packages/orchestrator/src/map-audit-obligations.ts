@@ -1377,6 +1377,9 @@ export function deriveAuditObligations(input: {
           fieldBindings.join(", ") +
           " identifies source ownership only, not immutable runtime objects."
       : "";
+    const importedWriteLead = candidate.receiverBindingKind ===
+      "direct-named-esm-class" &&
+      candidate.directFallibleWriteSource !== undefined;
     const caught = candidate.caughtStorageExceptionWriteSource;
     const caughtWhere = caught === undefined ? undefined :
       caught.relativePath + ":" + (caught.range?.lineStart ?? "unknown");
@@ -1403,21 +1406,33 @@ export function deriveAuditObligations(input: {
         failureClaim + failureWhere + "; " + writeSequence + feedbackWhere +
         " may publish success." + caughtForwarding + fieldProof +
         " This is a source-only candidate, not proof that the failure is reachable in play.",
-      missingProof: caughtWhere === undefined
-        ? "Determine the failing commit's reachability, the intended postcondition, " +
-          "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state."
-        : "Determine whether the cited setter can throw in the selected " +
-          "runtime/API profile, whether the catch returns false/null without " +
-          "retry/rollback, and whether discarding the result violates the " +
-          "authored player-visible postcondition.",
-      validationTest: caughtWhere === undefined
-        ? "Run one bounded success/failure case on this exact authored caller/callee " +
-          "with source-backed persistence failure; compare final state and user feedback, " +
-          "and check whether retries repair the discrepancy."
-        : "Inspect the exact setter, single catch-return, caller and runtime " +
-          "contract first; only if an exception is feasible, compare one " +
-          "failed write against the success path, later state, feedback and " +
-          "retry/rollback. Do not promote BUG from catch syntax.",
+      missingProof: importedWriteLead
+        ? "Verify that the selected-source false/null branch can reach " +
+          "this caller and violate a source-grounded postcondition, with " +
+          "no blocking guard, retry, rollback or compensating action."
+        : caughtWhere === undefined
+          ? "Determine the failing commit's reachability, the intended postcondition, " +
+            "any compensating retry/rollback, and whether the observed failure leaves incorrect player-visible state."
+          : "Determine whether the cited setter can throw in the selected " +
+            "runtime/API profile, whether the catch returns false/null without " +
+            "retry/rollback, and whether discarding the result violates the " +
+            "authored player-visible postcondition.",
+      validationTest: importedWriteLead
+        ? "First seek counterproof in the exact selected-source path: " +
+          "a checked return, unreachable failure, non-success feedback, " +
+          "guard, retry, rollback or compensation. If the risk survives, " +
+          "compare one bounded successful and one source-feasible failed " +
+          "write, including final state, resources and player feedback. " +
+          "Keep NEED_VALIDATION/UNKNOWN until independent causal and " +
+          "gameplay proof is established; never promote source-only BUG."
+        : caughtWhere === undefined
+          ? "Run one bounded success/failure case on this exact authored caller/callee " +
+            "with source-backed persistence failure; compare final state and user feedback, " +
+            "and check whether retries repair the discrepancy."
+          : "Inspect the exact setter, single catch-return, caller and runtime " +
+            "contract first; only if an exception is feasible, compare one " +
+            "failed write against the success path, later state, feedback and " +
+            "retry/rollback. Do not promote BUG from catch syntax.",
       validationGroupKey: "source:unchecked-commit:" + where,
       subjectIds: [where, ...forwarding, ...fieldBindings,
         ...(caughtWhere === undefined ? [] : [caughtWhere]),
