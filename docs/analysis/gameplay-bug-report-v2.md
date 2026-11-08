@@ -132,6 +132,16 @@ Internal uncertainty reasons never create additional public status categories.
 
 Designed/normal behavior and disproved findings are not published as bugs.
 
+Exact duplicate candidates are accounted for by the existing
+`contradictionRegistry` and must not silently discard a stronger,
+independently confirmed candidate before its proof is examined.
+Rejections remain visible with their reasons. Equivalent confirmed
+outcomes may collapse to one defect; conflicting confirmed narratives
+for the same route, semantic identity and evidence set must be returned
+for correction rather than arbitrarily promoting either version.
+This applies within the current audit revision, without borrowing
+historical approval or creating another issue status.
+
 ## Audit coverage boundary
 
 Full coverage accounting belongs to Map Audit Output V2.

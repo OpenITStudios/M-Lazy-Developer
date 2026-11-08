@@ -1048,43 +1048,87 @@ export function collectConfirmedDefects(
   const confirmed: ConfirmedDefect[] = [];
   const rejected: RejectedReportCandidate[] = [];
 
+  const registryCandidates = candidates.map((candidate) => ({
+    semanticKey: preclassificationCandidateKey(candidate),
+    route: candidate.route,
+    evidenceIds: candidateEvidenceIds(candidate),
+  }));
   const contradictionRegistry =
-    buildContradictionRegistry(
-      candidates.map((candidate) => ({
-        semanticKey:
-          preclassificationCandidateKey(
-            candidate,
-          ),
-        route: candidate.route,
-        evidenceIds:
-          candidateEvidenceIds(candidate),
-      })),
-    );
-  const duplicateIndexes = new Set(
-    contradictionRegistry
-      .exactDuplicateIndexes,
-  );
+    buildContradictionRegistry(registryCandidates);
 
-  candidates.forEach(
-    (candidate, index) => {
-      if (duplicateIndexes.has(index)) {
-        return;
-      }
+  // The registry groups source candidates; it must never discard a later
+  // independently valid confirmation simply because an earlier candidate
+  // used the same route, semantic subject and evidence IDs. Evaluate all
+  // outcomes first, then conserve one exact matching confirmed result.
+  const candidateGroups = new Map<string, number[]>();
+  for (let index = 0; index < registryCandidates.length; index++) {
+    const descriptor = registryCandidates[index]!;
+    const identity = JSON.stringify([
+      descriptor.semanticKey,
+      descriptor.route,
+      [...new Set(descriptor.evidenceIds)].sort(),
+    ]);
+    candidateGroups.set(identity, [
+      ...(candidateGroups.get(identity) ?? []),
+      index,
+    ]);
+  }
 
-      const result = collectOne(candidate);
-      if (result.confirmed) {
-        confirmed.push(
-          applyEngineeringAnalysis(
-            result.confirmed,
-            engineeringAnalyses,
-          ),
-        );
+  const confirmedByIndex = new Map<number, ConfirmedDefect>();
+  const rejectedByIndex = new Map<number, RejectedReportCandidate>();
+  const outcomes = candidates.map((candidate) => collectOne(candidate));
+
+  for (const indexes of candidateGroups.values()) {
+    const accepted = indexes.flatMap((index) => {
+      const item = outcomes[index]?.confirmed;
+      return item === undefined ? [] : [{ index, item }];
+    });
+    // One semantic/evidence identity cannot supply two incompatible
+    // approved descriptions. Refuse arbitrary first-wins promotion.
+    if (accepted.length > 1 &&
+        accepted.some(({ item }) =>
+          JSON.stringify(item) !== JSON.stringify(accepted[0]!.item))) {
+      for (const index of indexes) {
+        rejectedByIndex.set(index, rejectedCandidate(
+          candidates[index]!,
+          [
+            ...(outcomes[index]?.rejected?.reasons ?? []),
+            "Conflicting confirmed report candidates share the same " +
+              "source/semantic identity. Reconcile expected, actual, " +
+              "classification, reproduction and proof before approval.",
+          ],
+          "candidate-correction",
+        ));
       }
-      if (result.rejected) {
-        rejected.push(result.rejected);
+      continue;
+    }
+
+    if (accepted.length > 0) {
+      // Identical confirmed outcomes are one defect; the existing
+      // contradictionRegistry still retains all original candidate indexes.
+      confirmedByIndex.set(accepted[0]!.index, accepted[0]!.item);
+    }
+    for (const index of indexes) {
+      const rejectedOutcome = outcomes[index]?.rejected;
+      if (rejectedOutcome !== undefined) {
+        rejectedByIndex.set(index, rejectedOutcome);
       }
-    },
-  );
+    }
+  }
+
+  // Preserve the input order of actionable confirmations and every actual
+  // rejection, rather than letting group-iteration order decide the report.
+  for (let index = 0; index < candidates.length; index++) {
+    const accepted = confirmedByIndex.get(index);
+    if (accepted !== undefined) {
+      confirmed.push(applyEngineeringAnalysis(
+        accepted,
+        engineeringAnalyses,
+      ));
+    }
+    const denied = rejectedByIndex.get(index);
+    if (denied !== undefined) rejected.push(denied);
+  }
 
   return {
     confirmed,
