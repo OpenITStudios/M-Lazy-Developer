@@ -91,6 +91,10 @@ export interface ArenaCapacityExtractionEvidence {
   completeCommandTickingAreaFamilies: number;
   unmatchedCommandTickingAreaAdds: number;
   commandTickingAreaResourceResolved: boolean;
+  /** Source commands that can mutate active area leases after the DB snapshot. */
+  tickingAreaMutationSourceSites: number;
+  /** Exact script command-literal locators, never evidence of execution. */
+  scriptTickingAreaMutationSources: readonly SourceRef[];
   /** No number means no complete selected-world occupancy proof. */
   observedPermanentTickingAreas?: number;
   scriptTickingAreaManagerReferenced: boolean;
@@ -299,6 +303,26 @@ export function extractArenaConcurrencyCapacity(
       "Arena replica offsets are missing, duplicate or non-integral. " +
       "Translated command families cannot establish a complete per-arena cost.");
   }
+
+  // .mcfunction parsing and Script API runCommand literals are distinct
+  // owners of authored command operations. Neither proves invocation order,
+  // whether a persisted area has been removed or whether it is acquired
+  // again before a new arena starts.
+  const functionTickingAreaMutations = input.tickingAreas.filter((item) =>
+    item.semantics.action === "remove" ||
+    item.semantics.action === "remove-all");
+  const scriptTickingAreaMutations = (input.scripts ?? [])
+    .flatMap((script) => (script.commandLiterals ?? []).filter((item) =>
+      /(?:^|\brun\s+)\/?tickingarea\s+(?:add|remove(?:_all)?)\b/i
+        .test(item.command.trim())));
+  const tickingAreaMutationSourceSites =
+    functionTickingAreaMutations.length +
+    scriptTickingAreaMutations.length;
+  if (tickingAreaMutationSourceSites > 0) reasons.push(
+    String(tickingAreaMutationSourceSites) +
+    " source-side /tickingarea mutation(s) may change persisted occupancy " +
+    "between the world snapshot and arena admission. Resource arithmetic " +
+    "is conditional and does not establish the effective concurrent limit.");
 
   const resources: ArenaCapacityResource[] = [];
 
@@ -612,6 +636,9 @@ export function extractArenaConcurrencyCapacity(
       unmatchedCommandTickingAreaAdds: unmatched,
       commandTickingAreaResourceResolved:
         commandResourceResolved,
+      tickingAreaMutationSourceSites,
+      scriptTickingAreaMutationSources:
+        scriptTickingAreaMutations.map(item => item.source),
       ...(input.observedPermanentTickingAreas === undefined ? {} : {
         observedPermanentTickingAreas:
           input.observedPermanentTickingAreas,

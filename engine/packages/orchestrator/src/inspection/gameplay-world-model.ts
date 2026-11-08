@@ -1185,7 +1185,8 @@ export function deriveGameplayWorldModel(
       (source.arena.capacity.evidence.commandTickingAreaAdds > 0 &&
         !source.arena.capacity.evidence.commandTickingAreaResourceResolved) ||
       (source.arena.capacity.evidence.scriptTickingAreaManagerReferenced &&
-        !source.arena.capacity.evidence.scriptTickingAreaCapacityResolved)
+        !source.arena.capacity.evidence.scriptTickingAreaCapacityResolved) ||
+      (source.arena.capacity.evidence.tickingAreaMutationSourceSites ?? 0) > 0
     );
 
   const arenaDetected =

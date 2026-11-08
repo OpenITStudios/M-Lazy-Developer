@@ -78,6 +78,15 @@ name was accepted, or that an area was dynamically created rather than
 already present in the native snapshot. The capacity calculation is
 source/native resource analysis, not effective concurrent-start proof.
 
+Include typed Script API `runCommand` / `runCommandAsync` literal calls
+that mutate ticking areas and `.mcfunction` remove/remove_all commands in
+the existing resource evidence. They are not evidence of execution or live
+lease ordering. If any such mutation can change occupancy after the
+selected-world database snapshot, leave the effective capacity `UNKNOWN`
+in Gameplay World even if the source-only resource formula returns a
+number. Retain the source location and conditional arithmetic instead of
+silently promoting an admission cap to proven simultaneous gameplay.
+
 ## Effective-concurrency proof
 
 Configured capacity is not deliverable capacity.
