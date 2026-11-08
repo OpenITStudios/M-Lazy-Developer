@@ -629,9 +629,20 @@ export function analyzeInspectionRuntimeState(
           }),
     });
   if (arenaCapacity.report) {
-    diagnostics.push(
-      ...arenaCapacityDiagnostics(arenaCapacity.report),
-    );
+    // An observed DB snapshot cannot prove available slots at match start
+    // when source-side /tickingarea mutations can change occupancy.
+    // Suppress only the conditional command-budget shortfall diagnostic;
+    // an independently source-proven admission cap remains actionable.
+    const limiters = arenaCapacity.report.limitingResourceIds;
+    const ambiguousCommandBudget =
+      arenaCapacity.evidence.tickingAreaMutationSourceSites > 0 &&
+      limiters.includes("command-tickingarea-slots") &&
+      !limiters.includes("runtime-arena-admission-cap");
+    if (!ambiguousCommandBudget) {
+      diagnostics.push(
+        ...arenaCapacityDiagnostics(arenaCapacity.report),
+      );
+    }
   }
 
   const commandContext =

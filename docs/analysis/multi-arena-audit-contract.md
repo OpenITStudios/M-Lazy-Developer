@@ -84,8 +84,11 @@ the existing resource evidence. They are not evidence of execution or live
 lease ordering. If any such mutation can change occupancy after the
 selected-world database snapshot, leave the effective capacity `UNKNOWN`
 in Gameplay World even if the source-only resource formula returns a
-number. Retain the source location and conditional arithmetic instead of
-silently promoting an admission cap to proven simultaneous gameplay.
+number. The existing diagnostic consumer must also abstain from a
+**command-only critical shortfall** when occupancy is temporally ambiguous,
+while preserving an independently proven hard admission-cap shortfall.
+Retain the source location and conditional arithmetic instead of silently
+promoting an admission cap to proven simultaneous gameplay.
 
 ## Effective-concurrency proof
 
