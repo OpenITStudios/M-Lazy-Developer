@@ -1954,6 +1954,11 @@ export function planAuditIssueFirstFocus(input: {
     const isFailure = sameStageObligation !== undefined &&
       isSourceBackedFailurePathObligation(sameStageObligation);
 
+    // Most model tasks have no selected-source context. Avoid per-task
+    // evidence indexes for those; A28 obligations retain their separately
+    // grounded source-location route even with empty evidenceContext.
+    if (task.evidenceContext.length === 0 && !isFailure) return [];
+
     // Only the canonical task's selected source evidence can guide a
     // source jump. An unrelated evidenceContext entry is not sufficient.
     const ownedIds = new Set(task.evidenceIds);
