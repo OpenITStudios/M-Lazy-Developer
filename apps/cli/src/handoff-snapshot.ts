@@ -201,6 +201,12 @@ export async function readHandoffSnapshot(
             !/:[1-9]\d*:[1-9]\d*$/.test(hop.calleeLocator))))) {
       throw new Error("Handoff source-call navigation boundary is invalid");
     }
+    // A replayed snapshot cannot create two contradictory source targets
+    // for one caller, even if the snapshot checksum is recomputed.
+    if (hops !== undefined &&
+        new Set(hops.map(hop => hop.callerLocator)).size !== hops.length) {
+      throw new Error("Handoff source-call navigation boundary is invalid");
+    }
     focusOffsets.add(offset);
   }
   return snapshot;

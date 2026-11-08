@@ -2094,43 +2094,75 @@ export function planAuditIssueFirstFocus(input: {
   // reduce the number of files the operator must search. Missing or
   // ambiguous coordinates abstain; source execution is still UNKNOWN.
   const sites = new Set(selected.flatMap(item => item.sourceLocators));
-  // Most audits have thousands of unrelated IR regions. Do not index
-  // them when no source-backed task qualified for the bounded shortlist.
-  const regions = new Map((sites.size > 0 && input.selectedArtifactId?.trim()
-    ? input.semanticIr?.execution.regions ?? [] : [])
-    .map(region => [region.id, region] as const));
-  const sourceHops = !input.selectedArtifactId?.trim() || sites.size === 0
+  // Match only canonical source calls at current selected source locations.
+  // An unresolved competitor, missing exact target, or two distinct targets
+  // for the SAME caller means UNKNOWN. Do not present one as definitive.
+  const selectedArtifactId = input.selectedArtifactId;
+  const relevantCalls = !selectedArtifactId?.trim() || sites.size === 0
     ? [] : (input.semanticIr?.execution.edges ?? []).flatMap(edge => {
         if (edge.kind !== "synchronous-call" ||
-            edge.resolution !== "resolved" || edge.to === undefined ||
-            edge.source.artifactId !== input.selectedArtifactId) return [];
-        const target = regions.get(edge.to)?.source;
-        const caller = edge.source;
-        if (!target || target.artifactId !== input.selectedArtifactId ||
-            caller.relativePath === target.relativePath ||
-            !positive(caller.range?.lineStart) ||
-            !positive(caller.range?.columnStart) ||
-            !positive(target.range?.lineStart) ||
-            !positive(target.range?.columnStart)) return [];
-        const callerLocator = caller.relativePath + ":" +
-          caller.range.lineStart + ":" + caller.range.columnStart;
-        if (!sites.has(callerLocator)) return [];
-        const calleeLocator = target.relativePath + ":" +
-          target.range.lineStart + ":" + target.range.columnStart;
-        return [{
-          edgeId: edge.id, callerLocator, calleeLocator,
-          proof: "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF" as const,
-        }];
-      }).sort((a, b) =>
-        a.callerLocator.localeCompare(b.callerLocator) ||
-        a.calleeLocator.localeCompare(b.calleeLocator) ||
-        a.edgeId.localeCompare(b.edgeId));
+            edge.source.artifactId !== selectedArtifactId ||
+            !positive(edge.source.range?.lineStart) ||
+            !positive(edge.source.range?.columnStart)) return [];
+        const callerLocator = edge.source.relativePath + ":" +
+          edge.source.range.lineStart + ":" + edge.source.range.columnStart;
+        return sites.has(callerLocator) ? [{ edge, callerLocator }] : [];
+      });
+  // Avoid indexing tens of thousands of unrelated IR regions. A matched,
+  // source-resolved call is the only reason to look up its target source.
+  const targetIds = new Set(relevantCalls.flatMap(({ edge }) =>
+    edge.resolution === "resolved" && edge.to !== undefined
+      ? [edge.to] : []));
+  const targetRegions = new Map((targetIds.size === 0
+    ? [] : input.semanticIr?.execution.regions ?? [])
+    .filter(region => targetIds.has(region.id))
+    .map(region => [region.id, region] as const));
+  const inconclusiveCallers = new Set<string>();
+  const candidatesForHops = relevantCalls.flatMap(({ edge, callerLocator }) => {
+    if (edge.resolution !== "resolved" || edge.to === undefined) {
+      inconclusiveCallers.add(callerLocator);
+      return [];
+    }
+    const target = targetRegions.get(edge.to)?.source;
+    if (!target || target.artifactId !== selectedArtifactId ||
+        edge.source.relativePath === target.relativePath ||
+        !positive(target.range?.lineStart) ||
+        !positive(target.range?.columnStart)) {
+      inconclusiveCallers.add(callerLocator);
+      return [];
+    }
+    return [{
+      edgeId: edge.id, callerLocator,
+      calleeLocator: target.relativePath + ":" + target.range.lineStart +
+        ":" + target.range.columnStart,
+      proof: "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF" as const,
+    }];
+  }).sort((a, b) =>
+    a.callerLocator.localeCompare(b.callerLocator) ||
+    a.calleeLocator.localeCompare(b.calleeLocator) ||
+    a.edgeId.localeCompare(b.edgeId));
+  const targetsByCaller = new Map<string, Set<string>>();
+  for (const hop of candidatesForHops) {
+    const destinations = targetsByCaller.get(hop.callerLocator) ??
+      new Set<string>();
+    destinations.add(hop.calleeLocator);
+    targetsByCaller.set(hop.callerLocator, destinations);
+  }
+  const deduplicated = new Set<string>();
+  const hopsByCaller = new Map<string, typeof candidatesForHops>();
+  for (const hop of candidatesForHops) {
+    if (inconclusiveCallers.has(hop.callerLocator) ||
+        targetsByCaller.get(hop.callerLocator)?.size !== 1) continue;
+    const pair = JSON.stringify([hop.callerLocator, hop.calleeLocator]);
+    if (deduplicated.has(pair)) continue;
+    deduplicated.add(pair);
+    const grouped = hopsByCaller.get(hop.callerLocator) ?? [];
+    grouped.push(hop);
+    hopsByCaller.set(hop.callerLocator, grouped);
+  }
   const suggestions = selected.map(item => {
-    const matching = sourceHops.filter((hop, index) =>
-      item.sourceLocators.includes(hop.callerLocator) &&
-      sourceHops.findIndex(other =>
-        other.callerLocator === hop.callerLocator &&
-        other.calleeLocator === hop.calleeLocator) === index);
+    const matching = item.sourceLocators.flatMap(locator =>
+      hopsByCaller.get(locator) ?? []);
     return matching.length === 0 ? item : {
       ...item,
       sourceHops: matching.slice(0, 2),

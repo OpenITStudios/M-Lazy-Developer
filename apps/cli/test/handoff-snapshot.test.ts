@@ -266,6 +266,13 @@ describe("pinned read-only handoff transport", () => {
       await writeFile(path, Buffer.from(JSON.stringify(record)));
       await expect(load()).rejects.toThrow(/source-call navigation/);
     }
+    record.snapshot.shared.diagnosisNavigation.issueFirstFocus
+      .suggestions[0].sourceHops = [
+        hop, { ...hop, edgeId: "edge:contradicting",
+          calleeLocator: "scripts/chunks/other.js:19:2" },
+      ];
+    await writeFile(path, Buffer.from(JSON.stringify(record)));
+    await expect(load()).rejects.toThrow(/source-call navigation/);
   });
 
   it("does not allow a snapshot to become a tracked source file", async () => {

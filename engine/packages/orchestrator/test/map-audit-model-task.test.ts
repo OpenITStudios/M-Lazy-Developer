@@ -2135,6 +2135,41 @@ describe("issue-first current-source navigation", () => {
     expect(staleTarget.suggestions[0]?.sourceHops).toBeUndefined();
     expect(planAuditIssueFirstFocus({ ...input, semanticIr: undefined })
       .suggestions[0]?.sourceHops).toBeUndefined();
+
+    // A single authored source call with two plausible different targets
+    // has no unique navigation destination, even when both edges are
+    // individually resolved. Preserve the canonical task as OPEN.
+    const alternateTarget = { ...targetSite,
+      relativePath: "scripts/chunks/other.js" };
+    const twoTargets = planAuditIssueFirstFocus({
+      ...input, semanticIr: { execution: {
+        regions: [...ir.execution.regions,
+          { id: "alternative", source: alternateTarget }],
+        edges: [edge, { ...edge, id: "edge:alternative",
+          to: "alternative" }],
+      } } as any,
+    });
+    expect(twoTargets.suggestions[0]?.sourceHops).toBeUndefined();
+    expect(twoTargets.suggestions[0]?.taskId).toBe("bundle:source");
+
+    // An unresolved competitor at the identical source site is also a
+    // deciding-proof gap; do not hide that uncertainty with a resolved hint.
+    const mixed = planAuditIssueFirstFocus({
+      ...input, semanticIr: { execution: {
+        regions: ir.execution.regions,
+        edges: [edge, { ...edge, id: "edge:unknown",
+          resolution: "unresolved", to: undefined }],
+      } } as any,
+    });
+    expect(mixed.suggestions[0]?.sourceHops).toBeUndefined();
+    const repeated = planAuditIssueFirstFocus({
+      ...input, semanticIr: { execution: {
+        regions: ir.execution.regions,
+        edges: [edge, { ...edge, id: "edge:repeat" }],
+      } } as any,
+    });
+    expect(repeated.suggestions[0]?.sourceHops).toEqual(
+      result.suggestions[0]?.sourceHops);
   });
 
 
@@ -2149,6 +2184,29 @@ describe("issue-first current-source navigation", () => {
       selectedArtifactId: "map:pinned", semanticIr,
     });
     expect(result.suggestions).toEqual([]);
+    expect(result.canonicalTaskCount).toBe(1);
+  });
+
+  it("does not index source regions for unmatched selected call sites", () => {
+    const selected = task("source:without-call", {
+      kind: "COUNTERPROOF_SEARCH", stage: "PROVE",
+      causalLinkId: "link:one", scenarioId: "scenario:one",
+      evidenceContext: [source("scripts/caller.js:12:3")],
+    });
+    const ir = { execution: {
+      edges: [{
+        id: "unrelated", kind: "synchronous-call",
+        resolution: "resolved", to: "callee",
+        source: { artifactId: "map:pinned", relativePath: "scripts/other.js",
+          range: { lineStart: 1, columnStart: 2 } },
+      }],
+      get regions() { throw new Error("Unmatched edge needs no target index"); },
+    } } as any;
+    const result = planAuditIssueFirstFocus({
+      tasks: [selected], obligations: [], auditRevision: "revision:map",
+      selectedArtifactId: "map:pinned", semanticIr: ir,
+    });
+    expect(result.suggestions[0]?.sourceHops).toBeUndefined();
     expect(result.canonicalTaskCount).toBe(1);
   });
 
