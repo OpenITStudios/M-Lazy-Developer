@@ -1024,6 +1024,27 @@ function unknownSourceProofRequirements(
     matches.push(flow);
     byEntry.set(flow.entryRegionId, matches);
   }
+  // A large bundled map can have thousands of UNKNOWN source owners. The
+  // prior per-unknown full-array scans for reviewed relations and effect
+  // slices repeat identical work quadratically. Index CURRENT arrays once
+  // per derivation, retaining original order and duplicate memberships.
+  // Exact entry, source-step, artifact and review checks below remain the
+  // only proof boundary; an index lookup never proves source ownership.
+  const indexByUnknown = <T extends { readonly unknownId: string }>(
+    items: readonly T[],
+  ): ReadonlyMap<string, readonly T[]> => {
+    const index = new Map<string, T[]>();
+    for (const item of items) {
+      const existing = index.get(item.unknownId);
+      if (existing) existing.push(item);
+      else index.set(item.unknownId, [item]);
+    }
+    return index;
+  };
+  const reviewedByUnknown = indexByUnknown(
+    graph.reviewedSourceRelationships ?? [],
+  );
+  const effectsByUnknown = indexByUnknown(sourceEffects ?? []);
 
   return [...new Set(unknownIds)].sort().map(unknownId => {
     const owners = byUnknown.get(unknownId) ?? [];
@@ -1043,8 +1064,7 @@ function unknownSourceProofRequirements(
     // witness exists. Check the complete current selected-entry scope.
     const allExactIds = new Set(steps.map(step => step.id));
     const sourceEvidenceIds = unique(steps.map(step => step.id)).slice(0, 16);
-    const reviewed = (graph.reviewedSourceRelationships ?? []).filter(item =>
-      item.unknownId === unknownId &&
+    const reviewed = (reviewedByUnknown.get(unknownId) ?? []).filter(item =>
       item.sourceEntryRegionId === unknown?.sourceEntryRegionId &&
       unknown?.sourceRelations?.some(relation =>
         relation.sourceClaim === item.sourceClaim &&
@@ -1055,8 +1075,7 @@ function unknownSourceProofRequirements(
     // A positive CFG reaching-definition conclusion must come from the
     // current selected-artifact Behavior Model source slice, not an AI
     // assertion, an identifier resemblance or an unrelated sibling flow.
-    const sourceSlices = (sourceEffects ?? []).filter(item =>
-      item.unknownId === unknownId &&
+    const sourceSlices = (effectsByUnknown.get(unknownId) ?? []).filter(item =>
       item.entryRegionId === unknown?.sourceEntryRegionId);
     const sourceResolvedClaims = source !== undefined &&
         sourceSlices.length === 1

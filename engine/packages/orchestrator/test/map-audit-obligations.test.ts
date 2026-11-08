@@ -397,7 +397,7 @@ describe("audit obligations versus gameplay findings", () => {
         ],
       }],
     } as any;
-    const obligations = deriveAuditObligations({
+    const input: Parameters<typeof deriveAuditObligations>[0] = {
       graph, intent,
       sourceEffectContext: [{
         unknownId: "unknown:mechanic",
@@ -431,7 +431,8 @@ describe("audit obligations versus gameplay findings", () => {
       gameplayClosure: closed, capabilityDelivery: [], negativeSpace: [],
       temporalRisks: [], discoveryChallenges: [], sharedResourceSignals: [],
       compoundBoundaries: [], accumulationGrowth: [],
-    });
+    };
+    const obligations = deriveAuditObligations(input);
     const obligation = obligations.find(item =>
       item.id === "uninterpreted-gameplay-intent");
     expect(obligation?.sourceProofRequirements?.[0]?.missingClaims)
@@ -448,6 +449,47 @@ describe("audit obligations versus gameplay findings", () => {
     expect(obligation?.missingProof).toContain("tujuan");
     expect(obligation?.reason).toContain("remain unresolved");
     expect(obligations.some(item => item.id === "unknown:mechanic")).toBe(false);
+
+    // Two same-unknown/same-entry source-effect slices must NOT become one
+    // proven CFG handoff merely because their content is identical.
+    const duplicatedEffects = deriveAuditObligations({
+      ...input,
+      sourceEffectContext: [
+        ...input.sourceEffectContext!, ...input.sourceEffectContext!,
+      ],
+    }).find(item => item.id === "uninterpreted-gameplay-intent");
+    expect(duplicatedEffects?.sourceProofRequirements?.[0]
+      ?.sourceResolvedClaims).toBeUndefined();
+    expect(duplicatedEffects?.subjectIds).toContain("unknown:mechanic");
+    expect(duplicatedEffects?.missingProof).toContain("tujuan");
+
+    // Other unknowns and other entries may share source labels but cannot
+    // add to or shadow the exact current unknown's reviewed relations/effects.
+    const foreignGraph = {
+      ...graph,
+      reviewedSourceRelationships: [
+        ...graph.reviewedSourceRelationships,
+        { ...graph.reviewedSourceRelationships[0]!,
+          unknownId: "unknown:other" },
+        { ...graph.reviewedSourceRelationships[0]!,
+          sourceEntryRegionId: "entry:foreign" },
+      ],
+    };
+    const foreign = deriveAuditObligations({
+      ...input, graph: foreignGraph,
+      sourceEffectContext: [
+        ...input.sourceEffectContext!,
+        { ...input.sourceEffectContext![0]!,
+          unknownId: "unknown:other" },
+        { ...input.sourceEffectContext![0]!,
+          entryRegionId: "entry:foreign" },
+      ],
+    }).find(item => item.id === "uninterpreted-gameplay-intent");
+    expect(foreign?.sourceProofRequirements?.[0]?.sourceResolvedClaims)
+      .toEqual(obligation?.sourceProofRequirements?.[0]?.sourceResolvedClaims);
+    expect(foreign?.sourceProofRequirements?.[0]?.sourceEvidenceIds)
+      .toEqual(obligation?.sourceProofRequirements?.[0]?.sourceEvidenceIds);
+    expect(foreign?.subjectIds).toEqual(obligation?.subjectIds);
 
     const unrooted = deriveAuditObligations({
       graph: { ...graph, sourceFlowCandidates: [{
