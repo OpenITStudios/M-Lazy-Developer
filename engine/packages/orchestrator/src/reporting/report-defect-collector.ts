@@ -1068,10 +1068,12 @@ export function collectConfirmedDefects(
       descriptor.route,
       [...new Set(descriptor.evidenceIds)].sort(),
     ]);
-    candidateGroups.set(identity, [
-      ...(candidateGroups.get(identity) ?? []),
-      index,
-    ]);
+    const group = candidateGroups.get(identity);
+    if (group === undefined) {
+      candidateGroups.set(identity, [index]);
+    } else {
+      group.push(index);
+    }
   }
 
   const confirmedByIndex = new Map<number, ConfirmedDefect>();
@@ -1085,9 +1087,12 @@ export function collectConfirmedDefects(
     });
     // One semantic/evidence identity cannot supply two incompatible
     // approved descriptions. Refuse arbitrary first-wins promotion.
+    const firstConfirmed = accepted[0]?.item;
+    const firstSignature = firstConfirmed === undefined
+      ? undefined : JSON.stringify(firstConfirmed);
     if (accepted.length > 1 &&
         accepted.some(({ item }) =>
-          JSON.stringify(item) !== JSON.stringify(accepted[0]!.item))) {
+          JSON.stringify(item) !== firstSignature)) {
       for (const index of indexes) {
         rejectedByIndex.set(index, rejectedCandidate(
           candidates[index]!,
