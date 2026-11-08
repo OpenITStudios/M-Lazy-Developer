@@ -2137,6 +2137,21 @@ describe("issue-first current-source navigation", () => {
       .suggestions[0]?.sourceHops).toBeUndefined();
   });
 
+
+  it("does not inspect unrelated IR regions when no selected source site exists", () => {
+    const semanticIr = { execution: {
+      get regions() { throw new Error("No source site requires an IR index"); },
+      edges: [],
+    } } as any;
+    const result = planAuditIssueFirstFocus({
+      tasks: [task("no-source")], obligations: [],
+      auditRevision: "revision:map",
+      selectedArtifactId: "map:pinned", semanticIr,
+    });
+    expect(result.suggestions).toEqual([]);
+    expect(result.canonicalTaskCount).toBe(1);
+  });
+
   it("never promotes unknown, stale or unlocated evidence", () => {
     const tasks = [
       task("stale", {auditRevision: "old", stage: "PROVE",

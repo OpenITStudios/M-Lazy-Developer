@@ -2094,7 +2094,10 @@ export function planAuditIssueFirstFocus(input: {
   // reduce the number of files the operator must search. Missing or
   // ambiguous coordinates abstain; source execution is still UNKNOWN.
   const sites = new Set(selected.flatMap(item => item.sourceLocators));
-  const regions = new Map((input.semanticIr?.execution.regions ?? [])
+  // Most audits have thousands of unrelated IR regions. Do not index
+  // them when no source-backed task qualified for the bounded shortlist.
+  const regions = new Map((sites.size > 0 && input.selectedArtifactId?.trim()
+    ? input.semanticIr?.execution.regions ?? [] : [])
     .map(region => [region.id, region] as const));
   const sourceHops = !input.selectedArtifactId?.trim() || sites.size === 0
     ? [] : (input.semanticIr?.execution.edges ?? []).flatMap(edge => {
