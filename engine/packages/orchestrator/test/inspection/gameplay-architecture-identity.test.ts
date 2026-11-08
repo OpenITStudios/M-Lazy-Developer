@@ -1737,6 +1737,53 @@ describe("gameplay world model", () => {
     expect(capabilityLink?.dimensionEvidence.capability)
       .toEqual(["behavior_packs/a/scripts/policy.js"]);
 
+    // Source matching for inventory must keep the EXACT selected pack
+    // ownership: case/slash normalization is allowed, same-basename other
+    // packs are not. An unrelated bad assessment is a detection gap, not
+    // a contradiction belonging to the selected scenario.
+    const baseInventoryWorld = deriveGameplayWorldModel(scenarioSource);
+    const inventoryAssessment = {
+      scriptId: "BEHAVIOR_PACKS\\A\\SCRIPTS\\POLICY.JS",
+      executionRegion: "player:policy",
+      status: "partial-reset" as const,
+      itemGrants: 0, checkedItemGrants: 0, unverifiedItemGrants: 0,
+      propagatedItemGrants: 0, itemDrops: 0,
+    };
+    const scopedInventoryWorld = {
+      ...baseInventoryWorld,
+      inventory: {
+        ...baseInventoryWorld.inventory,
+        regions: 1, partialResets: 1,
+        assessments: [inventoryAssessment],
+      },
+    };
+    const inventoryPreset: typeof preset = {
+      ...preset,
+      scenarios: [{ ...preset.scenarios[0]!,
+        requiredKnowledgeDomains: ["inventory-state"] }],
+    };
+    const inventoryGraph = (world: typeof scopedInventoryWorld) =>
+      compileGameplayScenarioGraph({
+        intent: scenarioSource.intent, world,
+        preset: inventoryPreset,
+      });
+    const inventoryLink = (graph: ReturnType<typeof inventoryGraph>) =>
+      graph.causalLinks.find(link =>
+        link.scenarioId === "preset:capability-scope" &&
+        link.fromComponentId === "runtime:inventory");
+    expect(inventoryLink(inventoryGraph(scopedInventoryWorld))?.status)
+      .toBe("CONTRADICTED");
+    const foreignInventoryWorld = {
+      ...scopedInventoryWorld,
+      inventory: {
+        ...scopedInventoryWorld.inventory,
+        assessments: [{ ...inventoryAssessment,
+          scriptId: "behavior_packs/foreign/scripts/policy.js" }],
+      },
+    };
+    expect(inventoryLink(inventoryGraph(foreignInventoryWorld))?.status)
+      .toBe("DETECTION_GAP");
+
     const capacityEvidence = {
       requestedConcurrentArenas: 6,
       arenaCountConflict: false,

@@ -527,20 +527,31 @@ function sourceFileIdentity(value: string): string {
     .replace(/:[1-9][0-9]*:[1-9][0-9]*$/, "");
 }
 
+/** A normalized comparison, shared by the direct selector and the
+ * batch-scoped filter. Normalization changes computation only: the same
+ * authored locator must still match before any assessment can be linked.
+ */
+function scriptMatchesNormalizedScenarioScope(
+  script: string,
+  normalized: string,
+): boolean {
+  return (
+    normalized === script ||
+    normalized.endsWith("/" + script) ||
+    normalized.includes("/" + script + ".") ||
+    script.endsWith("/" + normalized)
+  );
+}
+
 function scriptMatchesScenarioScope(
   scriptId: string,
   sourceLocators: readonly string[],
 ): boolean {
   const script = normalizedLocator(scriptId);
-  return sourceLocators.some((locator) => {
-    const normalized = normalizedLocator(locator);
-    return (
-      normalized === script ||
-      normalized.endsWith("/" + script) ||
-      normalized.includes("/" + script + ".") ||
-      script.endsWith("/" + normalized)
-    );
-  });
+  return sourceLocators.some((locator) =>
+    scriptMatchesNormalizedScenarioScope(
+      script, normalizedLocator(locator),
+    ));
 }
 
 function scopedByScript<T extends { scriptId: string }>(
@@ -548,12 +559,15 @@ function scopedByScript<T extends { scriptId: string }>(
   sourceLocators: readonly string[],
 ): readonly T[] {
   if (sourceLocators.length === 0) return [];
-  return items.filter((item) =>
-    scriptMatchesScenarioScope(
-      item.scriptId,
-      sourceLocators,
-    )
-  );
+  // Assessment lists can be large. Normalizing the same immutable source
+  // locators for every assessment is avoidable; keep this scoped to ONE
+  // call and preserve the original source match and row ordering.
+  const normalizedLocators = sourceLocators.map(normalizedLocator);
+  return items.filter((item) => {
+    const script = normalizedLocator(item.scriptId);
+    return normalizedLocators.some((locator) =>
+      scriptMatchesNormalizedScenarioScope(script, locator));
+  });
 }
 
 function identifierMatchesScenarioScope(
