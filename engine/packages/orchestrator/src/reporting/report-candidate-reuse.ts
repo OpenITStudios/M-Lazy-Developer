@@ -17,16 +17,18 @@ const REUSABLE_WITH_UNCHANGED_EVIDENCE = new Set<
   "expected-behavior-evidence",
 ]);
 
-function sameSet(
-  left: readonly string[],
-  right: readonly string[],
-): boolean {
-  const a = [...new Set(left)].sort();
-  const b = [...new Set(right)].sort();
-  return (
-    a.length === b.length &&
-    a.every((value, index) => value === b[index])
-  );
+/**
+ * Reuse is bound to an exact candidate identity, not only its semantic
+ * category. JSON tuple encoding avoids delimiter ambiguity in source IDs.
+ */
+function reuseIdentity(
+  item: Pick<RejectedReportCandidate, "route" | "semanticKey" | "evidenceIds">,
+): string {
+  return JSON.stringify([
+    item.route,
+    item.semanticKey,
+    [...new Set(item.evidenceIds)].sort(),
+  ]);
 }
 
 export interface ReportCandidateReusePlan {
@@ -40,12 +42,11 @@ export function planReportCandidateReuse(
   previousRejected:
     readonly RejectedReportCandidate[],
 ): ReportCandidateReusePlan {
-  const previous = new Map(
-    previousRejected.map((item) => [
-      item.route + "|" + item.semanticKey,
-      item,
-    ]),
-  );
+  const previous = new Map<string, RejectedReportCandidate[]>();
+  for (const item of previousRejected) {
+    const key = reuseIdentity(item);
+    previous.set(key, [...(previous.get(key) ?? []), item]);
+  }
 
   const reevaluate: AuditReportCandidate[] = [];
   const reusedRejected: RejectedReportCandidate[] = [];
@@ -53,23 +54,17 @@ export function planReportCandidateReuse(
   for (const candidate of candidates) {
     const descriptor =
       describeAuditReportCandidate(candidate);
-    const prior = previous.get(
-      descriptor.route +
-        "|" +
-        descriptor.semanticKey,
-    );
+    const matches = previous.get(reuseIdentity(descriptor)) ?? [];
 
+    // Conflicting historical rows for the same exact identity must not
+    // choose an arbitrary rejection and silence a current investigation.
     if (
-      prior !== undefined &&
+      matches.length === 1 &&
       REUSABLE_WITH_UNCHANGED_EVIDENCE.has(
-        prior.nextEvidenceNeed,
-      ) &&
-      sameSet(
-        prior.evidenceIds,
-        descriptor.evidenceIds,
+        matches[0]!.nextEvidenceNeed,
       )
     ) {
-      reusedRejected.push(prior);
+      reusedRejected.push(matches[0]!);
       continue;
     }
 
@@ -118,23 +113,17 @@ export function planAuditBoundReportCandidateReuse(
     input.candidates,
     sameRevision.map((item) => item.rejected),
   );
-  const reusableKeys = new Set(
-    plan.reusedRejected.map(
-      (item) =>
-        item.route + "|" + item.semanticKey,
-    ),
-  );
+  // The bound plan must return only the exact rejected objects that
+  // passed the evidence-set check. Semantic-key-only filtering reattached
+  // unrelated previous evidence to a newly changed candidate.
+  const reusedReferences = new Set(plan.reusedRejected);
 
   return {
     auditRevision: input.auditRevision,
     reevaluate: plan.reevaluate,
     reusedRejected: sameRevision
       .filter((item) =>
-        reusableKeys.has(
-          item.rejected.route +
-            "|" +
-            item.rejected.semanticKey,
-        )
+        reusedReferences.has(item.rejected)
       ),
   };
 }
