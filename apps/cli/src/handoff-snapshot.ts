@@ -185,6 +185,22 @@ export async function readHandoffSnapshot(
           !/(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator))) {
       throw new Error("Handoff source focus task identity or provenance is invalid");
     }
+    const hops = suggestion.sourceHops;
+    if ((hops === undefined && suggestion.omittedSourceHops !== undefined) ||
+        (hops !== undefined && (!Array.isArray(hops) ||
+          hops.length < 1 || hops.length > 2 ||
+          !Number.isSafeInteger(suggestion.omittedSourceHops) ||
+          (suggestion.omittedSourceHops ?? -1) < 0 ||
+          hops.some(hop =>
+            !hop || typeof hop.edgeId !== "string" ||
+            hop.edgeId.length === 0 || hop.edgeId.length > 512 ||
+            hop.proof !== "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF" ||
+            !suggestion.sourceLocators.includes(hop.callerLocator) ||
+            typeof hop.calleeLocator !== "string" ||
+            hop.calleeLocator.length > 1024 ||
+            !/:[1-9]\d*:[1-9]\d*$/.test(hop.calleeLocator))))) {
+      throw new Error("Handoff source-call navigation boundary is invalid");
+    }
     focusOffsets.add(offset);
   }
   return snapshot;

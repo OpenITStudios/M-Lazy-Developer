@@ -2073,6 +2073,70 @@ describe("issue-first current-source navigation", () => {
     expect(focus.canonicalTaskCount).toBe(1);
   });
 
+
+  it("shows only exact same-artifact resolved cross-file caller-to-callee jumps", () => {
+    const current = task("bundle:source", {
+      stage: "PROVE", kind: "COUNTERPROOF_SEARCH",
+      causalLinkId: "link:bundle", scenarioId: "scenario:one",
+      evidenceContext: [source("scripts/chunks/entry.js:12:3")],
+    });
+    const sourceSite = { artifactId: "map:pinned",
+      relativePath: "scripts/chunks/entry.js",
+      range: { lineStart: 12, columnStart: 3 } };
+    const targetSite = { artifactId: "map:pinned",
+      relativePath: "scripts/chunks/store.js",
+      range: { lineStart: 81, columnStart: 4 } };
+    const edge = { id: "edge:resolved", kind: "synchronous-call",
+      resolution: "resolved", from: "caller", to: "callee",
+      source: sourceSite };
+    const ir = { execution: {
+      regions: [{ id: "callee", source: targetSite }],
+      edges: [edge],
+    } } as any;
+    const input = { tasks: [current], obligations: [],
+      auditRevision: "revision:map",
+      selectedArtifactId: "map:pinned", semanticIr: ir };
+    const result = planAuditIssueFirstFocus(input);
+    expect(result.suggestions[0]?.sourceHops).toEqual([{
+      edgeId: "edge:resolved",
+      callerLocator: "scripts/chunks/entry.js:12:3",
+      calleeLocator: "scripts/chunks/store.js:81:4",
+      proof: "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF",
+    }]);
+    expect(result.suggestions[0]?.omittedSourceHops).toBe(0);
+    expect(result.canonicalTaskCount).toBe(1);
+    expect(result.proofBoundary)
+      .toBe("READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION");
+
+    const negatives = [
+      { ...edge, resolution: "unresolved" },
+      { ...edge, kind: "static-module-dependency" },
+      { ...edge, source: { ...sourceSite, artifactId: "old-map" } },
+      { ...edge, source: { ...sourceSite,
+        range: { lineStart: 12, columnStart: 4 } } },
+      { ...edge, to: "nonexistent" },
+      { ...edge, source: { ...sourceSite, relativePath: "scripts/other.js" } },
+    ];
+    for (const variant of negatives) {
+      const invalid = planAuditIssueFirstFocus({
+        ...input, semanticIr: { execution: {
+          regions: ir.execution.regions, edges: [variant],
+        } } as any,
+      });
+      expect(invalid.suggestions[0]?.sourceHops).toBeUndefined();
+      expect(invalid.suggestions[0]?.taskId).toBe("bundle:source");
+    }
+    const staleTarget = planAuditIssueFirstFocus({
+      ...input, semanticIr: { execution: {
+        regions: [{ id: "callee", source: { ...targetSite,
+          artifactId: "old-map" } }], edges: [edge],
+      } } as any,
+    });
+    expect(staleTarget.suggestions[0]?.sourceHops).toBeUndefined();
+    expect(planAuditIssueFirstFocus({ ...input, semanticIr: undefined })
+      .suggestions[0]?.sourceHops).toBeUndefined();
+  });
+
   it("never promotes unknown, stale or unlocated evidence", () => {
     const tasks = [
       task("stale", {auditRevision: "old", stage: "PROVE",

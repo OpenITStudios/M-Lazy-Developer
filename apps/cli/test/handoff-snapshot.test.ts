@@ -212,6 +212,62 @@ describe("pinned read-only handoff transport", () => {
     })).rejects.toThrow(/focus task identity/);
   });
 
+
+  it("rejects forged source-call hops even when snapshot checksum is recomputed", async () => {
+    const path = await snapshotFile();
+    const original = fixture();
+    const task = original.taskRows[2]!.task;
+    const suggestion = {
+      taskId: task.id, taskOffset: 2, category: "SOURCE_BOUND_OBLIGATION",
+      obligationId: task.unresolvedObligationIds[0],
+      sourceLocators: ["scripts/chunks/entry.js:12:3"],
+      nextCheck: "Trace source", missingProof: ["Exact source"],
+      sourceHops: [{
+        edgeId: "edge:source", callerLocator: "scripts/chunks/entry.js:12:3",
+        calleeLocator: "scripts/chunks/store.js:81:4",
+        proof: "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF",
+      }],
+      omittedSourceHops: 0,
+      proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF",
+    } as const;
+    const fixtureWithHop = {
+      ...original, shared: {
+        ...original.shared, diagnosisNavigation: {
+          ...original.shared.diagnosisNavigation,
+          issueFirstFocus: {
+            ...original.shared.diagnosisNavigation.issueFirstFocus,
+            eligibleSourceGroups: 1, suggestions: [suggestion],
+          },
+        },
+      },
+    } as SelectedMapAuditHandoffSnapshot;
+    await writeHandoffSnapshot(path, fixtureWithHop, SOURCE_SHA);
+    const load = async () => {
+      const bytes = await readFile(path);
+      return readHandoffSnapshot(path, {
+        sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
+        snapshotSha256: hash(bytes),
+      });
+    };
+    expect((await load()).shared.diagnosisNavigation.issueFirstFocus
+      .suggestions[0]?.sourceHops?.[0]?.calleeLocator)
+      .toBe("scripts/chunks/store.js:81:4");
+
+    const record = JSON.parse((await readFile(path)).toString("utf8"));
+    const hop = record.snapshot.shared.diagnosisNavigation.issueFirstFocus
+      .suggestions[0].sourceHops[0];
+    for (const malformed of [
+      { ...hop, callerLocator: "scripts/chunks/unrelated.js:12:3" },
+      { ...hop, proof: "SOURCE_CALL_IS_BUG_PROOF" },
+      { ...hop, calleeLocator: "scripts/chunks/store.js" },
+    ]) {
+      record.snapshot.shared.diagnosisNavigation.issueFirstFocus
+        .suggestions[0].sourceHops[0] = malformed;
+      await writeFile(path, Buffer.from(JSON.stringify(record)));
+      await expect(load()).rejects.toThrow(/source-call navigation/);
+    }
+  });
+
   it("does not allow a snapshot to become a tracked source file", async () => {
     await expect(writeHandoffSnapshot("apps/cli/src/leak.json", fixture(), SOURCE_SHA))
       .rejects.toThrow("outside the source tree");

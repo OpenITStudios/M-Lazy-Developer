@@ -1678,6 +1678,8 @@ function projectSelectedMapAuditModelHandoffInternal(
         auditRevision: audit.auditRevision,
         firstBlockingStage: audit.admission.firstBlockingStage,
         analysisPriorities: audit.inspection.analysisPriorities,
+        selectedArtifactId: audit.identity.artifactId,
+        semanticIr: audit.inspection.semanticIrModel,
       }),
       admittedBugRootGroups: audit.candidateGroups.slice(0, 8).map(group => ({
         candidateGroupKey: group.candidateGroupKey,

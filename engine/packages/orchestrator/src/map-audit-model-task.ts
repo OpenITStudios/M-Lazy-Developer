@@ -1908,6 +1908,15 @@ export interface AuditIssueFirstFocus {
     readonly causalLinkId?: string;
     readonly obligationId?: string;
     readonly sourceLocators: readonly string[];
+    /** Up to two EXACT caller-to-callee source jumps already resolved by
+     * canonical Semantic IR. Never a root cause or executed path. */
+    readonly sourceHops?: readonly {
+      readonly edgeId: string;
+      readonly callerLocator: string;
+      readonly calleeLocator: string;
+      readonly proof: "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF";
+    }[];
+    readonly omittedSourceHops?: number;
     readonly nextCheck: string;
     readonly missingProof: readonly string[];
     readonly proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF";
@@ -1926,6 +1935,9 @@ export function planAuditIssueFirstFocus(input: {
   readonly auditRevision: string;
   readonly analysisPriorities?: readonly GameplayAnalysisPriority[];
   readonly firstBlockingStage?: SelectedMapAuditStage;
+  /** Existing selected-artifact Semantic IR only; no new parser or graph. */
+  readonly semanticIr?: SemanticIr;
+  readonly selectedArtifactId?: string;
 }, maximum = 5): AuditIssueFirstFocus {
   if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 12) {
     throw new Error("Issue-first shortlist limit must be from 1 to 12.");
@@ -2077,13 +2089,58 @@ export function planAuditIssueFirstFocus(input: {
     included.add(candidate.group);
     if (selected.length < maximum) selected.push(candidate.item);
   }
+  // Enrich only the already-selected source shortlist, never the complete
+  // task ledger. A line/column-exact, same-artifact synchronous IR edge can
+  // reduce the number of files the operator must search. Missing or
+  // ambiguous coordinates abstain; source execution is still UNKNOWN.
+  const sites = new Set(selected.flatMap(item => item.sourceLocators));
+  const regions = new Map((input.semanticIr?.execution.regions ?? [])
+    .map(region => [region.id, region] as const));
+  const sourceHops = !input.selectedArtifactId?.trim() || sites.size === 0
+    ? [] : (input.semanticIr?.execution.edges ?? []).flatMap(edge => {
+        if (edge.kind !== "synchronous-call" ||
+            edge.resolution !== "resolved" || edge.to === undefined ||
+            edge.source.artifactId !== input.selectedArtifactId) return [];
+        const target = regions.get(edge.to)?.source;
+        const caller = edge.source;
+        if (!target || target.artifactId !== input.selectedArtifactId ||
+            caller.relativePath === target.relativePath ||
+            !positive(caller.range?.lineStart) ||
+            !positive(caller.range?.columnStart) ||
+            !positive(target.range?.lineStart) ||
+            !positive(target.range?.columnStart)) return [];
+        const callerLocator = caller.relativePath + ":" +
+          caller.range.lineStart + ":" + caller.range.columnStart;
+        if (!sites.has(callerLocator)) return [];
+        const calleeLocator = target.relativePath + ":" +
+          target.range.lineStart + ":" + target.range.columnStart;
+        return [{
+          edgeId: edge.id, callerLocator, calleeLocator,
+          proof: "RESOLVED_SOURCE_CALL_NOT_RUNTIME_OR_BUG_PROOF" as const,
+        }];
+      }).sort((a, b) =>
+        a.callerLocator.localeCompare(b.callerLocator) ||
+        a.calleeLocator.localeCompare(b.calleeLocator) ||
+        a.edgeId.localeCompare(b.edgeId));
+  const suggestions = selected.map(item => {
+    const matching = sourceHops.filter((hop, index) =>
+      item.sourceLocators.includes(hop.callerLocator) &&
+      sourceHops.findIndex(other =>
+        other.callerLocator === hop.callerLocator &&
+        other.calleeLocator === hop.calleeLocator) === index);
+    return matching.length === 0 ? item : {
+      ...item,
+      sourceHops: matching.slice(0, 2),
+      omittedSourceHops: Math.max(0, matching.length - 2),
+    };
+  });
   return {
     policy: "issue-first-source-navigation",
     auditRevision: input.auditRevision,
     mandatoryFirstBlockingStage: input.firstBlockingStage ?? null,
     canonicalTaskCount: input.tasks.length,
     eligibleSourceGroups: included.size,
-    suggestions: selected,
+    suggestions,
     omittedSourceGroups: Math.max(0, included.size - selected.length),
     proofBoundary: "READ_ONLY_NAVIGATION_NOT_AUDIT_ADMISSION",
   };
