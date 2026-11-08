@@ -127,6 +127,98 @@ describe("persistence source analysis", () => {
     }
   });
 
+
+  it("surfaces an exact imported fallible write followed by feedback without an unrelated second write", () => {
+    const artifactId = "fixture:imported-source";
+    const write = parseScriptFile("store", [
+      "export class Store {",
+      "  updateScore(user, value) {",
+      "    try { entity.setScore(user, value); return true; }",
+      "    catch (error) { console.warn(error); }",
+      "    return false;",
+      "  }",
+      "}",
+    ].join("\n"), { artifactId, relativePath: "scripts/state/Store.js" });
+    const caller = parseScriptFile("buyer", [
+      'import { Store } from "../state/Store.js";',
+      "export class Buyer {",
+      "  constructor() { this.repository = new Store(); }",
+      "  purchase(player) {",
+      "    this.repository.updateScore(player, 2);",
+      '    player.sendMessage("Updated");',
+      "  }",
+      "}",
+    ].join("\n"), { artifactId, relativePath: "scripts/shop/Buyer.js" });
+    const findings = analyzePersistenceSource([], [caller, write])
+      .ignoredCommitBeforeFeedback;
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      callerRegion: "class:Buyer.purchase",
+      calleeName: "this.repository.updateScore",
+      callSource: { relativePath: "scripts/shop/Buyer.js",
+        range: { lineStart: 5 } },
+      directFallibleWriteSource: { range: { lineStart: 5 } },
+      failedReturnSource: { relativePath: "scripts/state/Store.js",
+        range: { lineStart: 5 } },
+      laterFeedbackSource: { range: { lineStart: 6 } },
+      receiverBindingKind: "direct-named-esm-class",
+      proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+    });
+  });
+
+  it("rejects cross-file guesses when the receiver or success path is not exact", () => {
+    const target = [
+      "export class Store {",
+      "  updateScore(player, value) {",
+      "    try { data.setScore(player, value); return true; }",
+      "    catch (error) {}",
+      "    return false;",
+      "  }",
+      "}",
+    ].join("\n");
+    const source = [
+      'import { Store } from "./Store.js";',
+      "class Buyer {",
+      "  constructor() { this.storage = new Store(); }",
+      "  purchase(player) {",
+      "    this.storage.updateScore(player, 1);",
+      '    player.sendMessage("Done");',
+      "  }",
+      "}",
+    ].join("\n");
+    const run = (callerText: string, calleeText = target,
+      calleeArtifact = "fixture:one") =>
+      analyzePersistenceSource([], [
+        parseScriptFile("buyer", callerText, {
+          artifactId: "fixture:one", relativePath: "scripts/Buyer.js",
+        }),
+        parseScriptFile("store", calleeText, {
+          artifactId: calleeArtifact, relativePath: "scripts/Store.js",
+        }),
+      ]).ignoredCommitBeforeFeedback;
+    expect(run(source)).toHaveLength(1);
+    const controls = [
+      source.replace("this.storage.updateScore(player, 1);",
+        "if (!this.storage.updateScore(player, 1)) return;"),
+      source.replace('player.sendMessage("Done");',
+        'this.retry(); player.sendMessage("Done");'),
+      source.replace("constructor() { this.storage = new Store(); }",
+        "constructor() { this.storage = new Store(); this.storage = replacement; }"),
+      source.replace('import { Store } from "./Store.js";',
+        'import { Store } from "./Unrelated.js";'),
+      source.replace("this.storage.updateScore(player, 1);",
+        "this.storage.updateScore?.(player, 1);"),
+    ];
+    for (const control of controls) {
+      expect(run(control)).toEqual([]);
+    }
+    expect(run(source, target, "fixture:other")).toEqual([]);
+    expect(run(source, target.replace("return false;", "return true;")))
+      .toEqual([]);
+    expect(run(source, target.replace("data.setScore(player, value);",
+      "data.getScore(player);"))).toEqual([]);
+  });
+
   it("flags only unguarded fallible commit before later write and feedback", () => {
     const parse = (source: string) => parseScriptFile("transaction", source, {
       artifactId: "fixture:persistence", relativePath: "scripts/transactions.ts",

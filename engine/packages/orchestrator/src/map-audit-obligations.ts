@@ -1348,26 +1348,34 @@ export function deriveAuditObligations(input: {
       (call.range?.columnStart ?? "unknown");
     const failureWhere = candidate.failedReturnSource.relativePath + ":" +
       (candidate.failedReturnSource.range?.lineStart ?? "unknown");
-    const writeSite = candidate.laterWriteSource ?? candidate.precedingWriteSource;
+    const writeSite = candidate.directFallibleWriteSource ??
+      candidate.laterWriteSource ?? candidate.precedingWriteSource;
     if (!writeSite) continue;
     const writeWhere = writeSite.relativePath + ":" +
       (writeSite.range?.lineStart ?? "unknown");
     const feedbackWhere = candidate.laterFeedbackSource.relativePath + ":" +
       (candidate.laterFeedbackSource.range?.lineStart ?? "unknown");
-    const writeSequence = candidate.precedingWriteSource && !candidate.laterWriteSource
-      ? "a preceding branch-local state write at " + writeWhere +
-        " and following feedback-looking call at "
-      : "a later state write at " + writeWhere +
-        " and feedback-looking call at ";
+    const writeSequence = candidate.directFallibleWriteSource
+      ? "the discarded fallible write itself at " + writeWhere +
+        " and a following feedback-looking call at "
+      : candidate.precedingWriteSource && !candidate.laterWriteSource
+        ? "a preceding branch-local state write at " + writeWhere +
+          " and following feedback-looking call at "
+        : "a later state write at " + writeWhere +
+          " and feedback-looking call at ";
     const forwarding = candidate.forwardingReturnSources?.map(source =>
       source.relativePath + ":" + (source.range?.lineStart ?? "unknown")) ?? [];
     const fieldBindings = candidate.receiverBindingSources?.map(source =>
       source.relativePath + ":" + (source.range?.lineStart ?? "unknown") +
       ":" + (source.range?.columnStart ?? "unknown")) ?? [];
     const fieldProof = fieldBindings.length > 0
-      ? " Unique same-file new LocalClass() receiver initialization at " +
-        fieldBindings.join(", ") +
-        " identifies source ownership only, not immutable runtime objects."
+      ? candidate.receiverBindingKind === "direct-named-esm-class"
+        ? " Direct named ESM class import and unique constructor receiver " +
+          "initialization at " + fieldBindings.join(", ") +
+          " establish authored linkage only, not runtime object identity."
+        : " Unique same-file new LocalClass() receiver initialization at " +
+          fieldBindings.join(", ") +
+          " identifies source ownership only, not immutable runtime objects."
       : "";
     const caught = candidate.caughtStorageExceptionWriteSource;
     const caughtWhere = caught === undefined ? undefined :

@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { posix } from "node:path";
 import type {
   ParsedScriptFile,
 } from "../../../../analyzers/scripts/src/index.js";
@@ -117,6 +118,11 @@ export interface IgnoredCommitBeforeFeedbackCandidate {
   /** Guarded branch case: state write before the unchecked call, with
    * subsequent feedback in the enclosing block. Never gameplay proof. */
   readonly precedingWriteSource?: SourceRef;
+  /** The discarded cross-file commit itself is the authored write; no
+   * unrelated second state write may be inferred as a success path. */
+  readonly directFallibleWriteSource?: SourceRef;
+  /** Explicitly named imported class and constructor-bound receiver only. */
+  readonly receiverBindingKind?: "direct-named-esm-class";
   readonly laterFeedbackSource: SourceRef;
   readonly proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG";
 }
@@ -1126,6 +1132,216 @@ function sequentialCounterBeforePayload(
     (a.firstWriteSource.range?.columnStart ?? 0) - (b.firstWriteSource.range?.columnStart ?? 0));
 }
 
+
+/** Bounded source-only alternative for a directly imported class whose
+ * fallible write result is discarded immediately before feedback. Unlike
+ * same-file lexical resolution, this requires an exact unique named ESM
+ * import, same-artifact file, exported class, one constructor binding and
+ * a terminal false/null fallback after an authored try/write. No dynamic
+ * modules, aliases, virtual paths, reexports or guessed runtime outcomes.
+ */
+function crossFileIgnoredWriteBeforeFeedback(
+  scripts: readonly ParsedScriptFile[],
+): readonly IgnoredCommitBeforeFeedbackCandidate[] {
+  type Entry = { readonly script: ParsedScriptFile; readonly file: ts.SourceFile };
+  const bySourcePath = new Map<string, Entry[]>();
+  const makeKey = (artifactId: string, relativePath: string): string =>
+    JSON.stringify([artifactId, relativePath]);
+  for (const script of scripts) {
+    if (!script.text || !script.source.artifactId.trim() ||
+        !script.source.relativePath.trim()) continue;
+    const file = ts.createSourceFile(
+      script.source.relativePath, script.text, ts.ScriptTarget.Latest, true,
+      /\.tsx?$/i.test(script.source.relativePath) ? ts.ScriptKind.TS : ts.ScriptKind.JS,
+    );
+    const key = makeKey(script.source.artifactId, script.source.relativePath);
+    bySourcePath.set(key, [...(bySourcePath.get(key) ?? []), { script, file }]);
+  }
+  const site = (entry: Entry, node: ts.Node): SourceRef => {
+    const start = entry.file.getLineAndCharacterOfPosition(node.getStart(entry.file));
+    const end = entry.file.getLineAndCharacterOfPosition(node.getEnd());
+    return { ...entry.script.source, range: {
+      lineStart: start.line + 1, columnStart: start.character + 1,
+      lineEnd: end.line + 1, columnEnd: end.character + 1,
+    } };
+  };
+  const hasModifier = (node: ts.HasModifiers, kind: ts.SyntaxKind): boolean =>
+    ts.getModifiers(node)?.some(mod => mod.kind === kind) ?? false;
+  const feedbackMethods = new Set([
+    "enqueue", "sendMessage", "setTitle", "setActionBar", "show",
+  ]);
+  const writeMethods = new Set(["set", "setScore", "setDynamicProperty"]);
+  const result: IgnoredCommitBeforeFeedbackCandidate[] = [];
+
+  for (const entries of bySourcePath.values()) {
+    if (entries.length !== 1) continue;
+    const caller = entries[0]!;
+    const imported = new Map<string, {
+      readonly target: Entry;
+      readonly definition: ts.ClassDeclaration;
+      readonly source: ts.ImportDeclaration;
+    }>();
+    for (const statement of caller.file.statements) {
+      if (!ts.isImportDeclaration(statement) ||
+          !ts.isStringLiteralLike(statement.moduleSpecifier) ||
+          !statement.moduleSpecifier.text.startsWith(".") ||
+          !statement.importClause?.namedBindings ||
+          !ts.isNamedImports(statement.importClause.namedBindings)) continue;
+      const relativePath = posix.normalize(posix.join(
+        posix.dirname(caller.script.source.relativePath),
+        statement.moduleSpecifier.text,
+      ));
+      const targetEntries = bySourcePath.get(makeKey(
+        caller.script.source.artifactId, relativePath,
+      ));
+      if (targetEntries?.length !== 1) continue;
+      const target = targetEntries[0]!;
+      for (const named of statement.importClause.namedBindings.elements) {
+        // Aliases introduce possible class-name shadowing; do not guess.
+        if (named.propertyName || !ts.isIdentifier(named.name)) continue;
+        const definitions = target.file.statements.filter((node):
+          node is ts.ClassDeclaration =>
+            ts.isClassDeclaration(node) &&
+            node.name?.text === named.name.text &&
+            hasModifier(node, ts.SyntaxKind.ExportKeyword));
+        if (definitions.length !== 1 || imported.has(named.name.text)) {
+          imported.delete(named.name.text);
+          continue;
+        }
+        imported.set(named.name.text, {
+          target, definition: definitions[0]!, source: statement,
+        });
+      }
+    }
+    if (imported.size === 0) continue;
+
+    for (const definition of caller.file.statements) {
+      if (!ts.isClassDeclaration(definition) || !definition.name ||
+          definition.heritageClauses?.length) continue;
+      const ctor = definition.members.find(ts.isConstructorDeclaration);
+      if (!ctor?.body) continue;
+      const fieldWrites = new Map<string, ts.BinaryExpression[]>();
+      const collectWrites = (node: ts.Node): void => {
+        if (ts.isBinaryExpression(node) &&
+            node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+            node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+            ts.isPropertyAccessExpression(node.left) &&
+            node.left.expression.kind === ts.SyntaxKind.ThisKeyword) {
+          const name = node.left.name.text;
+          fieldWrites.set(name, [...(fieldWrites.get(name) ?? []), node]);
+        }
+        ts.forEachChild(node, collectWrites);
+      };
+      ts.forEachChild(definition, collectWrites);
+      const boundFields = new Map<string, {
+        readonly target: Entry;
+        readonly source: ts.ImportDeclaration;
+        readonly definition: ts.ClassDeclaration;
+        readonly initialization: ts.BinaryExpression;
+      }>();
+      for (const statement of ctor.body.statements) {
+        if (!ts.isExpressionStatement(statement) ||
+            !ts.isBinaryExpression(statement.expression)) continue;
+        const assignment = statement.expression;
+        if (assignment.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+            !ts.isPropertyAccessExpression(assignment.left) ||
+            assignment.left.expression.kind !== ts.SyntaxKind.ThisKeyword ||
+            !ts.isNewExpression(assignment.right) ||
+            !ts.isIdentifier(assignment.right.expression)) continue;
+        const binding = imported.get(assignment.right.expression.text);
+        if (!binding || (fieldWrites.get(assignment.left.name.text)?.length ?? 0) !== 1 ||
+            fieldWrites.get(assignment.left.name.text)?.[0] !== assignment ||
+            ctor.parameters.some(param =>
+              ts.isIdentifier(param.name) &&
+              param.name.text === assignment.right.expression.getText(caller.file))) {
+          continue;
+        }
+        boundFields.set(assignment.left.name.text, {
+          ...binding, initialization: assignment,
+        });
+      }
+      if (boundFields.size === 0) continue;
+      for (const method of definition.members) {
+        if (!ts.isMethodDeclaration(method) || !method.body ||
+            !ts.isIdentifier(method.name) ||
+            hasModifier(method, ts.SyntaxKind.StaticKeyword)) continue;
+        const visit = (node: ts.Node): void => {
+          if (node !== method.body && ts.isFunctionLike(node)) return;
+          if (ts.isBlock(node)) {
+            for (let i = 0; i + 1 < node.statements.length; i += 1) {
+              const statement = node.statements[i]!;
+              const next = node.statements[i + 1]!;
+              if (!ts.isExpressionStatement(statement) ||
+                  !ts.isCallExpression(statement.expression) ||
+                  !ts.isPropertyAccessExpression(statement.expression.expression)) continue;
+              const call = statement.expression;
+              const receiver = call.expression.expression;
+              if (call.questionDotToken || call.expression.questionDotToken ||
+                  !ts.isPropertyAccessExpression(receiver) ||
+                  receiver.expression.kind !== ts.SyntaxKind.ThisKeyword ||
+                  receiver.questionDotToken) continue;
+              const bound = boundFields.get(receiver.name.text);
+              if (!bound) continue;
+              const implementations = bound.definition.members.filter((item):
+                item is ts.MethodDeclaration =>
+                  ts.isMethodDeclaration(item) && !!item.body &&
+                  ts.isIdentifier(item.name) &&
+                  item.name.text === call.expression.name.text &&
+                  !hasModifier(item, ts.SyntaxKind.AsyncKeyword) &&
+                  !hasModifier(item, ts.SyntaxKind.StaticKeyword));
+              if (implementations.length !== 1) continue;
+              const implementation = implementations[0]!;
+              const last = implementation.body!.statements.at(-1);
+              if (!last || !ts.isReturnStatement(last) || !last.expression ||
+                  (last.expression.kind !== ts.SyntaxKind.FalseKeyword &&
+                   last.expression.kind !== ts.SyntaxKind.NullKeyword)) continue;
+              let authoredWrite = false;
+              const findWrite = (current: ts.Node): void => {
+                if (current !== implementation.body && ts.isFunctionLike(current))
+                  return;
+                if (ts.isCallExpression(current) &&
+                    ts.isPropertyAccessExpression(current.expression) &&
+                    writeMethods.has(current.expression.name.text))
+                  authoredWrite = true;
+                ts.forEachChild(current, findWrite);
+              };
+              for (const inner of implementation.body!.statements) {
+                if (ts.isTryStatement(inner)) findWrite(inner.tryBlock);
+              }
+              if (!authoredWrite ||
+                  !ts.isExpressionStatement(next) ||
+                  !ts.isCallExpression(next.expression) ||
+                  !ts.isPropertyAccessExpression(next.expression.expression) ||
+                  !feedbackMethods.has(next.expression.expression.name.text))
+                continue;
+              result.push({
+                scriptId: caller.script.identifier,
+                callerRegion: "class:" + definition.name.text + "." + method.name.text,
+                calleeName: call.expression.getText(caller.file),
+                callSource: site(caller, call),
+                failedReturnSource: site(bound.target, last),
+                directFallibleWriteSource: site(caller, call),
+                receiverBindingSources: [
+                  site(caller, bound.source), site(caller, bound.initialization),
+                ],
+                receiverBindingKind: "direct-named-esm-class",
+                laterFeedbackSource: site(caller, next.expression),
+                proof: "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG",
+              });
+            }
+          }
+          ts.forEachChild(node, visit);
+        };
+        visit(method.body);
+      }
+    }
+  }
+  return result.sort((a, b) =>
+    a.callSource.relativePath.localeCompare(b.callSource.relativePath) ||
+    (a.callSource.range?.lineStart ?? 0) - (b.callSource.range?.lineStart ?? 0) ||
+    (a.callSource.range?.columnStart ?? 0) - (b.callSource.range?.columnStart ?? 0));
+}
+
 export function analyzePersistenceSource(
   scripts: readonly ParsedScriptFile[],
   sourceReviewScripts: readonly ParsedScriptFile[] = scripts,
@@ -1379,7 +1595,10 @@ export function analyzePersistenceSource(
 
   return {
     properties,
-    ignoredCommitBeforeFeedback: sourceReviewScripts.flatMap(ignoredCommitBeforeFeedback),
+    ignoredCommitBeforeFeedback: [
+      ...sourceReviewScripts.flatMap(ignoredCommitBeforeFeedback),
+      ...crossFileIgnoredWriteBeforeFeedback(sourceReviewScripts),
+    ],
     sequentialCounterBeforePayload: sourceReviewScripts.flatMap(sequentialCounterBeforePayload),
     resultAuditRecords,
     completeResultAuditRecords:
