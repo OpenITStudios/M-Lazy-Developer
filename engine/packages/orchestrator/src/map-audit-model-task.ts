@@ -58,8 +58,11 @@ import {
   satisfiedScenarioKnowledgeReceipt,
   uniqueScenarioKnowledgeRequirement,
 } from "./inspection/gameplay-scenario-knowledge.js";
-import type {
-  GameplayDefectResolutionGate,
+import {
+  automaticCounterProofSearch,
+  requiredCounterProofDimensions,
+  type CounterProofSearchDimension,
+  type GameplayDefectResolutionGate,
 } from "./inspection/gameplay-defect-resolution.js";
 import {
   sourceBoundAuditEvidenceIds,
@@ -384,6 +387,18 @@ export interface AuditModelTaskPacket {
   readonly proofGoal?: string;
   readonly provenClaims?: readonly string[];
   readonly missingClaims?: readonly string[];
+  /** Bounded progress from this exact current causal-link graph. This is
+   * source review reuse, NOT task completion, evidence admission or BUG proof.
+   */
+  readonly sourceCounterProofProgress?: {
+    readonly policy: "current-graph-counterproof-progress";
+    readonly completedDimensions: readonly {
+      readonly dimension: CounterProofSearchDimension;
+      readonly evidenceIds: readonly string[];
+    }[];
+    readonly remainingDimensions: readonly CounterProofSearchDimension[];
+    readonly proof: "SOURCE_SCOPE_REVIEW_NOT_GAMEPLAY_OR_BUG_PROOF";
+  };
   readonly navigationRoute?: readonly {
     readonly order: number;
     readonly knowledgeDomain: string;
@@ -1658,6 +1673,57 @@ function obligationPackets(
   });
 }
 
+
+/** Reuse only already-completed, current graph-scope counterproof work.
+ * The model task has no right to certify source receipts or discharge any
+ * proof requirement. Mismatched, stale or ambiguous records simply abstain.
+ */
+function scopedCounterProofProgress(
+  graph: GameplayScenarioGraph,
+  gate: GameplayDefectResolutionGate,
+  link: GameplayScenarioGraph["causalLinks"][number],
+): AuditModelTaskPacket["sourceCounterProofProgress"] | undefined {
+  if (link.status !== "CONTRADICTED") return undefined;
+  const owner = uniqueGameplayCausalLinkScope(graph, link.id);
+  if (owner?.link !== link) return undefined;
+  const matches = gate.resolutions.filter(item =>
+    item.causalLinkId === link.id);
+  if (matches.length !== 1 ||
+      matches[0]!.disposition !== "COUNTERPROOF_SEARCH_REQUIRED" ||
+      matches[0]!.scenarioId !== link.scenarioId ||
+      matches[0]!.counterProofSearch === undefined) return undefined;
+
+  // The prior receipt may originate from a model continuation. Re-evaluate
+  // ONLY this requested causal link with the canonical proof owner before
+  // calling any source dimension complete. No old receipt self-attests proof.
+  const current = automaticCounterProofSearch(graph, link, owner.scenario);
+  const prior = matches[0]!.counterProofSearch!;
+  if (current.conclusion !== "NO_BLOCKING_PROOF" ||
+      current.exhaustiveWithinScope ||
+      prior.schemaVersion !== 1 ||
+      prior.policy !== "bounded-counterproof-search" ||
+      JSON.stringify(prior) !== JSON.stringify(current)) return undefined;
+
+  const demanded = requiredCounterProofDimensions(graph, link, owner.scenario);
+  const completedDimensions = current.dimensionReceipts
+    .filter(receipt => receipt.exhaustiveWithinScope &&
+      receipt.evidenceIds.length > 0)
+    .map(receipt => ({
+      dimension: receipt.dimension,
+      evidenceIds: [...receipt.evidenceIds],
+    }));
+  const completed = new Set(completedDimensions.map(item => item.dimension));
+  const remainingDimensions = demanded.filter(dimension =>
+    !completed.has(dimension));
+  if (remainingDimensions.length === 0) return undefined;
+  return {
+    policy: "current-graph-counterproof-progress",
+    completedDimensions,
+    remainingDimensions,
+    proof: "SOURCE_SCOPE_REVIEW_NOT_GAMEPLAY_OR_BUG_PROOF",
+  };
+}
+
 function provePackets(
   graph: GameplayScenarioGraph,
   gate: GameplayDefectResolutionGate,
@@ -1678,6 +1744,9 @@ function provePackets(
     .filter((link) => ids.has(link.id))
     .map((link) => {
       const needsTranslation = translationIds.has(link.id);
+      const sourceProgress = needsTranslation ? undefined :
+        scopedCounterProofProgress(graph, gate, link);
+      const remaining = sourceProgress?.remainingDimensions ?? [];
       const requirementIds = unique(link.knowledgeRequirementIds);
       // Handoff and proof admission must consume one authoritative evidence
       // boundary. A task cannot lose already sourced dimension witnesses or
@@ -1704,7 +1773,19 @@ function provePackets(
         decisionNeeded:
           needsTranslation
             ? "Determine trigger, expected outcome, actual outcome, player-visible consequence, and affected scope."
-            : "Determine whether a reachable guard/owner/generation/scope/cleanup/exclusion makes the wrong state unreachable before commit.",
+            : remaining.length > 0
+              ? "Investigate the first still-open counterproof dimension '" +
+                remaining[0] + "' for this exact causal source scope; " +
+                (remaining.length - 1) + " other dimension(s) remain. " +
+                "Do not repeat a completed graph-scope review or infer a BUG."
+              : "Determine whether a reachable guard/owner/generation/scope/cleanup/exclusion makes the wrong state unreachable before commit.",
+        ...(sourceProgress === undefined ? {} : {
+          sourceCounterProofProgress: sourceProgress,
+          missingClaims: remaining.map(dimension =>
+            "Counterproof dimension '" + dimension + "' is not source-exhaustive " +
+            "for this exact causal link. Find its missing blocking witness " +
+            "or explicitly retain UNKNOWN."),
+        }),
         scenarioId: link.scenarioId,
         causalLinkId: link.id,
         subjectIds: unique(link.subjectIds),

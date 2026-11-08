@@ -29,8 +29,9 @@ import {
 import type {
   GameplayScenarioGraph,
 } from "../src/inspection/gameplay-scenario-model.js";
-import type {
-  GameplayDefectResolutionGate,
+import {
+  automaticCounterProofSearch,
+  type GameplayDefectResolutionGate,
 } from "../src/inspection/gameplay-defect-resolution.js";
 import {
   compileDeveloperPracticeReferenceContext,
@@ -778,6 +779,123 @@ describe("source interpretation admission is a read-only model-task review", () 
 });
 
 describe("PROVE model evidence handoff", () => {
+
+  it("reuses only current exact-link canonical source counterproof work", () => {
+    const id = "link:counterproof", scenarioId = "scenario:counterproof";
+    const guardId = "evidence:guard";
+    const intent: GameplayIntentModel = {
+      schemaVersion: 1, id: "intent:progress",
+      artifactId: "artifact:progress",
+      evidence: [{
+        id: guardId, origin: "source-code", scope: "selected-artifact",
+        locator: "scripts/admission.js:12:3",
+      }],
+      nodes: [], edges: [], invariants: [], unknowns: [],
+    };
+    const link: GameplayScenarioGraph["causalLinks"][number] = {
+      id, scenarioId,
+      fromComponentId: "runtime:player-capability",
+      toComponentId: "objective:start",
+      status: "CONTRADICTED",
+      purpose: "Admission must respect player capability",
+      reason: "The authored prerequisite can be bypassed",
+      evidenceIds: [guardId], subjectIds: ["objective:start"],
+      componentIds: ["runtime:player-capability"],
+      knowledgeRequirementIds: [], impactPathComponentIds: [],
+      impactPathEvidenceIds: [], dimensionEvidence: { guard: [guardId] },
+    };
+    const scenario: GameplayScenarioGraph["scenarios"][number] = {
+      id: scenarioId, label: "admission", gameplayStage: "READY_START",
+      purpose: "Start only when player is ready",
+      sourceSubjectIds: ["objective:start"],
+      componentIds: ["runtime:player-capability"],
+      causalLinkIds: [id], playerCounts: [1],
+      requiredKnowledgeIds: [], composedScenarioIds: [],
+    };
+    const graph: GameplayScenarioGraph = {
+      schemaVersion: 1, policy: "scenario-driven-causal-audit",
+      scenarios: [scenario], components: [], causalLinks: [link],
+      knowledgeRequirements: [], knowledgeReceipts: [],
+      requiredInspectionGraph: {
+        policy: "required-inspection-graph", nodes: [], receipts: [],
+      },
+    };
+    const canonical = automaticCounterProofSearch(graph, link, scenario);
+    expect(canonical.conclusion).toBe("NO_BLOCKING_PROOF");
+    expect(canonical.exhaustiveWithinScope).toBe(false);
+    expect(canonical.dimensionReceipts.some(receipt =>
+      receipt.dimension === "guard" && receipt.exhaustiveWithinScope)).toBe(true);
+
+    const gate: GameplayDefectResolutionGate = {
+      status: "BLOCKED",
+      contradictedCausalLinkIds: [id],
+      resolutions: [{
+        causalLinkId: id, scenarioId,
+        disposition: "COUNTERPROOF_SEARCH_REQUIRED",
+        counterProofSearch: canonical,
+      }],
+      confirmedDefectReadyIds: [], blockingCounterProofIds: [],
+      runtimeProofRequiredIds: [], detectionGapIds: [],
+      gameplayTranslationRequiredIds: [],
+      counterProofSearchRequiredIds: [id], issues: [],
+    };
+    const input: Parameters<typeof deriveAuditModelTaskPackets>[0] = {
+      admission: {
+        policy: "selected-map-audit-ordered-admission",
+        status: "BLOCKED", firstBlockingStage: "PROVE", issues: [],
+      },
+      procedure: {} as any, graph, defectResolution: gate,
+      intent, auditRevision: "revision:progress", world: {} as any,
+    };
+    const get = (overrides: Partial<typeof input> = {}) =>
+      deriveAuditModelTaskPackets({ ...input, ...overrides })
+        .find(packet => packet.kind === "COUNTERPROOF_SEARCH" &&
+          packet.causalLinkId === id);
+    const task = get();
+    expect(task?.sourceCounterProofProgress).toMatchObject({
+      policy: "current-graph-counterproof-progress",
+      completedDimensions: [{ dimension: "guard", evidenceIds: [guardId] }],
+      proof: "SOURCE_SCOPE_REVIEW_NOT_GAMEPLAY_OR_BUG_PROOF",
+    });
+    expect(task?.sourceCounterProofProgress?.remainingDimensions)
+      .toContain("scope");
+    expect(task?.sourceCounterProofProgress?.remainingDimensions)
+      .not.toContain("guard");
+    expect(task?.missingClaims?.some(claim =>
+      claim.includes("scope") && claim.includes("UNKNOWN"))).toBe(true);
+    expect(task?.decisionNeeded).toContain("first still-open counterproof");
+    expect(task?.evidenceIds).toContain(guardId);
+    expect(task?.unresolvedObligationIds).toEqual([]);
+    expect(task?.allowedOutputs).toContain("detection gap");
+    expect(task?.forbiddenActions).toContain("create final report text");
+
+    // Missing, duplicate, foreign or stale source receipts do not create
+    // synthetic progress or remove canonical tasks/obligations.
+    const stale = { ...canonical, dimensionReceipts:
+      canonical.dimensionReceipts.map(receipt =>
+        receipt.dimension === "guard" ? {
+          ...receipt, evidenceIds: ["evidence:unrelated"],
+        } : receipt) };
+    for (const invalid of [
+      { ...gate, resolutions: [] },
+      { ...gate, resolutions: [gate.resolutions[0]!, gate.resolutions[0]!] },
+      { ...gate, resolutions: [{
+        ...gate.resolutions[0]!, counterProofSearch: stale,
+      }] },
+    ]) {
+      const candidate = get({ defectResolution: invalid });
+      expect(candidate).toBeDefined();
+      expect(candidate?.sourceCounterProofProgress).toBeUndefined();
+      expect(candidate?.decisionNeeded).toContain("reachable guard/owner");
+    }
+    const ambiguous = get({ graph: {
+      ...graph, causalLinks: [link, { ...link }],
+    } });
+    expect(ambiguous).toBeDefined();
+    expect(ambiguous?.sourceCounterProofProgress).toBeUndefined();
+  });
+
+
   it("preserves exact analyzer witnesses while rejecting a neighboring source and duplicate identity", () => {
     const artifactId = "artifact:selected";
     const id = "link:admission";
