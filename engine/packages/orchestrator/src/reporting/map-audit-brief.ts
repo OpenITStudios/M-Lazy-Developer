@@ -773,12 +773,24 @@ export function formatSelectedMapAuditFinalReport(input: {
     "**Versi:** " + concise(report.mapVersion), "",
   ];
   out.push(...formatOperationalOutcomeSnapshot(report));
-  out.push(...formatSourceBoundGameplayFlowReview(report, intent));
-  out.push(...formatObjectiveStateSourceContexts(report, intent));
+  // The operator can decide what was found before reading source inventory.
+  // These fields are projections of the canonical gameDesign, not approved
+  // design or observed gameplay.
+  out.push(
+    "## Game Design (bukti source, bukan playtest)",
+    "**Tujuan (" + (report.gameDesign?.objectiveGrounding ?? "unresolved") +
+      "):** " + concise(report.gameDesign?.objective),
+    "**Kondisi menang (" + (report.gameDesign?.winConditionGrounding ?? "unresolved") +
+      "):** " + concise(report.gameDesign?.winCondition),
+    "**Kondisi kalah (" + (report.gameDesign?.loseConditionGrounding ?? "unresolved") +
+      "):** " + concise(report.gameDesign?.loseCondition),
+    "",
+  );
+  const technical: string[] = [];
   // Derived QA IDs remain pending until requirement-specific PROVE evidence.
   const qa = report.qaCoverage;
   if (qa) {
-    out.push(
+    technical.push(
       "## Klasifikasi QA — keputusan per kriteria",
       "Profil: " + qa.profile + "; pertanyaan terpilih: " +
         qa.selected + "; pelanggaran QA terbukti: " +
@@ -790,23 +802,23 @@ export function formatSelectedMapAuditFinalReport(input: {
         "tepat dapat mengonfirmasi pelanggaran; kekurangan bukti bukan PASS.",
     );
     if (qa.profile === "UNRESOLVED_SOURCE_CANDIDATES") {
-      out.push("Klasifikasi tipe/mode belum dibuktikan. " +
+      technical.push("Klasifikasi tipe/mode belum dibuktikan. " +
         "Kandidat aktivitas source tidak otomatis menjadi jenis game.");
     }
     const routes = qa.modeClassifications ?? [];
     if (routes.length > 0) {
-      out.push("Profil minigame berbasis bukti (routing, bukan PASS):");
+      technical.push("Profil minigame berbasis bukti (routing, bukan PASS):");
       for (const mode of routes.slice(0, 8)) {
-        out.push("- " + mode.modeId + " / " + mode.gameSubjectId +
+        technical.push("- " + mode.modeId + " / " + mode.gameSubjectId +
           ": " + mode.mapType + " / " + mode.playerMode +
           " [" + mode.status + "].");
       }
-      if (routes.length > 8) out.push(
+      if (routes.length > 8) technical.push(
         "- " + (routes.length - 8) + " profil lain ada di qaCoverage.");
     }
     const gameScopes = qa.gameScopes ?? [];
     if (gameScopes.length > 0) {
-      out.push(
+      technical.push(
         "Relasi aktivitas game dari source (belum klasifikasi mode/game type):",
         ...gameScopes.slice(0, 4).map(group =>
           "- " + group.gameSubjectId + ": " +
@@ -815,12 +827,12 @@ export function formatSelectedMapAuditFinalReport(input: {
           "Tidak membuktikan mode permainan."),
       );
       if ((qa.omittedGameScopes ?? 0) > 0) {
-        out.push("- Kelompok game lain tidak ditampilkan: " +
+        technical.push("- Kelompok game lain tidak ditampilkan: " +
           qa.omittedGameScopes + ".");
       }
     }
     if ((qa.unscopedActivitySubjectIds?.length ?? 0) > 0) {
-      out.push("Aktivitas tanpa relasi scope game yang terbukti: " +
+      technical.push("Aktivitas tanpa relasi scope game yang terbukti: " +
         qa.unscopedActivitySubjectIds!.length +
         " (ini tetap perlu ditelusuri).");
     }
@@ -844,7 +856,7 @@ export function formatSelectedMapAuditFinalReport(input: {
         : item.positiveSourceCoverage?.status === "RUNTIME_PROOF_REQUIRED"
           ? "bukti Minecraft/native masih diperlukan"
           : undefined;
-      out.push("- " + item.id +
+      technical.push("- " + item.id +
         (item.modeScope ? " [" + item.modeScope.modeId + "]" : "") +
         (violation ? " PELANGGARAN TERBUKTI — " :
           " BELUM TERVERIFIKASI — ") +
@@ -857,17 +869,17 @@ export function formatSelectedMapAuditFinalReport(input: {
         "; bukan QA PASS)");
     }
     if (qa.checks.length > 10) {
-      out.push("- " + (qa.checks.length - 10) +
+      technical.push("- " + (qa.checks.length - 10) +
         " ID lain tercatat di qaCoverage pada laporan yang sama.");
     }
-    out.push("");
+    technical.push("");
   }
   // Explain the same source evidence already present in Gameplay Intent and
   // the model handoff. A typed send is NOT evidence of an observed message,
   // a real player/arena binding, an approved objective, or a new Bug.
   const sourceUiRoutes = authoredUiMessageRoutes(intent);
   if (sourceUiRoutes.length > 0) {
-    out.push(
+    technical.push(
       "## Hubungan Pesan dan Kode (INDIKASI SOURCE)",
       "Kode map menunjukkan tempat pesan *mungkin dikirim*. " +
         "Ini belum membuktikan pesan tampil kepada pemain atau mekaniknya berhasil.",
@@ -1030,6 +1042,11 @@ export function formatSelectedMapAuditFinalReport(input: {
   };
   renderGroup("Bug", bugs);
   renderGroup("Design Mismatch", mismatches);
+  // Keep the same authored gameplay and QA evidence, but after admitted
+  // findings so code/QA inventory never obscures actionable map outcomes.
+  out.push(...formatSourceBoundGameplayFlowReview(report, intent));
+  out.push(...formatObjectiveStateSourceContexts(report, intent));
+  out.push(...technical);
   out.push(...formatSelectedMapProbeCoverage(report, intent));
 
   // Every still-material proof question uses ONE operator-facing label,
