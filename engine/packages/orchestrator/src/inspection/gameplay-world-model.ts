@@ -1385,11 +1385,18 @@ export function deriveGameplayWorldModel(
   }
 
   const persistenceApplicable =
-    (source.persistenceSource?.properties.length ?? 0) > 0;
+    (source.persistenceSource?.properties.length ?? 0) > 0 ||
+    (source.persistenceSource?.resultAuditRecords.length ?? 0) > 0 ||
+    (source.persistenceSource?.reconnectTransientRestoreRiskCount ?? 0) > 0;
   if (persistenceApplicable) {
+    // Keep global closure aligned with the already source-scoped Scenario
+    // compiler: reconnect ownership and incomplete result records remain
+    // material questions even when every property has a known lifetime.
     const unresolved =
       (source.persistenceSource?.unknownScope ?? 0) > 0 ||
-      (source.persistenceSource?.unknownLifetime ?? 0) > 0;
+      (source.persistenceSource?.unknownLifetime ?? 0) > 0 ||
+      (source.persistenceSource?.reconnectTransientRestoreRiskCount ?? 0) > 0 ||
+      (source.persistenceSource?.partialResultAuditRecords ?? 0) > 0;
     runtimeSurfaces.push({
       id: "runtime:persistence",
       label: "Persistence and recovery",
@@ -1397,7 +1404,7 @@ export function deriveGameplayWorldModel(
       status: unresolved ? "unknown" : "understood",
       material: true,
       ...(unresolved
-        ? { reason: "Persistence scope or lifetime remains unresolved." }
+        ? { reason: "Persistence scope/lifetime, reconnect ownership or durable result-journal proof remains unresolved." }
         : {}),
     });
   }
@@ -1443,7 +1450,9 @@ export function deriveGameplayWorldModel(
   if (inventoryApplicable) {
     const unresolved =
       (source.inventoryLifecycle?.unresolvedEquipmentSlotEvidence ?? 0) > 0 ||
+      (source.inventoryLifecycle?.grantVerificationGaps ?? 0) > 0 ||
       (source.inventoryRestoreOwnership?.unknownIdentityGrants ?? 0) > 0 ||
+      (source.inventoryRestoreOwnership?.initialSessionOverlapUnresolved ?? 0) > 0 ||
       (source.inventoryPolicy?.unknownIdentityEvidence ?? 0) > 0 ||
       (source.inventoryPolicy?.unknownDrops ?? 0) > 0;
     runtimeSurfaces.push({
@@ -1453,7 +1462,7 @@ export function deriveGameplayWorldModel(
       status: unresolved ? "unknown" : "understood",
       material: true,
       ...(unresolved
-        ? { reason: "Inventory/equipment identity or restore behavior remains unresolved." }
+        ? { reason: "Inventory/equipment identity, grant commit or initial-session restore ownership remains unresolved." }
         : {}),
     });
   }
