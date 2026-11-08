@@ -535,7 +535,13 @@ function scriptMatchesNormalizedScenarioScope(
   script: string,
   normalized: string,
 ): boolean {
+  // An EXACT selected source path with a genuine line/column suffix
+  // is still the same file. Do not accept arbitrary labels, zero or
+  // a similarly named sibling/foreign pack as an exact source site.
+  const exactPosition = normalized.startsWith(script + ":") &&
+    /^:[1-9]\d*(?::[1-9]\d*)?$/.test(normalized.slice(script.length));
   return (
+    exactPosition ||
     normalized === script ||
     normalized.endsWith("/" + script) ||
     normalized.includes("/" + script + ".") ||

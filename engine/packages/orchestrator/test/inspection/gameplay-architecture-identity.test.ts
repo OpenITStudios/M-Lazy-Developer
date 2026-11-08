@@ -1783,6 +1783,21 @@ describe("gameplay world model", () => {
     };
     expect(inventoryLink(inventoryGraph(foreignInventoryWorld))?.status)
       .toBe("DETECTION_GAP");
+    // A lookalike file and an arbitrary locator suffix cannot impersonate
+    // the exact selected-source file/position when inventory is assessed.
+    for (const unowned of [
+      "behavior_packs/a/scripts/policy.js.backup",
+      "behavior_packs/a/scripts/policy.js:untrusted",
+      "behavior_packs/other/scripts/policy.js",
+    ]) {
+      expect(inventoryLink(inventoryGraph({
+        ...scopedInventoryWorld,
+        inventory: {
+          ...scopedInventoryWorld.inventory,
+          assessments: [{ ...inventoryAssessment, scriptId: unowned }],
+        },
+      }))?.status).toBe("DETECTION_GAP");
+    }
 
     const capacityEvidence = {
       requestedConcurrentArenas: 6,
