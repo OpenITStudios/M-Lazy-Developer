@@ -151,7 +151,8 @@ describe("arena cleanup surface analysis", () => {
         (item) =>
           item.surface === "player-capability" &&
           item.key.includes("mayfly") &&
-          item.status === "complete",
+          // @s alone cannot prove the same player owns both commands.
+          item.status === "partial",
       ),
     ).toBe(true);
   });

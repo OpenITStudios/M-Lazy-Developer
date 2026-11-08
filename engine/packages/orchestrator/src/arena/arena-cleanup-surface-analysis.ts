@@ -407,7 +407,11 @@ function extractMutations(
           ability[3]!.toLowerCase() === "true"
             ? "acquire"
             : "release",
-        precision: "exact",
+        // The same textual selector (including @s) can denote a different
+        // player when a second command executes. Without a bound executor,
+        // matching ability true/false is a source inverse candidate, not
+        // exact player/session cleanup proof.
+        precision: "surface-level",
       });
     }
   }
@@ -459,16 +463,25 @@ function analyzeScript(
   );
   const graph = graphFor(script);
 
+  // Preserve every acquisition's proof precision for the same resource
+  // key. Taking the last Map value could borrow one exact occurrence to
+  // certify another acquisition whose player/entity owner was unresolved.
+  const groupedAcquisitions = new Map<
+    string, ArenaCleanupSurfaceMutation[]
+  >();
+  for (const acquisition of acquisitions) {
+    const key = mutationKey(acquisition.surface, acquisition.key);
+    groupedAcquisitions.set(
+      key,
+      [...(groupedAcquisitions.get(key) ?? []), acquisition],
+    );
+  }
+
   return terminalRegions(script).map((terminalRegion) => {
     const regions = reachable(graph, terminalRegion);
-    const surfaces = [
-      ...new Map(
-        acquisitions.map((item) => [
-          mutationKey(item.surface, item.key),
-          item,
-        ]),
-      ).values(),
-    ].map((acquire): ArenaCleanupSurfaceAssessment => {
+    const surfaces = [...groupedAcquisitions.values()]
+      .map((group): ArenaCleanupSurfaceAssessment => {
+      const acquire = group[0]!;
       const matching = releases.filter((release) =>
         releaseMatches(acquire, release)
       );
@@ -476,7 +489,7 @@ function analyzeScript(
         regions.includes(release.region)
       );
       const exact =
-        acquire.precision === "exact" &&
+        group.every((item) => item.precision === "exact") &&
         reachableMatching.some(
           (release) =>
             release.precision === "exact" &&
@@ -492,11 +505,7 @@ function analyzeScript(
       return {
         surface: acquire.surface,
         key: acquire.key,
-        acquisitionRegions: acquisitions
-          .filter((item) =>
-            item.surface === acquire.surface &&
-            item.key === acquire.key
-          )
+        acquisitionRegions: group
           .map((item) => item.region)
           .filter((value, index, array) =>
             array.indexOf(value) === index

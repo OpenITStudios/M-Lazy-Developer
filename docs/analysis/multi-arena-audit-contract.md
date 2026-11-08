@@ -218,9 +218,16 @@ speculative cross-arena BUG or isolated PASS.
 A source-level `Entity.remove()`, `Entity.kill()` or persisted
 `playerId` helper call cannot independently establish that cleanup
 executed, targeted the right arena generation, or preserved active
-sibling arenas. Use selected-map contracts and stronger evidence at
-the existing audit proof/admission gates; publisher ZIP rules and
-historical Skills Probe outcomes are reference, not universal map design.
+sibling arenas. A command pair like `ability @s mayfly true` /
+`ability @s mayfly false` only establishes a syntactic inverse, not
+the same player identity across command-executor contexts. It remains
+surface-level/partial until executor and session ownership are bound.
+When several acquisitions share a surface/key, exact cleanup proof
+requires every acquisition's source precision to be exact; one exact
+occurrence cannot upgrade another unresolved player/entity owner.
+Use selected-map contracts and stronger evidence at the existing audit
+proof/admission gates; publisher ZIP rules and historical Skills Probe
+outcomes are reference, not universal map design.
 
 ## Simultaneous-start rule
 
