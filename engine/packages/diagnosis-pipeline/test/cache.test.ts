@@ -881,6 +881,153 @@ describe("progressive diagnosis runner", () => {
     ).not.toHaveBeenCalled();
   });
 
+
+  it.each([
+    "evidence",
+    "reasons",
+    "missing-receipt",
+  ] as const)(
+    "recomputes rather than reusing %s-tampered cache receipts",
+    async (tampering) => {
+      const cache = createInMemoryDiagnosisResultCache();
+      const first = executor(
+        "diagnosis.source-index",
+        "static",
+        "structural-proof",
+      );
+
+      const original = await runProgressiveDiagnosis({
+        goal: "structural-consistency",
+        relevantTags: ["artifact"],
+        context: "LOCAL_ARTIFACT",
+        executorRegistry: {
+          schemaVersion: 1,
+          executors: [first],
+        },
+        payloadProvider: {
+          payloadFor: () => ({ artifact: "same" }),
+        },
+        resultCache: cache,
+      });
+
+      expect(original.status).toBe("sufficient");
+      const firstExecution = original.executions[0];
+      if (
+        firstExecution?.status !== "executed" ||
+        firstExecution.cacheKey === undefined
+      ) {
+        throw new Error("Expected an actual deterministic cache receipt.");
+      }
+
+      const cached = await cache.get(firstExecution.cacheKey);
+      if (cached === undefined) {
+        throw new Error("Expected stored diagnosis receipt.");
+      }
+
+      if (tampering === "evidence") {
+        // A different ID still satisfies the prior structural validator.
+        (cached.evidence[0]!.evidenceIds as string[])[0] =
+          "source:forged-but-well-formed";
+      } else if (tampering === "reasons") {
+        (cached.reasons as string[]).push(
+          "forged cache explanation",
+        );
+      } else {
+        delete cached.receiptFingerprint;
+      }
+
+      const second = executor(
+        "diagnosis.source-index",
+        "static",
+        "structural-proof",
+      );
+      const rerun = await runProgressiveDiagnosis({
+        goal: "structural-consistency",
+        relevantTags: ["artifact"],
+        context: "LOCAL_ARTIFACT",
+        executorRegistry: {
+          schemaVersion: 1,
+          executors: [second],
+        },
+        payloadProvider: {
+          payloadFor: () => ({ artifact: "same" }),
+        },
+        resultCache: cache,
+      });
+
+      expect(rerun.status).toBe("sufficient");
+      expect(second.execute).toHaveBeenCalledTimes(1);
+      expect(rerun.executions[0]?.status).toBe("executed");
+      expect(
+        rerun.executions[0]?.status === "executed"
+          ? rerun.executions[0].reused
+          : undefined,
+      ).toBe(false);
+    },
+  );
+
+  it(
+    "keeps cached evidence isolated from caller mutation after fresh execution and reuse",
+    async () => {
+      const cache = createInMemoryDiagnosisResultCache();
+      const first = executor(
+        "diagnosis.source-index",
+        "static",
+        "structural-proof",
+      );
+      const runWith = (source: DiagnosisCapabilityExecutor) =>
+        runProgressiveDiagnosis({
+          goal: "structural-consistency",
+          relevantTags: ["artifact"],
+          context: "LOCAL_ARTIFACT",
+          executorRegistry: {
+            schemaVersion: 1,
+            executors: [source],
+          },
+          payloadProvider: {
+            payloadFor: () => ({ artifact: "same" }),
+          },
+          resultCache: cache,
+        });
+
+      const original = await runWith(first);
+      expect(original.status).toBe("sufficient");
+      (original.evidence[0]!.evidenceIds as string[])[0] =
+        "modified-by-caller";
+
+      const second = executor(
+        "diagnosis.source-index",
+        "static",
+        "structural-proof",
+      );
+      const reused = await runWith(second);
+      expect(reused.status).toBe("sufficient");
+      expect(second.execute).not.toHaveBeenCalled();
+      expect(reused.executions[0]?.status).toBe("executed");
+      expect(
+        reused.executions[0]?.status === "executed"
+          ? reused.executions[0].reused
+          : undefined,
+      ).toBe(true);
+      expect(reused.evidence[0]?.evidenceIds).toEqual([
+        "diagnosis.source-index:evidence",
+      ]);
+
+      (reused.evidence[0]!.evidenceIds as string[])[0] =
+        "modified-after-reuse";
+      const third = executor(
+        "diagnosis.source-index",
+        "static",
+        "structural-proof",
+      );
+      const reusedAgain = await runWith(third);
+      expect(third.execute).not.toHaveBeenCalled();
+      expect(reusedAgain.evidence[0]?.evidenceIds).toEqual([
+        "diagnosis.source-index:evidence",
+      ]);
+    },
+  );
+
   it("invalidates deterministic reuse when cached output is mutated", async () => {
     const cache =
       createInMemoryDiagnosisResultCache();

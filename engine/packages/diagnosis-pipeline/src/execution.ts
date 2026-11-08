@@ -128,6 +128,18 @@ function capabilityById(
   );
 }
 
+function copyDiagnosisEvidence(
+  snapshots: readonly AnalysisEvidenceSnapshot[],
+): AnalysisEvidenceSnapshot[] {
+  // Separate cached IDs and traits from evidence returned to callers.
+  return snapshots.map((item) => ({
+    level: item.level,
+    quality: item.quality,
+    traits: [...item.traits],
+    evidenceIds: [...item.evidenceIds],
+  }));
+}
+
 function validateCompletedEvidence(
   capabilityId: string,
   executorId: string,
@@ -388,6 +400,33 @@ export async function executePlannedDiagnosisStep(
           );
         }
 
+        // Output validity does not authenticate the cached evidence IDs.
+        let receiptFingerprintValid = false;
+        try {
+          receiptFingerprintValid =
+            typeof cached.receiptFingerprint === "string" &&
+            cached.receiptFingerprint ===
+              diagnosisCacheValueFingerprint({
+                evidence: cached.evidence,
+                reasons: cached.reasons,
+              });
+        } catch (error) {
+          cacheNotes.push(
+            "Cached diagnosis receipt integrity could not be verified: " +
+              (
+                error instanceof Error
+                  ? error.message
+                  : String(error)
+              ),
+          );
+        }
+
+        if (!receiptFingerprintValid) {
+          cacheNotes.push(
+            "Cached diagnosis evidence/reasons receipt is missing or changed; cache entry was ignored.",
+          );
+        }
+
         const cachedEvidenceErrors =
           validateCompletedEvidence(
             capability.id,
@@ -397,15 +436,16 @@ export async function executePlannedDiagnosisStep(
 
         if (
           outputFingerprintValid &&
+          receiptFingerprintValid &&
           cachedEvidenceErrors.length === 0
         ) {
           return {
             status: "executed",
             capabilityId: capability.id,
             executorId: executor.executorId,
-            evidence: [
-              ...cached.evidence,
-            ],
+            evidence: copyDiagnosisEvidence(
+              cached.evidence,
+            ),
             output: cached.output,
             reasons: [
               "Reused deterministic diagnosis result from the exact input/revision cache.",
@@ -495,6 +535,16 @@ export async function executePlannedDiagnosisStep(
         diagnosisCacheValueFingerprint(
           result.output,
         );
+      const receiptEvidence =
+        copyDiagnosisEvidence(result.evidence);
+      const receiptReasons = [
+        ...(result.reasons ?? []),
+      ];
+      const receiptFingerprint =
+        diagnosisCacheValueFingerprint({
+          evidence: receiptEvidence,
+          reasons: receiptReasons,
+        });
 
       await input.cache.put({
         schemaVersion: 1,
@@ -507,11 +557,10 @@ export async function executePlannedDiagnosisStep(
           executor.executorRevision!,
         context: input.context,
         outputFingerprint,
-        evidence: [...result.evidence],
+        receiptFingerprint,
+        evidence: receiptEvidence,
         output: result.output,
-        reasons: [
-          ...(result.reasons ?? []),
-        ],
+        reasons: receiptReasons,
       });
     } catch (error) {
       cacheNotes.push(

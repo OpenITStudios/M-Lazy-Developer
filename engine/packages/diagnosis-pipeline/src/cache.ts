@@ -22,6 +22,8 @@ export interface CachedDiagnosisExecution {
   executorRevision: string;
   context: AnalysisExecutionContext;
   outputFingerprint: string;
+  /** Absent on legacy entries; such receipts must be recomputed before reuse. */
+  receiptFingerprint?: string;
   evidence: readonly AnalysisEvidenceSnapshot[];
   output: unknown;
   reasons: readonly string[];
