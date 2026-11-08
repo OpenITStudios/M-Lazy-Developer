@@ -598,6 +598,108 @@ function formatObjectiveStateSourceContexts(
   return out;
 }
 
+/**
+ * Read-only operator snapshot from canonical audit evidence. It restores the
+ * original map-audit questions (what is decided, what matters, which arenas)
+ * without becoming a new verdict, replica checker, or source of gameplay facts.
+ */
+function formatOperationalOutcomeSnapshot(report: MapAuditOutputV2): string[] {
+  const findings = [...report.bugs, ...report.designMismatches];
+  const proven = findings.filter(item => item.status === "PROVEN");
+  const pending = findings.filter(item => item.status === "NEED_VALIDATION");
+  const obligations = report.auditObligations ?? [];
+  const count = (value: number | null | undefined): string =>
+    typeof value === "number" && Number.isFinite(value)
+      ? String(value)
+      : "BELUM TERBUKTI";
+
+  const out = [
+    "## Ringkasan Operasional",
+    "**Status audit:** " + report.control.status +
+      ". Ini keputusan kelengkapan audit/bukti, bukan klaim Minecraft telah dijalankan.",
+    "**Temuan:** " + proven.length + " PROVEN; " +
+      pending.length + " NEED_VALIDATION (belum terbukti).",
+    "**Bukti yang belum selesai:** " + obligations.length +
+      " Audit Obligation; indeks unresolved " +
+      (report.unresolved?.total ?? 0) + ". Ini bukan tambahan bug.",
+  ];
+
+  if (proven.length > 0) {
+    out.push("**Temuan terbukti paling awal (rincian dan bukti di bawah):**");
+    for (const item of proven.slice(0, 3)) {
+      out.push("- " + item.issueType + ": " +
+        item.issue.replace(/\s+/g, " ").trim().slice(0, 180) +
+        " — dampak: " +
+        item.playerImpact.replace(/\s+/g, " ").trim().slice(0, 180));
+    }
+    if (proven.length > 3) {
+      out.push("- " + (proven.length - 3) +
+        " temuan PROVEN lainnya tercatat pada bagian Bug/Design Mismatch.");
+    }
+  }
+
+  const arena = report.multiArena;
+  if (arena?.detected) {
+    out.push(
+      "**Inventaris arena:** terlihat " + count(arena.visibleArenaCount) +
+        "; deklarasi source " + count(arena.declaredArenaCount) +
+        ". Jumlah arena terlihat bukan bukti semua dapat dimainkan.",
+      "**Kapasitas serentak:** batas deklarasi source " +
+        count(arena.declaredConcurrentArenaLimit) +
+        "; batas aman dari analisis bukti " +
+        count(arena.safeConcurrentArenaLimit) +
+        ". Ini bukan pengamatan beberapa sesi benar-benar berjalan.",
+    );
+    if (arena.queueBehavior?.trim()) {
+      out.push("**Antrean (model/source, bukan uji game):** " +
+        arena.queueBehavior.replace(/\s+/g, " ").trim().slice(0, 260));
+    }
+    const replica = report.fullMapReplica;
+    if (!replica || replica.replicaResults.length === 0) {
+      out.push("**Perbandingan tiap arena:** BELUM TERBUKTI; " +
+        "tidak ada receipt replica terperinci. Tidak boleh ditulis identik.");
+    } else {
+      out.push(
+        "**Perbandingan arena terhadap baseline " +
+          replica.replicaBaseline + ":** " +
+          replica.replicaResults.length +
+          " replica tercatat; status hanya berlaku untuk cakupan bukti yang dibandingkan.",
+      );
+      for (const item of replica.replicaResults.slice(0, 6)) {
+        const interpretation =
+          item.replicaStatus === "DIVERGENCE_REQUIRES_CLASSIFICATION"
+            ? "perbedaan perlu penilaian materialitas; bukan otomatis BUG"
+            : item.replicaStatus === "INCOMPLETE_PROOF"
+              ? "bukti belum cukup; bukan identik"
+              : item.replicaStatus === "BOUNDED_EQUIVALENCE"
+                ? "setara pada cakupan terbatas; bukan seluruh map"
+                : "setara pada cakupan pembuktian; bukan uji gameplay";
+        out.push("- " + item.replicaId + ": " +
+          item.replicaStatus + " — " + interpretation + ".");
+      }
+      if (replica.replicaResults.length > 6) {
+        out.push("- " + (replica.replicaResults.length - 6) +
+          " replica lainnya tetap ada dalam fullMapReplica kanonis.");
+      }
+    }
+  } else {
+    out.push("**Cakupan arena:** " +
+      (arena?.detected === false
+        ? "multi-arena tidak terdeteksi pada bukti saat ini; bukan bukti fitur tidak ada."
+        : "BELUM TERBUKTI; data multi-arena belum tersedia."));
+  }
+
+  if (report.control.blockingCheckpointIds?.length) {
+    out.push("**Checkpoint penghambat:** " +
+      report.control.blockingCheckpointIds.slice(0, 4).join("; ") +
+      (report.control.blockingCheckpointIds.length > 4
+        ? "; +" + (report.control.blockingCheckpointIds.length - 4) +
+          " lainnya di hasil kanonis." : "."));
+  }
+  out.push("");
+  return out;
+}
+
 export function formatSelectedMapAuditFinalReport(input: {
   readonly report: MapAuditOutputV2;
   readonly intent: GameplayIntentModel;
@@ -651,6 +753,7 @@ export function formatSelectedMapAuditFinalReport(input: {
     "**Map:** " + concise(report.evidenceScope.selectedArtifact),
     "**Versi:** " + concise(report.mapVersion), "",
   ];
+  out.push(...formatOperationalOutcomeSnapshot(report));
   out.push(...formatSourceBoundGameplayFlowReview(report, intent));
   out.push(...formatObjectiveStateSourceContexts(report, intent));
   // Derived QA IDs remain pending until requirement-specific PROVE evidence.

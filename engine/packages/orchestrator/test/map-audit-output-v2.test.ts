@@ -1724,6 +1724,67 @@ describe("two-category final report with visible pending findings", () => {
     }},
   };
 
+  it("restores the first-page arena and proof summary without inventing runtime readiness", () => {
+    const output = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base,
+        multiArena: {
+          detected: true, visibleArenaCount: 4, declaredArenaCount: 5,
+          declaredConcurrentArenaLimit: 5, safeConcurrentArenaLimit: null,
+          queueBehavior: "Queue is declared but not observed", isolationRules: [],
+        },
+        fullMapReplica: {
+          policy: "full-map-baseline-delta", replicaBaseline: "arena1",
+          replicaDivergenceIds: ["replica-delta:arena3"],
+          incompleteReplicaIds: [], baselineReusableForAllReplicas: false,
+          replicaResults: [{
+            replicaId: "arena2", replicaStatus: "EQUIVALENT",
+            replicaDivergenceIds: [], evidenceIds: [], reason: "Compared geometry",
+          }, {
+            replicaId: "arena3", replicaStatus: "DIVERGENCE_REQUIRES_CLASSIFICATION",
+            replicaDivergenceIds: ["replica-delta:arena3"], evidenceIds: [],
+            reason: "Unclassified geometry difference",
+          }],
+        },
+      },
+      intent,
+    });
+    const start = output.indexOf("## Ringkasan Operasional");
+    expect(start).toBeGreaterThan(0);
+    expect(start).toBeLessThan(output.indexOf("## Bug ("));
+    const summary = output.slice(start, output.indexOf("## Bug ("));
+    expect(summary).toContain("**Status audit:** BLOCKED");
+    expect(summary).toContain("**Temuan:** 2 PROVEN; 2 NEED_VALIDATION");
+    expect(summary).toContain("**Inventaris arena:** terlihat 4; deklarasi source 5");
+    expect(summary).toContain("batas deklarasi source 5; batas aman dari analisis bukti BELUM TERBUKTI");
+    expect(summary).toContain("arena2: EQUIVALENT");
+    expect(summary).toContain("arena3: DIVERGENCE_REQUIRES_CLASSIFICATION");
+    expect(summary).toContain("bukan otomatis BUG");
+    expect(summary).toContain("bukan klaim Minecraft telah dijalankan");
+  });
+
+  it("does not turn skipped or missing replica evidence into an identical result", () => {
+    const output = formatSelectedMapAuditFinalReport({
+      report: {
+        ...base, bugs: [], designMismatches: [],
+        multiArena: {
+          detected: true, visibleArenaCount: null, declaredArenaCount: 4,
+          declaredConcurrentArenaLimit: null, safeConcurrentArenaLimit: null,
+          queueBehavior: "", isolationRules: [],
+        },
+        fullMapReplica: undefined,
+      }, intent,
+    });
+    const summary = output.split("## Ringkasan Operasional")[1]!
+      .split("## Bug (")[0]!;
+    expect(summary).toContain("**Inventaris arena:** terlihat BELUM TERBUKTI");
+    expect(summary).toContain("**Perbandingan tiap arena:** BELUM TERBUKTI");
+    expect(summary).toContain("Tidak boleh ditulis identik.");
+    expect(summary).not.toContain("arena2: EQUIVALENT");
+    expect(summary).toContain("**Temuan:** 0 PROVEN");
+    expect(summary).toContain("**Status audit:** BLOCKED");
+  });
+
   it("retains every unproven candidate with deciding proof under its issue type", () => {
     const report = formatSelectedMapAuditFinalReport({ report: base, intent });
     expect(report.match(/^## (?:Bug|Design Mismatch) \(/gm)).toHaveLength(2);
