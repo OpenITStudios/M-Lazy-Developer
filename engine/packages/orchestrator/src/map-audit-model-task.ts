@@ -15,6 +15,7 @@ import {
   type SemanticIr,
 } from "../../semantic-ir/src/index.js";
 import type { InspectedPack } from "./core/types.js";
+import { sourceLocatorMatchesSourceRef } from "../../project-model/src/index.js";
 import type {
   GameplayAuditScenarioPreset,
   GameplayAuditDetectionIndicator,
@@ -1938,6 +1939,8 @@ export function planAuditIssueFirstFocus(input: {
     .map(p => [p.surfaceId, p] as const));
   const precise = (locator: string) =>
     /(?:#[/]\S+|#L[1-9]\d*(?:-L?[1-9]\d*)?(?::[1-9]\d*)?|:[1-9]\d*(?::[1-9]\d*)?)$/.test(locator);
+  const positive = (value: number | undefined): value is number =>
+    typeof value === "number" && Number.isSafeInteger(value) && value > 0;
   const candidates = input.tasks.flatMap((task, taskOffset) => {
     if (task.auditRevision !== input.auditRevision) return [];
     const obligationId = task.kind === "AUDIT_OBLIGATION" &&
@@ -1946,17 +1949,51 @@ export function planAuditIssueFirstFocus(input: {
     const obligation = obligationId === undefined ||
       countIds.get(obligationId) !== 1
         ? undefined : byObligation.get(obligationId);
-    const isFailure = task.kind === "AUDIT_OBLIGATION" &&
-      obligation !== undefined && isSourceBackedFailurePathObligation(obligation);
-    const locators = [...new Set([
-      ...task.evidenceContext.flatMap(e =>
-        e.kind === "selected-artifact-evidence" &&
-        typeof e.locator === "string" && precise(e.locator)
-          ? [e.locator] : []),
-      ...(isFailure && obligation !== undefined
-        ? obligation.subjectIds.filter(precise) : []),
-    ])].sort();
-    if (locators.length === 0) return [];
+    const sameStageObligation = obligation?.stage === task.stage
+      ? obligation : undefined;
+    const isFailure = sameStageObligation !== undefined &&
+      isSourceBackedFailurePathObligation(sameStageObligation);
+
+    // Only the canonical task's selected source evidence can guide a
+    // source jump. An unrelated evidenceContext entry is not sufficient.
+    const ownedIds = new Set(task.evidenceIds);
+    const selectedSource = task.evidenceContext.filter(e =>
+      e.kind === "selected-artifact-evidence" && ownedIds.has(e.id));
+    const bySelectedId = new Map(selectedSource.map(e => [e.id, e] as const));
+    const selectedLocators = selectedSource.flatMap(e =>
+      typeof e.locator === "string" && precise(e.locator)
+        ? [e.locator] : []);
+
+    // An UNDERSTAND task can already carry rooted, source-linked operations
+    // even when their evidence locator is only a filename. Bind the
+    // precise SourceRef to the SAME selected evidence ID and source path.
+    // This is navigation, not evidence that the effect ran or is a bug.
+    const rootedEntries = task.kind === "AUDIT_OBLIGATION" &&
+      task.sourceInvestigation?.authority ===
+        "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF"
+      ? task.sourceInvestigation.entries.filter(entry =>
+          entry.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
+          (entry.effectPaths?.length ?? 0) > 0)
+      : [];
+    const rootedLocators = rootedEntries.flatMap(entry =>
+      entry.steps.flatMap(step => {
+        const evidenceLocator = bySelectedId.get(step.id)?.locator;
+        if (typeof evidenceLocator !== "string" ||
+            !step.source.artifactId?.trim() ||
+            !sourceLocatorMatchesSourceRef(evidenceLocator, step.source)) {
+          return [];
+        }
+        if (precise(evidenceLocator)) return [evidenceLocator];
+        if (typeof step.source.jsonPointer === "string" &&
+            step.source.jsonPointer.startsWith("/")) {
+          return [step.source.relativePath + "#" + step.source.jsonPointer];
+        }
+        const line = step.source.range?.lineStart;
+        if (!positive(line)) return [];
+        const column = step.source.range?.columnStart;
+        return [step.source.relativePath + ":" + line +
+          (positive(column) ? ":" + column : "")];
+      }));
 
     let tier = 99;
     let category = "SOURCE_BOUND_OBLIGATION";
@@ -1972,17 +2009,22 @@ export function planAuditIssueFirstFocus(input: {
       tier = 2; category = "CAUSAL_PROOF_NAVIGATION";
     } else if (isFailure) {
       tier = 3; category = "FALLIBLE_COMMIT_PATH";
-    } else if (task.kind === "AUDIT_OBLIGATION" &&
-        task.sourceInvestigation?.entries.some(e =>
-          e.sourceTraceStatus === "SOURCE_ROOT_TRACE" &&
-          (e.effectPaths?.length ?? 0) > 0)) {
+    } else if (rootedLocators.length > 0) {
       tier = 4; category = "ROOTED_SOURCE_EFFECT";
     } else if (task.kind === "CHECKPOINT_REASONING") {
       tier = 5; category = "SOURCE_BOUND_CHECKPOINT";
     } else if (task.kind === "AUDIT_OBLIGATION" &&
-        obligation !== undefined) {
+        sameStageObligation !== undefined) {
       tier = 6;
     } else return [];
+
+    // Rooted source effects show the actual grounded operations, not a
+    // separate selected-file context attached to the same question.
+    const locators = [...new Set(category === "ROOTED_SOURCE_EFFECT"
+      ? rootedLocators
+      : [...selectedLocators, ...(isFailure && sameStageObligation
+        ? sameStageObligation.subjectIds.filter(precise) : [])])].sort();
+    if (locators.length === 0) return [];
 
     const sourceCheck = task.navigationRoute?.find(s =>
       s.evidencePreference !== "runtime");
@@ -1991,11 +2033,11 @@ export function planAuditIssueFirstFocus(input: {
       return found === undefined ? [] : [found];
     }).sort(compareGameplayAnalysisPriority)[0];
     const group = task.causalLinkId
-      ? "link:" + task.causalLinkId
-      : obligation && task.sourceInvestigation === undefined
-        ? JSON.stringify([obligation.stage, obligation.source,
-            obligation.validationGroupKey, obligation.missingProof,
-            obligation.validationTest])
+      ? JSON.stringify(["causal-scenario", task.causalLinkId, task.scenarioId])
+      : sameStageObligation && task.sourceInvestigation === undefined
+        ? JSON.stringify([sameStageObligation.stage, sameStageObligation.source,
+            sameStageObligation.validationGroupKey, sameStageObligation.missingProof,
+            sameStageObligation.validationTest])
         : "task:" + task.id;
     return [{
       group, tier, prior, taskOffset,
@@ -2006,10 +2048,13 @@ export function planAuditIssueFirstFocus(input: {
         sourceLocators: locators.slice(0, 4),
         nextCheck: sourceCheck
           ? sourceCheck.question + " " + sourceCheck.purpose
-          : obligation?.validationTest ?? task.decisionNeeded,
+          : category === "ROOTED_SOURCE_EFFECT"
+            ? (task.missingClaims?.[0] ??
+                rootedEntries[0]?.question ?? task.decisionNeeded)
+            : sameStageObligation?.validationTest ?? task.decisionNeeded,
         missingProof: task.missingClaims?.length
           ? [...task.missingClaims]
-          : obligation ? [obligation.missingProof] : [],
+          : sameStageObligation ? [sameStageObligation.missingProof] : [],
         proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF" as const,
       },
     }];

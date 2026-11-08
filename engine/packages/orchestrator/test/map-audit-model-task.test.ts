@@ -1886,7 +1886,9 @@ describe("issue-first current-source navigation", () => {
     auditRevision: "revision:map", stage: "DISCOVERY", kind: "AUDIT_OBLIGATION",
     goal: "Review", decisionNeeded: "Inspect this source",
     subjectIds: [], componentIds: [], requiredKnowledgeIds: [],
-    evidenceIds: [], evidenceContext: [], unresolvedEvidenceIds: [],
+    evidenceIds: Array.isArray(overrides.evidenceContext)
+      ? overrides.evidenceContext.map(e => e.id) : [],
+    evidenceContext: [], unresolvedEvidenceIds: [],
     knowledgeContext: [], unresolvedObligationIds: [],
     allowedOutputs: [], forbiddenActions: [], stopCondition: "One check",
     ...overrides,
@@ -1953,6 +1955,124 @@ describe("issue-first current-source navigation", () => {
     expect(result.canonicalTaskCount).toBe(tasks.length);
     expect(result.suggestions[1]?.sourceLocators).toEqual(["scripts/end.ts:33:2"]);
   });
+
+  it("ranks a source effect whose selected evidence is file-only but the same SourceRef has a line", () => {
+    const e = source("scripts/round-end.ts");
+    const rooted = task("rooted:effect", {
+      stage: "UNDERSTAND", kind: "AUDIT_OBLIGATION",
+      unresolvedObligationIds: ["unknown:effect"],
+      evidenceContext: [e],
+      missingClaims: ["Check the failed return before reward commit"],
+      sourceInvestigation: {
+        authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+        entries: [{
+          unknownId: "unknown:effect", question: "Trace exact effect",
+          sourceTraceStatus: "SOURCE_ROOT_TRACE",
+          effectPaths: [{ effectId: "effect:bounded" }],
+          steps: [{ id: e.id, kind: "world-effect",
+            source: { artifactId: "map:pinned",
+              relativePath: "scripts/round-end.ts",
+              range: { lineStart: 42, columnStart: 7 } } }],
+        }],
+      },
+    });
+    const obligation = {
+      id: "unknown:effect", source: "gameplay-closure", stage: "UNDERSTAND",
+      title: "Unknown effect", reason: "Source question",
+      missingProof: "Trace owner", validationTest: "Review source",
+      validationGroupKey: "unknown:effect", subjectIds: [],
+      componentIds: [], evidenceIds: [e.id],
+    } as any;
+    const tasks = [...Array.from({ length: 90 },
+      (_, i) => task("bulk:" + i)), rooted];
+    const focus = planAuditIssueFirstFocus({
+      tasks, obligations: [obligation], auditRevision: "revision:map",
+      firstBlockingStage: "DISCOVERY",
+    });
+    expect(focus.canonicalTaskCount).toBe(91);
+    expect(focus.mandatoryFirstBlockingStage).toBe("DISCOVERY");
+    expect(focus.suggestions).toHaveLength(1);
+    expect(focus.suggestions[0]).toMatchObject({
+      taskId: rooted.id, taskOffset: 90, category: "ROOTED_SOURCE_EFFECT",
+      sourceLocators: ["scripts/round-end.ts:42:7"],
+      nextCheck: "Check the failed return before reward commit",
+      proof: "SOURCE_REVIEW_HINT_NOT_BUG_PROOF",
+    });
+  });
+
+  it("does not rank disconnected, unbound, wrong-path, or file-only source steps", () => {
+    const e = source("scripts/round-end.ts");
+    const entry = (steps: unknown[], sourceTraceStatus = "SOURCE_ROOT_TRACE") => ({
+      unknownId: "unknown:effect", question: "Investigate",
+      sourceTraceStatus, effectPaths: [{ effectId: "effect" }], steps,
+    });
+    const site = (id: string, relativePath: string, range?: object) => ({
+      id, kind: "world-effect",
+      source: { artifactId: "map:pinned", relativePath,
+        ...(range === undefined ? {} : { range }) },
+    });
+    const sourceSite = site(e.id, "scripts/round-end.ts", { lineStart: 42 });
+    const failures = [
+      entry([sourceSite], "DISCONNECTED_SOURCE_REGION"),
+      entry([site("unbound:other", "scripts/round-end.ts", { lineStart: 42 })]),
+      entry([site(e.id, "scripts/other.ts", { lineStart: 42 })]),
+      entry([site(e.id, "scripts/round-end.ts")]),
+    ];
+    const obligation = {
+      id: "unknown:effect", source: "gameplay-closure", stage: "UNDERSTAND",
+      title: "Unknown effect", reason: "Source question",
+      missingProof: "Trace owner", validationTest: "Review source",
+      validationGroupKey: "unknown:effect", subjectIds: [],
+      componentIds: [], evidenceIds: [e.id],
+    } as any;
+    for (const [i, variant] of failures.entries()) {
+      const candidate = task("invalid:" + i, {
+        stage: "UNDERSTAND", kind: "AUDIT_OBLIGATION",
+        unresolvedObligationIds: ["unknown:effect"],
+        evidenceContext: [e], sourceInvestigation: {
+          authority: "SELECTED_SOURCE_PATH_CONTEXT_NOT_GAMEPLAY_OR_RUNTIME_PROOF",
+          entries: [variant],
+        },
+      });
+      expect(planAuditIssueFirstFocus({
+        tasks: [candidate], obligations: [obligation],
+        auditRevision: "revision:map",
+      }).suggestions).toEqual([]);
+    }
+  });
+
+  it("retains two scenario checks for one template link but one per scenario", () => {
+    const make = (id: string, scenarioId: string) => task(id, {
+      stage: "PROVE", kind: "COUNTERPROOF_SEARCH", scenarioId,
+      causalLinkId: "link:shared",
+      evidenceContext: [source("scripts/" + scenarioId + ".ts:18:3")],
+    });
+    const tasks = [make("arena:one", "arena-one"),
+      make("arena:one-repeat", "arena-one"),
+      make("arena:two", "arena-two")];
+    const focus = planAuditIssueFirstFocus({
+      tasks, obligations: [], auditRevision: "revision:map",
+    });
+    expect(focus.suggestions.map(item => item.taskId))
+      .toEqual(["arena:one", "arena:two"]);
+    expect(focus.eligibleSourceGroups).toBe(2);
+    expect(focus.canonicalTaskCount).toBe(3);
+  });
+
+  it("rejects an unrelated evidenceContext locator absent from the original task evidence IDs", () => {
+    const injected = task("injected:locator", {
+      stage: "PROVE", kind: "COUNTERPROOF_SEARCH",
+      scenarioId: "scenario:one", causalLinkId: "link:one",
+      evidenceIds: ["current:evidence"],
+      evidenceContext: [source("scripts/foreign.ts:80:2")],
+    });
+    const focus = planAuditIssueFirstFocus({
+      tasks: [injected], obligations: [], auditRevision: "revision:map",
+    });
+    expect(focus.suggestions).toEqual([]);
+    expect(focus.canonicalTaskCount).toBe(1);
+  });
+
   it("never promotes unknown, stale or unlocated evidence", () => {
     const tasks = [
       task("stale", {auditRevision: "old", stage: "PROVE",
