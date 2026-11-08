@@ -121,6 +121,46 @@ export async function readHandoffSnapshot(
         typeof row.resolutionEligible !== "boolean")) {
     throw new Error("Handoff snapshot identity or proof boundary is invalid");
   }
+
+  // This is only a transport consistency check. Graph-scoped search
+  // completion remains owned by a fresh canonical audit, never a snapshot.
+  for (const row of snapshot.taskRows) {
+    const task = row.task;
+    const progress = task.sourceCounterProofProgress;
+    if (progress === undefined) continue;
+    const completed = progress.completedDimensions;
+    const remaining = progress.remainingDimensions;
+    if (task.kind !== "COUNTERPROOF_SEARCH" || task.stage !== "PROVE" ||
+        typeof task.causalLinkId !== "string" || !task.causalLinkId.trim() ||
+        progress.policy !== "current-graph-counterproof-progress" ||
+        progress.proof !== "SOURCE_SCOPE_REVIEW_NOT_GAMEPLAY_OR_BUG_PROOF" ||
+        !Array.isArray(completed) || !Array.isArray(remaining) ||
+        remaining.length < 1 || remaining.length > 11 ||
+        !Array.isArray(task.evidenceIds) ||
+        !Array.isArray(task.missingClaims) ||
+        task.missingClaims.length !== remaining.length ||
+        typeof task.decisionNeeded !== "string" ||
+        remaining.some(dimension =>
+          typeof dimension !== "string" || !dimension.trim()) ||
+        new Set(remaining).size !== remaining.length ||
+        completed.some(item =>
+          !item || typeof item.dimension !== "string" ||
+          !item.dimension.trim() ||
+          !Array.isArray(item.evidenceIds) ||
+          item.evidenceIds.length < 1 ||
+          new Set(item.evidenceIds).size !== item.evidenceIds.length ||
+          item.evidenceIds.some(id =>
+            typeof id !== "string" || !task.evidenceIds.includes(id))) ||
+        new Set(completed.map(item => item.dimension)).size !== completed.length ||
+        completed.some(item => remaining.includes(item.dimension)) ||
+        remaining.some((dimension, index) =>
+          !task.missingClaims![index]?.includes(
+            "Counterproof dimension '" + dimension + "'")) ||
+        !task.decisionNeeded.includes(
+          "still-open counterproof dimension '" + remaining[0] + "'")) {
+      throw new Error("Handoff source counterproof progress boundary is invalid");
+    }
+  }
   // A read-only batch cannot hide a canonical task, impersonate another
   // task ID, or become a proof response. Retain exact 1:1 offset coverage.
   const seen = new Uint8Array(snapshot.taskRows.length);

@@ -213,6 +213,70 @@ describe("pinned read-only handoff transport", () => {
   });
 
 
+
+  it("preserves valid source counterproof review and rejects forged progress on replay", async () => {
+    const path = await snapshotFile();
+    const prior = fixture();
+    const rows = prior.taskRows.map((row, i) => ({
+      ...row, task: {
+        ...row.task, stage: i < 8 ? "PROVE" as const : "UNDERSTAND" as const,
+        ...(i !== 0 ? {} : {
+          kind: "COUNTERPROOF_SEARCH" as const,
+          causalLinkId: "link:exact",
+          unresolvedObligationIds: [],
+          evidenceIds: ["evidence:guard"],
+          decisionNeeded:
+            "Investigate the first still-open counterproof dimension 'scope'.",
+          missingClaims: [
+            "Counterproof dimension 'scope' is not source-exhaustive; retain UNKNOWN.",
+          ],
+          sourceCounterProofProgress: {
+            policy: "current-graph-counterproof-progress" as const,
+            completedDimensions: [{
+              dimension: "guard" as const, evidenceIds: ["evidence:guard"],
+            }],
+            remainingDimensions: ["scope" as const],
+            proof: "SOURCE_SCOPE_REVIEW_NOT_GAMEPLAY_OR_BUG_PROOF" as const,
+          },
+        }),
+      },
+    }));
+    const snapshot = {
+      ...prior, taskRows: rows,
+      investigationRows: prior.investigationRows.map((batch, i) =>
+        i === 0 ? { ...batch, stage: "PROVE" as const,
+          members: batch.members.map((member, j) =>
+            j === 0 ? { ...member, obligationId: null } : member) } : batch),
+    } as SelectedMapAuditHandoffSnapshot;
+    await writeHandoffSnapshot(path, snapshot, SOURCE_SHA);
+    const read = async () => {
+      const bytes = await readFile(path);
+      return readHandoffSnapshot(path, {
+        sourceCommit: SOURCE_SHA, artifactFingerprint: MAP_SHA,
+        snapshotSha256: hash(bytes),
+      });
+    };
+    expect((await read()).taskRows[0]?.task.sourceCounterProofProgress
+      ?.completedDimensions[0]?.dimension).toBe("guard");
+
+    const data = JSON.parse((await readFile(path)).toString("utf8"));
+    const task = data.snapshot.taskRows[0].task;
+    const original = JSON.parse(JSON.stringify(task.sourceCounterProofProgress));
+    for (const forged of [
+      { ...original, proof: "PROVEN_GAMEPLAY_BUG" },
+      { ...original, completedDimensions: [{
+        dimension: "guard", evidenceIds: ["foreign:source"],
+      }] },
+      { ...original, remainingDimensions: ["guard", "scope"] },
+      { ...original, completedDimensions: [...original.completedDimensions,
+        original.completedDimensions[0]] },
+    ]) {
+      task.sourceCounterProofProgress = forged;
+      await writeFile(path, Buffer.from(JSON.stringify(data)));
+      await expect(read()).rejects.toThrow(/source counterproof progress/);
+    }
+  });
+
   it("rejects forged source-call hops even when snapshot checksum is recomputed", async () => {
     const path = await snapshotFile();
     const original = fixture();
