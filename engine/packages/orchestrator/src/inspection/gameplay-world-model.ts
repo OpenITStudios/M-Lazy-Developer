@@ -1308,7 +1308,12 @@ export function deriveGameplayWorldModel(
 
   const replicaProof =
     source.arena.replicaProofQuality ?? [];
-  if (replicaProof.length > 0) {
+  // Missing or repeated physical replicas are not equivalent to completed
+  // proof. The world model and the canonical receipt must agree before
+  // audit closure; this does not classify a divergence as a gameplay bug.
+  const expectedReplicaCount =
+    arenaCount === undefined ? undefined : Math.max(0, arenaCount - 1);
+  if (replicaProof.length > 0 || (expectedReplicaCount ?? 0) > 0) {
     const incomplete = replicaProof.filter(
       (item) =>
         item.status === "incomplete-proof" ||
@@ -1318,28 +1323,38 @@ export function deriveGameplayWorldModel(
     const diverged = replicaProof.filter(
       (item) => item.status === "diverged",
     ).length;
+    const uniqueReplicaIds = new Set(replicaProof.map(item => item.arenaId));
+    const baselineId =
+      source.arena.spatialLayout?.canonical?.arenaId ??
+      source.arena.discovery?.canonical?.arenaId;
+    const rosterIncomplete =
+      expectedReplicaCount === undefined ||
+      expectedReplicaCount === 0 ||
+      replicaProof.length !== expectedReplicaCount ||
+      uniqueReplicaIds.size !== expectedReplicaCount ||
+      replicaProof.some(item =>
+        !item.arenaId.trim() || item.arenaId === baselineId);
 
     runtimeSurfaces.push({
       id: "runtime:arena-replica-integrity",
       label: "Arena replica integrity",
       kind: "runtime-domain",
-      status:
-        incomplete > 0
-          ? "unknown"
-          : "understood",
+      status: incomplete > 0 || rosterIncomplete ? "unknown" : "understood",
       material: true,
-      ...(incomplete > 0
+      ...(incomplete > 0 || rosterIncomplete
         ? {
             reason:
-              String(incomplete) +
-              " arena replica proof(s) remain incomplete or unavailable.",
+              String(incomplete) + " incomplete replica proof(s); " +
+              String(replicaProof.length) + " receipts / " +
+              String(uniqueReplicaIds.size) + " distinct IDs for " +
+              String(expectedReplicaCount ?? "unknown") +
+              " expected physical replica(s). Baseline reuse remains unproven.",
           }
         : {}),
       boundaries: [
-        "replicaCount=" +
-          String(replicaProof.length),
-        "divergedReplicas=" +
-          String(diverged),
+        "replicaCount=" + String(replicaProof.length),
+        "expectedReplicaCount=" + String(expectedReplicaCount ?? "unknown"),
+        "divergedReplicas=" + String(diverged),
       ],
     });
   }

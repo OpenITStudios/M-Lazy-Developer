@@ -1592,6 +1592,29 @@ describe("gameplay world model", () => {
     const result = deriveGameplayWorldModel(source);
 
     expect(result.arenas.count).toBe(3);
+    // An authored layout with three physical arenas but no native replica
+    // receipts must remain UNKNOWN rather than silently considered complete.
+    expect(result.gameplayClosure.unknownSurfaceIds)
+      .toContain("runtime:arena-replica-integrity");
+    const replicaProof = (arenaId: string) => ({
+      arenaId, status: "complete-proof" as const,
+      plannedBlocks: 1, proofEligibleBlocks: 1, comparedBlocks: 1,
+      unresolvedBlocks: 0, excludedBlocks: 0, mismatchCount: 0,
+      eligibleCoverageRatio: 1, effectiveArenaCoverageRatio: 1,
+    });
+    const checkReplica = (ids: string[]) =>
+      deriveGameplayWorldModel({
+        ...source,
+        arena: {
+          ...source.arena,
+          replicaProofQuality: ids.map(replicaProof),
+        },
+      }).gameplayClosure.surfaces.find(item =>
+        item.id === "runtime:arena-replica-integrity");
+    expect(checkReplica(["arena-2", "arena-3"])?.status).toBe("understood");
+    expect(checkReplica(["arena-2"])?.status).toBe("unknown");
+    expect(checkReplica(["arena-2", "arena-2"])?.status).toBe("unknown");
+    expect(checkReplica(["arena-2", ""])?.status).toBe("unknown");
 
     const scopedCapability = deriveGameplayWorldModel({
       ...source,
