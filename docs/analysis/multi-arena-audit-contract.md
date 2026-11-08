@@ -56,6 +56,28 @@ for the target edition/version. A source-only declared admission cap cannot
 close the native command-budget uncertainty. Historical project defaults
 (such as five concurrent arenas) are never universal map design rules.
 
+## Exact command-family accounting
+
+A static `/tickingarea add` is only one **candidate** resource
+operation. Relative or unsupported coordinates, invalid circle radius,
+rectangular areas exceeding the documented chunk limit, incomplete
+or duplicate replica offsets and reused area names may not silently be
+discarded. Each invalid/unresolved command stays visible in the existing
+arena-capacity evidence, and the overall command resource remains UNKNOWN.
+
+After normalizing replica offsets, count authored `add` commands as a
+**multiset of shape + absolute position**. Every expected translated
+position must match exactly once and every authored add must be accounted
+for. Equal arithmetic counts alone are insufficient: two candidate
+families may share a position while a different source command is omitted.
+Ambiguous family partitions fail closed instead of becoming evidence
+that all arenas have equal ticking-area budgets.
+
+These structural checks still do not prove the command was executed, the
+name was accepted, or that an area was dynamically created rather than
+already present in the native snapshot. The capacity calculation is
+source/native resource analysis, not effective concurrent-start proof.
+
 ## Effective-concurrency proof
 
 Configured capacity is not deliverable capacity.

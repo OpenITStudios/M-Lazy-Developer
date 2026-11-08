@@ -86,6 +86,8 @@ export interface ArenaCapacityExtractionEvidence {
   declaredConcurrentArenaLimit?: number;
   arenaCountConflict: boolean;
   commandTickingAreaAdds: number;
+  /** Add commands with unresolved/invalid shape or relative coordinates. */
+  unresolvedCommandTickingAreaAdds: number;
   completeCommandTickingAreaFamilies: number;
   unmatchedCommandTickingAreaAdds: number;
   commandTickingAreaResourceResolved: boolean;
@@ -119,7 +121,10 @@ function absolutePoint(
   if (
     coordinate.x.mode !== "absolute" ||
     coordinate.y.mode !== "absolute" ||
-    coordinate.z.mode !== "absolute"
+    coordinate.z.mode !== "absolute" ||
+    !Number.isFinite(coordinate.x.value) ||
+    !Number.isFinite(coordinate.y.value) ||
+    !Number.isFinite(coordinate.z.value)
   ) {
     return undefined;
   }
@@ -153,6 +158,9 @@ function shapeKey(
   semantics: TickingAreaSemantics,
 ): string | undefined {
   if (semantics.action === "add-circle") {
+    // Official /tickingarea command range, not a guessed resource cost.
+    if (!Number.isInteger(semantics.radius) ||
+        semantics.radius < 0 || semantics.radius > 4) return undefined;
     return [
       "circle",
       semantics.radius,
@@ -163,6 +171,15 @@ function shapeKey(
     const from = absolutePoint(semantics.from);
     const to = absolutePoint(semantics.to);
     if (!from || !to) return undefined;
+    const chunkSpan = (a: number, b: number): number =>
+      Math.floor(Math.max(a, b) / 16) -
+      Math.floor(Math.min(a, b) / 16) + 1;
+    // A command area can contain at most 100 chunks. Source coordinates
+    // larger than this are an unresolved/invalid creation attempt, not
+    // proof of a valid per-arena slot.
+    if (chunkSpan(from.x, to.x) * chunkSpan(from.z, to.z) > 100) {
+      return undefined;
+    }
     return [
       "rectangle",
       Math.abs(to.x - from.x),
@@ -230,13 +247,58 @@ export function extractArenaConcurrencyCapacity(
     );
   }
 
-  const addRecords = input.tickingAreas.flatMap((record) => {
+  const authoredAdds = input.tickingAreas.filter((record) =>
+    record.semantics.action === "add-circle" ||
+    record.semantics.action === "add-rectangle");
+  const addRecords = authoredAdds.flatMap((record) => {
     const anchor = anchorForTickingArea(record.semantics);
     const shape = shapeKey(record.semantics);
     return anchor && shape
       ? [{ record, anchor, shape }]
       : [];
   });
+  // Do not silently drop relative/unresolved/invalid add commands. A
+  // numerically complete subset cannot establish the whole resource cost.
+  const unresolvedAdds = authoredAdds.length - addRecords.length;
+  if (unresolvedAdds > 0) reasons.push(
+    String(unresolvedAdds) + " authored /tickingarea add command(s) have " +
+    "relative/unresolved coordinates or invalid area shape; whole-map " +
+    "command residency cost is UNKNOWN.");
+
+  const names = authoredAdds.flatMap((item) =>
+    item.semantics.action === "add-circle" ||
+    item.semantics.action === "add-rectangle"
+      ? item.semantics.name?.trim()
+        ? [item.semantics.name.trim().toLowerCase()]
+        : []
+      : []);
+  // Name uniqueness is a necessary, not sufficient, global allocation
+  // condition. Distinct positions with one reused name cannot be proven
+  // concurrently creatable from geometry alone.
+  const ambiguousNames = new Set(names).size !== names.length;
+  if (ambiguousNames) reasons.push(
+    "Repeated authored ticking-area names require lifecycle/rename proof. " +
+    "Do not infer independent concurrent leases from coordinates alone.");
+
+  const offsets = input.discovery?.offsets ?? [];
+  const expectedOffsets = input.discovery?.replicas.length;
+  const offsetKeys = [
+    offsetKey({ x: 0, y: 0, z: 0 }),
+    ...offsets.map(offsetKey),
+  ];
+  const completeOffsets =
+    input.discovery !== undefined &&
+    expectedOffsets === offsets.length &&
+    offsetKeys.length === new Set(offsetKeys).size &&
+    offsets.every(offset =>
+      Number.isSafeInteger(offset.x) &&
+      Number.isSafeInteger(offset.y) &&
+      Number.isSafeInteger(offset.z));
+  if (input.discovery !== undefined && !completeOffsets && authoredAdds.length > 0) {
+    reasons.push(
+      "Arena replica offsets are missing, duplicate or non-integral. " +
+      "Translated command families cannot establish a complete per-arena cost.");
+  }
 
   const resources: ArenaCapacityResource[] = [];
 
@@ -362,13 +424,14 @@ export function extractArenaConcurrencyCapacity(
   const scriptTickingAreaManagerReferenced =
     scriptCapacitySignals.length > 0;
   let completeFamilies = 0;
-  let unmatched = addRecords.length;
+  let unmatched = authoredAdds.length;
   let commandResourceResolved = false;
 
   if (
     requestedConcurrentArenas !== undefined &&
     requestedConcurrentArenas > 0 &&
     input.discovery !== undefined &&
+    completeOffsets &&
     addRecords.length > 0
   ) {
     const arenaOffsets: Translation3[] = [
@@ -421,17 +484,32 @@ export function extractArenaConcurrencyCapacity(
     }
 
     completeFamilies = completeFamilyKeys.length;
-    const matchedRecords =
-      completeFamilies * requestedConcurrentArenas;
-    unmatched = Math.max(
-      0,
-      addRecords.length - matchedRecords,
-    );
+    // A family can overlap another family's translated positions. Counting
+    // N * number-of-families alone admitted false exact coverage when one
+    // authored command was reused by two families and a different command
+    // was never matched. Match the complete position MULTISET instead.
+    const consumed = new Map<string, number>();
+    for (const familyKey of completeFamilyKeys) {
+      const separator = familyKey.indexOf("|");
+      const shape = familyKey.slice(0, separator);
+      const [x, y, z] = familyKey.slice(separator + 1).split(",").map(Number);
+      for (const offset of arenaOffsets) {
+        const key = shape + "|" +
+          pointKey({ x: x! + offset.x, y: y! + offset.y, z: z! + offset.z });
+        consumed.set(key, (consumed.get(key) ?? 0) + 1);
+      }
+    }
+    unmatched = unresolvedAdds +
+      [...recordsByShapeAndPoint].reduce(
+        (sum, [key, observed]) =>
+          sum + Math.abs(observed - (consumed.get(key) ?? 0)),
+        0);
 
     if (
       completeFamilies > 0 &&
       unmatched === 0 &&
-      matchedRecords === addRecords.length
+      !ambiguousNames &&
+      completeFamilies * arenaOffsets.length === addRecords.length
     ) {
       reasons.push(
         `Detected ${completeFamilies} complete /tickingarea add family/families repeated across all ${requestedConcurrentArenas} arena(s).`,
@@ -464,9 +542,11 @@ export function extractArenaConcurrencyCapacity(
         "Command ticking-area usage could not be reduced to complete translated families across every detected arena; capacity remains unresolved.",
       );
     }
-  } else if (addRecords.length > 0) {
+  } else if (authoredAdds.length > 0) {
     reasons.push(
-      "Command ticking-area adds exist, but arena discovery is unavailable, so per-arena cost cannot be proven.",
+      "Authored command ticking-area additions exist, but complete " +
+      "arena topology/offset or position evidence is unavailable. " +
+      "Per-arena resource cost remains unresolved.",
     );
   }
 
@@ -525,7 +605,8 @@ export function extractArenaConcurrencyCapacity(
               input.declaredConcurrentArenaLimit,
           }),
       arenaCountConflict,
-      commandTickingAreaAdds: addRecords.length,
+      commandTickingAreaAdds: authoredAdds.length,
+      unresolvedCommandTickingAreaAdds: unresolvedAdds,
       completeCommandTickingAreaFamilies:
         completeFamilies,
       unmatchedCommandTickingAreaAdds: unmatched,
