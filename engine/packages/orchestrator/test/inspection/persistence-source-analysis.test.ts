@@ -235,6 +235,18 @@ describe("persistence source analysis", () => {
       target.replace("catch (error) {}", "catch (error) {} finally { store.rollback(); }"),
       target.replace("data.setScore(player, value); return true;",
         "if (ready) { data.setScore(player, value); return true; } else { store.rollback(); }"),
+      // Even without an else arm, later effects in try invalidate a
+      // seemingly valid guarded write/success source relation.
+      target.replace("data.setScore(player, value); return true;",
+        "if (ready) { data.setScore(player, value); return true; } store.rollback();"),
+      target.replace("data.setScore(player, value); return true;",
+        "if (ready) { data.setScore(player, value); return true; } throw Error('cancel');"),
+      target.replace("data.setScore(player, value); return true;",
+        "if (ready) { data.setScore(player, value); return true; } data.set('fallback', false);"),
+      target.replace("data.setScore(player, value); return true;",
+        "if (ready) { data.setScore(player, value); return true; } return false;"),
+      target.replace("data.setScore(player, value); return true;",
+        "if (ready) { data.setScore(player, value); return true; } if (stale) store.rollback();"),
       target.replace("catch (error) {}",
         "catch (error) { console.warn(reportError(error)); }"),
     ]) {

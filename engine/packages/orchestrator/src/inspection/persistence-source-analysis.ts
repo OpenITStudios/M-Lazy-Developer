@@ -1183,17 +1183,20 @@ function crossFileIgnoredWriteBeforeFeedback(
       ts.isReturnStatement(success) &&
       success.expression?.kind === ts.SyntaxKind.TrueKeyword;
   };
-  const hasSourceCoupledSuccess = (block: ts.Block): boolean =>
-    isWriteThenTrue(block.statements) ||
-    block.statements.some(statement => {
-      if (!ts.isIfStatement(statement) || statement.elseStatement ||
-          !(ts.isIdentifier(statement.expression) ||
-            (ts.isPropertyAccessExpression(statement.expression) &&
-              !statement.expression.questionDotToken))) return false;
-      const branch = ts.isBlock(statement.thenStatement)
-        ? statement.thenStatement.statements : [statement.thenStatement];
-      return isWriteThenTrue(branch);
-    });
+  const hasSourceCoupledSuccess = (block: ts.Block): boolean => {
+    if (isWriteThenTrue(block.statements)) return true;
+    // A successful write inside an earlier branch cannot establish that
+    // the surrounding try has no later rollback/throw/early-exit. This
+    // source-only lead must stop at the last direct guarded statement.
+    const last = block.statements.at(-1);
+    if (!last || !ts.isIfStatement(last) || last.elseStatement ||
+        !(ts.isIdentifier(last.expression) ||
+          (ts.isPropertyAccessExpression(last.expression) &&
+            !last.expression.questionDotToken))) return false;
+    const branch = ts.isBlock(last.thenStatement)
+      ? last.thenStatement.statements : [last.thenStatement];
+    return isWriteThenTrue(branch);
+  };
   const hasNestedCall = (node: ts.Node): boolean => {
     let found = false;
     const visit = (current: ts.Node): void => {
