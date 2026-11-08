@@ -477,6 +477,9 @@ function deriveSelectedMapAuditControl(input: {
       : buildFullMapReplicaReceipt({
           replicaBaseline:
             input.gameplayWorld.arenas.replicaBaselineId,
+          ...(input.gameplayWorld.arenas.count === undefined ? {}
+            : { expectedReplicaCount:
+                Math.max(0, input.gameplayWorld.arenas.count - 1) }),
           replicas:
             input.gameplayWorld.arenas.replicaProof.map(
               (item) => ({

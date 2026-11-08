@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { createSpatialFingerprint } from "../../../../analyzers/world-db/src/index.js";
 import { runArenaAudit } from "../../src/arena/arena-audit.js";
+import { buildFullMapReplicaReceipt } from "../../src/arena/full-map-replica-receipt.js";
 import { buildArenaEngineeringProjection } from "../../src/arena/arena-engineering-projection.js";
 import { analyzeMultiplayerStaticRisks, analyzePendingWorldOperations, assessWorldReleaseState, proposeTickingAreaConsolidation } from "../../src/index.js";
 import type { McStructureModel } from "../../../../adapters/mcstructure/src/index.js";
@@ -845,3 +846,47 @@ describe("arena runtime adapter requirements", () => {
   });
 });
 }
+
+
+describe("full-map replica proof conservation", () => {
+  const equivalent = (replicaId: string) => ({
+    replicaId, proofStatus: "complete-proof" as const,
+    mismatchCount: 0, evidenceIds: ["proof:" + replicaId],
+  });
+
+  it("reuses a structural baseline only with complete, uniquely identified replica coverage", () => {
+    const complete = buildFullMapReplicaReceipt({
+      replicaBaseline: "arena-1", expectedReplicaCount: 2,
+      replicas: [equivalent("arena-2"), equivalent("arena-3")],
+    });
+    expect(complete.baselineReusableForAllReplicas).toBe(true);
+    expect(complete.replicaResults).toHaveLength(2);
+    expect(complete.replicaResults.map(x => x.replicaStatus)).toEqual([
+      "EQUIVALENT", "EQUIVALENT",
+    ]);
+    for (const caseInput of [
+      { expectedReplicaCount: 2, replicas: [equivalent("arena-2")] },
+      { expectedReplicaCount: 2, replicas: [equivalent("arena-2"), equivalent("arena-2")] },
+      { expectedReplicaCount: 2, replicas: [equivalent("arena-1"), equivalent("arena-3")] },
+      { expectedReplicaCount: undefined, replicas: [equivalent("arena-2"), equivalent("arena-3")] },
+    ]) {
+      const incomplete = buildFullMapReplicaReceipt({
+        replicaBaseline: "arena-1", ...caseInput,
+      });
+      expect(incomplete.baselineReusableForAllReplicas).toBe(false);
+    }
+  });
+
+  it("keeps diverged, bounded and unproven replicas outside transferable full-map proof", () => {
+    for (const variant of ["bounded-proof", "diverged", "no-proof"] as const) {
+      const receipt = buildFullMapReplicaReceipt({
+        replicaBaseline: "arena-1", expectedReplicaCount: 2,
+        replicas: [
+          equivalent("arena-2"),
+          { replicaId: "arena-3", proofStatus: variant, mismatchCount: 0 },
+        ],
+      });
+      expect(receipt.baselineReusableForAllReplicas).toBe(false);
+    }
+  });
+});

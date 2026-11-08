@@ -681,6 +681,25 @@ function formatOperationalOutcomeSnapshot(report: MapAuditOutputV2): string[] {
         out.push("- " + (replica.replicaResults.length - 6) +
           " replica lainnya tetap ada dalam fullMapReplica kanonis.");
       }
+      const expected = typeof arena.visibleArenaCount === "number" &&
+        Number.isSafeInteger(arena.visibleArenaCount) &&
+        arena.visibleArenaCount > 0
+        ? arena.visibleArenaCount - 1 : undefined;
+      const uniqueIds = new Set(replica.replicaResults.map(item => item.replicaId));
+      if (expected === undefined ||
+          uniqueIds.size !== expected ||
+          replica.replicaResults.length !== expected ||
+          !replica.baselineReusableForAllReplicas) {
+        out.push("**Cakupan baseline:** BELUM TERBUKTI untuk seluruh arena. " +
+          "Receipt saat ini " + replica.replicaResults.length +
+          " entri / " + uniqueIds.size + " ID unik; " +
+          "replica yang diharapkan: " + count(expected) +
+          ". Tidak boleh mewariskan bukti kesetaraan ke arena yang belum dicakup.");
+      } else {
+        out.push("**Cakupan baseline:** semua " + expected +
+          " replica mendapat receipt kesetaraan sesuai cakupan bukti. " +
+          "Ini bukan bukti gameplay/multiplayer sudah dijalankan.");
+      }
     }
   } else {
     out.push("**Cakupan arena:** " +

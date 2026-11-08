@@ -28,6 +28,8 @@ export interface FullMapReplicaReceipt {
  */
 export function buildFullMapReplicaReceipt(input: {
   readonly replicaBaseline: string;
+  /** Physical replica count from current-map topology, not a config guess. */
+  readonly expectedReplicaCount?: number;
   readonly replicas: readonly {
     readonly replicaId: string;
     readonly proofStatus:
@@ -90,6 +92,17 @@ export function buildFullMapReplicaReceipt(input: {
       ),
     ),
   ].sort();
+  const replicaIds = replicaResults.map(item => item.replicaId);
+  const distinctReplicaIds = new Set(replicaIds);
+  const completeReplicaRoster =
+    input.expectedReplicaCount !== undefined &&
+    Number.isSafeInteger(input.expectedReplicaCount) &&
+    input.expectedReplicaCount > 0 &&
+    replicaResults.length === input.expectedReplicaCount &&
+    distinctReplicaIds.size === input.expectedReplicaCount &&
+    replicaIds.every(id =>
+      id.trim().length > 0 && id !== input.replicaBaseline);
+
   const incompleteReplicaIds =
     replicaResults
       .filter(
@@ -110,7 +123,7 @@ export function buildFullMapReplicaReceipt(input: {
     replicaDivergenceIds,
     incompleteReplicaIds,
     baselineReusableForAllReplicas:
-      replicaResults.length > 0 &&
+      completeReplicaRoster &&
       replicaResults.every(
         (item) =>
           item.replicaStatus === "EQUIVALENT",
