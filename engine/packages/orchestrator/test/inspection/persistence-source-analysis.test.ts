@@ -227,6 +227,51 @@ describe("persistence source analysis", () => {
       "data.getScore(player);"))).toEqual([]);
   });
 
+
+  it("retains same-file and imported fallible-write leads in one source pass", () => {
+    const artifactId = "fixture:combined-source";
+    const parse = (id: string, relativePath: string, code: string) =>
+      parseScriptFile(id, code, { artifactId, relativePath });
+    const same = parse("local", "scripts/Local.js", [
+      "function commit() { if (!store.set('result', true)) return false; return true; }",
+      "function publish() {",
+      "  commit();",
+      "  notifications.enqueue('result');",
+      "  state.set('published', true);",
+      "}",
+    ].join("\n"));
+    const imported = parse("store", "scripts/Store.js", [
+      "export class Store {",
+      "  update(player, value) {",
+      "    try { data.setScore(player, value); return true; }",
+      "    catch (error) {}",
+      "    return false;",
+      "  }",
+      "}",
+    ].join("\n"));
+    const caller = parse("buyer", "scripts/Buyer.js", [
+      'import { Store } from "./Store.js";',
+      "class Buyer {",
+      "  constructor() { this.store = new Store(); }",
+      "  run(player) {",
+      "    this.store.update(player, 4);",
+      '    player.sendMessage("Success");',
+      "  }",
+      "}",
+    ].join("\n"));
+    const combined = analyzePersistenceSource([], [same, caller, imported])
+      .ignoredCommitBeforeFeedback;
+    expect(combined).toHaveLength(2);
+    expect(combined.map(item => item.calleeName)).toEqual([
+      "commit", "this.store.update",
+    ]);
+    expect(combined.every(item =>
+      item.proof === "SOURCE_FAILURE_PATH_AND_SUCCESS_CANDIDATE_NOT_PROVEN_BUG"))
+      .toBe(true);
+    expect(combined[0]?.directFallibleWriteSource).toBeUndefined();
+    expect(combined[1]?.receiverBindingKind).toBe("direct-named-esm-class");
+  });
+
   it("flags only unguarded fallible commit before later write and feedback", () => {
     const parse = (source: string) => parseScriptFile("transaction", source, {
       artifactId: "fixture:persistence", relativePath: "scripts/transactions.ts",

@@ -351,13 +351,10 @@ function sameAuthoredResetRegion(
  */
 function ignoredCommitBeforeFeedback(
   script: ParsedScriptFile,
+  file: ts.SourceFile,
 ): readonly IgnoredCommitBeforeFeedbackCandidate[] {
   if (!script.text || !script.source.artifactId.trim() ||
       !script.source.relativePath.trim()) return [];
-  const file = ts.createSourceFile(
-    script.source.relativePath, script.text, ts.ScriptTarget.Latest, true,
-    /\.tsx?$/i.test(script.source.relativePath) ? ts.ScriptKind.TS : ts.ScriptKind.JS,
-  );
   // A callable is resolved by its lexical owner, not its bare method name.
   // Identical method/local names in other classes or closures are unrelated.
   // Unnamed callbacks, arbitrary obj.method(), and dynamic/computed receivers
@@ -1142,6 +1139,7 @@ function sequentialCounterBeforePayload(
  */
 function crossFileIgnoredWriteBeforeFeedback(
   scripts: readonly ParsedScriptFile[],
+  sourceAsts: ReadonlyMap<ParsedScriptFile, ts.SourceFile>,
 ): readonly IgnoredCommitBeforeFeedbackCandidate[] {
   type Entry = { readonly script: ParsedScriptFile; readonly file: ts.SourceFile };
   const bySourcePath = new Map<string, Entry[]>();
@@ -1150,10 +1148,8 @@ function crossFileIgnoredWriteBeforeFeedback(
   for (const script of scripts) {
     if (!script.text || !script.source.artifactId.trim() ||
         !script.source.relativePath.trim()) continue;
-    const file = ts.createSourceFile(
-      script.source.relativePath, script.text, ts.ScriptTarget.Latest, true,
-      /\.tsx?$/i.test(script.source.relativePath) ? ts.ScriptKind.TS : ts.ScriptKind.JS,
-    );
+    const file = sourceAsts.get(script);
+    if (file === undefined) continue;
     const key = makeKey(script.source.artifactId, script.source.relativePath);
     bySourcePath.set(key, [...(bySourcePath.get(key) ?? []), { script, file }]);
   }
@@ -1637,11 +1633,27 @@ export function analyzePersistenceSource(
       )
     );
 
+  // Both existing source detectors inspect the same immutable parsed
+  // scripts. Parse each eligible source once per invocation; a transient
+  // identity map is sufficient and does not persist proof or source state.
+  const sourceAsts = new Map<ParsedScriptFile, ts.SourceFile>();
+  for (const script of sourceReviewScripts) {
+    if (!script.text || !script.source.artifactId.trim() ||
+        !script.source.relativePath.trim() || sourceAsts.has(script)) continue;
+    sourceAsts.set(script, ts.createSourceFile(
+      script.source.relativePath, script.text, ts.ScriptTarget.Latest, true,
+      /\.tsx?$/i.test(script.source.relativePath)
+        ? ts.ScriptKind.TS : ts.ScriptKind.JS,
+    ));
+  }
   return {
     properties,
     ignoredCommitBeforeFeedback: [
-      ...sourceReviewScripts.flatMap(ignoredCommitBeforeFeedback),
-      ...crossFileIgnoredWriteBeforeFeedback(sourceReviewScripts),
+      ...sourceReviewScripts.flatMap(script => {
+        const file = sourceAsts.get(script);
+        return file === undefined ? [] : ignoredCommitBeforeFeedback(script, file);
+      }),
+      ...crossFileIgnoredWriteBeforeFeedback(sourceReviewScripts, sourceAsts),
     ],
     sequentialCounterBeforePayload: sourceReviewScripts.flatMap(sequentialCounterBeforePayload),
     resultAuditRecords,
