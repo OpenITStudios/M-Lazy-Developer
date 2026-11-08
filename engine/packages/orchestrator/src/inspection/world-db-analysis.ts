@@ -25,6 +25,10 @@ export interface WorldDbNativeSummary {
   status: "not-present" | "scanned" | "failed";
   entriesScanned: number;
   truncated: boolean;
+  /** Count of persisted tickingarea_ LevelDB keys. A truncated scan
+   * yields a lower bound only; never treat it as complete occupancy.
+   */
+  permanentTickingAreaRecords?: number;
   actorRecords: number;
   actorDigestRecords: number;
   actorContentFingerprint?: string;
@@ -109,11 +113,19 @@ export async function analyzeWorldDbNative(
         WorldDbNativeSummary["chunkContentObservations"]
       >[number][] = [];
       let chunkValueHashes = 0;
+      let permanentTickingAreaRecords = 0;
+      // "tickingarea_" is the Bedrock persisted-record prefix. Compare
+      // raw key bytes represented in hex, not printable-only previews.
+      const tickingAreaPrefixHex =
+        Buffer.from("tickingarea_", "ascii").toString("hex");
       // The adapter owns entry budgets and value hashes. Aggregate once as
       // each record arrives rather than retaining another 300k-entry list.
       const scan = await scanLevelDbMetadata(reader, INSPECTION_LEVELDB_BUDGET, {
         retainMetadata: false,
         onMetadata(entry) {
+          if (entry.keyHex.startsWith(tickingAreaPrefixHex)) {
+            permanentTickingAreaRecords += 1;
+          }
           if (entry.dimensionId !== undefined) dimensions.add(entry.dimensionId);
           if (entry.keyFamily === "actor" && entry.valueHash !== undefined) {
             actorHashes.push({ keyHex: entry.keyHex, valueHash: entry.valueHash });
@@ -169,6 +181,7 @@ export async function analyzeWorldDbNative(
         status: "scanned",
         entriesScanned: scan.entriesScanned,
         truncated: scan.truncated,
+        permanentTickingAreaRecords,
         actorRecords: scan.keyFamilies.actor ?? 0,
         actorDigestRecords: scan.keyFamilies["actor-digest"] ?? 0,
         ...(actorContentFingerprint === undefined

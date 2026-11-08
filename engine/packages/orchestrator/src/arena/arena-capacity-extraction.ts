@@ -75,6 +75,8 @@ export interface ArenaCapacityExtractionInput {
   scripts?: readonly ParsedScriptFile[];
   declaredArenaCount?: number;
   declaredConcurrentArenaLimit?: number;
+  /** Persisted command ticking areas from a complete selected-world DB scan. */
+  observedPermanentTickingAreas?: number;
 }
 
 export interface ArenaCapacityExtractionEvidence {
@@ -87,6 +89,8 @@ export interface ArenaCapacityExtractionEvidence {
   completeCommandTickingAreaFamilies: number;
   unmatchedCommandTickingAreaAdds: number;
   commandTickingAreaResourceResolved: boolean;
+  /** No number means no complete selected-world occupancy proof. */
+  observedPermanentTickingAreas?: number;
   scriptTickingAreaManagerReferenced: boolean;
   scriptCapacitySignals: readonly string[];
   scriptTickingAreaCapacityResolved: boolean;
@@ -429,16 +433,32 @@ export function extractArenaConcurrencyCapacity(
       unmatched === 0 &&
       matchedRecords === addRecords.length
     ) {
-      commandResourceResolved = true;
-      resources.push({
-        id: "command-tickingarea-slots",
-        backend: "fixed-pool",
-        perArena: completeFamilies,
-        total: 10,
-      });
       reasons.push(
         `Detected ${completeFamilies} complete /tickingarea add family/families repeated across all ${requestedConcurrentArenas} arena(s).`,
       );
+      const occupied = input.observedPermanentTickingAreas;
+      if (occupied !== undefined &&
+          Number.isSafeInteger(occupied) && occupied >= 0 &&
+          occupied <= 10) {
+        // Official Bedrock command rule: ten /tickingarea entries per world.
+        // Existing world records (lobby/admin/other dimensions) consume slots.
+        // This is a resource ceiling, not proof a session starts successfully.
+        resources.push({
+          id: "command-tickingarea-slots",
+          backend: "fixed-pool",
+          perArena: completeFamilies,
+          total: 10,
+          reserved: occupied,
+        });
+        commandResourceResolved = true;
+        reasons.push(
+          `Selected-world native DB has ${occupied} persisted ticking area(s); command budget is (10 - ${occupied}) / ${completeFamilies} per arena. This does not prove admission, scheduling or native gameplay.`,
+        );
+      } else {
+        reasons.push(
+          "Command ticking-area cost was reconstructed, but complete selected-world occupancy is unavailable or invalid. Do not assume zero permanent areas or report a safe simultaneous capacity.",
+        );
+      }
     } else {
       reasons.push(
         "Command ticking-area usage could not be reduced to complete translated families across every detected arena; capacity remains unresolved.",
@@ -511,6 +531,10 @@ export function extractArenaConcurrencyCapacity(
       unmatchedCommandTickingAreaAdds: unmatched,
       commandTickingAreaResourceResolved:
         commandResourceResolved,
+      ...(input.observedPermanentTickingAreas === undefined ? {} : {
+        observedPermanentTickingAreas:
+          input.observedPermanentTickingAreas,
+      }),
       scriptTickingAreaManagerReferenced,
       scriptCapacitySignals,
       scriptTickingAreaCapacityResolved: false,

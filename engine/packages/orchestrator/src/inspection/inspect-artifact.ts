@@ -193,6 +193,11 @@ async function inspectPreparedArtifact(
       runtimeProbeTranscript?.droppedExchanges ?? 0,
       mapClassification,
       prepared.sourceInventoryReuse,
+      nativeWorldDb.status === "scanned" &&
+        !nativeWorldDb.truncated &&
+        nativeWorldDb.permanentTickingAreaRecords !== undefined
+          ? nativeWorldDb.permanentTickingAreaRecords
+          : undefined,
     );
 
     const levelName = await readFile(

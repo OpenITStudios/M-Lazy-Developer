@@ -33,7 +33,30 @@ A diverged replica is not automatically a bug. It becomes a causal candidate onl
 
 An incomplete/no-proof replica cannot inherit baseline safety.
 
-### Effective-concurrency proof
+### Persisted ticking-area capacity evidence
+
+For command-created ticking areas, the published Bedrock command ceiling is
+**10 per world** ([Microsoft Ticking Areas](https://learn.microsoft.com/en-us/minecraft/creator/documents/tickingareacommand?view=minecraft-bedrock-stable)).
+The ceiling is a platform rule, not evidence that all ten slots are free.
+
+The canonical native World DB scan counts `tickingarea_` persisted records
+without decoding user-controlled names. Only a **complete** selected-artifact
+scan can supply the existing arena-capacity extraction owner with an occupancy
+count, including a verified zero. A missing/truncated/unreadable scan is
+**UNKNOWN**, never zero. For complete source-derived per-arena command families:
+
+```text
+command capacity ceiling = floor((10 - observed persisted areas) / per-arena adds)
+```
+
+This is still a *resource ceiling*, not proof that queues, allocation, chunk
+readiness and actual concurrent starts work. Script-managed ticking area
+capacity remains a separate unresolved backend unless independently grounded
+for the target edition/version. A source-only declared admission cap cannot
+close the native command-budget uncertainty. Historical project defaults
+(such as five concurrent arenas) are never universal map design rules.
+
+## Effective-concurrency proof
 
 Configured capacity is not deliverable capacity.
 

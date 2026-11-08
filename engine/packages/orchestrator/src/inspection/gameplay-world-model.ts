@@ -1180,6 +1180,14 @@ export function deriveGameplayWorldModel(
 
   const runtimeSurfaces: GameplayClosureSurface[] = [];
 
+  const arenaCapacityConstraintsUnresolved =
+    source.arena.capacity !== undefined && (
+      (source.arena.capacity.evidence.commandTickingAreaAdds > 0 &&
+        !source.arena.capacity.evidence.commandTickingAreaResourceResolved) ||
+      (source.arena.capacity.evidence.scriptTickingAreaManagerReferenced &&
+        !source.arena.capacity.evidence.scriptTickingAreaCapacityResolved)
+    );
+
   const arenaDetected =
     source.arena.autoDetected ||
     arenaCount !== undefined ||
@@ -1211,20 +1219,15 @@ export function deriveGameplayWorldModel(
     const requested =
       source.arena.capacity?.evidence
         .requestedConcurrentArenas;
-    const safe =
-      source.arena.capacity?.report
-        ?.safeConcurrentArenas;
+    const safe = arenaCapacityConstraintsUnresolved
+      ? null
+      : source.arena.capacity?.report?.safeConcurrentArenas;
     const unresolvedCapacity =
       source.arena.capacity === undefined ||
       source.arena.capacity.evidence.arenaCountConflict ||
       source.arena.capacity.report === undefined ||
-      source.arena.capacity.report.safeConcurrentArenas === null ||
-      (
-        source.arena.capacity.evidence
-          .scriptTickingAreaManagerReferenced &&
-        !source.arena.capacity.evidence
-          .scriptTickingAreaCapacityResolved
-      );
+      safe == null ||
+      arenaCapacityConstraintsUnresolved;
 
     runtimeSurfaces.push({
       id: "runtime:arena-capacity",
@@ -1858,8 +1861,8 @@ export function deriveGameplayWorldModel(
         ? {}
         : {
             safeConcurrentArenas:
-              source.arena.capacity.report
-                .safeConcurrentArenas,
+              arenaCapacityConstraintsUnresolved ? null :
+                source.arena.capacity.report.safeConcurrentArenas,
           }),
       ...(source.arena.capacity?.evidence
           .declaredConcurrentArenaLimit === undefined
@@ -1895,7 +1898,8 @@ export function deriveGameplayWorldModel(
               source.arena.capacity.evidence
                 .declaredMaxConcurrentPlayers,
           }),
-      ...(source.arena.capacity?.report === undefined
+      ...(source.arena.capacity?.report === undefined ||
+          arenaCapacityConstraintsUnresolved
         ? {}
         : {
             capacityOk:

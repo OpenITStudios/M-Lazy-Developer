@@ -18,6 +18,7 @@ const absolute = (x: number, y: number, z: number) => ({
 describe("arena concurrency capacity extraction", () => {
   it("derives command ticking-area per-arena cost from complete translated families", () => {
     const result = extractArenaConcurrencyCapacity({
+      observedPermanentTickingAreas: 2,
       discovery: {
         canonical: {
           arenaId: "arena-1",
@@ -59,14 +60,71 @@ describe("arena concurrency capacity extraction", () => {
       completeCommandTickingAreaFamilies: 1,
       unmatchedCommandTickingAreaAdds: 0,
       commandTickingAreaResourceResolved: true,
+      observedPermanentTickingAreas: 2,
     });
     expect(result.resources).toEqual([{
       id: "command-tickingarea-slots",
       backend: "fixed-pool",
       perArena: 1,
       total: 10,
+      reserved: 2,
     }]);
     expect(result.report?.ok).toBe(true);
+  });
+
+  it("restores persisted occupancy when computing the original five-arena command budget", () => {
+    const anchors = [0, 100, 200, 300, 400];
+    const discovery = {
+      canonical: { arenaId: "arena-1", anchor: { x: 0, y: 0, z: 0 }, items: [] },
+      replicas: anchors.slice(1).map((x, index) => ({
+        arenaId: "arena-" + (index + 2), anchor: { x, y: 0, z: 0 }, items: [],
+      })),
+      offsets: anchors.slice(1).map(x => ({ x, y: 0, z: 0 })),
+      supportByOffset: {}, confidence: "medium" as const, evidenceCandidates: 5,
+    };
+    const tickingAreas = anchors.flatMap(x =>
+      [1, 2, 3].map(radius => ({
+        functionId: "arena/add",
+        semantics: {
+          action: "add-circle" as const, center: absolute(x, 0, 0), radius,
+        },
+      })));
+    const base = { discovery, tickingAreas };
+
+    const observed = extractArenaConcurrencyCapacity({
+      ...base, observedPermanentTickingAreas: 2,
+    });
+    expect(observed.evidence).toMatchObject({
+      requestedConcurrentArenas: 5,
+      completeCommandTickingAreaFamilies: 3,
+      unmatchedCommandTickingAreaAdds: 0,
+      commandTickingAreaResourceResolved: true,
+    });
+    expect(observed.resources).toEqual([{
+      id: "command-tickingarea-slots", backend: "fixed-pool",
+      perArena: 3, total: 10, reserved: 2,
+    }]);
+    expect(observed.report?.safeConcurrentArenas).toBe(2);
+    expect(observed.report?.ok).toBe(false);
+
+    // Missing or implausible world-state evidence cannot become an
+    // invented zero-reservation proof or a false sufficient verdict.
+    for (const occupied of [undefined, -1, 11, 0.5]) {
+      const unknown = extractArenaConcurrencyCapacity({
+        ...base,
+        ...(occupied === undefined ? {} : { observedPermanentTickingAreas: occupied }),
+      });
+      expect(unknown.evidence.commandTickingAreaResourceResolved).toBe(false);
+      expect(unknown.evidence.completeCommandTickingAreaFamilies).toBe(3);
+      expect(unknown.resources).toEqual([]);
+      expect(unknown.report?.safeConcurrentArenas).toBeNull();
+    }
+
+    const withoutReservations = extractArenaConcurrencyCapacity({
+      ...base, observedPermanentTickingAreas: 0,
+    });
+    expect(withoutReservations.report?.safeConcurrentArenas).toBe(3);
+    expect(withoutReservations.report?.ok).toBe(false);
   });
 
   it("refuses to infer capacity from incomplete translated families", () => {

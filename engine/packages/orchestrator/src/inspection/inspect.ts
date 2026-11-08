@@ -138,6 +138,8 @@ export async function inspectDirectory(
   runtimeProbeDroppedExchanges = 0,
   mapClassification?: GameDesignMapClassification,
   sourceInventoryReuse?: InspectionFileInventoryReuse,
+  /** Selected-artifact complete native DB scan only; never a source guess. */
+  nativePermanentTickingAreas?: number,
 ): Promise<InspectDirectoryResult> {
   const runtimeEvidenceStage =
     prepareInspectionRuntimeEvidence({
@@ -530,6 +532,8 @@ export async function inspectDirectory(
   const runtimeAnalysis =
     analyzeInspectionRuntimeState({
       target,
+      ...(nativePermanentTickingAreas === undefined
+        ? {} : { nativePermanentTickingAreas }),
       gameplayIntent,
       parsedFunctions,
       parsedScripts,

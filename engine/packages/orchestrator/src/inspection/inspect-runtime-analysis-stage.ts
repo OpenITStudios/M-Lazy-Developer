@@ -92,6 +92,7 @@ import {
 
 export interface InspectionRuntimeAnalysisInput {
   target: InspectTargetProfile;
+  nativePermanentTickingAreas?: number;
   gameplayIntent?: GameplayIntentModel;
   parsedFunctions: InspectionSourceIndex["parsedFunctions"];
   parsedScripts: InspectionSourceIndex["parsedScripts"];
@@ -599,6 +600,8 @@ export function analyzeInspectionRuntimeState(
 
   const arenaCapacity =
     extractArenaConcurrencyCapacity({
+      ...(input.nativePermanentTickingAreas === undefined ? {}
+        : { observedPermanentTickingAreas: input.nativePermanentTickingAreas }),
       ...(topology.arenaReplicaDiscovery === undefined
         ? {}
         : { discovery: topology.arenaReplicaDiscovery }),
