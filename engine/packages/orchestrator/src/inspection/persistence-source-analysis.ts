@@ -1220,19 +1220,55 @@ function crossFileIgnoredWriteBeforeFeedback(
           definition.heritageClauses?.length) continue;
       const ctor = definition.members.find(ts.isConstructorDeclaration);
       if (!ctor?.body) continue;
-      const fieldWrites = new Map<string, ts.BinaryExpression[]>();
+      const fieldWrites = new Map<string, ts.Node[]>();
+      let opaqueReceiverWrite = false;
+      const recordFieldWrite = (field: string, node: ts.Node): void => {
+        fieldWrites.set(field, [...(fieldWrites.get(field) ?? []), node]);
+      };
+      const thisField = (node: ts.Node): string | undefined => {
+        if (ts.isPropertyAccessExpression(node) &&
+            node.expression.kind === ts.SyntaxKind.ThisKeyword) {
+          return node.name.text;
+        }
+        if (ts.isElementAccessExpression(node) &&
+            node.expression.kind === ts.SyntaxKind.ThisKeyword) {
+          if (node.argumentExpression &&
+              ts.isStringLiteralLike(node.argumentExpression)) {
+            return node.argumentExpression.text;
+          }
+          // Unknown computed receiver may alias the constructor field.
+          opaqueReceiverWrite = true;
+        }
+        return undefined;
+      };
+      const trackMutationTarget = (target: ts.Node, node: ts.Node): void => {
+        const direct = thisField(target);
+        if (direct !== undefined) recordFieldWrite(direct, node);
+        if (ts.isPropertyAccessExpression(target) ||
+            ts.isElementAccessExpression(target)) {
+          // A method replacement (this.field.fn = ...) invalidates the
+          // imported-method identity even if this.field itself is unchanged.
+          const nested = thisField(target.expression);
+          if (nested !== undefined) recordFieldWrite(nested, node);
+        }
+      };
       const collectWrites = (node: ts.Node): void => {
         if (ts.isBinaryExpression(node) &&
             node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
-            node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
-            ts.isPropertyAccessExpression(node.left) &&
-            node.left.expression.kind === ts.SyntaxKind.ThisKeyword) {
-          const name = node.left.name.text;
-          fieldWrites.set(name, [...(fieldWrites.get(name) ?? []), node]);
+            node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) {
+          trackMutationTarget(node.left, node);
+        }
+        if (ts.isPrefixUnaryExpression(node) ||
+            ts.isPostfixUnaryExpression(node)) {
+          trackMutationTarget(node.operand, node);
+        }
+        if (ts.isDeleteExpression(node)) {
+          trackMutationTarget(node.expression, node);
         }
         ts.forEachChild(node, collectWrites);
       };
       ts.forEachChild(definition, collectWrites);
+      if (opaqueReceiverWrite) continue;
       const boundFields = new Map<string, {
         readonly target: Entry;
         readonly source: ts.ImportDeclaration;
@@ -1248,12 +1284,20 @@ function crossFileIgnoredWriteBeforeFeedback(
             assignment.left.expression.kind !== ts.SyntaxKind.ThisKeyword ||
             !ts.isNewExpression(assignment.right) ||
             !ts.isIdentifier(assignment.right.expression)) continue;
-        const binding = imported.get(assignment.right.expression.text);
-        if (!binding || (fieldWrites.get(assignment.left.name.text)?.length ?? 0) !== 1 ||
+        const constructorName = assignment.right.expression.text;
+        const binding = imported.get(constructorName);
+        const shadowedByConstructor = ctor.body.statements.some(s =>
+          ts.isVariableStatement(s) &&
+            s.declarationList.declarations.some(d =>
+              ts.isIdentifier(d.name) && d.name.text === constructorName) ||
+          ts.isFunctionDeclaration(s) && s.name?.text === constructorName ||
+          ts.isClassDeclaration(s) && s.name?.text === constructorName);
+        if (!binding || shadowedByConstructor ||
+            (fieldWrites.get(assignment.left.name.text)?.length ?? 0) !== 1 ||
             fieldWrites.get(assignment.left.name.text)?.[0] !== assignment ||
             ctor.parameters.some(param =>
               ts.isIdentifier(param.name) &&
-              param.name.text === assignment.right.expression.getText(caller.file))) {
+              param.name.text === constructorName)) {
           continue;
         }
         boundFields.set(assignment.left.name.text, {
