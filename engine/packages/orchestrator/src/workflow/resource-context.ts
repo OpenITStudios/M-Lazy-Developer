@@ -753,8 +753,10 @@ interface DeveloperPracticeReferenceQuery {
  * no source site, version or gameplay proof is inferred from this index. */
 interface PreparedDeveloperReferenceSource {
   readonly all: SelectedArtifactReferenceSignal[];
-  readonly byLine: Map<number, SelectedArtifactReferenceSignal[]>;
-  readonly broad: SelectedArtifactReferenceSignal[];
+  /** Ordinals retain exact global/source witness order even when two
+   * observations carry identical IDs or their source ranges overlap. */
+  readonly byLine: Map<number, number[]>;
+  readonly broad: number[];
 }
 
 export function prepareDeveloperPracticeReferenceSelector(
@@ -773,18 +775,19 @@ export function prepareDeveloperPracticeReferenceSelector(
       group = { all: [], byLine: new Map(), broad: [] };
       observedBySource.set(item.sourcePath, group);
     }
+    const ordinal = group.all.length;
     group.all.push(item);
     const from = item.range?.lineStart;
     const to = item.range?.lineEnd ?? from;
     // Avoid allocating an unbounded number of buckets for long source spans.
     if (from === undefined || to === undefined || to < from || to - from > 64) {
-      group.broad.push(item);
+      group.broad.push(ordinal);
       continue;
     }
     for (let line = from; line <= to; line += 1) {
       const candidates = group.byLine.get(line);
-      if (candidates) candidates.push(item);
-      else group.byLine.set(line, [item]);
+      if (candidates) candidates.push(ordinal);
+      else group.byLine.set(line, [ordinal]);
     }
   }
   // Many obligations ask identical source-scoped reference questions. Reuse
@@ -854,32 +857,38 @@ function compileDeveloperPracticeReferenceContextWithSignals(
         const matching = locators.filter(locator =>
           sourceLocatorMatchesSourcePath(locator, sourcePath));
         if (matching.length === 0) return [];
-        const candidates = new Set<SelectedArtifactReferenceSignal>();
+        const candidates = new Set<number>();
         for (const locator of matching) {
           const suffix = locator.slice(sourcePath.length);
           const position = /^:([1-9]\d*)(?::([1-9]\d*))?$/.exec(suffix);
           const localized = /^#L([1-9]\d*)(?:-L?([1-9]\d*))?(?::([1-9]\d*))?$/.exec(suffix);
           if (!position && !localized) {
-            // Explicit whole-file, JSON pointer or unresolved source symbol:
-            // only the original precise witness predicate may decide.
-            for (const item of source.all) candidates.add(item);
-            break;
+            // Wide/file/JSON-pointer/symbol questions still use the FULL
+            // original predicate. A numeric index cannot invent a symbol.
+            return source.all.filter(item => matching.some(candidate =>
+              sourceLocatorMatchesReferenceSignal(candidate, item)));
           }
           const from = Number((position ?? localized)![1]);
           const to = Number(localized?.[2] ?? from);
           if (to < from) continue;
           if (to - from > 64) {
-            for (const item of source.all) candidates.add(item);
-            break;
+            return source.all.filter(item => matching.some(candidate =>
+              sourceLocatorMatchesReferenceSignal(candidate, item)));
           }
-          for (const item of source.broad) candidates.add(item);
+          for (const ordinal of source.broad) candidates.add(ordinal);
           for (let line = from; line <= to; line += 1) {
-            for (const item of source.byLine.get(line) ?? []) candidates.add(item);
+            for (const ordinal of source.byLine.get(line) ?? [])
+              candidates.add(ordinal);
           }
         }
-        // Preserve source-array tie ordering, even for repeated witness IDs.
-        return source.all.filter(item => candidates.has(item) && matching.some(locator =>
-          sourceLocatorMatchesReferenceSignal(locator, item)));
+        // Sorting selected ordinals avoids rescanning a large bundled file
+        // for every precise source site, while preserving all duplicate
+        // witness identities and original tie ordering.
+        return [...candidates].sort((a, b) => a - b).flatMap(ordinal => {
+          const item = source.all[ordinal]!;
+          return matching.some(locator =>
+            sourceLocatorMatchesReferenceSignal(locator, item)) ? [item] : [];
+        });
       })
       // Retain the original global IR witness order after source pruning.
       .sort((a, b) => a.evidenceId.localeCompare(b.evidenceId) ||

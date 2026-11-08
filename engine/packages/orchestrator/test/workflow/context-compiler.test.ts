@@ -1427,6 +1427,75 @@ describe("source-first Daigon export investigation reference", () => {
     }
   });
 
+
+  it("keeps sparse bundled source lookups identical to the direct full witness scan", () => {
+    const regions = Array.from({ length: 800 }, (_, index) => {
+      const exact = {
+        ...source, range: {
+          lineStart: 100 + index, lineEnd: 100 + index,
+          columnStart: 1, columnEnd: 65,
+        },
+      };
+      return {
+        ...subscription, id: "event:large:" + index, source: exact,
+        scriptEventIdRejection: {
+          ...subscription.scriptEventIdRejection,
+          source: exact, valueSource: exact,
+        },
+      };
+    });
+    const wide = {
+      ...source, range: {
+        lineStart: 20, lineEnd: 250,
+        columnStart: 1, columnEnd: 65,
+      },
+    };
+    const semanticIr = {
+      schemaVersion: 1 as const,
+      execution: {
+        regions: [...regions, {
+          ...subscription, id: "event:wide-span", source: wide,
+          scriptEventIdRejection: {
+            ...subscription.scriptEventIdRejection,
+            source: wide, valueSource: wide,
+          },
+        }], edges: [],
+      },
+      state: { surfaces: [], operations: [], authorityBindings: [] },
+      temporal: { relations: [] },
+    };
+    const prepared = prepareDeveloperPracticeReferenceSelector(
+      semanticIr, "selected");
+    const file = "behavior_packs/demo/scripts/results.ts";
+    for (const sourceLocators of [
+      [file + ":412:20"],
+      [file + ":413:20", file + ":412:20", file + ":413:20"],
+      [file + ":40:20"],
+      [file + "#L10-L120"],
+      [file + "#L20-L250"],
+      [file],
+      [file + "@unresolved-symbol"],
+      [file + ":412:100"],
+      [file + "-other:412:20"],
+    ]) {
+      const input = { data, domains: ["scoring"], sourceLocators };
+      expect(prepared(input)).toEqual(
+        compileDeveloperPracticeReferenceContext({
+          ...input, semanticIr, selectedArtifactId: "selected",
+        }),
+      );
+    }
+    const sparse = prepared({
+      data, domains: ["scoring"], sourceLocators: [file + ":412:20"],
+    });
+    expect(sparse?.status).toBe("INVESTIGATION_HINTS_ONLY");
+    expect(sparse?.items[0]?.matchingSourceLocators)
+      .toContain(file + ":412:1");
+    expect(sparse?.items[0]?.matchingSourceLocators)
+      .not.toContain(file + ":413:1");
+    expect(sparse?.authority).toBe("REFERENCE");
+  });
+
   it("keeps bounded prepared selectors identical to direct source proof", () => {
     const semanticIr = {
       schemaVersion: 1 as const,
