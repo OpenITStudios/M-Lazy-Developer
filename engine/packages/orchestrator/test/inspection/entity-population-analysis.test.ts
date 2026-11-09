@@ -511,3 +511,59 @@ describe("critical persistence and spawn performance policy", () => {
     ).toBe("unresolved");
   });
 });
+
+describe("batch-local entity population AST reuse", () => {
+  it("keeps four independent source inspections faithful across JS, TS and absent text", () => {
+    const jsScript = parseScriptFile(
+      "spawn-js",
+      [
+        "const intent = {",
+        "  arenaGeneration: 1, waveGeneration: 2,",
+        "  spawnOperationId: 'op:1', expectedEntityType: 'demo:enemy',",
+        "  expectedCount: 2,",
+        "};",
+        "const maxSpawnPerTick = 3;",
+        "function spawnWave(dimension, arena) {",
+        "  const enemy = dimension.spawnEntity('demo:enemy', {x:0,y:0,z:0});",
+        "  if (!enemy.isValid) return;",
+        "  arena.enemyRegistry.add(enemy.id);",
+        "  for (let i = 0; i < 2; i++) {",
+        "    dimension.spawnEntity('demo:enemy', {x:0,y:0,z:0});",
+        "  }",
+        "}",
+      ].join("\n"),
+      { artifactId: "fixture", relativePath: "scripts/spawn.js" },
+    );
+    const tsScript = parseScriptFile(
+      "partial-ts",
+      "const partial: { arenaGeneration: number; expectedCount: number } = " +
+        "{ arenaGeneration: 1, expectedCount: 2 };",
+      { artifactId: "fixture", relativePath: "scripts/partial.ts" },
+    );
+    const missingText = {
+      ...jsScript,
+      identifier: "missing-source",
+      text: undefined,
+    };
+    const result = analyzeEntityPopulationSources(
+      [], [jsScript, tsScript, missingText],
+    );
+
+    expect(result.spawnIntents.map(item => [item.scriptId, item.status]))
+      .toEqual([
+        ["partial-ts", "incomplete"],
+        ["spawn-js", "complete"],
+      ]);
+    expect(result.completeSpawnIntents).toBe(1);
+    expect(result.incompleteSpawnIntents).toBe(1);
+    expect(result.spawnCommits.map(item => [item.scriptId, item.status]))
+      .toEqual([["spawn-js", "verified-before-registration"]]);
+    expect(result.authoredSpawnBudgets)
+      .toEqual([{scriptId: "spawn-js", name: "maxSpawnPerTick", limit: 3}]);
+    expect(result.maxStaticSpawnBurst).toBe(2);
+    expect(result.spawnBudgetStatus).toBe("within-authored-budget");
+    // Missing original source text cannot provide fresh AST-only proof.
+    expect(result.spawnIntents.some(item => item.scriptId === "missing-source"))
+      .toBe(false);
+  });
+});

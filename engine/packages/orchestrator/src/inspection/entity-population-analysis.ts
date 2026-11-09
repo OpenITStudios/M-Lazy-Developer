@@ -148,24 +148,20 @@ const REQUIRED_SPAWN_INTENT_FIELDS = [
   "expectedCount",
 ] as const;
 
+/** One transient TypeScript AST per selected script; the four consumers
+ * inspect it read-only and never store AST nodes in the source index. */
+interface EntityPopulationScriptAst {
+  readonly script: ParsedScriptFile;
+  readonly file: ts.SourceFile;
+}
+
 function spawnIntentAssessments(
-  scripts: readonly ParsedScriptFile[],
+  astViews: readonly EntityPopulationScriptAst[],
 ): SpawnIntentAssessment[] {
   const output:
     SpawnIntentAssessment[] = [];
 
-  for (const script of scripts) {
-    const file = ts.createSourceFile(
-      script.source.relativePath,
-      script.text ?? "",
-      ts.ScriptTarget.Latest,
-      true,
-      script.source.relativePath.endsWith(
-        ".ts",
-      )
-        ? ts.ScriptKind.TS
-        : ts.ScriptKind.JS,
-    );
+  for (const { script, file } of astViews) {
 
     const visit = (node: ts.Node): void => {
       if (
@@ -275,23 +271,12 @@ function lineageInheritanceEvidence(
 
 
 function spawnCommitAssessments(
-  scripts: readonly ParsedScriptFile[],
+  astViews: readonly EntityPopulationScriptAst[],
 ): SpawnCommitAssessment[] {
   const output:
     SpawnCommitAssessment[] = [];
 
-  for (const script of scripts) {
-    const file = ts.createSourceFile(
-      script.source.relativePath,
-      script.text ?? "",
-      ts.ScriptTarget.Latest,
-      true,
-      script.source.relativePath.endsWith(
-        ".ts",
-      )
-        ? ts.ScriptKind.TS
-        : ts.ScriptKind.JS,
-    );
+  for (const { script, file } of astViews) {
 
     const inspectFunction = (
       node:
@@ -466,7 +451,7 @@ function spawnCommitAssessments(
 
 
 function authoredSpawnBudgets(
-  scripts: readonly ParsedScriptFile[],
+  astViews: readonly EntityPopulationScriptAst[],
 ): {
   scriptId: string;
   name: string;
@@ -478,16 +463,7 @@ function authoredSpawnBudgets(
     limit: number;
   }[] = [];
 
-  for (const script of scripts) {
-    const file = ts.createSourceFile(
-      script.source.relativePath,
-      script.text ?? "",
-      ts.ScriptTarget.Latest,
-      true,
-      script.source.relativePath.endsWith(".ts")
-        ? ts.ScriptKind.TS
-        : ts.ScriptKind.JS,
-    );
+  for (const { script, file } of astViews) {
     const visit = (node: ts.Node): void => {
       if (
         ts.isVariableDeclaration(node) &&
@@ -518,19 +494,10 @@ function authoredSpawnBudgets(
 }
 
 function maxStaticSpawnBurst(
-  scripts: readonly ParsedScriptFile[],
+  astViews: readonly EntityPopulationScriptAst[],
 ): number {
   let maximum = 0;
-  for (const script of scripts) {
-    const file = ts.createSourceFile(
-      script.source.relativePath,
-      script.text ?? "",
-      ts.ScriptTarget.Latest,
-      true,
-      script.source.relativePath.endsWith(".ts")
-        ? ts.ScriptKind.TS
-        : ts.ScriptKind.JS,
-    );
+  for (const { script, file } of astViews) {
     const visit = (node: ts.Node): void => {
       if (
         ts.isForStatement(node) &&
@@ -588,20 +555,48 @@ export function analyzeEntityPopulationSources(
     generationBoundRegistryAuthorities?: number;
   } = {},
 ): EntityPopulationSourceAnalysis {
+  // Parse one script once, run all four read-only inspections, then
+  // release that AST before moving to the next selected source file.
+  // This avoids retaining an entire map's script ASTs in memory.
   const sources:
     AutonomousEntitySpawnSource[] = [];
-  const spawnIntents =
-    spawnIntentAssessments(scripts);
-  const spawnCommits =
-    spawnCommitAssessments(scripts);
+  const spawnIntents: SpawnIntentAssessment[] = [];
+  const spawnCommits: SpawnCommitAssessment[] = [];
+  const spawnBudgets: ReturnType<typeof authoredSpawnBudgets> = [];
+  let staticSpawnBurst = 0;
+
+  for (const script of scripts) {
+    const astViews: EntityPopulationScriptAst[] = [{
+      script,
+      file: ts.createSourceFile(
+        script.source.relativePath,
+        script.text ?? "",
+        ts.ScriptTarget.Latest,
+        true,
+        script.source.relativePath.endsWith(".ts")
+          ? ts.ScriptKind.TS
+          : ts.ScriptKind.JS,
+      ),
+    }];
+    spawnIntents.push(...spawnIntentAssessments(astViews));
+    spawnCommits.push(...spawnCommitAssessments(astViews));
+    spawnBudgets.push(...authoredSpawnBudgets(astViews));
+    staticSpawnBurst = Math.max(staticSpawnBurst, maxStaticSpawnBurst(astViews));
+  }
+  // Maintain the original global ordering, including duplicate script IDs
+  // and stable ties from source order (per-script helper sorts are local).
+  spawnIntents.sort((a, b) =>
+    a.scriptId.localeCompare(b.scriptId) ||
+    a.objectName.localeCompare(b.objectName));
+  spawnCommits.sort((a, b) =>
+    a.scriptId.localeCompare(b.scriptId) ||
+    a.functionRegion.localeCompare(b.functionRegion) ||
+    a.entityVariable.localeCompare(b.entityVariable));
+  spawnBudgets.sort((a, b) =>
+    a.scriptId.localeCompare(b.scriptId) ||
+    a.name.localeCompare(b.name));
   const lineageEvidence =
-    lineageInheritanceEvidence(
-      scripts,
-    );
-  const spawnBudgets =
-    authoredSpawnBudgets(scripts);
-  const staticSpawnBurst =
-    maxStaticSpawnBurst(scripts);
+    lineageInheritanceEvidence(scripts);
 
   for (const entity of entities) {
     for (
