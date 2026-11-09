@@ -126,6 +126,47 @@ test("single pairs, multiple changes and mixed outcomes are confounded", () => {
   assert.equal(reflect(x).verdict, "confounded");
 });
 
+test("one regression and one unchanged pair retains baseline rather than being unclassified", () => {
+  const x = makePayload(true, true);
+  x.runs.runs[1].selectedLane = "m-bedrock-system-improvement";
+  const r = reflect(x);
+  assert.equal(r.verdict, "hurt");
+  assert.equal(r.regressions, 1);
+  assert.equal(r.unchanged, 1);
+  assert.equal(r.regressedOracleChecks, 2);
+  assert.equal(r.candidateDisposition, "KEEP_BASELINE");
+});
+
+test("a net score gain cannot erase a previously passing frozen assertion", () => {
+  const x = makePayload();
+  x.runs.runs[0].caseId = "improve-system-source";
+  x.runs.runs[1].caseId = "improve-system-source";
+  x.runs.runs[0].selectedLane = "m-bedrock-system-improvement";
+  x.runs.runs[1].selectedLane = "m-bedrock-system-improvement";
+  const names = [
+    "single existing source owner",
+    "no target write during system improvement",
+    "Skills/Probe source and report versions separated",
+    "no unsupported gameplay proof",
+    "GitHub Local commit verified",
+  ];
+  x.runs.runs[0].assertions = Object.fromEntries(
+    names.map((name, i) => [name, i < 2]));
+  x.runs.runs[1].assertions = Object.fromEntries(
+    names.map((name, i) => [name, i >= 1 && i <= 3]));
+  const r = reflect(x);
+  // The procedure-lane assertion is a sixth frozen check on this case.
+  assert.equal(r.pairs[0].baselineScore.passed, 3);
+  assert.equal(r.pairs[0].candidateScore.passed, 4);
+  assert.equal(r.pairs[0].regressedOracleChecks, 1);
+  assert.equal(r.regressedOracleChecks, 1);
+  assert.equal(r.improvements, 1);
+  assert.equal(r.regressions, 1);
+  assert.equal(r.verdict, "confounded");
+  assert.equal(r.candidateDisposition, "KEEP_BASELINE");
+  assert.equal(r.transferableLesson.status, "NO_EVIDENCE_SUPPORTED_LESSON");
+});
+
 test("unexecuted receipts, changed task or repeated evidence never help", () => {
   const x = makePayload();
   x.contrast.runEvidence[0].executionStatus = "source-reviewed";

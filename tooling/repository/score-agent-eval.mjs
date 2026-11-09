@@ -219,7 +219,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
       }
     }
     return checks.length === 0 ? null :
-      { passed: checks.filter(Boolean).length, total: checks.length };
+      { passed: checks.filter(Boolean).length, total: checks.length, checks };
   };
   const observed = [];
   const seenIds = new Set();
@@ -245,6 +245,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
     const candidateHarnesses = new Set();
     const caseIds = new Set();
     let improvements = 0, regressions = 0, unchanged = 0;
+    let regressedOracleChecks = 0;
     let latencyCompared = 0, latencyDelta = 0, tokenCompared = 0, tokenDelta = 0;
     for (const pair of contrast.pairs) {
       const baseline = runsById.get(pair?.baselineRunId);
@@ -302,14 +303,20 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
           baseQuality.total !== nextQuality.total) {
         issue.push("incomplete independently specified routing/procedure expectations");
       }
+      let lostChecks = null;
       if (issue.length === 0) {
         modelIds.add(baseline.model);
         baseHarnesses.add(baseEvidence.harnessFingerprint);
         candidateHarnesses.add(candidateEvidence.harnessFingerprint);
         caseIds.add(baseline.caseId);
         const delta = nextQuality.passed - baseQuality.passed;
-        if (delta > 0) improvements++;
-        else if (delta < 0) regressions++;
+        // Aggregate scores can rise while a previously satisfied frozen
+        // requirement fails. Such a candidate is a regression, not a win.
+        lostChecks = baseQuality.checks.reduce((count, passed, index) =>
+          count + Number(passed && !nextQuality.checks[index]), 0);
+        regressedOracleChecks += lostChecks;
+        if (lostChecks > 0 || delta < 0) regressions++;
+        else if (delta > 0) improvements++;
         else unchanged++;
         const baseMetrics = baseReceipt.metrics;
         const candidateMetrics = candidateReceipt.metrics;
@@ -333,8 +340,13 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         caseId: baseline.caseId,
         baselineRunId: baseline.runId,
         candidateRunId: candidate.runId,
-        ...(baseQuality === null ? {} : { baselineScore: baseQuality }),
-        ...(nextQuality === null ? {} : { candidateScore: nextQuality }),
+        ...(baseQuality === null ? {} : {
+          baselineScore: { passed: baseQuality.passed, total: baseQuality.total },
+        }),
+        ...(nextQuality === null ? {} : {
+          candidateScore: { passed: nextQuality.passed, total: nextQuality.total },
+        }),
+        ...(lostChecks === null ? {} : { regressedOracleChecks: lostChecks }),
         comparable: issue.length === 0,
         reasons: issue,
       });
@@ -346,7 +358,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
       ? "confounded"
       : improvements >= 2 && regressions === 0
         ? "helped"
-        : regressions >= 2 && improvements === 0
+        : regressions > 0 && improvements === 0
           ? "hurt"
           : improvements === 0 && regressions === 0
             ? "no observed effect"
@@ -365,6 +377,12 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
       pairCount: pairs.length,
       comparablePairs: pairs.length - deficits.length,
       improvements, regressions, unchanged,
+      regressedOracleChecks,
+      // No automatic promotion: any regression or incomplete evidence
+      // keeps the baseline; clean gains still require independent review.
+      candidateDisposition: verdict === "helped"
+        ? "CANDIDATE_REQUIRES_INDEPENDENT_REVIEW"
+        : "KEEP_BASELINE",
       pairs,
       ...(latencyCompared === pairs.length
         ? { meanCandidateMinusBaselineLatencyMs: latencyDelta / pairs.length }
@@ -379,8 +397,10 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         ...(contrast.pairs.length < 2 ? ["A single pair cannot isolate a repeatable effect."] : []),
         ...(contrast.changedComponents.length !== 1
           ? ["Multiple changed components prevent per-component attribution."] : []),
+        ...(regressedOracleChecks > 0
+          ? ["A previously passing frozen check failed; aggregate-score gains cannot conceal it."] : []),
         ...(improvements > 0 && regressions > 0
-          ? ["Mixed positive/negative changes are confounded."] : []),
+          ? ["Mixed positive/negative changes are confounded; keep the baseline."] : []),
         "Receipt files were read and SHA-256/identity/observation consistency checked for comparable pairs. This is integrity, NOT independent executor attestation, causal edit proof or Minecraft gameplay verification.",
       ],
       transferableLesson: canProposeLesson
