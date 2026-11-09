@@ -8,6 +8,33 @@ const source = {
 };
 
 describe("script cleanup resource evidence", () => {
+  it("finds paired abort/success finalizers without assuming failure is ignored", () => {
+    const code = [
+      "class Session {",
+      "  onCompleted() {",
+      "    const finish = error => { if (error) console.warn(error); this.endSession(); };",
+      "    resetArena({ onComplete: () => finish(), onAbort: error => finish(error) });",
+      "  }",
+      "  onSafeCompleted() {",
+      "    const finish = error => { if (error) return; this.endSession(); };",
+      "    resetArena({ onComplete: () => finish(), onAbort: error => finish(error) });",
+      "  }",
+      "  onDifferentFinalizers() {",
+      "    resetArena({ onComplete: () => succeed(), onAbort: error => fail(error) });",
+      "  }",
+      "}",
+    ].join("\\n");
+    const parsed = parseScriptFile("callback-contrast", code, source);
+    const found = (parsed.arenaResetCompletionEvidence ?? []).filter(item =>
+      item.kind === "abort-and-complete-share-finalizer-candidate");
+    expect(found).toHaveLength(2);
+    expect(found.every(item =>
+      item.source.relativePath === "scripts/main.ts" &&
+      item.source.range?.lineStart !== undefined)).toBe(true);
+    // Even an explicit error guard is retained as an investigation
+    // candidate, not classified as an actual gameplay defect.
+  });
+
   it("retains source evidence for async reset exceptions and partial results", () => {
     const code = [
       "const ResetMapService = class {",

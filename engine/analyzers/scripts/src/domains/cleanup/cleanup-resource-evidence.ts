@@ -19,7 +19,8 @@ export type ScriptArenaResetCompletionKind =
   | "partial-reset-result-candidate"
   | "idle-before-cleanup-settlement-candidate"
   | "start-admission-on-cleanup-settlement-candidate"
-  | "world-baseline-reset-request-candidate";
+  | "world-baseline-reset-request-candidate"
+  | "abort-and-complete-share-finalizer-candidate";
 
 export interface ScriptArenaResetCompletionEvidence {
   readonly kind: ScriptArenaResetCompletionKind;
@@ -539,6 +540,58 @@ export function deriveScriptArenaResetCompletionEvidence(
       };
       inspectWaitThen(owner.body);
     }
+
+    // A reset/cleanup call can send both success and abort to the same
+    // finalizer. This is only a source-backed investigation candidate:
+    // the finalizer may inspect the error or have compensating guards.
+    // Require an exact paired callback on one callsite, and an abort
+    // argument forwarded to the same identifier invoked on success.
+    const sharedFinalizer = (node: ts.Node): void => {
+      if (!ts.isCallExpression(node)) {
+        ts.forEachChild(node, sharedFinalizer);
+        return;
+      }
+      for (const arg of node.arguments) {
+        if (!ts.isObjectLiteralExpression(arg)) continue;
+        const callbacks = new Map<string, ts.ArrowFunction>();
+        for (const property of arg.properties) {
+          if (!ts.isPropertyAssignment(property)) continue;
+          const key = named(property.name);
+          if ((key === "onComplete" || key === "onAbort") &&
+              ts.isArrowFunction(property.initializer)) {
+            callbacks.set(key, property.initializer);
+          }
+        }
+        const complete = callbacks.get("onComplete");
+        const abort = callbacks.get("onAbort");
+        if (!complete || !abort || abort.parameters.length !== 1 ||
+            !ts.isIdentifier(abort.parameters[0]!.name)) continue;
+        const directCall = (fn: ts.ArrowFunction): ts.CallExpression | undefined => {
+          const expr = ts.isBlock(fn.body)
+            ? fn.body.statements.length === 1 &&
+              ts.isExpressionStatement(fn.body.statements[0]!)
+              ? fn.body.statements[0]!.expression : undefined
+            : fn.body;
+          return expr && ts.isCallExpression(expr) &&
+            ts.isIdentifier(expr.expression) ? expr : undefined;
+        };
+        const onSuccess = directCall(complete);
+        const onFailure = directCall(abort);
+        if (!onSuccess || !onFailure ||
+            onSuccess.expression.getText(file) !==
+              onFailure.expression.getText(file) ||
+            onSuccess.arguments.length !== 0 ||
+            onFailure.arguments.length !== 1 ||
+            !ts.isIdentifier(onFailure.arguments[0]!) ||
+            onFailure.arguments[0]!.text !== abort.parameters[0]!.name.text) {
+          continue;
+        }
+        emit("abort-and-complete-share-finalizer-candidate", arg,
+          "Success and abort callbacks invoke the same finalizer, forwarding the abort argument. Inspect whether the finalizer gates state commit, resource release, and player feedback on failure.");
+      }
+      ts.forEachChild(node, sharedFinalizer);
+    };
+    sharedFinalizer(owner.body);
 
     if (!relevant) return;
 
