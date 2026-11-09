@@ -1130,7 +1130,19 @@ export function counterProofSearchIsGraphGrounded(
       !Array.isArray(submitted.scopeIds) ||
       !Array.isArray(submitted.evidenceIds) ||
       !Array.isArray(submitted.searchedDimensions) ||
-      !Array.isArray(submitted.dimensionReceipts)) return false;
+      !Array.isArray(submitted.dimensionReceipts) ||
+      // Receipts can originate outside the typed engine boundary. Reject
+      // malformed identifiers before canonical set normalization calls trim().
+      ![submitted.scopeIds, submitted.evidenceIds,
+        submitted.searchedDimensions].every((ids) =>
+        ids.every((id) => typeof id === "string")) ||
+      submitted.dimensionReceipts.some((receipt) =>
+        receipt === null || typeof receipt !== "object" ||
+        typeof receipt.dimension !== "string" ||
+        !Array.isArray(receipt.evidenceIds) ||
+        !Array.isArray(receipt.scopeIds) ||
+        ![receipt.evidenceIds, receipt.scopeIds].every((ids) =>
+          ids.every((id) => typeof id === "string")))) return false;
 
   const canonical = automaticCounterProofSearch(
     graph, contradicted, scenario,

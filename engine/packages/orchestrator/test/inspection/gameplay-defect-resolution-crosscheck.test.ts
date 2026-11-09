@@ -540,6 +540,26 @@ describe("gameplay defect resolution crosscheck depth", () => {
         ],
       },
     )).toBe(false);
+    // Untrusted JSON may not satisfy the TypeScript receipt shape.
+    // Malformed nested IDs must abstain rather than throw during trim().
+    for (const malformed of [
+      { ...receipt!, evidenceIds: [null, ...receipt!.evidenceIds] },
+      { ...receipt!, scopeIds: [7, ...receipt!.scopeIds] },
+      { ...receipt!, searchedDimensions: [null, ...receipt!.searchedDimensions] },
+      { ...receipt!, dimensionReceipts: [null, ...receipt!.dimensionReceipts] },
+      { ...receipt!, dimensionReceipts: receipt!.dimensionReceipts.map(
+        (item, index) => index === 0
+          ? { ...item, evidenceIds: [null, ...item.evidenceIds] }
+          : item,
+      ) },
+    ]) {
+      expect(() => counterProofSearchIsGraphGrounded(
+        witnessed, link, scenario, malformed as any,
+      )).not.toThrow();
+      expect(counterProofSearchIsGraphGrounded(
+        witnessed, link, scenario, malformed as any,
+      )).toBe(false);
+    }
   });
 
   it("does not accept an authored exclusion without an exact exclusion witness", () => {
