@@ -303,6 +303,29 @@ region.
 Current selected-artifact source and actual generation ownership remain
 the required proof boundary.
 
+### Deferred helper call-site versus arena owner
+
+A deferred callback's reachable helper mutation is a **source
+investigation lead**, not proof that the helper mutates the callback's
+captured player/arena generation. The canonical lifecycle analyzer now
+retains source-route categories for indirect mutations:
+`unconditional-source-bound` means the complete call-site chain has
+resolved source spans and unconditional calls;
+`conditional-source-bound` means its source sites bind but one or
+more calls are conditional/deferred/unknown; and
+`unverified-call-site` means no continuous fully bound call-site path
+was established. These labels classify qualified call graph edges,
+**not** source-owner forwarding for the mutation target.
+
+All indirect mutations remain outside `protected` until independent
+owner, guard dominance and generation invalidation proof closes them.
+The existing Gameplay World deferred projection retains those source
+leads. The scenario compiler must retain every non-protected
+`source-guard-candidate`, `source-snapshot-candidate`, and `unresolved`
+obligation rather than silently listing only the literal `unresolved`
+status. Neither candidate evidence nor a missing source span authorizes
+a proven gameplay defect.
+
 ### Deferred generation and terminal race closure
 
 The canonical arena lifecycle analyzer already tracks source-authored

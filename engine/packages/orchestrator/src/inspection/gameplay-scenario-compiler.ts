@@ -900,23 +900,27 @@ function runtimeEdgeState(
         const deferred =
           world.arenas.lifecycle
             .deferredMutations
-            .filter((item) =>
-              item.status === "unresolved"
-            )
-            .map((item) =>
-              item.scriptId +
-              ":" +
-              item.callbackRegion +
-              " -> " +
-              item.mutationRegions.join(" | ")
-            )
+            // Aggregate unresolvedDeferredMutations counts ALL non-protected
+            // states, including lexical guard/snapshot candidates. Retain
+            // their source witnesses instead of returning an empty reason.
+            .filter((item) => item.status !== "protected")
+            .map((item) => {
+              const routes = (item.indirectMutationRoutes ?? [])
+                .map(route =>
+                  route.region + " [" + route.callSiteProof + "]");
+              return item.scriptId + ":" + item.callbackRegion +
+                " [" + item.status + "] -> " +
+                (routes.length > 0 ? routes : item.mutationRegions)
+                  .join(" | ");
+            })
             .sort();
         return {
           status: "DETECTION_GAP",
           reason:
-            "Deferred gameplay mutation reaches mutable session/arena state without source-proven generation/session revalidation: " +
-            deferred.join("; ") +
-            ". Keep ownership unresolved until a generation/session guard or a blocking exclusion is proven.",
+            "Deferred gameplay mutation ownership/generation proof remains incomplete: " +
+            (deferred.length > 0 ? deferred.join("; ") :
+              "No exact projected deferred source witness") +
+            ". A lexical guard or source-bound helper call is not runtime protection; trace the same arena owner and invalidation across every reachable mutation.",
         };
       }
 

@@ -178,6 +178,7 @@ export interface GameplayWorldModel {
         | "scheduler"
         | "callbackRegion"
         | "mutationRegions"
+        | "indirectMutationRoutes"
         | "guardIdentifiers"
         | "generationInvalidationRelativeToSchedule"
         | "status"
@@ -2028,6 +2029,13 @@ export function deriveGameplayWorldModel(
                 item.callbackRegion,
               mutationRegions:
                 [...item.mutationRegions],
+              ...(item.indirectMutationRoutes === undefined ? {} : {
+                indirectMutationRoutes:
+                  item.indirectMutationRoutes.map(route => ({
+                    region: route.region,
+                    callSiteProof: route.callSiteProof,
+                  })),
+              }),
               guardIdentifiers:
                 [...item.guardIdentifiers],
               ...(item.generationInvalidationRelativeToSchedule === undefined

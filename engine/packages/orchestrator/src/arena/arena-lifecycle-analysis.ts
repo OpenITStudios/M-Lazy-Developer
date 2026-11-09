@@ -125,6 +125,17 @@ export interface ArenaDeferredMutationAssessment {
   readonly mutationRegions: readonly string[];
   /** Reachable helper mutations do not inherit the direct callback guard. */
   readonly indirectMutationRegions: readonly string[];
+  /** Reachable indirect mutations classified by exact qualified call-site
+   * source binding. Neither unconditional call-site proof nor a generation
+   * guard proves the helper's live arena/player identity or execution.
+   */
+  readonly indirectMutationRoutes?: readonly {
+    readonly region: string;
+    readonly callSiteProof:
+      | "unconditional-source-bound"
+      | "conditional-source-bound"
+      | "unverified-call-site";
+  }[];
   readonly sourceDirectMutationSites?: readonly SourceGenerationMutationSite[];
   readonly guardIdentifiers: readonly string[];
   readonly generationGuardSource?: SourceRef;
@@ -1790,6 +1801,19 @@ function deferredMutationAssessments(
           crossFileCalls,
         );
 
+  // Reuse the canonical qualified call graph even in a local-only scan
+  // when classifying call-site evidence. Preserve the existing local
+  // mutation region IDs and candidate inventory for compatibility.
+  const callSiteGraph = projectGraph ??
+    composeQualifiedScriptLifecycleProjectGraph(
+      scripts.map(script => ({
+        fileId: script.source.relativePath,
+        artifactId: script.source.artifactId,
+        localFunctionCalls: script.localFunctionCalls,
+      })), []);
+  const sourceBoundEdges = callSiteGraph.callEdges.filter(
+    edge => edge.sourceBound === true);
+
   // A script only needs ONE mutation-region inventory: either qualified
   // by the project graph or local to its own call graph, never both.
   const projectMutationRegions = projectGraph === undefined
@@ -1852,6 +1876,30 @@ function deferredMutationAssessments(
         : callback.callbackRegion;
       const indirectMutationRegions = mutationRegions.filter(region =>
         region !== directRegion);
+      const indirectMutationRoutes = indirectMutationRegions.length === 0
+        ? [] : (() => {
+            const root = qualifiedRegion(script, callback.callbackRegion!);
+            const bound = new Set(projectReachable(
+              sourceBoundEdges, root, false));
+            const unconditional = new Set(projectReachable(
+              callSiteGraph.callEdges, root, true));
+            return indirectMutationRegions.map(region => {
+              const qualified = projectGraph === undefined
+                ? qualifiedRegion(script, region) : region;
+              const callSiteProof = unconditional.has(qualified)
+                ? "unconditional-source-bound" as const
+                : bound.has(qualified)
+                  ? "conditional-source-bound" as const
+                  : "unverified-call-site" as const;
+              return { region, callSiteProof };
+            });
+          })();
+      const routeSummary = indirectMutationRoutes.length === 0 ? "" :
+        " Indirect call-site routes (not helper mutation owner proof): " +
+        ["unconditional-source-bound", "conditional-source-bound",
+          "unverified-call-site"].map(proof =>
+          proof + "=" + indirectMutationRoutes.filter(item =>
+            item.callSiteProof === proof).length).join(", ") + ".";
       const sameCallbackGuardCandidate =
         callback.guardEvidence === "explicit-generation-check" &&
         callback.generationGuardSource !== undefined &&
@@ -1909,6 +1957,9 @@ function deferredMutationAssessments(
         mutationRegions:
           [...mutationRegions].sort(),
         indirectMutationRegions: [...indirectMutationRegions].sort(),
+        ...(indirectMutationRoutes.length === 0 ? {} : {
+          indirectMutationRoutes,
+        }),
         ...(sites.length ? { sourceDirectMutationSites: sites } : {}),
         guardIdentifiers:
           [...callback.guardIdentifiers],
@@ -1940,7 +1991,7 @@ function deferredMutationAssessments(
               : sameCallbackGuardCandidate
                 ? "Leading generation guard exists but no uniquely source-bound direct mutation target closes the association."
                 : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.") +
-          orderingNote,
+          routeSummary + orderingNote,
       });
     }
   }
