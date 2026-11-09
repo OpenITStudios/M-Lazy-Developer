@@ -1122,7 +1122,8 @@ export function counterProofSearchIsGraphGrounded(
   scenario: GameplayScenarioGraph["scenarios"][number] | undefined,
   submitted: CounterProofSearchReceipt | undefined,
 ): boolean {
-  if (submitted === undefined ||
+  if (submitted === undefined || submitted === null ||
+      typeof submitted !== "object" || Array.isArray(submitted) ||
       submitted.schemaVersion !== 1 ||
       submitted.policy !== "bounded-counterproof-search" ||
       submitted.conclusion !== "NO_BLOCKING_PROOF" ||

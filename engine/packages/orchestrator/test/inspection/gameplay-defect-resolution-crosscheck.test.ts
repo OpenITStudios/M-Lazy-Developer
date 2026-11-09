@@ -543,6 +543,10 @@ describe("gameplay defect resolution crosscheck depth", () => {
     // Untrusted JSON may not satisfy the TypeScript receipt shape.
     // Malformed nested IDs must abstain rather than throw during trim().
     for (const malformed of [
+      null,
+      7,
+      "untrusted",
+      [],
       { ...receipt!, evidenceIds: [null, ...receipt!.evidenceIds] },
       { ...receipt!, scopeIds: [7, ...receipt!.scopeIds] },
       { ...receipt!, searchedDimensions: [null, ...receipt!.searchedDimensions] },
