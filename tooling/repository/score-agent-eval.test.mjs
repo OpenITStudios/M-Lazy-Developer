@@ -319,3 +319,43 @@ test("invalid agent-eval performance values are rejected before scoring", () => 
   assert.equal(noCounters.performance.latencyMs, null);
   assert.equal(noCounters.performance.totalTokens, null);
 });
+
+test("streaming statistics handle 150,000 recorded evaluation runs", () => {
+  const runs = Array.from({length: 150_000}, (_, index) => ({
+    runId: "stress-" + index,
+    caseId: "audit-id-01",
+    selectedLane: "m-bedrock-map-testing",
+    latencyMs: 1200,
+    inputTokens: 1000,
+    outputTokens: 300,
+  }));
+  const scored = scoreAgentEvalRuns({schemaVersion: 1, runs});
+  assert.equal(scored.routing.accuracy, 1);
+  assert.deepEqual(scored.performance.latencyMs, {
+    n: runs.length, mean: 1200, stddev: 0, min: 1200, max: 1200,
+  });
+  assert.deepEqual(scored.performance.totalTokens, {
+    n: runs.length, mean: 1300, stddev: 0, min: 1300, max: 1300,
+  });
+});
+
+test("streaming statistics retain variance and reject overflowing token totals", () => {
+  const runs = [1, 3, 5, 7].map((latencyMs, index) => ({
+    runId: "var-" + index,
+    caseId: "audit-id-01",
+    selectedLane: "m-bedrock-map-testing",
+    latencyMs,
+    inputTokens: 50,
+    outputTokens: index,
+  }));
+  const scored = scoreAgentEvalRuns({schemaVersion: 1, runs});
+  assert.equal(scored.performance.latencyMs.mean, 4);
+  assert.equal(scored.performance.latencyMs.stddev, Math.sqrt(5));
+  assert.equal(scored.performance.latencyMs.min, 1);
+  assert.equal(scored.performance.latencyMs.max, 7);
+  assert.equal(scored.performance.totalTokens.min, 50);
+  assert.equal(scored.performance.totalTokens.max, 53);
+  assert.throws(() => scoreAgentEvalRuns({schemaVersion: 1, runs: [{
+    ...runs[0], inputTokens: Number.MAX_SAFE_INTEGER, outputTokens: 1,
+  }]}), /total token counter/);
+});

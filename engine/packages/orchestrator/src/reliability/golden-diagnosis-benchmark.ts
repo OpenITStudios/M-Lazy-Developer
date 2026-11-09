@@ -56,6 +56,31 @@ export interface GoldenDiagnosisMetrics {
   rootCauseCases: number;
 }
 
+
+/** Frozen thresholds are selected before the benchmark is observed. */
+export interface GoldenDiagnosisAcceptanceTargets {
+  minimumPrecision: number;
+  minimumRecall: number;
+  minimumDispositionAccuracy: number;
+  minimumRootCauseAccuracy: number;
+}
+export interface GoldenDiagnosisAcceptanceMetric {
+  id:
+    | "prediction-coverage"
+    | "precision"
+    | "recall"
+    | "disposition-accuracy"
+    | "root-cause-accuracy";
+  value: number | null;
+  target: number;
+  disposition: "pass" | "fail" | "blocked";
+}
+export interface GoldenDiagnosisAcceptanceReport {
+  disposition: "pass" | "fail" | "blocked" | "unscored";
+  metrics: readonly GoldenDiagnosisAcceptanceMetric[];
+  reasons: readonly string[];
+}
+
 export interface GoldenDiagnosisBenchmarkReport {
   schemaVersion: 1;
   corpusId: string;
@@ -67,6 +92,7 @@ export interface GoldenDiagnosisBenchmarkReport {
     readonly string[];
   unexpectedPredictionCaseIds:
     readonly string[];
+  acceptance: GoldenDiagnosisAcceptanceReport;
   reasons: readonly string[];
 }
 
@@ -205,12 +231,89 @@ function rootCauseMatches(
   );
 }
 
+
+function acceptanceTarget(name: string, value: number): number {
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error("Invalid golden diagnosis acceptance threshold: " + name + ".");
+  }
+  return value;
+}
+
+function acceptanceMetric(
+  id: GoldenDiagnosisAcceptanceMetric["id"],
+  value: number,
+  target: number,
+  supported: boolean,
+): GoldenDiagnosisAcceptanceMetric {
+  return {
+    id,
+    value: supported ? value : null,
+    target,
+    disposition: !supported ? "blocked" : value >= target ? "pass" : "fail",
+  };
+}
+
+/** Benchmark acceptance is not a map/Minecraft release decision. */
+export function assessGoldenDiagnosisAcceptance(
+  report: GoldenDiagnosisBenchmarkReport,
+  targets: GoldenDiagnosisAcceptanceTargets | undefined,
+): GoldenDiagnosisAcceptanceReport {
+  if (!targets) {
+    return {
+      disposition: "unscored",
+      metrics: [],
+      reasons: ["No frozen quality targets supplied; raw diagnosis scores are informational."],
+    };
+  }
+  const precision = acceptanceTarget("minimumPrecision", targets.minimumPrecision);
+  const recall = acceptanceTarget("minimumRecall", targets.minimumRecall);
+  const disposition = acceptanceTarget("minimumDispositionAccuracy", targets.minimumDispositionAccuracy);
+  const rootCause = acceptanceTarget("minimumRootCauseAccuracy", targets.minimumRootCauseAccuracy);
+  const m = report.metrics;
+  const metrics: GoldenDiagnosisAcceptanceMetric[] = [
+    acceptanceMetric("prediction-coverage", m.predictionCoverage, 1,
+      m.corpusCases > 0),
+    acceptanceMetric("precision", m.precision, precision,
+      m.truePositive + m.falsePositive > 0),
+    acceptanceMetric("recall", m.recall, recall,
+      m.truePositive + m.falseNegative > 0),
+    acceptanceMetric("disposition-accuracy", m.dispositionAccuracy, disposition,
+      m.cases > 0),
+    acceptanceMetric("root-cause-accuracy", m.rootCauseAccuracy, rootCause,
+      m.rootCauseCases > 0),
+  ];
+  // A partial corpus is unsupported for acceptance; retain its observed
+  // coverage value for diagnosis instead of hiding it behind null.
+  if (m.corpusCases > 0 && m.predictionCoverage < 1) {
+    metrics[0] = {...metrics[0]!, disposition: "blocked"};
+  }
+  const blocked = metrics.some(item => item.disposition === "blocked") ||
+    report.unexpectedPredictionCaseIds.length > 0;
+  const failed = metrics.some(item => item.disposition === "fail");
+  return {
+    disposition: blocked ? "blocked" : failed ? "fail" : "pass",
+    metrics,
+    reasons: [
+      m.predictionCoverage < 1
+        ? "Incomplete golden predictions; sample-only accuracy cannot establish acceptance."
+        : "Complete golden prediction coverage.",
+      report.unexpectedPredictionCaseIds.length > 0
+        ? "Predictions contain unknown case IDs."
+        : "No unexpected prediction case IDs.",
+      blocked ? "Required prediction/quality evidence missing or invalid."
+        : failed ? "At least one frozen diagnosis-quality threshold missed."
+          : "All frozen diagnosis-quality targets met.",
+    ],
+  };
+}
+
 export function evaluateGoldenDiagnosisBenchmark(
   corpusId: string,
   cases:
     readonly GoldenDiagnosisCase[],
   predictions:
     readonly GoldenDiagnosisPrediction[],
+  acceptanceTargets: GoldenDiagnosisAcceptanceTargets | undefined = undefined,
 ): GoldenDiagnosisBenchmarkReport {
   if (!corpusId.trim()) {
     throw new Error(
@@ -379,7 +482,7 @@ export function evaluateGoldenDiagnosisBenchmark(
   const scoredCases =
     results.length;
 
-  return {
+  const report: GoldenDiagnosisBenchmarkReport = {
     schemaVersion: 1,
     corpusId,
     cases: results.sort(
@@ -441,6 +544,11 @@ export function evaluateGoldenDiagnosisBenchmark(
       missing,
     unexpectedPredictionCaseIds:
       unique(unexpected),
+    acceptance: {
+      disposition: "unscored",
+      metrics: [],
+      reasons: [],
+    },
     reasons: [
       missing.length === 0
         ? "Every golden case has a prediction."
@@ -458,6 +566,10 @@ export function evaluateGoldenDiagnosisBenchmark(
         ? "No golden case requires root-cause scoring."
         : "Root-cause accuracy is scored independently from defect detection.",
     ],
+  };
+  return {
+    ...report,
+    acceptance: assessGoldenDiagnosisAcceptance(report, acceptanceTargets),
   };
 }
 
@@ -484,6 +596,9 @@ export function goldenDiagnosisBenchmarkText(
       String(m.cases),
     "Prediction coverage: " +
       pct(m.predictionCoverage),
+    "Quality acceptance: " +
+      report.acceptance.disposition,
+    ...report.acceptance.reasons.map(reason => "- " + reason),
     "",
     "Defect detection",
     "- precision: " +

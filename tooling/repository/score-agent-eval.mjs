@@ -29,20 +29,37 @@ function validateRunPerformanceCounters(run) {
       throw new Error("Invalid agent-eval performance counter: " + field + ".");
     }
   }
+  if (Object.hasOwn(run, "inputTokens") &&
+      Object.hasOwn(run, "outputTokens") &&
+      !Number.isSafeInteger(run.inputTokens + run.outputTokens)) {
+    throw new Error("Invalid agent-eval total token counter.");
+  }
 }
 
-function stats(values) {
-  const xs = values.filter((v) => typeof v === "number" && Number.isFinite(v));
-  if (!xs.length) return null;
-  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
-  const variance =
-    xs.reduce((sum, value) => sum + (value - mean) ** 2, 0) / xs.length;
+// Welford's online statistics avoid spread-argument limits and filtered copies.
+function stats(items, valueFor) {
+  let n = 0;
+  let mean = 0;
+  let squaredDeviations = 0;
+  let min = Infinity;
+  let max = -Infinity;
+  for (const item of items) {
+    const value = valueFor(item);
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    n++;
+    const delta = value - mean;
+    mean += delta / n;
+    squaredDeviations += delta * (value - mean);
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+  if (n === 0) return null;
   return {
-    n: xs.length,
+    n,
     mean,
-    stddev: Math.sqrt(variance),
-    min: Math.min(...xs),
-    max: Math.max(...xs),
+    stddev: Math.sqrt(Math.max(0, squaredDeviations / n)),
+    min,
+    max,
   };
 }
 
@@ -479,15 +496,15 @@ export function scoreAgentEvalRuns(payload, contrastInput, options) {
         procedureAssertions === 0 ? null : procedurePassed / procedureAssertions,
     },
     performance: {
-      latencyMs: stats(payload.runs.map((item) => item.latencyMs)),
-      inputTokens: stats(payload.runs.map((item) => item.inputTokens)),
-      outputTokens: stats(payload.runs.map((item) => item.outputTokens)),
-      totalTokens: stats(payload.runs.map((item) =>
+      latencyMs: stats(payload.runs, (item) => item.latencyMs),
+      inputTokens: stats(payload.runs, (item) => item.inputTokens),
+      outputTokens: stats(payload.runs, (item) => item.outputTokens),
+      totalTokens: stats(payload.runs, (item) =>
         typeof item.inputTokens === "number" &&
         typeof item.outputTokens === "number"
           ? item.inputTokens + item.outputTokens
           : undefined
-      )),
+      ),
     },
     agreement: agreements,
     ...(contrastInput === undefined ? {} : {

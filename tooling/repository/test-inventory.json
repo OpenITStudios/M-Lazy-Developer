@@ -6697,7 +6697,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "ba36533121cf412a7f03421d24a5109f71b62b9f"
+        "sourceBlobSha": "d71239ace5222be3020366311215bc5213569698"
       },
       "recommendation": "keep",
       "rationale": "Source cases and assertion sites inspected; retain pending full assertion and consumer-equivalence review.",
@@ -10339,7 +10339,7 @@
         "owner": "tooling/repository",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "0ce88e5e17dfad164013a2709f355fa11722a07e"
+        "sourceBlobSha": "5766bb079e7b69bc7651c20445960674d0e00412"
       },
       "recommendation": "keep",
       "rationale": "Paired agent-eval comparison logic: input/receipt identity, frozen expected routing, no unsupported promotion, and confounded negative controls.",

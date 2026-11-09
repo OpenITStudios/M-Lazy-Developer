@@ -7,6 +7,7 @@ import {
   evaluateGoldenDiagnosisBenchmark,
   goldenDiagnosisBenchmarkText,
   validateReviewedGoldenDiagnosisCases,
+  type GoldenDiagnosisCase,
 } from "../../src/reliability/golden-diagnosis-benchmark.js";
 
 describe("golden diagnosis benchmark", () => {
@@ -199,5 +200,155 @@ describe("golden diagnosis benchmark", () => {
       .toContain(
         "Prediction coverage: 0.0%",
       );
+  });
+
+  it("requires frozen targets before reporting quality acceptance", () => {
+    const report = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:unscored",
+      [{
+        id: "bug", expectedDefect: true,
+        acceptedDispositions: ["confirmed-defect"],
+        acceptedRootCauseIds: ["root:a"],
+      }],
+      [{
+        caseId: "bug", disposition: "confirmed-defect",
+        rootCauseIds: ["root:a"],
+      }],
+    );
+    expect(report.acceptance.disposition).toBe("unscored");
+    expect(goldenDiagnosisBenchmarkText(report)).toContain(
+      "Quality acceptance: unscored",
+    );
+  });
+
+  it("accepts complete mixed-case diagnosis only when all frozen dimensions pass", () => {
+    const report = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:complete",
+      [{
+        id: "bug", expectedDefect: true,
+        acceptedDispositions: ["confirmed-defect"],
+        acceptedRootCauseIds: ["root:a"],
+      }, {
+        id: "designed", expectedDefect: false,
+        acceptedDispositions: ["designed-behavior"],
+      }],
+      [{
+        caseId: "bug", disposition: "confirmed-defect",
+        rootCauseIds: ["root:a"],
+      }, {
+        caseId: "designed", disposition: "designed-behavior",
+      }],
+      {
+        minimumPrecision: 0.95,
+        minimumRecall: 0.95,
+        minimumDispositionAccuracy: 0.95,
+        minimumRootCauseAccuracy: 0.95,
+      },
+    );
+    expect(report.acceptance.disposition).toBe("pass");
+    expect(report.acceptance.metrics).toHaveLength(5);
+    expect(report.acceptance.metrics.every(item =>
+      item.disposition === "pass")).toBe(true);
+  });
+
+  it("blocks 100% sampled accuracy when only 1% of expected cases were predicted", () => {
+    const cases: GoldenDiagnosisCase[] = Array.from(
+      {length: 100}, (_, index) => ({
+        id: "case-" + index,
+        expectedDefect: index % 2 === 0,
+        acceptedDispositions: [index % 2 === 0
+          ? "confirmed-defect" as const
+          : "designed-behavior" as const],
+        acceptedRootCauseIds: index % 2 === 0 ? ["root:a"] : [],
+      }),
+    );
+    const report = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:partial", cases,
+      [{
+        caseId: "case-0", disposition: "confirmed-defect",
+        rootCauseIds: ["root:a"],
+      }],
+      {
+        minimumPrecision: 0.9, minimumRecall: 0.9,
+        minimumDispositionAccuracy: 0.9, minimumRootCauseAccuracy: 0.9,
+      },
+    );
+    expect(report.metrics.defectAccuracy).toBe(1);
+    expect(report.metrics.predictionCoverage).toBe(0.01);
+    expect(report.acceptance.disposition).toBe("blocked");
+    expect(report.acceptance.reasons.join(" ")).toMatch(/sample-only accuracy/);
+  });
+
+  it("fails wrong cause or wrong disposition even with perfect defect precision", () => {
+    const cases: GoldenDiagnosisCase[] = [{
+      id: "bug", expectedDefect: true,
+      acceptedDispositions: ["confirmed-defect"],
+      acceptedRootCauseIds: ["root:a"],
+    }, {
+      id: "designed", expectedDefect: false,
+      acceptedDispositions: ["designed-behavior"],
+    }];
+    const targets = {
+      minimumPrecision: 1, minimumRecall: 1,
+      minimumDispositionAccuracy: 1, minimumRootCauseAccuracy: 1,
+    };
+    const wrongRoot = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:root", cases,
+      [{
+        caseId: "bug", disposition: "confirmed-defect",
+        rootCauseIds: ["root:wrong"],
+      }, {
+        caseId: "designed", disposition: "designed-behavior",
+      }], targets,
+    );
+    expect(wrongRoot.metrics.precision).toBe(1);
+    expect(wrongRoot.acceptance.disposition).toBe("fail");
+
+    const wrongDisposition = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:disposition", cases,
+      [{
+        caseId: "bug", disposition: "confirmed-defect",
+        rootCauseIds: ["root:a"],
+      }, {
+        caseId: "designed", disposition: "engine-constraint",
+      }], targets,
+    );
+    expect(wrongDisposition.metrics.precision).toBe(1);
+    expect(wrongDisposition.acceptance.disposition).toBe("fail");
+  });
+
+  it("blocks unsupported root-cause evidence and unknown prediction identifiers", () => {
+    const targets = {
+      minimumPrecision: 0.9, minimumRecall: 0.9,
+      minimumDispositionAccuracy: 0.9, minimumRootCauseAccuracy: 0.9,
+    };
+    const cases: GoldenDiagnosisCase[] = [{
+      id: "bug", expectedDefect: true,
+      acceptedDispositions: ["confirmed-defect"],
+    }, {
+      id: "designed", expectedDefect: false,
+      acceptedDispositions: ["designed-behavior"],
+    }];
+    const predictions = [{
+      caseId: "bug", disposition: "confirmed-defect" as const,
+    }, {
+      caseId: "designed", disposition: "designed-behavior" as const,
+    }];
+    const missingProof = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:no-cause", cases, predictions, targets,
+    );
+    expect(missingProof.acceptance.disposition).toBe("blocked");
+    const extra = evaluateGoldenDiagnosisBenchmark(
+      "acceptance:extra", cases,
+      [...predictions, {
+        caseId: "foreign", disposition: "confirmed-defect",
+      }], targets,
+    );
+    expect(extra.acceptance.disposition).toBe("blocked");
+    expect(extra.unexpectedPredictionCaseIds).toEqual(["foreign"]);
+    expect(() => evaluateGoldenDiagnosisBenchmark(
+      "acceptance:invalid", cases, predictions,
+      {...targets, minimumRecall: NaN},
+    )).toThrow(/minimumRecall/);
   });
 });
