@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:14:typescript:" +
+  "m-bedrock-script-parser:15:typescript:" +
   ts.version;
 import type {
   SourceRef, SourceSequentialSite, SourceGenerationCapture,
