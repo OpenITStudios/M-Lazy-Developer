@@ -354,8 +354,13 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
     const comparable = deficits.length === 0 && modelIds.size === 1 &&
       baseHarnesses.size === 1 && candidateHarnesses.size === 1 &&
       contrast.pairs.length >= 2 && contrast.changedComponents.length === 1;
+    // Repeating one frozen task can establish repeatability, not generalization
+    // to another task. Never mark a one-case replay as an improved harness.
+    const distinctCases = caseIds.size >= 2;
     const verdict = !comparable
       ? "confounded"
+      : improvements >= 2 && regressions === 0 && !distinctCases
+        ? "confounded"
       : improvements >= 2 && regressions === 0
         ? "helped"
         : regressions > 0 && improvements === 0
@@ -395,6 +400,8 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         ...(modelIds.size > 1 || baseHarnesses.size > 1 || candidateHarnesses.size > 1
           ? ["Contrasts must retain one model and one baseline/candidate harness identity."] : []),
         ...(contrast.pairs.length < 2 ? ["A single pair cannot isolate a repeatable effect."] : []),
+        ...(improvements >= 2 && regressions === 0 && !distinctCases
+          ? ["Repeated wins on one frozen case do not demonstrate cross-case improvement; keep the baseline."] : []),
         ...(contrast.changedComponents.length !== 1
           ? ["Multiple changed components prevent per-component attribution."] : []),
         ...(regressedOracleChecks > 0

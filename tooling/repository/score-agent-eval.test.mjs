@@ -104,6 +104,24 @@ test("replicated independent cases yield reviewable lesson, not automatic adopti
   assert.equal(r.comparablePairs, 2);
 });
 
+test("repeated success on one frozen case cannot be promoted as general improvement", () => {
+  const x = makePayload();
+  x.runs.runs[2].caseId = "audit-id-01";
+  x.runs.runs[3].caseId = "audit-id-01";
+  x.contrast.runEvidence[2].inputFingerprint = fixed("a");
+  x.contrast.runEvidence[3].inputFingerprint = fixed("a");
+  const r = reflect(x);
+  assert.equal(r.pairCount, 2);
+  assert.equal(r.comparablePairs, 2);
+  assert.equal(r.caseCount, 1);
+  assert.equal(r.improvements, 2);
+  assert.equal(r.regressions, 0);
+  assert.equal(r.verdict, "confounded");
+  assert.equal(r.candidateDisposition, "KEEP_BASELINE");
+  assert.ok(r.reasons.some(reason => reason.includes("one frozen case")));
+  assert.equal(r.transferableLesson.status, "NO_EVIDENCE_SUPPORTED_LESSON");
+});
+
 test("regression and equal quality stay distinct from efficiency claims", () => {
   assert.equal(reflect(makePayload(true, false)).verdict, "hurt");
   const equal = reflect(makePayload(true, true));

@@ -141,6 +141,9 @@ agent-eval run. Any absent or mismatched receipt is `confounded`, never
 frozen `caseId` and model; each harness must retain its content identity
 across comparison pairs. At least two independent pairs and exactly one
 changed component are needed for an observational component verdict.
+A favorable verdict additionally requires improvements on at least two
+distinct frozen evaluation case IDs: repeating one case can show
+repeatability but cannot establish cross-case quality improvement.
 
 The scorer uses the existing frozen skill routing/procedure expectations
 to count declared correctness, never a model-authored PASS. A missing or
