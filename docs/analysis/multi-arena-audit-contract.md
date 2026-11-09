@@ -288,6 +288,17 @@ whenever `unresolvedDeferredMutations`,
 `staleReadySnapshotRisks`, `unresolvedTerminalRaces` or
 `terminalPrecedenceUnresolved` is nonzero. This obligation is
 independent of an otherwise complete terminal-entry and release ledger.
+The existing lifecycle analyzer now compares a typed generation
+invalidation with a scheduler **only when their authored SourceRef block
+identities are exactly equal**, and the invalidation targets the same
+captured owner/generation source expression. Its
+`generationInvalidationRelativeToSchedule` observation is `before`,
+`after`, `mixed`, or `unknown`; exact source locations remain attached
+to the full analyzer observation. This is source statement order only,
+not the order of callback delivery, not identity of a live arena
+instance, and not evidence that the generation was invalidated during
+cleanup. Cross-function, branching or missing source evidence must
+remain `unknown`. No ordering category grants `protected` status.
 It requires targeted selected-map proof, not a speculative BUG
 classification or an alternate workflow.
 

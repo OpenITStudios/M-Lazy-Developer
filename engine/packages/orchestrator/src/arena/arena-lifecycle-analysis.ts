@@ -128,6 +128,14 @@ export interface ArenaDeferredMutationAssessment {
   readonly generationGuardSource?: SourceRef;
   readonly generationGuardOperands?: readonly [string, string];
   readonly sourceGenerationCapture?: SourceGenerationCapture;
+  /** Direct same-block AST statement ordering relative to the scheduler.
+   * This is NOT callback delivery or cross-function cleanup ordering.
+   * 'mixed' means authored invalidations appear on both sides.
+   */
+  readonly generationInvalidationRelativeToSchedule?:
+    "before" | "after" | "mixed" | "unknown";
+  /** Exact same-block source sites used for the ordering observation. */
+  readonly generationInvalidationSources?: readonly SourceRef[];
   /** Reserved 'protected' requires ownership/capture proof not provided by
    * a lexical guard pattern or region-level reachability alone.
    */
@@ -1695,6 +1703,32 @@ function materialMutationRegions(
   ].sort();
 }
 
+/** An identical file/lexical block is necessary for source statement
+ * order. Matching region names, line proximity, or file paths alone can
+ * never establish that two operations are sequenced together.
+ */
+function sameDeferredSourceBlock(
+  a: SourceRef | undefined,
+  b: SourceRef | undefined,
+): boolean {
+  const x = a?.range;
+  const y = b?.range;
+  return a !== undefined && b !== undefined &&
+    a.artifactId.trim().length > 0 &&
+    a.relativePath.trim().length > 0 &&
+    a.artifactId === b.artifactId &&
+    a.relativePath === b.relativePath &&
+    a.jsonPointer === b.jsonPointer &&
+    x?.lineStart !== undefined && x.lineEnd !== undefined &&
+    x.columnStart !== undefined && x.columnEnd !== undefined &&
+    y?.lineStart !== undefined && y.lineEnd !== undefined &&
+    y.columnStart !== undefined && y.columnEnd !== undefined &&
+    x.lineStart === y.lineStart &&
+    x.lineEnd === y.lineEnd &&
+    x.columnStart === y.columnStart &&
+    x.columnEnd === y.columnEnd;
+}
+
 function deferredMutationAssessments(
   scripts: readonly ParsedScriptFile[],
   crossFileCalls:
@@ -1788,6 +1822,39 @@ function deferredMutationAssessments(
         sameCallbackGuardCandidate &&
         callback.sourceGenerationCapture !== undefined &&
         hasSameOwner && !hasOtherOwner;
+      const capture = callback.sourceGenerationCapture;
+      const schedule = callback.sourceSequence?.directCall === true
+        ? callback.sourceSequence : undefined;
+      // Only direct generation writes in the exact scheduler's block
+      // admit a before/after observation. A terminal in another helper,
+      // branch or module has no established execution order here.
+      const orderedInvalidations = capture === undefined ||
+          schedule === undefined ? [] :
+        (script.arenaAuthorityEvidence ?? []).flatMap(item => {
+          const site = item.sourceSequence;
+          return item.kind === "generation-invalidate" &&
+            item.arenaExpression === capture.ownerExpression &&
+            item.generationExpression === capture.generationExpression &&
+            site !== undefined &&
+            site.statementIndex !== schedule.statementIndex &&
+            sameDeferredSourceBlock(site.block, schedule.block)
+              ? [{ source: item.source, index: site.statementIndex }]
+              : [];
+        });
+      const invalidationBefore = orderedInvalidations.some(
+        item => item.index < schedule!.statementIndex);
+      const invalidationAfter = orderedInvalidations.some(
+        item => item.index > schedule!.statementIndex);
+      const invalidationOrder =
+        invalidationBefore && invalidationAfter ? "mixed" as const :
+        invalidationBefore ? "before" as const :
+        invalidationAfter ? "after" as const :
+        "unknown" as const;
+      const orderingNote = capture === undefined ? "" :
+        invalidationOrder === "unknown"
+          ? " No exact same-block generation invalidation is bound to the scheduler; inter-handler ordering remains unknown."
+          : " Generation invalidation is authored " + invalidationOrder +
+            " relative to scheduling in the same lexical block; this cannot prove callback delivery or post-reset protection.";
       output.push({
         scriptId:
           script.identifier,
@@ -1810,13 +1877,18 @@ function deferredMutationAssessments(
         }),
         ...(callback.sourceGenerationCapture === undefined ? {} : {
           sourceGenerationCapture: callback.sourceGenerationCapture,
+          generationInvalidationRelativeToSchedule: invalidationOrder,
+          ...(orderedInvalidations.length === 0 ? {} : {
+            generationInvalidationSources:
+              orderedInvalidations.map(item => item.source),
+          }),
         }),
         status: sourceSnapshotCandidate
           ? "source-snapshot-candidate"
           : sameCallbackGuardCandidate
             ? "source-guard-candidate"
             : "unresolved",
-        reason: sourceSnapshotCandidate
+        reason: (sourceSnapshotCandidate
           ? "Direct typed mutation of captured authored owner expression follows the leading guard; runtime identity, untyped effects and all-path invalidation remain unproven."
           : indirectMutationRegions.length > 0
             ? "Reachable helper mutations cannot inherit direct callback guard or owner identity without independent proof."
@@ -1824,7 +1896,8 @@ function deferredMutationAssessments(
               ? "Another direct mutation owner expression exists, so the captured generation does not cover all authored targets."
               : sameCallbackGuardCandidate
                 ? "Leading generation guard exists but no uniquely source-bound direct mutation target closes the association."
-                : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.",
+                : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.") +
+          orderingNote,
       });
     }
   }

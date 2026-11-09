@@ -179,6 +179,7 @@ export interface GameplayWorldModel {
         | "callbackRegion"
         | "mutationRegions"
         | "guardIdentifiers"
+        | "generationInvalidationRelativeToSchedule"
         | "status"
       >[];
       terminalRaces: readonly {
@@ -2029,6 +2030,11 @@ export function deriveGameplayWorldModel(
                 [...item.mutationRegions],
               guardIdentifiers:
                 [...item.guardIdentifiers],
+              ...(item.generationInvalidationRelativeToSchedule === undefined
+                ? {} : {
+                    generationInvalidationRelativeToSchedule:
+                      item.generationInvalidationRelativeToSchedule,
+                  }),
               status: item.status,
             })) ?? [],
         terminalRaces:
