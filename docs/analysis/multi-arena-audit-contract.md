@@ -274,6 +274,23 @@ evidence. The source-owned ledger keeps terminal assessments matched to
 their exact script instance, not the potentially repeated
 `script.identifier` display label.
 
+### Deferred generation and terminal race closure
+
+The canonical arena lifecycle analyzer already tracks source-authored
+deferred callback mutations, generation guard/snapshot *candidates*,
+stale ready-set snapshots, terminal collision races and unresolved
+result precedence. These source candidates do **not** become
+`protected` or prove safe cleanup just because a leading generation
+guard or terminal helper is reachable. Until source attribution
+and outcome ordering are proven, the existing material
+`runtime:arena-lifecycle` Gameplay World closure remains **UNKNOWN**
+whenever `unresolvedDeferredMutations`,
+`staleReadySnapshotRisks`, `unresolvedTerminalRaces` or
+`terminalPrecedenceUnresolved` is nonzero. This obligation is
+independent of an otherwise complete terminal-entry and release ledger.
+It requires targeted selected-map proof, not a speculative BUG
+classification or an alternate workflow.
+
 ## Simultaneous-start rule
 
 Independent arenas must be reviewed under simultaneous start and overlapping lifecycle transitions. A system that works sequentially but fails when two arenas start together is a gameplay defect candidate.

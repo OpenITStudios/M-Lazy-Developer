@@ -1273,22 +1273,43 @@ export function deriveGameplayWorldModel(
   }
 
   if (source.arena.lifecycle !== undefined) {
+    const lifecycle = source.arena.lifecycle;
     const terminalEvidenceUnresolved =
-      source.arena.lifecycle.terminalCandidates === 0 ||
-      source.arena.lifecycle.partial > 0 ||
-      source.arena.lifecycle.unresolved > 0 ||
-      (source.arena.lifecycle.terminalEntryPaths ?? []).some(
+      lifecycle.terminalCandidates === 0 ||
+      lifecycle.partial > 0 ||
+      lifecycle.unresolved > 0 ||
+      (lifecycle.terminalEntryPaths ?? []).some(
         path => path.status !== "source-reachable") ||
-      (source.arena.lifecycle.terminalEntryPaths?.length ?? 0) <
-        source.arena.lifecycle.terminalCandidates;
+      (lifecycle.terminalEntryPaths?.length ?? 0) <
+        lifecycle.terminalCandidates;
+    // Terminal reachability alone is not complete lifecycle coverage:
+    // a deferred callback can still mutate a previous generation after
+    // cleanup, and unresolved collision precedence can choose the wrong
+    // result even when each terminal path is individually reachable.
+    // These existing source risks must remain a material proof obligation,
+    // never be converted to a PROVEN gameplay defect by this projection.
+    const temporalEvidenceUnresolved =
+      lifecycle.unresolvedDeferredMutations > 0 ||
+      lifecycle.staleReadySnapshotRisks > 0 ||
+      lifecycle.unresolvedTerminalRaces > 0 ||
+      lifecycle.terminalPrecedenceUnresolved > 0;
+    const unresolved =
+      terminalEvidenceUnresolved || temporalEvidenceUnresolved;
     runtimeSurfaces.push({
       id: "runtime:arena-lifecycle",
       label: "Arena lifecycle",
       kind: "runtime-domain",
-      status: terminalEvidenceUnresolved ? "unknown" : "understood",
+      status: unresolved ? "unknown" : "understood",
       material: true,
-      ...(terminalEvidenceUnresolved
-        ? { reason: "Arena lifecycle terminal convergence or entry ownership remains source-unproven." }
+      ...(unresolved
+        ? { reason: [
+            ...(terminalEvidenceUnresolved ? [
+              "Terminal convergence or entry ownership remains source-unproven.",
+            ] : []),
+            ...(temporalEvidenceUnresolved ? [
+              "Deferred generation ownership, stale readiness or terminal race precedence remains source-unproven.",
+            ] : []),
+          ].join(" ") }
         : {}),
     });
   }
