@@ -158,24 +158,31 @@ interface RemoteCleanupRelease {
 }
 
 /**
- * Join only the existing resolver's exact, selected-artifact ESM calls.
- * Cross-module reachability is a cleanup INVESTIGATION witness, never
- * proof that the caller and the remote release share a player/arena owner.
- * Module-qualified nodes prevent equal region names in different files
- * from borrowing each other's cleanup.
+ * Only a directly sourced argument/formal correspondence may carry a
+ * player/arena owner across a function boundary. Region reachability alone
+ * cannot establish that the resource being released is the resource acquired.
+ * The conclusion is still PARTIAL: AST forwarding is not runtime identity,
+ * execution, or generation equivalence.
  */
 function crossFileReleaseRoutes(
   scripts: readonly ParsedScriptFile[],
   crossFileCalls: readonly CrossFileCallEdge[],
-): (script: ParsedScriptFile, terminalRegion: string) =>
+): (script: ParsedScriptFile, terminalRegion: string,
+    acquire: ArenaCleanupSurfaceMutation) =>
   readonly RemoteCleanupRelease[] {
   if (crossFileCalls.length === 0) return () => [];
-  const moduleKey = (artifactId: string, relativePath: string): string =>
-    JSON.stringify([artifactId, relativePath]);
-  const nodeKey = (
-    artifactId: string, relativePath: string, region: string,
-  ): string => JSON.stringify([artifactId, relativePath, region]);
-
+  const moduleKey = (artifactId: string, path: string): string =>
+    JSON.stringify([artifactId, path]);
+  const nodeKey = (artifactId: string, path: string, region: string): string =>
+    JSON.stringify([artifactId, path, region]);
+  type CallBindings = NonNullable<CrossFileCallEdge["argumentParameterBindings"]>;
+  type RouteEdge = {
+    readonly target: string;
+    readonly fromPath: string;
+    readonly toPath: string;
+    readonly imported: boolean;
+    readonly bindings: CallBindings;
+  };
   const modules = new Map<string, ParsedScriptFile[]>();
   for (const script of scripts) {
     const key = moduleKey(script.source.artifactId, script.source.relativePath);
@@ -183,25 +190,31 @@ function crossFileReleaseRoutes(
     if (group) group.push(script);
     else modules.set(key, [script]);
   }
-  const owned = (artifactId: string, relativePath: string): boolean =>
-    modules.get(moduleKey(artifactId, relativePath))?.length === 1;
+  const uniqueModule = (artifactId: string, path: string): boolean =>
+    modules.get(moduleKey(artifactId, path))?.length === 1;
 
-  const graph = new Map<string, Set<string>>();
+  const graph = new Map<string, RouteEdge[]>();
   const releases = new Map<string, RemoteCleanupRelease[]>();
-  const connect = (caller: string, target: string): void => {
-    const next = graph.get(caller);
-    if (next) next.add(target);
-    else graph.set(caller, new Set([target]));
+  const connect = (start: string, edge: RouteEdge): void => {
+    const group = graph.get(start);
+    if (group) group.push(edge);
+    else graph.set(start, [edge]);
   };
 
   for (const script of scripts) {
     const { artifactId, relativePath } = script.source;
-    if (!owned(artifactId, relativePath)) continue;
+    if (!uniqueModule(artifactId, relativePath)) continue;
     for (const call of script.localFunctionCalls) {
-      connect(
-        nodeKey(artifactId, relativePath, call.callerRegion),
-        nodeKey(artifactId, relativePath, call.targetRegion),
-      );
+      if (!call.targetSource?.range ||
+          call.targetSource.artifactId !== artifactId ||
+          call.targetSource.relativePath !== relativePath) continue;
+      connect(nodeKey(artifactId, relativePath, call.callerRegion), {
+        target: nodeKey(artifactId, relativePath, call.targetRegion),
+        fromPath: relativePath,
+        toPath: relativePath,
+        imported: false,
+        bindings: call.argumentParameterBindings ?? [],
+      });
     }
     for (const mutation of extractMutations(script)) {
       if (mutation.action !== "release") continue;
@@ -219,20 +232,107 @@ function crossFileReleaseRoutes(
         edge.source.artifactId !== edge.targetSource.artifactId ||
         edge.callerModule !== edge.source.relativePath ||
         edge.targetModule !== edge.targetSource.relativePath ||
-        !owned(edge.source.artifactId, edge.callerModule) ||
-        !owned(edge.source.artifactId, edge.targetModule)) continue;
+        !uniqueModule(edge.source.artifactId, edge.callerModule) ||
+        !uniqueModule(edge.source.artifactId, edge.targetModule)) continue;
     connect(
       nodeKey(edge.source.artifactId, edge.callerModule, edge.callerRegion),
-      nodeKey(edge.source.artifactId, edge.targetModule, edge.targetRegion),
+      {
+        target: nodeKey(edge.source.artifactId, edge.targetModule,
+          edge.targetRegion),
+        fromPath: edge.callerModule,
+        toPath: edge.targetModule,
+        imported: true,
+        bindings: edge.argumentParameterBindings ?? [],
+      },
     );
   }
 
-  return (script, terminalRegion) => {
+  const identifier = /^[A-Za-z_$][\\w$]*$/;
+  const acquireOwner = (
+    mutation: ArenaCleanupSurfaceMutation,
+  ): { readonly owner: string; readonly suffix: string;
+      readonly worldSingleton: boolean } | undefined => {
+    const { key, surface } = mutation;
+    if (surface === "membership") {
+      const match = /^([A-Za-z_$][\\w$]*)(\\..+)$/.exec(key);
+      return match ? { owner: match[1]!, suffix: match[2]!,
+        worldSingleton: false } : undefined;
+    }
+    if (surface === "dynamic-property") {
+      const split = key.indexOf(":");
+      if (split < 0) return undefined;
+      const owner = key.slice(0, split);
+      if (!identifier.test(owner)) return undefined;
+      return { owner, suffix: key.slice(split),
+        worldSingleton: owner === "world" && mutation.precision === "exact" };
+    }
+    if (surface === "inventory" || surface === "equipment" ||
+        surface === "gamemode") {
+      return identifier.test(key)
+        ? { owner: key, suffix: "", worldSingleton: false }
+        : undefined;
+    }
+    // Tags, effects, @s and arbitrary selector strings do not carry
+    // stable player/arena ownership identities through source text alone.
+    return undefined;
+  };
+
+  return (script, terminalRegion, acquire) => {
     const { artifactId, relativePath } = script.source;
-    if (!owned(artifactId, relativePath)) return [];
-    return reachable(graph, nodeKey(artifactId, relativePath, terminalRegion))
-      .flatMap(node => releases.get(node) ?? [])
-      .filter(item => item.sourcePath !== relativePath);
+    if (!uniqueModule(artifactId, relativePath)) return [];
+    const root = acquireOwner(acquire);
+    if (!root) return [];
+
+    const queue: { node: string; owner: string; imported: boolean }[] = [{
+      node: nodeKey(artifactId, relativePath, terminalRegion),
+      owner: root.owner,
+      imported: false,
+    }];
+    const seen = new Set<string>();
+    const remote: RemoteCleanupRelease[] = [];
+    for (let index = 0; index < queue.length; index++) {
+      const state = queue[index]!;
+      const key = JSON.stringify([state.node, state.owner, state.imported]);
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      if (state.imported) {
+        for (const witness of releases.get(state.node) ?? []) {
+          if (witness.sourcePath === relativePath ||
+              witness.mutation.surface !== acquire.surface) continue;
+          const expected = state.owner + root.suffix;
+          const exactText = witness.mutation.key === expected;
+          const dynamicClear = acquire.surface === "dynamic-property" &&
+            witness.mutation.key === state.owner + ":*";
+          if (exactText || dynamicClear) remote.push(witness);
+        }
+      }
+
+      for (const edge of graph.get(state.node) ?? []) {
+        let nextOwner = state.owner;
+        if (!root.worldSingleton) {
+          // The canonical parser/resolver proves unchanged formal forwarding
+          // (including immutable const aliases). Missing, conflicting or
+          // renamed/unbound arguments cannot be chosen by lexical similarity.
+          const matches = edge.bindings.filter(binding =>
+            binding.argumentName === state.owner &&
+            binding.argumentSource.artifactId === artifactId &&
+            binding.parameterSource.artifactId === artifactId &&
+            binding.argumentSource.relativePath === edge.fromPath &&
+            binding.parameterSource.relativePath === edge.toPath &&
+            binding.argumentSource.range !== undefined &&
+            binding.parameterSource.range !== undefined);
+          if (matches.length !== 1) continue;
+          nextOwner = matches[0]!.parameterName;
+        }
+        queue.push({
+          node: edge.target,
+          owner: nextOwner,
+          imported: state.imported || edge.imported,
+        });
+      }
+    }
+    return remote;
   };
 }
 
@@ -539,7 +639,8 @@ function releaseMatches(
 function analyzeScript(
   script: ParsedScriptFile,
   remoteReleasesFor:
-    (script: ParsedScriptFile, terminalRegion: string) =>
+    (script: ParsedScriptFile, terminalRegion: string,
+      acquire: ArenaCleanupSurfaceMutation) =>
       readonly RemoteCleanupRelease[] = () => [],
 ): ArenaCleanupTerminalAssessment[] {
   const mutations = extractMutations(script);
@@ -566,7 +667,6 @@ function analyzeScript(
 
   return terminalRegions(script).map((terminalRegion) => {
     const regions = reachable(graph, terminalRegion);
-    const remoteReleases = remoteReleasesFor(script, terminalRegion);
     const surfaces = [...groupedAcquisitions.values()]
       .map((group): ArenaCleanupSurfaceAssessment => {
       const acquire = group[0]!;
@@ -576,9 +676,9 @@ function analyzeScript(
       const reachableMatching = matching.filter((release) =>
         regions.includes(release.region)
       );
-      const remoteMatching = remoteReleases.filter(({ mutation }) =>
-        releaseMatches(acquire, mutation)
-      );
+      // Remote source needs an exact unchanged owner parameter forwarded
+      // across every local/ESM hop, or an exact world singleton source.
+      const remoteMatching = remoteReleasesFor(script, terminalRegion, acquire);
       const exact =
         group.every((item) => item.precision === "exact") &&
         reachableMatching.some(

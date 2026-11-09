@@ -236,8 +236,14 @@ call chain from a terminal into a cleanup helper in another module.
 The existing cleanup analyzer follows only resolved, same-artifact calls
 between unique source-module owners. A matching remote release is a
 **partial cleanup candidate** with the source module path retained in
-`releaseRegions`; it never certifies that the terminal and helper refer
-to the same player, arena, generation or actual executed reset. Unresolved,
+`releaseRegions`, but only if each reachable local/ESM hop has a unique
+parser-proven unchanged argument-to-formal binding for the source resource
+owner. Exact `World` singleton properties can instead cross no-argument
+helpers because they have a stable world-level owner. Literal tag names,
+`@s`, player selectors, unbound/renamed arguments and other unknown
+receiver identities cannot borrow a remote cleanup proof. Even a fully
+source-forwarded chain never certifies that the terminal and helper refer
+to the same live player, arena, generation or executed reset. Unresolved,
 ambiguous, cross-artifact, or absent imported calls cannot supply cleanup
 evidence. The source-owned ledger keeps terminal assessments matched to
 their exact script instance, not the potentially repeated
