@@ -245,6 +245,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
     const candidateHarnesses = new Set();
     const caseIds = new Set();
     let improvements = 0, regressions = 0, unchanged = 0;
+    const improvedCaseIds = new Set();
     let regressedOracleChecks = 0;
     let latencyCompared = 0, latencyDelta = 0, tokenCompared = 0, tokenDelta = 0;
     for (const pair of contrast.pairs) {
@@ -316,8 +317,10 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
           count + Number(passed && !nextQuality.checks[index]), 0);
         regressedOracleChecks += lostChecks;
         if (lostChecks > 0 || delta < 0) regressions++;
-        else if (delta > 0) improvements++;
-        else unchanged++;
+        else if (delta > 0) {
+          improvements++;
+          improvedCaseIds.add(baseline.caseId);
+        } else unchanged++;
         const baseMetrics = baseReceipt.metrics;
         const candidateMetrics = candidateReceipt.metrics;
         if (Number.isFinite(baseMetrics?.latencyMs) &&
@@ -354,12 +357,12 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
     const comparable = deficits.length === 0 && modelIds.size === 1 &&
       baseHarnesses.size === 1 && candidateHarnesses.size === 1 &&
       contrast.pairs.length >= 2 && contrast.changedComponents.length === 1;
-    // Repeating one frozen task can establish repeatability, not generalization
-    // to another task. Never mark a one-case replay as an improved harness.
-    const distinctCases = caseIds.size >= 2;
+    // A clean case does not make two wins on a different repeated case
+    // independent improvements. Count the cases that actually improved.
+    const crossCaseImprovement = improvedCaseIds.size >= 2;
     const verdict = !comparable
       ? "confounded"
-      : improvements >= 2 && regressions === 0 && !distinctCases
+      : improvements >= 2 && regressions === 0 && !crossCaseImprovement
         ? "confounded"
       : improvements >= 2 && regressions === 0
         ? "helped"
@@ -368,7 +371,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
           : improvements === 0 && regressions === 0
             ? "no observed effect"
             : "confounded";
-    const canProposeLesson = verdict === "helped" && caseIds.size >= 2 &&
+    const canProposeLesson = verdict === "helped" && crossCaseImprovement &&
       contrast.proposedLesson &&
       typeof contrast.proposedLesson.cue === "string" &&
       contrast.proposedLesson.cue.trim() &&
@@ -382,6 +385,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
       pairCount: pairs.length,
       comparablePairs: pairs.length - deficits.length,
       improvements, regressions, unchanged,
+      improvedCaseCount: improvedCaseIds.size,
       regressedOracleChecks,
       // No automatic promotion: any regression or incomplete evidence
       // keeps the baseline; clean gains still require independent review.
@@ -400,8 +404,8 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         ...(modelIds.size > 1 || baseHarnesses.size > 1 || candidateHarnesses.size > 1
           ? ["Contrasts must retain one model and one baseline/candidate harness identity."] : []),
         ...(contrast.pairs.length < 2 ? ["A single pair cannot isolate a repeatable effect."] : []),
-        ...(improvements >= 2 && regressions === 0 && !distinctCases
-          ? ["Repeated wins on one frozen case do not demonstrate cross-case improvement; keep the baseline."] : []),
+        ...(improvements >= 2 && regressions === 0 && !crossCaseImprovement
+          ? ["Two wins must improve distinct frozen cases; unchanged cases and repeated wins cannot establish cross-case improvement."] : []),
         ...(contrast.changedComponents.length !== 1
           ? ["Multiple changed components prevent per-component attribution."] : []),
         ...(regressedOracleChecks > 0
@@ -414,7 +418,7 @@ function scoreHarnessContrasts(payload, contrastInput, routingById, procedureByI
         ? { status: "REVIEWABLE_CANDIDATE_NOT_ADOPTED",
             cue: contrast.proposedLesson.cue.trim(),
             operation: contrast.proposedLesson.operation.trim(),
-            supportingCaseIds: [...caseIds].sort() }
+            supportingCaseIds: [...improvedCaseIds].sort() }
         : { status: "NO_EVIDENCE_SUPPORTED_LESSON" },
       proofBoundary: "FILE_HASH_AND_OBSERVATION_MATCH_NOT_EXECUTION_ATTESTATION_OR_MINECRAFT_PROOF",
     });

@@ -122,6 +122,37 @@ test("repeated success on one frozen case cannot be promoted as general improvem
   assert.equal(r.transferableLesson.status, "NO_EVIDENCE_SUPPORTED_LESSON");
 });
 
+test("two wins on one case plus an unchanged second case cannot claim cross-case improvement", () => {
+  const x = makePayload();
+  // The first case improves; the second is present but does not improve.
+  x.runs.runs[2].selectedLane = "m-bedrock-system-improvement";
+  x.runs.runs.push({
+    ...x.runs.runs[0], runId: "b3",
+  }, {
+    ...x.runs.runs[1], runId: "c3",
+  });
+  x.contrast.runEvidence.push({
+    ...x.contrast.runEvidence[0], runId: "b3",
+    executionEvidenceSha256: fixed("7"),
+  }, {
+    ...x.contrast.runEvidence[1], runId: "c3",
+    executionEvidenceSha256: fixed("8"),
+  });
+  x.contrast.contrasts[0].pairs.push({
+    baselineRunId: "b3", candidateRunId: "c3",
+  });
+  const r = reflect(x);
+  assert.equal(r.comparablePairs, 3);
+  assert.equal(r.caseCount, 2);
+  assert.equal(r.improvements, 2);
+  assert.equal(r.improvedCaseCount, 1);
+  assert.equal(r.unchanged, 1);
+  assert.equal(r.regressions, 0);
+  assert.equal(r.verdict, "confounded");
+  assert.equal(r.candidateDisposition, "KEEP_BASELINE");
+  assert.equal(r.transferableLesson.status, "NO_EVIDENCE_SUPPORTED_LESSON");
+});
+
 test("regression and equal quality stay distinct from efficiency claims", () => {
   assert.equal(reflect(makePayload(true, false)).verdict, "hurt");
   const equal = reflect(makePayload(true, true));

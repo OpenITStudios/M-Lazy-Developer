@@ -144,6 +144,8 @@ changed component are needed for an observational component verdict.
 A favorable verdict additionally requires improvements on at least two
 distinct frozen evaluation case IDs: repeating one case can show
 repeatability but cannot establish cross-case quality improvement.
+A second unchanged case does not satisfy this requirement: count distinct
+**improved** cases, not merely distinct cases present in the comparison.
 
 The scorer uses the existing frozen skill routing/procedure expectations
 to count declared correctness, never a model-authored PASS. A missing or
