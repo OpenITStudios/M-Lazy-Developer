@@ -45,3 +45,45 @@ These scenarios exercise the existing IMPROVE SYSTEM contract as **manual review
 - `bedrock-project-setup`, `bedrock-agent-team`, `bedrock-git-workflow`, `bedrock-testing-policy`, `bedrock-release-export` and `bedrock-game-results` guide only source/proof/approval discipline, not automatic project scaffold, CI, stakeholder rule or release.
 - An un-routed technical skill is REFERENCE ONLY without a precise selected-map typed Semantic IR witness. A Probe PASS, FAIL, BLOCKED, PARTIAL or pending status retains its original client, fixture and negative-control boundary.
 - BENCHMARK is a separately scoped read-only measurement operation within IMPROVE SYSTEM and never writes frozen expectations or creates a third work lane.
+
+## Clockwork Harness2 experiment — paused 2026-11-10
+
+This is a bounded evidence review of the existing Harness work, not a new
+benchmark expectation, audit receipt, checkpoint store, or automatic PASS.
+
+- **Sample:** The Clockwork Vault v1.1.1, selected Google Drive `.mcworld`,
+  SHA-256 `e7de6660b71b1126eebb250ec2e1655c0edef6034bca80e9129dc6f86f112634`.
+  The selected world is read-only; source findings are not Minecraft runtime
+  observations.
+- **Pinned baseline:** `Local` at
+  `64533d95ef7eb17ca398a8fab3ba4fc73dfa03d5`.
+- **Pre-Clockwork candidate:** `Harness` at
+  `04ed9554813b6314e9ca51f78126c19b233295bf`.
+  Its counterproof receipt validation was stronger on isolated synthetic
+  controls; no measured automatic Clockwork discovery gain was established.
+- **Clockwork source investigations:** CW-001 (failed reset followed by
+  potential arena reuse), CW-002 (failed lobby recovery followed by reset
+  request), and CW-003 (completion finalizer shared by reset success/abort)
+  are source-level investigation candidates, **not PROVEN gameplay bugs**.
+  Mocked JavaScript controls do not establish actual world corruption,
+  player stranding, or erroneous final scoring.
+- **Applied generalizable detector change:** commit
+  `fea1559c3889292bfbc69d4dce4c3b15255ddaa9` introduces
+  `abort-and-complete-share-finalizer-candidate` in the existing
+  cleanup analyzer and adds source-level regression cases. The evidence
+  kind denotes a paired callback investigation lead; it must not imply
+  that the shared finalizer ignores the error. An error-gated finalizer
+  remains a mandatory negative control.
+- **Proof ceiling:** source review and isolated AST/JavaScript probes only.
+  Native TypeScript/Vitest, current-map canonical CLI audit, downstream
+  evidence consumption, independent scored baseline/candidate map runs,
+  and actual Minecraft gameplay were **NOT EXECUTED / NOT VERIFIED**.
+- **Resume only on explicit new authorization:** first verify the exact
+  source-to-consumer route for the new evidence kind, execute native
+  focused tests if available, then compare independent positive,
+  negative, and correct-UNKNOWN cases without editing frozen oracles.
+  Do not silently promote Clockwork findings into production bug verdicts.
+
+**Disposition:** user requested to stop Harness work here. No further
+experiments, source patches, merges, or CI actions are authorized by
+this record.
