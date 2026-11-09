@@ -80,8 +80,14 @@ source/native resource analysis, not effective concurrent-start proof.
 
 Include typed Script API `runCommand` / `runCommandAsync` literal calls
 that mutate ticking areas and `.mcfunction` remove/remove_all commands in
-the existing resource evidence. They are not evidence of execution or live
-lease ordering. If any such mutation can change occupancy after the
+the existing resource evidence. A typed dynamic `runCommand` expression
+with a visibly authored `tickingarea` command prefix is an unresolved
+source candidate, not an executed command or verified area cost. Keep its
+exact source locator and retain the arena capacity UNKNOWN until the
+actual command can be resolved. Opaque dynamic commands without this
+prefix remain under general source Discovery uncertainty; do not guess
+that every dynamic command creates or removes a ticking area. Neither
+source form proves execution or live lease ordering. If any such mutation can change occupancy after the
 selected-world database snapshot, leave the effective capacity `UNKNOWN`
 in Gameplay World even if the source-only resource formula returns a
 number. The existing diagnostic consumer must also abstain from a

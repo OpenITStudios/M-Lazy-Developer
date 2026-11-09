@@ -1245,7 +1245,12 @@ export function deriveGameplayWorldModel(
       ...(unresolvedCapacity
         ? {
             reason:
-              "Arena capacity/concurrency has unresolved selected-artifact evidence.",
+              (source.arena.capacity?.evidence.dynamicTickingAreaCommandSources?.length ?? 0) > 0
+                ? "Arena capacity/concurrency has unresolved selected-artifact evidence, including " +
+                  String(source.arena.capacity!.evidence.dynamicTickingAreaCommandSources!.length) +
+                  " source-authored dynamic tickingarea command candidate(s). " +
+                  "Generated arguments/executor and active allocation are not proven."
+                : "Arena capacity/concurrency has unresolved selected-artifact evidence.",
           }
         : {}),
       boundaries: [

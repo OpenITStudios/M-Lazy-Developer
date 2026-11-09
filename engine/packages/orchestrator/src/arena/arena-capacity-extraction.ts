@@ -95,6 +95,10 @@ export interface ArenaCapacityExtractionEvidence {
   tickingAreaMutationSourceSites: number;
   /** Exact script command-literal locators, never evidence of execution. */
   scriptTickingAreaMutationSources: readonly SourceRef[];
+  /** Dynamic runCommand expressions with a literal tickingarea prefix:
+   * possible commands, never established command arguments or execution.
+   */
+  dynamicTickingAreaCommandSources?: readonly SourceRef[];
   /** No number means no complete selected-world occupancy proof. */
   observedPermanentTickingAreas?: number;
   scriptTickingAreaManagerReferenced: boolean;
@@ -315,14 +319,36 @@ export function extractArenaConcurrencyCapacity(
     .flatMap((script) => (script.commandLiterals ?? []).filter((item) =>
       /(?:^|\brun\s+)\/?tickingarea\s+(?:add|remove(?:_all)?)\b/i
         .test(item.command.trim())));
+  // Source parser keeps typed runCommand calls even when their first
+  // argument is not a constant string. Recognize only an explicit
+  // tickingarea/execute...run tickingarea prefix in the authored expression.
+  // Arbitrary dynamic commands remain in the general Discovery unknowns,
+  // not speculative arena resource mutations.
+  const dynamicTickingAreaCandidates = (input.scripts ?? [])
+    .flatMap((script) => script.methodCalls.filter((call) => {
+      if (call.method !== "runCommand" &&
+          call.method !== "runCommandAsync") return false;
+      if (!call.hasSpreadArgument &&
+          call.argumentKinds[0] === "string") return false;
+      const expression = call.argumentTexts?.[0]?.trim() ?? "";
+      return /^(?:\s|\(|"|'|\x60)*\/?tickingarea\b/i.test(expression) ||
+        /^(?:\s|\(|"|'|\x60)*\/?execute\b[\s\S]*\brun\s+\/?tickingarea\b/i
+          .test(expression);
+    }));
   const tickingAreaMutationSourceSites =
     functionTickingAreaMutations.length +
-    scriptTickingAreaMutations.length;
+    scriptTickingAreaMutations.length +
+    dynamicTickingAreaCandidates.length;
   if (tickingAreaMutationSourceSites > 0) reasons.push(
     String(tickingAreaMutationSourceSites) +
-    " source-side /tickingarea mutation(s) may change persisted occupancy " +
-    "between the world snapshot and arena admission. Resource arithmetic " +
-    "is conditional and does not establish the effective concurrent limit.");
+    " source-side /tickingarea mutation candidate(s) may change persisted " +
+    "occupancy between the world snapshot and arena admission. Resource " +
+    "arithmetic is conditional and cannot prove an effective concurrent limit.");
+  if (dynamicTickingAreaCandidates.length > 0) reasons.push(
+    String(dynamicTickingAreaCandidates.length) +
+    " dynamic runCommand expression(s) contain a tickingarea prefix. " +
+    "The generated command, target and resource cost remain unresolved; " +
+    "this is a source lead, not a command that was proven to execute.");
 
   const resources: ArenaCapacityResource[] = [];
 
@@ -639,6 +665,10 @@ export function extractArenaConcurrencyCapacity(
       tickingAreaMutationSourceSites,
       scriptTickingAreaMutationSources:
         scriptTickingAreaMutations.map(item => item.source),
+      ...(dynamicTickingAreaCandidates.length === 0 ? {} : {
+        dynamicTickingAreaCommandSources:
+          dynamicTickingAreaCandidates.map(item => item.source),
+      }),
       ...(input.observedPermanentTickingAreas === undefined ? {} : {
         observedPermanentTickingAreas:
           input.observedPermanentTickingAreas,
