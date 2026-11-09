@@ -1180,6 +1180,8 @@ export function deriveGameplayWorldModel(
 
   const runtimeSurfaces: GameplayClosureSurface[] = [];
 
+  const dynamicTickingAreaCommandCount =
+    source.arena.capacity?.evidence.dynamicTickingAreaCommandSources?.length ?? 0;
   const arenaCapacityConstraintsUnresolved =
     source.arena.capacity !== undefined && (
       // Source-family geometry + persisted world count cannot establish
@@ -1245,9 +1247,9 @@ export function deriveGameplayWorldModel(
       ...(unresolvedCapacity
         ? {
             reason:
-              (source.arena.capacity?.evidence.dynamicTickingAreaCommandSources?.length ?? 0) > 0
+              dynamicTickingAreaCommandCount > 0
                 ? "Arena capacity/concurrency has unresolved selected-artifact evidence, including " +
-                  String(source.arena.capacity!.evidence.dynamicTickingAreaCommandSources!.length) +
+                  String(dynamicTickingAreaCommandCount) +
                   " source-authored dynamic tickingarea command candidate(s). " +
                   "Generated arguments/executor and active allocation are not proven."
                 : "Arena capacity/concurrency has unresolved selected-artifact evidence.",
@@ -1294,9 +1296,11 @@ export function deriveGameplayWorldModel(
   if (source.arena.cleanupSurfaces !== undefined) {
     const unresolved =
       source.arena.cleanupSurfaces.unresolved > 0 ||
+      source.arena.cleanupSurfaces.partial > 0 ||
       source.arena.cleanupSurfaces.lifecycle
         .unresolved > 0 ||
       (source.arena.cleanupSurfaces.ledger?.missing ?? 0) > 0 ||
+      (source.arena.cleanupSurfaces.ledger?.partial ?? 0) > 0 ||
       // Script-owned reset requests also establish an arena cleanup
       // obligation when topology/count discovery is incomplete. Reuse the
       // canonical reset blocker; do not invent a second arena detector.
@@ -1311,7 +1315,7 @@ export function deriveGameplayWorldModel(
       status: unresolved ? "unknown" : "understood",
       material: true,
       ...(unresolved
-        ? { reason: "Arena cleanup/reuse coverage is incomplete." }
+        ? { reason: "Arena cleanup/reuse has unresolved, partial, missing or reset-baseline proof; source inverse candidates cannot close gameplay coverage." }
         : {}),
     });
   }

@@ -221,6 +221,11 @@ handling and cleanup effect scope. A plain/global query or computed
 unresolved filter also remains `partition-proof-required` rather than a
 speculative cross-arena BUG or isolated PASS.
 
+The canonical Gameplay World cleanup surface stays **UNKNOWN** if any
+terminal/resource obligation is PARTIAL, missing or unresolved, even if a
+source-level inverse command exists. Partial cleanup coverage is an
+investigation lead, not sufficient evidence to close gameplay proof.
+
 A source-level `Entity.remove()`, `Entity.kill()` or persisted
 `playerId` helper call cannot independently establish that cleanup
 executed, targeted the right arena generation, or preserved active
