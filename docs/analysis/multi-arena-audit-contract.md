@@ -295,8 +295,11 @@ from its originating terminal through exact caller-formal to callee-formal
 bindings. Separately passed arenas must never share a release and
 invalidation verdict solely because two helper formals are both named
 `arena`. The existing assessment groups matched evidence by the
-originating terminal parameter, while unbound helper evidence stays
-PARTIAL and retains its qualified source region.
+originating terminal parameter in both local-only and cross-file paths.
+Single-file helper calls now also require source-bound unconditional
+argument forwarding before supporting strong convergence. Unbound or
+conditional helper effects stay PARTIAL and retain their qualified source
+region.
 Current selected-artifact source and actual generation ownership remain
 the required proof boundary.
 
