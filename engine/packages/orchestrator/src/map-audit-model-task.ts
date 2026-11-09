@@ -1036,6 +1036,7 @@ function checkpointPackets(
   auditRevision: string,
   intent: GameplayIntentModel,
   graph: GameplayScenarioGraph,
+  lookupIndex: AuditModelIntentLookup,
   scenarioPreset?: GameplayAuditScenarioPreset,
 ): readonly AuditModelTaskPacket[] {
   // Batch-local de-duplication: C6/C8 own their scenario before C9.
@@ -1075,7 +1076,7 @@ function checkpointPackets(
         ...ids,
         ...scoped.indicators.flatMap(item => item.sourceEvidenceIds),
       ]);
-      const evidence = evidenceContext(taskEvidenceIds, intent);
+      const evidence = evidenceContext(taskEvidenceIds, intent, lookupIndex);
       return {
         schemaVersion: 1 as const,
         policy: "bounded-audit-model-task" as const,
@@ -1754,6 +1755,7 @@ function provePackets(
   gate: GameplayDefectResolutionGate,
   auditRevision: string,
   intent: GameplayIntentModel,
+  lookupIndex: AuditModelIntentLookup,
   world: GameplayWorldModel,
 ): readonly AuditModelTaskPacket[] {
   // The causal link already carries its scenario identity. Do not scan the
@@ -1777,7 +1779,7 @@ function provePackets(
       // boundary. A task cannot lose already sourced dimension witnesses or
       // gain unrelated sibling evidence merely from scenario proximity.
       const ids = sourceBoundAuditEvidenceIds(graph, link.id);
-      const evidence = evidenceContext(ids, intent);
+      const evidence = evidenceContext(ids, intent, lookupIndex);
       return {
         schemaVersion: 1 as const,
         policy: "bounded-audit-model-task" as const,
@@ -2400,6 +2402,7 @@ export function deriveAuditModelTaskPackets(input: {
           evidenceContext(
             finding.evidenceIds,
             input.intent,
+            lookupIndex,
           );
         return {
           schemaVersion: 1 as const,
@@ -2567,6 +2570,7 @@ export function deriveAuditModelTaskPackets(input: {
               input.defectResolution,
               input.auditRevision,
               input.intent,
+              lookupIndex,
               input.world,
             );
             return prove.length > 0
@@ -2582,6 +2586,7 @@ export function deriveAuditModelTaskPackets(input: {
                     input.auditRevision,
                     input.intent,
                     input.graph,
+                    lookupIndex,
                     input.scenarioPreset,
                   ),
                   ...rankedNavigationPackets,
@@ -2595,6 +2600,7 @@ export function deriveAuditModelTaskPackets(input: {
               input.auditRevision,
               input.intent,
               input.graph,
+              lookupIndex,
               input.scenarioPreset,
             ),
             ...rankedNavigationPackets,

@@ -1029,6 +1029,24 @@ describe("PROVE model evidence handoff", () => {
       item.kind === "selected-artifact-evidence")).toBe(true);
     expect(task?.evidenceIds).not.toContain(neighborId);
     expect(task?.evidenceIds).not.toContain(fakeId);
+    // A newer untrusted duplicate cannot inherit current-artifact proof
+    // from an older same-ID Intent evidence record.
+    const changedIntent = {
+      ...intent,
+      evidence: [...intent.evidence, {
+        ...intent.evidence[1]!,
+        scope: "external-reference" as const,
+        locator: "old/scripts/admission.js:22:1",
+      }],
+    };
+    const changedTask = deriveAuditModelTaskPackets({
+      ...input, intent: changedIntent,
+    }).find(item => item.causalLinkId === id &&
+      item.kind === "COUNTERPROOF_SEARCH");
+    expect(changedTask?.evidenceIds).toEqual(authorized);
+    expect(changedTask?.evidenceContext.some(item => item.id === guardId))
+      .toBe(false);
+    expect(changedTask?.unresolvedEvidenceIds).toContain(guardId);
 
     // Publisher methodology must follow the exact causal link's authored
     // guard, not another operation in the same (possibly bundled) script.
@@ -2367,5 +2385,84 @@ describe("issue-first current-source navigation", () => {
     expect(() => planAuditIssueFirstFocus({
       tasks, obligations: [], auditRevision: "revision:map",
     }, 0)).toThrow(/limit/);
+  });
+});
+
+
+describe("batch-local evidence index across audit packet owners", () => {
+  it("keeps selected evidence, last-writer identity, analysis receipts and unresolved IDs identical", () => {
+    const revision = "revision:batch-evidence";
+    const evidenceIds = [
+      "e:current", "e:duplicate", "e:foreign", "analysis:run", "e:missing",
+    ];
+    const intent = {
+      schemaVersion: 1, id: "intent:batch-evidence", artifactId: "map:selected",
+      evidence: [
+        { id: "e:duplicate", origin: "source-code", scope: "external-reference",
+          locator: "old/scripts/start.js:1", summary: "Old owner" },
+        { id: "e:current", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/start.js:14:2", summary: "Current owner" },
+        { id: "e:foreign", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/old.js:5", summary: "Superseded owner" },
+        { id: "e:foreign", origin: "source-code", scope: "external-reference",
+          locator: "old/scripts/old.js:5", summary: "Untrusted final owner" },
+        { id: "e:duplicate", origin: "source-code", scope: "selected-artifact",
+          locator: "scripts/start.js:20:1", summary: "Selected final owner" },
+      ],
+      nodes: [], edges: [], invariants: [], unknowns: [],
+    } as any;
+    const input: Parameters<typeof deriveAuditModelTaskPackets>[0] = {
+      admission: { firstBlockingStage: undefined } as any,
+      procedure: { checkpoints: [] } as any,
+      graph: { causalLinks: [], knowledgeRequirements: [] } as any,
+      defectResolution: {} as any, world: {} as any,
+      auditRevision: revision, intent,
+      needValidationFindings: [{
+        causalLinkId: "link:review", scenarioId: "scenario:review",
+        subjectIds: [], componentIds: [], knowledgeRequirementIds: [],
+        evidenceIds, validationReason: "Determine exact source owner",
+        proofNavigation: {
+          proofGoal: "Trace this selected source",
+          provenClaims: [], missingClaims: ["Current owner not yet proven"],
+          route: [], evidenceSubstitutions: [], historicalSearchHints: [],
+          historyPressure: 0, familyProofCriteria: [],
+          proofStopRule: "Stop at deciding source proof",
+          runtimeRequired: false,
+        },
+      }] as any,
+    };
+    const navigation = deriveAuditModelTaskPackets(input)
+      .find(item => item.kind === "PROOF_NAVIGATION");
+    const checkpoint = deriveAuditModelTaskPackets({
+      ...input,
+      admission: { firstBlockingStage: "DISCOVERY" } as any,
+      needValidationFindings: [],
+      procedure: { checkpoints: [{
+        id: "A2", block: "DISCOVERY", label: "Discover",
+        status: "OPEN", reasonCode: "OBLIGATION_INCOMPLETE",
+        blocksPublication: true, evidenceIds, outputIds: [], obligations: [],
+        reason: "Unresolved source identity",
+        investigationScenarioIds: [],
+      }] } as any,
+    }).find(item => item.kind === "CHECKPOINT_REASONING");
+
+    const expected = [
+      { id: "analysis:run", kind: "analysis-receipt",
+        summary: expect.any(String) },
+      { id: "e:current", kind: "selected-artifact-evidence",
+        origin: "source-code", locator: "scripts/start.js:14:2",
+        summary: "Current owner" },
+      { id: "e:duplicate", kind: "selected-artifact-evidence",
+        origin: "source-code", locator: "scripts/start.js:20:1",
+        summary: "Selected final owner" },
+    ];
+    expect(navigation?.evidenceContext).toEqual(expected);
+    expect(checkpoint?.evidenceContext).toEqual(expected);
+    expect(navigation?.unresolvedEvidenceIds).toEqual(["e:foreign", "e:missing"]);
+    expect(checkpoint?.unresolvedEvidenceIds).toEqual(["e:foreign", "e:missing"]);
+    expect(navigation?.evidenceIds).toEqual(evidenceIds);
+    expect(checkpoint?.evidenceIds).toEqual([...evidenceIds].sort());
+    expect(navigation?.auditRevision).toBe(revision);
+    expect(checkpoint?.auditRevision).toBe(revision);
   });
 });
