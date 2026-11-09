@@ -49,6 +49,63 @@ if (!/^[a-f0-9]{64}$/.test(audit.artifactFingerprint ?? "") ||
 // The .git directory does not exist in a verified portable source package.
 // When available, use the canonical CLI's bound execution sidecar instead
 // of treating the HEAD of a separate freezing process as audit provenance.
+
+/** Optional metrics are validated as SAME-INVOCATION observation metadata.
+ * Their existence does not attest a source, model host, or gameplay executor.
+ */
+function validatedCliCostObservation(cost, auditRevision) {
+  if (cost === undefined) return undefined; // older captures remain valid
+  const allowed = new Set([
+    "policy", "scope", "initialAuditRevision", "auditCallElapsedMs",
+    "inspectionReadyElapsedMs", "scopedFindingProjectionElapsedMs",
+    "reportReadyElapsedMs", "auditControlElapsedMs",
+    "modelTaskGenerationElapsedMs", "reportProjectionElapsedMs",
+    "modelTaskCount", "generatedModelTaskPacketBytes",
+    "firstScopedFindingAvailableElapsedMs", "firstNextDecisionAvailableElapsedMs",
+  ]);
+  if (!cost || typeof cost !== "object" || Array.isArray(cost) ||
+      Object.keys(cost).some(key => !allowed.has(key)) ||
+      cost.policy !== "selected-map-same-invocation-cost-v1" ||
+      cost.scope !== "INITIAL_CANONICAL_AUDIT_NOT_MINECRAFT_RUNTIME" ||
+      cost.initialAuditRevision !== auditRevision) {
+    throw new Error("Malformed or stale same-invocation CLI cost observation.");
+  }
+  const durations = [
+    "auditCallElapsedMs", "inspectionReadyElapsedMs",
+    "scopedFindingProjectionElapsedMs", "reportReadyElapsedMs",
+    "auditControlElapsedMs", "modelTaskGenerationElapsedMs",
+    "reportProjectionElapsedMs",
+  ];
+  const optionalDurations = [
+    "firstScopedFindingAvailableElapsedMs",
+    "firstNextDecisionAvailableElapsedMs",
+  ];
+  if (durations.some(key =>
+      typeof cost[key] !== "number" || !Number.isFinite(cost[key]) ||
+      cost[key] < 0) ||
+      optionalDurations.some(key => cost[key] !== undefined &&
+      (typeof cost[key] !== "number" || !Number.isFinite(cost[key]) ||
+       cost[key] < 0)) ||
+      !Number.isSafeInteger(cost.modelTaskCount) || cost.modelTaskCount < 0 ||
+      !Number.isSafeInteger(cost.generatedModelTaskPacketBytes) ||
+      cost.generatedModelTaskPacketBytes < 0) {
+    throw new Error("Invalid same-invocation CLI cost counters.");
+  }
+  const total = cost.reportReadyElapsedMs;
+  const limit = cost.auditCallElapsedMs;
+  if (total > limit + 1 ||
+      cost.inspectionReadyElapsedMs > cost.scopedFindingProjectionElapsedMs ||
+      cost.scopedFindingProjectionElapsedMs > total ||
+      (cost.firstScopedFindingAvailableElapsedMs !== undefined &&
+       cost.firstScopedFindingAvailableElapsedMs !== cost.scopedFindingProjectionElapsedMs) ||
+      (cost.firstNextDecisionAvailableElapsedMs !== undefined &&
+       cost.firstNextDecisionAvailableElapsedMs < cost.scopedFindingProjectionElapsedMs) ||
+      [...optionalDurations].some(key => cost[key] !== undefined && cost[key] > total)) {
+    throw new Error("Inconsistent same-invocation CLI cost timeline.");
+  }
+  return {...cost};
+}
+
 const receiptBytes = executionReceiptPath === undefined
   ? undefined : readFileSync(resolve(executionReceiptPath));
 const receipt = receiptBytes === undefined
@@ -88,6 +145,8 @@ if (receipt !== undefined) {
     );
   }
 }
+const costObservation = receipt === undefined ? undefined :
+  validatedCliCostObservation(receipt.costObservation, receipt.auditRevision);
 const gitCommit = receipt === undefined
   ? execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
   : receipt.sourceCommit;
@@ -116,6 +175,7 @@ const frozen = {
         auditStatus: receipt.auditStatus,
         exitCode: receipt.exitCode,
         receiptSha256: createHash("sha256").update(receiptBytes).digest("hex"),
+        ...(costObservation === undefined ? {} : { costObservation }),
         ...(receipt.canonicalReportFile === undefined ? {} : {
           captureMode: receipt.captureMode,
           canonicalReportFile: receipt.canonicalReportFile,

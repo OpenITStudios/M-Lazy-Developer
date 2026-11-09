@@ -336,6 +336,56 @@ function isBoundCanonicalAuditReceipt(frozen, scored) {
     receipt.exitCode === (report.control.status === "BLOCKED" ? 2 : 0);
 }
 
+
+/** Same-CLI receipt cost only. Hash binding is not executor attestation. */
+function receiptCostObservation(receipt) {
+  const x = receipt?.costObservation;
+  if (x === undefined) return undefined;
+  const durations = [
+    "auditCallElapsedMs", "inspectionReadyElapsedMs",
+    "scopedFindingProjectionElapsedMs", "reportReadyElapsedMs",
+    "auditControlElapsedMs", "modelTaskGenerationElapsedMs",
+    "reportProjectionElapsedMs",
+  ];
+  const optional = [
+    "firstScopedFindingAvailableElapsedMs",
+    "firstNextDecisionAvailableElapsedMs",
+  ];
+  const validNumber = n => typeof n === "number" && Number.isFinite(n) && n >= 0;
+  const allowed = new Set([
+    "policy", "scope", "initialAuditRevision", ...durations,
+    ...optional, "modelTaskCount", "generatedModelTaskPacketBytes",
+  ]);
+  if (!x || typeof x !== "object" || Array.isArray(x) ||
+      Object.keys(x).some(key => !allowed.has(key)) ||
+      x.policy !== "selected-map-same-invocation-cost-v1" ||
+      x.scope !== "INITIAL_CANONICAL_AUDIT_NOT_MINECRAFT_RUNTIME" ||
+      x.initialAuditRevision !== receipt.auditRevision ||
+      durations.some(key => !validNumber(x[key])) ||
+      optional.some(key => x[key] !== undefined && !validNumber(x[key])) ||
+      !Number.isSafeInteger(x.modelTaskCount) || x.modelTaskCount < 0 ||
+      !Number.isSafeInteger(x.generatedModelTaskPacketBytes) ||
+      x.generatedModelTaskPacketBytes < 0 ||
+      x.reportReadyElapsedMs > x.auditCallElapsedMs + 1 ||
+      x.inspectionReadyElapsedMs > x.scopedFindingProjectionElapsedMs ||
+      x.scopedFindingProjectionElapsedMs > x.reportReadyElapsedMs ||
+      (x.firstScopedFindingAvailableElapsedMs !== undefined &&
+       x.firstScopedFindingAvailableElapsedMs !== x.scopedFindingProjectionElapsedMs) ||
+      (x.firstNextDecisionAvailableElapsedMs !== undefined &&
+       x.firstNextDecisionAvailableElapsedMs < x.scopedFindingProjectionElapsedMs) ||
+      optional.some(key => x[key] !== undefined &&
+        x[key] > x.reportReadyElapsedMs)) {
+    throw new Error("Invalid bound canonical audit cost observation.");
+  }
+  return x;
+}
+
+function nearestRankP95(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a,b) => a-b);
+  return sorted[Math.ceil(0.95 * sorted.length) - 1];
+}
+
 /** Compare independently frozen source-scope outcomes using the SAME
  * existing per-claim adjudicator; never rescore from model-written counts.
  * Outputs are review decisions, not an automatic harness adoption or
@@ -347,6 +397,22 @@ function compareFrozenSourceOutcomes(input) {
       !Array.isArray(input.pairs) ||
       input.pairs.length < 2 || input.pairs.length > 20) {
     throw new Error("Frozen outcome comparison requires 2–20 complete independent pairs.");
+  }
+  const efficiencyTarget = input.efficiencyReview !== null &&
+    typeof input.efficiencyReview === "object" &&
+    !Array.isArray(input.efficiencyReview)
+      ? input.efficiencyReview.maximumMeanAuditCallRatio
+      : undefined;
+  if (input.efficiencyReview !== undefined &&
+      (input.efficiencyReview === null ||
+       typeof input.efficiencyReview !== "object" ||
+       Array.isArray(input.efficiencyReview) ||
+       Object.keys(input.efficiencyReview).some(
+         key => key !== "maximumMeanAuditCallRatio") ||
+       typeof efficiencyTarget !== "number" ||
+       !Number.isFinite(efficiencyTarget) ||
+       efficiencyTarget <= 0 || efficiencyTarget >= 1)) {
+    throw new Error("Efficiency comparison requires a predeclared mean audit-call ratio between 0 and 1.");
   }
   // Commit identities are a comparison-wide contract, not a per-case hint.
   // Different candidate versions cannot jointly establish repeatable benefit.
@@ -371,6 +437,7 @@ function compareFrozenSourceOutcomes(input) {
   const uniqueArtifacts = new Set();
   const usedObservationDigests = new Set();
   let improved = 0, regressed = 0, unchanged = 0, insufficient = 0;
+  const auditCosts = [];
   for (const pair of input.pairs) {
     if (!pair || typeof pair.id !== "string" || !pair.id.trim() ||
         uniqueCaseIds.has(pair.id) ||
@@ -470,7 +537,19 @@ function compareFrozenSourceOutcomes(input) {
     };
     const baseObservedHash = materialAuditDigest(frozenBase.observed);
     const candidateObservedHash = materialAuditDigest(frozenCandidate.observed);
-    if (baseObservedHash === candidateObservedHash ||
+    // Source-claim gains still need material change. An explicitly bounded
+    // efficiency comparison may retain identical semantic output; it can
+    // never rebrand that unchanged output as an accuracy improvement.
+    const sameMaterialEvidence = baseObservedHash === candidateObservedHash;
+    const normalizedReview = result => JSON.stringify(
+      (result.fullMapReview.decisions ?? []).map(item => ({
+        claimId: item.claimId,
+        observedClass: item.observedClass,
+        observedEvidenceIds: [...(item.observedEvidenceIds ?? [])].sort(),
+      })).sort((a, b) => a.claimId.localeCompare(b.claimId)));
+    if ((sameMaterialEvidence &&
+         (efficiencyTarget === undefined ||
+          normalizedReview(baseline) !== normalizedReview(candidate))) ||
         usedObservationDigests.has(baseObservedHash) ||
         usedObservationDigests.has(candidateObservedHash)) {
       throw new Error("Baseline and candidate require distinct material audit observations; revision-only differences or regraded identical output are not proof of a source improvement.");
@@ -510,18 +589,57 @@ function compareFrozenSourceOutcomes(input) {
     else if (regression) regressed++;
     else if (improvement) improved++;
     else unchanged++;
+
+    // The two frozen observations must carry metrics from the same
+    // invocation whose canonical report and source/map are already bound.
+    const baselineCost = receiptCostObservation(
+      frozenBase.execution.canonicalAuditReceipt);
+    const candidateCost = receiptCostObservation(
+      frozenCandidate.execution.canonicalAuditReceipt);
+    const pairedCost = baselineCost === undefined ||
+      candidateCost === undefined ? undefined : {
+        baseline: {
+          auditCallElapsedMs: baselineCost.auditCallElapsedMs,
+          reportReadyElapsedMs: baselineCost.reportReadyElapsedMs,
+          generatedModelTaskPacketBytes: baselineCost.generatedModelTaskPacketBytes,
+          ...(baselineCost.firstScopedFindingAvailableElapsedMs === undefined
+            ? {} : { firstScopedFindingAvailableElapsedMs:
+              baselineCost.firstScopedFindingAvailableElapsedMs }),
+        },
+        candidate: {
+          auditCallElapsedMs: candidateCost.auditCallElapsedMs,
+          reportReadyElapsedMs: candidateCost.reportReadyElapsedMs,
+          generatedModelTaskPacketBytes: candidateCost.generatedModelTaskPacketBytes,
+          ...(candidateCost.firstScopedFindingAvailableElapsedMs === undefined
+            ? {} : { firstScopedFindingAvailableElapsedMs:
+              candidateCost.firstScopedFindingAvailableElapsedMs }),
+        },
+        candidateMinusBaselineAuditCallMs:
+          candidateCost.auditCallElapsedMs - baselineCost.auditCallElapsedMs,
+        candidateMinusBaselineReportReadyMs:
+          candidateCost.reportReadyElapsedMs - baselineCost.reportReadyElapsedMs,
+        candidateMinusBaselineGeneratedTaskBytes:
+          candidateCost.generatedModelTaskPacketBytes -
+          baselineCost.generatedModelTaskPacketBytes,
+        scope: "SAME_INVOCATION_SOURCE_AUDIT_ONLY_NOT_MODEL_OR_GAMEPLAY",
+      };
+    auditCosts.push({
+      id: pair.id, valid, regression, measured: pairedCost !== undefined,
+      ...(pairedCost === undefined ? {} : { cost: pairedCost }),
+    });
     evaluated.push({
       id: pair.id,
       artifactSha256: b.receipt.artifactSha256,
       frozenExpectationSha256: expectedHash,
       baselineSourceCommit,
       candidateSourceCommit,
-      sourceObservationChanged: true,
+      sourceObservationChanged: !sameMaterialEvidence,
       positiveClaims: positive,
       negativeClaims: negative,
       baseline: { counts: b.counts, correctUnknown: b.receipt.correctUnknown },
       candidate: { counts: c.counts, correctUnknown: c.receipt.correctUnknown },
       decision,
+      ...(pairedCost === undefined ? {} : { observedAuditCost: pairedCost }),
       proofBoundary: "INDEPENDENTLY_FROZEN_CLAIMS_REVIEWER_DECLARED_NOT_EXECUTOR_ATTESTED",
     });
   }
@@ -532,6 +650,69 @@ function compareFrozenSourceOutcomes(input) {
     insufficient || regressed ? "KEEP_BASELINE"
     : improved >= 2 ? "CANDIDATE_ELIGIBLE_FOR_INDEPENDENT_REVIEW"
     : "KEEP_BASELINE";
+
+  // Cost and quality are independently scored. No speedup is inferred
+  // from missing observations, a source-claim regression or a zero baseline.
+  const completeCostPairs = auditCosts.filter(item => item.measured);
+  const mean = (values) => values.length === 0 ? null :
+    values.reduce((sum, value) => sum + value, 0) / values.length;
+  const baseAuditCalls = completeCostPairs.map(
+    item => item.cost.baseline.auditCallElapsedMs);
+  const nextAuditCalls = completeCostPairs.map(
+    item => item.cost.candidate.auditCallElapsedMs);
+  const firstFindingPairs = completeCostPairs.filter(item =>
+    item.cost.baseline.firstScopedFindingAvailableElapsedMs !== undefined &&
+    item.cost.candidate.firstScopedFindingAvailableElapsedMs !== undefined);
+  const meanBase = mean(baseAuditCalls);
+  const meanNext = mean(nextAuditCalls);
+  const ratio = meanBase > 0 && meanNext !== null ? meanNext / meanBase : null;
+  const costReductions = completeCostPairs.filter(item =>
+    item.cost.candidate.auditCallElapsedMs <
+      item.cost.baseline.auditCallElapsedMs).length;
+  const costIncreases = completeCostPairs.filter(item =>
+    item.cost.candidate.auditCallElapsedMs >
+      item.cost.baseline.auditCallElapsedMs).length;
+  const costReview = efficiencyTarget === undefined ? undefined : {
+    policy: "quality-guarded-selected-map-audit-cost-contrast",
+    disposition: completeCostPairs.length !== evaluated.length ||
+        insufficient > 0 || meanBase === null || ratio === null
+      ? "INSUFFICIENT_COST_OR_QUALITY_EVIDENCE"
+      : regressed > 0
+        ? "QUALITY_REGRESSION_DO_NOT_OPTIMIZE"
+        : costIncreases === 0 && costReductions >= 2 &&
+          ratio <= efficiencyTarget
+          ? "REDUCED_COST_REVIEWABLE_NOT_ADOPTED"
+          : "NO_REPLICATED_COST_REDUCTION",
+    targetMaximumMeanAuditCallRatio: efficiencyTarget,
+    measuredPairCount: completeCostPairs.length,
+    missingPairCount: evaluated.length - completeCostPairs.length,
+    reducedPairCount: costReductions,
+    increasedPairCount: costIncreases,
+    meanBaselineAuditCallMs: meanBase,
+    meanCandidateAuditCallMs: meanNext,
+    observedMeanCandidateToBaselineRatio: ratio,
+    sampleP95BaselineAuditCallMs: nearestRankP95(baseAuditCalls),
+    sampleP95CandidateAuditCallMs: nearestRankP95(nextAuditCalls),
+    pairedFirstScopedFindingCount: firstFindingPairs.length,
+    meanBaselineFirstScopedFindingAvailabilityMs: mean(firstFindingPairs.map(
+      item => item.cost.baseline.firstScopedFindingAvailableElapsedMs)),
+    meanCandidateFirstScopedFindingAvailabilityMs: mean(firstFindingPairs.map(
+      item => item.cost.candidate.firstScopedFindingAvailableElapsedMs)),
+    generatedModelTaskPacketBytes: {
+      baselineMean: mean(completeCostPairs.map(
+        item => item.cost.baseline.generatedModelTaskPacketBytes)),
+      candidateMean: mean(completeCostPairs.map(
+        item => item.cost.candidate.generatedModelTaskPacketBytes)),
+      meaning: "GENERATED_PACKET_UTF8_BYTES_NOT_MODEL_INPUT_TOKENS",
+    },
+    unavailable: [
+      "CHATGPT_TOOL_CALL_COUNT_NOT_IN_CANONICAL_CLI",
+      "ACTUAL_MODEL_CONTEXT_TOKENS_NOT_IN_CANONICAL_CLI",
+      "CACHE_COLD_WARM_STATE_NOT_ATTESTED_BY_INITIAL_AUDIT",
+    ],
+    proofBoundary:
+      "BOUND_CLI_COST_METADATA_ONLY_NOT_INDEPENDENTLY_ATTESTED_SPEEDUP",
+  };
   return {
     schemaVersion: 1,
     policy: "selected-map-frozen-outcome-comparison-result",
@@ -541,6 +722,7 @@ function compareFrozenSourceOutcomes(input) {
     pairCount: evaluated.length,
     improved, regressed, unchanged, insufficient,
     comparisons: evaluated,
+    ...(costReview === undefined ? {} : { costReview }),
     proofBoundary:
       "SOURCE_CLAIM_OUTCOME_COMPARISON_NOT_EXECUTOR_CAUSALITY_OR_MINECRAFT_GAMEPLAY",
     caveat:

@@ -157,7 +157,7 @@ function outcomePair(caseId, artifactSha) {
   baseline.result.resultClass = "false-negative";
   return { baseline, candidate };
 }
-function withComparisonManifest(pairs, evaluate, mutateBeforeSave) {
+function withComparisonManifest(pairs, evaluate, mutateBeforeSave, efficiencyReview) {
   const root = mkdtempSync(join(tmpdir(), "m-bedrock-paired-source-review-"));
   try {
     // Test-only synthetic receipts do not attest a real audit execution.
@@ -191,6 +191,7 @@ function withComparisonManifest(pairs, evaluate, mutateBeforeSave) {
       policy: "selected-map-frozen-outcome-comparison",
       baselineSourceCommit: "1".repeat(40),
       candidateSourceCommit: "2".repeat(40),
+      ...(efficiencyReview === undefined ? {} : { efficiencyReview }),
       pairs: pairs.map((p) => {
         p.baseline.save(); p.candidate.save();
         return {
@@ -208,11 +209,129 @@ function withComparisonManifest(pairs, evaluate, mutateBeforeSave) {
     for (const p of pairs) { p.baseline.cleanup(); p.candidate.cleanup(); }
   }
 }
-function runComparison(pairs, mutateBeforeSave) {
+function runComparison(pairs, mutateBeforeSave, efficiencyReview) {
   return withComparisonManifest(pairs, path =>
     spawnSync(process.execPath, [scorer, "--compare", path],
-      { encoding: "utf8" }), mutateBeforeSave);
+      { encoding: "utf8" }), mutateBeforeSave, efficiencyReview);
 }
+
+
+function syntheticAuditCost(auditMs, taskBytes, findingMs, revision = "a".repeat(64)) {
+  return {
+    policy: "selected-map-same-invocation-cost-v1",
+    scope: "INITIAL_CANONICAL_AUDIT_NOT_MINECRAFT_RUNTIME",
+    initialAuditRevision: revision,
+    auditCallElapsedMs: auditMs,
+    inspectionReadyElapsedMs: auditMs * 0.35,
+    scopedFindingProjectionElapsedMs: auditMs * 0.7,
+    reportReadyElapsedMs: auditMs * 0.95,
+    auditControlElapsedMs: auditMs * 0.1,
+    modelTaskGenerationElapsedMs: auditMs * 0.1,
+    reportProjectionElapsedMs: auditMs * 0.05,
+    modelTaskCount: 2,
+    generatedModelTaskPacketBytes: taskBytes,
+    firstScopedFindingAvailableElapsedMs: findingMs,
+    firstNextDecisionAvailableElapsedMs: auditMs * 0.8,
+  };
+}
+
+// Equal source semantics and equal frozen reviews allow a cost-only contrast;
+// this must not be counted as improved defect detection.
+function matchProofAndRecordCost(pairs, speedup = true) {
+  for (const [index, pair] of pairs.entries()) {
+    pair.baseline.frozen.observed =
+      JSON.parse(JSON.stringify(pair.candidate.frozen.observed));
+    // The synthetic CLI receipt must reflect the mutated exact report bytes.
+    pair.baseline.frozen.execution.canonicalAuditReceipt.outputSha256 =
+      createHash("sha256").update(
+        JSON.stringify(pair.baseline.frozen.observed, null, 2) + "\n",
+      ).digest("hex");
+    pair.baseline.result.fullMapReview.decisions =
+      JSON.parse(JSON.stringify(pair.candidate.result.fullMapReview.decisions));
+    pair.baseline.result.metrics = {...pair.candidate.result.metrics};
+    pair.baseline.result.resultClass = pair.candidate.result.resultClass;
+    const baseMs = index === 0 ? 120 : 200;
+    const nextMs = speedup ? (index === 0 ? 80 : 140) : baseMs;
+    pair.baseline.frozen.execution.canonicalAuditReceipt.costObservation =
+      syntheticAuditCost(baseMs, 600, baseMs * 0.7);
+    pair.candidate.frozen.execution.canonicalAuditReceipt.costObservation =
+      syntheticAuditCost(nextMs, 550, nextMs * 0.7);
+  }
+}
+
+test("bound audit cost compares identical quality without declaring a defect-detection gain", () => {
+  const a = outcomePair("cost-case-a", "8".repeat(64));
+  const b = outcomePair("cost-case-b", "9".repeat(64));
+  const done = runComparison([a, b], pairs => matchProofAndRecordCost(pairs),
+    {maximumMeanAuditCallRatio: 0.8});
+  assert.equal(done.status, 0, done.stderr);
+  const scored = JSON.parse(done.stdout);
+  assert.equal(scored.improved, 0);
+  assert.equal(scored.recommendation, "KEEP_BASELINE");
+  assert.equal(scored.costReview.disposition, "REDUCED_COST_REVIEWABLE_NOT_ADOPTED");
+  assert.equal(scored.costReview.measuredPairCount, 2);
+  assert.equal(scored.costReview.meanBaselineAuditCallMs, 160);
+  assert.equal(scored.costReview.meanCandidateAuditCallMs, 110);
+  assert.equal(scored.costReview.sampleP95BaselineAuditCallMs, 200);
+  assert.equal(scored.costReview.sampleP95CandidateAuditCallMs, 140);
+  assert.equal(scored.costReview.pairedFirstScopedFindingCount, 2);
+  assert.equal(scored.comparisons[0].sourceObservationChanged, false);
+  assert.equal(scored.comparisons[0].decision, "NO_DEMONSTRATED_IMPROVEMENT");
+  assert.ok(scored.costReview.unavailable.includes(
+    "CHATGPT_TOOL_CALL_COUNT_NOT_IN_CANONICAL_CLI"));
+});
+
+test("missing cost and malformed cost timeline never earn efficiency review", () => {
+  const target = {maximumMeanAuditCallRatio: 0.8};
+  const pairs = () => [
+    outcomePair("cost-negative-a", "d".repeat(64)),
+    outcomePair("cost-negative-b", "e".repeat(64)),
+  ];
+  const missing = runComparison(pairs(), pairList => {
+    matchProofAndRecordCost(pairList);
+    delete pairList[1].baseline.frozen.execution.canonicalAuditReceipt.costObservation;
+  }, target);
+  assert.equal(missing.status, 0, missing.stderr);
+  assert.equal(JSON.parse(missing.stdout).costReview.disposition,
+    "INSUFFICIENT_COST_OR_QUALITY_EVIDENCE");
+
+  const forged = runComparison(pairs(), pairList => {
+    matchProofAndRecordCost(pairList);
+    pairList[0].candidate.frozen.execution.canonicalAuditReceipt
+      .costObservation.firstScopedFindingAvailableElapsedMs = 9999;
+  }, target);
+  assert.notEqual(forged.status, 0);
+  assert.match(forged.stderr, /Invalid bound canonical audit cost observation/);
+
+  const regraded = runComparison(pairs(), pairList => {
+    matchProofAndRecordCost(pairList);
+    pairList[0].baseline.result.fullMapReview.decisions[0].observedClass = "unknown";
+    pairList[0].baseline.result.fullMapReview.decisions[0].observedEvidenceIds = [];
+    pairList[0].baseline.result.metrics.tp = 0;
+    pairList[0].baseline.result.metrics.fn = 1;
+    pairList[0].baseline.result.metrics.unknown = 2;
+    pairList[0].baseline.result.resultClass = "false-negative";
+  }, target);
+  assert.notEqual(regraded.status, 0);
+  assert.match(regraded.stderr, /distinct material audit observations/);
+
+  const invalidTarget = runComparison(pairs(), pairList =>
+    matchProofAndRecordCost(pairList), {maximumMeanAuditCallRatio: 0});
+  assert.notEqual(invalidTarget.status, 0);
+  assert.match(invalidTarget.stderr, /predeclared mean audit-call ratio/);
+});
+
+test("flat cost is not promoted to a harness efficiency gain", () => {
+  const pairs = [
+    outcomePair("cost-flat-a", "2".repeat(64)),
+    outcomePair("cost-flat-b", "3".repeat(64)),
+  ];
+  const done = runComparison(pairs, list => matchProofAndRecordCost(list, false),
+    {maximumMeanAuditCallRatio: 0.8});
+  assert.equal(done.status, 0, done.stderr);
+  assert.equal(JSON.parse(done.stdout).costReview.disposition,
+    "NO_REPLICATED_COST_REDUCTION");
+});
 
 test("frozen positive and negative controls permit only source-claim review recommendation", () => {
   const a = outcomePair("source-case-a", "b".repeat(64));
@@ -531,6 +650,7 @@ test("freeze accepts output-bound CLI receipt without requiring a Git checkout",
       canonicalReportFile: "audit.json",
       captureMode: "EXCLUSIVE_SAME_INVOCATION_SCRATCH_JSON",
       auditStatus: "BLOCKED", exitCode: 2,
+      costObservation: syntheticAuditCost(120, 600, 84, audit.auditRevision),
       proofBoundary:
         "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION",
     };
@@ -548,6 +668,17 @@ test("freeze accepts output-bound CLI receipt without requiring a Git checkout",
       /^[a-f0-9]{64}$/);
     assert.equal(frozen.execution.canonicalAuditReceipt.canonicalReportFile,
       receipt.canonicalReportFile);
+    assert.deepEqual(frozen.execution.canonicalAuditReceipt.costObservation,
+      receipt.costObservation);
+    receipt.costObservation.auditCallElapsedMs = -1;
+    writeFileSync(receiptPath, JSON.stringify(receipt) + "\n");
+    const invalidCost = spawnSync(process.execPath, [
+      freezer, artifact, report, join(root, "bad-cost.json"), receiptPath,
+    ], { encoding: "utf8" });
+    assert.notEqual(invalidCost.status, 0);
+    assert.match(invalidCost.stderr, /Invalid same-invocation CLI cost counters/);
+    receipt.costObservation.auditCallElapsedMs = 120;
+    writeFileSync(receiptPath, JSON.stringify(receipt) + "\n");
     const originalFreeze = readFileSync(frozenPath);
     const repeated = run();
     assert.notEqual(repeated.status, 0);

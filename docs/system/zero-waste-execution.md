@@ -106,6 +106,47 @@ runtime Minecraft test speed or when the engine initially finds a defect.
 Real time-to-first-actionable-finding improvement requires a measured run on
 the exact selected source, not source assertions alone.
 
+## Evidence-bound audit cost contrast
+
+A selected-map CLI invocation can emit `AUDIT_TIMINGS` on stderr with
+`--timings`. A fresh, exact-source-and-map-bound `--execution-receipt`
+additionally captures `costObservation` from that **same initial
+`runSelectedMapAudit()` call**, without altering canonical Map Audit JSON,
+status, or proof admission. The captured wall-clock `auditCallElapsedMs`
+excludes CLI startup, Knowledge loading, rendering and stdout transport.
+`firstScopedFindingAvailableElapsedMs` is the time by which a source-scoped
+finding projection was available, not individual detector discovery time.
+`generatedModelTaskPacketBytes` measures serialized task-packet UTF-8
+bytes, **not** ChatGPT input tokens or model context actually consumed.
+
+The existing freeze operation validates the cost timeline and carries the
+metrics inside the SHA-256-bound CLI execution receipt. The existing
+`score-benchmark.mjs --compare` may receive an explicitly predeclared
+`efficiencyReview.maximumMeanAuditCallRatio` between 0 and 1. It still
+requires 2–20 independent frozen map artifacts, identical independent
+expectations, pinned baseline/candidate commits, canonical execution
+receipt metadata and source-grounded reviewer decisions. In efficiency
+mode, identical material audit findings are comparable **only when**
+the reviewed claim classes and cited evidence IDs also match. This does
+not create a new detector, runner or report authority.
+
+The resulting `costReview` is separate from the established source-claim
+`recommendation`. An apparent reduction earns at most
+`REDUCED_COST_REVIEWABLE_NOT_ADOPTED` when no case regresses in source
+quality, at least two measured pairs improve, no measured pair becomes
+slower, and the predeclared mean ratio is met. Missing/contradictory
+durations, zero-cost baselines or missing quality evidence never become
+proof of savings. Sample p95 carries the sample count and does not imply
+population-level latency. No automatic harness adoption is authorized.
+
+ChatGPT tool-call counts, actual model context/token usage, and cold/warm
+cache state are **unobserved by the canonical CLI**. They must not be
+substituted by zero, generated task byte size, or synthetic fixture
+timings. Repeated actual selected-map invocations and their independently
+verified provenance remain necessary before claiming end-to-end speedup.
+The freeze/compare receipts establish internal byte/provenance coherence,
+not independent execution attestation or Minecraft gameplay proof.
+
 ## STOP
 
 When the requested outcome has matching evidence, affected validation is closed, stale proof obligations are resolved, and no blocker remains, stop. Do not continue into unrelated cleanup or architecture expansion.

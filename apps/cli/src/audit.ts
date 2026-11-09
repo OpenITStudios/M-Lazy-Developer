@@ -337,6 +337,34 @@ async function main(): Promise<void> {
         knowledgeCatalog: knowledge,
         developerPractice,
       });
+  // Measurement comes only from this fresh CLI invocation, never a stale
+  // model response or prior report. Task bytes are generated payload volume,
+  // NOT actual model input tokens; external ChatGPT tool calls are unobserved.
+  const initialCost = (timings || probeFiles !== undefined) &&
+    audit.timingObservations !== undefined ? {
+    policy: "selected-map-same-invocation-cost-v1" as const,
+    scope: "INITIAL_CANONICAL_AUDIT_NOT_MINECRAFT_RUNTIME" as const,
+    initialAuditRevision: audit.auditRevision,
+    auditCallElapsedMs,
+    inspectionReadyElapsedMs: audit.timingObservations.inspectionReadyElapsedMs,
+    scopedFindingProjectionElapsedMs:
+      audit.timingObservations.scopedFindingProjectionElapsedMs,
+    reportReadyElapsedMs: audit.timingObservations.reportReadyElapsedMs,
+    auditControlElapsedMs: audit.timingObservations.auditControlElapsedMs,
+    modelTaskGenerationElapsedMs: audit.timingObservations.modelTaskGenerationElapsedMs,
+    reportProjectionElapsedMs: audit.timingObservations.reportProjectionElapsedMs,
+    modelTaskCount: audit.timingObservations.modelTaskCount,
+    generatedModelTaskPacketBytes:
+      Buffer.byteLength(JSON.stringify(audit.modelTaskPackets), "utf8"),
+    ...(audit.timingObservations.firstScopedFinding === undefined ? {} : {
+      firstScopedFindingAvailableElapsedMs:
+        audit.timingObservations.firstScopedFinding.availableElapsedMs,
+    }),
+    ...(audit.timingObservations.firstNextDecision === undefined ? {} : {
+      firstNextDecisionAvailableElapsedMs:
+        audit.timingObservations.firstNextDecision.availableElapsedMs,
+    }),
+  } : undefined;
   if (timings) {
     // Side-channel measurement only. Preserve the canonical Map Audit JSON,
     // brief and handoff bytes, their admission, and existing exit semantics.
@@ -346,6 +374,7 @@ async function main(): Promise<void> {
       artifactFingerprint: resolvedAudit.identity.artifactFingerprint,
       auditRevision: resolvedAudit.auditRevision,
       auditCallElapsedMs,
+      ...(initialCost === undefined ? {} : { initialAuditCost: initialCost }),
       // Initial-run observations cannot claim timing for a later accepted
       // model-response revision. Preserve both revision identities.
       ...(audit.timingObservations === undefined ? {} : {
@@ -423,6 +452,7 @@ async function main(): Promise<void> {
       }),
       auditStatus: status,
       exitCode: status === "BLOCKED" ? 2 : 0,
+      ...(initialCost === undefined ? {} : { costObservation: initialCost }),
       proofBoundary:
         "EXACT_PORTABLE_SOURCE_AND_MAP_BOUND_CLI_INVOCATION_NOT_INDEPENDENT_EXECUTOR_ATTESTATION",
     };
