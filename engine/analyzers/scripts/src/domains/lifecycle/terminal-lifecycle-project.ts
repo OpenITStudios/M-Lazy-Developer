@@ -29,6 +29,11 @@ export interface ScriptLifecycleProjectGraph {
      * proof-sensitive traversal. False retains an investigative edge only.
      */
     sourceBound?: boolean;
+    /** Full source call site and authored actual-argument syntax; useful
+     * only for navigation, not a claim that a captured object was forwarded.
+     */
+    source?: ScriptLocalFunctionCall["source"];
+    argumentExpressions?: readonly string[];
     /** Exact authored caller-formal -> callee-formal source witness;
      * never proof of live object identity or execution.
      */
@@ -254,6 +259,10 @@ export function composeQualifiedScriptLifecycleProjectGraph(
         targetName: call.targetName,
         controlFlow: call.controlFlow ?? "unknown" as const,
         sourceBound,
+        source: call.source,
+        ...(call.argumentExpressions === undefined ? {} : {
+          argumentExpressions: call.argumentExpressions,
+        }),
         ...(stableBindings.length === 0 ? {} : {
           sourceBindings: stableBindings.map(binding => ({
             argumentName: binding.argumentName,
@@ -315,6 +324,10 @@ export function composeQualifiedScriptLifecycleProjectGraph(
       targetName: call.targetExport,
       controlFlow: call.controlFlow,
       sourceBound,
+      source: call.source,
+      ...(call.argumentExpressions === undefined ? {} : {
+        argumentExpressions: call.argumentExpressions,
+      }),
       ...(sourceBound && (call.argumentParameterBindings?.length ?? 0) > 0
         ? { sourceBindings: call.argumentParameterBindings!.map(binding => ({
               argumentName: binding.argumentName,

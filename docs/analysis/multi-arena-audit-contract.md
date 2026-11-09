@@ -326,6 +326,21 @@ obligation rather than silently listing only the literal `unresolved`
 status. Neither candidate evidence nor a missing source span authorizes
 a proven gameplay defect.
 
+### Callback capture to direct helper argument source leads
+
+The existing parser preserves exact authored argument syntax on direct
+local and imported helper calls. When a source-backed generation capture
+exists, the deferred analyzer may identify a **first-hop helper argument**
+whose expression is the same spelled owner identifier and whose helper
+route reaches a material mutation. It retains the exact invocation site,
+target region, argument index and the existing qualified call-site proof
+class. This is only navigation evidence: an identical identifier spelling
+does not establish lexical binding under shadowing, a callee's formal
+parameter, an arena instance, or the mutation's final owner. Unmatched
+or indirect/opaque owner paths stay unresolved; no such lead can upgrade
+the deferred callback to `protected`. The canonical Gameplay World and
+Scenario Compiler reuse the same lead without inventing separate findings.
+
 ### Deferred generation and terminal race closure
 
 The canonical arena lifecycle analyzer already tracks source-authored

@@ -40,6 +40,10 @@ export interface CrossFileCallEdge {
    */
   actualArgumentCount?: number;
   targetParameterCount?: number;
+  /** Exact authored argument expressions at the imported invocation.
+   * Name equality is a navigation lead, not captured-object identity.
+   */
+  argumentExpressions?: readonly string[];
   source: SourceRef;
 }
 
@@ -1312,6 +1316,7 @@ export function deriveCrossFileCallEdges(
           targetParameterCount: targetCallable.parameters.length,
         }),
         localName: imported.localName,
+        argumentExpressions: node.arguments.map(arg => arg.getText(file)),
         controlFlow: controlFlow(node),
         status: targetRegion ? "resolved" : "unresolved",
         source: nodeSource(file, node, {

@@ -179,6 +179,7 @@ export interface GameplayWorldModel {
         | "callbackRegion"
         | "mutationRegions"
         | "indirectMutationRoutes"
+        | "capturedOwnerHelperCallLeads"
         | "guardIdentifiers"
         | "generationInvalidationRelativeToSchedule"
         | "status"
@@ -2034,6 +2035,15 @@ export function deriveGameplayWorldModel(
                   item.indirectMutationRoutes.map(route => ({
                     region: route.region,
                     callSiteProof: route.callSiteProof,
+                  })),
+              }),
+              ...(item.capturedOwnerHelperCallLeads === undefined ? {} : {
+                capturedOwnerHelperCallLeads:
+                  item.capturedOwnerHelperCallLeads.map(lead => ({
+                    source: lead.source,
+                    targetRegion: lead.targetRegion,
+                    argumentIndex: lead.argumentIndex,
+                    callSiteProof: lead.callSiteProof,
                   })),
               }),
               guardIdentifiers:

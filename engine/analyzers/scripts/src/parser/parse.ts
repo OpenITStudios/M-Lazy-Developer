@@ -4262,6 +4262,7 @@ export function parseScriptFile(
         targetName: node.expression.text,
         targetSource: lineSource(file, target, source),
         ...(bindings.length ? { argumentParameterBindings: bindings } : {}),
+        argumentExpressions: node.arguments.map(arg => arg.getText(file)),
         controlFlow: lexicalGuards.length || precedenceGuards.length
           ? "conditional" : localCallControlFlow(node),
         lexicalGuards,

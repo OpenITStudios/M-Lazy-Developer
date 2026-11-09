@@ -908,10 +908,19 @@ function runtimeEdgeState(
               const routes = (item.indirectMutationRoutes ?? [])
                 .map(route =>
                   route.region + " [" + route.callSiteProof + "]");
+              const ownerLeads = (item.capturedOwnerHelperCallLeads ?? [])
+                .map(lead => lead.source.relativePath + ":" +
+                  (lead.source.range?.lineStart ?? "?") +
+                  " -> " + lead.targetRegion +
+                  " (arg " + lead.argumentIndex + ", " +
+                  lead.callSiteProof + ")");
               return item.scriptId + ":" + item.callbackRegion +
                 " [" + item.status + "] -> " +
                 (routes.length > 0 ? routes : item.mutationRegions)
-                  .join(" | ");
+                  .join(" | ") +
+                (ownerLeads.length === 0 ? "" :
+                  "; captured-owner argument leads (NOT identity proof): " +
+                  ownerLeads.join(" | "));
             })
             .sort();
         return {

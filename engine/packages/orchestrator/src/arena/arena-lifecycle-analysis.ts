@@ -136,6 +136,20 @@ export interface ArenaDeferredMutationAssessment {
       | "conditional-source-bound"
       | "unverified-call-site";
   }[];
+  /** First-hop helper arguments whose exact authored expression matches
+   * the callback's captured arena-owner name and can reach a mutation.
+   * Lexical shadowing, callee parameter identity and gameplay execution
+   * remain UNKNOWN; these are navigation leads, NOT owner-forwarding proof.
+   */
+  readonly capturedOwnerHelperCallLeads?: readonly {
+    readonly source: SourceRef;
+    readonly targetRegion: string;
+    readonly argumentIndex: number;
+    readonly callSiteProof:
+      | "unconditional-source-bound"
+      | "conditional-source-bound"
+      | "unverified-call-site";
+  }[];
   readonly sourceDirectMutationSites?: readonly SourceGenerationMutationSite[];
   readonly guardIdentifiers: readonly string[];
   readonly generationGuardSource?: SourceRef;
@@ -1900,6 +1914,60 @@ function deferredMutationAssessments(
           "unverified-call-site"].map(proof =>
           proof + "=" + indirectMutationRoutes.filter(item =>
             item.callSiteProof === proof).length).join(", ") + ".";
+      const capture = callback.sourceGenerationCapture;
+      // One first-hop source lead per exact argument position. Only calls
+      // originating in THIS callback and reaching a known mutating region
+      // qualify. Matching a captured owner's spelled identifier does not
+      // establish the same lexical binding, callee formal, or arena object.
+      const capturedOwnerHelperCallLeads = capture === undefined ||
+        indirectMutationRegions.length === 0 ? [] : (() => {
+          const root = qualifiedRegion(script, callback.callbackRegion!);
+          const mutations = new Set(mutationRegions.map(region =>
+            projectGraph === undefined ? qualifiedRegion(script, region) : region));
+          const leads: {
+            source: SourceRef;
+            targetRegion: string;
+            argumentIndex: number;
+            callSiteProof:
+              "unconditional-source-bound" |
+              "conditional-source-bound" | "unverified-call-site";
+          }[] = [];
+          for (const edge of callSiteGraph.callEdges) {
+            if (edge.callerRegion !== root || edge.source === undefined ||
+                edge.source.artifactId !== script.source.artifactId ||
+                edge.source.relativePath !== script.source.relativePath ||
+                edge.source.range?.lineStart === undefined ||
+                edge.source.range.columnStart === undefined ||
+                edge.source.range.lineEnd === undefined ||
+                edge.source.range.columnEnd === undefined) continue;
+            const argumentsAtCall = edge.argumentExpressions ?? [];
+            if (!argumentsAtCall.includes(capture.ownerExpression)) continue;
+            const downstream = projectReachable(
+              callSiteGraph.callEdges, edge.targetRegion, false);
+            if (!downstream.some(region => mutations.has(region))) continue;
+            const callSiteProof = edge.sourceBound !== true
+              ? "unverified-call-site" as const
+              : edge.controlFlow === "unconditional"
+                ? "unconditional-source-bound" as const
+                : "conditional-source-bound" as const;
+            for (let index = 0; index < argumentsAtCall.length; index++) {
+              if (argumentsAtCall[index] === capture.ownerExpression) {
+                leads.push({
+                  source: edge.source,
+                  targetRegion: edge.targetRegion,
+                  argumentIndex: index,
+                  callSiteProof,
+                });
+              }
+            }
+          }
+          return leads;
+        })();
+      const ownerLeadSummary = capturedOwnerHelperCallLeads.length === 0
+        ? "" : " " + capturedOwnerHelperCallLeads.length +
+          " directly authored captured-owner helper-argument lead(s) " +
+          "reach mutating regions; binding/shadowing and mutation target " +
+          "ownership remain unproven.";
       const sameCallbackGuardCandidate =
         callback.guardEvidence === "explicit-generation-check" &&
         callback.generationGuardSource !== undefined &&
@@ -1913,7 +1981,6 @@ function deferredMutationAssessments(
         sameCallbackGuardCandidate &&
         callback.sourceGenerationCapture !== undefined &&
         hasSameOwner && !hasOtherOwner;
-      const capture = callback.sourceGenerationCapture;
       const schedule = callback.sourceSequence?.directCall === true
         ? callback.sourceSequence : undefined;
       // Only direct generation writes in the exact scheduler's block
@@ -1960,6 +2027,9 @@ function deferredMutationAssessments(
         ...(indirectMutationRoutes.length === 0 ? {} : {
           indirectMutationRoutes,
         }),
+        ...(capturedOwnerHelperCallLeads.length === 0 ? {} : {
+          capturedOwnerHelperCallLeads,
+        }),
         ...(sites.length ? { sourceDirectMutationSites: sites } : {}),
         guardIdentifiers:
           [...callback.guardIdentifiers],
@@ -1991,7 +2061,7 @@ function deferredMutationAssessments(
               : sameCallbackGuardCandidate
                 ? "Leading generation guard exists but no uniquely source-bound direct mutation target closes the association."
                 : "A direct guard is not evidenced for every reachable mutation; deferred ownership remains unresolved.") +
-          routeSummary + orderingNote,
+          routeSummary + ownerLeadSummary + orderingNote,
       });
     }
   }
