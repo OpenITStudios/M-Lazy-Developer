@@ -247,14 +247,14 @@ function crossFileReleaseRoutes(
     );
   }
 
-  const identifier = /^[A-Za-z_$][\\w$]*$/;
+  const identifier = /^[A-Za-z_$][\w$]*$/;
   const acquireOwner = (
     mutation: ArenaCleanupSurfaceMutation,
   ): { readonly owner: string; readonly suffix: string;
       readonly worldSingleton: boolean } | undefined => {
     const { key, surface } = mutation;
     if (surface === "membership") {
-      const match = /^([A-Za-z_$][\\w$]*)(\\..+)$/.exec(key);
+      const match = /^([A-Za-z_$][\w$]*)(\..+)$/.exec(key);
       return match ? { owner: match[1]!, suffix: match[2]!,
         worldSingleton: false } : undefined;
     }
