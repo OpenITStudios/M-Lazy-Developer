@@ -1708,12 +1708,12 @@ function scopedCounterProofProgress(
   graph: GameplayScenarioGraph,
   gate: GameplayDefectResolutionGate,
   link: GameplayScenarioGraph["causalLinks"][number],
+  resolutionsByLink: ReadonlyMap<string, GameplayDefectResolutionGate["resolutions"]>,
 ): AuditModelTaskPacket["sourceCounterProofProgress"] | undefined {
   if (link.status !== "CONTRADICTED") return undefined;
   const owner = uniqueGameplayCausalLinkScope(graph, link.id);
   if (owner?.link !== link) return undefined;
-  const matches = gate.resolutions.filter(item =>
-    item.causalLinkId === link.id);
+  const matches = resolutionsByLink.get(link.id) ?? [];
   if (matches.length !== 1 ||
       matches[0]!.disposition !== "COUNTERPROOF_SEARCH_REQUIRED" ||
       matches[0]!.scenarioId !== link.scenarioId ||
@@ -1766,13 +1766,21 @@ function provePackets(
     ...translationIds,
     ...gate.counterProofSearchRequiredIds,
   ]);
+  // Index the exact current gate once. Preserve all duplicate resolution
+  // records: an ambiguous owner must still abstain rather than gain proof.
+  const resolutionsByLink = new Map<string, GameplayDefectResolutionGate["resolutions"][number][]>();
+  for (const resolution of gate.resolutions) {
+    const matches = resolutionsByLink.get(resolution.causalLinkId);
+    if (matches) matches.push(resolution);
+    else resolutionsByLink.set(resolution.causalLinkId, [resolution]);
+  }
 
   return graph.causalLinks
     .filter((link) => ids.has(link.id))
     .map((link) => {
       const needsTranslation = translationIds.has(link.id);
       const sourceProgress = needsTranslation ? undefined :
-        scopedCounterProofProgress(graph, gate, link);
+        scopedCounterProofProgress(graph, gate, link, resolutionsByLink);
       const remaining = sourceProgress?.remainingDimensions ?? [];
       const requirementIds = unique(link.knowledgeRequirementIds);
       // Handoff and proof admission must consume one authoritative evidence

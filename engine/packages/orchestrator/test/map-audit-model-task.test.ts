@@ -887,6 +887,18 @@ describe("PROVE model evidence handoff", () => {
     expect(task?.allowedOutputs).toContain("detection gap");
     expect(task?.forbiddenActions).toContain("create final report text");
 
+    // Unrelated gate resolutions cannot displace exact-link progress.
+    // This also covers the per-batch resolution index with many other links.
+    const unrelated = Array.from({ length: 300 }, (_, index) => ({
+      ...gate.resolutions[0]!,
+      causalLinkId: "link:unrelated:" + index,
+      scenarioId: "scenario:unrelated:" + index,
+    }));
+    const withUnrelated = get({ defectResolution: {
+      ...gate, resolutions: [...unrelated, ...gate.resolutions],
+    } });
+    expect(withUnrelated).toEqual(task);
+
     // Missing, duplicate, foreign or stale source receipts do not create
     // synthetic progress or remove canonical tasks/obligations.
     const stale = { ...canonical, dimensionReceipts:
