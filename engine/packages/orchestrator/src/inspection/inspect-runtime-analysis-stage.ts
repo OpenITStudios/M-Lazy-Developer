@@ -465,6 +465,7 @@ export function analyzeInspectionRuntimeState(
   const arenaCleanupSurfaces =
     analyzeArenaCleanupSurfaces(
       scriptsFor("arena-lifecycle"),
+      demanded.has("arena-lifecycle") ? crossFileCalls : [],
     );
   const inventoryLifecycle =
     analyzeInventoryLifecycle(

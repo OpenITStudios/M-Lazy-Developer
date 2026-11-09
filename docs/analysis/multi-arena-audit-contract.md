@@ -229,6 +229,20 @@ Use selected-map contracts and stronger evidence at the existing audit
 proof/admission gates; publisher ZIP rules and historical Skills Probe
 outcomes are reference, not universal map design.
 
+### Cross-file cleanup proof boundary
+
+The selected-source ESM resolver may establish a unique, exact imported
+call chain from a terminal into a cleanup helper in another module.
+The existing cleanup analyzer follows only resolved, same-artifact calls
+between unique source-module owners. A matching remote release is a
+**partial cleanup candidate** with the source module path retained in
+`releaseRegions`; it never certifies that the terminal and helper refer
+to the same player, arena, generation or actual executed reset. Unresolved,
+ambiguous, cross-artifact, or absent imported calls cannot supply cleanup
+evidence. The source-owned ledger keeps terminal assessments matched to
+their exact script instance, not the potentially repeated
+`script.identifier` display label.
+
 ## Simultaneous-start rule
 
 Independent arenas must be reviewed under simultaneous start and overlapping lifecycle transitions. A system that works sequentially but fails when two arenas start together is a gameplay defect candidate.

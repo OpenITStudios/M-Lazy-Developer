@@ -1,5 +1,6 @@
 import type {
   ParsedScriptFile,
+  CrossFileCallEdge,
 } from "../../../../analyzers/scripts/src/index.js";
 import { isArenaTerminalRegionCandidate } from "./arena-lifecycle-analysis.js";
 
@@ -149,6 +150,90 @@ function reachable(
     }
   }
   return [...seen].sort();
+}
+
+interface RemoteCleanupRelease {
+  readonly mutation: ArenaCleanupSurfaceMutation;
+  readonly sourcePath: string;
+}
+
+/**
+ * Join only the existing resolver's exact, selected-artifact ESM calls.
+ * Cross-module reachability is a cleanup INVESTIGATION witness, never
+ * proof that the caller and the remote release share a player/arena owner.
+ * Module-qualified nodes prevent equal region names in different files
+ * from borrowing each other's cleanup.
+ */
+function crossFileReleaseRoutes(
+  scripts: readonly ParsedScriptFile[],
+  crossFileCalls: readonly CrossFileCallEdge[],
+): (script: ParsedScriptFile, terminalRegion: string) =>
+  readonly RemoteCleanupRelease[] {
+  if (crossFileCalls.length === 0) return () => [];
+  const moduleKey = (artifactId: string, relativePath: string): string =>
+    JSON.stringify([artifactId, relativePath]);
+  const nodeKey = (
+    artifactId: string, relativePath: string, region: string,
+  ): string => JSON.stringify([artifactId, relativePath, region]);
+
+  const modules = new Map<string, ParsedScriptFile[]>();
+  for (const script of scripts) {
+    const key = moduleKey(script.source.artifactId, script.source.relativePath);
+    const group = modules.get(key);
+    if (group) group.push(script);
+    else modules.set(key, [script]);
+  }
+  const owned = (artifactId: string, relativePath: string): boolean =>
+    modules.get(moduleKey(artifactId, relativePath))?.length === 1;
+
+  const graph = new Map<string, Set<string>>();
+  const releases = new Map<string, RemoteCleanupRelease[]>();
+  const connect = (caller: string, target: string): void => {
+    const next = graph.get(caller);
+    if (next) next.add(target);
+    else graph.set(caller, new Set([target]));
+  };
+
+  for (const script of scripts) {
+    const { artifactId, relativePath } = script.source;
+    if (!owned(artifactId, relativePath)) continue;
+    for (const call of script.localFunctionCalls) {
+      connect(
+        nodeKey(artifactId, relativePath, call.callerRegion),
+        nodeKey(artifactId, relativePath, call.targetRegion),
+      );
+    }
+    for (const mutation of extractMutations(script)) {
+      if (mutation.action !== "release") continue;
+      const key = nodeKey(artifactId, relativePath, mutation.region);
+      const group = releases.get(key);
+      const witness = { mutation, sourcePath: relativePath };
+      if (group) group.push(witness);
+      else releases.set(key, [witness]);
+    }
+  }
+
+  for (const edge of crossFileCalls) {
+    if (edge.status !== "resolved" || !edge.targetModule ||
+        !edge.targetRegion || !edge.targetSource?.range ||
+        edge.source.artifactId !== edge.targetSource.artifactId ||
+        edge.callerModule !== edge.source.relativePath ||
+        edge.targetModule !== edge.targetSource.relativePath ||
+        !owned(edge.source.artifactId, edge.callerModule) ||
+        !owned(edge.source.artifactId, edge.targetModule)) continue;
+    connect(
+      nodeKey(edge.source.artifactId, edge.callerModule, edge.callerRegion),
+      nodeKey(edge.source.artifactId, edge.targetModule, edge.targetRegion),
+    );
+  }
+
+  return (script, terminalRegion) => {
+    const { artifactId, relativePath } = script.source;
+    if (!owned(artifactId, relativePath)) return [];
+    return reachable(graph, nodeKey(artifactId, relativePath, terminalRegion))
+      .flatMap(node => releases.get(node) ?? [])
+      .filter(item => item.sourcePath !== relativePath);
+  };
 }
 
 function terminalRegions(script: ParsedScriptFile): string[] {
@@ -453,6 +538,9 @@ function releaseMatches(
 
 function analyzeScript(
   script: ParsedScriptFile,
+  remoteReleasesFor:
+    (script: ParsedScriptFile, terminalRegion: string) =>
+      readonly RemoteCleanupRelease[] = () => [],
 ): ArenaCleanupTerminalAssessment[] {
   const mutations = extractMutations(script);
   const acquisitions = mutations.filter(
@@ -471,14 +559,14 @@ function analyzeScript(
   >();
   for (const acquisition of acquisitions) {
     const key = mutationKey(acquisition.surface, acquisition.key);
-    groupedAcquisitions.set(
-      key,
-      [...(groupedAcquisitions.get(key) ?? []), acquisition],
-    );
+    const group = groupedAcquisitions.get(key);
+    if (group) group.push(acquisition);
+    else groupedAcquisitions.set(key, [acquisition]);
   }
 
   return terminalRegions(script).map((terminalRegion) => {
     const regions = reachable(graph, terminalRegion);
+    const remoteReleases = remoteReleasesFor(script, terminalRegion);
     const surfaces = [...groupedAcquisitions.values()]
       .map((group): ArenaCleanupSurfaceAssessment => {
       const acquire = group[0]!;
@@ -487,6 +575,9 @@ function analyzeScript(
       );
       const reachableMatching = matching.filter((release) =>
         regions.includes(release.region)
+      );
+      const remoteMatching = remoteReleases.filter(({ mutation }) =>
+        releaseMatches(acquire, mutation)
       );
       const exact =
         group.every((item) => item.precision === "exact") &&
@@ -498,7 +589,7 @@ function analyzeScript(
       const status =
         exact
           ? "proven" as const
-          : reachableMatching.length > 0
+          : reachableMatching.length > 0 || remoteMatching.length > 0
             ? "partial" as const
             : "unresolved" as const;
 
@@ -511,14 +602,15 @@ function analyzeScript(
             array.indexOf(value) === index
           )
           .sort(),
-        releaseRegions: reachableMatching
-          .map((item) => item.region)
-          .filter((value, index, array) =>
-            array.indexOf(value) === index
-          )
-          .sort(),
+        releaseRegions: [...new Set([
+          ...reachableMatching.map((item) => item.region),
+          // The path must remain visible; a region name alone would
+          // misattribute this source evidence to the local module.
+          ...remoteMatching.map(({ sourcePath, mutation }) =>
+            sourcePath + "#" + mutation.region),
+        ])].sort(),
         releaseReachableFromTerminal:
-          reachableMatching.length > 0,
+          reachableMatching.length > 0 || remoteMatching.length > 0,
         precision:
           exact
             ? "exact"
@@ -550,11 +642,11 @@ function analyzeScript(
 
 function buildResourceLedger(
   scripts: readonly ParsedScriptFile[],
-  terminalAssessments: readonly ArenaCleanupTerminalAssessment[],
+  perScriptTerminals: readonly (readonly ArenaCleanupTerminalAssessment[])[],
 ): ArenaCleanupResourceLedger {
   const obligations: ArenaCleanupResourceObligation[] = [];
 
-  for (const script of scripts) {
+  for (const [scriptIndex, script] of scripts.entries()) {
     const acquisitions = extractMutations(script).filter(
       (item) => item.action === "acquire",
     );
@@ -567,9 +659,10 @@ function buildResourceLedger(
       );
     }
 
-    const terminals = terminalAssessments.filter(
-      (item) => item.scriptId === script.identifier,
-    );
+    // script.identifier is a readable label, not a globally unique
+    // artifact owner. Do not borrow terminals from a different source file
+    // whose author happened to reuse the same identifier.
+    const terminals = perScriptTerminals[scriptIndex] ?? [];
 
     for (const acquisition of unique.values()) {
       const matchingAcquisitions = acquisitions.filter(
@@ -876,8 +969,12 @@ function cleanupLifecycleSummary(
 
 export function analyzeArenaCleanupSurfaces(
   scripts: readonly ParsedScriptFile[],
+  crossFileCalls: readonly CrossFileCallEdge[] = [],
 ): ArenaCleanupSurfaceAnalysis {
-  const terminalAssessments = scripts.flatMap(analyzeScript);
+  const remoteReleasesFor = crossFileReleaseRoutes(scripts, crossFileCalls);
+  const perScriptTerminals = scripts.map(script =>
+    analyzeScript(script, remoteReleasesFor));
+  const terminalAssessments = perScriptTerminals.flat();
   const acquiredSurfaces = scripts.reduce(
     (sum, script) =>
       sum +
@@ -889,7 +986,7 @@ export function analyzeArenaCleanupSurfaces(
 
   const ledger = buildResourceLedger(
     scripts,
-    terminalAssessments,
+    perScriptTerminals,
   );
   const lifecycle =
     cleanupLifecycleSummary(
