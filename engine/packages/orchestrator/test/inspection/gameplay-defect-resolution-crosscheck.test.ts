@@ -1,6 +1,6 @@
 // Bounded same-directory feature family; preserve original lexical bodies.
 import { describe, expect, it } from "vitest";
-import { assessGameplayDefectResolutionGate, requiredCounterProofDimensions } from "../../src/inspection/gameplay-defect-resolution.js";
+import { assessGameplayDefectResolutionGate, requiredCounterProofDimensions, counterProofSearchIsGraphGrounded } from "../../src/inspection/gameplay-defect-resolution.js";
 import type { GameplayScenarioGraph } from "../../src/inspection/gameplay-scenario-model.js";
 import { assessGameplayDiscoveryClosure } from "../../src/inspection/gameplay-discovery-closure.js";
 
@@ -513,6 +513,33 @@ describe("gameplay defect resolution crosscheck depth", () => {
     expect(result.confirmedDefectReadyIds).toEqual(["link:arena-capacity"]);
     expect(result.resolutions[0]?.counterProofSearch?.exhaustiveWithinScope)
       .toBe(true);
+    const link = witnessed.causalLinks[0]!;
+    const scenario = witnessed.scenarios[0]!;
+    const receipt = result.resolutions[0]?.counterProofSearch;
+    expect(receipt).toBeDefined();
+    expect(receipt?.evidenceIds.length).toBeGreaterThan(1);
+    expect(counterProofSearchIsGraphGrounded(
+      witnessed, link, scenario, receipt,
+    )).toBe(true);
+    expect(counterProofSearchIsGraphGrounded(
+      witnessed, link, scenario, {
+        ...receipt!, evidenceIds: receipt!.evidenceIds.slice(0, -1),
+      },
+    )).toBe(false);
+    expect(counterProofSearchIsGraphGrounded(
+      witnessed, link, scenario, {
+        ...receipt!, evidenceIds: [
+          ...receipt!.evidenceIds, receipt!.evidenceIds[0]!,
+        ],
+      },
+    )).toBe(false);
+    expect(counterProofSearchIsGraphGrounded(
+      witnessed, link, scenario, {
+        ...receipt!, evidenceIds: [
+          ...receipt!.evidenceIds, "source:foreign",
+        ],
+      },
+    )).toBe(false);
   });
 
   it("does not accept an authored exclusion without an exact exclusion witness", () => {

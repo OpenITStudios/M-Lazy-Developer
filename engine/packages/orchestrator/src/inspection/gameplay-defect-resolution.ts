@@ -1150,9 +1150,9 @@ export function counterProofSearchIsGraphGrounded(
       !sameIds(submitted.searchedDimensions, canonical.searchedDimensions) ||
       submitted.searchedDimensions.length !== submitted.dimensionReceipts.length ||
       submitted.evidenceIds.length === 0 ||
-      !submitted.evidenceIds.every((id) =>
-        canonical.evidenceIds.includes(id)
-      )) return false;
+      // A partial or duplicated aggregate evidence inventory is not the
+      // exact canonical receipt, even if individual dimensions match.
+      !sameIds(submitted.evidenceIds, canonical.evidenceIds)) return false;
 
   return canonical.dimensionReceipts.every((expected) => {
     const found = submitted.dimensionReceipts.filter((item) =>
