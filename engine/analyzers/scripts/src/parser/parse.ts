@@ -365,6 +365,55 @@ function runCommandStringContext(
   };
 }
 
+/**
+ * Resolve only a command string copied through immutable declarations in
+ * the SAME direct lexical block as a runCommand statement. Do not perform
+ * name-based cross-scope inference, function calls, interpolation, concatenation
+ * or mutable configuration folding: those remain dynamic source uncertainty.
+ * The literal's declaration remains separate provenance from the call site.
+ */
+function boundedRunCommandConstLiteral(
+  call: ts.CallExpression,
+  file: ts.SourceFile,
+): ts.StringLiteralLike | undefined {
+  const arg = call.arguments[0];
+  if (call.arguments.length !== 1 || !arg || !ts.isIdentifier(arg) ||
+      !ts.isExpressionStatement(call.parent) ||
+      call.parent.expression !== call) return undefined;
+  const scope = call.parent.parent;
+  if (!ts.isBlock(scope) && !ts.isSourceFile(scope)) return undefined;
+
+  const statements = scope.statements;
+  let previousPosition = call.parent.getStart(file);
+  let name = arg.text;
+  const seen = new Set<string>();
+  // A bounded, single-use source chain is sufficient for common
+  // const command = "..."; dimension.runCommand(command) patterns.
+  for (let hop = 0; hop < 4; hop++) {
+    if (seen.has(name)) return undefined;
+    seen.add(name);
+    const declarations = statements.flatMap(statement =>
+      ts.isVariableStatement(statement)
+        ? statement.declarationList.declarations.flatMap(declaration =>
+            ts.isIdentifier(declaration.name) &&
+            declaration.name.text === name
+              ? [{ statement, declaration }]
+              : [])
+        : []);
+    if (declarations.length !== 1) return undefined;
+    const { statement, declaration } = declarations[0]!;
+    if (!(statement.declarationList.flags & ts.NodeFlags.Const) ||
+        declaration.getStart(file) >= previousPosition ||
+        !declaration.initializer) return undefined;
+    const initializer = declaration.initializer;
+    if (ts.isStringLiteralLike(initializer)) return initializer;
+    if (!ts.isIdentifier(initializer)) return undefined;
+    previousPosition = declaration.getStart(file);
+    name = initializer.text;
+  }
+  return undefined;
+}
+
 function stringArgument(node: ts.CallExpression, index = 0): string | undefined {
   const arg = node.arguments[index];
   return arg && ts.isStringLiteralLike(arg) ? arg.text : undefined;
@@ -4284,24 +4333,27 @@ export function parseScriptFile(
 
       if (methodName === "runCommand" || methodName === "runCommandAsync") {
         const argument = node.arguments[0];
-        if (
-          argument &&
-          (
-            ts.isStringLiteralLike(argument) ||
-            ts.isNoSubstitutionTemplateLiteral(argument)
-          )
-        ) {
-          // Only retain extra loop evidence for selector commands. It is a
-          // bounded source candidate, never an implicit arena ownership proof.
-          const activeLoop = /(?:^|\s)@a(?:\[|\b)/i.test(argument.text)
+        const directLiteral = argument && ts.isStringLiteralLike(argument)
+          ? argument : undefined;
+        const constLiteral = directLiteral === undefined
+          ? boundedRunCommandConstLiteral(node, file) : undefined;
+        const literal = directLiteral ?? constLiteral;
+        if (argument && literal) {
+          // Both branches have an exact source-authored immutable string.
+          // Forwarding evidence is NOT command execution or a typed arena
+          // owner; source location points to the actual invocation.
+          const activeLoop = /(?:^|\s)@a(?:\[|\b)/i.test(literal.text)
             ? authoredActiveSessionLoopCommand(node, file, source)
             : undefined;
           commandLiterals.push({
-            command: argument.text.trim(),
+            command: literal.text.trim(),
             mechanism: methodName,
             executionRegion: localExecutionRegionId(node, file),
             receiverHint: node.expression.expression.getText(file),
             source: lineSource(file, argument, source),
+            ...(constLiteral === undefined ? {} : {
+              resolvedLiteralSource: lineSource(file, constLiteral, source),
+            }),
             lexicalGuards: lexicalBranchGuards(node, file, source),
             precedenceGuards: precedingEarlyExitGuards(node, file, source),
             ...(activeLoop === undefined ? {} : {

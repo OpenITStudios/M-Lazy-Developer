@@ -80,7 +80,14 @@ source/native resource analysis, not effective concurrent-start proof.
 
 Include typed Script API `runCommand` / `runCommandAsync` literal calls
 that mutate ticking areas and `.mcfunction` remove/remove_all commands in
-the existing resource evidence. A typed dynamic `runCommand` expression
+the existing resource evidence. The canonical script parser also resolves a
+bounded immutable **same-lexical-block const alias** into a command literal
+and retains the original string declaration in `resolvedLiteralSource`
+alongside the invocation source. This is a source-authored command, never
+evidence it ran. Conditional execution, player/arena ownership and
+post-snapshot world effects remain open. Concatenated/interpolated strings,
+mutable values, imported bindings, function parameters and helper-built
+commands remain dynamic/unknown until their own source proof is available. A typed dynamic `runCommand` expression
 with a visibly authored `tickingarea` command prefix is an unresolved
 source candidate, not an executed command or verified area cost. Keep its
 exact source locator and retain the arena capacity UNKNOWN until the
