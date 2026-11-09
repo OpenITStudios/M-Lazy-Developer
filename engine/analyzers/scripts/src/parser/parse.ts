@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:13:typescript:" +
+  "m-bedrock-script-parser:14:typescript:" +
   ts.version;
 import type {
   SourceRef, SourceSequentialSite, SourceGenerationCapture,
@@ -341,6 +341,10 @@ function authoredActiveSessionLoopCommand(
   };
 }
 
+/** Suppress duplicate embedded-string leads for a syntactic runCommand
+ * call. This lexical context is NOT proof of a Minecraft API receiver.
+ * Actual commandLiterals require typedMethodAt at the call AST node.
+ */
 function runCommandStringContext(
   node: ts.StringLiteralLike,
   file: ts.SourceFile,
@@ -4354,7 +4358,17 @@ export function parseScriptFile(
         }
       }
 
-      if (methodName === "runCommand" || methodName === "runCommandAsync") {
+      // A user-defined object can expose a same-spelled runCommand().
+      // Only the existing typed Script API receiver owner can admit
+      // actual authored Minecraft command literals. An unknown lexical
+      // receiver stays outside executable-command claims.
+      const commandReceiver =
+        methodName === "runCommand" || methodName === "runCommandAsync"
+          ? typedMethodAt(node, file, typedMethodSites)?.receiverType
+          : undefined;
+      if (commandReceiver === "Dimension" ||
+          commandReceiver === "Player" ||
+          commandReceiver === "Entity") {
         const argument = node.arguments[0];
         const directLiteral = argument && ts.isStringLiteralLike(argument)
           ? argument : undefined;

@@ -84,7 +84,11 @@ the existing resource evidence. The canonical script parser also resolves a
 bounded immutable **same-lexical-block const alias** into a command literal.
 The parser retains the literal declaration in `resolvedLiteralSource`,
 the actual argument in `source`, and the exact call expression in
-`invocationSource`. Source consumers use the same full call-site identity
+`invocationSource`. A Minecraft command literal is admitted only when
+the existing typed Script API method-call source identifies a
+`Dimension`, `Player`, or `Entity` receiver at the exact call site.
+A user-defined `runCommand` lookalike or untyped receiver cannot supply
+command-execution evidence merely by spelling. Source consumers use the same full call-site identity
 to prevent a resolved command from also being counted as an unresolved
 dynamic command. Missing spans are never matched by filename or line alone.
 This is a source-authored command, never evidence it ran. Conditional execution, player/arena ownership and
