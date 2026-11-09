@@ -1157,6 +1157,10 @@ interface SourceInvestigationLookup {
   >;
   readonly flowsByEntry: ReadonlyMap<
     string, readonly GameplaySourceFlowCandidate[]>;
+  readonly reviewedByUnknownEntry: ReadonlyMap<
+    string, readonly NonNullable<GameplayScenarioGraph["reviewedSourceRelationships"]>[number][]>;
+  readonly journeysByFlow: ReadonlyMap<
+    string, readonly NonNullable<GameplayScenarioGraph["gameplayJourneyCandidates"]>[number][]>;
 }
 
 /** Bind an existing UNDERSTAND obligation to its exact selected-source IR
@@ -1253,8 +1257,7 @@ function deriveSourceInvestigation(
     const linkedSubjects = new Set(gameplayEvidenceInquiry?.subjectLinks
       .map(link => link.subjectId) ?? []);
     const journeyLeads = flow.sourceTraceStatus === "SOURCE_ROOT_TRACE"
-      ? (graph.gameplayJourneyCandidates ?? []).filter(journey =>
-          journey.exactSourceFlowIds.includes(flow.id) &&
+      ? (lookup.journeysByFlow.get(flow.id) ?? []).filter(journey =>
           journey.evidenceIds.some(id => matchedIds.has(id)) &&
           journey.subjectIds.some(id => linkedSubjects.has(id)))
         .sort((a, b) => a.id.localeCompare(b.id))
@@ -1290,6 +1293,8 @@ function deriveSourceInvestigation(
           sum + path.temporalBoundaryEvidence.length, 0),
       };
     });
+    const reviewedRelationships = lookup.reviewedByUnknownEntry.get(
+      JSON.stringify([unknown.id, flow.entryRegionId])) ?? [];
     return {
       unknownId: unknown.id,
       question: unknown.question,
@@ -1297,14 +1302,9 @@ function deriveSourceInvestigation(
       sourceTraceStatus: flow.sourceTraceStatus ?? ("UNKNOWN" as const),
       steps,
       omittedSteps: matchedSteps.length - steps.length,
-      ...((graph.reviewedSourceRelationships ?? [])
-        .filter(relation => relation.unknownId === unknown.id &&
-          relation.sourceEntryRegionId === flow.entryRegionId)
-        .length === 0 ? {} : {
-          reviewedSourceRelationships: (graph.reviewedSourceRelationships ?? [])
-            .filter(relation => relation.unknownId === unknown.id &&
-              relation.sourceEntryRegionId === flow.entryRegionId),
-        }),
+      ...(reviewedRelationships.length === 0 ? {} : {
+        reviewedSourceRelationships: [...reviewedRelationships],
+      }),
       ...(gameplayEvidenceInquiry === undefined ? {} : {
         gameplayEvidenceInquiry,
         candidateJourneyIds: journeyLeads.slice(0, 3).map(item => item.id),
@@ -1559,11 +1559,36 @@ function obligationPackets(
       if (group !== undefined) group.push(flow);
       else flowsByEntry.set(flow.entryRegionId, [flow]);
     }
+    // The original filters preserve source-array order and duplicate
+    // relationship records. Index their exact pair identity once per
+    // projection; never merge reviews from another entry or unknown.
+    const reviewedByUnknownEntry = new Map<string,
+      NonNullable<GameplayScenarioGraph["reviewedSourceRelationships"]>[number][]>();
+    for (const relation of graph.reviewedSourceRelationships ?? []) {
+      const key = JSON.stringify([relation.unknownId, relation.sourceEntryRegionId]);
+      const group = reviewedByUnknownEntry.get(key);
+      if (group) group.push(relation);
+      else reviewedByUnknownEntry.set(key, [relation]);
+    }
+    // A journey may list the same flow more than once. The original
+    // .includes() matched that journey once, so index each unique flow
+    // ID once while retaining original journey order and multiplicity.
+    const journeysByFlow = new Map<string,
+      NonNullable<GameplayScenarioGraph["gameplayJourneyCandidates"]>[number][]>();
+    for (const journey of graph.gameplayJourneyCandidates ?? []) {
+      for (const flowId of new Set(journey.exactSourceFlowIds)) {
+        const group = journeysByFlow.get(flowId);
+        if (group) group.push(journey);
+        else journeysByFlow.set(flowId, [journey]);
+      }
+    }
     sourceLookup = {
       unknownById,
       effectByUnknown: new Map(
         (sourceEffects ?? []).map(item => [item.unknownId, item] as const)),
       flowsByEntry,
+      reviewedByUnknownEntry,
+      journeysByFlow,
     };
     return sourceLookup;
   };

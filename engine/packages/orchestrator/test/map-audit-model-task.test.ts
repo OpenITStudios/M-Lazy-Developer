@@ -428,6 +428,19 @@ describe("unfamiliar source gameplay evidence handoff", () => {
       procedure: { checkpoints: [] } as any,
       graph: {
         causalLinks: [],
+        reviewedSourceRelationships: [
+          { fromStepId: "step:first", toStepId: "result:first",
+            unknownId: "unknown:uninterpreted-execution:entry",
+            sourceEntryRegionId: "entry" },
+          { fromStepId: "step:foreign-entry", toStepId: "result:foreign-entry",
+            unknownId: "unknown:uninterpreted-execution:entry",
+            sourceEntryRegionId: "entry:foreign" },
+          { fromStepId: "step:second", toStepId: "result:second",
+            unknownId: "unknown:uninterpreted-execution:entry",
+            sourceEntryRegionId: "entry" },
+          { fromStepId: "step:foreign-unknown", toStepId: "result:foreign-unknown",
+            unknownId: "unknown:other", sourceEntryRegionId: "entry" },
+        ],
         sourceFlowCandidates: [{
           id: "source-flow:entry", entryRegionId: "entry",
           sourceTraceStatus: "SOURCE_ROOT_TRACE",
@@ -501,6 +514,10 @@ describe("unfamiliar source gameplay evidence handoff", () => {
       .toEqual(["edge:entry-handler"]);
     expect(investigation?.entries[0]?.unresolvedExecutionEdgeIds)
       .toEqual(["edge:dynamic"]);
+    // Only the same unknown AND entry may contribute reviewed source
+    // relationships. Preserve original order and duplicate records.
+    expect(investigation?.entries[0]?.reviewedSourceRelationships?.map(
+      relation => relation.fromStepId)).toEqual(["step:first", "step:second"]);
     expect(investigation?.entries[0]?.unmatchedEvidenceIds).toEqual([]);
     expect(task?.allowedOutputs).not.toContain("confirmed gameplay bug");
   });
@@ -1573,7 +1590,7 @@ describe("unclassified source-effect relationship reuse", () => {
       graph: {
         causalLinks: [],
         gameplayJourneyCandidates: [{
-          id: "journey:gate", exactSourceFlowIds: ["flow:entry"],
+          id: "journey:gate", exactSourceFlowIds: ["flow:entry", "flow:entry"],
           subjectIds: ["objective:gate"], evidenceIds: ["effect:open"],
         }],
         sourceFlowCandidates: [{
