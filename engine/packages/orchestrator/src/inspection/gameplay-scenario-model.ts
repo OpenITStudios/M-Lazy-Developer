@@ -402,16 +402,23 @@ export function uniqueGameplayCausalLinkScope(
   causalLinkId: string,
   ambiguous: ReturnType<typeof ambiguousGameplayGraphIds> =
     ambiguousGameplayGraphIds(graph),
+  /** Optional current-graph lookup. Caller must build it from this exact graph. */
+  indexed?: {
+    readonly linksById: ReadonlyMap<string, readonly GameplayCausalLink[]>;
+    readonly scenariosById: ReadonlyMap<string, readonly GameplayScenario[]>;
+  },
 ): {
   readonly link: GameplayCausalLink;
   readonly scenario: GameplayScenario;
 } | undefined {
   if (ambiguous.causalLinkIds.includes(causalLinkId)) return undefined;
-  const links = graph.causalLinks.filter(link => link.id === causalLinkId);
+  const links = indexed?.linksById.get(causalLinkId) ??
+    graph.causalLinks.filter(link => link.id === causalLinkId);
   if (links.length !== 1) return undefined;
   const link = links[0]!;
   if (ambiguous.scenarioIds.includes(link.scenarioId)) return undefined;
-  const scenarios = graph.scenarios.filter(item => item.id === link.scenarioId);
+  const scenarios = indexed?.scenariosById.get(link.scenarioId) ??
+    graph.scenarios.filter(item => item.id === link.scenarioId);
   if (scenarios.length !== 1) return undefined;
   const scenario = scenarios[0]!;
   // A causal link is not owned merely because its scenario ID exists.

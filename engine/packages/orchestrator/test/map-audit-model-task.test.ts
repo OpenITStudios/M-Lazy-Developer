@@ -937,6 +937,12 @@ describe("PROVE model evidence handoff", () => {
     } });
     expect(unrelatedAmbiguous?.sourceCounterProofProgress)
       .toEqual(task?.sourceCounterProofProgress);
+    // A duplicate scenario ID must still block exact-link ownership,
+    // even when the owner is resolved from the batch-local lookup.
+    const duplicateScenario = get({ graph: {
+      ...graph, scenarios: [scenario, { ...scenario }],
+    } });
+    expect(duplicateScenario?.sourceCounterProofProgress).toBeUndefined();
   });
 
 

@@ -1710,9 +1710,13 @@ function scopedCounterProofProgress(
   link: GameplayScenarioGraph["causalLinks"][number],
   resolutionsByLink: ReadonlyMap<string, GameplayDefectResolutionGate["resolutions"]>,
   ambiguous: ReturnType<typeof ambiguousGameplayGraphIds>,
+  indexed: {
+    readonly linksById: ReadonlyMap<string, readonly GameplayScenarioGraph["causalLinks"][number][]>;
+    readonly scenariosById: ReadonlyMap<string, readonly GameplayScenarioGraph["scenarios"][number][]>;
+  },
 ): AuditModelTaskPacket["sourceCounterProofProgress"] | undefined {
   if (link.status !== "CONTRADICTED") return undefined;
-  const owner = uniqueGameplayCausalLinkScope(graph, link.id, ambiguous);
+  const owner = uniqueGameplayCausalLinkScope(graph, link.id, ambiguous, indexed);
   if (owner?.link !== link) return undefined;
   const matches = resolutionsByLink.get(link.id) ?? [];
   if (matches.length !== 1 ||
@@ -1773,6 +1777,21 @@ function provePackets(
   // One canonical ambiguity classification for the same immutable graph.
   // Recomputing it for every contradicted link multiplies full-graph scans.
   const ambiguous = ambiguousGameplayGraphIds(graph);
+  // Index current graph identities without collapsing duplicate owners.
+  // The canonical unique-scope check still decides proof eligibility.
+  const linksById = new Map<string, GameplayScenarioGraph["causalLinks"][number][]>();
+  for (const link of graph.causalLinks) {
+    const matches = linksById.get(link.id);
+    if (matches) matches.push(link);
+    else linksById.set(link.id, [link]);
+  }
+  const scenariosById = new Map<string, GameplayScenarioGraph["scenarios"][number][]>();
+  for (const scenario of graph.scenarios) {
+    const matches = scenariosById.get(scenario.id);
+    if (matches) matches.push(scenario);
+    else scenariosById.set(scenario.id, [scenario]);
+  }
+  const indexed = { linksById, scenariosById };
   for (const resolution of gate.resolutions) {
     const matches = resolutionsByLink.get(resolution.causalLinkId);
     if (matches) matches.push(resolution);
@@ -1784,7 +1803,7 @@ function provePackets(
     .map((link) => {
       const needsTranslation = translationIds.has(link.id);
       const sourceProgress = needsTranslation ? undefined :
-        scopedCounterProofProgress(graph, gate, link, resolutionsByLink, ambiguous);
+        scopedCounterProofProgress(graph, gate, link, resolutionsByLink, ambiguous, indexed);
       const remaining = sourceProgress?.remainingDimensions ?? [];
       const requirementIds = unique(link.knowledgeRequirementIds);
       // Handoff and proof admission must consume one authoritative evidence
