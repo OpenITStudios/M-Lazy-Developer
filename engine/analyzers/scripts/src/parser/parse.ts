@@ -425,9 +425,10 @@ export function scriptCommandInvocationSiteKey(
   const range = source?.range;
   if (!source?.artifactId.trim() || !source.relativePath.trim() ||
       !range ||
-      ![
+      [
         range.lineStart, range.columnStart, range.lineEnd, range.columnEnd,
-      ].every(value => Number.isSafeInteger(value) && value > 0)) {
+      ].some(value => typeof value !== "number" ||
+        !Number.isSafeInteger(value) || value <= 0)) {
     return undefined;
   }
   return JSON.stringify([
