@@ -8167,7 +8167,7 @@
         "owner": "engine/packages/orchestrator",
         "riskHint": "low",
         "action": "read-assertions-before-decision",
-        "sourceBlobSha": "f746dd9f447fc935179f7f952e6002d40cb83e7a"
+        "sourceBlobSha": "e1ddaf131fce8a2cf8db0c53c9ba5473d591635d"
       },
       "recommendation": "defer",
       "rationale": "Projection, ranking or efficiency metric tests; retain for targeted change review and do not treat as release proof.",
@@ -10339,7 +10339,7 @@
         "owner": "tooling/repository",
         "riskHint": "medium",
         "action": "review-assertion-and-consumer-equivalence",
-        "sourceBlobSha": "0921a6b2d2de4698d729df0b5d7dfe931c5630a7"
+        "sourceBlobSha": "0ce88e5e17dfad164013a2709f355fa11722a07e"
       },
       "recommendation": "keep",
       "rationale": "Paired agent-eval comparison logic: input/receipt identity, frozen expected routing, no unsupported promotion, and confounded negative controls.",

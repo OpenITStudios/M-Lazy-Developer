@@ -271,3 +271,51 @@ test("existing single-file eval scorer remains backward compatible", () => {
   assert.equal(result.routing.correct, 1);
   assert.equal("contrastReviews" in result, false);
 });
+
+test("invalid agent-eval performance values are rejected before scoring", () => {
+  const valid = {
+    schemaVersion: 1,
+    runs: [{
+      caseId: "audit-id-01",
+      runId: "counter-check",
+      selectedLane: "m-bedrock-map-testing",
+      latencyMs: 120,
+      inputTokens: 100,
+      outputTokens: 40,
+    }],
+  };
+  assert.equal(scoreAgentEvalRuns(valid).routing.accuracy, 1);
+
+  for (const [field, value] of [
+    ["latencyMs", -1],
+    ["latencyMs", Infinity],
+    ["latencyMs", NaN],
+    ["latencyMs", "100"],
+    ["inputTokens", -2],
+    ["inputTokens", 1.5],
+    ["inputTokens", Number.MAX_SAFE_INTEGER + 1],
+    ["outputTokens", null],
+    ["outputTokens", -1],
+  ]) {
+    const runWithInvalidMetric = {
+      ...valid.runs[0],
+      [field]: value,
+    };
+    assert.throws(() => scoreAgentEvalRuns({
+      schemaVersion: 1,
+      runs: [runWithInvalidMetric],
+    }), new RegExp(field));
+  }
+
+  const noCounters = scoreAgentEvalRuns({
+    schemaVersion: 1,
+    runs: [{
+      caseId: "audit-id-01",
+      runId: "without-counters",
+      selectedLane: "m-bedrock-map-testing",
+    }],
+  });
+  assert.equal(noCounters.routing.accuracy, 1);
+  assert.equal(noCounters.performance.latencyMs, null);
+  assert.equal(noCounters.performance.totalTokens, null);
+});

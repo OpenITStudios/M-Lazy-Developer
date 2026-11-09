@@ -64,6 +64,78 @@ function boundedRatio(
   return value;
 }
 
+// A benchmark is invalid when its counters contradict its claimed ratios.
+function nonNegativeCount(label: string, value: number): void {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error("Invalid zero-waste count: " + label + ".");
+  }
+}
+
+function consistentRatio(
+  label: string,
+  reported: number,
+  numerator: number,
+  denominator: number,
+): void {
+  boundedRatio(reported);
+  const calculated = denominator === 0 ? 0 : numerator / denominator;
+  if (Math.abs(reported - calculated) > 1e-9) {
+    throw new Error("Inconsistent zero-waste ratio: " + label + ".");
+  }
+}
+
+function validateSummary(summary: ZeroWasteExecutionSummary): void {
+  const diagnosis = summary.diagnosis;
+  nonNegativeCount("diagnosis.totalSteps", diagnosis.totalSteps);
+  nonNegativeCount("diagnosis.executedSteps", diagnosis.executedSteps);
+  nonNegativeCount("diagnosis.reusedSteps", diagnosis.reusedSteps);
+  const successful = diagnosis.executedSteps + diagnosis.reusedSteps;
+  if (!Number.isSafeInteger(successful) || successful > diagnosis.totalSteps) {
+    throw new Error("Inconsistent zero-waste diagnosis step counts.");
+  }
+  consistentRatio(
+    "diagnosis.reuseRatio",
+    diagnosis.reuseRatio,
+    diagnosis.reusedSteps,
+    successful,
+  );
+
+  if (summary.semanticImpact) {
+    const impact = summary.semanticImpact;
+    nonNegativeCount("semanticImpact.totalNodes", impact.totalNodes);
+    nonNegativeCount("semanticImpact.affectedNodes", impact.affectedNodes);
+    nonNegativeCount("semanticImpact.skippedNodes", impact.skippedNodes);
+    if (impact.affectedNodes + impact.skippedNodes !== impact.totalNodes) {
+      throw new Error("Inconsistent zero-waste semantic node counts.");
+    }
+    consistentRatio(
+      "semanticImpact.skipRatio",
+      impact.skipRatio,
+      impact.skippedNodes,
+      impact.totalNodes,
+    );
+  }
+
+  if (summary.validation) {
+    const validation = summary.validation;
+    nonNegativeCount("validation.totalScenarios", validation.totalScenarios);
+    nonNegativeCount("validation.selectedScenarios", validation.selectedScenarios);
+    nonNegativeCount("validation.skippedScenarios", validation.skippedScenarios);
+    if (
+      validation.selectedScenarios + validation.skippedScenarios !==
+      validation.totalScenarios
+    ) {
+      throw new Error("Inconsistent zero-waste validation scenario counts.");
+    }
+    consistentRatio(
+      "validation.skipRatio",
+      validation.skipRatio,
+      validation.skippedScenarios,
+      validation.totalScenarios,
+    );
+  }
+}
+
 function minimumMetric(
   id:
     ZeroWasteBenchmarkMetric["id"],
@@ -170,6 +242,29 @@ export function evaluateZeroWasteBenchmark(
     throw new Error(
       "Zero-waste benchmark id must be non-empty.",
     );
+  }
+
+  if (input.runMode !== "cold" && input.runMode !== "warm") {
+    throw new Error("Invalid zero-waste benchmark runMode.");
+  }
+  validateSummary(input.summary);
+  if (
+    input.targets?.minimumSemanticSkipRatio !== undefined &&
+    input.summary.semanticImpact === undefined
+  ) {
+    throw new Error("Missing semanticImpact for configured zero-waste target.");
+  }
+  if (
+    input.targets?.minimumValidationSkipRatio !== undefined &&
+    input.summary.validation === undefined
+  ) {
+    throw new Error("Missing validation evidence for configured zero-waste target.");
+  }
+  if (
+    input.targets?.maximumContextTruncationRatio !== undefined &&
+    input.context === undefined
+  ) {
+    throw new Error("Missing context for configured zero-waste target.");
   }
 
   const metrics:

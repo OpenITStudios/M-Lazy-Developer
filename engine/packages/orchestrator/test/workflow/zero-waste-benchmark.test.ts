@@ -333,4 +333,100 @@ describe("zero-waste benchmark", () => {
     expect(report.disposition)
       .toBe("unscored");
   });
+  it("rejects forged ratios and inconsistent count totals", () => {
+    const valid = () => ({
+      id: "bench:integrity",
+      runMode: "warm" as const,
+      summary: {
+        diagnosis: {
+          totalSteps: 100,
+          executedSteps: 5,
+          reusedSteps: 95,
+          reuseRatio: 0.95,
+        },
+        semanticImpact: {
+          totalNodes: 100,
+          affectedNodes: 5,
+          skippedNodes: 95,
+          skipRatio: 0.95,
+        },
+        validation: {
+          totalScenarios: 100,
+          selectedScenarios: 5,
+          skippedScenarios: 95,
+          skipRatio: 0.95,
+        },
+        reasons: [],
+      },
+      targets: {
+        minimumDiagnosisReuseRatio: 0.9,
+        minimumSemanticSkipRatio: 0.9,
+        minimumValidationSkipRatio: 0.9,
+      },
+    });
+
+    expect(evaluateZeroWasteBenchmark(valid()).disposition).toBe("pass");
+    const forgedReuse = valid();
+    forgedReuse.summary.diagnosis.reusedSteps = 0;
+    forgedReuse.summary.diagnosis.executedSteps = 100;
+    expect(() => evaluateZeroWasteBenchmark(forgedReuse))
+      .toThrow(/diagnosis.reuseRatio/);
+
+    const forgedSemantic = valid();
+    forgedSemantic.summary.semanticImpact.skipRatio = 0.99;
+    expect(() => evaluateZeroWasteBenchmark(forgedSemantic))
+      .toThrow(/semanticImpact.skipRatio/);
+
+    const forgedValidation = valid();
+    forgedValidation.summary.validation.skipRatio = 0.99;
+    expect(() => evaluateZeroWasteBenchmark(forgedValidation))
+      .toThrow(/validation.skipRatio/);
+
+    const contradictory = valid();
+    contradictory.summary.semanticImpact.affectedNodes = 100;
+    expect(() => evaluateZeroWasteBenchmark(contradictory))
+      .toThrow(/semantic node counts/);
+
+    const negative = valid();
+    negative.summary.validation.selectedScenarios = -1;
+    expect(() => evaluateZeroWasteBenchmark(negative))
+      .toThrow(/Invalid zero-waste count/);
+  });
+
+  it("does not grant PASS when a configured target has no evidence", () => {
+    expect(() => evaluateZeroWasteBenchmark({
+      id: "bench:missing-validation",
+      runMode: "warm",
+      summary: {
+        diagnosis: {
+          totalSteps: 10,
+          executedSteps: 1,
+          reusedSteps: 9,
+          reuseRatio: 0.9,
+        },
+        reasons: [],
+      },
+      targets: {
+        minimumDiagnosisReuseRatio: 0.8,
+        minimumValidationSkipRatio: 0.8,
+      },
+    })).toThrow(/Missing validation evidence/);
+
+    expect(() => evaluateZeroWasteBenchmark({
+      id: "bench:missing-context",
+      runMode: "cold",
+      summary: {
+        diagnosis: {
+          totalSteps: 0,
+          executedSteps: 0,
+          reusedSteps: 0,
+          reuseRatio: 0,
+        },
+        reasons: [],
+      },
+      targets: {
+        maximumContextTruncationRatio: 0.1,
+      },
+    })).toThrow(/Missing context/);
+  });
 });

@@ -10,6 +10,27 @@ const procedure = JSON.parse(
   readFileSync(".agents/evals/skill-procedure.json", "utf8"),
 );
 
+// Direct scorer calls must validate optional performance fields even without
+// a file-backed A/B receipt; missing metrics remain legitimately unscored.
+const PERFORMANCE_FIELDS = [
+  ["latencyMs", false],
+  ["inputTokens", true],
+  ["outputTokens", true],
+];
+function validateRunPerformanceCounters(run) {
+  if (!run || typeof run !== "object" || Array.isArray(run)) {
+    throw new Error("Agent eval run must be an object.");
+  }
+  for (const [field, integer] of PERFORMANCE_FIELDS) {
+    if (!Object.hasOwn(run, field)) continue;
+    const value = run[field];
+    if (!Number.isFinite(value) || value < 0 ||
+        (integer && !Number.isSafeInteger(value))) {
+      throw new Error("Invalid agent-eval performance counter: " + field + ".");
+    }
+  }
+}
+
 function stats(values) {
   const xs = values.filter((v) => typeof v === "number" && Number.isFinite(v));
   if (!xs.length) return null;
@@ -373,6 +394,7 @@ export function scoreAgentEvalRuns(payload, contrastInput, options) {
   const caseBuckets = new Map();
 
   for (const run of payload.runs) {
+    validateRunPerformanceCounters(run);
     const routeCase = routingById.get(run.caseId);
     if (routeCase) {
       routingEligible += 1;
