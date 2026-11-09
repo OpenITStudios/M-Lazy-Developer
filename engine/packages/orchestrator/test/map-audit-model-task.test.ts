@@ -923,6 +923,20 @@ describe("PROVE model evidence handoff", () => {
     } });
     expect(ambiguous).toBeDefined();
     expect(ambiguous?.sourceCounterProofProgress).toBeUndefined();
+    // Ambiguity must remain exact-scope even when a different link owns
+    // the duplicate identity. Reusing a batch ambiguity receipt cannot
+    // suppress the valid target's already sourced counterproof progress.
+    const other = { ...link, id: "link:other",
+      scenarioId: "scenario:other" };
+    const otherScenario = { ...scenario, id: "scenario:other",
+      causalLinkIds: ["link:other"] };
+    const unrelatedAmbiguous = get({ graph: {
+      ...graph,
+      scenarios: [scenario, otherScenario],
+      causalLinks: [link, other, { ...other }],
+    } });
+    expect(unrelatedAmbiguous?.sourceCounterProofProgress)
+      .toEqual(task?.sourceCounterProofProgress);
   });
 
 
