@@ -81,10 +81,13 @@ source/native resource analysis, not effective concurrent-start proof.
 Include typed Script API `runCommand` / `runCommandAsync` literal calls
 that mutate ticking areas and `.mcfunction` remove/remove_all commands in
 the existing resource evidence. The canonical script parser also resolves a
-bounded immutable **same-lexical-block const alias** into a command literal
-and retains the original string declaration in `resolvedLiteralSource`
-alongside the invocation source. This is a source-authored command, never
-evidence it ran. Conditional execution, player/arena ownership and
+bounded immutable **same-lexical-block const alias** into a command literal.
+The parser retains the literal declaration in `resolvedLiteralSource`,
+the actual argument in `source`, and the exact call expression in
+`invocationSource`. Source consumers use the same full call-site identity
+to prevent a resolved command from also being counted as an unresolved
+dynamic command. Missing spans are never matched by filename or line alone.
+This is a source-authored command, never evidence it ran. Conditional execution, player/arena ownership and
 post-snapshot world effects remain open. Concatenated/interpolated strings,
 mutable values, imported bindings, function parameters and helper-built
 commands remain dynamic/unknown until their own source proof is available. A typed dynamic `runCommand` expression

@@ -13,6 +13,7 @@ import type {
   TickingAreaSemantics,
 } from "../../../../analyzers/commands/src/index.js";
 import type { ParsedScriptFile } from "../../../../analyzers/scripts/src/index.js";
+import { scriptCommandInvocationSiteKey } from "../../../../analyzers/scripts/src/index.js";
 import type { SourceRef } from "../../../project-model/src/index.js";
 
 /**
@@ -325,16 +326,31 @@ export function extractArenaConcurrencyCapacity(
   // Arbitrary dynamic commands remain in the general Discovery unknowns,
   // not speculative arena resource mutations.
   const dynamicTickingAreaCandidates = (input.scripts ?? [])
-    .flatMap((script) => script.methodCalls.filter((call) => {
-      if (call.method !== "runCommand" &&
-          call.method !== "runCommandAsync") return false;
-      if (!call.hasSpreadArgument &&
-          call.argumentKinds[0] === "string") return false;
-      const expression = call.argumentTexts?.[0]?.trim() ?? "";
-      return /^(?:\s|\(|"|'|\x60)*\/?tickingarea\b/i.test(expression) ||
-        /^(?:\s|\(|"|'|\x60)*\/?execute\b[\s\S]*\brun\s+\/?tickingarea\b/i
-          .test(expression);
-    }));
+    .flatMap((script) => {
+      const resolved = new Set(
+        (script.commandLiterals ?? []).flatMap(item => {
+          if (item.mechanism !== "runCommand" &&
+              item.mechanism !== "runCommandAsync") return [];
+          const key = scriptCommandInvocationSiteKey(item.invocationSource);
+          return key === undefined ? [] : [key];
+        }),
+      );
+      return script.methodCalls.filter((call) => {
+        if (call.method !== "runCommand" &&
+            call.method !== "runCommandAsync") return false;
+        if (!call.hasSpreadArgument &&
+            call.argumentKinds[0] === "string") return false;
+        // Avoid counting a const-resolved command as both a known
+        // literal mutation and an unresolved dynamic source candidate.
+        if (resolved.has(scriptCommandInvocationSiteKey(call.source) ?? "")) {
+          return false;
+        }
+        const expression = call.argumentTexts?.[0]?.trim() ?? "";
+        return /^(?:\s|\(|"|'|\x60)*\/?tickingarea\b/i.test(expression) ||
+          /^(?:\s|\(|"|'|\x60)*\/?execute\b[\s\S]*\brun\s+\/?tickingarea\b/i
+            .test(expression);
+      });
+    });
   const tickingAreaMutationSourceSites =
     functionTickingAreaMutations.length +
     scriptTickingAreaMutations.length +

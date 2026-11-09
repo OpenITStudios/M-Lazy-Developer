@@ -16,6 +16,7 @@ import type {
 import { planInspectionRepairs } from "../repair/repair-planning.js";
 import { deriveReliabilityFingerprint } from "../reliability/reliability-fingerprint.js";
 import { deriveScriptApiUsage } from "./script-api-usage.js";
+import { scriptCommandInvocationSiteKey } from "../../../../analyzers/scripts/src/index.js";
 import { indexInspectionSources } from "./inspect-source-index.js";
 import { prepareInspectionRuntimeEvidence } from "./inspect-runtime-evidence.js";
 import { analyzeInspectionEntityKnowledge } from "./inspect-entity-knowledge-stage.js";
@@ -187,20 +188,24 @@ function deriveUnsupportedSurfaceSignals(
           mutatingAsyncPrefixes,
         ),
     );
-  const dynamicCommand =
-    scripts.some((script) =>
-      script.methodCalls.some(
-        (call) =>
-          (
-            call.method === "runCommand" ||
-            call.method === "runCommandAsync"
-          ) &&
-          (
-            call.hasSpreadArgument ||
-            call.argumentKinds[0] !== "string"
-          ),
-      )
+  const dynamicCommand = scripts.some((script) => {
+    const resolved = new Set(
+      script.commandLiterals.flatMap(item => {
+        if (item.mechanism !== "runCommand" &&
+            item.mechanism !== "runCommandAsync") return [];
+        const key = scriptCommandInvocationSiteKey(item.invocationSource);
+        return key === undefined ? [] : [key];
+      }),
     );
+    return script.methodCalls.some(call =>
+      (call.method === "runCommand" ||
+       call.method === "runCommandAsync") &&
+      (call.hasSpreadArgument || call.argumentKinds[0] !== "string") &&
+      // A source-proven immutable command is not still an opaque dynamic
+      // command merely because the original call argument was an identifier.
+      !resolved.has(scriptCommandInvocationSiteKey(call.source) ?? ""),
+    );
+  });
 
   return {
     teleport,

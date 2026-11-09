@@ -446,6 +446,10 @@ export interface ScriptLiteralTranslationReference {
 
 export interface ScriptCommandLiteral {
   command: string;
+  /** Exact runCommand/runCommandAsync call expression, shared with typed
+   * ScriptMethodCall.source; absent on embedded string-only candidates.
+   */
+  invocationSource?: SourceRef;
   /** Exact immutable const source when the command was forwarded through
    * a bounded same-block alias; source remains the invocation argument.
    */

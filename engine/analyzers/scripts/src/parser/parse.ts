@@ -2,7 +2,7 @@ import ts from "typescript";
 import { extractScriptWaveStages, extractScriptGameplayCatalog, extractScriptContentCollections, extractScriptContentUseSites } from "./source-gameplay-content.js";
 
 export const SCRIPT_PARSER_REVISION =
-  "m-bedrock-script-parser:12:typescript:" +
+  "m-bedrock-script-parser:13:typescript:" +
   ts.version;
 import type {
   SourceRef, SourceSequentialSite, SourceGenerationCapture,
@@ -412,6 +412,28 @@ function boundedRunCommandConstLiteral(
     name = initializer.text;
   }
   return undefined;
+}
+
+/**
+ * Stable, exact AST call-site identity shared by script source consumers.
+ * Missing/partial spans are not safe to match by line number or name.
+ * The source key is a navigation witness, never proof the command ran.
+ */
+export function scriptCommandInvocationSiteKey(
+  source: SourceRef | undefined,
+): string | undefined {
+  const range = source?.range;
+  if (!source?.artifactId.trim() || !source.relativePath.trim() ||
+      !range ||
+      ![
+        range.lineStart, range.columnStart, range.lineEnd, range.columnEnd,
+      ].every(value => Number.isSafeInteger(value) && value > 0)) {
+    return undefined;
+  }
+  return JSON.stringify([
+    source.artifactId, source.relativePath, source.jsonPointer ?? null,
+    range.lineStart, range.columnStart, range.lineEnd, range.columnEnd,
+  ]);
 }
 
 function stringArgument(node: ts.CallExpression, index = 0): string | undefined {
@@ -4351,6 +4373,10 @@ export function parseScriptFile(
             executionRegion: localExecutionRegionId(node, file),
             receiverHint: node.expression.expression.getText(file),
             source: lineSource(file, argument, source),
+            // The typed MethodCall owner records the entire call expression.
+            // This exact shared AST span allows consumers to distinguish
+            // a resolved const alias from a still-opaque dynamic command.
+            invocationSource: lineSource(file, node, source),
             ...(constLiteral === undefined ? {} : {
               resolvedLiteralSource: lineSource(file, constLiteral, source),
             }),
