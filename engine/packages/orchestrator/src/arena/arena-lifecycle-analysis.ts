@@ -19,6 +19,8 @@ export type ArenaLifecycleConvergenceStatus =
 
 export interface ArenaLifecycleScopeAssessment {
   arenaExpression: string;
+  /** Qualified origin for helper evidence without a proven owner path. */
+  sourceRegion?: string;
   membershipRelease: boolean;
   generationInvalidation: boolean;
   status: ArenaLifecycleConvergenceStatus;
@@ -658,6 +660,53 @@ function projectReachable(
   );
 }
 
+/** Track a caller arena parameter through exact AST argument-to-formal
+ * bindings. Names in unrelated helper bodies are never owner evidence.
+ * This is source traceability, not the identity of a runtime arena.
+ */
+function traceTerminalArenaOwners(
+  calls: ReadonlyMap<string, readonly {
+    targetRegion: string;
+    controlFlow: "unconditional" | "conditional" | "deferred" | "unknown";
+    sourceBound?: boolean;
+    sourceBindings?: readonly { argumentName: string; parameterName: string }[];
+  }[]>,
+  terminal: string,
+  names: readonly string[],
+  strongOnly: boolean,
+): Map<string, Map<string, Set<string>>> {
+  const atRegion = new Map<string, Map<string, Set<string>>>();
+  const queue = names.map(name => ({
+    region: terminal, origin: name, current: name,
+  }));
+  const visited = new Set<string>();
+  for (let i = 0; i < queue.length; i++) {
+    const state = queue[i]!;
+    const id = JSON.stringify([state.region, state.origin, state.current]);
+    if (visited.has(id)) continue;
+    visited.add(id);
+    const tokens = atRegion.get(state.region) ?? new Map<string, Set<string>>();
+    const origins = tokens.get(state.current) ?? new Set<string>();
+    origins.add(state.origin);
+    tokens.set(state.current, origins);
+    atRegion.set(state.region, tokens);
+    for (const edge of calls.get(state.region) ?? []) {
+      if (edge.sourceBound !== true ||
+          (strongOnly && edge.controlFlow !== "unconditional")) continue;
+      for (const binding of edge.sourceBindings ?? []) {
+        if (binding.argumentName === state.current) {
+          queue.push({
+            region: edge.targetRegion,
+            origin: state.origin,
+            current: binding.parameterName,
+          });
+        }
+      }
+    }
+  }
+  return atRegion;
+}
+
 function assessProject(
   scripts: readonly ParsedScriptFile[],
   crossFileCalls:
@@ -681,6 +730,15 @@ function assessProject(
       string,
       ScriptArenaAuthorityPath[]
     >();
+  const edgesByCaller = new Map<
+    string,
+    (typeof projectGraph.callEdges)[number][]
+  >();
+  for (const edge of projectGraph.callEdges) {
+    const group = edgesByCaller.get(edge.callerRegion);
+    if (group) group.push(edge);
+    else edgesByCaller.set(edge.callerRegion, [edge]);
+  }
   const candidates =
     new Map<
       string,
@@ -885,88 +943,75 @@ function assessProject(
         ),
       );
 
-    const byArena =
-      new Map<
-        string,
-        {
-          releaseAny: boolean;
-          invalidateAny: boolean;
-          releaseStrong: boolean;
-          invalidateStrong:
-            boolean;
-        }
-      >();
+    const rootNames = new Set([
+      ...(paths.get(terminalRegion) ?? []).map(path => path.arenaExpression),
+      ...(edgesByCaller.get(terminalRegion) ?? [])
+        .filter(edge => edge.sourceBound === true)
+        .flatMap(edge => (edge.sourceBindings ?? [])
+          .map(binding => binding.argumentName)),
+    ]);
+    const possibleOwners = traceTerminalArenaOwners(
+      edgesByCaller, terminalRegion, [...rootNames], false);
+    const strongOwners = traceTerminalArenaOwners(
+      edgesByCaller, terminalRegion, [...rootNames], true);
 
+    const byArena = new Map<string, {
+      arenaExpression: string;
+      sourceRegion?: string;
+      releaseAny: boolean;
+      invalidateAny: boolean;
+      releaseStrong: boolean;
+      invalidateStrong: boolean;
+    }>();
     for (const region of allRegions) {
-      for (
-        const path of
-          paths.get(region) ?? []
-      ) {
-        const state =
-          byArena.get(
-            path.arenaExpression,
-          ) ?? {
+      for (const path of paths.get(region) ?? []) {
+        const mappedRoots = possibleOwners.get(region)?.get(
+          path.arenaExpression);
+        const owners = mappedRoots?.size ? [...mappedRoots] : [undefined];
+        for (const origin of owners) {
+          const key = origin === undefined
+            ? JSON.stringify(["unbound", region, path.arenaExpression])
+            : JSON.stringify(["root", origin]);
+          const state = byArena.get(key) ?? {
+            arenaExpression: origin ?? path.arenaExpression,
+            ...(origin === undefined ? { sourceRegion: region } : {}),
             releaseAny: false,
             invalidateAny: false,
             releaseStrong: false,
             invalidateStrong: false,
           };
-
-        const release =
-          path.membershipRelease !==
-          undefined;
-        const invalidate =
-          path.generationInvalidation !==
-          undefined;
-
-        state.releaseAny ||= release;
-        state.invalidateAny ||=
-          invalidate;
-
-        if (
-          strongRegions.has(region)
-        ) {
-          state.releaseStrong ||=
-            release;
-          state.invalidateStrong ||=
-            invalidate;
+          const release = path.membershipRelease !== undefined;
+          const invalidate = path.generationInvalidation !== undefined;
+          state.releaseAny ||= release;
+          state.invalidateAny ||= invalidate;
+          const sourceBound = origin !== undefined &&
+            strongRegions.has(region) &&
+            strongOwners.get(region)?.get(path.arenaExpression)?.has(origin) === true;
+          if (sourceBound) {
+            state.releaseStrong ||= release;
+            state.invalidateStrong ||= invalidate;
+          }
+          byArena.set(key, state);
         }
-
-        byArena.set(
-          path.arenaExpression,
-          state,
-        );
       }
     }
 
-    const scopes =
-      [...byArena.entries()]
-        .map(
-          ([
-            arenaExpression,
-            state,
-          ]) => ({
-            arenaExpression,
-            membershipRelease:
-              state.releaseAny,
-            generationInvalidation:
-              state.invalidateAny,
-            status:
-              state.releaseStrong &&
-              state.invalidateStrong
-                ? "proven" as const
-                : state.releaseAny ||
-                    state.invalidateAny
-                  ? "partial" as const
-                  : "unresolved" as const,
-          }),
-        )
-        .sort((a, b) =>
-          a.arenaExpression
-            .localeCompare(
-              b.arenaExpression,
-            ),
-        );
+    const scopes: ArenaLifecycleScopeAssessment[] =
+      [...byArena.values()].map(state => ({
+        arenaExpression: state.arenaExpression,
+        ...(state.sourceRegion === undefined
+          ? {} : { sourceRegion: state.sourceRegion }),
+        membershipRelease: state.releaseAny,
+        generationInvalidation: state.invalidateAny,
+        status: state.releaseStrong && state.invalidateStrong
+          ? "proven" as const
+          : state.releaseAny || state.invalidateAny
+            ? "partial" as const
+            : "unresolved" as const,
+      })).sort((a, b) =>
+        a.arenaExpression.localeCompare(b.arenaExpression) ||
+        (a.sourceRegion ?? "").localeCompare(b.sourceRegion ?? ""),
+      );
 
     const unguardedDeferredCallbacks =
       scripts.reduce(

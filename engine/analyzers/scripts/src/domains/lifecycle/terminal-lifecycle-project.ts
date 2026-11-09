@@ -29,6 +29,13 @@ export interface ScriptLifecycleProjectGraph {
      * proof-sensitive traversal. False retains an investigative edge only.
      */
     sourceBound?: boolean;
+    /** Exact authored caller-formal -> callee-formal source witness;
+     * never proof of live object identity or execution.
+     */
+    sourceBindings?: readonly {
+      argumentName: string;
+      parameterName: string;
+    }[];
   }[];
   reachableReleaseFunctions:
     readonly string[];
@@ -224,19 +231,37 @@ export function composeQualifiedScriptLifecycleProjectGraph(
       modules.length === 1 && modules[0]!.artifactId === artifactId;
   };
   const localEdges = inputs.flatMap(item =>
-    item.localFunctionCalls.map(call => ({
-      callerRegion: qualifiedRegion(item.fileId, call.callerRegion),
-      targetRegion: qualifiedRegion(item.fileId, call.targetRegion),
-      targetName: call.targetName,
-      controlFlow: call.controlFlow ?? "unknown" as const,
-      sourceBound: item.artifactId !== undefined &&
+    item.localFunctionCalls.map(call => {
+      const sourceBound = item.artifactId !== undefined &&
         owned(item.fileId, item.artifactId) &&
         validSpan(call.source) && validSpan(call.targetSource) &&
         call.source.artifactId === item.artifactId &&
         call.source.relativePath === item.fileId &&
         call.targetSource?.artifactId === item.artifactId &&
-        call.targetSource.relativePath === item.fileId,
-    })));
+        call.targetSource.relativePath === item.fileId;
+      const stableBindings = sourceBound
+        ? (call.argumentParameterBindings ?? []).filter(binding =>
+            validSpan(binding.argumentSource) &&
+            validSpan(binding.parameterSource) &&
+            binding.argumentSource.artifactId === item.artifactId &&
+            binding.parameterSource.artifactId === item.artifactId &&
+            binding.argumentSource.relativePath === item.fileId &&
+            binding.parameterSource.relativePath === item.fileId)
+        : [];
+      return {
+        callerRegion: qualifiedRegion(item.fileId, call.callerRegion),
+        targetRegion: qualifiedRegion(item.fileId, call.targetRegion),
+        targetName: call.targetName,
+        controlFlow: call.controlFlow ?? "unknown" as const,
+        sourceBound,
+        ...(stableBindings.length === 0 ? {} : {
+          sourceBindings: stableBindings.map(binding => ({
+            argumentName: binding.argumentName,
+            parameterName: binding.parameterName,
+          })),
+        }),
+      };
+    }));
 
   const sourceBoundExternal = (call: CrossFileCallEdge): boolean => {
     const target = call.targetSource;
@@ -277,18 +302,27 @@ export function composeQualifiedScriptLifecycleProjectGraph(
   // prohibit it from satisfying a strong terminal/deferred ownership path.
   // Do not silently reinterpret a source-authored unconditional call as
   // conditional; controlFlow and sourceBound describe different facts.
-  const externalEdges = crossFileCalls.map(call => ({
-    callerRegion: qualifiedRegion(call.callerModule, call.callerRegion),
-    targetRegion:
-      call.status === "resolved" &&
-      call.targetModule !== undefined &&
-      call.targetRegion !== undefined
-        ? qualifiedRegion(call.targetModule, call.targetRegion)
-        : "unresolved:" + call.callerModule + "->" + call.targetExport,
-    targetName: call.targetExport,
-    controlFlow: call.controlFlow,
-    sourceBound: sourceBoundExternal(call),
-  }));
+  const externalEdges = crossFileCalls.map(call => {
+    const sourceBound = sourceBoundExternal(call);
+    return {
+      callerRegion: qualifiedRegion(call.callerModule, call.callerRegion),
+      targetRegion:
+        call.status === "resolved" &&
+        call.targetModule !== undefined &&
+        call.targetRegion !== undefined
+          ? qualifiedRegion(call.targetModule, call.targetRegion)
+          : "unresolved:" + call.callerModule + "->" + call.targetExport,
+      targetName: call.targetExport,
+      controlFlow: call.controlFlow,
+      sourceBound,
+      ...(sourceBound && (call.argumentParameterBindings?.length ?? 0) > 0
+        ? { sourceBindings: call.argumentParameterBindings!.map(binding => ({
+              argumentName: binding.argumentName,
+              parameterName: binding.parameterName,
+            })) }
+        : {}),
+    };
+  });
 
   return summarizeCallGraph(
     [

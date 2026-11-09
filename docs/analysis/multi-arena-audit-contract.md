@@ -290,6 +290,13 @@ existing conditional/investigation coverage, not a new status or detector.
 
 A `sourceBound` graph edge is not an assertion that a live arena/player
 instance was identical across callbacks or that any call executed.
+Terminal convergence must also follow the unchanged arena parameter
+from its originating terminal through exact caller-formal to callee-formal
+bindings. Separately passed arenas must never share a release and
+invalidation verdict solely because two helper formals are both named
+`arena`. The existing assessment groups matched evidence by the
+originating terminal parameter, while unbound helper evidence stays
+PARTIAL and retains its qualified source region.
 Current selected-artifact source and actual generation ownership remain
 the required proof boundary.
 
