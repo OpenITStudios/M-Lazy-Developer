@@ -612,6 +612,7 @@ function projectReachable(
         | "conditional"
         | "deferred"
         | "unknown";
+      sourceBound?: boolean;
     }[],
   root: string,
   unconditionalOnly: boolean,
@@ -625,8 +626,9 @@ function projectReachable(
   for (const edge of edges) {
     if (
       unconditionalOnly &&
-      edge.controlFlow !==
-        "unconditional"
+      (edge.controlFlow !==
+        "unconditional" ||
+       edge.sourceBound === false)
     ) {
       continue;
     }
@@ -666,6 +668,8 @@ function assessProject(
       scripts.map((script) => ({
         fileId:
           script.source.relativePath,
+        artifactId:
+          script.source.artifactId,
         localFunctionCalls:
           script.localFunctionCalls,
       })),
@@ -1082,6 +1086,8 @@ function terminalIngressesForProject(
       scripts.map((script) => ({
         fileId:
           script.source.relativePath,
+        artifactId:
+          script.source.artifactId,
         localFunctionCalls:
           script.localFunctionCalls,
       })),
@@ -1152,6 +1158,7 @@ function terminalIngressReachable(
         | "conditional"
         | "deferred"
         | "unknown";
+      sourceBound?: boolean;
     }[],
   root: string,
   target: string,
@@ -1195,6 +1202,9 @@ function terminalIngressReachable(
         );
       if (
         !allowed ||
+        // An unbound import is still a navigation/candidate path, never
+        // an unconditional source-convergence or terminal entry witness.
+        (edge.sourceBound === false && !allowConditional) ||
         seen.has(
           edge.targetRegion,
         )
@@ -1250,6 +1260,8 @@ function terminalRaceAssessments(
           scripts.map((script) => ({
             fileId:
               script.source.relativePath,
+            artifactId:
+              script.source.artifactId,
             localFunctionCalls:
               script.localFunctionCalls,
           })),
@@ -1741,6 +1753,8 @@ function deferredMutationAssessments(
           scripts.map((script) => ({
             fileId:
               script.source.relativePath,
+            artifactId:
+              script.source.artifactId,
             localFunctionCalls:
               script.localFunctionCalls,
           })),

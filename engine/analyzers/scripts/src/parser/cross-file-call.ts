@@ -35,6 +35,11 @@ export interface CrossFileCallEdge {
   };
   /** Direct or bounded immutable-const source forwarding, never instance proof. */
   argumentParameterBindings?: readonly ScriptArgumentParameterBinding[];
+  /** Authored actual/formal arities. No binding inference without an exact
+   * resolved executable target; useful for identifying incomplete forwarding.
+   */
+  actualArgumentCount?: number;
+  targetParameterCount?: number;
   source: SourceRef;
 }
 
@@ -1302,6 +1307,10 @@ export function deriveCrossFileCallEdges(
         ...(exactTargetSource === undefined ? {} : { targetSource: exactTargetSource }),
         ...(internalEvent === undefined ? {} : { internalEvent }),
         ...(argumentParameterBindings.length ? { argumentParameterBindings } : {}),
+        ...(targetCallable === undefined ? {} : {
+          actualArgumentCount: node.arguments.length,
+          targetParameterCount: targetCallable.parameters.length,
+        }),
         localName: imported.localName,
         controlFlow: controlFlow(node),
         status: targetRegion ? "resolved" : "unresolved",

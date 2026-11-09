@@ -274,6 +274,25 @@ evidence. The source-owned ledger keeps terminal assessments matched to
 their exact script instance, not the potentially repeated
 `script.identifier` display label.
 
+### Source-bound helper reachability in lifecycle proof
+
+The canonical qualified lifecycle graph distinguishes the source-authored
+call's control flow from its **source binding**. A graph edge may still
+identify a reachable helper for investigation even when source binding is
+unresolved. Only one unambiguously selected module on each side, exact
+same-artifact invocation/declaration spans, and (for nonzero-argument
+ESM calls) complete one-to-one unchanged actual-to-formal bindings permit
+the edge to contribute to strong convergence/entry evidence.
+Missing/ambiguous module identity or argument forwarding never becomes
+source-confirmed cleanup merely because helper method names, arena
+parameters or generated module paths coincide. Such edges stay in the
+existing conditional/investigation coverage, not a new status or detector.
+
+A `sourceBound` graph edge is not an assertion that a live arena/player
+instance was identical across callbacks or that any call executed.
+Current selected-artifact source and actual generation ownership remain
+the required proof boundary.
+
 ### Deferred generation and terminal race closure
 
 The canonical arena lifecycle analyzer already tracks source-authored
