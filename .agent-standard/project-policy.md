@@ -1,0 +1,22 @@
+# M-Lazy-Developer — Local Project Policy
+
+**Authority:** project-specific operational constraints under byte-identical AgentSkill root instructions and selected `.agent-standard/profile.json`. Preserve all nested `AGENTS.md` and original local Skill files. Current source, user instructions and selected-map permissions are mandatory.
+
+## Product identity and operator
+- **M-Lazy-Developer is a Minecraft Bedrock/Education map-checking system operated through **ChatGPT Chat****. ChatGPT Chat is the sole user-facing workflow; selected map/source documents may come from authorized connected **Google Drive**. GitHub `Local` is the repository source/knowledge branch, not a PC-local command runner.
+- **Operating contract: ChatGPT Chat is the only user-facing workspace**. Actual world/map inspection can use available authorized ChatGPT tools against the explicitly selected `.mcworld` with exact SHA-256 identity, without demanding user PC tests. **Never ask the user to run npm, Vitest, TypeScript, Minecraft, or a checkout on their own computer**. Do not require ChatGPT Work or hosted CI as a workaround.
+- **Treat `runSelectedMapAudit()` as source-declared programmatic contract only unless directly executed** using the matching exact source revision and selected-world identity. Reading TS/ZIP/NBT/LevelDB source or a historical GitHub artifact cannot prove a current engine run or native Minecraft gameplay. State exact `UNKNOWN / NOT EXECUTED` evidence where needed, without inventing PASS or skipping source-decidable obligations.
+- Material report: **Report contract — mandatory on every task**: distinguish what the agent actually inspected, what GitHub committed, a script actually run with receipts, the canonical selected-map audit and real native/gameplay observation; never silently upgrade a source-only finding.
+
+## Two project work lanes, plus shared governance
+- Keep **exactly two domain Skills** and operator lanes: `m-bedrock-system-improvement` = IMPROVE SYSTEM and `m-bedrock-map-testing` = TEST MAP. Their `SKILL.md`/SPEC/EVAL, `.agents/skill-registry.json`, `docs/system/skill-routing.md` and current validations remain domain-owned. No third domain work lane, no independent detection development Skill, and no automatic map mutation.
+- `TEST MAP` executes the `LOAD → UNDERSTAND → TEST → REPORT` source-observable workstream. The selected world is read-only until a separate user-authorized working-copy repair. Preserve Must Change, Must Preserve, evidence tiers, capability-gap and attribution; an absent Minecraft game runtime is not an automatic blocker to ChatGPT source-audit completion.
+- `IMPROVE SYSTEM` changes the detection engine/knowledge/capabilities only on explicit authorization. It can use **Matt Pocock Skills** as an adapted reference within `docs/system/development-discipline.md#matt-pocock-engineering-method-adapted`; it is not an installed third-party Skill, new agent or a replacement for these two native work lanes.
+- The three `oits-*` Skills are **shared governance / repository audit / complex brief**, not active product/operator work lanes. They do not change the exact two-domain-Skill registry and cannot take ownership of selected-map evaluation.
+- Preserve all nested product subdirectory `AGENTS.md` and local permissions. `docs/analysis/master-selected-map-audit-workflow.md` is the accepted source of selected-map audit state; `CONTEXT.md`, `planning/` and actual current source govern continuation.
+
+## Branch, CI, proof and data
+- `Local` is the only ordinary GitHub source-development branch; `main` is reserved. No auto-branch, merge, deployment, release or cross-repo mutation on this task.
+- CI and large repository tests are **on hold**. Existing `.github/workflows/package-source.yml` is manual-only transport and must never be dispatched automatically; cloud verification cannot substitute for user-PC/local native proof. Direct ChatGPT source/artifact inspection is separate from authoring/test-running the repository code.
+- Never upload protected customer/world data, credentials, passwords, raw private worlds or unreleased source without explicit scope and access. Do not invent game results, false selected-map PASS or lost source limitations.
+- The original pre-adoption root policy is preserved under `.agent-standard/history/` for targeted domain restriction review only, not a second active root. Preserve all meaningful restrictions, current action holds and product files unchanged.

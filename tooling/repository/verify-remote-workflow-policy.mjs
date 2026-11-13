@@ -35,7 +35,7 @@ const requiredPolicy = [
     ]
   ],
   [
-    "AGENTS.md",
+    ".agent-standard/project-policy.md",
     [
       "M-Lazy-Developer is a Minecraft Bedrock/Education map-checking system operated through **ChatGPT Chat**",
       "ChatGPT Chat is the sole user-facing workflow",
@@ -43,7 +43,7 @@ const requiredPolicy = [
     ]
   ],
   [
-    "GITHUB_RULES.md",
+    ".agent-standard/project-policy.md",
     [
       "Operating contract: ChatGPT Chat is the only user-facing workspace",
       "Google Drive",

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "repository": "OpenITStudios/M-Lazy-Developer",
+  "activeBranch": "Local",
+  "branchPolicy": {
+    "writableBranches": [
+      "Local"
+    ],
+    "allowAutoBranch": false,
+    "allowAutoPromotion": false
+  },
+  "executionPolicy": {
+    "ci": "disabled",
+    "tests": "on_hold",
+    "nativeProof": "required_when_claimed"
+  },
+  "permissions": {
+    "crossRepoWrites": false,
+    "mutatingActionsRequireUserIntent": true,
+    "releaseRequiresExplicitApproval": true
+  },
+  "protectedPaths": [],
+  "holds": [
+    {
+      "id": "lazydev-ci-source-test-hold",
+      "reason": "Maintainer suspended CI and broad executable validation on Local during source work; no GitHub Actions dispatch/cloud substitution.",
+      "paths": [],
+      "blockedActions": [
+        "ci",
+        "test"
+      ],
+      "until": "New explicit selected validation instruction with actual authorized tools."
+    }
+  ],
+  "dataPolicy": "confidential-project",
+  "note": "Read .agent-standard/project-policy.md after shared rules/profile. Exactly TWO domain Skills remain; three oits-* are governance Skills, not operator work lanes. Existing ChatGPT Chat map-checking and selected Drive world authorization remain local project policy.",
+  "workflowPolicy": {
+    "sourceSurface": "CHATGPT_GITHUB",
+    "localValidationSurface": "LOCAL_PC_AGENT",
+    "localTestDuringSourcePhase": false,
+    "requestLocaltestFromChatGPT": false,
+    "githubActionsOrCloudTestSubstitution": false,
+    "localValidationRequiresExplicitTransition": true
+  }
+}

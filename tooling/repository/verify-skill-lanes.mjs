@@ -3,16 +3,17 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 // specialist references are not independent work lanes or installed ZIP skills.
 const failures=[];
 const two=["m-bedrock-map-testing","m-bedrock-system-improvement"].sort();
+const shared=["oits-agent-quality-review","oits-development-brief","oits-repository-audit"].sort();
 const registry=JSON.parse(readFileSync(".agents/skill-registry.json","utf8"));
 const registered=Object.keys(registry.workLanes??{}).sort();
 const folders=readdirSync(".agents/skills",{withFileTypes:true})
   .filter(x=>x.isDirectory()&&existsSync(".agents/skills/"+x.name+"/SKILL.md"))
   .map(x=>x.name).sort();
 if(JSON.stringify(registered)!==JSON.stringify(two) ||
-   JSON.stringify(folders)!==JSON.stringify(two) ||
+   JSON.stringify(folders)!==JSON.stringify([...two,...shared].sort()) ||
    Object.keys(registry.domainSpecialists??{}).length ||
    Object.keys(registry.routingOnly??{}).length) {
-  failures.push("Exactly two active internal SKILL.md identities are allowed.");
+  failures.push("Exactly two product work-lane Skills plus three non-product shared governance Skills are permitted.");
 }
 const required={
  "m-bedrock-system-improvement":[
@@ -32,6 +33,12 @@ function frontmatter(s){if(!s.startsWith("---\n"))return undefined;
     ?.replace(/\s+/g," ").trim();
   return {name,desc};
 }
+for(const name of shared){
+ const file=".agents/skills/"+name+"/SKILL.md";
+ const source=existsSync(file)?readFileSync(file,"utf8"):"";
+ if(!source.startsWith("---\n")||!source.includes("name: "+name))
+   failures.push("Missing or invalid shared governance Skill: "+name);
+}
 for(const name of two){
  const path=".agents/skills/"+name+"/SKILL.md";
  const s=readFileSync(path,"utf8");
@@ -49,7 +56,7 @@ if(improve?.mutatesTarget!==false || test?.mutatesEngine!==false || test?.mutate
 for(const path of [...(improve?.benchmarkTools??[]),test?.runtimeInstrumentation,test?.repairValidationTool,test?.outputSchema,test?.deterministicEntrypoint]){
   if(typeof path!=="string"||!existsSync(path))failures.push("Missing preserved technical/validation owner: "+path);
 }
-for(const path of ["AGENTS.md",".agents/README.md","docs/system/skill-routing.md"]) {
+for(const path of [".agent-standard/project-policy.md",".agents/README.md","docs/system/skill-routing.md"]) {
   const source=readFileSync(path,"utf8");
   for(const name of two)if(!source.includes(name))failures.push(path+": missing active skill route "+name);
 }
@@ -60,7 +67,7 @@ for(const p of ["## Development Operating Standard","**Development preflight:**"
 
 // Guard the adopted external-method path without installing an extra Skill,
 // mutating the frozen eval corpus or asserting model-run effectiveness.
-const policy = readFileSync("AGENTS.md","utf8");
+const policy = readFileSync(".agent-standard/project-policy.md","utf8");
 const improveSkillSource = readFileSync(
   ".agents/skills/m-bedrock-system-improvement/SKILL.md","utf8");
 const improveEvaluation = readFileSync(

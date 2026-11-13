@@ -95,6 +95,7 @@ const trackedFiles = execFileSync("git", ["ls-files"], { encoding: "utf8" })
   .filter(Boolean);
 
 const allowedRootEntries = new Set([
+  ".agent-standard",
   ".agents",
   ".editorconfig",
   ".gitattributes",
@@ -169,26 +170,20 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// Agent Rules is a self-contained root contract, not a dependency on another
-// OpenIT product's repository or an installed third-party agent runtime.
+// Shared AgentSkill source owns general rules; the local project policy owns
+// the two ChatGPT map/product lanes. Source inspection is not host proof.
 const agentRules = readFileSync("AGENTS.md", "utf8");
-const agentMethodSources = [
-  "multica-ai/andrej-karpathy-skills",
-  "dietrichgebert/ponytail",
-  "cursor/plugins",
-  "google-research/harness2",
-  "deepseek-ai/deepseek-harness",
-  "morluto/rea",
-  "nextlevelbuilder/ui-ux-pro-max-skill",
-];
-if (
-  !agentRules.includes("## Agent Rules — independent seven-method contract") ||
-  !agentRules.includes("The user selects the branch manually") ||
-  !agentRules.includes("No implicit plugin install") ||
-  agentMethodSources.some((repo) => !agentRules.includes(`github.com/${repo}/tree/`)) ||
-  agentRules.includes("github.com/OpenITStudios/M-LazyDesigner/blob/")
-) {
-  console.error("Agent Rules root must remain independent, seven-source, manually branched, and permission-safe.");
+const domainRules = readFileSync(".agent-standard/project-policy.md", "utf8");
+const methods = JSON.parse(readFileSync(".agent-standard/methods.json", "utf8"));
+const reviewedMethods = new Set(methods.methods?.map(item=>item.id));
+if (!agentRules.includes("# OpenITStudios — Shared Agent Rules") ||
+    !agentRules.includes(".agent-standard/profile.json") ||
+    !domainRules.includes("ChatGPT Chat is the sole user-facing workflow") ||
+    !domainRules.includes("m-bedrock-map-testing") ||
+    !domainRules.includes("m-bedrock-system-improvement") ||
+    reviewedMethods.size!==8 || !reviewedMethods.has("matt-pocock") ||
+    agentRules.includes("github.com/OpenITStudios/M-LazyDesigner/blob/")) {
+  console.error("Canonical AgentSkill source, eight methods or two-domain-lane contract is missing.");
   process.exit(1);
 }
 

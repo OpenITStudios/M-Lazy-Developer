@@ -1,228 +1,60 @@
-# GitHub Rules — Lazy-Developer
+# OpenITStudios — Shared GitHub Operating Rules
 
-Canonical GitHub operating rules for repository work.
+**Version:** v0.1.0-draft. Same bytes for all adopted repositories. Repository-specific branch, CI, test, release, data and hold policies belong in `.agent-standard/profile.json` and continue to apply.
 
-`Local` is the working authority unless the user explicitly changes it.
+## Execution-surface rule (mandatory)
 
-## Operating sequence
+In `CHATGPT_GITHUB`, GitHub is a **source-control and architecture workspace**, not a user-PC execution environment. Complete source and integration work on the explicitly selected ref; do not run, dispatch, suggest or create GitHub Actions, cloud CI, hosted sandboxes or fake local tests. Do not ask for repeated localtest during source development. Source-only proof (`SOURCE_REVIEWED`, `SOURCE_COMMITTED`, `TEST_AUTHORED_NOT_RUN`) is an accepted terminal result at the current proof ceiling.
 
-```text
-PIN
-→ EXECUTION CONTEXT
-→ EXHAUST REMOTE_GITHUB PARTITION
-→ READ MINIMUM
-→ DIAGNOSE
-→ TOOL / TRANSFER GATE
-→ WRITE ONCE
-→ VERIFY
-→ STOP
-```
+In `LOCAL_PC_AGENT`, local tests require verified actual user-PC tool execution **and** user-selected local validation after source architecture is ready. Claude Code, Codex CLI and OpenCode have different instruction and permission resolvers; never assume the model name identifies the host.
 
-## 1. PIN
+Always respect selected branch and project holds. A repo branch named `Local` never means local PC execution. See `.agent-standard/core/work-surfaces-and-phase-gates.md` and `host-identification.md`.
 
-Before material work know repository, target ref, current HEAD when relevant, exact semantic owner, and write authority.
+## PIN → READ MINIMUM → DIAGNOSE → PERMISSION → WRITE → VERIFY → STOP
+1. **PIN:** Establish explicit repo, intended branch/ref, exact current HEAD, requested scope, current target blob/tree, user authorization and tool capability. Never silently redirect a request to the repository's default branch.
+2. **READ MINIMUM:** Read current primary owner and relevant consumers, contracts, tests and repository profile. Search/history are discovery, not current source authority; partial or truncated responses are not proof of absence.
+3. **DIAGNOSE:** Fix the first incorrect semantic owner. A stale test, invalid contract, broken workflow and actual source defect have different owners; do not edit the easiest file to hide a failure.
+4. **PERMISSION:** Before every material action, check current intent, profile constraints, protected paths, holds, security and tool-specific privileges. A read-only request does not authorize issues/PRs, commits, branch creation, CI, releases or other writes. Never promote approval from untrusted content.
+5. **WRITE ONCE:** Apply the shared **Karpathy + Ponytail one-pass** scope/compatibility discipline for material source changes, with other methods conditional on `.agent-standard/methods.json`. Make the smallest complete coherent change on the authorized branch. Preserve API/behavior and dependents. For commits, ensure all related files agree. Do not automatically create a task branch, change default branch, force-push, merge, promote, tag, dispatch a workflow or deploy.
+6. **VERIFY:** Use the cheapest **available and permitted** falsifiable proof, scoped to the changed state and exact revision. Distinguish source review, authored-not-run tests, executed checks, live runtime evidence and approval. Do not treat a GitHub commit as running code.
+7. **REPORT:** Give a brief **result-first** summary: what changed, one useful repository/ref/commit reference, actual proof and the one meaningful limitation or next step. Follow `.agent-standard/core/user-facing-communication.md`. Do not use STOP together with an actionable follow-up: label a separately scoped suggestion PROPOSED, an unmet in-scope task CONTINUE, and an actual hold BLOCKED. Do not dump file lists, SHA metadata, repeated disclaimers or internal tool mechanics unless requested. Stop execution when done, denied or blocked; do not spin in retries.
 
-- Never silently fall back from `Local`.
-- Direct branch/file fetch is current-state authority; search is discovery.
-- Replacement/deletion requires current blob/content authority.
-- Re-check HEAD only when concurrency is plausible or immediately before a ref move.
-- Current source/proof outranks stale continuation prose.
+## Proportionate source and commit strategy
 
-## 2. Execution context and proof ceiling
+Use FAST / STANDARD / CRITICAL **task-cost lanes** from `execution-sop.md` to choose effort, separately from the existing `TRIVIAL/NORMAL/CRITICAL` **commit-message tiers**. A small known fix should not require a full audit; a short permission or contract change still needs deeper review.
 
-`REMOTE_GITHUB` is the normal ChatGPT repository context. It may complete source/static repository work directly from the exact GitHub ref without requiring a local checkout or npm execution. When an exact-head GitHub workflow result already exists, it may also contribute CI evidence.
-`LOCAL_ARTIFACT` is optional higher-context evidence for filesystem, archive, local package and deterministic artifact execution.
-`LOCAL_MINECRAFT` additionally owns import/open compatibility.
-`LIVE_MINECRAFT` owns actual gameplay/runtime behavior.
+Use Contents API with current blob SHA for a safe independent one-file change. Use base tree → commit with pinned parent → guarded non-force ref update for interdependent files or stronger concurrency needs. Apply the source/receipt limits in `tool-contracts-and-reliability.md`. **Never trade away selected-branch authority, source integrity, safety or proof merely to reduce API calls.**
 
-Never combine evidence from different SHAs as if it were one exact-head proof.
+## Concurrent Git writes
+- Refresh current HEAD before a mutable transaction. Use current file blob SHA for replacement/deletion and conditional/fast-forward ref updates where available.
+- If the expected SHA moved, **stop and reconcile current history**. No force push or overwrite of concurrent work just to make the action pass.
+- One logical unit per commit; do not create staging branches or CI workflows merely as transport. Never assert a PR exists when working directly on one branch.
 
-## 3. READ MINIMUM
+## Commit quality and cross-chat continuity
 
-Default after boot:
+For every coherent change, use `type(scope): concrete outcome`. Commit body depends on **actual change risk**: **TRIVIAL** only for a diff-reviewed small documentation typo, new **NORMAL** requires `Surface / Goal / Work / State / Proof / Next`, and **CRITICAL** (architecture, security, permissions, agent policy, contracts, migrations or high-risk integration) also requires `Decision / Unresolved`. `Surface` identifies the observed work method, not the LLM brand; earlier messages without it remain historical records with an unverified environment. Never use `--trivial` alone to skip a body.
 
-```text
-owner/source reads   1–3
-history reads        0
-broad scans          0
-```
+`Surface` distinguishes ChatGPT+GitHub from a confirmed PC-local agent; `Work` names a **stable topic**; `Proof` matches actual evidence at the source revision; `Next` is only a safe suggestion, **never** authorization. Use `.agent-standard/core/commit-continuity-and-recovery.md` for the single authoritative format and recovery flow. Do not copy transcripts or repeat every changed file in the message.
 
-Open more only for a concrete unresolved question. Truncation or partial output is incomplete evidence, not proof of absence.
+On a new ChatGPT session: **user topic → exact branch/HEAD → current owner/status/source → history only for unresolved context → verify source, evidence and permissions → next authorized action**. When current source and accepted decisions already establish the workstream, skip history retrieval. Otherwise start with 30 branch commit metadata, expand to 50/100 on gaps, then trace older Work/path/decision evidence without a cutoff. Do not assume the newest commit or a prior Next is authoritative. Do not load all diffs; global commit search is incomplete for nondefault branches.
 
-Use `docs/system/implementation-map.md` before broad search for a known subsystem.
+## Real GitHub object verification — before source-level coverage claims
 
-## 3.1 Knowledge access
+After a material commit or when reconciling old work, read the **actual selected branch HEAD** and **exact GitHub commit object**, check its parent against the observed prior HEAD where applicable, and inspect the returned changed files/status/rename paths. More than 300 changed files may be paginated; missing binary patches or incomplete responses must be marked partial. Source/file metadata can support only **source-level** conclusions, not runtime PASS. Arbitrary patch text or snapshot JSON is **not** proof that GitHub returned those bytes. The canonical decision procedure is `commit-continuity-and-recovery.md`; the source-only pilot is in `docs/research/` of AgentSkill. Do not run localtest, GitHub Actions or cloud CI to compensate.
 
-When repository knowledge is needed:
+## Version and release discipline
 
-```text
-Router
-→ stable resource ID
-→ explicit Graph relationships
-→ selected owner
-→ targeted read
-```
+Use **one meaningful AgentSkill package version**, not a new numbered "v1/v2/v3" for every Skill, protocol or iteration. Current version stays `0.1.0-draft` during ordinary source development. Git SHA and stable Work ID identify individual improvements. Small changes use Git history; noteworthy upcoming changes go under **[Unreleased]** in `CHANGELOG.md`.
 
-Do not substitute broad code search for ownership routing. Search is a bounded discovery/ranking tool after the initial owner/domain is known.
+Only an **explicitly authorized release** with meaningful scope, compatibility/adoption review and matched evidence may increment package/manifest version. Never bump automatically, tag, publish, deploy or roll out as a side effect of a code change. Human display 0.1 → 0.2 → 0.3 corresponds to SemVer 0.1.0 → 0.2.0 → 0.3.0; 0.31.0 is not 0.3.1.
 
-For documentation, frontmatter `id` is identity and file path is location. Follow domain README links first. For knowledge/reliability data, preserve authority class and do not promote historical or derived material into current proof.
+## Execution contexts
+- `REMOTE_GITHUB`: exact source read/write and static inspection. No build/test/native proof without a real executor.
+- `LOCAL_CODE`: only verified commands on the actual user's PC when the local agent workflow and local-validation phase were selected; not a ChatGPT/cloud container.
+- `LIVE_TARGET`: a connected native app/device/service, required for claims that depend on it.
+- `NOT_EXECUTED`: tool absent, validation held, or evidence unavailable.
 
-## 4. DIAGNOSE THE FIRST WRONG OWNER
-
-```text
-requirement/policy wrong   → semantic policy owner
-implementation wrong       → implementation owner
-assertion stale            → test owner
-CI route wrong             → workflow owner
-runtime/toolchain missing  → environment owner
-requested evidence missing → proof owner
-derived output wrong       → upstream canonical owner
-```
-
-CI failure is evidence, not permission to edit the easiest file.
-
-## 4.1 ChatGPT no-local-PC invariant
-
-**Operating contract: ChatGPT Chat is the only user-facing workspace.** GitHub `Local` is the remote branch for code, knowledge, commits and continuity; accessible Google Drive links identify selected `.mcworld` inputs. Do not require the user's computer, ChatGPT Work, separate compute infrastructure or another user interface for ordinary source-verifiable checking.
-
-**Positive product identity:** M-Lazy-Developer checks selected Minecraft Bedrock/Education maps inside ChatGPT Chat. A connected Drive `.mcworld` is an immutable inspection source, while GitHub `Local` is the canonical knowledge and development authority. Existing TypeScript analysis, CLI and report files remain useful source contracts; a commit or declared command is not executable verification. Direct archive/JavaScript/NBT/world inspection is valid when actually performed, and is distinct from invoking `runSelectedMapAudit()` or observing Minecraft gameplay. Missing runnable proof is `UNKNOWN / NOT EXECUTED` only for that claim.
-
-**ChatGPT executable audit priority — mandatory for a requested full map test.** First pin the current `Local` HEAD and the selected .mcworld SHA-256. Check whether the existing `lazy-developer-portable` artifact for that EXACT HEAD is downloadable; if it is, download it inside ChatGPT, verify the archive checksum and source provenance, and call the canonical CLI with `--expected-source-sha` and `--expected-sha256`. Never treat a historical package as the current engine. Distinguish a valid engine audit returning BLOCKED from an unavailable executable and from completed gameplay. If an exact-HEAD portable artifact is absent or fails, **do not dispatch the manual-only GitHub workflow**. Make one bounded transport/provenance diagnosis: an available historical package can be an input to a reconstructed candidate only when every changed source blob, lock/dependency identity and executable provenance can be verified against current HEAD. Never bypass the canonical package identity gate, claim an old archive as current, or infer a successful engine run from copied files. If exact-HEAD execution cannot be established, use a clearly labeled source-only or historical comparison and leave the requested full audit INCOMPLETE. Live Minecraft-only claims remain unverified unless actually observed. This package is source TRANSFER using existing GitHub Actions, not a new cloud execution service or a reactivated CI test suite.
-
-**Source-only ChatGPT QA scope (user decision, 2026-11-03).** Minecraft itself is NOT an execution target, acceptance prerequisite, user handoff, or open task in this product. Within ChatGPT, exhaust exact-selected-artifact ZIP/JSON/NBT/LevelDB/structure evidence, actual canonical engine execution, bounded JS/TS tests, static/formal state and callback traces, scenario/counterproof/negative controls, and complete source-derived report reconciliation. Source-verifiable UNKNOWNs remain real in-scope work and must NOT be dropped merely because they are numerous or bundled/minified. Exhaustive source inventory does not require dispatching every generated AI investigation in one pass: prioritize material risk and feasible deciding proof, report remaining source obligations losslessly as OPEN, and preserve canonical BLOCKED rather than implying a bounded operator review is full-audit admission. Pure live-only effects (rendering, network latency, actual FPS/TPS, real Minecraft multiplayer execution) are external observability limits, NOT skipped ChatGPT tests and NOT required to declare the *ChatGPT source-audit scope* completed. Preserve the original canonical report status, source/proof obligations, and evidence identities without upgrading external-only UNKNOWN to PASS. The operator summary must separate (a) source-decidable work still OPEN, (b) genuine source ambiguity after complete investigation, and (c) Minecraft-only external scope; never present a BLOCKED engine report as READY. The absence of native Minecraft is never permission to stop source-code investigation.
-
-**Report contract — mandatory on every task.** Before saying "tested", "working", "passed", "engine ran", or "ready", identify the actual actor and evidence: (a) ChatGPT directly examined the selected artifact/source, (b) GitHub source changed/committed, (c) a specific script actually executed in ChatGPT Chat, (d) the exact repository TypeScript capability was actually invoked, or (e) Minecraft gameplay was directly observed. State only the highest genuinely observed tier. A GitHub commit is stored source, not executable proof; ChatGPT source interpretation is not a `runSelectedMapAudit()` result. Keep exact missing proof `UNKNOWN / NOT EXECUTED` instead of presenting planned code as an observed audit.
-
-**Never ask the user to run npm, Vitest, TypeScript, Minecraft, or a checkout on their own computer** as a prerequisite, workaround, or follow-up to a ChatGPT-owned repository task. Do not ask them to install Node, run `DEV.cmd`, clone/download the repository, provide local filesystem paths or local data, execute a CLI, or upload a locally prepared artifact to compensate for a missing ChatGPT/GitHub tool.
-
-Use the strongest ChatGPT-accessible route in this order:
-
-```text
-authenticated GitHub source and exact ref
-→ authenticated repository/artifact source when actually accessible
-→ a capability already available inside this ChatGPT conversation, if authorized and actually callable
-→ an existing GitHub-native verification result on the exact HEAD, if already available
-→ exact bounded result with honest proof ceiling
-```
-
-GitHub is the source of truth and storage for development; ChatGPT performs authorized work using its current tools. Never create or require cloud compute, cloud-hosted execution, a deployment platform, managed runner, user PC, npm, CI, or a local checkout to complete source-verifiable work. Existing GitHub Actions are not an external cloud architecture requirement and are never a standing gate; do not initiate a new verification workflow unless expressly within scope and callable. Never claim an unavailable executable test or Minecraft runtime was used.
-
-If a claim inherently requires execution or live-game evidence absent from the tools currently available in ChatGPT and GitHub, mark **only that specific claim `UNKNOWN / NOT EXECUTED`** and preserve its proof requirement. Finish independent GitHub-valid development without creating a toolchain, runner, deployment, external cloud service, or future-work dependency. Do not repeatedly recommend waiting for a runner or ask the user to operate a PC. Do not turn this residue into a local-PC request or repeatedly stall development on npm/toolchain checks.
-
-A user-local workflow is outside this ChatGPT Chat operating contract; mention PC instructions only if the user **explicitly changes the workflow and asks for them**. Missing Minecraft-runtime evidence is not that permission.
-
-## 5. GitHub-first partition
-
-Exhaust independent GitHub-verifiable work before handoff.
-
-Do not transfer a complete task because one residue needs a local artifact or Minecraft.
-
-Prepare deterministic harnesses/tests/fixtures remotely when they improve future executable proof, but do not require a local handoff merely to declare remote source work complete.
-
-## 6. WRITE ONCE
-
-Before repository mutation:
-
-```text
-repo/ref/current state pinned
-scope and owners final
-complete intended file set known
-final content ready
-no scratch paths
-verification route known
-```
-
-One logical outcome should normally be one atomic commit. Do not use commits as checkpoints, CI triggers, or transfer experiments.
-
-Commit format:
-
-`<type>(<optional-scope>): <logical outcome>`
-
-Use `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `build`, `release`, or bounded `chore`.
-
-### Commit-based work continuity
-
-For every material, independently valid work unit, use one logical commit with the existing conventional subject and concise continuity metadata:
-
-```text
-Work: <stable domain/topic>
-State: ACTIVE | BLOCKED | PAUSED | DONE
-Decision: <relevant rationale, if any>
-Proof: <actual evidence and verification ceiling>
-Unresolved: <specific open issue, if any>
-Next: <one actionable step, unless DONE>
-```
-
-`Work`, `State`, and `Proof` are required for material commits. Other fields are conditional. DONE closes only the bounded work unit, never automatically the whole feature. Source changes, documentation decisions, and relevant metadata belong in the same commit. Do not create empty heartbeat commits, broken checkpoints, or duplicate planning ledgers. Git already records the diff, SHA, and timestamp.
-
-For resume: identify the requested work; inspect relevant commits plus any newer commits touching its owner/source; compare decisions and claims with the current `Local` HEAD. Historical `Next` is a suggestion at that SHA, not a current command. Where prior commits lack metadata, recover only facts established by diff, current source, or explicit proof. Do not guess missing chat context.
-
-For a resumed **TEST MAP** from another chat, require the same map fingerprint, source commit, audit revision/knowledge provenance when present, and observed proof tier before claiming continuity. A report with mismatched identities is historical comparison evidence, not the active result; do not replace the prior outcome silently. The sole operator presentation and comparison procedure is in `docs/analysis/master-selected-map-audit-workflow.md`.
-
-**Repository-URL cold start:** treat "amati/observe repo and follow its rules" as read-only inspection. Resolve the URL ref, pin HEAD, read root routing, this GitHub contract, and the minimum relevant canonical owner. Use commit `Work`, `State`, `Proof`, `Unresolved`, and `Next` only as historical evidence; inspect earlier topic commits when the latest commit concerns an unrelated topic. Validate candidate unfinished work against current source, not the recency of a commit alone. Report what is confirmed, uncertain, and the best evidence-grounded next step. Do not create a checkpoint, session-memory file, progress registry, or commit for cold start. An explicit continue request authorizes bounded work only when intended topic is determinate; otherwise ask one question.
-
-Before publishing a multi-file commit, pin the current HEAD, prepare one Git tree and commit, then fast-forward the expected `Local` ref without force. Verify the ref points to the new commit before claiming it was saved. On concurrent updates, refresh and reconcile rather than overwrite. If mutation outcome is uncertain, inspect the ref before retrying.
-
-Planning owns future intent, not manually synchronized implementation status. Existing workspace/project owners retain project execution data; stable semantic decisions stay in their canonical docs/source. Do not add a parallel memory database, transcript store, or next-to-do file. Uncommitted conversation content cannot be guaranteed recoverable.
-
-## 7. Tool and transfer gate
-
-Prefer:
-
-```text
-exact read             → direct GitHub fetch
-single bounded edit    → contents API
-coherent multi-file    → one Git tree + commit + fast-forward
-CI diagnosis           → run → job → failing step → relevant log
-unavailable proof      → exact UNKNOWN residue; no user-PC handoff
-```
-
-Never use temporary branches/workflows, base64 stand-ins, placeholder source, alternate repository structures, or force-pushes merely to bypass connector limitations.
-
-## CI policy: disabled during evidence-led test pruning on Local
-
-The user has explicitly suspended GitHub CI because automatically running the large Vitest suite blocks repository work. The `Verify` and `Repository Policy` workflow YAML files have been removed from `Local`, so development pushes to this branch do not trigger their verification jobs. Their previous definitions remain recoverable from Git history; this is not an authorization to delete source contracts, lower production evidence gates, or claim PASS without execution.
-
-As of 2026-11-03 the user explicitly prohibited use of CI because it delays development. No push, pull-request, or scheduled GitHub Actions are authorized on `Local`. The existing `Package Source Snapshot` workflow is MANUAL-ONLY and must NOT be dispatched for routine development or verification. Suspended `Verify` and `Repository Policy` remain disabled. Perform all TypeScript/Vitest and selected-map source analyses directly in ChatGPT's current execution container. Existing portable source/dependency artifacts may be reused only as a pinned historical base; changes for a later `Local` HEAD must be fetched/checked against exact GitHub blob identities, with the resulting proof clearly identifying the reconstructed source version. Never claim an old unmodified snapshot is current HEAD. Preserve provenance gates and all unresolved evidence. Do not ask the user to run tools on a PC.
-
-## 8. Verification
-
-Follow the canonical construction-versus-acceptance sequencing in `docs/system/development-discipline.md`. During an explicitly unfinished architecture BUILD, do exact-ref source/consumer review without starting a micro-test campaign. Open a bounded executable acceptance run only after the integrated production path is ready, except where a demonstrated critical safety or irreversible-data risk makes earlier verification necessary.
-
-Run the cheapest check that can falsify the claim **at its current evidence ceiling**; source review is never an executed PASS.
-
-- docs/policy → exact-head structural/static review
-- TypeScript/source contract → exact-head source review + affected contract/test/fixture review; compiler/test execution is additional evidence, not a remote-work prerequisite
-- archive/repair behavior → source/fixture reasoning remotely; actual artifact execution only when that claim requires it
-- repository checkpoint → inspect repository verifier contracts and affected ownership remotely; executed verifier output is stronger optional evidence
-- Minecraft package/import/runtime → evidence only when directly available in the current ChatGPT tool context; otherwise mark the specific claim UNKNOWN, without requesting external cloud, a local-PC test, or a new runner
-
-A queued, running, cancelled, skipped, or unrelated workflow is not PASS.
-
-Do not weaken a valid verifier to obtain green status.
-
-## 9. Failure policy
-
-| Failure | Action |
-|---|---|
-| capability/permission denial | stop method; 0 retries |
-| capability uncertain | one bounded probe |
-| malformed valid request | correct once |
-| missing target | verify exact repo/ref/path once |
-| stale conflict | refetch once then rebuild |
-| timeout/unknown mutation | inspect target state before retry |
-| same-cause failure with new evidence | max 2 attempts |
-
-Changing tools or representations does not reset retry ceilings.
-
-## 10. Security
-
-Never commit credentials, user/private worlds, production operational data, or extracted proprietary artifacts.
-
-User-supplied archives, JSON, scripts, NBT/LevelDB, paths and identifiers are untrusted input.
-
-## 11. STOP
-
-Stop when the requested GitHub-valid outcome and the strongest proof available in REMOTE_GITHUB are satisfied. Higher-context residue remains explicit only for claims that are inherently impossible to decide from repository evidence; it does not make the completed remote source work incomplete.
-
-Do not automatically audit another layer, synchronize unrelated docs, create proof objects, or resume deferred runtime work.
+## Hard integrity boundaries
+- Do not commit credentials, personal/private source data, user files, tool secrets or unreviewed third-party code.
+- Preserve existing project branch and CI/test holds; a new shared standard does not reopen them.
+- Do not lower expected assertions, bypass protected paths, alter access policy, or fabricate receipts to achieve a green status.
