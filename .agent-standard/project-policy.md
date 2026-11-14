@@ -15,6 +15,11 @@
 - The three `oits-*` Skills are **shared governance / repository audit / complex brief**, not active product/operator work lanes. They do not change the exact two-domain-Skill registry and cannot take ownership of selected-map evaluation.
 - Preserve all nested product subdirectory `AGENTS.md` and local permissions. `docs/analysis/master-selected-map-audit-workflow.md` is the accepted source of selected-map audit state; `CONTEXT.md`, `planning/` and actual current source govern continuation.
 
+
+## Related Lazy-family task routing
+
+When an explicitly authorized task involves another Lazy Minecraft product, consult this repository's `README.md` **Related Lazy-family handoff** section to locate the actual artifact and evidence owner. This is a navigation pointer, not another agent/router. Read the other repository's current selected ref and own local policy only when the handoff is genuinely required. Preserve exact asset/world identity, edition/version, user approval, evidence tier and every local test/CI hold. A relationship never grants automatic transfer, cross-repository writes, native host access or gameplay approval.
+
 ## Branch, CI, proof and data
 - `Local` is the only ordinary GitHub source-development branch; `main` is reserved. No auto-branch, merge, deployment, release or cross-repo mutation on this task.
 - CI and large repository tests are **on hold**. Existing `.github/workflows/package-source.yml` is manual-only transport and must never be dispatched automatically; cloud verification cannot substitute for user-PC/local native proof. Direct ChatGPT source/artifact inspection is separate from authoring/test-running the repository code.
