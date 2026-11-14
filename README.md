@@ -148,6 +148,15 @@ The exact selected map artifact is current gameplay authority. Historical eviden
 **Developer source reference:** The CLI now reads the pinned `experiments/developer-practice-signals.json` snapshot in the standard selected-map audit. This is a curated index of the two original developer ZIPs: 22 source-pinned skill methodologies (16 map-interpretation candidates and six development-only), with linked module/test/probe provenance. An investigation receives at most two hints **only** when its current selected-map Intent source, typed Semantic IR witness and question domain match. The developer ZIP is authoritative for its author's methods and source examples—not for the selected map's intended design, independently verified Minecraft platform behavior or live proof. The external modules and probe packs are not installed or executed by this integration. The canonical owners and methodology update procedure remain in [Developer-Practice Context](docs/analysis/developer-practice-context.md).
 
 
+
+## Related Lazy-family handoff (source coordination only)
+
+[LazyDesigner](https://github.com/OpenITStudios/M-LazyDesigner/tree/Local) owns Blockbench-authored Bedrock Entity visual assets (`.bbmodel`), **not** a gameplay world or add-on package. An asset affects this map audit only after its authorized owner actually incorporates it into the selected `.mcworld`; an asset export is not evidence of world incorporation.
+
+[LazyTester](https://github.com/OpenITStudios/M-Minecraft-Emulator/tree/Local) owns separate Minecraft Education Windows profiles and an optional [map-test contract](https://github.com/OpenITStudios/M-Minecraft-Emulator/blob/Local/docs/system/map-aware-probe-qa.md). For a finding that requires native evidence, retain the **existing** selected-map audit's artifact SHA-256, edition/version, source revision, finding/obligation IDs, expected versus observed evidence, missing proof, and actual execution tier. The map owner must review any proposed `map-test-contract.json` in its own authorized repository/storage before LazyTester uses it. Neither `MapAuditOutputV2` nor the `--handoff` projection is directly accepted as a LazyTester map-test contract; no automatic converter is installed.
+
+The existing LazyTester `probe_qa` may supply bounded probe/plan evidence, but a probe-reported PASS is **not** selected-map gameplay PASS. Any authorized observation returns through this repository's existing [selected-map audit and proof owners](docs/analysis/master-selected-map-audit-workflow.md), preserving provenance and unresolved findings. These source links authorize no automatic asset/world transfer, runtime test, cross-repository write, or edition conversion. AgentSkill shared rules and each repository's local holds remain in force.
+
 ## Project state and planning
 
 ```text
